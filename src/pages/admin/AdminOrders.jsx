@@ -8,7 +8,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 
 const ADMIN = '/pickyadmin-softnova2026';
-const STATUS_TABS = ['all', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+const STATUS_TABS = ['all', 'confirmed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'];
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);

@@ -1,16 +1,17 @@
 import React from 'react';
 
 const STEPS = [
-  { id: 'confirmed', label: 'Order Confirmed', icon: '📝' },
-  { id: 'shipped', label: 'Shipped', icon: '🚚' },
-  { id: 'delivered', label: 'Delivered', icon: '📦' },
+  { id: 'confirmed', label: 'Confirmed & Paid', icon: '💳' },
+  { id: 'shipped', label: 'Dispatched', icon: '📦' },
+  { id: 'out_for_delivery', label: 'Out for Delivery', icon: '🚚' },
+  { id: 'delivered', label: 'Delivered', icon: '🎉' },
 ];
 
 export default function TrackingStepper({ currentStatus }) {
   const normalized = (currentStatus || 'confirmed').toLowerCase();
 
   const getStepState = (stepIndex) => {
-    const statusOrder = { confirmed: 0, shipped: 1, delivered: 2, cancelled: -1 };
+    const statusOrder = { confirmed: 0, shipped: 1, out_for_delivery: 2, delivered: 3, cancelled: -1 };
     const currentIdx = statusOrder[normalized] ?? 0;
 
     if (normalized === 'cancelled') return 'cancelled';
@@ -21,20 +22,21 @@ export default function TrackingStepper({ currentStatus }) {
 
   const getProgressWidth = () => {
     if (normalized === 'delivered') return '100%';
-    if (normalized === 'shipped') return '50%';
+    if (normalized === 'out_for_delivery') return '66%';
+    if (normalized === 'shipped') return '33%';
     return '0%';
   };
 
   if (normalized === 'cancelled') {
     return (
-      <div style={{ padding: '1.5rem', background: '#fee2e2', borderRadius: 'var(--radius)', color: '#b91c1c', textAlign: 'center', fontWeight: 700 }}>
-        ❌ This order has been cancelled.
+      <div style={{ padding: '1.5rem', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fecaca', color: '#b91c1c', textAlign: 'center', fontWeight: 700 }}>
+        ❌ This order has been cancelled by store administrator.
       </div>
     );
   }
 
   return (
-    <div className="stepper-container">
+    <div className="stepper-container" style={{ margin: '1.5rem 0' }}>
       {/* Background track */}
       <div className="stepper-track">
         <div className="stepper-progress" style={{ width: getProgressWidth() }} />

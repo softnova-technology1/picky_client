@@ -60,7 +60,10 @@ export default function OrderDetail() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
             <div>
               <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Order #{order.orderNumber}</h1>
-              <p style={{ margin: 0 }}>Placed on {formatDate(order.createdAt)} • Payment via {order.paymentMethod?.toUpperCase()}</p>
+              <p style={{ margin: 0, color: '#475569' }}>
+                Placed on {formatDate(order.createdAt)} • <span style={{ color: '#16a34a', fontWeight: 600 }}>💳 Paid via Razorpay</span>
+                {order.razorpayPaymentId && <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: '0.5rem' }}>({order.razorpayPaymentId})</span>}
+              </p>
             </div>
             <Badge status={order.status} />
           </div>

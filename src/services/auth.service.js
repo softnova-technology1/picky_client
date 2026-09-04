@@ -7,4 +7,5 @@ export const authService = {
   refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
   logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
   getMe: () => api.get('/auth/me'),
+  updateProfile: (data) => api.patch('/auth/profile', data),
 };

@@ -9,6 +9,17 @@ import { useUiStore } from '../store/uiStore';
 import { orderService } from '../services/order.service';
 import { formatPrice } from '../utils/formatPrice';
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, couponDiscount, clearCart } = useCartStore();
@@ -16,11 +27,11 @@ export default function Checkout() {
   const { showToast } = useUiStore();
 
   const [address, setAddress] = useState({
-    street: user?.addresses?.[0]?.line1 || '',
-    city: user?.addresses?.[0]?.city || 'Chennai',
-    state: user?.addresses?.[0]?.state || 'Tamil Nadu',
-    pincode: user?.addresses?.[0]?.pincode || '',
-    landmark: '',
+    street: user?.defaultAddress?.street || user?.addresses?.[0]?.street || '',
+    city: user?.defaultAddress?.city || user?.addresses?.[0]?.city || 'Chennai',
+    state: user?.defaultAddress?.state || user?.addresses?.[0]?.state || 'Tamil Nadu',
+    pincode: user?.defaultAddress?.pincode || user?.addresses?.[0]?.pincode || '',
+    landmark: user?.defaultAddress?.landmark || '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -36,9 +47,10 @@ export default function Checkout() {
     return (
       <PageWrapper>
         <div className="section container" style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <h2>No items to checkout</h2>
-          <Link to="/products" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-            Browse Store
+          <h2>No items in your checkout</h2>
+          <p style={{ color: '#64748b', marginTop: '0.5rem' }}>Your shopping bag is currently empty.</p>
+          <Link to="/products" className="btn btn-primary" style={{ marginTop: '1.25rem' }}>
+            Browse Catalog ➔
           </Link>
         </div>
       </PageWrapper>
@@ -49,24 +61,76 @@ export default function Checkout() {
     setAddress({ ...address, [e.target.name]: e.target.value });
   };
 
-  const handleSubmitOrder = async (e) => {
+  const handleRazorpayPayment = async (e) => {
     e.preventDefault();
-    if (!address.street.trim() || !address.pincode.trim()) {
-      showToast('Please fill in complete delivery address details', 'error');
+    if (!address.street.trim() || !address.pincode.trim() || !address.city.trim()) {
+      showToast('Please fill in your complete delivery address', 'error');
       return;
     }
 
     try {
       setLoading(true);
-      const res = await orderService.checkout({ shippingAddress: address });
-      const order = res?.data || res;
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        showToast('Razorpay SDK failed to load. Please check your internet connection.', 'error');
+        setLoading(false);
+        return;
+      }
 
-      clearCart();
-      showToast('🎉 Order placed successfully! Check your WhatsApp for updates.', 'success');
-      navigate(`/orders/${order._id || order.id}`);
+      // 1. Initialize Razorpay Order on server
+      const rzInitRes = await orderService.createRazorpayOrder({ shippingAddress: address });
+      const rzData = rzInitRes?.data || rzInitRes;
+
+      // 2. Open Razorpay Checkout Modal
+      const options = {
+        key: rzData.keyId,
+        amount: rzData.amount, // in paise
+        currency: rzData.currency || 'INR',
+        name: 'Picky',
+        description: `Order Payment (${items.length} items)`,
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100',
+        order_id: rzData.razorpayOrderId,
+        prefill: {
+          name: user?.name || '',
+          contact: user?.phone || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#7c3aed',
+        },
+        handler: async (response) => {
+          try {
+            setLoading(true);
+            // 3. Verify Payment Signature on Backend
+            const verifyRes = await orderService.verifyRazorpayPayment({
+              shippingAddress: address,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+
+            const order = verifyRes?.data || verifyRes;
+            clearCart();
+            showToast('🎉 Payment Successful! Order placed and confirmed.', 'success');
+            navigate(`/orders/${order._id || order.id}`);
+          } catch (err) {
+            showToast(err.message || 'Payment verification failed', 'error');
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            showToast('Payment window closed. Order was not placed.', 'info');
+          },
+        },
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
     } catch (err) {
-      showToast(err.message || 'Failed to place order. Please try again.', 'error');
-    } finally {
+      showToast(err.message || 'Failed to initialize payment. Please try again.', 'error');
       setLoading(false);
     }
   };
@@ -76,21 +140,21 @@ export default function Checkout() {
       <div className="section">
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>
-            <Link to="/cart">Cart</Link> ➔ <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Checkout</span>
+            <Link to="/cart">Cart</Link> ➔ <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Prepaid Checkout</span>
           </div>
 
-          <h1 style={{ fontSize: '2.2rem', marginBottom: '2rem' }}>Checkout & Delivery</h1>
+          <h1 style={{ fontSize: '2.2rem', marginBottom: '2rem' }}>Checkout & Online Payment</h1>
 
-          <form onSubmit={handleSubmitOrder}>
+          <form onSubmit={handleRazorpayPayment}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
               {/* Address Details Left */}
               <div className="card" style={{ padding: '2rem' }}>
                 <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
-                  1. Delivery Address
+                  1. Shipping & Delivery Details
                 </h3>
 
                 <Input
-                  label="Street Address / Door No / Flat"
+                  label="Street Address / Door No / Flat *"
                   name="street"
                   value={address.street}
                   onChange={handleChange}
@@ -100,21 +164,21 @@ export default function Checkout() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
                   <Input
-                    label="City"
+                    label="City *"
                     name="city"
                     value={address.city}
                     onChange={handleChange}
                     required
                   />
                   <Input
-                    label="State"
+                    label="State *"
                     name="state"
                     value={address.state}
                     onChange={handleChange}
                     required
                   />
                   <Input
-                    label="PIN Code"
+                    label="PIN Code *"
                     name="pincode"
                     value={address.pincode}
                     onChange={handleChange}
@@ -135,11 +199,17 @@ export default function Checkout() {
                   <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>
                     2. Payment Method
                   </h3>
-                  <div style={{ padding: '1rem 1.25rem', border: '2px solid var(--color-primary)', borderRadius: '8px', background: 'var(--color-primary-light)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <input type="radio" checked readOnly style={{ accentColor: 'var(--color-primary)' }} />
-                    <div>
-                      <strong style={{ display: 'block', color: 'var(--color-primary-dark)' }}>💵 Cash on Delivery (COD)</strong>
-                      <span style={{ fontSize: '0.82rem', color: '#475569' }}>Pay safely when your package arrives at your doorstep.</span>
+                  <div style={{ padding: '1.25rem', border: '2px solid var(--color-primary)', borderRadius: '12px', background: '#faf5ff', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 800 }}>
+                      ✓
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <strong style={{ display: 'block', color: 'var(--color-primary-dark)', fontSize: '1rem' }}>
+                        ⚡ 100% Secure Online Payment (Razorpay)
+                      </strong>
+                      <span style={{ fontSize: '0.82rem', color: '#6b21a8' }}>
+                        UPI (GPay / PhonePe / Paytm), Credit / Debit Cards, NetBanking, and Wallets supported.
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -172,18 +242,18 @@ export default function Checkout() {
 
                   {couponDiscount > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
-                      <span>Discount</span>
+                      <span>Coupon Discount</span>
                       <span>-{formatPrice(couponDiscount)}</span>
                     </div>
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Shipping</span>
+                    <span style={{ color: '#64748b' }}>Express Delivery</span>
                     <strong style={{ color: '#16a34a' }}>FREE</strong>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
-                    <span>Total Pay</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
+                    <span>Total Amount</span>
                     <span>{formatPrice(total)}</span>
                   </div>
                 </div>
@@ -195,11 +265,11 @@ export default function Checkout() {
                   block
                   loading={loading}
                 >
-                  Confirm Order & Place (COD) ➔
+                  Pay with Razorpay ⚡ ➔
                 </Button>
 
                 <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: '#64748b' }}>
-                  💬 You will receive immediate WhatsApp confirmation with order summary.
+                  🔒 256-Bit SSL Encrypted & Instant WhatsApp Order Confirmation.
                 </div>
               </div>
             </div>

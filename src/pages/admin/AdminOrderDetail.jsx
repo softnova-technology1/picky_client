@@ -209,8 +209,8 @@ export default function AdminOrderDetail() {
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
-                <span>Total Amount (COD)</span>
-                <span>{formatPrice(order.total)}</span>
+                <span>Total Amount</span>
+                <span style={{ color: '#16a34a' }}>{formatPrice(order.total)} (Paid)</span>
               </div>
             </div>
           </div>
@@ -229,10 +229,11 @@ export default function AdminOrderDetail() {
                   onChange={(e) => setNewStatus(e.target.value)}
                   className="form-select"
                 >
-                  <option value="confirmed">Confirmed</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered (Triggers Delivered WhatsApp)</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="confirmed">Confirmed & Paid (Razorpay)</option>
+                  <option value="shipped">Shipped & Dispatched</option>
+                  <option value="out_for_delivery">Out for Delivery</option>
+                  <option value="delivered">Delivered (Triggers WhatsApp)</option>
+                  <option value="cancelled">Cancelled (Auto-Restores Stock)</option>
                 </select>
               </div>
 
