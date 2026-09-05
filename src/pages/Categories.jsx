@@ -3,6 +3,7 @@ import PageWrapper from '../components/layout/PageWrapper';
 import CategoryCard from '../components/product/CategoryCard';
 import Spinner from '../components/ui/Spinner';
 import { categoryService } from '../services/category.service';
+import { PICKY_CATEGORIES } from '../data/categoriesData';
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -13,9 +14,11 @@ export default function Categories() {
       try {
         setLoading(true);
         const res = await categoryService.list();
-        setCategories(res?.data || []);
+        const list = res?.data || [];
+        setCategories(list.length > 0 ? list : PICKY_CATEGORIES);
       } catch (err) {
         console.error('Failed to load categories:', err);
+        setCategories(PICKY_CATEGORIES);
       } finally {
         setLoading(false);
       }

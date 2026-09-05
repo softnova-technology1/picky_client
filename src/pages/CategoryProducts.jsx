@@ -4,6 +4,7 @@ import PageWrapper from '../components/layout/PageWrapper';
 import ProductGrid from '../components/product/ProductGrid';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import { PICKY_CATEGORIES } from '../data/categoriesData';
 
 export default function CategoryProducts() {
   const { slug } = useParams();
@@ -16,12 +17,20 @@ export default function CategoryProducts() {
     async function load() {
       try {
         setLoading(true);
-        const catRes = await categoryService.getBySlug(slug);
-        const catData = catRes?.data || catRes;
-        setCategory(catData);
+        let catData = null;
+        try {
+          const catRes = await categoryService.getBySlug(slug);
+          catData = catRes?.data || catRes;
+        } catch (e) {
+          catData = PICKY_CATEGORIES.find((c) => c.slug === slug) || { name: slug, slug };
+        }
+        setCategory(catData || PICKY_CATEGORIES.find((c) => c.slug === slug) || { name: slug, slug });
 
         if (catData?._id) {
           const prodRes = await productService.list({ category: catData._id, sort });
+          setProducts(prodRes?.data?.data || prodRes?.data || []);
+        } else {
+          const prodRes = await productService.list({ sort });
           setProducts(prodRes?.data?.data || prodRes?.data || []);
         }
       } catch (err) {

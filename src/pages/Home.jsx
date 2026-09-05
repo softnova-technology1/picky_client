@@ -5,6 +5,7 @@ import ProductGrid from '../components/product/ProductGrid';
 import CategoryCard from '../components/product/CategoryCard';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import { PICKY_CATEGORIES } from '../data/categoriesData';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -20,9 +21,11 @@ export default function Home() {
           categoryService.list(),
         ]);
         setFeaturedProducts(prodRes?.data?.data || prodRes?.data || []);
-        setCategories(catRes?.data || []);
+        const cList = catRes?.data || [];
+        setCategories(cList.length > 0 ? cList : PICKY_CATEGORIES);
       } catch (err) {
         console.error('Home load error:', err);
+        setCategories(PICKY_CATEGORIES);
       } finally {
         setLoading(false);
       }
@@ -33,7 +36,7 @@ export default function Home() {
   return (
     <PageWrapper>
       {/* ── Hero Banner Section ─────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #2563eb 100%)', color: 'white', padding: '4.5rem 0' }}>
+      <section style={{ background: 'linear-gradient(135deg, #2e0854 0%, #581c87 50%, #7c3aed 100%)', color: 'white', padding: '4.5rem 0' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem', alignItems: 'center' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(8px)', padding: '0.35rem 0.9rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.25rem' }}>
@@ -44,7 +47,7 @@ export default function Home() {
               <span style={{ color: '#fde047' }}>Delivered Fast.</span>
             </h1>
             <p style={{ color: '#e0e7ff', fontSize: '1.05rem', marginBottom: '2rem', maxWidth: '500px', lineHeight: 1.6 }}>
-              Discover strictly quality-tested electronics, apparel, and home essentials with instant live shipment tracking on WhatsApp.
+              Discover strictly quality-tested Tamil traditional products, fashion, home décor, cookware and gadgets with live WhatsApp tracking.
             </p>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <Link to="/products" className="btn btn-lg" style={{ background: '#fde047', color: '#1e1b4b', fontWeight: 800 }}>
@@ -77,35 +80,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Value Propositions Bar ───────────────────────────────── */}
-      <section style={{ background: 'white', borderBottom: '1px solid var(--color-border)', padding: '1.5rem 0' }}>
+      {/* ── Value Propositions Bar (Light Purple Card Style - NO COD) ───── */}
+      <section style={{ background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(10px)', borderBottom: '1.5px solid var(--color-border)', padding: '1.5rem 0' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <span style={{ fontSize: '1.8rem' }}>📦</span>
+            <span style={{ fontSize: '1.8rem' }}>🔒</span>
             <div>
-              <strong style={{ fontSize: '0.92rem', display: 'block' }}>Cash on Delivery</strong>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Pay when you receive</span>
+              <strong style={{ fontSize: '0.92rem', display: 'block', color: '#1e1233' }}>100% Prepaid Safe</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64557a' }}>Instant UPI & Cards</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <span style={{ fontSize: '1.8rem' }}>💬</span>
             <div>
-              <strong style={{ fontSize: '0.92rem', display: 'block' }}>WhatsApp Tracking</strong>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Instant AWB & status</span>
+              <strong style={{ fontSize: '0.92rem', display: 'block', color: '#1e1233' }}>WhatsApp Tracking</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64557a' }}>Instant AWB & status</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <span style={{ fontSize: '1.8rem' }}>⚡</span>
             <div>
-              <strong style={{ fontSize: '0.92rem', display: 'block' }}>Fast Dispatch</strong>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Ships in 24 hours</span>
+              <strong style={{ fontSize: '0.92rem', display: 'block', color: '#1e1233' }}>Fast Dispatch</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64557a' }}>Ships in 24 hours</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <span style={{ fontSize: '1.8rem' }}>🛡️</span>
             <div>
-              <strong style={{ fontSize: '0.92rem', display: 'block' }}>Quality Checked</strong>
-              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>100% verified items</span>
+              <strong style={{ fontSize: '0.92rem', display: 'block', color: '#1e1233' }}>Quality Checked</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64557a' }}>100% verified items</span>
             </div>
           </div>
         </div>
@@ -119,7 +122,7 @@ export default function Home() {
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Curated Collections
               </span>
-              <h2 style={{ marginTop: '0.2rem' }}>Popular Categories</h2>
+              <h2 style={{ marginTop: '0.2rem', color: '#1e1233' }}>Popular Categories</h2>
             </div>
             <Link to="/categories" style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.92rem' }}>
               View All ➔
@@ -135,14 +138,14 @@ export default function Home() {
       </section>
 
       {/* ── Featured Products ───────────────────────────────────── */}
-      <section className="section" style={{ background: 'white', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
+      <section className="section" style={{ background: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(8px)', borderTop: '1.5px solid var(--color-border)', borderBottom: '1.5px solid var(--color-border)' }}>
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
             <div>
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Top Rated Picks
               </span>
-              <h2 style={{ marginTop: '0.2rem' }}>Trending Products</h2>
+              <h2 style={{ marginTop: '0.2rem', color: '#1e1233' }}>Trending Products</h2>
             </div>
             <Link to="/products" style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.92rem' }}>
               See All ➔
@@ -158,12 +161,13 @@ export default function Home() {
         <div className="container">
           <div
             style={{
-              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+              background: 'linear-gradient(135deg, #2e0854 0%, #4c1d95 50%, #6d28d9 100%)',
               color: 'white',
               borderRadius: 'var(--radius-lg)',
               padding: '3rem 2rem',
               textAlign: 'center',
-              boxShadow: 'var(--shadow)',
+              boxShadow: '0 12px 36px rgba(76, 29, 149, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
             }}
           >
             <span style={{ background: 'rgba(255,255,255,0.15)', padding: '0.35rem 0.85rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 700 }}>
@@ -172,10 +176,10 @@ export default function Home() {
             <h2 style={{ color: 'white', margin: '1rem 0 0.5rem', fontSize: '2.2rem' }}>
               Get 10% Off On Your First Order
             </h2>
-            <p style={{ color: '#c7d2fe', maxWidth: '480px', margin: '0 auto 1.5rem', fontSize: '1rem' }}>
+            <p style={{ color: '#e0e7ff', maxWidth: '480px', margin: '0 auto 1.5rem', fontSize: '1rem' }}>
               Use coupon code <strong style={{ color: '#fde047', background: 'rgba(0,0,0,0.3)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>WELCOME10</strong> at checkout!
             </p>
-            <Link to="/products" className="btn btn-lg" style={{ background: 'var(--color-primary)', color: 'white', fontWeight: 700 }}>
+            <Link to="/products" className="btn btn-lg" style={{ background: '#fde047', color: '#1e1b4b', fontWeight: 800 }}>
               Shop Now 🛒
             </Link>
           </div>

@@ -1,0 +1,314 @@
+/* ─── Picky Customer UI: Lighter Gradient Skyline Wave Footer ────────────── */
+
+.picky-footer-root {
+  position: relative;
+  width: 100%;
+  margin-top: auto;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* ── 1. Compact Skyline & Product Hills Vector Canvas ────────────────────── */
+.footer-skyline-canvas-wrap {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  display: block;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+  margin-bottom: -2px; /* Prevent sub-pixel white gap */
+}
+
+.footer-skyline-svg {
+  width: 100%;
+  height: 120px; /* Compact height as requested */
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .footer-skyline-svg {
+    height: 95px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-skyline-svg {
+    height: 80px;
+  }
+}
+
+/* ── 2. Lighter Radiant Purple Gradient Footer Body ──────────────────────── */
+.picky-footer-body {
+  background: linear-gradient(180deg, #380d5e 0%, #2b0849 50%, #1f0535 100%);
+  color: #e2e8f0;
+  padding: 2.25rem 1.5rem 1.25rem; /* Reduced height padding */
+  position: relative;
+  z-index: 3;
+}
+
+.footer-container {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* ── 3. Compact Grid Columns ─────────────────────────────────────────────── */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr 1fr 1.15fr;
+  gap: 2rem;
+  margin-bottom: 1.75rem; /* Reduced gap */
+}
+
+@media (max-width: 1200px) {
+  .footer-grid {
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  }
+  .footer-col-contact {
+    grid-column: span 4;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 860px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .footer-col-newsletter {
+    grid-column: span 2;
+  }
+  .footer-col-contact {
+    grid-column: span 2;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .footer-col-newsletter {
+    grid-column: span 1;
+  }
+  .footer-col-contact {
+    grid-column: span 1;
+  }
+}
+
+/* ── 4. Column Headings & Links (With Gradient Accents) ──────────────────── */
+.footer-heading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.01em;
+  display: inline-block;
+}
+
+.footer-links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Compact list gap */
+}
+
+.footer-link {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.footer-link:hover {
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.footer-link-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.08rem 0.4rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  line-height: 1;
+}
+
+/* ── 5. Newsletter Column ────────────────────────────────────────────────── */
+.footer-newsletter-text {
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin-bottom: 0.85rem;
+}
+
+.footer-newsletter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.footer-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.footer-newsletter-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 0.85rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.footer-newsletter-input::placeholder {
+  color: #94a3b8;
+}
+
+.footer-newsletter-input:focus {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #c084fc;
+  box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.25);
+}
+
+.footer-subscribe-btn {
+  height: 40px;
+  padding: 0 1.25rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(217, 70, 239, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.footer-subscribe-btn:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(217, 70, 239, 0.45);
+}
+
+/* Social Links */
+.footer-social-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.footer-social-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.footer-social-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.footer-social-icon:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #c084fc 100%);
+  border-color: #c084fc;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+}
+
+/* ── 6. Contact & Support Column ─────────────────────────────────────────── */
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.footer-contact-icon {
+  color: #c084fc;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.footer-whatsapp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 0.3rem;
+  transition: all 0.2s ease;
+}
+
+.footer-whatsapp-chip:hover {
+  background: rgba(34, 197, 94, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ── 7. Bottom Bar (Centered Copyright) ─────────────────────────────────── */
+.footer-bottom-bar {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.footer-copyright {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
+}
