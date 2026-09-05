@@ -6,6 +6,7 @@ import Spinner from '../components/ui/Spinner';
 import { orderService } from '../services/order.service';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
+import { Package, Search, ArrowRight } from 'lucide-react';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -31,19 +32,21 @@ export default function Orders() {
       <div className="section">
         <div className="container" style={{ maxWidth: '900px' }}>
           <h1 style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>My Orders</h1>
-          <p style={{ marginBottom: '2rem' }}>Track and manage all your purchases and deliveries in real-time.</p>
+          <p style={{ marginBottom: '2rem', color: '#64748b' }}>Track and manage all your festival purchases and deliveries in real-time.</p>
 
           {loading ? (
             <Spinner size={36} />
           ) : orders.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '4rem 1.5rem' }}>
-              <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '1rem' }}>📦</span>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#7c3aed' }}>
+                <Package size={40} />
+              </div>
               <h3>No Orders Placed Yet</h3>
-              <p style={{ maxWidth: '400px', margin: '0.5rem auto 1.5rem' }}>
+              <p style={{ maxWidth: '400px', margin: '0.5rem auto 1.5rem', color: '#64748b' }}>
                 When you place an order, you will be able to track live shipping updates and AWB details right here.
               </p>
-              <Link to="/products" className="btn btn-primary">
-                Start Shopping Now
+              <Link to="/products" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                Start Shopping Now <ArrowRight size={16} />
               </Link>
             </div>
           ) : (
@@ -59,8 +62,8 @@ export default function Orders() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                       <Badge status={order.status} />
-                      <Link to={`/orders/${order._id}`} className="btn btn-outline btn-sm">
-                        Track Order 🔍
+                      <Link to={`/orders/${order._id}`} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Search size={14} /> Track Order
                       </Link>
                     </div>
                   </div>

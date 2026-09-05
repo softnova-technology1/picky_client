@@ -1,10 +1,17 @@
-/* ─── CSS Variables & Design System ──────────────────────── */
+@import '../pages/contact/contact.css';
+
+/* ─── CSS Variables & Purple Design System ──────────────────────── */
 :root {
   --color-primary: #7c3aed;
-  --color-primary-dark: #5b21b6;
-  --color-primary-light: #ede9fe;
-  --color-accent: #2563eb;
-  --color-accent-light: #eff6ff;
+  --color-primary-hover: #6d28d9;
+  --color-primary-dark: #581c87;
+  --color-primary-light: #f3e8ff;
+  --color-primary-subtle: #faf5ff;
+  --color-purple-gradient: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+  --color-purple-gradient-subtle: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%);
+  --color-purple-dark-gradient: linear-gradient(135deg, #1e1035 0%, #3b0764 50%, #581c87 100%);
+  --color-accent: #a855f7;
+  --color-accent-light: #f5f3ff;
   --color-success: #10b981;
   --color-success-light: #d1fae5;
   --color-warning: #f59e0b;
@@ -12,18 +19,18 @@
   --color-danger: #ef4444;
   --color-danger-light: #fee2e2;
   --color-bg: #ffffff;
-  --color-bg-secondary: #f8fafc;
+  --color-bg-secondary: #faf5ff;
   --color-bg-card: #ffffff;
   --color-text: #0f172a;
   --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
-  --color-border-hover: #cbd5e1;
+  --color-border: #e9d5ff;
+  --color-border-hover: #c084fc;
   --radius-lg: 16px;
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 3px rgba(124, 58, 237, 0.06);
+  --shadow: 0 4px 20px -2px rgba(124, 58, 237, 0.12);
+  --shadow-lg: 0 10px 30px -5px rgba(124, 58, 237, 0.18);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -88,14 +95,21 @@ p { line-height: 1.6; color: var(--color-text-muted); }
   cursor: pointer;
   border: 1px solid transparent;
 }
-.btn:hover { opacity: 0.92; transform: translateY(-1px); }
+.btn:hover { opacity: 0.94; transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.btn-primary { background: var(--color-primary); color: white; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35); }
-.btn-primary:hover { background: var(--color-primary-dark); }
-.btn-secondary { background: #f1f5f9; color: #334155; border-color: #e2e8f0; }
-.btn-secondary:hover { background: #e2e8f0; }
+.btn-primary {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #7e22ce 100%);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+}
+.btn-secondary { background: #f3e8ff; color: #581c87; border-color: #e9d5ff; }
+.btn-secondary:hover { background: #e9d5ff; }
 .btn-outline { background: transparent; border-color: var(--color-primary); color: var(--color-primary); }
 .btn-outline:hover { background: var(--color-primary-light); }
 .btn-danger { background: var(--color-danger); color: white; }
@@ -120,7 +134,7 @@ p { line-height: 1.6; color: var(--color-text-muted); }
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
 }
 .form-error { font-size: 0.8rem; color: var(--color-danger); }
 
@@ -218,10 +232,11 @@ p { line-height: 1.6; color: var(--color-text-muted); }
 .price-discount-tag {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #16a34a;
-  background: #dcfce7;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
+  color: #7c3aed;
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
 }
 
 /* ─── Order Tracker Component ────────────────────────────── */

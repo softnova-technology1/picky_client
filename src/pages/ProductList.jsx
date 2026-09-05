@@ -4,21 +4,25 @@ import PageWrapper from '../components/layout/PageWrapper';
 import ProductGrid from '../components/product/ProductGrid';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import { getProducts, categories as defaultCategories } from '../data';
 
 export default function ProductList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const selectedCategory = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || 'newest';
+
+  const [products, setProducts] = useState(() => getProducts({ category: selectedCategory, sort }));
+  const [categories, setCategories] = useState(defaultCategories);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchCategories() {
       try {
         const res = await categoryService.list();
-        setCategories(res?.data || []);
+        const items = res?.data || res;
+        if (Array.isArray(items) && items.length > 0) {
+          setCategories(items);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -29,19 +33,21 @@ export default function ProductList() {
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
         const params = { sort };
         if (selectedCategory) params.category = selectedCategory;
         const res = await productService.list(params);
-        setProducts(res?.data?.data || res?.data || []);
+        const items = res?.data?.data || res?.data;
+        if (Array.isArray(items)) {
+          setProducts(items);
+        }
       } catch (err) {
         console.error(err);
-      } finally {
-        setLoading(false);
+        setProducts(getProducts({ category: selectedCategory, sort }));
       }
     }
     load();
   }, [selectedCategory, sort]);
+
 
   const handleCategoryChange = (catId) => {
     const next = new URLSearchParams(searchParams);

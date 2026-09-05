@@ -1,5 +1,6 @@
 import React from 'react';
 import ProductCard from './ProductCard';
+import { ShoppingBag } from 'lucide-react';
 
 export default function ProductGrid({ products = [], loading = false }) {
   if (loading) {
@@ -30,9 +31,11 @@ export default function ProductGrid({ products = [], loading = false }) {
   if (products.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '4rem 1rem', background: 'white', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)' }}>
-        <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🛍️</span>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#7c3aed' }}>
+          <ShoppingBag size={32} />
+        </div>
         <h3>No products found</h3>
-        <p>Try searching with a different term or browse categories.</p>
+        <p style={{ color: '#64748b' }}>Try searching with a different term or browse categories.</p>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { useUiStore } from '../store/uiStore';
 import { wishlistService } from '../services/wishlist.service';
+import { Heart, ShoppingCart, Trash2, ArrowRight, Sparkles, X } from 'lucide-react';
 
 export default function Wishlist() {
   const { items, removeItem, setWishlist } = useWishlistStore();
@@ -45,7 +46,7 @@ export default function Wishlist() {
       } catch (_) {}
     }
 
-    showToast(`Moved "${product.name}" to cart! 🛒`, 'success');
+    showToast(`Moved "${product.name}" to cart!`, 'success');
   };
 
   const handleRemove = async (productId) => {
@@ -63,21 +64,28 @@ export default function Wishlist() {
       <div className="section">
         <div className="container">
           <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2.2rem', marginBottom: '0.35rem' }}>
-              My Wishlist ({items.length})
-            </h1>
-            <p>Save items you like and move them to cart whenever you're ready.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+              <h1 style={{ fontSize: '2.2rem', margin: 0 }}>
+                My Wishlist
+              </h1>
+              <span style={{ background: '#f3e8ff', color: '#7c3aed', padding: '0.25rem 0.75rem', borderRadius: '100px', fontWeight: 800, fontSize: '0.9rem' }}>
+                {items.length} items
+              </span>
+            </div>
+            <p style={{ color: '#64748b' }}>Save items you like and move them to cart whenever you're ready.</p>
           </div>
 
           {items.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '5rem 1.5rem', maxWidth: '600px', margin: '0 auto' }}>
-              <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>🤍</span>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#f43f5e' }}>
+                <Heart size={40} />
+              </div>
               <h2>Your Wishlist is Empty</h2>
               <p style={{ margin: '0.5rem 0 1.75rem', color: '#64748b' }}>
-                Explore curated trending products and tap the heart icon to save your favorites!
+                Explore curated festival fireworks and tap the heart icon to save your favorites!
               </p>
-              <Link to="/products" className="btn btn-primary btn-lg">
-                Explore Store ➔
+              <Link to="/products" className="btn btn-primary btn-lg" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                Explore Store <ArrowRight size={18} />
               </Link>
             </div>
           ) : (
@@ -105,20 +113,21 @@ export default function Wishlist() {
                           position: 'absolute',
                           top: '10px',
                           right: '10px',
-                          background: 'rgba(255, 255, 255, 0.9)',
+                          background: 'rgba(255, 255, 255, 0.95)',
                           color: '#ef4444',
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
+                          border: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '1rem',
+                          cursor: 'pointer',
                           boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                         }}
                         title="Remove from wishlist"
                       >
-                        ✕
+                        <X size={16} />
                       </button>
                     </div>
 
@@ -139,9 +148,9 @@ export default function Wishlist() {
                       <button
                         onClick={() => handleMoveToCart(product)}
                         className="btn btn-primary btn-sm btn-block"
-                        style={{ marginTop: 'auto' }}
+                        style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
                       >
-                        Move to Cart 🛒
+                        <ShoppingCart size={15} /> Move to Cart
                       </button>
                     </div>
                   </div>

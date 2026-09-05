@@ -8,6 +8,16 @@ import { useAuthStore } from '../store/authStore';
 import { useUiStore } from '../store/uiStore';
 import { orderService } from '../services/order.service';
 import { formatPrice } from '../utils/formatPrice';
+import {
+  CreditCard,
+  Lock,
+  ShieldCheck,
+  Check,
+  Zap,
+  ChevronRight,
+  ArrowRight,
+  MapPin,
+} from 'lucide-react';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -49,8 +59,8 @@ export default function Checkout() {
         <div className="section container" style={{ textAlign: 'center', padding: '4rem 0' }}>
           <h2>No items in your checkout</h2>
           <p style={{ color: '#64748b', marginTop: '0.5rem' }}>Your shopping bag is currently empty.</p>
-          <Link to="/products" className="btn btn-primary" style={{ marginTop: '1.25rem' }}>
-            Browse Catalog ➔
+          <Link to="/products" className="btn btn-primary" style={{ marginTop: '1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            Browse Catalog <ArrowRight size={16} />
           </Link>
         </div>
       </PageWrapper>
@@ -86,7 +96,7 @@ export default function Checkout() {
         key: rzData.keyId,
         amount: rzData.amount, // in paise
         currency: rzData.currency || 'INR',
-        name: 'Picky',
+        name: 'Crackly Fireworks',
         description: `Order Payment (${items.length} items)`,
         image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100',
         order_id: rzData.razorpayOrderId,
@@ -139,8 +149,8 @@ export default function Checkout() {
     <PageWrapper>
       <div className="section">
         <div className="container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>
-            <Link to="/cart">Cart</Link> ➔ <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Prepaid Checkout</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>
+            <Link to="/cart">Cart</Link> <ChevronRight size={14} /> <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Prepaid Checkout</span>
           </div>
 
           <h1 style={{ fontSize: '2.2rem', marginBottom: '2rem' }}>Checkout & Online Payment</h1>
@@ -149,8 +159,8 @@ export default function Checkout() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
               {/* Address Details Left */}
               <div className="card" style={{ padding: '2rem' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
-                  1. Shipping & Delivery Details
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <MapPin size={20} color="#7c3aed" /> 1. Shipping & Delivery Details
                 </h3>
 
                 <Input
@@ -196,16 +206,16 @@ export default function Checkout() {
                 />
 
                 <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>
-                    2. Payment Method
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CreditCard size={20} color="#7c3aed" /> 2. Payment Method
                   </h3>
                   <div style={{ padding: '1.25rem', border: '2px solid var(--color-primary)', borderRadius: '12px', background: '#faf5ff', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 800 }}>
-                      ✓
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                      <Check size={14} strokeWidth={3} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <strong style={{ display: 'block', color: 'var(--color-primary-dark)', fontSize: '1rem' }}>
-                        ⚡ 100% Secure Online Payment (Razorpay)
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--color-primary-dark)', fontSize: '1rem' }}>
+                        <Zap size={16} /> 100% Secure Online Payment (Razorpay)
                       </strong>
                       <span style={{ fontSize: '0.82rem', color: '#6b21a8' }}>
                         UPI (GPay / PhonePe / Paytm), Credit / Debit Cards, NetBanking, and Wallets supported.
@@ -264,12 +274,13 @@ export default function Checkout() {
                   size="lg"
                   block
                   loading={loading}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 >
-                  Pay with Razorpay ⚡ ➔
+                  Pay with Razorpay <Zap size={16} />
                 </Button>
 
-                <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: '#64748b' }}>
-                  🔒 256-Bit SSL Encrypted & Instant WhatsApp Order Confirmation.
+                <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                  <Lock size={14} color="#059669" /> 256-Bit SSL Encrypted & Instant WhatsApp Order Confirmation.
                 </div>
               </div>
             </div>

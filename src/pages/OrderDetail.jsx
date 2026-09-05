@@ -7,26 +7,30 @@ import Spinner from '../components/ui/Spinner';
 import { orderService } from '../services/order.service';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
+import { getOrderById } from '../data';
 
 export default function OrderDetail() {
   const { id } = useParams();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [order, setOrder] = useState(() => getOrderById(id));
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchOrder() {
       try {
-        setLoading(true);
         const res = await orderService.getById(id);
-        setOrder(res?.data || res);
+        const item = res?.data || res;
+        if (item && item.orderNumber) {
+          setOrder(item);
+        }
       } catch (err) {
         console.error('Failed to load order:', err);
-      } finally {
-        setLoading(false);
+        const fallback = getOrderById(id);
+        if (fallback) setOrder(fallback);
       }
     }
     fetchOrder();
   }, [id]);
+
 
   if (loading) {
     return (

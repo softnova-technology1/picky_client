@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Heart, ShoppingCart } from 'lucide-react';
 import PriceDisplay from './PriceDisplay';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
@@ -36,7 +37,7 @@ export default function ProductCard({ product }) {
     }
 
     showToast(
-      inWishlist ? `Removed from wishlist` : `Saved "${product.name}" to wishlist! ❤️`,
+      inWishlist ? `Removed "${product.name}" from wishlist` : `Saved "${product.name}" to wishlist!`,
       'info'
     );
   };
@@ -60,22 +61,26 @@ export default function ProductCard({ product }) {
             position: 'absolute',
             top: '10px',
             right: '10px',
-            background: inWishlist ? '#fee2e2' : 'rgba(255, 255, 255, 0.85)',
-            border: 'none',
+            background: inWishlist ? '#fdf2f8' : 'rgba(255, 255, 255, 0.9)',
+            border: inWishlist ? '1.5px solid #f43f5e' : '1px solid #e2e8f0',
             borderRadius: '50%',
-            width: '34px',
-            height: '34px',
+            width: '36px',
+            height: '36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.1rem',
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-            transition: 'transform 0.15s ease',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease',
           }}
           title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-          {inWishlist ? '❤️' : '🤍'}
+          <Heart
+            size={18}
+            color={inWishlist ? '#e11d48' : '#64748b'}
+            fill={inWishlist ? '#e11d48' : 'transparent'}
+            strokeWidth={2.2}
+          />
         </button>
       </div>
 
@@ -94,9 +99,9 @@ export default function ProductCard({ product }) {
         <button
           onClick={handleAddToCart}
           className="btn btn-primary btn-sm btn-block"
-          style={{ marginTop: 'auto' }}
+          style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
         >
-          Add to Cart 🛒
+          <ShoppingCart size={15} /> Add to Cart
         </button>
       </div>
     </div>

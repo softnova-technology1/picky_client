@@ -3,6 +3,16 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import Toast from '../ui/Toast';
 import '../../styles/admin.css';
+import {
+  LayoutDashboard,
+  Package,
+  Tag,
+  FolderTree,
+  Users,
+  BarChart3,
+  Store,
+  LogOut,
+} from 'lucide-react';
 
 const ADMIN = '/pickyadmin-softnova2026';
 
@@ -21,9 +31,9 @@ export default function AdminLayout({ children, title }) {
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="admin-logo-badge">P</span>
+            <span className="admin-logo-badge">C</span>
             <div>
-              <strong style={{ color: 'white', fontSize: '1.1rem', display: 'block' }}>Picky Admin</strong>
+              <strong style={{ color: 'white', fontSize: '1.1rem', display: 'block' }}>Crackly Admin</strong>
               <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Merchant Portal</span>
             </div>
           </div>
@@ -31,22 +41,22 @@ export default function AdminLayout({ children, title }) {
 
         <nav className="admin-sidebar-nav">
           <NavLink to={ADMIN} end className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <span style={{ fontSize: '1.1rem' }}>📊</span> Dashboard
+            <LayoutDashboard size={18} /> Dashboard
           </NavLink>
           <NavLink to={`${ADMIN}/orders`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <span style={{ fontSize: '1.1rem' }}>📦</span> Orders & AWB Dispatch
+            <Package size={18} /> Orders & AWB Dispatch
           </NavLink>
           <NavLink to={`${ADMIN}/products`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <span style={{ fontSize: '1.1rem' }}>🏷️</span> Products Catalog
+            <Tag size={18} /> Products Catalog
           </NavLink>
           <NavLink to={`${ADMIN}/categories`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <span style={{ fontSize: '1.1rem' }}>📂</span> Categories
+            <FolderTree size={18} /> Categories
           </NavLink>
           <NavLink to={`${ADMIN}/customers`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <span style={{ fontSize: '1.1rem' }}>👥</span> Customers
+            <Users size={18} /> Customers
           </NavLink>
           <NavLink to={`${ADMIN}/reports`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <span style={{ fontSize: '1.1rem' }}>📈</span> Sales & Reports
+            <BarChart3 size={18} /> Sales & Reports
           </NavLink>
         </nav>
 
@@ -67,7 +77,7 @@ export default function AdminLayout({ children, title }) {
               textDecoration: 'none',
             }}
           >
-            🏪 View Customer Store ➔
+            <Store size={16} /> View Customer Store ➔
           </Link>
           <button
             onClick={handleLogout}
@@ -85,7 +95,7 @@ export default function AdminLayout({ children, title }) {
               cursor: 'pointer',
             }}
           >
-            🚪 Logout of Admin
+            <LogOut size={16} /> Logout of Admin
           </button>
         </div>
       </aside>

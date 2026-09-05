@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import PageWrapper from '../components/layout/PageWrapper';
 import ProductGrid from '../components/product/ProductGrid';
 import { productService } from '../services/product.service';
+import { searchProducts } from '../data';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => (query ? searchProducts(query) : []));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -20,17 +21,19 @@ export default function Search() {
 
     async function doSearch() {
       try {
-        setLoading(true);
         const res = await productService.search(query);
-        setProducts(res?.data?.data || res?.data || []);
+        const items = res?.data?.data || res?.data;
+        if (Array.isArray(items)) {
+          setProducts(items);
+        }
       } catch (err) {
         console.error('Search error:', err);
-      } finally {
-        setLoading(false);
+        setProducts(searchProducts(query));
       }
     }
     doSearch();
   }, [query]);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();

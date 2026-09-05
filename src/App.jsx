@@ -6,6 +6,7 @@ import { AdminProtectedRoute } from './components/layout/AdminProtectedRoute';
 // Customer Pages
 import Home from './pages/Home';
 import Categories from './pages/Categories';
+import CategorySubcategories from './pages/CategorySubcategories';
 import CategoryProducts from './pages/CategoryProducts';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
@@ -17,7 +18,7 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Account from './pages/Account';
-import Contact from './pages/Contact';
+import Contact from './pages/contact/Contact';
 import About from './pages/About';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -42,9 +43,11 @@ export default function App() {
           {/* ── Customer Routes ─────────────────────── */}
           <Route path="/" element={<Home />} />
           <Route path="/categories" element={<Categories />} />
-          <Route path="/categories/:slug" element={<CategoryProducts />} />
+          <Route path="/categories/:slug" element={<CategorySubcategories />} />
+          <Route path="/categories/:slug/:subSlug" element={<CategoryProducts />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
+
           <Route path="/search" element={<Search />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/wishlist" element={<Wishlist />} />

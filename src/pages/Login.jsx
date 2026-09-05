@@ -132,17 +132,17 @@ export default function Login() {
 
   return (
     <PageWrapper>
-      <div className="section" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center' }}>
+      <div className="section" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', background: '#faf5ff' }}>
         <div className="container" style={{ maxWidth: '440px' }}>
-          <div className="card" style={{ padding: '2.5rem 2rem', boxShadow: 'var(--shadow-lg)' }}>
+          <div className="card" style={{ padding: '2.5rem 2rem', boxShadow: '0 12px 36px rgba(124, 58, 237, 0.12)', border: '1px solid #e9d5ff' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ width: 56, height: 56, background: 'var(--color-primary-light)', borderRadius: '16px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', marginBottom: '1rem' }}>
-                💬
+              <div style={{ width: 60, height: 60, background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)', border: '1px solid #d8b4fe', borderRadius: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', marginBottom: '1rem', boxShadow: '0 4px 12px rgba(124, 58, 237, 0.15)' }}>
+                🎆
               </div>
-              <h2 style={{ fontSize: '1.6rem', marginBottom: '0.35rem' }}>
-                {step === 'phone' ? 'Login or Sign Up' : 'Enter Verification Code'}
+              <h2 style={{ fontSize: '1.6rem', marginBottom: '0.35rem', color: '#0f172a' }}>
+                {step === 'phone' ? 'Login to Crackly' : 'Enter Verification Code'}
               </h2>
-              <p style={{ fontSize: '0.88rem' }}>
+              <p style={{ fontSize: '0.88rem', color: '#64748b' }}>
                 {step === 'phone'
                   ? 'We will send a fast 6-digit OTP to your WhatsApp.'
                   : `Enter the code sent to ${phone}`}

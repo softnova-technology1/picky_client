@@ -6,6 +6,17 @@ import { useAuthStore } from '../store/authStore';
 import { useUiStore } from '../store/uiStore';
 import { cartService } from '../services/cart.service';
 import { formatPrice } from '../utils/formatPrice';
+import {
+  ShoppingCart,
+  ShoppingBag,
+  Trash2,
+  Plus,
+  Minus,
+  Tag,
+  ArrowRight,
+  Lock,
+  Sparkles,
+} from 'lucide-react';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -62,13 +73,15 @@ export default function Cart() {
     return (
       <PageWrapper>
         <div className="section container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
-          <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>🛒</span>
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#7c3aed' }}>
+            <ShoppingCart size={40} />
+          </div>
           <h2>Your Cart is Empty</h2>
-          <p style={{ maxWidth: '400px', margin: '0.5rem auto 2rem' }}>
-            Looks like you haven't added anything to your cart yet. Discover trending essentials!
+          <p style={{ maxWidth: '400px', margin: '0.5rem auto 2rem', color: '#64748b' }}>
+            Looks like you haven't added anything to your cart yet. Discover trending fireworks & sparklers!
           </p>
-          <Link to="/products" className="btn btn-primary btn-lg">
-            Start Shopping ➔
+          <Link to="/products" className="btn btn-primary btn-lg" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            Start Shopping <ArrowRight size={18} />
           </Link>
         </div>
       </PageWrapper>
@@ -79,7 +92,12 @@ export default function Cart() {
     <PageWrapper>
       <div className="section">
         <div className="container">
-          <h1 style={{ fontSize: '2.2rem', marginBottom: '2rem' }}>Shopping Cart ({items.length} items)</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '2.2rem', margin: 0 }}>Shopping Cart</h1>
+            <span style={{ background: '#f3e8ff', color: '#7c3aed', padding: '0.25rem 0.75rem', borderRadius: '100px', fontWeight: 800, fontSize: '0.9rem' }}>
+              {items.length} items
+            </span>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
             {/* Items List Left */}
@@ -113,26 +131,26 @@ export default function Cart() {
                         <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: '6px', background: '#f8fafc' }}>
                           <button
                             onClick={() => updateQty(itemId, Math.max(1, (item.quantity || 1) - 1))}
-                            style={{ padding: '0.25rem 0.65rem', fontWeight: 700 }}
+                            style={{ padding: '0.35rem 0.6rem', color: '#334155', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                           >
-                            -
+                            <Minus size={13} />
                           </button>
                           <span style={{ minWidth: '30px', textAlign: 'center', fontSize: '0.88rem', fontWeight: 600 }}>
                             {item.quantity || 1}
                           </span>
                           <button
                             onClick={() => updateQty(itemId, (item.quantity || 1) + 1)}
-                            style={{ padding: '0.25rem 0.65rem', fontWeight: 700 }}
+                            style={{ padding: '0.35rem 0.6rem', color: '#334155', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                           >
-                            +
+                            <Plus size={13} />
                           </button>
                         </div>
 
                         <button
                           onClick={() => removeItem(itemId)}
-                          style={{ fontSize: '0.82rem', color: 'var(--color-danger)', fontWeight: 600 }}
+                          style={{ fontSize: '0.82rem', color: 'var(--color-danger)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem', border: 'none', background: 'transparent', cursor: 'pointer' }}
                         >
-                          Remove
+                          <Trash2 size={14} /> Remove
                         </button>
                       </div>
                     </div>
@@ -147,12 +165,12 @@ export default function Cart() {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
                 <button
                   onClick={clearCart}
-                  style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}
+                  style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem', border: 'none', background: 'transparent', cursor: 'pointer' }}
                 >
-                  Clear Cart
+                  <Trash2 size={15} /> Clear Cart
                 </button>
-                <Link to="/products" style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 600 }}>
-                  + Continue Shopping
+                <Link to="/products" style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <Plus size={15} /> Continue Shopping
                 </Link>
               </div>
             </div>
@@ -165,15 +183,15 @@ export default function Cart() {
 
               {/* Coupon input form */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.4rem' }}>
-                  Have a Promo Code?
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.4rem' }}>
+                  <Tag size={15} color="#7c3aed" /> Have a Promo Code?
                 </label>
                 {coupon ? (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#dcfce7', padding: '0.6rem 0.85rem', borderRadius: '6px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#16a34a' }}>
-                      🎟️ {coupon} Applied (-{formatPrice(couponDiscount)})
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Tag size={14} /> {coupon} Applied (-{formatPrice(couponDiscount)})
                     </span>
-                    <button onClick={handleRemoveCoupon} style={{ color: '#b91c1c', fontSize: '0.8rem', fontWeight: 700 }}>
+                    <button onClick={handleRemoveCoupon} style={{ color: '#b91c1c', fontSize: '0.8rem', fontWeight: 700, border: 'none', background: 'transparent', cursor: 'pointer' }}>
                       Remove
                     </button>
                   </div>
@@ -181,7 +199,7 @@ export default function Cart() {
                   <form onSubmit={handleApplyCoupon} style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
                       type="text"
-                      placeholder="e.g. WELCOME10"
+                      placeholder="e.g. FESTIVAL50"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       className="form-input"
@@ -222,12 +240,13 @@ export default function Cart() {
               <button
                 onClick={() => navigate('/checkout')}
                 className="btn btn-primary btn-lg btn-block"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               >
-                Proceed to Checkout ➔
+                Proceed to Checkout <ArrowRight size={18} />
               </button>
 
-              <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.8rem', color: '#64748b' }}>
-                🔒 Safe & Secure Checkout with Cash on Delivery
+              <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                <Lock size={14} color="#059669" /> Safe & Secure Checkout with Cash on Delivery
               </div>
             </div>
           </div>
