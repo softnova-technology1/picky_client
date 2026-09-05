@@ -42,6 +42,9 @@ export default function AdminLayout({ children, title }) {
           <NavLink to={`${ADMIN}/categories`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <span style={{ fontSize: '1.1rem' }}>📂</span> Categories
           </NavLink>
+          <NavLink to={`${ADMIN}/coupons`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+            <span style={{ fontSize: '1.1rem' }}>🎟️</span> Coupons & Offers
+          </NavLink>
           <NavLink to={`${ADMIN}/customers`} className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <span style={{ fontSize: '1.1rem' }}>👥</span> Customers
           </NavLink>

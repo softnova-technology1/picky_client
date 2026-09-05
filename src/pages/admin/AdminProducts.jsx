@@ -32,6 +32,7 @@ export default function AdminProducts() {
     isFeatured: false,
   });
 
+  const [charValues, setCharValues] = useState({});
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   async function loadData() {
@@ -56,9 +57,10 @@ export default function AdminProducts() {
 
   const handleOpenAdd = () => {
     setEditingProduct(null);
+    const defaultCat = categories[0]?._id || '';
     setFormData({
       name: '',
-      category: categories[0]?._id || '',
+      category: defaultCat,
       price: '',
       discountPrice: '',
       description: '',
@@ -66,22 +68,34 @@ export default function AdminProducts() {
       stock: '50',
       isFeatured: false,
     });
+    setCharValues({});
     setSelectedFiles([]);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (p) => {
     setEditingProduct(p);
+    const catId = p.category?._id || p.category || '';
     setFormData({
       name: p.name || '',
-      category: p.category?._id || p.category || '',
+      category: catId,
       price: p.price ? String(p.price) : '',
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       description: p.description || '',
       tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
-      stock: '50',
+      stock: p.stock !== undefined ? String(p.stock) : '50',
       isFeatured: !!p.isFeatured,
     });
+
+    // Populate characteristics
+    const initialChars = {};
+    if (Array.isArray(p.characteristics)) {
+      p.characteristics.forEach((item) => {
+        if (item.key) initialChars[item.key] = item.value;
+      });
+    }
+    setCharValues(initialChars);
+
     setSelectedFiles([]);
     setIsModalOpen(true);
   };
@@ -98,11 +112,24 @@ export default function AdminProducts() {
     payload.append('category', formData.category);
     payload.append('price', Number(formData.price));
     if (formData.discountPrice) payload.append('discountPrice', Number(formData.discountPrice));
+    payload.append('stock', Number(formData.stock) || 50);
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
 
     const tagsArray = formData.tags.split(',').map((t) => t.trim()).filter(Boolean);
     tagsArray.forEach((t) => payload.append('tags[]', t));
+
+    // Serialize category characteristics
+    const characteristicsList = Object.entries(charValues)
+      .filter(([_, v]) => v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0))
+      .map(([k, v]) => ({
+        key: k,
+        value: Array.isArray(v) ? v.join(', ') : String(v),
+      }));
+
+    if (characteristicsList.length > 0) {
+      payload.append('characteristics', JSON.stringify(characteristicsList));
+    }
 
     if (selectedFiles.length > 0) {
       for (const file of selectedFiles) {
@@ -137,6 +164,19 @@ export default function AdminProducts() {
     } catch (err) {
       showToast(err.message || 'Failed to deactivate product', 'error');
     }
+  };
+
+  // Find currently selected category object to inspect characteristics
+  const currentCategoryObj = categories.find((c) => c._id === formData.category);
+  const currentCategorySpecs = currentCategoryObj?.characteristics || [];
+
+  const toggleMultiSelect = (charName, val) => {
+    const current = Array.isArray(charValues[charName]) ? charValues[charName] : [];
+    const exists = current.includes(val);
+    setCharValues({
+      ...charValues,
+      [charName]: exists ? current.filter((x) => x !== val) : [...current, val],
+    });
   };
 
   return (
@@ -211,93 +251,259 @@ export default function AdminProducts() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingProduct ? 'Edit Product' : 'Add New Product'}
-        maxWidth={620}
+        maxWidth={640}
       >
         <form onSubmit={handleSubmit}>
-          <Input
-            label="Product Name"
-            placeholder="e.g. AeroSound Pro Wireless Headphones"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-
-          <div className="form-group">
-            <label className="form-label">Category *</label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="form-select"
-              required
-            >
-              <option value="">Select Category</option>
-              {categories.map((c) => (
-                <option key={c._id} value={c._id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div style={{ maxHeight: '76vh', overflowY: 'auto', paddingRight: '0.4rem' }}>
             <Input
-              label="Regular Price (Rs.)"
-              type="number"
-              placeholder="e.g. 3999"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              label="Product Name *"
+              placeholder="e.g. AeroSound Pro Wireless Headphones"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
+
+            <div className="form-group">
+              <label className="form-label">Category *</label>
+              <select
+                value={formData.category}
+                onChange={(e) => {
+                  setFormData({ ...formData, category: e.target.value });
+                  // If category changed, clear or reset characteristics
+                  if (!editingProduct) setCharValues({});
+                }}
+                className="form-select"
+                required
+              >
+                <option value="">Select Category</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} {c.characteristics?.length ? `(${c.characteristics.length} specs)` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Price, Discount Price, and Stock Quantity Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+              <Input
+                label="Price (Rs.) *"
+                type="number"
+                placeholder="e.g. 3999"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                required
+              />
+              <Input
+                label="Discount Price (Rs.)"
+                type="number"
+                placeholder="e.g. 2499"
+                value={formData.discountPrice}
+                onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
+              />
+              <Input
+                label="Stock Quantity *"
+                type="number"
+                placeholder="e.g. 50"
+                value={formData.stock}
+                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                required
+              />
+            </div>
+
+            {/* 🌟 DYNAMIC CATEGORY CHARACTERISTICS SECTION */}
+            {currentCategorySpecs.length > 0 && (
+              <div
+                style={{
+                  background: '#f8fafc',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  border: '1.5px solid #e2e8f0',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '1rem' }}>⚙️</span>
+                    <strong style={{ fontSize: '0.88rem', color: '#1e293b' }}>
+                      {currentCategoryObj?.name} Specifications
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    Auto-loaded from category configuration
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                  {currentCategorySpecs.map((char, idx) => (
+                    <div key={idx} style={{ background: 'white', padding: '0.65rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem', color: '#334155' }}>
+                        {char.name} {char.required && <span style={{ color: '#ef4444' }}>*</span>}
+                      </label>
+
+                      {/* 1. Single Select Dropdown */}
+                      {char.type === 'select' && (
+                        <select
+                          className="form-input"
+                          style={{ fontSize: '0.82rem', padding: '0.4rem' }}
+                          value={charValues[char.name] || ''}
+                          onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                          required={char.required}
+                        >
+                          <option value="">Select {char.name}...</option>
+                          {char.values?.map((v, i) => (
+                            <option key={i} value={v}>{v}</option>
+                          ))}
+                        </select>
+                      )}
+
+                      {/* 2. Multi-Select Pills */}
+                      {char.type === 'multi_select' && (
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          {char.values?.map((v, i) => {
+                            const current = Array.isArray(charValues[char.name]) ? charValues[char.name] : [];
+                            const isSelected = current.includes(v);
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => toggleMultiSelect(char.name, v)}
+                                style={{
+                                  fontSize: '0.74rem',
+                                  padding: '0.2rem 0.45rem',
+                                  borderRadius: '4px',
+                                  border: '1px solid',
+                                  borderColor: isSelected ? '#6366f1' : '#cbd5e1',
+                                  background: isSelected ? '#ede9fe' : '#f8fafc',
+                                  color: isSelected ? '#5b21b6' : '#475569',
+                                  cursor: 'pointer',
+                                  fontWeight: isSelected ? 600 : 400,
+                                }}
+                              >
+                                {isSelected ? `✓ ${v}` : v}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* 3. Text Input */}
+                      {char.type === 'text' && (
+                        <input
+                          type="text"
+                          placeholder={`Enter ${char.name}...`}
+                          className="form-input"
+                          style={{ fontSize: '0.82rem', padding: '0.4rem' }}
+                          value={charValues[char.name] || ''}
+                          onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                          required={char.required}
+                        />
+                      )}
+
+                      {/* 4. Number Input */}
+                      {char.type === 'number' && (
+                        <input
+                          type="number"
+                          placeholder="e.g. 100"
+                          className="form-input"
+                          style={{ fontSize: '0.82rem', padding: '0.4rem' }}
+                          value={charValues[char.name] || ''}
+                          onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                          required={char.required}
+                        />
+                      )}
+
+                      {/* 5. Yes / No Toggle */}
+                      {char.type === 'boolean' && (
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setCharValues({ ...charValues, [char.name]: 'Yes' })}
+                            style={{
+                              flex: 1,
+                              fontSize: '0.75rem',
+                              padding: '0.3rem',
+                              borderRadius: '4px',
+                              border: '1px solid',
+                              borderColor: charValues[char.name] === 'Yes' ? '#16a34a' : '#cbd5e1',
+                              background: charValues[char.name] === 'Yes' ? '#dcfce7' : '#fff',
+                              color: charValues[char.name] === 'Yes' ? '#166534' : '#475569',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCharValues({ ...charValues, [char.name]: 'No' })}
+                            style={{
+                              flex: 1,
+                              fontSize: '0.75rem',
+                              padding: '0.3rem',
+                              borderRadius: '4px',
+                              border: '1px solid',
+                              borderColor: charValues[char.name] === 'No' ? '#ef4444' : '#cbd5e1',
+                              background: charValues[char.name] === 'No' ? '#fee2e2' : '#fff',
+                              color: charValues[char.name] === 'No' ? '#991b1b' : '#475569',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                          >
+                            No
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">Description *</label>
+              <textarea
+                rows={3}
+                className="form-textarea"
+                placeholder="Detailed description of features and specs..."
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                required
+              />
+            </div>
+
             <Input
-              label="Discount Price (Rs., Optional)"
-              type="number"
-              placeholder="e.g. 2499"
-              value={formData.discountPrice}
-              onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
+              label="Tags (Comma-separated)"
+              placeholder="e.g. wireless, headphones, anc, audio"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
             />
+
+            <div className="form-group">
+              <label className="form-label">Product Images (Upload)</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
+                className="form-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <input
+                type="checkbox"
+                id="isFeatured"
+                checked={formData.isFeatured}
+                onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+              />
+              <label htmlFor="isFeatured" style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                Show on Featured / Trending list
+              </label>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Description *</label>
-            <textarea
-              rows={3}
-              className="form-textarea"
-              placeholder="Detailed description of features and specs..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-            />
-          </div>
-
-          <Input
-            label="Tags (Comma-separated)"
-            placeholder="e.g. wireless, headphones, anc, audio"
-            value={formData.tags}
-            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-          />
-
-          <div className="form-group">
-            <label className="form-label">Product Images (Upload)</label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
-              className="form-input"
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <input
-              type="checkbox"
-              id="isFeatured"
-              checked={formData.isFeatured}
-              onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-            />
-            <label htmlFor="isFeatured" style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-              Show on Featured / Trending list
-            </label>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
             <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary">
               Cancel
             </button>

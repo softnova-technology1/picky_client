@@ -77,8 +77,16 @@ export default function Checkout() {
         return;
       }
 
+      const cartPayload = items.map((i) => ({
+        productId: i.productId || i._id || i.id,
+        quantity: i.quantity || 1,
+      }));
+
       // 1. Initialize Razorpay Order on server
-      const rzInitRes = await orderService.createRazorpayOrder({ shippingAddress: address });
+      const rzInitRes = await orderService.createRazorpayOrder({
+        shippingAddress: address,
+        items: cartPayload,
+      });
       const rzData = rzInitRes?.data || rzInitRes;
 
       // 2. Open Razorpay Checkout Modal
@@ -107,6 +115,7 @@ export default function Checkout() {
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
+              items: cartPayload,
             });
 
             const order = verifyRes?.data || verifyRes;

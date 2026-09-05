@@ -20,6 +20,7 @@ export const adminService = {
   // Categories
   createCategory: (formData) => api.post('/categories', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   updateCategory: (id, formData) => api.put(`/categories/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateCategoryCharacteristics: (id, characteristics) => api.patch(`/categories/${id}/characteristics`, { characteristics }),
   deleteCategory: (id) => api.delete(`/categories/${id}`),
 
   // Coupons
@@ -27,10 +28,13 @@ export const adminService = {
   createCoupon: (data) => api.post('/coupons', data),
   updateCoupon: (id, data) => api.put(`/coupons/${id}`, data),
   toggleCoupon: (id) => api.patch(`/coupons/${id}/toggle`),
+  deleteCoupon: (id) => api.delete(`/coupons/${id}`),
 
   // Discounts
   getDiscounts: () => api.get('/discounts'),
   createDiscount: (data) => api.post('/discounts', data),
   updateDiscount: (id, data) => api.put(`/discounts/${id}`, data),
   toggleDiscount: (id) => api.patch(`/discounts/${id}/toggle`),
+  deleteDiscount: (id) => api.delete(`/discounts/${id}`),
 };
+
