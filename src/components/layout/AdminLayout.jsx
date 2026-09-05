@@ -17,20 +17,13 @@ import {
   LogOut,
   Sparkles,
   ArrowRight,
-} from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
-import Toast from '../ui/Toast';
-import '../../styles/admin.css';
-import {
-  LayoutDashboard,
   Package,
   Tag,
   FolderTree,
-  Users,
-  BarChart3,
   Store,
-  LogOut,
 } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import '../../styles/admin.css';
 
 const ADMIN = '/pickyadmin-softnova2026';
 

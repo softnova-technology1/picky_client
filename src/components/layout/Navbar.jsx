@@ -1,6 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingCart, Sparkles, User, LogOut, Gift, Menu, X, Package } from 'lucide-react';
+import {
+  ChevronDown,
+  Search,
+  Heart,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  ArrowRight,
+  Package,
+  LogOut,
+  Truck,
+} from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
@@ -10,8 +22,15 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const categoryDropdownRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const searchInputRef = useRef(null);
+
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, user, logout } = useAuthStore();
   const { items } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
@@ -73,381 +92,577 @@ export default function Navbar() {
     }
   };
 
-  const isContactPage = location.pathname === '/contact';
+  const handleQuickSearch = (term) => {
+    navigate(`/search?q=${encodeURIComponent(term)}`);
+    setIsSearchOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+
+  const isNavActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
 
   return (
-    <header className="picky-header">
-      <div className="container picky-nav-container">
-        {/* Left: Picky Brand Logo */}
-        <Link to="/" className="picky-logo-link">
-          <div className="picky-logo-disc">
-            <span className="picky-logo-letter">P</span>
-          </div>
-          <div>
-            <span className="picky-brand-name">Picky</span>
-            <span className="picky-brand-sub">Shop More. Live Better.</span>
-          </div>
-        </Link>
-
-        {/* Center: Main Navigation Links */}
-        <nav className="picky-center-nav">
-          <Link to="/" className={`picky-nav-link ${location.pathname === '/' ? 'active' : ''}`}>
-            Home
-          </Link>
-          <Link to="/products" className={`picky-nav-link ${location.pathname === '/products' ? 'active' : ''}`}>
-            Shop
-          </Link>
-          <Link to="/categories" className={`picky-nav-link ${location.pathname.startsWith('/categories') && location.pathname !== '/categories/combo-packs' ? 'active' : ''}`}>
-            Categories
-          </Link>
-          <Link to="/categories/combo-packs" className={`picky-nav-link ${location.pathname === '/categories/combo-packs' ? 'active' : ''}`}>
-            Offers
-          </Link>
-          <Link to="/orders" className={`picky-nav-link ${location.pathname === '/orders' ? 'active' : ''}`}>
-            Track Order
-          </Link>
-          <Link to="/contact" className={`picky-nav-link ${isContactPage ? 'active-pill' : ''}`}>
-            Contact
-          </Link>
-        </nav>
-
-        {/* Right: Search & Utility Disc Buttons */}
-        <div className="picky-right-nav">
-          {/* Minimal Search input */}
-          <form onSubmit={handleSearch} className="picky-nav-search">
-            <input
-              type="text"
-              placeholder="Search for products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="picky-search-input"
-            />
-            <Search size={16} className="picky-search-icon" />
-          </form>
-
-          {/* Wishlist Disc */}
-          <Link to="/wishlist" title="Wishlist" className="nav-icon-disc">
-            <Heart
-              size={19}
-              color="#7c3aed"
-              fill={totalWishlistCount > 0 ? '#7c3aed' : 'transparent'}
-              strokeWidth={2.2}
-            />
-            {totalWishlistCount > 0 && (
-              <span className="nav-icon-badge">{totalWishlistCount}</span>
-            )}
-          </Link>
-
-          {/* Cart Disc */}
-          <Link to="/cart" title="Shopping Cart" className="nav-icon-disc">
-            <ShoppingCart size={19} color="#7c3aed" strokeWidth={2.2} />
-            {totalCartCount > 0 && (
-              <span className="nav-icon-badge">{totalCartCount}</span>
-            )}
-          </Link>
-
-          {/* Account */}
-          {isLoggedIn ? (
-            <div className="picky-user-group">
-              <Link to="/account" className="picky-account-btn">
-                <User size={16} color="#7c3aed" />
-                <span className="user-short-name">{user?.name?.split(' ')[0] || 'Account'}</span>
-              </Link>
-              <button onClick={logout} className="picky-logout-icon-btn" title="Logout">
-                <LogOut size={16} />
-              </button>
-            </div>
-          ) : (
-            <Link to="/login" className="picky-login-btn">
-              Login
-            </Link>
-          )}
-
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="picky-mobile-menu-btn"
-            aria-label="Toggle Navigation"
-          >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+    <>
+      {/* ── 1. Top Announcement Bar (Slanted "Crosh" Style at Limited Time Place) ── */}
+      <div className="top-announcement-bar">
+        <div className="top-announcement-crosh">
+          <span className="top-crosh-badge">LIMITED TIME</span>
+          <span>
+            ⚡ <strong>Special Offer:</strong> Free express delivery on orders over ₹999 | Code: <strong>PICKYFREE</strong>
+          </span>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
-      {isMobileMenuOpen && (
-        <div className="picky-mobile-drawer">
-          <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-          <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Shop</Link>
-          <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
-          <Link to="/categories/combo-packs" onClick={() => setIsMobileMenuOpen(false)}>Offers</Link>
-          <Link to="/orders" onClick={() => setIsMobileMenuOpen(false)}>Track Order</Link>
-          <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} className="active-pill">Contact</Link>
+      {/* ── 2. Floating Pill Navbar (Restored Clean Pill Style) ────────────── */}
+      <header className="floating-nav-container">
+        <div className="floating-nav-pill">
+          {/* Brand & Divider (Left) */}
+          <Link to="/" className="nav-brand-cluster" title="Picky Home">
+            <div className="nav-brand-logo-icon">P</div>
+            <span className="nav-brand-name">Picky</span>
+            <div className="nav-vertical-divider" />
+          </Link>
+
+          {/* Center Navigation Links (Clean Text Only, Minimalist) */}
+          <nav className="nav-center-links" aria-label="Main Navigation">
+            {/* Shop */}
+            <div className="nav-item-rel">
+              <Link
+                to="/products"
+                className={`nav-pill-link ${isNavActive('/products') && !location.search ? 'active' : ''}`}
+              >
+                <span>Shop</span>
+              </Link>
+            </div>
+
+            {/* Categories with Mega Dropdown */}
+            <div
+              className="nav-item-rel"
+              ref={categoryDropdownRef}
+              onMouseEnter={() => setIsCategoryOpen(true)}
+              onMouseLeave={() => setIsCategoryOpen(false)}
+            >
+              <button
+                type="button"
+                className={`nav-pill-link ${isNavActive('/categories') ? 'active' : ''}`}
+                onClick={() => setIsCategoryOpen((prev) => !prev)}
+                aria-expanded={isCategoryOpen}
+              >
+                <span>Categories</span>
+                <ChevronDown
+                  size={12}
+                  style={{
+                    transform: isCategoryOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
+                />
+              </button>
+
+              {/* Mega Dropdown Menu */}
+              {isCategoryOpen && (
+                <div className="nav-dropdown-menu">
+                  <div className="nav-dropdown-header">10 Core Store Departments</div>
+                  <div className="nav-dropdown-grid">
+                    {PICKY_CATEGORIES.map((cat) => (
+                      <Link
+                        key={cat.slug}
+                        to={`/categories/${cat.slug}`}
+                        className="nav-dropdown-card"
+                        onClick={() => setIsCategoryOpen(false)}
+                      >
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #ede8f8 0%, #dcd0fa 100%)',
+                            color: '#4c1d95',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.15rem',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {cat.icon}
+                        </div>
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                          <span className="nav-dropdown-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {cat.name}
+                          </span>
+                          <span className="nav-dropdown-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {cat.subtext}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="nav-dropdown-footer">
+                    <Link
+                      to="/categories"
+                      className="nav-dropdown-view-all"
+                      onClick={() => setIsCategoryOpen(false)}
+                    >
+                      Explore All 10 Categories <ArrowRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* New Arrivals */}
+            <div className="nav-item-rel">
+              <Link
+                to="/products?sort=newest"
+                className={`nav-pill-link ${location.search.includes('newest') ? 'active' : ''}`}
+              >
+                <span>New Arrivals</span>
+              </Link>
+            </div>
+
+            {/* Best Sellers */}
+            <div className="nav-item-rel">
+              <Link
+                to="/products?sort=rating"
+                className={`nav-pill-link ${location.search.includes('rating') ? 'active' : ''}`}
+              >
+                <span>Best Sellers</span>
+              </Link>
+            </div>
+
+            {/* About Us */}
+            <div className="nav-item-rel">
+              <Link
+                to="/about"
+                className={`nav-pill-link ${isNavActive('/about') ? 'active' : ''}`}
+              >
+                <span>About Us</span>
+              </Link>
+            </div>
+
+            {/* Contact Us */}
+            <div className="nav-item-rel">
+              <Link
+                to="/contact"
+                className={`nav-pill-link ${isNavActive('/contact') ? 'active' : ''}`}
+              >
+                <span>Contact Us</span>
+              </Link>
+            </div>
+
+            {/* Blog */}
+            <div className="nav-item-rel">
+              <Link
+                to="/about"
+                className="nav-pill-link"
+              >
+                <span>Blog</span>
+              </Link>
+            </div>
+          </nav>
+
+          {/* Right Action Icons, Elongated Search & Auth */}
+          <div className="nav-actions-cluster">
+            {/* Elongated Search Bar Button */}
+            <button
+              type="button"
+              className="nav-search-bar-btn"
+              onClick={() => setIsSearchOpen(true)}
+              title="Search products (Ctrl+K)"
+              aria-label="Search products"
+            >
+              <Search size={14} style={{ color: '#7c3aed', flexShrink: 0 }} />
+              <span className="nav-search-placeholder">Search products...</span>
+              <kbd className="nav-search-kbd">⌘K</kbd>
+            </button>
+
+            {/* Wishlist Button with Counter Badge */}
+            <Link
+              to="/wishlist"
+              className="nav-icon-btn"
+              title="My Wishlist"
+              aria-label={`Wishlist: ${totalWishlistCount} items`}
+            >
+              <Heart size={17} />
+              {totalWishlistCount > 0 && (
+                <span className="nav-action-badge nav-action-badge-rose">
+                  {totalWishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Cart Button (Clean Icon Button Only) */}
+            <Link
+              to="/cart"
+              className="nav-icon-btn"
+              title="View Cart"
+              aria-label={`Cart: ${totalCartCount} items`}
+            >
+              <ShoppingCart size={17} />
+              {totalCartCount > 0 && (
+                <span className="nav-action-badge">
+                  {totalCartCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Restored Auth: Profile Chip vs. Violet Gradient Sign In CTA */}
+            {isLoggedIn ? (
+              <div className="nav-item-rel" ref={userMenuRef}>
+                <button
+                  type="button"
+                  className="nav-user-chip"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  aria-expanded={isUserMenuOpen}
+                >
+                  <div className="nav-user-avatar">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="nav-user-name">
+                    {user?.name?.split(' ')[0] || 'Account'}
+                  </span>
+                  <ChevronDown size={13} style={{ color: '#7c3aed' }} />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="nav-user-menu">
+                    <div style={{ padding: '0.35rem 0.65rem 0.2rem', fontSize: '0.78rem', color: '#64748b' }}>
+                      Signed in as <strong style={{ color: '#1e1b4b', display: 'block' }}>{user?.email || user?.name}</strong>
+                    </div>
+                    <div className="nav-user-menu-divider" />
+                    <Link
+                      to="/account"
+                      className="nav-user-menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <User size={15} />
+                      <span>My Profile</span>
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="nav-user-menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Package size={15} />
+                      <span>My Orders</span>
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      className="nav-user-menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Heart size={15} />
+                      <span>Wishlist ({totalWishlistCount})</span>
+                    </Link>
+                    <div className="nav-user-menu-divider" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        logout();
+                      }}
+                      className="nav-user-menu-link"
+                      style={{
+                        width: '100%',
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#e11d48',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <LogOut size={15} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login" className="nav-cta-btn">
+                <User size={15} />
+                <span>Sign In</span>
+              </Link>
+            )}
+
+            {/* Mobile Hamburger Toggle (Shown on tablet/mobile) */}
+            <button
+              type="button"
+              className="nav-mobile-toggle-btn"
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              <Menu size={18} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ── 3. Quick Search Modal Popover ──────────────────────────────── */}
+      {isSearchOpen && (
+        <div
+          className="nav-search-modal-backdrop"
+          onClick={() => setIsSearchOpen(false)}
+        >
+          <div
+            className="nav-search-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#1e1b4b', fontSize: '1.05rem' }}>
+                <Search size={20} style={{ color: '#7c3aed' }} />
+                <span>Search Picky Catalog</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                }}
+                aria-label="Close search"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSearchSubmit}>
+              <div className="nav-search-input-wrap">
+                <Search size={18} style={{ color: '#7c3aed' }} />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="nav-search-input"
+                  placeholder="Search premium headphones, watches, apparel, shoes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  style={{
+                    background: '#7c3aed',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.45rem 1rem',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+
+            <div className="nav-search-quick-tags">
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8' }}>TRENDING:</span>
+              <button
+                type="button"
+                className="nav-search-quick-tag"
+                onClick={() => handleQuickSearch('Wireless Headphones')}
+              >
+                Wireless Headphones
+              </button>
+              <button
+                type="button"
+                className="nav-search-quick-tag"
+                onClick={() => handleQuickSearch('Smart Watch')}
+              >
+                Smart Watch
+              </button>
+              <button
+                type="button"
+                className="nav-search-quick-tag"
+                onClick={() => handleQuickSearch('Sneakers')}
+              >
+                Sneakers
+              </button>
+              <button
+                type="button"
+                className="nav-search-quick-tag"
+                onClick={() => handleQuickSearch('Backpack')}
+              >
+                Backpack
+              </button>
+              <button
+                type="button"
+                className="nav-search-quick-tag"
+                onClick={() => handleQuickSearch('Hoodie')}
+              >
+                Hoodie
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      <style>{`
-        .picky-header {
-          background: #ffffff;
-          border-bottom: 1px solid #ede9fe;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          box-shadow: 0 2px 16px rgba(124, 58, 237, 0.04);
-        }
+      {/* ── 4. Mobile Drawer Menu ──────────────────────────────────────── */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-nav-backdrop"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            className="mobile-nav-drawer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="mobile-drawer-header">
+              <Link to="/" className="nav-brand-cluster" onClick={() => setIsMobileMenuOpen(false)}>
+                <div className="nav-brand-logo-icon">P</div>
+                <span className="nav-brand-name">Picky</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#475569',
+                }}
+                aria-label="Close menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-        .picky-nav-container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          height: 72px;
-          gap: 1.5rem;
-        }
+            {/* Mobile Search */}
+            <form onSubmit={handleSearchSubmit}>
+              <div className="nav-search-input-wrap" style={{ padding: '0.5rem 0.85rem' }}>
+                <Search size={16} style={{ color: '#7c3aed' }} />
+                <input
+                  type="text"
+                  className="nav-search-input"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </form>
 
-        .picky-logo-link {
-          display: flex;
-          align-items: center;
-          gap: 0.65rem;
-          text-decoration: none;
-        }
+            {/* Navigation Links */}
+            <div className="mobile-drawer-links">
+              <Link to="/products" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Shop Catalog</span>
+              </Link>
+              <Link to="/categories" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Categories</span>
+              </Link>
+              <Link to="/products?sort=newest" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>New Arrivals</span>
+              </Link>
+              <Link to="/products?sort=rating" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Best Sellers</span>
+              </Link>
+              <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>About Us</span>
+              </Link>
+              <Link to="/contact" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Contact Us</span>
+              </Link>
+              <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Blog / Our Story</span>
+              </Link>
+              <Link to="/orders" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Track Order</span>
+              </Link>
+            </div>
 
-        .picky-logo-disc {
-          width: 38px;
-          height: 38px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #9333ea 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-        }
+            {/* Quick Actions at bottom */}
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid #ede8f8' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                <Link
+                  to="/wishlist"
+                  className="mobile-drawer-link"
+                  style={{ justifyContent: 'center' }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Heart size={16} style={{ color: '#e11d48' }} />
+                  <span>Wishlist ({totalWishlistCount})</span>
+                </Link>
+                <Link
+                  to="/cart"
+                  className="mobile-drawer-link"
+                  style={{ justifyContent: 'center' }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <ShoppingCart size={16} style={{ color: '#7c3aed' }} />
+                  <span>Cart ({totalCartCount})</span>
+                </Link>
+              </div>
 
-        .picky-logo-letter {
-          font-size: 1.4rem;
-          font-weight: 900;
-          line-height: 1;
-          color: #ffffff;
-          letter-spacing: -0.04em;
-        }
-
-        .picky-brand-name {
-          font-weight: 900;
-          font-size: 1.35rem;
-          color: #0f172a;
-          display: block;
-          line-height: 1.1;
-          letter-spacing: -0.02em;
-        }
-
-        .picky-brand-sub {
-          font-size: 0.65rem;
-          font-weight: 700;
-          color: #7c3aed;
-          letter-spacing: 0.04em;
-          display: block;
-        }
-
-        .picky-center-nav {
-          display: flex;
-          align-items: center;
-          gap: 1.6rem;
-        }
-
-        @media (max-width: 960px) {
-          .picky-center-nav {
-            display: none;
-          }
-        }
-
-        .picky-nav-link {
-          font-weight: 600;
-          font-size: 0.92rem;
-          color: #475569;
-          text-decoration: none;
-          padding: 0.35rem 0.65rem;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-          position: relative;
-        }
-        .picky-nav-link:hover {
-          color: #7c3aed;
-        }
-        .picky-nav-link.active {
-          color: #7c3aed;
-          font-weight: 700;
-        }
-        .picky-nav-link.active-pill {
-          color: #6d28d9;
-          background: #ede9fe;
-          font-weight: 700;
-          padding: 0.32rem 0.85rem;
-          border-radius: 9999px;
-        }
-
-        .picky-right-nav {
-          display: flex;
-          align-items: center;
-          gap: 0.9rem;
-        }
-
-        .picky-nav-search {
-          position: relative;
-          width: 200px;
-        }
-        @media (max-width: 1140px) {
-          .picky-nav-search {
-            display: none;
-          }
-        }
-
-        .picky-search-input {
-          width: 100%;
-          padding: 0.5rem 0.85rem 0.5rem 2.1rem;
-          border-radius: 9999px;
-          border: 1.5px solid #ede9fe;
-          background: #f8fafc;
-          font-size: 0.86rem;
-          color: #0f172a;
-          outline: none;
-          transition: all 0.2s ease;
-        }
-        .picky-search-input:focus {
-          border-color: #7c3aed;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
-        }
-
-        .picky-search-icon {
-          position: absolute;
-          left: 0.75rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #94a3b8;
-        }
-
-        .nav-icon-disc {
-          width: 40px;
-          height: 40px;
-          min-width: 40px;
-          border-radius: 50%;
-          background: #ffffff;
-          border: 1.5px solid #e9d5ff;
-          box-shadow: 0 4px 10px rgba(124, 58, 237, 0.08);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          transition: all 0.25s ease;
-          text-decoration: none;
-        }
-        .nav-icon-disc:hover {
-          transform: translateY(-2px);
-          border-color: #7c3aed;
-          box-shadow: 0 8px 18px rgba(124, 58, 237, 0.22);
-        }
-
-        .nav-icon-badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          min-width: 19px;
-          height: 19px;
-          padding: 0 4px;
-          border-radius: 9999px;
-          background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-          color: #ffffff;
-          font-size: 0.7rem;
-          font-weight: 800;
-          border: 2px solid #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        .picky-user-group {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-        }
-
-        .picky-account-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          padding: 0.45rem 0.85rem;
-          background: #f3e8ff;
-          color: #6d28d9;
-          font-size: 0.86rem;
-          font-weight: 700;
-          border-radius: 9999px;
-          text-decoration: none;
-          transition: all 0.2s ease;
-        }
-        .picky-account-btn:hover {
-          background: #e9d5ff;
-        }
-
-        .picky-logout-icon-btn {
-          background: transparent;
-          border: none;
-          color: #ef4444;
-          padding: 0.4rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-        }
-
-        .picky-login-btn {
-          background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
-          color: white;
-          font-weight: 700;
-          font-size: 0.88rem;
-          padding: 0.5rem 1.25rem;
-          border-radius: 9999px;
-          text-decoration: none;
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-          transition: all 0.2s ease;
-        }
-        .picky-login-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
-        }
-
-        .picky-mobile-menu-btn {
-          display: none;
-          background: transparent;
-          border: none;
-          color: #1e293b;
-          cursor: pointer;
-          padding: 0.3rem;
-        }
-        @media (max-width: 960px) {
-          .picky-mobile-menu-btn {
-            display: block;
-          }
-        }
-
-        .picky-mobile-drawer {
-          padding: 1rem 1.5rem 1.5rem;
-          background: #ffffff;
-          border-top: 1px solid #ede9fe;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-        .picky-mobile-drawer a {
-          text-decoration: none;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #334155;
-          padding: 0.4rem 0;
-        }
-        .picky-mobile-drawer a.active-pill {
-          color: #7c3aed;
-        }
-      `}</style>
-    </header>
+              {isLoggedIn ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Link
+                    to="/account"
+                    className="nav-cta-btn"
+                    style={{ width: '100%', textAlign: 'center', justifyContent: 'center' }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <User size={16} />
+                    <span>My Account ({user?.name || 'User'})</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      logout();
+                    }}
+                    style={{
+                      background: '#fee2e2',
+                      color: '#dc2626',
+                      border: '1px solid #fecaca',
+                      borderRadius: '9999px',
+                      padding: '0.55rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="nav-cta-btn"
+                  style={{ width: '100%', textAlign: 'center', justifyContent: 'center' }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <User size={16} />
+                  <span>Sign In / Register</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
