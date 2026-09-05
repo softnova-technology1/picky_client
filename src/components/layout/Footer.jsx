@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, MessageCircle, Heart } from 'lucide-react';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setIsSubscribed(true);
+      setTimeout(() => {
+        setEmail('');
+        setIsSubscribed(false);
+      }, 4000);
+    }
+  };
+
   return (
     <footer className="picky-footer">
       <div className="container">

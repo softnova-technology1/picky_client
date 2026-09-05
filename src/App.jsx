@@ -31,6 +31,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminReports from './pages/admin/AdminReports';
+import AdminCoupons from './pages/admin/AdminCoupons';
 
 const ADMIN = '/pickyadmin-softnova2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
@@ -69,6 +70,7 @@ export default function App() {
           <Route path={`${ADMIN}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/reports`} element={<AdminProtectedRoute><AdminReports /></AdminProtectedRoute>} />
         </Routes>
