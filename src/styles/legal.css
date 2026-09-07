@@ -1,0 +1,261 @@
+/* ─── Terms and Conditions & Legal Pages Styles (Matching Reference Design) ─── */
+
+/* Full-Width Header Banner with Geometric Purple Ribbon Overlays */
+.legal-hero-wrapper {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  background: linear-gradient(135deg, #1e1035 0%, #2e1065 40%, #3b0764 70%, #581c87 100%);
+  padding: 4.5rem 2.5rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 220px;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+/* Abstract Ribbon Geometric Overlays matching reference image */
+.legal-hero-ribbon-1 {
+  position: absolute;
+  top: -40px;
+  right: -50px;
+  width: 600px;
+  height: 300px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.9) 0%, rgba(147, 51, 234, 0.85) 100%);
+  clip-path: polygon(45% 0%, 100% 0%, 85% 100%, 0% 100%);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.legal-hero-ribbon-2 {
+  position: absolute;
+  top: 20px;
+  right: 120px;
+  width: 450px;
+  height: 250px;
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+  clip-path: polygon(30% 0%, 100% 0%, 70% 100%, 0% 100%);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.legal-hero-ribbon-3 {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 320px;
+  height: 180px;
+  background: #c084fc;
+  clip-path: polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.legal-hero-container {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.legal-hero-title {
+  font-family: Georgia, 'Playfair Display', 'Inter', serif;
+  font-size: clamp(2.5rem, 5vw, 3.8rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Floating Share Button matching reference image */
+.legal-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: #1e1035;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.legal-share-btn:hover {
+  background: #faf5ff;
+  color: #7c3aed;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+
+/* ─── Legal Main Body Container ──────────────────────────────────── */
+.legal-body-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 5rem 1.5rem;
+}
+
+/* Top Purple Accent Line Bar matching Picky Design System */
+.legal-accent-bar {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #7c3aed 0%, #9333ea 50%, #c084fc 100%);
+  border-radius: 4px;
+  margin-bottom: 2.75rem;
+}
+
+/* Quick Jump / Document Tools Bar */
+.legal-tools-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.legal-update-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #581c87;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legal-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1.5px solid #d8b4fe;
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  width: 260px;
+}
+
+.legal-search-input {
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  width: 100%;
+  background: transparent;
+  color: #1e1035;
+}
+
+/* Legal Document Typography */
+.legal-content {
+  font-size: 0.98rem;
+  line-height: 1.85;
+  color: #334155;
+}
+
+.legal-paragraph {
+  margin-bottom: 1.4rem;
+}
+
+.legal-link {
+  color: #7c3aed;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.legal-link:hover {
+  color: #6d28d9;
+}
+
+.legal-section-heading {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1e1035;
+  margin: 2.5rem 0 1rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.legal-section-heading:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.legal-list {
+  margin: 1rem 0 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.legal-list li {
+  line-height: 1.7;
+}
+
+.legal-highlight-box {
+  background: #faf5ff;
+  border-left: 4px solid #7c3aed;
+  border-radius: 0 12px 12px 0;
+  padding: 1.25rem 1.5rem;
+  margin: 1.75rem 0;
+  font-size: 0.95rem;
+  color: #581c87;
+}
+
+/* Toast Message */
+.legal-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.75rem 1.4rem;
+  border-radius: 30px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive Tweak */
+@media (max-width: 640px) {
+  .legal-hero-wrapper {
+    padding: 3rem 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+  .legal-body-container {
+    padding: 2.25rem 1rem 4rem 1rem;
+  }
+  .legal-tools-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .legal-search-box {
+    width: 100%;
+  }
+}

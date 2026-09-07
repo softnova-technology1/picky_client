@@ -250,8 +250,8 @@ export default function Navbar() {
             {/* Blog */}
             <div className="nav-item-rel">
               <Link
-                to="/about"
-                className="nav-pill-link"
+                to="/blog"
+                className={`nav-pill-link ${isNavActive('/blog') ? 'active' : ''}`}
               >
                 <span>Blog</span>
               </Link>
@@ -580,8 +580,8 @@ export default function Navbar() {
               <Link to="/contact" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Contact Us</span>
               </Link>
-              <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Blog / Our Story</span>
+              <Link to="/blog" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Blog / Insights</span>
               </Link>
               <Link to="/orders" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Track Order</span>

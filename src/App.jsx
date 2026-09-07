@@ -20,6 +20,7 @@ import OrderDetail from './pages/OrderDetail';
 import Account from './pages/Account';
 import Contact from './pages/contact/Contact';
 import About from './pages/About';
+import Blog from './pages/Blog';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import NotFound from './pages/NotFound';
@@ -70,6 +71,7 @@ export default function App() {
           {/* ── Support & Legal ──────────────────────── */}
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<Blog />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
 

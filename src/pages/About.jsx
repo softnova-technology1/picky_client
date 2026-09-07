@@ -1,24 +1,65 @@
 import React from 'react';
 import PageWrapper from '../components/layout/PageWrapper';
-
+import AboutHeroSection from '../components/about/AboutHeroSection';
+import AboutFeatureSection from '../components/about/AboutFeatureSection';
+import GlassCountersSection from '../components/about/GlassCountersSection';
+import AboutReviewsSection from '../components/about/AboutReviewsSection';
 export default function About() {
   return (
     <PageWrapper>
-      <div className="section">
-        <div className="container" style={{ maxWidth: '800px' }}>
-          <h1 style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>About Picky</h1>
-          <div className="card" style={{ padding: '2.5rem', lineHeight: 1.8 }}>
-            <p style={{ fontSize: '1.05rem', color: '#334155', marginBottom: '1.5rem' }}>
-              <strong>Picky</strong> was founded with a singular mission: eliminating the clutter and decision paralysis of endless low-quality e-commerce choices.
-            </p>
-            <h3 style={{ margin: '1.5rem 0 0.5rem', color: '#0f172a' }}>Our Philosophy</h3>
-            <p style={{ color: '#475569', marginBottom: '1rem' }}>
-              Instead of listing thousands of unvetted products from random third-party sellers, Picky operates as a <strong>curated single-vendor store</strong>. Every single product in our catalog is physically inspected, tested, and stored in our dedicated fulfillment center before it is listed online.
-            </p>
-            <h3 style={{ margin: '1.5rem 0 0.5rem', color: '#0f172a' }}>Real-Time Transparency</h3>
-            <p style={{ color: '#475569', marginBottom: '1rem' }}>
-              We know waiting for deliveries can be frustrating. That is why every Picky order triggers automatic live updates via WhatsApp — from dispatch with courier AWB tracking to real-time milestone delivery notifications.
-            </p>
+      {/* Full-Width Edge-to-Edge Hero Section */}
+      <AboutHeroSection />
+
+      <div className="section" style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
+        <div className="container">
+          {/* About Us Feature Section */}
+          <AboutFeatureSection />
+        </div>
+      </div>
+
+      {/* Standalone Parallax Mission & Vision Section with background-attachment: fixed */}
+      <section className="about-parallax-mission-section">
+        <div className="about-parallax-mission-overlay" />
+        <div className="about-parallax-mission-content">
+          <div className="about-parallax-glass-card">
+            <div style={{ maxWidth: '850px', margin: '0 auto', textAlign: 'center' }}>
+              <span style={{ 
+                display: 'inline-block',
+                padding: '0.4rem 1.2rem', 
+                borderRadius: '20px', 
+                background: 'rgba(168, 85, 247, 0.25)', 
+                border: '1px solid rgba(192, 132, 252, 0.4)',
+                color: '#e9d5ff',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                marginBottom: '1.25rem'
+              }}>
+                ✦ Our Mission & Vision ✦
+              </span>
+              <h2 style={{ fontSize: '2.4rem', color: '#ffffff', marginBottom: '1.25rem', fontWeight: 800 }}>
+                Eliminating Clutter, Elevating Every Choice
+              </h2>
+              <p style={{ fontSize: '1.15rem', color: '#f3e8ff', lineHeight: 1.8, marginBottom: '1.5rem' }}>
+                <strong style={{ color: '#ffffff' }}>Picky</strong> was founded with a singular mission: eliminating the clutter and decision paralysis of endless low-quality e-commerce choices. Instead of listing thousands of unvetted products from random third-party sellers, Picky operates as a <strong style={{ color: '#ffffff' }}>curated single-vendor store</strong>.
+              </p>
+              <p style={{ fontSize: '1.05rem', color: '#e9d5ff', lineHeight: 1.7 }}>
+                Every single product in our catalog is physically inspected, tested, and stored in our dedicated fulfillment center before it is listed online — ensuring 100% authenticity and real-time live WhatsApp tracking from dispatch to delivery.
+              </p>
+            </div>
+
+            {/* 3D Purple Circular Glass Counters */}
+            <GlassCountersSection />
+          </div>
+        </div>
+      </section>
+
+      <div className="section" style={{ paddingTop: '1rem', paddingBottom: '4rem' }}>
+        <div className="container">
+          <div className="about-story-section">
+            {/* Customer Reviews & Testimonials Section */}
+            <AboutReviewsSection />
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
 import { getProducts, categories as defaultCategories, searchProducts } from '../data';
 import { Search, X, SlidersHorizontal, Sparkles, ArrowRight, RotateCcw, Check, ChevronRight } from 'lucide-react';
+import BestSellersHeroSection from '../components/bestseller/BestSellersHeroSection';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();
@@ -161,6 +162,11 @@ export default function ProductList() {
 
   return (
     <PageWrapper>
+      {/* Editorial Best Sellers Hero Section matching reference image */}
+      {(sort === 'rating' || sort === 'featured' || (!selectedCategory && !searchQuery)) && (
+        <BestSellersHeroSection />
+      )}
+
       <div className="section" style={{ background: '#faf5ff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
         <div className="container">
           {/* Breadcrumbs */}
@@ -198,6 +204,7 @@ export default function ProductList() {
 
           {/* Header & Controls Bar */}
           <div
+            id="bestsellers-grid-start"
             style={{
               background: '#ffffff',
               borderRadius: '24px',
