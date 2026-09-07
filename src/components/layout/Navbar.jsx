@@ -167,8 +167,8 @@ export default function Navbar() {
             {/* Shop */}
             <div className="nav-item-rel">
               <Link
-                to="/products"
-                className={`nav-pill-link ${isNavActive('/products') && !location.search ? 'active' : ''}`}
+                to="/shop"
+                className={`nav-pill-link ${isNavActive('/shop') || (isNavActive('/products') && !location.search) ? 'active' : ''}`}
               >
                 <span>Shop</span>
               </Link>

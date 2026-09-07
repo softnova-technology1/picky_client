@@ -49,6 +49,7 @@ export default function App() {
           <Route path="/categories/:slug" element={<CategorySubcategories />} />
           <Route path="/categories/:slug/:subSlug" element={<ProductList />} />
           <Route path="/new-arrivals" element={<NewArrivals />} />
+          <Route path="/shop" element={<ProductList />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/search" element={<ProductList />} />

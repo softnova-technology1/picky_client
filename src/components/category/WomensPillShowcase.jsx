@@ -60,27 +60,9 @@ export default function WomensPillShowcase() {
   ];
 
   return (
-    <section className="womens-pill-section" style={{ marginBottom: '3.5rem' }}>
+    <section className="womens-pill-section" style={{ marginBottom: '4.5rem' }}>
       {/* ── Section Header ── */}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            color: '#7c3aed',
-            fontSize: '0.84rem',
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            marginBottom: '0.4rem',
-          }}
-        >
-          <Sparkles size={14} />
-          <span>Handpicked Flagships</span>
-          <Sparkles size={14} />
-        </div>
-
         <h2
           style={{
             fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
