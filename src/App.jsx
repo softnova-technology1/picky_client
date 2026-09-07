@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Categories from './pages/Categories';
 import CategorySubcategories from './pages/CategorySubcategories';
 import ProductList from './pages/ProductList';
+import NewArrivals from './pages/NewArrivals';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/categories" element={<Categories />} />
           <Route path="/categories/:slug" element={<CategorySubcategories />} />
           <Route path="/categories/:slug/:subSlug" element={<ProductList />} />
+          <Route path="/new-arrivals" element={<NewArrivals />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/search" element={<ProductList />} />
