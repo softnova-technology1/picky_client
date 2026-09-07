@@ -200,7 +200,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
         .new-arrivals-hero-wrapper {
           width: 100%;
           max-width: 1440px; /* Full-width matching Picky layout */
-          margin: 0 auto 3.5rem;
+          margin: 0 auto 0; /* Docked timing bar overlaps bottom edge by 50% */
           padding: 0 clamp(1rem, 2.5vw, 2.5rem);
           position: relative;
         }

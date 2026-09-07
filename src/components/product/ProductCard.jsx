@@ -124,7 +124,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="lumina-product-card">
       {/* ── 1. Full-Width Edge-to-Edge 3-Image Carousel Stage ── */}
-      <div className="lumina-stage">
+      <div className="lumina-stage" data-pin-nopin="true">
         {/* Sleek Frosted Glass Island Badge (Top-Left) */}
         <div className="lumina-badge-pill">
           {discountPercent > 0 ? (
@@ -163,6 +163,7 @@ export default function ProductCard({ product }) {
                     i === 1 && carouselImages[0] === src ? 'img-zoom-detail' : ''
                   }`}
                   loading="lazy"
+                  data-pin-nopin="true"
                 />
               </div>
             ))}
@@ -210,7 +211,7 @@ export default function ProductCard({ product }) {
           </p>
         </Link>
 
-        {/* Clean Luxury Price Row (Zero marketing noise, pure elegance) */}
+        {/* Clean Luxury Price Row */}
         <div className="lumina-price-row">
           <span className="lumina-current-price">
             ₹{currentPrice.toLocaleString('en-IN')}
@@ -346,7 +347,7 @@ export default function ProductCard({ product }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 0.35rem;
+          padding: 0.8rem 0.8rem 1.6rem 0.8rem;
           flex-shrink: 0;
         }
 
