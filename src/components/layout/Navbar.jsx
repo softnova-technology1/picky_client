@@ -210,8 +210,8 @@ export default function Navbar() {
             {/* New Arrivals */}
             <div className="nav-item-rel">
               <Link
-                to="/products?sort=newest"
-                className={`nav-pill-link ${location.search.includes('newest') ? 'active' : ''}`}
+                to="/new-arrivals"
+                className={`nav-pill-link ${isNavActive('/new-arrivals') ? 'active' : ''}`}
               >
                 <span>New Arrivals</span>
               </Link>
@@ -568,7 +568,7 @@ export default function Navbar() {
               <Link to="/categories" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Categories</span>
               </Link>
-              <Link to="/products?sort=newest" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/new-arrivals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>New Arrivals</span>
               </Link>
               <Link to="/products?sort=rating" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
