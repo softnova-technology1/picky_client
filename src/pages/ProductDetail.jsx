@@ -130,7 +130,7 @@ export default function ProductDetail() {
 
   return (
     <PageWrapper>
-      <div style={{ background: '#faf5ff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
+      <div style={{ background: '#ffffff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
         <div className="container">
           {/* Breadcrumbs */}
           <div

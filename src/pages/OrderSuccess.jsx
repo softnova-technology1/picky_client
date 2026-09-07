@@ -30,7 +30,7 @@ export default function OrderSuccess() {
 
   return (
     <PageWrapper>
-      <div className="section" style={{ minHeight: '85vh', background: '#faf5ff', display: 'flex', alignItems: 'center', padding: '3.5rem 0' }}>
+      <div className="section" style={{ minHeight: '85vh', background: '#ffffff', display: 'flex', alignItems: 'center', padding: '3.5rem 0' }}>
         <div className="container" style={{ maxWidth: '640px' }}>
           <div
             className="card"

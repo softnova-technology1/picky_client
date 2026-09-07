@@ -74,7 +74,7 @@ export default function CategoryProducts() {
 
   return (
     <PageWrapper>
-      <div style={{ background: '#faf5ff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
+      <div style={{ background: '#ffffff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
         <div className="container">
           {/* Breadcrumbs */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#64748b', marginBottom: '1.5rem', flexWrap: 'wrap' }}>

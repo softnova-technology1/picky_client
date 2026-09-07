@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
+  ChevronRight,
+  Sparkles,
   Search,
   Heart,
   ShoppingCart,
@@ -12,11 +14,14 @@ import {
   Package,
   LogOut,
   Truck,
+  Layers,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
-import { PICKY_CATEGORIES } from '../../data/categoriesData';
+import { MOCK_CATEGORIES } from '../../data/adminMockData';
+import { CATEGORY_COLUMNS, MEGAMENU_ALL_CATEGORIES } from '../../data/categoriesData';
+import CategoryIcon from '../common/CategoryIcon';
 import GlamicsMarqueeTicker from '../category/GlamicsMarqueeTicker';
 
 export default function Navbar() {
@@ -24,11 +29,45 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [activeCategorySlug, setActiveCategorySlug] = useState('womens-fashion');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+  const activeCat = useMemo(() => {
+    return MOCK_CATEGORIES.find((c) => c.slug === activeCategorySlug) || MOCK_CATEGORIES[0];
+  }, [activeCategorySlug]);
+
+  const columnData = useMemo(() => {
+    return CATEGORY_COLUMNS[activeCategorySlug] || CATEGORY_COLUMNS['womens-fashion'];
+  }, [activeCategorySlug]);
+
   const categoryDropdownRef = useRef(null);
+  const dropdownMenuRef = useRef(null);
+  const categoryTimeoutRef = useRef(null);
   const userMenuRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  const handleCategoryMouseEnter = () => {
+    if (categoryTimeoutRef.current) {
+      clearTimeout(categoryTimeoutRef.current);
+      categoryTimeoutRef.current = null;
+    }
+    setIsCategoryOpen(true);
+  };
+
+  const handleCategoryMouseLeave = () => {
+    if (categoryTimeoutRef.current) {
+      clearTimeout(categoryTimeoutRef.current);
+    }
+    categoryTimeoutRef.current = setTimeout(() => {
+      setIsCategoryOpen(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
+    };
+  }, []);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,7 +111,11 @@ export default function Navbar() {
   // Click outside to close category & user popups
   useEffect(() => {
     function handleClickOutside(event) {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target)) {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target) &&
+        (!dropdownMenuRef.current || !dropdownMenuRef.current.contains(event.target))
+      ) {
         setIsCategoryOpen(false);
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -131,17 +174,17 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Categories with Mega Dropdown */}
+            {/* Categories Link */}
             <div
               className="nav-item-rel"
               ref={categoryDropdownRef}
-              onMouseEnter={() => setIsCategoryOpen(true)}
-              onMouseLeave={() => setIsCategoryOpen(false)}
+              onMouseEnter={handleCategoryMouseEnter}
+              onMouseLeave={handleCategoryMouseLeave}
             >
-              <button
-                type="button"
+              <Link
+                to="/categories"
                 className={`nav-pill-link ${isNavActive('/categories') ? 'active' : ''}`}
-                onClick={() => setIsCategoryOpen((prev) => !prev)}
+                onClick={() => setIsCategoryOpen(false)}
                 aria-expanded={isCategoryOpen}
               >
                 <span>Categories</span>
@@ -152,59 +195,7 @@ export default function Navbar() {
                     transition: 'transform 0.2s ease',
                   }}
                 />
-              </button>
-
-              {/* Mega Dropdown Menu */}
-              {isCategoryOpen && (
-                <div className="nav-dropdown-menu">
-                  <div className="nav-dropdown-header">10 Core Store Departments</div>
-                  <div className="nav-dropdown-grid">
-                    {PICKY_CATEGORIES.map((cat) => (
-                      <Link
-                        key={cat.slug}
-                        to={`/categories/${cat.slug}`}
-                        className="nav-dropdown-card"
-                        onClick={() => setIsCategoryOpen(false)}
-                      >
-                        <div
-                          style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '8px',
-                            background: 'linear-gradient(135deg, #ede8f8 0%, #dcd0fa 100%)',
-                            color: '#4c1d95',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.15rem',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {cat.icon}
-                        </div>
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <span className="nav-dropdown-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {cat.name}
-                          </span>
-                          <span className="nav-dropdown-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {cat.subtext}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="nav-dropdown-footer">
-                    <Link
-                      to="/categories"
-                      className="nav-dropdown-view-all"
-                      onClick={() => setIsCategoryOpen(false)}
-                    >
-                      Explore All 10 Categories <ArrowRight size={13} />
-                    </Link>
-                  </div>
-                </div>
-              )}
+              </Link>
             </div>
 
             {/* New Arrivals */}
@@ -391,6 +382,49 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {/* Full-Width All-Categories Multi-Column Mega Menu (Exact Screenshot Layout) */}
+        {isCategoryOpen && (
+          <div
+            ref={dropdownMenuRef}
+            className="nav-dropdown-menu nav-dropdown-full-width"
+            onMouseEnter={handleCategoryMouseEnter}
+            onMouseLeave={handleCategoryMouseLeave}
+          >
+            <div className="nav-all-categories-strip">
+              {MEGAMENU_ALL_CATEGORIES.map((cat, idx) => (
+                <div
+                  key={cat.slug}
+                  className={`nav-mega-column ${idx % 2 === 1 ? 'shaded' : ''}`}
+                >
+                  <Link
+                    to={`/categories/${cat.slug}`}
+                    className="nav-mega-column-title"
+                    onClick={() => setIsCategoryOpen(false)}
+                  >
+                    {cat.title}
+                  </Link>
+                  <div className="nav-mega-links-list">
+                    {cat.links.map((item, itemIdx) => (
+                      <Link
+                        key={itemIdx}
+                        to={
+                          item.slug
+                            ? `/categories/${cat.slug}?sub=${item.slug}`
+                            : `/categories/${cat.slug}`
+                        }
+                        className={`nav-mega-link-item ${itemIdx === 0 ? 'highlight-top' : ''}`}
+                        onClick={() => setIsCategoryOpen(false)}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ── 3. Quick Search Modal Popover ──────────────────────────────── */}

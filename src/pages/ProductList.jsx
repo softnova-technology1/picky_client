@@ -161,7 +161,7 @@ export default function ProductList() {
 
   return (
     <PageWrapper>
-      <div className="section" style={{ background: '#faf5ff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
+      <div className="section" style={{ background: '#ffffff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
         <div className="container">
           {/* Breadcrumbs */}
           <div

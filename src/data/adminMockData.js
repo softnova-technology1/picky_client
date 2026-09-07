@@ -91,7 +91,7 @@ export const MOCK_CATEGORIES = [
     subtext: 'Sungudi sarees, brass items, Tanjore crafts',
     icon: '🪔',
     badge: 'Authentic Tamil',
-    image: 'https://images.unsplash.com/photo-1609137144822-26155986ec32?w=600&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
     itemCount: 74,
     subcategories: [
       { _id: 'sub-tp-1', name: 'Sungudi Sarees', slug: 'sungudi-sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400', itemCount: 28 },

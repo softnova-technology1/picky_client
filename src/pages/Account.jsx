@@ -71,7 +71,7 @@ export default function Account() {
 
   return (
     <PageWrapper>
-      <div className="section" style={{ background: '#faf5ff', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
+      <div className="section" style={{ background: '#ffffff', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
         <div className="container" style={{ maxWidth: '1100px' }}>
           {/* Top Profile Header Card */}
           <div

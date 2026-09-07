@@ -3,65 +3,66 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 
 export default function WomensPillShowcase() {
+  // Top 4 flagship store categories with authentic category-matching visuals
   const pillCards = [
     {
-      id: 'ethnic-sarees',
-      title: 'Ethnic Sarees',
-      subtitle: 'Silk, Banarasi & Drapes',
+      id: 'womens-fashion',
+      title: "Women's Fashion",
       link: '/categories/womens-fashion',
-      modelImg: '/images/pill_model_saree.png',
-      bgGradient: 'linear-gradient(135deg, #ede9fe 0%, #e0d7fe 100%)',
-      borderColor: 'rgba(168, 85, 247, 0.38)',
-      shadowColor: 'rgba(124, 58, 237, 0.14)',
-      btnBg: '#ffffff',
+      image: '/images/pill_model_saree.png',
+      bgGradient: 'linear-gradient(135deg, #ede9fe 0%, #f3e8ff 50%, #e9d5ff 100%)',
+      borderColor: 'rgba(168, 85, 247, 0.4)',
+      shadowColor: 'rgba(124, 58, 237, 0.16)',
       btnColor: '#7c3aed',
-      badge: 'Bestseller',
+      imgHeight: '178px',
+      imgBottom: '0px',
+      imgRight: '4px',
     },
     {
-      id: 'western-gallery',
-      title: 'Western Edit',
-      subtitle: 'Hoodies, Co-ords & Fits',
-      link: '/categories/womens-fashion',
-      modelImg: '/images/pill_model_western.png',
-      bgGradient: 'linear-gradient(135deg, #fae8ff 0%, #f5d0fe 100%)',
-      borderColor: 'rgba(217, 70, 239, 0.38)',
-      shadowColor: 'rgba(217, 70, 239, 0.14)',
-      btnBg: '#ffffff',
-      btnColor: '#c026d3',
-      badge: 'Trending',
-    },
-    {
-      id: 'kurtis-fusion',
-      title: 'Kurtis & Fusion',
-      subtitle: 'Anarkali, A-Line & Sets',
-      link: '/categories/womens-fashion',
-      modelImg: '/images/pill_model_kurti.png',
-      bgGradient: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-      borderColor: 'rgba(245, 158, 11, 0.38)',
-      shadowColor: 'rgba(245, 158, 11, 0.14)',
-      btnBg: '#ffffff',
-      btnColor: '#b45309',
-      badge: 'New Styles',
-    },
-    {
-      id: 'glam-jewellery',
-      title: 'Glam Jewellery',
-      subtitle: 'Sets, Jhumkas & Chains',
+      id: 'artificial-jewellery',
+      title: 'Artificial Jewellery',
       link: '/categories/artificial-jewellery',
-      modelImg: '/images/pill_model_jewellery.png',
-      bgGradient: 'linear-gradient(135deg, #ede4fc 0%, #ddd0f8 100%)',
-      borderColor: 'rgba(147, 51, 234, 0.38)',
-      shadowColor: 'rgba(147, 51, 234, 0.14)',
-      btnBg: '#ffffff',
-      btnColor: '#6b21a8',
-      badge: 'Handcrafted',
+      image: '/images/pill_model_jewellery.png',
+      bgGradient: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fae8ff 100%)',
+      borderColor: 'rgba(217, 70, 239, 0.4)',
+      shadowColor: 'rgba(217, 70, 239, 0.16)',
+      btnColor: '#c026d3',
+      imgHeight: '178px',
+      imgBottom: '0px',
+      imgRight: '4px',
+    },
+    {
+      id: 'mobile-accessories',
+      title: 'Mobile Accessories',
+      link: '/categories/mobile-accessories',
+      image: '/images/pill_tech_product.png',
+      bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #e0f2fe 50%, #dbeafe 100%)',
+      borderColor: 'rgba(59, 130, 246, 0.4)',
+      shadowColor: 'rgba(59, 130, 246, 0.16)',
+      btnColor: '#2563eb',
+      imgHeight: '168px',
+      imgBottom: '2px',
+      imgRight: '8px',
+    },
+    {
+      id: 'home-kitchen',
+      title: 'Home & Kitchen',
+      link: '/categories/home-kitchen',
+      image: '/images/pill_kitchen_product.png',
+      bgGradient: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 50%, #fef08a 100%)',
+      borderColor: 'rgba(234, 179, 8, 0.4)',
+      shadowColor: 'rgba(234, 179, 8, 0.16)',
+      btnColor: '#b45309',
+      imgHeight: '164px',
+      imgBottom: '4px',
+      imgRight: '6px',
     },
   ];
 
   return (
     <section className="womens-pill-section" style={{ marginBottom: '3.5rem' }}>
-      {/* ── Section Header (Glamics Style with decorative divider) ── */}
-      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+      {/* ── Section Header ── */}
+      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
         <div
           style={{
             display: 'inline-flex',
@@ -76,7 +77,7 @@ export default function WomensPillShowcase() {
           }}
         >
           <Sparkles size={14} />
-          <span>Exclusive Women's Gallery</span>
+          <span>Handpicked Flagships</span>
           <Sparkles size={14} />
         </div>
 
@@ -85,12 +86,23 @@ export default function WomensPillShowcase() {
             fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
             fontWeight: 900,
             color: '#1e1b4b',
-            margin: '0 0 0.6rem',
-            letterSpacing: '-0.02em',
+            margin: '0 0 0.35rem',
+            letterSpacing: '-0.025em',
           }}
         >
-          Premium Shades
+          Curated Store Departments
         </h2>
+
+        <p
+          style={{
+            fontSize: '0.92rem',
+            color: '#64748b',
+            margin: '0 0 0.85rem',
+            fontWeight: 500,
+          }}
+        >
+          Explore our top flagship lifestyle & ethnic collections
+        </p>
 
         {/* Decorative Diamond Ornament Divider */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -100,32 +112,35 @@ export default function WomensPillShowcase() {
         </div>
       </div>
 
-      {/* ── 4 Overlapping 3D Pill Cards Grid ── */}
+      {/* ── 4 Capsule Pill Cards (Full-Card Clickable with Tailored Hover Glow) ── */}
       <div
         className="womens-pills-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
           gap: '1.25rem',
-          paddingTop: '35px', /* Room for overlapping model heads */
+          paddingTop: '35px', /* Generous headroom for 3D cutout popping out over the top */
         }}
       >
         {pillCards.map((card) => (
-          <div
+          <Link
             key={card.id}
+            to={card.link}
             className="womens-pill-card"
             style={{
+              '--card-glow': card.shadowColor,
               position: 'relative',
               background: card.bgGradient,
               borderRadius: '9999px',
               border: `1.5px solid ${card.borderColor}`,
               boxShadow: `0 12px 28px -6px ${card.shadowColor}`,
-              height: '145px',
+              height: '144px',
               display: 'flex',
               alignItems: 'center',
               overflow: 'visible',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
               cursor: 'pointer',
+              textDecoration: 'none',
             }}
           >
             {/* Left Content Column */}
@@ -133,124 +148,131 @@ export default function WomensPillShowcase() {
               style={{
                 position: 'relative',
                 zIndex: 3,
-                paddingLeft: '1.6rem',
-                paddingRight: '120px', /* Leave space for model cutout */
+                paddingLeft: '1.65rem',
+                paddingRight: '120px', /* Safe clearance away from right cutout image */
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 justifyContent: 'center',
+                width: '100%',
+                boxSizing: 'border-box',
               }}
             >
+              {/* Category Title */}
               <h3
                 style={{
-                  fontSize: 'clamp(1rem, 1.2vw, 1.18rem)',
+                  fontSize: 'clamp(1.08rem, 1.25vw, 1.32rem)',
                   fontWeight: 900,
                   color: '#1e1b4b',
-                  margin: '0 0 0.25rem',
-                  lineHeight: 1.15,
-                  whiteSpace: 'nowrap',
+                  margin: '0 0 0.85rem',
+                  lineHeight: 1.16,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  maxWidth: '100%',
+                  letterSpacing: '-0.015em',
                 }}
+                title={card.title}
               >
                 {card.title}
               </h3>
 
-              <p
-                style={{
-                  fontSize: '0.74rem',
-                  color: '#475569',
-                  fontWeight: 600,
-                  margin: '0 0 0.75rem',
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {card.subtitle}
-              </p>
-
-              {/* Pill Button */}
-              <Link
-                to={card.link}
+              {/* White Pill Button (Shop Now ↗) */}
+              <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  padding: '0.38rem 0.95rem',
+                  padding: '0.42rem 1.15rem',
                   borderRadius: '9999px',
-                  background: card.btnBg,
+                  background: '#ffffff',
                   color: card.btnColor,
                   fontWeight: 800,
                   fontSize: '0.74rem',
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  boxShadow: '0 3px 10px rgba(0, 0, 0, 0.08)',
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
                   transition: 'all 0.2s ease',
-                  border: '1px solid rgba(255, 255, 255, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.9)',
                 }}
                 className="womens-pill-btn"
               >
-                <span>Click Now</span>
-                <ArrowUpRight size={13} strokeWidth={2.5} />
-              </Link>
+                <span>Shop Now</span>
+                <ArrowUpRight size={13} strokeWidth={2.6} className="pill-btn-arrow" />
+              </div>
             </div>
 
-            {/* Overlapping 3D Model Cutout (Pops 35px above pill boundary!) */}
+            {/* Right Cutout Image: Popping out over the top rim of the pill card! */}
             <div
               style={{
                 position: 'absolute',
-                right: '6px',
-                bottom: 0,
+                right: card.imgRight || '6px',
+                bottom: card.imgBottom || '0px',
+                height: card.imgHeight || '175px',
                 width: '135px',
-                height: '180px',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                zIndex: 4,
                 pointerEvents: 'none',
-                zIndex: 2,
                 overflow: 'visible',
               }}
+              className="pill-cutout-container"
             >
               <img
-                src={card.modelImg}
+                src={card.image}
                 alt={card.title}
                 style={{
-                  width: '100%',
                   height: '100%',
+                  width: 'auto',
+                  maxWidth: '135px',
                   objectFit: 'contain',
                   objectPosition: 'bottom center',
                   display: 'block',
-                  filter: `drop-shadow(0 12px 16px ${card.shadowColor})`,
-                  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  filter: 'drop-shadow(0 10px 20px rgba(0, 0, 0, 0.14))',
+                  transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease',
                 }}
-                className="womens-pill-img"
+                className="pill-cutout-img"
               />
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
       <style>{`
         .womens-pill-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 18px 36px -8px rgba(124, 58, 237, 0.22) !important;
+          transform: translateY(-5px) scale(1.015);
+          box-shadow: 0 20px 42px -6px var(--card-glow, rgba(124, 58, 237, 0.25)) !important;
         }
-        .womens-pill-card:hover .womens-pill-img {
-          transform: scale(1.06) translateY(-4px);
+        .womens-pill-card:hover .pill-cutout-img {
+          transform: translateY(-6px) scale(1.06);
+          filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.2)) !important;
         }
-        .womens-pill-btn:hover {
-          transform: scale(1.05);
-          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25) !important;
+        .womens-pill-card:hover .womens-pill-btn {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14) !important;
+        }
+        .womens-pill-card:hover .pill-btn-arrow {
+          transform: translate(2px, -2px);
+        }
+        .pill-btn-arrow {
+          transition: transform 0.2s ease;
         }
         @media (max-width: 1200px) {
           .womens-pills-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            row-gap: 40px !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 3rem 1.25rem !important;
           }
         }
         @media (max-width: 640px) {
           .womens-pills-grid {
             grid-template-columns: 1fr !important;
-            row-gap: 35px !important;
+            gap: 3rem !important;
           }
         }
       `}</style>
     </section>
   );
 }
+
