@@ -167,8 +167,8 @@ export default function Navbar() {
             {/* Shop */}
             <div className="nav-item-rel">
               <Link
-                to="/products"
-                className={`nav-pill-link ${isNavActive('/products') && !location.search ? 'active' : ''}`}
+                to="/shop"
+                className={`nav-pill-link ${isNavActive('/shop') || (isNavActive('/products') && !location.search) ? 'active' : ''}`}
               >
                 <span>Shop</span>
               </Link>
@@ -211,8 +211,8 @@ export default function Navbar() {
             {/* Best Sellers */}
             <div className="nav-item-rel">
               <Link
-                to="/products?sort=rating"
-                className={`nav-pill-link ${location.search.includes('rating') ? 'active' : ''}`}
+                to="/best-sellers"
+                className={`nav-pill-link ${isNavActive('/best-sellers') || isNavActive('/bestsellers') ? 'active' : ''}`}
               >
                 <span>Best Sellers</span>
               </Link>
@@ -241,8 +241,8 @@ export default function Navbar() {
             {/* Blog */}
             <div className="nav-item-rel">
               <Link
-                to="/about"
-                className="nav-pill-link"
+                to="/blog"
+                className={`nav-pill-link ${isNavActive('/blog') ? 'active' : ''}`}
               >
                 <span>Blog</span>
               </Link>
@@ -605,7 +605,7 @@ export default function Navbar() {
               <Link to="/new-arrivals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>New Arrivals</span>
               </Link>
-              <Link to="/products?sort=rating" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/best-sellers" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Best Sellers</span>
               </Link>
               <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
@@ -614,8 +614,8 @@ export default function Navbar() {
               <Link to="/contact" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Contact Us</span>
               </Link>
-              <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Blog / Our Story</span>
+              <Link to="/blog" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Blog / Insights</span>
               </Link>
               <Link to="/orders" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Track Order</span>

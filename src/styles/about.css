@@ -1,0 +1,774 @@
+/* ─── About Page & Hero Section Styles (Full-Width 100vh Picky Categories Theme) ─── */
+
+.about-hero-wrapper {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  min-height: calc(100vh - 100px);
+  height: calc(100vh - 100px);
+  background: url('/images/about_hero_flatlay_picky_categories.jpg') center center / cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem 2.5rem 1.5rem;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(233, 213, 255, 0.6);
+}
+
+/* White shadow overlay removed for clean natural image contrast */
+.about-hero-overlay {
+  display: none;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 860px;
+  text-align: center;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.about-hero-title {
+  font-size: clamp(2.2rem, 4.8vw, 3.6rem);
+  font-weight: 800;
+  color: #2e1065;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.2rem;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.6);
+}
+
+.about-hero-subtitle {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 600;
+  color: #6b21a8;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.01em;
+}
+
+.about-hero-subtitle span {
+  font-weight: 700;
+  color: #9333ea;
+}
+
+.about-hero-wave {
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.about-hero-wave svg {
+  width: 90px;
+  height: 18px;
+}
+
+/* Bottom Value Props Grid - Innovative Organic Pill Shape */
+.about-hero-features {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1060px;
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  /* Innovative Organic Asymmetrical Shape */
+  border-radius: 60px 18px 60px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 40px -10px rgba(124, 58, 237, 0.16);
+  padding: 2.2rem 0.5rem 1.5rem 0.5rem;
+  transition: border-radius 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.about-hero-features:hover {
+  /* Dynamic Morphing Shape-Shift on Hover */
+  border-radius: 18px 60px 18px 60px;
+  transform: translateY(-4px);
+  box-shadow: 0 24px 50px -8px rgba(124, 58, 237, 0.24);
+}
+
+/* Floating Top Badge Tag attached to container edge */
+.about-hero-features-badge {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.4rem 1.4rem;
+  border-radius: 30px;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.38);
+  border: 2px solid #ffffff;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.about-feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.75rem 1.25rem;
+  border-right: 1px solid rgba(124, 58, 237, 0.18);
+  transition: transform 0.3s ease;
+}
+
+.about-feature-item:last-child {
+  border-right: none;
+}
+
+.about-feature-item:hover {
+  transform: translateY(-3px);
+}
+
+/* Innovative Squircle Diamond Icon Frame with Rotating Animation */
+.about-feature-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  /* Innovative Organic Asymmetric Squircle */
+  border-radius: 20px 8px 20px 8px;
+  border: 2px solid #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: #7c3aed;
+  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.18);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.4s ease, background 0.4s ease, color 0.4s ease;
+}
+
+.about-feature-icon-wrapper svg {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-feature-item:hover .about-feature-icon-wrapper {
+  transform: rotate(45deg) scale(1.08);
+  border-radius: 8px 20px 8px 20px;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(124, 58, 237, 0.35);
+}
+
+.about-feature-item:hover .about-feature-icon-wrapper svg {
+  /* Counter-rotate icon back 45deg so it stays perfectly upright */
+  transform: rotate(-45deg);
+}
+
+.about-feature-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #3b0764;
+  line-height: 1.35;
+  max-width: 180px;
+}
+
+/* Story and details section styling */
+.about-story-section {
+  padding: 3rem 0;
+}
+
+.about-glass-card {
+  background: var(--color-bg-card, #ffffff);
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--color-border, #e9d5ff);
+  padding: 2.5rem;
+  box-shadow: var(--shadow, 0 4px 20px -2px rgba(124, 58, 237, 0.12));
+}
+
+.about-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.about-stat-box {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.about-stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-primary, #7c3aed);
+  margin-bottom: 0.25rem;
+}
+
+.about-stat-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .about-hero-features {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 0;
+  }
+  
+  .about-feature-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(13, 37, 69, 0.12);
+  }
+
+  .about-feature-item:nth-child(2) {
+    border-right: none;
+  }
+
+  .about-feature-item:nth-child(3),
+  .about-feature-item:nth-child(4) {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-hero-wrapper {
+    min-height: 480px;
+    padding: 2.5rem 1rem 2rem 1rem;
+  }
+
+  .about-hero-features {
+    grid-template-columns: 1fr;
+    gap: 1rem 0;
+  }
+
+  .about-feature-item {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(13, 37, 69, 0.12);
+  }
+
+
+  .about-feature-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* ─── About Feature Block (2-Column Showcase with Innovative Image Radius) ─── */
+.about-feature-block-wrapper {
+  margin: 3.5rem 0 4.5rem 0;
+  padding: 1rem 0;
+}
+
+.about-feature-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+/* Left Column: Image with Innovative Organic Border Radius */
+.about-feature-image-col {
+  position: relative;
+  width: 100%;
+}
+
+.about-feature-image-backdrop {
+  position: absolute;
+  inset: -14px 14px 14px -14px;
+  border-radius: 60px 180px 40px 140px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18) 0%, rgba(56, 189, 248, 0.25) 100%);
+  z-index: 1;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-feature-image-box {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  /* Innovative organic asymmetric border-radius - Steady & Fixed */
+  border-radius: 40px 160px 30px 120px;
+  overflow: hidden;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.16);
+  border: 4px solid #ffffff;
+}
+
+.about-feature-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Floating Glass Badge */
+.about-feature-floating-badge {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.badge-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.badge-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.badge-main-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.badge-sub-text {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Right Column: Typography matching image */
+.about-feature-content-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.about-feature-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.about-feature-main-heading {
+  font-size: clamp(2rem, 3.8vw, 3rem);
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+}
+
+.about-feature-heading-italic {
+  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
+  color: #0f4c5c;
+}
+
+.about-feature-description {
+  font-size: 1.02rem;
+  color: #64748b;
+  line-height: 1.75;
+  margin-bottom: 2rem;
+  max-width: 580px;
+}
+
+/* Checkmark List */
+.about-feature-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.about-feature-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.check-icon-wrapper {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
+.check-text-content {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+
+@media (max-width: 960px) {
+  .about-feature-container {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* ─── 3D Circular Glass Counter Discs (Clean Steady Presentation) ─── */
+.glass-counters-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding: 1.5rem 0;
+}
+
+.glass-counter-disc {
+  position: relative;
+  width: 205px;
+  height: 205px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff 0%, #f6eeef 30%, #ede0fe 70%, #d8b4fe 100%);
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 16px 40px -8px rgba(109, 40, 217, 0.3),
+    inset 0 4px 8px rgba(255, 255, 255, 0.95),
+    inset 0 -6px 14px rgba(124, 58, 237, 0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+}
+
+/* Top Glossy Highlight Arc */
+.disc-gloss-highlight {
+  position: absolute;
+  top: 6px;
+  left: 20px;
+  right: 20px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Top Left Badge - Positioned comfortably inside disc (Zero clipping) */
+.disc-top-badge {
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7 0%, #6d28d9 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.35);
+}
+
+/* Center Content */
+.disc-center-content {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 0.75rem;
+  margin-top: -6px;
+}
+
+.disc-number {
+  font-size: 2.3rem;
+  font-weight: 800;
+  color: #1e1035;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.95);
+}
+
+.disc-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: #581c87;
+  text-transform: uppercase;
+  margin-top: 0.35rem;
+  line-height: 1.25;
+  max-width: 140px;
+}
+
+/* Bottom Purple Wave */
+.disc-bottom-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.disc-wave-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Bottom Right Icon Badge */
+
+/* ─── Testimony Section (Clean Borderless Floating Layout) ─── */
+.testimony-section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 2rem 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  margin: 3.5rem 0;
+  box-shadow: none;
+}
+
+.testimony-leaf-shadow-top,
+.testimony-leaf-shadow-bottom {
+  display: none;
+}
+
+.testimony-header {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.testimony-main-title {
+  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-size: clamp(2.8rem, 5vw, 3.8rem);
+  font-weight: 700;
+  color: #2e1065;
+  margin-bottom: 0.2rem;
+  letter-spacing: -0.01em;
+}
+
+.testimony-author-credit {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  color: #7c3aed;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.testimony-cards-container {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.75rem 3.5rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  align-items: start;
+}
+
+.testimony-card-box {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 2rem 2.25rem 2rem 2.5rem;
+  box-shadow: 0 14px 35px -5px rgba(124, 58, 237, 0.12);
+  border: 1.5px solid #e9d5ff;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.testimony-card-box:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 48px -5px rgba(124, 58, 237, 0.22);
+  border-color: #c084fc;
+}
+
+/* Stagger Right Column vertically for dynamic 2-column presentation */
+.testimony-align-right {
+  margin-top: 48px;
+}
+
+.testimony-align-left {
+  margin-top: 0;
+}
+
+/* Floating Circular Avatar overlapping card edge */
+.testimony-floating-avatar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+  overflow: hidden;
+  background: #f3e8ff;
+  z-index: 3;
+}
+
+.testimony-floating-avatar.avatar-left {
+  left: -30px;
+}
+
+.testimony-floating-avatar.avatar-right {
+  right: -30px;
+}
+
+.testimony-floating-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.testimony-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.testimony-user-name {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.testimony-stars {
+  display: flex;
+  gap: 0.2rem;
+  margin-bottom: 0.35rem;
+}
+
+.testimony-text {
+  font-size: 0.94rem;
+  color: #4c1d95;
+  line-height: 1.65;
+  font-weight: 450;
+}
+
+@media (max-width: 900px) {
+  .testimony-cards-container {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    gap: 2.5rem;
+  }
+  .testimony-align-right {
+    margin-top: 0 !important;
+  }
+  .testimony-floating-avatar.avatar-left {
+    left: -18px;
+    width: 52px;
+    height: 52px;
+  }
+  .testimony-floating-avatar.avatar-right {
+    right: -18px;
+    width: 52px;
+    height: 52px;
+  }
+}
+
+
+
+
+@media (max-width: 900px) {
+  .glass-counters-container {
+    gap: 1.25rem;
+  }
+  .glass-counter-disc {
+    width: 175px;
+    height: 175px;
+  }
+  .disc-number {
+    font-size: 1.9rem;
+  }
+  .disc-label {
+    font-size: 0.62rem;
+  }
+}
+
+/* ─── Parallax Mission & Vision Standalone Section ────────────────── */
+.about-parallax-mission-section {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding: 5rem 1.5rem;
+  background: url('/images/about_mission_parallax_bg.jpg') center center / cover no-repeat fixed;
+  background-attachment: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 4.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.about-parallax-mission-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(30, 16, 53, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.about-parallax-mission-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+.about-parallax-glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px;
+  padding: 3rem 2rem 2.5rem 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}

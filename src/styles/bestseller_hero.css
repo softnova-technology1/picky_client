@@ -1,0 +1,278 @@
+/* ─── Best Sellers Playful Modern Hero Section (Category Flat-Lay Background Theme) ─── */
+
+.bestseller-playful-hero-wrapper {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(248, 240, 255, 0.58) 100%),
+              url('/images/bestseller_category_bg.jpg') center center / cover no-repeat;
+  padding: 4.5rem 1.5rem 5rem 1.5rem;
+  overflow: hidden;
+  border-bottom: 1.5px solid #e9d5ff;
+}
+
+/* Container Frame */
+.bestseller-playful-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Left & Right Side Purple Border Ribbons Removed */
+.bestseller-playful-hero-wrapper::before,
+.bestseller-playful-hero-wrapper::after {
+  display: none;
+}
+
+/* ─── Top Left Floating Cutout & Curly Arrow Doodle ─────────────── */
+.playful-left-cutout-wrap {
+  position: absolute;
+  top: 10px;
+  left: 3%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 5;
+}
+
+.playful-left-avatar-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%);
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.18);
+  overflow: hidden;
+}
+
+.playful-left-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.playful-curly-arrow {
+  width: 70px;
+  height: 70px;
+  margin-top: 5px;
+  margin-left: 15px;
+  transform: rotate(-10deg);
+}
+
+/* ─── Top Right Circular Stamp Badge ────────────────────────────── */
+.playful-stamp-badge {
+  position: absolute;
+  top: 10px;
+  right: 4%;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #e9d5ff;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.playful-stamp-spin-svg {
+  width: 100%;
+  height: 100%;
+  animation: stampSpin 16s linear infinite;
+}
+
+@keyframes stampSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.playful-stamp-center-flower {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Bottom Left Concentric Ring Doodle ────────────────────────── */
+.playful-concentric-doodle {
+  position: absolute;
+  bottom: 20px;
+  left: 12%;
+  width: 70px;
+  height: 70px;
+  color: #7c3aed;
+  opacity: 0.85;
+}
+
+/* ─── Bottom Right Floating Cutout & Blob Shape ──────────────────── */
+.playful-right-cutout-wrap {
+  position: absolute;
+  bottom: 10px;
+  right: 5%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 5;
+}
+
+.playful-blob-bg {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
+  border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.18);
+}
+
+.playful-blob-bg img {
+  width: 90%;
+  height: 90%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.playful-right-badge-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.playful-right-badge-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1e1035;
+}
+
+.playful-right-badge-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* ─── Headline Typography Stack matching reference ─────────────── */
+.playful-title-stack {
+  max-width: 820px;
+  margin: 0 auto 2rem auto;
+  line-height: 1.25;
+}
+
+.playful-title-line {
+  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8);
+}
+
+/* Italic Script Purple Text with Wavy Underline */
+.playful-script-purple {
+  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 600;
+  color: #7c3aed;
+  position: relative;
+  display: inline-block;
+  margin: 0 0.3rem;
+}
+
+.playful-purple-wave-underline {
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  pointer-events: none;
+}
+
+/* Italic Script Yellow/Gold Text with Brush Underline */
+.playful-script-yellow {
+  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 600;
+  color: #d97706;
+  position: relative;
+  display: inline-block;
+  margin: 0 0.3rem;
+}
+
+.playful-yellow-brush-underline {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 14px;
+  pointer-events: none;
+}
+
+/* Subtitle Centered */
+.playful-subtitle {
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  color: #475569;
+  max-width: 620px;
+  margin: 0 auto 2.25rem auto;
+  line-height: 1.65;
+  font-weight: 600;
+}
+
+/* Purple Pill CTA Button with arrow inside circle */
+.playful-cta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1.8rem 0.8rem 2rem;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  border-radius: 50px;
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.35);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.playful-cta-pill:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 16px 35px rgba(124, 58, 237, 0.5);
+}
+
+.playful-cta-arrow-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Tweak */
+@media (max-width: 860px) {
+  .playful-left-cutout-wrap,
+  .playful-right-cutout-wrap,
+  .playful-stamp-badge,
+  .playful-concentric-doodle {
+    display: none;
+  }
+  .bestseller-playful-hero-wrapper {
+    padding: 3rem 1rem 3.5rem 1rem;
+  }
+}

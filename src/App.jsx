@@ -9,6 +9,7 @@ import Categories from './pages/Categories';
 import CategorySubcategories from './pages/CategorySubcategories';
 import ProductList from './pages/ProductList';
 import NewArrivals from './pages/NewArrivals';
+import BestSellers from './pages/BestSellers';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
@@ -21,6 +22,7 @@ import OrderDetail from './pages/OrderDetail';
 import Account from './pages/Account';
 import Contact from './pages/contact/Contact';
 import About from './pages/About';
+import Blog from './pages/Blog';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import NotFound from './pages/NotFound';
@@ -49,6 +51,9 @@ export default function App() {
           <Route path="/categories/:slug" element={<CategorySubcategories />} />
           <Route path="/categories/:slug/:subSlug" element={<ProductList />} />
           <Route path="/new-arrivals" element={<NewArrivals />} />
+          <Route path="/best-sellers" element={<BestSellers />} />
+          <Route path="/bestsellers" element={<BestSellers />} />
+          <Route path="/shop" element={<ProductList />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/search" element={<ProductList />} />
@@ -72,6 +77,7 @@ export default function App() {
           {/* ── Support & Legal ──────────────────────── */}
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<Blog />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
 

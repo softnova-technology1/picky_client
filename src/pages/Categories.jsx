@@ -3,6 +3,11 @@ import PageWrapper from '../components/layout/PageWrapper';
 import CategoryHeroCarousel from '../components/category/CategoryHeroCarousel';
 import WomensPillShowcase from '../components/category/WomensPillShowcase';
 import GlamicsCategoryPills from '../components/category/GlamicsCategoryPills';
+import CategoryBudgetStore from '../components/category/CategoryBudgetStore';
+import CategoryFeaturedDrops from '../components/category/CategoryFeaturedDrops';
+import CategoryPromoBanner from '../components/category/CategoryPromoBanner';
+import CategoryRecommendedDrops from '../components/category/CategoryRecommendedDrops';
+import CategoryTrustStrip from '../components/category/CategoryTrustStrip';
 import { MOCK_CATEGORIES } from '../data/adminMockData';
 import { Sparkles } from 'lucide-react';
 
@@ -46,43 +51,57 @@ export default function Categories() {
           {/* ── 2. Exclusive 4-Pill Showcase (Exact UI with Top-Right 3D Cutout Pop-Out) ── */}
           <WomensPillShowcase />
 
-          {/* ── 3. Balance 6 Categories Quick Access Bar ── */}
-          <div style={{ marginBottom: '2.5rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.25rem',
-              }}
-            >
-              <div
+          {/* ── 3. Explore More Categories Section ── */}
+          <section className="explore-more-categories-section" style={{ marginBottom: '4.5rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <h2
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  color: '#7c3aed',
-                  fontSize: '0.84rem',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
+                  fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
+                  fontWeight: 900,
+                  color: '#1e1b4b',
+                  margin: '0 0 0.35rem',
+                  letterSpacing: '-0.025em',
                 }}
               >
-                <Sparkles size={16} />
-                <span>Explore More Departments ({balance6Categories.length})</span>
-              </div>
-              <span
+                Explore More Categories
+              </h2>
+
+              <p
                 style={{
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
+                  fontSize: '0.92rem',
                   color: '#64748b',
+                  margin: '0 0 0.85rem',
+                  fontWeight: 500,
                 }}
               >
-                Curated Tamil & Lifestyle Essentials
-              </span>
+                Curated Tamil heritage, gourmet snacks, beauty rituals & living essentials
+              </p>
+
+              {/* Decorative Diamond Ornament Divider */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '45px', height: '1.5px', background: 'linear-gradient(90deg, transparent, #c084fc)' }} />
+                <span style={{ color: '#7c3aed', fontSize: '0.75rem' }}>✦ ❖ ✦</span>
+                <div style={{ width: '45px', height: '1.5px', background: 'linear-gradient(90deg, #c084fc, transparent)' }} />
+              </div>
             </div>
+
             <GlamicsCategoryPills categories={balance6Categories} />
-          </div>
+          </section>
+
+          {/* ── 4. Shop By Budget: 4 Interactive Tier Cards ── */}
+          <CategoryBudgetStore />
+
+          {/* ── 5. Top Products: 1 Row of 4 Lumina Product Cards ── */}
+          <CategoryFeaturedDrops />
+
+          {/* ── 6. Mega Deal & Coupon Spotlight Banner (Up to 60% OFF + Click to Copy) ── */}
+          <CategoryPromoBanner />
+
+          {/* ── 7. Most Recommended Products: 1 Row of 4 Lumina Product Cards ── */}
+          <CategoryRecommendedDrops />
+
+          {/* ── 8. Customer Assurance Trust Strip (4 Floating Quality Guarantee Pillars) ── */}
+          <CategoryTrustStrip />
         </div>
       </div>
     </PageWrapper>

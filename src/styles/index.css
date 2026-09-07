@@ -1,4 +1,8 @@
 @import '../pages/contact/contact.css';
+@import './about.css';
+@import './blog.css';
+@import './legal.css';
+@import './bestseller_hero.css';
 
 /* ─── CSS Variables & Purple Design System ──────────────────────── */
 :root {
