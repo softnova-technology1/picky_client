@@ -159,7 +159,7 @@ export default function Signup() {
 
   return (
     <PageWrapper>
-      <div className="section" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', background: '#faf5ff', padding: '3rem 0' }}>
+      <div className="section" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', background: '#ffffff', padding: '3rem 0' }}>
         <div className="container" style={{ maxWidth: '460px' }}>
           <div
             className="card"

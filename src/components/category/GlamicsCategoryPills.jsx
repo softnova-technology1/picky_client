@@ -2,128 +2,178 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
-export default function GlamicsCategoryPills({ categories = [], activeFilter = 'all', onSelectFilter }) {
+// Curated high-resolution photographic images for the 6 departments
+const CATEGORY_IMAGES = {
+  'beauty-personal-care': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&auto=format&fit=crop&q=80',
+  'traditional-tamil-products': 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&auto=format&fit=crop&q=80',
+  'snacks-foods': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80',
+  'home-decor': 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400&auto=format&fit=crop&q=80',
+  'kids-products': 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&auto=format&fit=crop&q=80',
+  'fitness-products': 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80',
+};
+
+export default function GlamicsCategoryPills({ categories = [] }) {
   if (!categories || categories.length === 0) return null;
 
   return (
-    <div className="glamics-pills-section" style={{ marginBottom: '3.5rem' }}>
-      {/* 2-Row Responsive Pill Grid matching Glamics Template */}
+    <div className="glamics-pills-section" style={{ marginBottom: '2.5rem' }}>
+      {/* 2-Row Balanced Responsive Pill Grid (3x2 on desktop) */}
       <div
+        className="glamics-pills-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: '1.25rem',
         }}
       >
         {categories.map((cat) => {
-          const isActive = activeFilter === cat.slug;
+          const imgSrc = CATEGORY_IMAGES[cat.slug] || cat.image || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400';
+
           return (
-            <div
+            <Link
               key={cat._id || cat.slug}
-              onClick={() => onSelectFilter && onSelectFilter(cat.slug)}
+              to={`/categories/${cat.slug}`}
               className="glamics-category-pill"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0.55rem 0.65rem 0.55rem 0.8rem',
+                padding: '0.85rem 1.25rem 0.85rem 1.05rem',
+                minHeight: '74px',
                 borderRadius: '9999px',
-                background: isActive
-                  ? 'linear-gradient(135deg, #f3e8ff 0%, #faf5ff 100%)'
-                  : '#ffffff',
-                border: isActive
-                  ? '1.5px solid #a855f7'
-                  : '1px solid rgba(226, 232, 240, 0.9)',
-                boxShadow: isActive
-                  ? '0 8px 24px rgba(124, 58, 237, 0.12)'
-                  : '0 4px 14px rgba(0, 0, 0, 0.03)',
+                background: '#ffffff',
+                border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                boxShadow: '0 3px 14px rgba(0, 0, 0, 0.03)',
+                textDecoration: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                position: 'relative',
               }}
             >
-              {/* Left Circular Thumbnail Photo */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+              {/* Left Real Photographic Thumbnail & Name */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.95rem', minWidth: 0 }}>
+                {/* 6 Real HD Category Images */}
                 <div
+                  className="glamics-pill-img-box"
                   style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: '50%',
+                    width: 46,
+                    height: 46,
+                    minWidth: 46,
+                    minHeight: 46,
+                    borderRadius: '13px',
                     overflow: 'hidden',
+                    background: '#f1f5f9',
+                    border: '1.5px solid rgba(226, 232, 240, 0.95)',
+                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.06)',
                     flexShrink: 0,
-                    border: '1.5px solid #ede9fe',
-                    background: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.25s ease',
                   }}
                 >
                   <img
-                    src={cat.image}
+                    src={imgSrc}
                     alt={cat.name}
                     style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
+                      display: 'block',
+                      transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                    className="glamics-cat-img"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400';
                     }}
                   />
                 </div>
 
-                {/* Category Name & Short Item Count */}
+                {/* Category Name & Clean Product Count (Badges Removed) */}
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: '0.92rem',
-                      fontWeight: 700,
-                      color: isActive ? '#6b21a8' : '#1e1b4b',
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      color: '#1e1b4b',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      marginBottom: '0.2rem',
+                      letterSpacing: '-0.01em',
                     }}
                   >
                     {cat.name}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#6b7280', fontWeight: 500 }}>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
                     {cat.itemCount || 30}+ Products
                   </div>
                 </div>
               </div>
 
               {/* Right Circular Navigation Chevron Button */}
-              <Link
-                to={`/categories/${cat.slug}`}
-                onClick={(e) => e.stopPropagation()}
+              <div
                 className="glamics-pill-arrow-btn"
                 title={`Explore ${cat.name}`}
                 style={{
-                  width: 34,
-                  height: 34,
+                  width: 36,
+                  height: 36,
                   borderRadius: '50%',
-                  background: isActive ? '#7c3aed' : '#f5f3ff',
-                  color: isActive ? '#ffffff' : '#7c3aed',
+                  background: '#f5f3ff',
+                  color: '#7c3aed',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.22s ease',
                   boxShadow: '0 2px 8px rgba(124, 58, 237, 0.1)',
                 }}
               >
-                <ChevronRight size={17} strokeWidth={2.4} />
-              </Link>
-            </div>
+                <ChevronRight size={17} strokeWidth={2.5} className="glamics-chevron-icon" />
+              </div>
+            </Link>
           );
         })}
       </div>
 
       <style>{`
         .glamics-category-pill:hover {
-          transform: translateY(-2px);
+          transform: translateY(-3px);
           border-color: #c084fc !important;
-          box-shadow: 0 10px 24px rgba(124, 58, 237, 0.1) !important;
-          background: #faf5ff !important;
+          box-shadow: 0 14px 28px -4px rgba(124, 58, 237, 0.14), 0 0 0 1px #d8b4fe !important;
+          background: #faf8ff !important;
+        }
+        .glamics-category-pill:hover .glamics-pill-img-box {
+          transform: scale(1.06);
+          border-color: #c084fc !important;
+          box-shadow: 0 6px 16px rgba(124, 58, 237, 0.2) !important;
+        }
+        .glamics-category-pill:hover .glamics-cat-img {
+          transform: scale(1.1);
         }
         .glamics-category-pill:hover .glamics-pill-arrow-btn {
           background: #7c3aed !important;
           color: #ffffff !important;
-          transform: scale(1.08);
+          transform: scale(1.06);
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35) !important;
+        }
+        .glamics-category-pill:hover .glamics-chevron-icon {
+          transform: translateX(2px);
+        }
+        .glamics-chevron-icon {
+          transition: transform 0.2s ease;
+        }
+        @media (max-width: 1024px) {
+          .glamics-pills-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .glamics-pills-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
         }
       `}</style>
     </div>

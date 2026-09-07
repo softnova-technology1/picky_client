@@ -13,7 +13,7 @@ export default function NotFound() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#faf5ff',
+          background: '#ffffff',
           padding: '4rem 1rem',
         }}
       >

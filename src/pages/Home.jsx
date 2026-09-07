@@ -77,7 +77,7 @@ export default function Home() {
       </section>
 
       {/* ── Promotional Special Offer Banner ─────────────────────────────── */}
-      <section className="section" style={{ padding: '2rem 0 5rem', background: '#faf5ff' }}>
+      <section className="section" style={{ padding: '2rem 0 5rem', background: '#ffffff' }}>
         <div className="container">
           <div
             style={{

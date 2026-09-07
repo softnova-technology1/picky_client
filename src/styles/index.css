@@ -45,8 +45,7 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font);
   color: var(--color-text);
-  background: linear-gradient(180deg, #faf5ff 0%, #f6ecfc 45%, #ede0f9 100%);
-  background-attachment: fixed;
+  background: #ffffff;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }

@@ -12,7 +12,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
   const safeCategories = categories && categories.length > 0 ? categories : [];
   const currentCategory = safeCategories[currentIdx] || null;
 
-  // Grab the top-selling product in this active category for the innovative mini-preview
+  // Top product preview (if any)
   const topProduct = useMemo(() => {
     if (!currentCategory) return null;
     const catSlug = currentCategory.slug || currentCategory._id;
@@ -34,12 +34,12 @@ export default function CategoryHeroCarousel({ categories = [] }) {
     setTimeout(() => setIsTransitioning(false), 250);
   };
 
-  // Auto-play interval: exactly 1 second (1000ms) gap as requested by user
+  // Auto-play interval: smooth 3.5s with pause on hover for calm, premium interaction
   useEffect(() => {
     if (isPaused || safeCategories.length <= 1) return;
     timerRef.current = setInterval(() => {
       handleNext();
-    }, 1000);
+    }, 3500);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -53,111 +53,156 @@ export default function CategoryHeroCarousel({ categories = [] }) {
       onMouseLeave={() => setIsPaused(false)}
       style={{
         width: '100%',
-        height: 'calc(100vh - 175px)',
+        height: 'clamp(520px, 78vh, 720px)',
         minHeight: '520px',
-        maxHeight: '740px',
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.15fr)',
-        gap: 'clamp(1rem, 2vw, 1.5rem)',
+        gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1.05fr)',
+        gap: 'clamp(1rem, 2vw, 1.75rem)',
         alignItems: 'stretch',
       }}
     >
-      {/* ── 1. Master Showcase Card (Glamics High-Fashion Editorial) ── */}
+      {/* ── 1. Master Editorial Showcase Card (Glamics High-Fashion Editorial) ── */}
       <div
         className="hero-static-card"
         style={{
-          background: 'linear-gradient(135deg, #e4e4e4 0%, #dfdfdf 50%, #d8d8d8 100%)',
+          background: 'linear-gradient(135deg, #f8f6fd 0%, #f1ecfa 45%, #e7def7 100%)',
           borderRadius: '32px',
           overflow: 'hidden',
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
           height: '100%',
-          padding: 'clamp(1.75rem, 4vw, 3.5rem) clamp(1.75rem, 4vw, 3.5rem)',
-          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.05)',
-          border: '1px solid rgba(215, 215, 215, 0.9)',
+          padding: 'clamp(2rem, 4vw, 3.8rem) clamp(2rem, 4vw, 3.8rem)',
+          boxShadow: '0 20px 50px -12px rgba(124, 58, 237, 0.12)',
+          border: '1px solid rgba(216, 180, 254, 0.55)',
         }}
       >
-        {/* Left Typography & CTAs (Strictly constrained to left 48% column) */}
+        {/* Left Column Typography & Actions */}
         <div
           style={{
             position: 'relative',
             zIndex: 3,
-            maxWidth: '450px',
+            maxWidth: '520px',
           }}
         >
-          {/* Subtitle (Glamics Clean Text Style) */}
+          {/* Subtle Tag Pill */}
           <div
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'rgba(124, 58, 237, 0.08)',
+              border: '1px solid rgba(124, 58, 237, 0.2)',
               color: '#7c3aed',
-              fontSize: 'clamp(0.85rem, 1.1vw, 0.98rem)',
-              fontWeight: 700,
+              fontSize: 'clamp(0.75rem, 0.95vw, 0.86rem)',
+              fontWeight: 800,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              marginBottom: '1rem',
+              padding: '0.35rem 0.9rem',
+              borderRadius: '9999px',
+              marginBottom: '1.25rem',
+              backdropFilter: 'blur(8px)',
             }}
           >
-            Perfect for Summer Evenings
+            <Sparkles size={14} className="hero-sparkle-spin" />
+            <span>Summer Editorial 2026</span>
           </div>
 
-          {/* Big Bold Editorial Headline (Deep Ink Violet Contrast) */}
+          {/* Big Bold Editorial Headline */}
           <h1
             style={{
-              fontSize: 'clamp(2.3rem, 4vw, 3.6rem)',
+              fontSize: 'clamp(2.4rem, 4.2vw, 3.8rem)',
               fontWeight: 900,
               color: '#181126',
               lineHeight: 1.1,
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.035em',
               margin: '0 0 1.25rem',
             }}
           >
-            Casual and Stylish for All Seasons
-          </h1>
-
-          {/* Price Callout */}
-          <div
-            style={{
-              fontSize: 'clamp(0.95rem, 1.2vw, 1.1rem)',
-              color: '#52525b',
-              fontWeight: 600,
-              marginBottom: '2rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem',
-            }}
-          >
-            <span>Starting From</span>
+            Casual &amp; Stylish <br />
             <span
               style={{
-                color: '#7c3aed',
-                fontSize: 'clamp(1.5rem, 2.2vw, 2rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.02em',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
               }}
             >
-              ₹129
+              for All Seasons
             </span>
+          </h1>
+
+          {/* Price Callout & Feature Badges */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              marginBottom: '2.25rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'baseline',
+                gap: '0.5rem',
+                background: '#ffffff',
+                padding: '0.45rem 1.1rem',
+                borderRadius: '9999px',
+                border: '1px solid #e9d5ff',
+                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+              }}
+            >
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Starting From</span>
+              <span
+                style={{
+                  color: '#7c3aed',
+                  fontSize: 'clamp(1.4rem, 2vw, 1.85rem)',
+                  fontWeight: 900,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                ₹129
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: 'rgba(255, 255, 255, 0.7)',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '9999px',
+                border: '1px solid rgba(221, 214, 254, 0.7)',
+                color: '#6b21a8',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+              }}
+            >
+              <span>🔥 100% Quality Inspected</span>
+            </div>
           </div>
 
-          {/* Shop Now Glamics Minimalist Outline Pill Button */}
+          {/* Shop Now High-Fashion Capsule CTA */}
           <Link
             to="/products"
-            className="glamics-outline-shop-btn"
+            className="glamics-hero-cta-btn"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.85rem',
-              padding: '0.85rem 2.25rem',
+              padding: '0.95rem 2.4rem',
               borderRadius: '9999px',
-              border: '2px solid #181126',
-              background: 'transparent',
-              color: '#181126',
+              background: '#181126',
+              color: '#ffffff',
               fontWeight: 800,
-              fontSize: '0.9rem',
+              fontSize: '0.92rem',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               textDecoration: 'none',
-              transition: 'all 0.25s ease',
+              boxShadow: '0 10px 25px rgba(24, 17, 38, 0.25)',
+              transition: 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             <span>SHOP NOW</span>
@@ -170,14 +215,14 @@ export default function CategoryHeroCarousel({ categories = [] }) {
           className="hero-model-bg"
           style={{
             position: 'absolute',
-            right: 0,
+            right: '-2%',
             bottom: 0,
             top: 0,
-            width: '68%',
+            width: '62%',
             pointerEvents: 'none',
             overflow: 'hidden',
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.85) 15%, black 35%)',
-            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.85) 15%, black 35%)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.85) 18%, black 42%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.85) 18%, black 42%)',
           }}
         >
           <img
@@ -187,7 +232,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              objectPosition: 'center 10%',
+              objectPosition: 'center 12%',
               display: 'block',
             }}
           />
@@ -202,9 +247,10 @@ export default function CategoryHeroCarousel({ categories = [] }) {
               right: '16px',
               transform: 'translateY(-50%)',
               zIndex: 10,
-              background: '#ffffff',
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
               borderRadius: '9999px',
-              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.16)',
+              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.18)',
               display: 'flex',
               flexDirection: 'column',
               padding: '0.4rem 0.25rem',
@@ -260,16 +306,16 @@ export default function CategoryHeroCarousel({ categories = [] }) {
         )}
       </div>
 
-      {/* ── 2. Category Carousel Card (Right - Glamics Matching Bright Fashion Style) ── */}
+      {/* ── 2. Category Carousel Card (Right - Curated Department Showcase) ── */}
       {currentCategory && (
         <div
           className="hero-category-carousel-card"
           style={{
-            background: '#eef0f4',
+            background: '#1a0f2e',
             borderRadius: '32px',
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 20px 50px -12px rgba(124, 58, 237, 0.2)',
             border: '1px solid rgba(215, 215, 222, 0.85)',
             display: 'flex',
             flexDirection: 'column',
@@ -282,36 +328,95 @@ export default function CategoryHeroCarousel({ categories = [] }) {
               position: 'absolute',
               inset: 0,
               overflow: 'hidden',
-              background: '#e8ebf0',
+              background: '#24143f',
             }}
           >
             <img
               key={currentCategory.slug || currentCategory._id}
-              src={currentCategory.slug === 'womens-fashion' ? '/images/glamics_summer_model.jpg' : (currentCategory.image || '/images/glamics_summer_model.jpg')}
+              src={
+                currentCategory.slug === 'womens-fashion'
+                  ? '/images/glamics_summer_model.jpg'
+                  : currentCategory.image || '/images/glamics_summer_model.jpg'
+              }
               alt={currentCategory.name}
               className={`category-carousel-img ${isTransitioning ? 'fade-out' : 'fade-in'}`}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                objectPosition: 'center 10%',
+                objectPosition: 'center 12%',
                 display: 'block',
-                transition: 'transform 0.4s ease, opacity 0.25s ease',
+                transition: 'transform 0.5s ease, opacity 0.25s ease',
               }}
             />
 
-            {/* Deep Violet Gradient Scrim at Bottom for Clean Readability */}
+            {/* Radiant Top & Bottom Gradient Scrim for Flawless Readability */}
             <div
               style={{
                 position: 'absolute',
                 inset: 0,
                 background:
-                  'linear-gradient(180deg, transparent 0%, rgba(20, 10, 36, 0.15) 50%, rgba(15, 6, 28, 0.88) 100%)',
+                  'linear-gradient(180deg, rgba(16, 8, 30, 0.55) 0%, rgba(16, 8, 30, 0.1) 35%, rgba(12, 5, 24, 0.92) 85%, rgba(12, 5, 24, 0.98) 100%)',
               }}
             />
           </div>
 
-          {/* Bottom Floating Card: Clean Title & Explore CTA */}
+          {/* Top Status Header */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: 'clamp(1.2rem, 2.5vw, 1.75rem) clamp(1.2rem, 2.5vw, 1.75rem) 0',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                background: 'rgba(255, 255, 255, 0.18)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: '#ffffff',
+                fontSize: '0.76rem',
+                fontWeight: 800,
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                letterSpacing: '0.06em',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              }}
+            >
+              <span>{String(currentIdx + 1).padStart(2, '0')}</span>
+              <span style={{ opacity: 0.6 }}>/</span>
+              <span>{String(safeCategories.length).padStart(2, '0')}</span>
+              <span style={{ opacity: 0.6 }}>•</span>
+              <span>DEPARTMENT</span>
+            </div>
+
+            {currentCategory.badge && (
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, #c026d3 0%, #7c3aed 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  padding: '0.25rem 0.7rem',
+                  borderRadius: '9999px',
+                  boxShadow: '0 4px 12px rgba(124, 58, 237, 0.4)',
+                }}
+              >
+                {currentCategory.badge}
+              </span>
+            )}
+          </div>
+
+          {/* Bottom Floating Information: Department Name, Subtext & Explore CTA */}
           <div
             style={{
               marginTop: 'auto',
@@ -324,17 +429,35 @@ export default function CategoryHeroCarousel({ categories = [] }) {
             {/* Category Title */}
             <h2
               style={{
-                fontSize: 'clamp(1.7rem, 2.5vw, 2.3rem)',
+                fontSize: 'clamp(1.8rem, 2.8vw, 2.5rem)',
                 fontWeight: 900,
                 color: '#ffffff',
-                margin: '0 0 1.35rem',
-                letterSpacing: '-0.02em',
+                margin: '0 0 0.5rem',
+                letterSpacing: '-0.025em',
                 lineHeight: 1.15,
-                textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+                textShadow: '0 2px 14px rgba(0, 0, 0, 0.6)',
               }}
             >
               {currentCategory.name}
             </h2>
+
+            {/* Subtext description */}
+            {currentCategory.subtext && (
+              <p
+                style={{
+                  fontSize: '0.86rem',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  margin: '0 0 1.25rem',
+                  lineHeight: 1.45,
+                  textShadow: '0 1px 6px rgba(0,0,0,0.5)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {currentCategory.subtext}
+              </p>
+            )}
 
             {/* Explore Department CTA Button */}
             <Link
@@ -344,21 +467,34 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 width: '100%',
-                padding: '0.85rem 1.4rem',
+                padding: '0.9rem 1.5rem',
                 borderRadius: '9999px',
                 background: '#ffffff',
-                color: '#7c3aed',
+                color: '#6b21a8',
                 fontWeight: 800,
-                fontSize: '0.88rem',
+                fontSize: '0.9rem',
                 letterSpacing: '0.04em',
                 textDecoration: 'none',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.18)',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.28)',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               className="category-card-cta"
             >
               <span>EXPLORE {currentCategory.name.toUpperCase()}</span>
-              <ArrowUpRight size={18} strokeWidth={2.4} />
+              <div
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #f5f0ff 0%, #e9ddfd 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7c3aed',
+                }}
+              >
+                <ArrowUpRight size={17} strokeWidth={2.6} />
+              </div>
             </Link>
 
             {/* Interactive Dots / Progress Tracker with Purple Gradient Glow */}
@@ -367,7 +503,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                gap: '0.35rem',
+                gap: '0.4rem',
                 marginTop: '1.25rem',
               }}
             >
@@ -380,15 +516,18 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                     setTimeout(() => setIsTransitioning(false), 250);
                   }}
                   style={{
-                    height: '4px',
-                    width: currentIdx === idx ? '26px' : '6px',
+                    height: '5px',
+                    width: currentIdx === idx ? '28px' : '6px',
                     borderRadius: '9999px',
-                    background: currentIdx === idx ? 'linear-gradient(90deg, #a855f7 0%, #c084fc 100%)' : 'rgba(255, 255, 255, 0.28)',
-                    boxShadow: currentIdx === idx ? '0 0 10px rgba(168, 85, 247, 0.8)' : 'none',
+                    background:
+                      currentIdx === idx
+                        ? 'linear-gradient(90deg, #a855f7 0%, #d8b4fe 100%)'
+                        : 'rgba(255, 255, 255, 0.35)',
+                    boxShadow: currentIdx === idx ? '0 0 10px rgba(168, 85, 247, 0.9)' : 'none',
                     border: 'none',
                     padding: 0,
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
+                    transition: 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                   aria-label={`Go to category ${idx + 1}`}
                   title={cat.name}
@@ -399,42 +538,46 @@ export default function CategoryHeroCarousel({ categories = [] }) {
         </div>
       )}
 
-      {/* Styles */}
+      {/* Embedded Component Styles */}
       <style>{`
-        .hero-shop-pill-btn:hover,
-        .glamics-outline-shop-btn:hover {
-          background: #7c3aed !important;
+        .glamics-hero-cta-btn:hover {
+          background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%) !important;
           color: #ffffff !important;
-          border-color: #7c3aed !important;
           transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 12px 30px rgba(124, 58, 237, 0.4) !important;
+          box-shadow: 0 14px 32px rgba(124, 58, 237, 0.45) !important;
         }
         .carousel-arrow-btn:hover {
           background: #f5f3ff !important;
           color: #7c3aed !important;
-          transform: scale(1.12);
+          transform: scale(1.14);
         }
         .category-carousel-img.fade-in {
           opacity: 1;
           transform: scale(1);
         }
         .category-carousel-img.fade-out {
-          opacity: 0.75;
-          transform: scale(1.03);
+          opacity: 0.8;
+          transform: scale(1.04);
         }
         .hero-category-carousel-card:hover .category-carousel-img {
-          transform: scale(1.05);
+          transform: scale(1.06);
         }
         .hero-category-carousel-card:hover .category-card-cta,
         .category-card-cta:hover {
           background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
           color: #ffffff !important;
-          box-shadow: 0 10px 30px rgba(124, 58, 237, 0.55) !important;
+          box-shadow: 0 12px 30px rgba(124, 58, 237, 0.55) !important;
         }
-        .carousel-top-product-pill:hover {
-          background: rgba(124, 58, 237, 0.35) !important;
-          border-color: rgba(216, 180, 254, 0.7) !important;
-          transform: translateY(-1px);
+        .category-card-cta:hover div {
+          background: #ffffff !important;
+          color: #7c3aed !important;
+        }
+        .hero-sparkle-spin {
+          animation: sparkleGlow 2.5s ease-in-out infinite;
+        }
+        @keyframes sparkleGlow {
+          0%, 100% { opacity: 0.85; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.15) rotate(15deg); }
         }
         @media (max-width: 1024px) {
           .category-hero-wrapper {
@@ -448,7 +591,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
             min-height: 480px !important;
           }
           .hero-model-bg {
-            opacity: 0.4 !important;
+            opacity: 0.35 !important;
             width: 75% !important;
           }
         }
@@ -456,4 +599,3 @@ export default function CategoryHeroCarousel({ categories = [] }) {
     </div>
   );
 }
-

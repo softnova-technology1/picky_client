@@ -132,7 +132,7 @@ export default function Login() {
 
   return (
     <PageWrapper>
-      <div className="section" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', background: '#faf5ff' }}>
+      <div className="section" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', background: '#ffffff' }}>
         <div className="container" style={{ maxWidth: '440px' }}>
           <div className="card" style={{ padding: '2.5rem 2rem', boxShadow: '0 12px 36px rgba(124, 58, 237, 0.12)', border: '1px solid #e9d5ff' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>

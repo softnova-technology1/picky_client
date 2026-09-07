@@ -58,7 +58,7 @@ export default function CategorySubcategories() {
 
   return (
     <PageWrapper>
-      <div style={{ background: 'linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%)', minHeight: '80vh', padding: '2rem 0 5rem' }}>
+      <div style={{ background: '#ffffff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
         <div className="container">
           {/* Breadcrumbs */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#64748b', marginBottom: '2rem', flexWrap: 'wrap' }}>
