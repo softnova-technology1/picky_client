@@ -74,7 +74,7 @@ export default function CategoryRecommendedDrops() {
       {/* Centered View Best Rated CTA */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <Link
-          to="/products?sort=rating"
+          to="/best-sellers"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

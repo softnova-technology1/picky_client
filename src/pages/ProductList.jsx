@@ -10,7 +10,7 @@ import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
 import { getProducts, categories as defaultCategories, searchProducts } from '../data';
 import { MOCK_CATEGORIES } from '../data/adminMockData';
-import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Grid3X3, LayoutGrid } from 'lucide-react';
+import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Grid3X3, LayoutGrid, Sparkles, ArrowRight, Check, ChevronRight } from 'lucide-react';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();
