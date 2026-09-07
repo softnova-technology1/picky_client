@@ -1,35 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageWrapper from '../components/layout/PageWrapper';
-import Spinner from '../components/ui/Spinner';
+import ProductCard from '../components/product/ProductCard';
 import { categoryService } from '../services/category.service';
-import { getCategoryBySlug, getSubcategoriesByCategory } from '../data';
-import { Sparkles, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
+import { getCategoryBySlug, getSubcategoriesByCategory, getProducts } from '../data';
+import { Sparkles, ChevronRight, ArrowLeft, ArrowRight, Layers, ShoppingBag } from 'lucide-react';
 
 export default function CategorySubcategories() {
   const { slug } = useParams();
   const [category, setCategory] = useState(() => getCategoryBySlug(slug));
   const [subcategories, setSubcategories] = useState(() => getSubcategoriesByCategory(slug));
-  const [loading, setLoading] = useState(false);
+  const [categoryProducts, setCategoryProducts] = useState(() => getProducts({ category: slug, limit: 4 }));
 
   useEffect(() => {
     async function load() {
       try {
         const catRes = await categoryService.getBySlug(slug);
         const catData = catRes?.data || catRes;
-        if (catData) {
+        if (catData && catData.name) {
           setCategory(catData);
           const subList = catData.subcategories || getSubcategoriesByCategory(slug);
           setSubcategories(subList);
+        } else {
+          const fallbackCat = getCategoryBySlug(slug);
+          if (fallbackCat) {
+            setCategory(fallbackCat);
+            setSubcategories(fallbackCat.subcategories || []);
+          }
         }
       } catch (err) {
-        console.error('Failed to load category subcategories:', err);
         const fallbackCat = getCategoryBySlug(slug);
         if (fallbackCat) {
           setCategory(fallbackCat);
           setSubcategories(fallbackCat.subcategories || []);
         }
       }
+      setCategoryProducts(getProducts({ category: slug, limit: 4 }));
     }
     load();
   }, [slug]);
@@ -40,7 +46,7 @@ export default function CategorySubcategories() {
         <div className="section container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
           <h2>Category Not Found</h2>
           <p style={{ color: '#64748b', marginTop: '0.5rem' }}>
-            The category you are looking for does not exist or has been moved.
+            The department you are looking for does not exist or has been moved.
           </p>
           <Link to="/categories" className="btn btn-primary" style={{ marginTop: '1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
             Back to All Categories <ArrowRight size={16} />
@@ -63,7 +69,7 @@ export default function CategorySubcategories() {
             <span style={{ color: '#7c3aed', fontWeight: 700 }}>{category.name}</span>
           </div>
 
-          {/* Category Banner Header */}
+          {/* Department Showcase Hero Header */}
           <div
             style={{
               background: 'white',
@@ -71,7 +77,7 @@ export default function CategorySubcategories() {
               padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
               marginBottom: '2.5rem',
               boxShadow: '0 10px 30px rgba(124, 58, 237, 0.08)',
-              border: '1px solid rgba(192, 132, 252, 0.4)',
+              border: '1.5px solid rgba(192, 132, 252, 0.4)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -79,12 +85,12 @@ export default function CategorySubcategories() {
               gap: '1.5rem',
             }}
           >
-            <div style={{ maxWidth: '640px' }}>
+            <div style={{ maxWidth: '680px' }}>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  gap: '0.45rem',
                   background: '#f3e8ff',
                   color: '#6d28d9',
                   border: '1px solid #e9d5ff',
@@ -94,56 +100,77 @@ export default function CategorySubcategories() {
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  marginBottom: '0.75rem',
+                  marginBottom: '0.85rem',
                 }}
               >
                 <Sparkles size={14} color="#7c3aed" /> Department Showcase
               </div>
               <h1 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.6rem)', margin: '0 0 0.5rem', color: '#0f172a' }}>
-                {category.name} Sub-Categories
+                {category.icon ? `${category.icon} ` : ''}{category.name}
               </h1>
               <p style={{ color: '#64748b', fontSize: '1.02rem', margin: 0, lineHeight: 1.6 }}>
-                {category.description || 'Select a sub-category below to view curated products and special festival packs.'}
+                {category.subtext || category.description || `Browse curated collections and popular styles in ${category.name}.`}
               </p>
             </div>
 
-            <Link
-              to="/categories"
-              className="btn btn-outline"
-              style={{
-                borderRadius: '9999px',
-                borderColor: '#c084fc',
-                color: '#6d28d9',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-              }}
-            >
-              <ArrowLeft size={16} /> All Categories
-            </Link>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <Link
+                to="/categories"
+                className="btn btn-outline"
+                style={{
+                  borderRadius: '9999px',
+                  borderColor: '#c084fc',
+                  color: '#6d28d9',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <ArrowLeft size={16} /> All Categories
+              </Link>
+              <Link
+                to={`/products?category=${category.slug || category._id}`}
+                className="btn btn-primary"
+                style={{
+                  borderRadius: '9999px',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <ShoppingBag size={16} /> View All {category.name}
+              </Link>
+            </div>
           </div>
 
           {/* Sub-Categories Grid */}
-          <div style={{ marginBottom: '3rem' }}>
+          <div style={{ marginBottom: '3.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.4rem', color: '#1e293b', margin: 0 }}>
-                Choose a Collection ({subcategories.length})
-              </h2>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Layers size={20} color="#7c3aed" /> Browse by Collection ({subcategories.length})
+                </h2>
+                <p style={{ margin: '0.2rem 0 0', color: '#64748b', fontSize: '0.88rem' }}>
+                  Select a specific category to filter and shop matching items.
+                </p>
+              </div>
             </div>
 
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: '1.75rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '1.5rem',
               }}
             >
               {subcategories.map((sub) => (
                 <Link
                   key={sub._id || sub.slug}
-                  to={`/categories/${category.slug}/${sub.slug}`}
+                  to={`/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`}
                   style={{
                     textDecoration: 'none',
                     background: 'white',
@@ -193,17 +220,17 @@ export default function CategorySubcategories() {
                         border: '1px solid rgba(192, 132, 252, 0.4)',
                       }}
                     >
-                      {sub.itemCount ? `${sub.itemCount} Items` : 'Available'}
+                      {sub.itemCount ? `${sub.itemCount} Items` : 'In Stock'}
                     </div>
                   </div>
 
                   {/* Body Info */}
-                  <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <h3 style={{ fontSize: '1.2rem', color: '#0f172a', margin: '0 0 0.5rem', fontWeight: 800 }}>
+                  <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <h3 style={{ fontSize: '1.15rem', color: '#0f172a', margin: '0 0 0.4rem', fontWeight: 800 }}>
                       {sub.name}
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem', flex: 1 }}>
-                      {sub.description}
+                    <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem', flex: 1 }}>
+                      {sub.description || `Explore trending ${sub.name.toLowerCase()} curated for quality.`}
                     </p>
 
                     <div
@@ -221,7 +248,7 @@ export default function CategorySubcategories() {
                       }}
                       className="subcat-action-btn"
                     >
-                      <span>Explore Products</span>
+                      <span>Shop {sub.name}</span>
                       <ArrowRight size={16} />
                     </div>
                   </div>
@@ -230,7 +257,35 @@ export default function CategorySubcategories() {
             </div>
           </div>
 
-          {/* Quick Option to browse all products in this category */}
+          {/* Featured Highlights from this Category */}
+          {categoryProducts.length > 0 && (
+            <div style={{ marginBottom: '3rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Sparkles size={20} color="#7c3aed" /> Top Picks in {category.name}
+                  </h2>
+                  <p style={{ margin: '0.2rem 0 0', color: '#64748b', fontSize: '0.88rem' }}>
+                    Customer favorites and highest rated items ready for fast dispatch.
+                  </p>
+                </div>
+                <Link
+                  to={`/products?category=${category.slug || category._id}`}
+                  style={{ color: '#7c3aed', fontWeight: 700, fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  View All ({category.itemCount || 10}+ Items) <ArrowRight size={15} />
+                </Link>
+              </div>
+
+              <div className="grid-4">
+                {categoryProducts.map((prod) => (
+                  <ProductCard key={prod._id || prod.id} product={prod} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Option to browse full catalog */}
           <div
             style={{
               textAlign: 'center',
@@ -241,10 +296,10 @@ export default function CategorySubcategories() {
             }}
           >
             <p style={{ margin: '0 0 0.85rem', color: '#581c87', fontWeight: 700, fontSize: '1.02rem' }}>
-              Want to see all {category.name} crackers without filtering by sub-category?
+              Want to see all {category.name} products with instant filters and sorting?
             </p>
             <Link
-              to={`/products?category=${category._id || category.slug}`}
+              to={`/products?category=${category.slug || category._id}`}
               className="btn btn-primary"
               style={{
                 borderRadius: '9999px',
@@ -255,7 +310,7 @@ export default function CategorySubcategories() {
                 gap: '0.5rem',
               }}
             >
-              Browse All {category.name} ({category.itemCount || 10}+ Items) <ArrowRight size={16} />
+              Browse All {category.name} <ArrowRight size={16} />
             </Link>
           </div>
         </div>
@@ -279,3 +334,4 @@ export default function CategorySubcategories() {
     </PageWrapper>
   );
 }
+

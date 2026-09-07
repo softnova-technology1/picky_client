@@ -170,6 +170,13 @@ export default function Login() {
                   Send OTP ➔
                 </Button>
 
+                <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.9rem', color: '#475569' }}>
+                  New to Picky?{' '}
+                  <Link to="/signup" style={{ color: '#7c3aed', fontWeight: 700, textDecoration: 'none' }}>
+                    Create an Account ➔
+                  </Link>
+                </div>
+
                 <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: '#64748b' }}>
                   By signing in, you agree to our <Link to="/terms" style={{ textDecoration: 'underline' }}>Terms of Service</Link> and <Link to="/privacy" style={{ textDecoration: 'underline' }}>Privacy Policy</Link>.
                 </div>

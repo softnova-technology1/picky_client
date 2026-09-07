@@ -50,10 +50,10 @@ export default function Home() {
           >
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#7c3aed', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>
-                <Sparkles size={16} /> Sivakasi Fresh Stock
+                <Sparkles size={16} /> Handpicked Highlights
               </div>
               <h2 style={{ margin: 0, fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', color: '#0f172a' }}>
-                Trending Festive Fireworks
+                Trending Products & Bestsellers
               </h2>
             </div>
             <Link

@@ -36,12 +36,30 @@ export default function Checkout() {
   const { user } = useAuthStore();
   const { showToast } = useUiStore();
 
-  const [address, setAddress] = useState({
-    street: user?.defaultAddress?.street || user?.addresses?.[0]?.street || '',
-    city: user?.defaultAddress?.city || user?.addresses?.[0]?.city || 'Chennai',
-    state: user?.defaultAddress?.state || user?.addresses?.[0]?.state || 'Tamil Nadu',
-    pincode: user?.defaultAddress?.pincode || user?.addresses?.[0]?.pincode || '',
-    landmark: user?.defaultAddress?.landmark || '',
+  const [address, setAddress] = useState(() => {
+    try {
+      const saved = localStorage.getItem('picky-saved-addresses');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const def = parsed.find((a) => a.isDefault) || parsed[0];
+        if (def) {
+          return {
+            street: def.street || '',
+            city: def.city || 'Chennai',
+            state: def.state || 'Tamil Nadu',
+            pincode: def.pincode || '',
+            landmark: def.landmark || '',
+          };
+        }
+      }
+    } catch (_) {}
+    return {
+      street: user?.defaultAddress?.street || user?.addresses?.[0]?.street || '',
+      city: user?.defaultAddress?.city || user?.addresses?.[0]?.city || 'Chennai',
+      state: user?.defaultAddress?.state || user?.addresses?.[0]?.state || 'Tamil Nadu',
+      pincode: user?.defaultAddress?.pincode || user?.addresses?.[0]?.pincode || '',
+      landmark: user?.defaultAddress?.landmark || '',
+    };
   });
 
   const [loading, setLoading] = useState(false);
@@ -131,7 +149,7 @@ export default function Checkout() {
             const order = verifyRes?.data || verifyRes;
             clearCart();
             showToast('🎉 Payment Successful! Order placed and confirmed.', 'success');
-            navigate(`/orders/${order._id || order.id}`);
+            navigate(`/order-success/${order._id || order.id}`);
           } catch (err) {
             showToast(err.message || 'Payment verification failed', 'error');
           } finally {

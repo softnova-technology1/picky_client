@@ -17,6 +17,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { PICKY_CATEGORIES } from '../../data/categoriesData';
+import GlamicsMarqueeTicker from '../category/GlamicsMarqueeTicker';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,7 +86,7 @@ export default function Navbar() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      navigate(`/products?q=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchOpen(false);
       setIsMobileMenuOpen(false);
       setSearchTerm('');
@@ -93,7 +94,7 @@ export default function Navbar() {
   };
 
   const handleQuickSearch = (term) => {
-    navigate(`/search?q=${encodeURIComponent(term)}`);
+    navigate(`/products?q=${encodeURIComponent(term)}`);
     setIsSearchOpen(false);
     setIsMobileMenuOpen(false);
   };
@@ -105,15 +106,8 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ── 1. Top Announcement Bar (Slanted "Crosh" Style at Limited Time Place) ── */}
-      <div className="top-announcement-bar">
-        <div className="top-announcement-crosh">
-          <span className="top-crosh-badge">LIMITED TIME</span>
-          <span>
-            ⚡ <strong>Special Offer:</strong> Free express delivery on orders over ₹999 | Code: <strong>PICKYFREE</strong>
-          </span>
-        </div>
-      </div>
+      {/* ── 1. Top Running Marquee Announcement Bar (Replaces Static Row) ── */}
+      <GlamicsMarqueeTicker />
 
       {/* ── 2. Floating Pill Navbar (Restored Clean Pill Style) ────────────── */}
       <header className="floating-nav-container">
@@ -271,12 +265,11 @@ export default function Navbar() {
               type="button"
               className="nav-search-bar-btn"
               onClick={() => setIsSearchOpen(true)}
-              title="Search products (Ctrl+K)"
+              title="Search products"
               aria-label="Search products"
             >
               <Search size={14} style={{ color: '#7c3aed', flexShrink: 0 }} />
               <span className="nav-search-placeholder">Search products...</span>
-              <kbd className="nav-search-kbd">⌘K</kbd>
             </button>
 
             {/* Wishlist Button with Counter Badge */}
@@ -334,7 +327,7 @@ export default function Navbar() {
                     </div>
                     <div className="nav-user-menu-divider" />
                     <Link
-                      to="/account"
+                      to="/account?tab=profile"
                       className="nav-user-menu-link"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
@@ -342,7 +335,7 @@ export default function Navbar() {
                       <span>My Profile</span>
                     </Link>
                     <Link
-                      to="/orders"
+                      to="/account?tab=orders"
                       className="nav-user-menu-link"
                       onClick={() => setIsUserMenuOpen(false)}
                     >

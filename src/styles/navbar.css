@@ -43,39 +43,40 @@
   text-transform: uppercase;
 }
 
-/* ── 2. Floating Navbar Sticky Container ──────────────────────────────────── */
+/* ── 2. Full-Width Clean Header (Glamics Style) ──────────────────────────── */
 .floating-nav-container {
   position: sticky;
-  top: 0.75rem;
+  top: 0;
   z-index: 1000;
   width: 100%;
-  padding: 0 1rem;
-  pointer-events: none;
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(226, 218, 240, 0.7);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.04);
 }
 
 .floating-nav-pill {
   pointer-events: auto;
-  max-width: 1320px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
-  height: 64px;
-  background: linear-gradient(135deg, rgba(252, 248, 255, 0.97) 0%, rgba(244, 234, 255, 0.95) 48%, rgba(237, 224, 255, 0.97) 100%);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1.5px solid rgba(192, 132, 252, 0.65);
-  border-radius: 9999px;
-  box-shadow: 0 14px 40px -8px rgba(124, 58, 237, 0.2), 0 0 0 1.5px rgba(255, 255, 255, 0.85) inset;
+  height: 70px;
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.85rem 0 1.25rem;
+  padding: 0 clamp(1rem, 2.5vw, 2.5rem);
   position: relative;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .floating-nav-pill:hover {
-  background: linear-gradient(135deg, rgba(254, 251, 255, 0.98) 0%, rgba(247, 239, 255, 0.96) 48%, rgba(241, 230, 255, 0.98) 100%);
-  border-color: rgba(168, 85, 247, 0.85);
-  box-shadow: 0 18px 46px -6px rgba(124, 58, 237, 0.28), 0 0 0 1.5px rgba(255, 255, 255, 0.95) inset;
+  background: #ffffff;
+  border: none;
+  box-shadow: none;
 }
 
 /* ── 3. Brand & Divider (Left) ───────────────────────────────────────────── */
