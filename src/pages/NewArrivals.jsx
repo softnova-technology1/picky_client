@@ -605,8 +605,8 @@ export default function NewArrivals() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
-                  gap: '2.2rem 1.6rem',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
+                  gap: '1.8rem 1.3rem',
                   marginBottom: processedProducts.length > 4 ? '3rem' : '4.5rem',
                 }}
               >
@@ -691,8 +691,8 @@ export default function NewArrivals() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
-                    gap: '2.2rem 1.6rem',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
+                    gap: '1.8rem 1.3rem',
                     marginBottom: '4.5rem',
                   }}
                 >

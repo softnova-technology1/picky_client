@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SlidersHorizontal,
   RotateCcw,
-  Star,
   Check,
   Zap,
   Layers,
@@ -19,6 +18,7 @@ import {
   Home,
   Tag,
   ShoppingBag,
+  ChevronDown,
 } from 'lucide-react';
 
 // Pure Lucide icon mapping for departments (Zero emojis)
@@ -46,6 +46,8 @@ export default function ShopSidebarFilter({
   activeFilterCount = 0,
   onResetAll,
 }) {
+  const [isDeptOpen, setIsDeptOpen] = useState(false);
+
   const budgetOptions = [
     { label: 'All Prices', val: '', min: 0 },
     { label: 'Under ₹299', subtext: 'Pocket Finds', val: '299' },
@@ -53,12 +55,6 @@ export default function ShopSidebarFilter({
     { label: 'Under ₹999', subtext: 'Festive Ethnic', val: '999' },
     { label: '₹1,000 - ₹2,500', subtext: 'Premium Picks', val: '2500' },
     { label: '₹2,500+ Luxe', subtext: 'Heritage Special', val: '5000' },
-  ];
-
-  const ratingOptions = [
-    { label: '4.5 & above', subtext: 'Top Rated', val: '4.5', stars: 5 },
-    { label: '4.0 & above', subtext: 'Very Good', val: '4.0', stars: 4 },
-    { label: '3.5 & above', subtext: 'Good Value', val: '3.5', stars: 3 },
   ];
 
   const discountOptions = [
@@ -108,41 +104,78 @@ export default function ShopSidebarFilter({
           )}
         </div>
 
-        {/* ── 1. Departments & Categories (Permanently Static & Open) ── */}
+        {/* ── 1. Department Dropdown Button ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
             <Layers size={14} color="#7c3aed" strokeWidth={2.4} />
-            <span className="sidebar-section-title">Departments</span>
+            <span className="sidebar-section-title">Department</span>
           </div>
 
-          <div className="sidebar-content-body">
-            <button
-              type="button"
-              onClick={() => onSelectCategory('')}
-              className={`sidebar-category-row ${!selectedCategory ? 'active' : ''}`}
-            >
-              <div className="row-icon-pod">
-                <ShoppingBag size={13} />
+          {/* Tactical Dropdown Button */}
+          <button
+            type="button"
+            onClick={() => setIsDeptOpen((prev) => !prev)}
+            className={`sidebar-dept-dropdown-btn ${selectedCategory ? 'has-active' : ''}`}
+            aria-expanded={isDeptOpen}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flex: 1, minWidth: 0 }}>
+              <div className="dept-btn-icon-pod">
+                {selectedCategory && currentCategoryObj ? (
+                  (() => {
+                    const ActiveIcon = CATEGORY_LUCIDE_ICONS[currentCategoryObj.slug] || Tag;
+                    return <ActiveIcon size={14} strokeWidth={2.4} color="#7c3aed" />;
+                  })()
+                ) : (
+                  <ShoppingBag size={14} strokeWidth={2.4} color="#7c3aed" />
+                )}
               </div>
-              <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: !selectedCategory ? 800 : 600 }}>
-                All Departments
+              <span className="dept-btn-label">
+                {selectedCategory && currentCategoryObj ? currentCategoryObj.name : 'All Departments'}
               </span>
-              {!selectedCategory && <Check size={13} strokeWidth={3} className="check-indicator" />}
-            </button>
+            </div>
+            <ChevronDown
+              size={15}
+              strokeWidth={2.5}
+              className={`dept-chevron ${isDeptOpen ? 'rotated' : ''}`}
+            />
+          </button>
 
-            {categories.map((cat) => {
-              const isChecked =
-                selectedCategory === cat.slug ||
-                selectedCategory === cat._id ||
-                selectedCategory.toLowerCase() === cat.slug?.toLowerCase();
+          {/* Collapsible Dropdown Menu */}
+          {isDeptOpen && (
+            <div className="sidebar-dept-dropdown-menu">
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectCategory('');
+                  setIsDeptOpen(false);
+                }}
+                className={`sidebar-category-row ${!selectedCategory ? 'active' : ''}`}
+              >
+                <div className="row-icon-pod">
+                  <ShoppingBag size={13} />
+                </div>
+                <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: !selectedCategory ? 800 : 600 }}>
+                  All Departments
+                </span>
+                {!selectedCategory && <Check size={13} strokeWidth={3} className="check-indicator" />}
+              </button>
 
-              const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Tag;
+              {categories.map((cat) => {
+                const isChecked =
+                  selectedCategory === cat.slug ||
+                  selectedCategory === cat._id ||
+                  selectedCategory.toLowerCase() === cat.slug?.toLowerCase();
 
-              return (
-                <div key={cat._id || cat.slug}>
+                const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Tag;
+
+                return (
                   <button
+                    key={cat._id || cat.slug}
                     type="button"
-                    onClick={() => onSelectCategory(cat.slug || cat._id)}
+                    onClick={() => {
+                      onSelectCategory(cat.slug || cat._id);
+                      setIsDeptOpen(false);
+                    }}
                     className={`sidebar-category-row ${isChecked ? 'active' : ''}`}
                   >
                     <div className="row-icon-pod">
@@ -153,42 +186,42 @@ export default function ShopSidebarFilter({
                     </span>
                     {isChecked && <Check size={13} strokeWidth={3} className="check-indicator" />}
                   </button>
+                );
+              })}
+            </div>
+          )}
 
-                  {/* Subcategories (If Category Selected) */}
-                  {isChecked &&
-                    currentCategoryObj &&
-                    Array.isArray(currentCategoryObj.subcategories) &&
-                    currentCategoryObj.subcategories.length > 0 && (
-                      <div className="sidebar-subcategories-wrap">
-                        <button
-                          type="button"
-                          onClick={() => onSelectSubCategory('')}
-                          className={`sidebar-sub-item ${!selectedSubCategory ? 'active' : ''}`}
-                        >
-                          All {currentCategoryObj.name}
-                        </button>
-                        {currentCategoryObj.subcategories.map((sub) => {
-                          const isSubActive =
-                            selectedSubCategory === sub.slug ||
-                            selectedSubCategory === sub._id ||
-                            selectedSubCategory.toLowerCase() === sub.slug?.toLowerCase();
-                          return (
-                            <button
-                              key={sub._id || sub.slug}
-                              type="button"
-                              onClick={() => onSelectSubCategory(sub.slug || sub._id)}
-                              className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
-                            >
-                              {sub.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-              );
-            })}
-          </div>
+          {/* Subcategories Pills (If Department is Selected) */}
+          {selectedCategory &&
+            currentCategoryObj &&
+            Array.isArray(currentCategoryObj.subcategories) &&
+            currentCategoryObj.subcategories.length > 0 && (
+              <div className="sidebar-subcategories-wrap" style={{ marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => onSelectSubCategory('')}
+                  className={`sidebar-sub-item ${!selectedSubCategory ? 'active' : ''}`}
+                >
+                  All {currentCategoryObj.name}
+                </button>
+                {currentCategoryObj.subcategories.map((sub) => {
+                  const isSubActive =
+                    selectedSubCategory === sub.slug ||
+                    selectedSubCategory === sub._id ||
+                    selectedSubCategory.toLowerCase() === sub.slug?.toLowerCase();
+                  return (
+                    <button
+                      key={sub._id || sub.slug}
+                      type="button"
+                      onClick={() => onSelectSubCategory(sub.slug || sub._id)}
+                      className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
+                    >
+                      {sub.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
         </div>
 
         {/* ── 2. Budget & Price Range (Permanently Static & Open) ── */}
@@ -228,37 +261,7 @@ export default function ShopSidebarFilter({
           </div>
         </div>
 
-        {/* ── 3. Customer Ratings (Permanently Static & Open) ── */}
-        <div className="sidebar-section">
-          <div className="sidebar-section-title-wrap">
-            <Star size={14} color="#d97706" strokeWidth={2.4} />
-            <span className="sidebar-section-title">Customer Reviews</span>
-          </div>
 
-          <div className="sidebar-content-body">
-            {ratingOptions.map((opt) => {
-              const isSelected = quickFilters.rating4Plus && opt.val === '4.5';
-              return (
-                <button
-                  key={opt.val}
-                  type="button"
-                  onClick={() => onToggleQuickFilter('rating4Plus')}
-                  className={`sidebar-rating-row ${isSelected ? 'active' : ''}`}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    {[...Array(opt.stars)].map((_, i) => (
-                      <Star key={i} size={12} fill="#f59e0b" color="#f59e0b" />
-                    ))}
-                  </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: isSelected ? 800 : 600, color: '#334155', marginLeft: '0.25rem', flexGrow: 1, textAlign: 'left' }}>
-                    {opt.label}
-                  </span>
-                  {isSelected && <Check size={13} color="#d97706" strokeWidth={2.8} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
         {/* ── 4. Discounts & Deals (Permanently Static & Open) ── */}
         <div className="sidebar-section">
@@ -535,8 +538,75 @@ export default function ShopSidebarFilter({
           border-radius: 50%;
           background: #059669;
         }
-        /* Rating & Discount Rows */
-        .sidebar-rating-row, .sidebar-discount-row {
+        /* Department Dropdown Button */
+        .sidebar-dept-dropdown-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          padding: 0.52rem 0.75rem;
+          background: #f8fafc;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .sidebar-dept-dropdown-btn:hover {
+          background: #f5f3ff;
+          border-color: #c4b5fd;
+        }
+        .sidebar-dept-dropdown-btn.has-active {
+          background: #faf5ff;
+          border-color: #c084fc;
+        }
+        .dept-btn-icon-pod {
+          width: 26px;
+          height: 26px;
+          border-radius: 8px;
+          background: #f3e8ff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .dept-btn-label {
+          font-size: 0.84rem;
+          font-weight: 800;
+          color: #1e1b4b;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-align: left;
+        }
+        .dept-chevron {
+          color: #7c3aed;
+          transition: transform 0.25s ease;
+          flex-shrink: 0;
+        }
+        .dept-chevron.rotated {
+          transform: rotate(180deg);
+        }
+        .sidebar-dept-dropdown-menu {
+          margin-top: 0.5rem;
+          padding: 0.4rem;
+          background: #ffffff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 14px;
+          box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.12);
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          max-height: 260px;
+          overflow-y: auto;
+          animation: deptDropdownFade 0.2s ease;
+        }
+        @keyframes deptDropdownFade {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        /* Discount Rows */
+        .sidebar-discount-row {
           width: 100%;
           display: flex;
           align-items: center;
@@ -548,12 +618,8 @@ export default function ShopSidebarFilter({
           cursor: pointer;
           transition: all 0.15s ease;
         }
-        .sidebar-rating-row:hover, .sidebar-discount-row:hover {
+        .sidebar-discount-row:hover {
           background: #f8fafc;
-        }
-        .sidebar-rating-row.active {
-          background: #fffbeb;
-          border-color: #fde68a;
         }
         .sidebar-discount-row.active {
           background: #fdf2f8;

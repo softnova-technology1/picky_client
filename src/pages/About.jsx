@@ -3,7 +3,6 @@ import PageWrapper from '../components/layout/PageWrapper';
 import AboutHeroSection from '../components/about/AboutHeroSection';
 import AboutFeatureSection from '../components/about/AboutFeatureSection';
 import GlassCountersSection from '../components/about/GlassCountersSection';
-import AboutReviewsSection from '../components/about/AboutReviewsSection';
 export default function About() {
   return (
     <PageWrapper>
@@ -55,14 +54,7 @@ export default function About() {
         </div>
       </section>
 
-      <div className="section" style={{ paddingTop: '1rem', paddingBottom: '4rem' }}>
-        <div className="container">
-          <div className="about-story-section">
-            {/* Customer Reviews & Testimonials Section */}
-            <AboutReviewsSection />
-          </div>
-        </div>
-      </div>
+
     </PageWrapper>
   );
 }

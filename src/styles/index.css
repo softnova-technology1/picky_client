@@ -78,11 +78,11 @@ p { line-height: 1.6; color: var(--color-text-muted); }
 /* ─── Grid System ────────────────────────────────────────── */
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
 .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-.grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 1.4rem; }
 
 @media (min-width: 768px) {
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); gap: 1.4rem; }
 }
 
 /* ─── Common UI Components ───────────────────────────────── */

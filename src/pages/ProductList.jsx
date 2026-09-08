@@ -28,13 +28,12 @@ export default function ProductList() {
   const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState(MOCK_CATEGORIES || defaultCategories);
   const [loading, setLoading] = useState(true);
-  const [gridCols, setGridCols] = useState(3); // 3-col editorial or 4-col
+  const [gridCols, setGridCols] = useState(4); // 4-col compact grid default
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(16);
 
   // Quick Filters State
   const [quickFilters, setQuickFilters] = useState({
-    rating4Plus: false,
     discount40: false,
     fastDispatch: false,
   });
@@ -126,11 +125,6 @@ export default function ProductList() {
       });
     }
 
-    // Min Rating Filter
-    if (quickFilters.rating4Plus) {
-      result = result.filter((p) => Number(p.rating || p.ratings?.average || 4.2) >= 4.5);
-    }
-
     // Discount Filter (40%+)
     if (quickFilters.discount40) {
       result = result.filter((p) => {
@@ -154,8 +148,6 @@ export default function ProductList() {
       result.sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sort === 'price_desc') {
       result.sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (sort === 'rating') {
-      result.sort((a, b) => (b.rating || 4.2) - (a.rating || 4.2));
     }
 
     return result;
@@ -238,7 +230,6 @@ export default function ProductList() {
     (selectedSubCategory ? 1 : 0) +
     (searchQuery ? 1 : 0) +
     (urlMaxPrice ? 1 : 0) +
-    (quickFilters.rating4Plus ? 1 : 0) +
     (quickFilters.discount40 ? 1 : 0) +
     (quickFilters.fastDispatch ? 1 : 0);
 
@@ -487,7 +478,6 @@ export default function ProductList() {
                     >
                       <option value="newest">Newest Arrivals</option>
                       <option value="featured">Best Sellers & Featured</option>
-                      <option value="rating">Customer Ratings</option>
                       <option value="price_asc">Price: Low to High</option>
                       <option value="price_desc">Price: High to Low</option>
                     </select>
