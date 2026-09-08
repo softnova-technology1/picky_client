@@ -3,17 +3,19 @@
 /* Full-Width Header Banner with Geometric Purple Ribbon Overlays */
 .legal-hero-wrapper {
   position: relative;
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
-  margin-right: calc(-50vw + 50%);
+  width: 100%;
+  max-width: 1440px;
+  margin: 1.5rem auto 0 auto;
   background: linear-gradient(135deg, #1e1035 0%, #2e1065 40%, #3b0764 70%, #581c87 100%);
-  padding: 4.5rem 2.5rem;
+  padding: 3.5rem 3rem;
+  border-radius: 20px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 220px;
-  border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+  min-height: 180px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  box-shadow: 0 10px 30px rgba(46, 16, 101, 0.2);
 }
 
 /* Abstract Ribbon Geometric Overlays matching reference image */
@@ -57,7 +59,7 @@
   position: relative;
   z-index: 5;
   width: 100%;
-  max-width: 1080px;
+  max-width: 1440px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -102,7 +104,7 @@
 
 /* ─── Legal Main Body Container ──────────────────────────────────── */
 .legal-body-container {
-  max-width: 960px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 3.5rem 1.5rem 5rem 1.5rem;
 }

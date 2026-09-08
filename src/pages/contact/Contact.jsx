@@ -47,63 +47,57 @@ export default function Contact() {
           {/* Top subtle glow/curves can be added via CSS before/after */}
           <div className="k-container k-hero-grid">
             <div className="k-hero-content">
+              {/* Live Status Pill */}
+              <div className="k-hero-status-pill">
+                <span className="k-status-dot"></span>
+                <span>Live Support Active • We're Online Now</span>
+              </div>
+
               <div className="k-eyebrow-container">
                 <span className="k-eyebrow">GET IN TOUCH</span>
                 <div className="k-eyebrow-line"></div>
               </div>
               <h1 className="k-hero-title">
-                Contact <span>Us</span>
+                We're Here to Help Your <span>Picky Experience</span>
               </h1>
               <p className="k-hero-desc">
-                We'd love to hear from you. Whether you have a question, need a quote, or want to discuss your dream kitchen — our team is here to help.
+                Have a query about your order, product recommendations, or custom requests? Our customer care specialists are standing by to assist you 24/7 with dedicated support.
               </p>
 
-              <div className="k-hero-features">
-                <div className="k-feature-item">
-                  <div className="k-feature-icon">
-                    <Headset size={22} />
-                  </div>
-                  <div>
-                    <h4 className="k-feature-title">Quick Response</h4>
-                    <p className="k-feature-desc">Within 24 Hours</p>
-                  </div>
+              {/* CTA Action Buttons */}
+              <div className="k-hero-actions">
+                <a href="#contact-form-section" className="k-hero-btn-primary">
+                  <MessageSquare size={18} />
+                  <span>Send Us a Message</span>
+                  <ArrowRight size={16} />
+                </a>
+                <a href="tel:+919876543210" className="k-hero-btn-secondary">
+                  <Phone size={18} />
+                  <span>Call Customer Care</span>
+                </a>
+              </div>
+
+
+
+              {/* Single Horizontal Line Text-Only Pills */}
+              <div className="k-hero-features-capsules">
+                <div className="k-feature-pill-card">
+                  <span className="k-pill-label">Quick Support</span>
+                  <span className="k-pill-stat k-stat-violet">⚡ Within 15 Mins</span>
                 </div>
 
-                <div className="k-feature-divider"></div>
-
-                <div className="k-feature-item">
-                  <div className="k-feature-icon">
-                    <ShieldCheck size={22} />
-                  </div>
-                  <div>
-                    <h4 className="k-feature-title">Trusted by</h4>
-                    <p className="k-feature-desc">10,000+ Homes</p>
-                  </div>
+                <div className="k-feature-pill-card">
+                  <span className="k-pill-label">Trusted Choice</span>
+                  <span className="k-pill-stat k-stat-emerald">⭐ 10,000+ Homes</span>
                 </div>
 
-                <div className="k-feature-divider"></div>
-
-                <div className="k-feature-item">
-                  <div className="k-feature-icon">
-                    <Heart size={22} />
-                  </div>
-                  <div>
-                    <h4 className="k-feature-title">Your Dream Space</h4>
-                    <p className="k-feature-desc">Our Priority</p>
-                  </div>
+                <div className="k-feature-pill-card">
+                  <span className="k-pill-label">Satisfaction</span>
+                  <span className="k-pill-stat k-stat-rose">🛡️ 100% Guaranteed</span>
                 </div>
               </div>
             </div>
 
-            <div className="k-hero-visual">
-              <div className="k-hero-arch-wrapper">
-                <img
-                  src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=2070&auto=format&fit=crop"
-                  alt="Modern Kitchen"
-                  className="k-hero-arch-img"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Wave Bottom Divider */}

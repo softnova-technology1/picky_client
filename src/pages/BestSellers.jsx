@@ -150,111 +150,6 @@ export default function BestSellers() {
         {/* ── 1. Hero Showcase with SVG Doodles & Stamp ── */}
         <BestSellersHeroSection />
 
-        {/* ── 2. Trust Metrics Highlight Strip ── */}
-        <div className="container" style={{ marginTop: '-1.5rem', marginBottom: '3rem', position: 'relative', zIndex: 10 }}>
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '24px',
-              padding: '1.25rem 2rem',
-              boxShadow: '0 12px 32px rgba(124, 58, 237, 0.08)',
-              border: '1.5px solid #ede9fe',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1.5rem',
-              alignItems: 'center',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#f3e8ff',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Flame size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>10k+ Sold</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Top selling items</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#ede9fe',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <CheckCircle2 size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>100% Quality Inspected</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Store-Verified Products</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#d1fae5',
-                  color: '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Zap size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>24h Dispatch</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Fast priority dispatch</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#e0e7ff',
-                  color: '#4f46e5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>100% Inspected</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Zero damage guarantee</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* ── 3. Catalog & Interactive Filter Grid Anchor ── */}
         <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px' }}>
           {/* Header Row */}
@@ -499,14 +394,7 @@ export default function BestSellers() {
               <p style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>Loading verified bestsellers...</p>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
-                gap: '1.8rem 1.3rem',
-                marginBottom: '4.5rem',
-              }}
-            >
+            <div className="bestsellers-grid-5">
               {filteredProducts.map((prod, idx) => (
                 <div key={prod._id || prod.id} style={{ position: 'relative' }}>
                   {/* Top 3 Best Seller Rank Badge */}

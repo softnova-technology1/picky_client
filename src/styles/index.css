@@ -63,7 +63,7 @@ h4 { font-size: 1.1rem; }
 p { line-height: 1.6; color: var(--color-text-muted); }
 
 /* ─── Containers & Layout ────────────────────────────────── */
-.container { max-width: 1240px; margin: 0 auto; padding: 0 1.25rem; }
+.container { max-width: 1440px; margin: 0 auto; padding: 0 1.25rem; }
 .section { padding: 3rem 0; }
 .flex { display: flex; }
 .flex-col { display: flex; flex-direction: column; }
