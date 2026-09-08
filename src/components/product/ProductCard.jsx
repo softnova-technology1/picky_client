@@ -124,7 +124,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="lumina-product-card">
       {/* ── 1. Full-Width Edge-to-Edge 3-Image Carousel Stage ── */}
-      <div className="lumina-stage">
+      <div className="lumina-stage" data-pin-nopin="true">
         {/* Sleek Frosted Glass Island Badge (Top-Left) */}
         <div className="lumina-badge-pill">
           {discountPercent > 0 ? (
@@ -163,6 +163,7 @@ export default function ProductCard({ product }) {
                     i === 1 && carouselImages[0] === src ? 'img-zoom-detail' : ''
                   }`}
                   loading="lazy"
+                  data-pin-nopin="true"
                 />
               </div>
             ))}
@@ -210,7 +211,7 @@ export default function ProductCard({ product }) {
           </p>
         </Link>
 
-        {/* Clean Luxury Price Row (Zero marketing noise, pure elegance) */}
+        {/* Clean Luxury Price Row */}
         <div className="lumina-price-row">
           <span className="lumina-current-price">
             ₹{currentPrice.toLocaleString('en-IN')}
@@ -286,8 +287,11 @@ export default function ProductCard({ product }) {
       <style>{`
         /* ── Lumina Canvas Card Architecture ── */
         .lumina-product-card {
+          width: 100%;
+          max-width: 285px;
+          margin: 0 auto;
           background: #ffffff;
-          border-radius: 24px;
+          border-radius: 20px;
           border: 1.5px solid #ede9fe;
           padding: 0;
           display: flex;
@@ -346,7 +350,7 @@ export default function ProductCard({ product }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 0.35rem;
+          padding: 0.8rem 0.8rem 1.6rem 0.8rem;
           flex-shrink: 0;
         }
 
@@ -488,7 +492,7 @@ export default function ProductCard({ product }) {
 
         /* ── Card Content Body with Clean Internal Padding ── */
         .lumina-card-content {
-          padding: 1rem 1rem 1rem 1rem;
+          padding: 0.85rem 0.9rem 0.9rem 0.9rem;
           display: flex;
           flex-direction: column;
           flex: 1;
@@ -498,15 +502,15 @@ export default function ProductCard({ product }) {
         .lumina-title-link {
           text-decoration: none;
           display: block;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.65rem;
         }
 
         /* Line 1: Product Name */
         .lumina-title-text {
-          font-size: 0.96rem;
+          font-size: 0.91rem;
           font-weight: 800;
           color: #0f172a;
-          margin: 0 0 0.22rem 0;
+          margin: 0 0 0.18rem 0;
           line-height: 1.3;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -534,12 +538,12 @@ export default function ProductCard({ product }) {
         .lumina-price-row {
           display: flex;
           align-items: baseline;
-          gap: 0.5rem;
-          margin-bottom: 0.9rem;
+          gap: 0.45rem;
+          margin-bottom: 0.75rem;
         }
 
         .lumina-current-price {
-          font-size: 1.25rem;
+          font-size: 1.18rem;
           font-weight: 900;
           color: #7c3aed;
           letter-spacing: -0.02em;

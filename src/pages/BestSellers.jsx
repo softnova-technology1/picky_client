@@ -30,8 +30,7 @@ export default function BestSellers() {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('rating');
-  const [minRatingFilter, setMinRatingFilter] = useState(false);
+  const [sortBy, setSortBy] = useState('popular');
   const [highDiscountFilter, setHighDiscountFilter] = useState(false);
   const [fastDispatchFilter, setFastDispatchFilter] = useState(false);
   const catalogRef = useRef(null);
@@ -103,10 +102,6 @@ export default function BestSellers() {
       });
     }
 
-    // Min rating 4.5+
-    if (minRatingFilter) {
-      list = list.filter((p) => (p.rating || 0) >= 4.5);
-    }
 
     // 30%+ discount
     if (highDiscountFilter) {
@@ -122,9 +117,10 @@ export default function BestSellers() {
     }
 
     // Sorting
+    // Sorting
     list.sort((a, b) => {
-      if (sortBy === 'rating') {
-        return (b.rating || 0) - (a.rating || 0);
+      if (sortBy === 'popular') {
+        return (b.soldCount || b.orderCount || b.price || 0) - (a.soldCount || a.orderCount || a.price || 0);
       }
       if (sortBy === 'price-low') {
         return (a.price || 0) - (b.price || 0);
@@ -132,16 +128,13 @@ export default function BestSellers() {
       if (sortBy === 'price-high') {
         return (b.price || 0) - (a.price || 0);
       }
-      if (sortBy === 'popular') {
-        return (b.reviewsCount || b.salesCount || 0) - (a.reviewsCount || a.salesCount || 0);
-      }
       return 0;
     });
 
     return list;
-  }, [allProducts, activeCategory, minRatingFilter, highDiscountFilter, fastDispatchFilter, sortBy]);
+  }, [allProducts, activeCategory, highDiscountFilter, fastDispatchFilter, sortBy]);
 
-  const hasActiveFilters = minRatingFilter || highDiscountFilter || fastDispatchFilter || activeCategory !== 'all';
+  const hasActiveFilters = highDiscountFilter || fastDispatchFilter || activeCategory !== 'all';
 
   const handleResetFilters = () => {
     setActiveCategory('all');
@@ -156,111 +149,6 @@ export default function BestSellers() {
       <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Hero Showcase with SVG Doodles & Stamp ── */}
         <BestSellersHeroSection />
-
-        {/* ── 2. Trust Metrics Highlight Strip ── */}
-        <div className="container" style={{ marginTop: '-1.5rem', marginBottom: '3rem', position: 'relative', zIndex: 10 }}>
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '24px',
-              padding: '1.25rem 2rem',
-              boxShadow: '0 12px 32px rgba(124, 58, 237, 0.08)',
-              border: '1.5px solid #ede9fe',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1.5rem',
-              alignItems: 'center',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#f3e8ff',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Flame size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>10k+ Sold</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Top selling items</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#fef3c7',
-                  color: '#d97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Star size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>4.8 / 5.0</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Average verified rating</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#d1fae5',
-                  color: '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Zap size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>24h Dispatch</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Fast priority dispatch</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '12px',
-                  background: '#e0e7ff',
-                  color: '#4f46e5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e1b4b' }}>100% Inspected</div>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Zero damage guarantee</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* ── 3. Catalog & Interactive Filter Grid Anchor ── */}
         <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px' }}>
@@ -325,7 +213,6 @@ export default function BestSellers() {
                     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
                   }}
                 >
-                  <option value="rating">Top Customer Ratings (★)</option>
                   <option value="popular">Most Popular & Sales</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
@@ -422,26 +309,6 @@ export default function BestSellers() {
               marginBottom: '2.5rem',
             }}
           >
-            <button
-              onClick={() => setMinRatingFilter(!minRatingFilter)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.95rem',
-                borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: minRatingFilter ? '1.5px solid #7c3aed' : '1.5px solid #e2e8f0',
-                background: minRatingFilter ? '#f3e8ff' : '#ffffff',
-                color: minRatingFilter ? '#7c3aed' : '#64748b',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Star size={14} fill={minRatingFilter ? '#7c3aed' : 'none'} />
-              <span>4.5★ & Above</span>
-            </button>
 
             <button
               onClick={() => setHighDiscountFilter(!highDiscountFilter)}
@@ -527,14 +394,7 @@ export default function BestSellers() {
               <p style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>Loading verified bestsellers...</p>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
-                gap: '2.2rem 1.6rem',
-                marginBottom: '4.5rem',
-              }}
-            >
+            <div className="bestsellers-grid-5">
               {filteredProducts.map((prod, idx) => (
                 <div key={prod._id || prod.id} style={{ position: 'relative' }}>
                   {/* Top 3 Best Seller Rank Badge */}

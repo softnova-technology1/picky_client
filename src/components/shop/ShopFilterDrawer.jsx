@@ -3,7 +3,6 @@ import {
   X,
   RotateCcw,
   Check,
-  Star,
   SlidersHorizontal,
   Coins,
   Layers,
@@ -69,11 +68,6 @@ export default function ShopFilterDrawer({
     { label: '₹2,500+ Luxe', val: '5000' },
   ];
 
-  const ratingOptions = [
-    { label: '4.5 & above (Top Rated)', val: '4.5', stars: 5 },
-    { label: '4.0 & above (Very Good)', val: '4.0', stars: 4 },
-    { label: '3.5 & above (Good Value)', val: '3.5', stars: 3 },
-  ];
 
   const discountOptions = [
     { label: '50% or more', badge: 'Mega Deal', val: '50' },
@@ -301,59 +295,6 @@ export default function ShopFilterDrawer({
             </div>
           </div>
 
-          {/* Section: Customer Rating */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
-              <Star size={16} color="#d97706" strokeWidth={2.3} />
-              <h4
-                style={{
-                  fontSize: '0.86rem',
-                  fontWeight: 800,
-                  color: '#1e1b4b',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  margin: 0,
-                }}
-              >
-                Customer Rating
-              </h4>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-              {ratingOptions.map((opt) => {
-                const isSelected = filterState.minRating === opt.val;
-                return (
-                  <button
-                    key={opt.val}
-                    type="button"
-                    onClick={() =>
-                      onUpdateFilter('minRating', isSelected ? '' : opt.val)
-                    }
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.55rem 0.85rem',
-                      borderRadius: '10px',
-                      border: isSelected ? '1.5px solid #f59e0b' : '1px solid #e2e8f0',
-                      background: isSelected ? '#fffbeb' : '#ffffff',
-                      color: isSelected ? '#b45309' : '#475569',
-                      fontWeight: isSelected ? 800 : 600,
-                      fontSize: '0.84rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      {[...Array(opt.stars)].map((_, i) => (
-                        <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
-                      ))}
-                      <span>{opt.label}</span>
-                    </div>
-                    {isSelected && <Check size={14} strokeWidth={2.8} />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {/* Section: Minimum Discount */}
           <div>

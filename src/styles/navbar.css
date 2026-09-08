@@ -7,7 +7,8 @@
   height: 38px;
   display: flex;
   align-items: center;
-  justify-content: flex-end; /* Positioned at the end */
+  justify-content: flex-end;
+  /* Positioned at the end */
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   z-index: 1001;
@@ -194,6 +195,7 @@
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -250,7 +252,8 @@
 .nav-mega-column-title {
   font-size: 0.88rem;
   font-weight: 800;
-  color: #86198f; /* Rich deep magenta-purple matching screenshot */
+  color: #86198f;
+  /* Rich deep magenta-purple matching screenshot */
   text-decoration: none;
   margin-bottom: 0.95rem;
   display: flex;
@@ -519,8 +522,13 @@
 }
 
 @keyframes backdropFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .nav-search-modal-box {
@@ -539,6 +547,7 @@
     opacity: 0;
     transform: translateY(-16px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -641,8 +650,13 @@
 }
 
 @keyframes drawerSlide {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 .mobile-drawer-header {
@@ -685,10 +699,12 @@
   .nav-center-links {
     gap: 0.15rem;
   }
+
   .nav-pill-link {
     padding: 0.4rem 0.65rem;
     font-size: 0.82rem;
   }
+
   .nav-search-bar-btn {
     width: 155px;
   }
@@ -696,11 +712,14 @@
 
 @media (max-width: 1100px) {
   .nav-center-links {
-    display: none; /* Switch to hamburger drawer */
+    display: none;
+    /* Switch to hamburger drawer */
   }
+
   .nav-mobile-toggle-btn {
     display: flex;
   }
+
   .floating-nav-pill {
     padding: 0 0.5rem 0 1rem;
   }
@@ -711,27 +730,33 @@
     top: 0.4rem;
     padding: 0 0.6rem;
   }
+
   .floating-nav-pill {
     height: 56px;
     padding: 0 0.4rem 0 0.75rem;
   }
+
   .nav-brand-name {
     font-size: 1.15rem;
   }
+
   .nav-search-bar-btn {
     width: 110px;
     height: 34px;
     padding: 0 0.5rem;
   }
+
   .nav-search-kbd {
     display: none;
   }
+
   .top-announcement-bar {
     font-size: 0.72rem;
     height: auto;
     padding: 0.35rem 0.85rem;
     justify-content: center;
   }
+
   .top-announcement-crosh {
     clip-path: none;
     padding: 0.35rem 0.5rem;

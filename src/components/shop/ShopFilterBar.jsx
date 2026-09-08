@@ -1,5 +1,5 @@
 import React from 'react';
-import { SlidersHorizontal, Check, RotateCcw, LayoutGrid, Grid3X3, Flame, Star, Tag, Zap } from 'lucide-react';
+import { SlidersHorizontal, Check, RotateCcw, LayoutGrid, Grid3X3, Flame, Tag, Zap } from 'lucide-react';
 
 export default function ShopFilterBar({
   onOpenDrawer,
@@ -106,32 +106,7 @@ export default function ShopFilterBar({
           <span>💰 Under ₹499</span>
         </button>
 
-        {/* Quick Filter Chip: 4.5+ Rating */}
-        <button
-          type="button"
-          onClick={() => onToggleQuickFilter('rating4Plus')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.45rem 0.85rem',
-            borderRadius: '9999px',
-            border: quickFilters.rating4Plus ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
-            background: quickFilters.rating4Plus ? '#fffbeb' : '#ffffff',
-            color: quickFilters.rating4Plus ? '#b45309' : '#475569',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {quickFilters.rating4Plus ? (
-            <Check size={13} strokeWidth={2.8} />
-          ) : (
-            <Star size={13} fill="#f59e0b" color="#f59e0b" />
-          )}
-          <span>4.5★+ Top Rated</span>
-        </button>
+
 
         {/* Quick Filter Chip: 40%+ Discount */}
         <button
@@ -238,7 +213,6 @@ export default function ShopFilterBar({
           >
             <option value="newest">✨ Newest Arrivals</option>
             <option value="featured">🔥 Best Sellers & Featured</option>
-            <option value="rating">⭐ Customer Ratings (Highest)</option>
             <option value="price_asc">💵 Price: Low to High</option>
             <option value="price_desc">💎 Price: High to Low</option>
           </select>

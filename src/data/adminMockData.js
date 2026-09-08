@@ -482,11 +482,11 @@ export const MOCK_PRODUCTS = [
     rating: 5.0,
     reviewsCount: 65,
     isFeatured: true,
-    tags: ['Tanjore', 'Gold Foil', 'Painting'],
-    description: 'Authentic Tanjore painting of Lord Ganesha created with genuine 22-carat gold foil leaf and Jaipur gem stones set in teakwood frame.',
+    tags: ['Gold Plated', 'Couple Rings', 'Solitaire', 'Traditional'],
+    description: 'Handcrafted 22K micro gold plated adjustable couple solitaire rings with brilliant zircon sparkle for engagements & celebrations.',
     characteristics: [
-      { key: 'Craft', value: 'Original 22k Gold Leaf Work' },
-      { key: 'Frame', value: 'Antique Teakwood with Glass' },
+      { key: 'Material', value: '22K Micro Gold Plated Brass' },
+      { key: 'Stone', value: 'Brilliant Cut Zircon Crystal' },
     ],
   },
 

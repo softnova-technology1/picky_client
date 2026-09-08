@@ -2,14 +2,11 @@ import React from 'react';
 import {
   SlidersHorizontal,
   RotateCcw,
-  Star,
   Check,
-  Zap,
   Layers,
   Coins,
   Percent,
   Truck,
-  Sparkles,
   Gem,
   Smartphone,
   UtensilsCrossed,
@@ -61,12 +58,6 @@ export default function ShopSidebarFilter({
     { label: '₹2,500+ Luxe', subtext: 'Heritage Special', val: '5000' },
   ];
 
-  const ratingOptions = [
-    { label: '4.5 & above', subtext: 'Top Rated', val: '4.5', stars: 5 },
-    { label: '4.0 & above', subtext: 'Very Good', val: '4.0', stars: 4 },
-    { label: '3.5 & above', subtext: 'Good Value', val: '3.5', stars: 3 },
-  ];
-
   const discountOptions = [
     { label: '50% or more', badge: 'Mega Deal', val: '50' },
     { label: '40% or more', badge: 'Special', val: '40' },
@@ -114,7 +105,7 @@ export default function ShopSidebarFilter({
           )}
         </div>
 
-        {/* ── 1. Departments & Categories (Permanently Static & Open) ── */}
+        {/* ── 1. Departments List (Open, Direct Access) ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
             <div className="section-title-icon-pod">
@@ -144,7 +135,7 @@ export default function ShopSidebarFilter({
                 selectedCategory === cat._id ||
                 selectedCategory.toLowerCase() === cat.slug?.toLowerCase();
 
-              const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Sparkles;
+              const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Tag;
 
               return (
                 <div key={cat._id || cat.slug}>
@@ -162,7 +153,7 @@ export default function ShopSidebarFilter({
                     {isChecked && <Check size={13} strokeWidth={3} className="check-indicator" />}
                   </button>
 
-                  {/* Subcategories (If Category Selected) */}
+                  {/* Subcategories if this category is selected */}
                   {isChecked &&
                     currentCategoryObj &&
                     Array.isArray(currentCategoryObj.subcategories) &&
@@ -199,7 +190,7 @@ export default function ShopSidebarFilter({
           </div>
         </div>
 
-        {/* ── 2. Budget & Price Range (Permanently Static & Open) ── */}
+        {/* ── 2. Budget & Price Range ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
             <div className="section-title-icon-pod">
@@ -238,41 +229,7 @@ export default function ShopSidebarFilter({
           </div>
         </div>
 
-        {/* ── 3. Customer Ratings (Permanently Static & Open) ── */}
-        <div className="sidebar-section">
-          <div className="sidebar-section-title-wrap">
-            <div className="section-title-icon-pod">
-              <Star size={13} strokeWidth={2.3} />
-            </div>
-            <span className="sidebar-section-title">Customer Reviews</span>
-          </div>
-
-          <div className="sidebar-content-body">
-            {ratingOptions.map((opt) => {
-              const isSelected = quickFilters.rating4Plus && opt.val === '4.5';
-              return (
-                <button
-                  key={opt.val}
-                  type="button"
-                  onClick={() => onToggleQuickFilter('rating4Plus')}
-                  className={`sidebar-rating-row ${isSelected ? 'active' : ''}`}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    {[...Array(opt.stars)].map((_, i) => (
-                      <Star key={i} size={12} fill="#f59e0b" color="#f59e0b" />
-                    ))}
-                  </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: isSelected ? 800 : 600, color: '#334155', marginLeft: '0.25rem', flexGrow: 1, textAlign: 'left' }}>
-                    {opt.label}
-                  </span>
-                  {isSelected && <Check size={13} color="#d97706" strokeWidth={2.8} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 4. Discounts & Deals (Permanently Static & Open) ── */}
+        {/* ── 3. Discounts & Deals ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
             <div className="section-title-icon-pod">
@@ -304,7 +261,7 @@ export default function ShopSidebarFilter({
           </div>
         </div>
 
-        {/* ── 5. Express Delivery ── */}
+        {/* ── 4. Express Delivery ── */}
         <div className="sidebar-section" style={{ borderBottom: 'none', paddingBottom: 0 }}>
           <div className="sidebar-switch-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -503,19 +460,6 @@ export default function ShopSidebarFilter({
           color: #ffffff;
           box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
         }
-        .switch-icon-pod {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          background: #ffffff;
-          border: 1.5px solid rgba(192, 132, 252, 0.45);
-          color: #7c3aed;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
-          flex-shrink: 0;
-        }
         .check-indicator {
           color: #7c3aed;
         }
@@ -587,8 +531,8 @@ export default function ShopSidebarFilter({
           border-radius: 50%;
           background: #059669;
         }
-        /* Rating & Discount Rows */
-        .sidebar-rating-row, .sidebar-discount-row {
+        /* Discount Rows */
+        .sidebar-discount-row {
           width: 100%;
           display: flex;
           align-items: center;
@@ -600,12 +544,8 @@ export default function ShopSidebarFilter({
           cursor: pointer;
           transition: all 0.15s ease;
         }
-        .sidebar-rating-row:hover, .sidebar-discount-row:hover {
+        .sidebar-discount-row:hover {
           background: #f8fafc;
-        }
-        .sidebar-rating-row.active {
-          background: #fffbeb;
-          border-color: #fde68a;
         }
         .sidebar-discount-row.active {
           background: #fdf2f8;
