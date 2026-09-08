@@ -8,27 +8,33 @@ import {
   Coins,
   Layers,
   Percent,
-  ShoppingBag,
   Sparkles,
   Gem,
   Smartphone,
   UtensilsCrossed,
-  Crown,
-  Heart,
-  Coffee,
+  Flower,
+  Flame,
+  Cookie,
   Home,
+  Baby,
+  Dumbbell,
+  Shirt,
+  Store,
   Tag,
 } from 'lucide-react';
 
 const CATEGORY_LUCIDE_ICONS = {
-  'womens-fashion': Sparkles,
-  'artificial-jewellery': Gem,
-  'mobile-accessories': Smartphone,
+  'all': Store,
+  'womens-fashion': Shirt,
   'home-kitchen': UtensilsCrossed,
-  'traditional-tamil-products': Crown,
-  'beauty-personal-care': Heart,
-  'snacks-foods': Coffee,
+  'artificial-jewellery': Gem,
+  'beauty-personal-care': Flower,
+  'mobile-accessories': Smartphone,
+  'traditional-tamil-products': Flame,
+  'snacks-foods': Cookie,
   'home-decor': Home,
+  'kids-products': Baby,
+  'fitness-products': Dumbbell,
 };
 
 export default function ShopFilterDrawer({
@@ -253,7 +259,7 @@ export default function ShopFilterDrawer({
                   onChange={() => onUpdateFilter('category', '')}
                   style={{ accentColor: '#7c3aed' }}
                 />
-                <ShoppingBag size={15} color="#7c3aed" />
+                <Store size={15} color="#7c3aed" />
                 <span style={{ fontSize: '0.86rem', fontWeight: !filterState.category ? 800 : 600, color: !filterState.category ? '#7c3aed' : '#1e293b' }}>
                   All Departments
                 </span>

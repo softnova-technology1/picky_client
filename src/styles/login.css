@@ -1,0 +1,920 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY LUXURY AUTHENTICATION & LOGIN DESIGN SYSTEM
+   Deep Twilight Purple Aesthetic with Transparent Glassmorphism & GPU Slide Swap
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Full-Screen Container with Underlying Website & Modal Overlay */
+.picky-login-page-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #080313;
+  overflow: hidden;
+}
+
+/* Real website in background blurred with twilight purple tint */
+.picky-login-underlying-site {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  filter: blur(14px) brightness(0.48) saturate(1.25);
+  transform: scale(1.05); /* eliminates edge blur cutoffs */
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* Modal Overlay Backdrop with Frosted Glass Blur & Radial Ambient Glow */
+.picky-login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(
+    circle at 50% 35%,
+    rgba(124, 58, 237, 0.32) 0%,
+    rgba(10, 4, 24, 0.72) 65%,
+    rgba(6, 2, 16, 0.88) 100%
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow-y: auto;
+  animation: backdropFadeIn 0.35s ease-out;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   MAIN LUXURY MODAL CARD (TRANSPARENT FROSTED GLASS & FIXED 650PX HEIGHT)
+   ────────────────────────────────────────────────────────────────────────── */
+.picky-auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1040px;
+  height: 650px;
+  min-height: 650px;
+  max-height: 650px;
+  display: flex;
+  flex-direction: row;
+  background: rgba(14, 6, 30, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 
+    0 35px 90px -10px rgba(0, 0, 0, 0.85),
+    0 0 60px -10px rgba(124, 58, 237, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Fixed Universal Close Button (Always Top-Right of Card) */
+.picky-auth-close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(18, 7, 34, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 30;
+}
+
+.picky-auth-close-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   GPU-ACCELERATED SLIDING PANELS (EXACT 50% WIDTH — ZERO OVERLAP)
+   ────────────────────────────────────────────────────────────────────────── */
+.picky-auth-left,
+.picky-auth-right {
+  flex: 0 0 50% !important;
+  width: 50% !important;
+  max-width: 50% !important;
+  min-width: 50% !important;
+  height: 100%;
+  position: relative;
+  box-sizing: border-box !important;
+  transition: transform 0.65s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+/* Default / LOGIN Mode: Visual Panel Left (0%), Form Panel Right (0%) */
+.picky-auth-card.is-login .picky-auth-left {
+  transform: translateX(0%);
+  z-index: 2;
+}
+.picky-auth-card.is-login .picky-auth-right {
+  transform: translateX(0%);
+  z-index: 2;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: none;
+}
+
+/* SIGNUP Mode: Visual Panel slides to Right (+100%), Form Panel slides to Left (-100%) */
+.picky-auth-card.is-signup .picky-auth-left {
+  transform: translateX(100%);
+  z-index: 2;
+}
+.picky-auth-card.is-signup .picky-auth-right {
+  transform: translateX(-100%);
+  z-index: 2;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: none;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   LEFT PANEL — CURATED LUXURY VISUALS & BADGES
+   ────────────────────────────────────────────────────────────────────────── */
+.picky-auth-left {
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2.2rem 2.4rem;
+  overflow: visible;
+  isolation: isolate;
+}
+
+/* Rich Tint & Vignette Overlay */
+.picky-auth-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 8, 38, 0.12) 0%,
+    rgba(14, 5, 28, 0.3) 45%,
+    rgba(9, 3, 18, 0.72) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.picky-auth-left-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+/* Top Glass Rating Badge */
+.picky-glass-rating-badge {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 1.1rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 20px;
+  box-shadow: 
+    0 10px 25px -3px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+/* Avatar Stack */
+.picky-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.picky-avatar-bubble {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  margin-left: -6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.picky-avatar-bubble:first-child {
+  margin-left: 0;
+}
+
+.avatar-gold { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.avatar-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.avatar-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+
+.picky-rating-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.picky-stars-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #fbbf24;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.picky-rating-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-top: 2px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.picky-rating-sub {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+/* Floating "Premium Member" Badge & Glowing Orb */
+.picky-floating-member-badge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(124, 58, 237, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.55rem 1.15rem 0.55rem 1rem;
+  border-radius: 50px;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 
+    0 8px 30px rgba(124, 58, 237, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  white-space: nowrap;
+  transition: all 0.65s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.picky-floating-member-badge span.sparkle {
+  color: #ffffff;
+  font-size: 0.85rem;
+}
+
+/* Glowing Translucent 3D Orb */
+.picky-seam-orb {
+  position: absolute;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #c084fc 28%, #8b5cf6 60%, #4c1d95 100%);
+  box-shadow: 
+    0 0 24px 8px rgba(168, 85, 247, 0.75),
+    0 0 50px 14px rgba(124, 58, 237, 0.4),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.5),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12;
+  animation: orbPulse 3s infinite ease-in-out;
+  transition: all 0.65s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.picky-seam-orb::after {
+  content: '✦';
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: 0 0 8px #ffffff, 0 0 14px #e9d5ff;
+}
+
+/* In Login mode: Seam is at the right edge of visual panel */
+.picky-auth-card.is-login .picky-floating-member-badge {
+  right: -24px;
+  left: auto;
+}
+.picky-auth-card.is-login .picky-seam-orb {
+  right: -20px;
+  left: auto;
+  transform: translate(50%, -50%);
+}
+
+/* In Signup mode: Seam is at the left edge of visual panel */
+.picky-auth-card.is-signup .picky-floating-member-badge {
+  left: -24px;
+  right: auto;
+}
+.picky-auth-card.is-signup .picky-seam-orb {
+  left: -20px;
+  right: auto;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes orbPulse {
+  0%, 100% {
+    box-shadow: 0 0 22px 6px rgba(168, 85, 247, 0.7), 0 0 45px 12px rgba(124, 58, 237, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 30px 10px rgba(192, 132, 252, 0.85), 0 0 60px 18px rgba(124, 58, 237, 0.55);
+  }
+}
+
+/* Bottom Elements: 20% Off Glass Badge & Brand Typography */
+.picky-auth-left-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.picky-glass-promo-badge {
+  align-self: flex-start;
+  padding: 0.65rem 1rem;
+  background: rgba(28, 12, 45, 0.68);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.picky-promo-tag {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.picky-promo-value {
+  font-size: 1.22rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.picky-promo-desc {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.picky-brand-typography {
+  margin-top: 0.25rem;
+}
+
+.picky-brand-title {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.32em;
+  line-height: 1;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+  margin-bottom: 0.45rem;
+}
+
+.picky-brand-tagline {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  color: #d8b4fe;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   FORM PANEL (TRANSPARENT BACKGROUND & BALANCED SPACING)
+   ────────────────────────────────────────────────────────────────────────── */
+.picky-auth-right {
+  background: transparent !important;
+  padding: 2.2rem 2.6rem 2rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.picky-auth-right-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── LOGIN MODE: Balanced Vertical Centering (ELIMINATES LARGE GAP!) ── */
+.picky-auth-card.is-login .picky-auth-right-content {
+  justify-content: center;
+  gap: 0;
+}
+
+.picky-auth-card.is-login .picky-form-top-section {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.picky-auth-card.is-login .picky-auth-header {
+  margin-bottom: 1.1rem;
+  padding-right: 2.6rem;
+}
+
+.picky-auth-card.is-login .picky-auth-tabs {
+  margin-bottom: 1.15rem;
+}
+
+.picky-auth-card.is-login .picky-auth-form {
+  gap: 0.95rem;
+}
+
+.picky-auth-card.is-login .picky-auth-submit-btn {
+  margin-top: 0.15rem;
+}
+
+.picky-auth-card.is-login .picky-auth-terms {
+  margin-top: 1.25rem;
+}
+
+.picky-auth-card.is-login .picky-auth-footer {
+  margin-top: 1.25rem;
+}
+
+/* ── SIGNUP MODE: Space-between Distribution for 3 Inputs ── */
+.picky-auth-card.is-signup .picky-auth-right-content {
+  justify-content: space-between;
+}
+
+.picky-auth-card.is-signup .picky-form-top-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.picky-auth-card.is-signup .picky-auth-header {
+  margin-bottom: 1.1rem;
+  padding-right: 0; /* No offset on left */
+}
+
+.picky-auth-card.is-signup .picky-auth-tabs {
+  margin-bottom: 1.15rem;
+}
+
+.picky-auth-card.is-signup .picky-auth-form {
+  gap: 0.8rem;
+}
+
+.picky-auth-card.is-signup .picky-auth-terms {
+  margin-top: 1.15rem;
+}
+
+.picky-auth-card.is-signup .picky-auth-footer {
+  margin-top: 1.15rem;
+}
+
+/* Shared Typography & Headers */
+.picky-auth-header h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+  line-height: 1.2;
+}
+
+.picky-auth-header p {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin-bottom: 0;
+}
+
+/* Capsule Segmented Tab Switcher [ LOGIN | SIGN UP ] */
+.picky-auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50px;
+  padding: 4px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.picky-auth-tab-btn {
+  padding: 0.65rem 1rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.picky-auth-tab-btn:hover:not(.active) {
+  color: #ffffff;
+}
+
+.picky-auth-tab-btn.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #ffffff;
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.65),
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Form Inputs */
+.picky-auth-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.picky-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.picky-input-icon {
+  position: absolute;
+  left: 1.15rem;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  transition: color 0.2s ease;
+}
+
+.picky-pill-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 1.25rem 0 3.15rem;
+  background: rgba(237, 242, 254, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid transparent;
+  border-radius: 15px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.picky-pill-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.picky-pill-input:focus {
+  background: #ffffff;
+  border-color: #8b5cf6;
+  box-shadow: 
+    0 0 0 4px rgba(139, 92, 246, 0.25),
+    0 4px 12px rgba(124, 58, 237, 0.18);
+}
+
+.picky-input-end-btn {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.picky-input-end-btn:hover {
+  color: #7c3aed;
+}
+
+/* OTP Specific UI */
+.picky-otp-input {
+  text-align: center !important;
+  letter-spacing: 0.35em !important;
+  font-size: 1.4rem !important;
+  font-weight: 800 !important;
+  padding-left: 1.25rem !important;
+}
+
+.picky-otp-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  margin-top: -0.2rem;
+  width: 100%;
+}
+
+.picky-otp-back-btn {
+  color: #cbd5e1;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.picky-otp-back-btn:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.picky-otp-resend-btn {
+  color: #c084fc;
+  font-weight: 700;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.picky-otp-resend-btn:hover {
+  color: #e9d5ff;
+  text-decoration: underline;
+}
+
+/* Primary Action Button (CONTINUE →) */
+.picky-auth-submit-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  box-shadow: 
+    0 10px 28px -4px rgba(124, 58, 237, 0.65),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.picky-auth-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 14px 34px -4px rgba(139, 92, 246, 0.8),
+    0 0 22px rgba(168, 85, 247, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+}
+
+.picky-auth-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.picky-auth-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.picky-auth-submit-btn span.arrow {
+  transition: transform 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.picky-auth-submit-btn:hover:not(:disabled) span.arrow {
+  transform: translateX(4px);
+}
+
+/* Spinner */
+.picky-auth-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* "or continue with" Divider */
+.picky-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 500;
+  width: 100%;
+}
+
+.picky-auth-divider::before,
+.picky-auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+
+
+/* Terms and Privacy agreement notice */
+.picky-auth-terms {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  width: 100%;
+}
+
+.picky-auth-terms a {
+  color: #c084fc;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.picky-auth-terms a:hover {
+  color: #e9d5ff;
+}
+
+/* Footer Link */
+.picky-auth-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  width: 100%;
+}
+
+.picky-auth-footer button,
+.picky-auth-footer a {
+  color: #c084fc;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: inherit;
+  margin-left: 0.35rem;
+  transition: color 0.2s ease;
+}
+
+.picky-auth-footer button:hover,
+.picky-auth-footer a:hover {
+  color: #e9d5ff;
+  text-decoration: underline;
+}
+
+/* Subtle Admin Link at bottom */
+.picky-admin-login-link {
+  display: block;
+  text-align: center;
+  margin-top: 0.35rem;
+  font-size: 0.74rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.picky-admin-login-link:hover {
+  color: #a855f7;
+  text-decoration: underline;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   RESPONSIVE DESIGN (Tablets & Mobile)
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .picky-auth-card {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    max-width: 520px;
+    border-radius: 26px;
+  }
+
+  .picky-auth-left,
+  .picky-auth-right {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    transform: none !important;
+  }
+
+  .picky-auth-left {
+    min-height: 250px;
+    padding: 1.5rem;
+  }
+
+  .picky-auth-right {
+    padding: 2.2rem 1.75rem 2rem;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .picky-floating-member-badge,
+  .picky-seam-orb {
+    display: none;
+  }
+
+  .picky-brand-title {
+    font-size: 1.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .picky-login-modal-backdrop {
+    padding: 0.75rem;
+  }
+
+  .picky-auth-card {
+    border-radius: 20px;
+  }
+
+  .picky-auth-left {
+    min-height: 200px;
+    padding: 1.25rem;
+  }
+
+  .picky-brand-title {
+    font-size: 1.5rem;
+    letter-spacing: 0.22em;
+  }
+
+  .picky-auth-right {
+    padding: 1.85rem 1.25rem 1.75rem;
+  }
+
+  .picky-auth-header h2 {
+    font-size: 1.55rem;
+  }
+
+  .picky-social-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+}

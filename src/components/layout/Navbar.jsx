@@ -19,8 +19,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
-import { MOCK_CATEGORIES } from '../../data/adminMockData';
-import { CATEGORY_COLUMNS, MEGAMENU_ALL_CATEGORIES } from '../../data/categoriesData';
+import { MEGAMENU_ALL_CATEGORIES } from '../../data/categoriesData';
 import CategoryIcon from '../common/CategoryIcon';
 import GlamicsMarqueeTicker from '../category/GlamicsMarqueeTicker';
 
@@ -29,16 +28,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [activeCategorySlug, setActiveCategorySlug] = useState('womens-fashion');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-
-  const activeCat = useMemo(() => {
-    return MOCK_CATEGORIES.find((c) => c.slug === activeCategorySlug) || MOCK_CATEGORIES[0];
-  }, [activeCategorySlug]);
-
-  const columnData = useMemo(() => {
-    return CATEGORY_COLUMNS[activeCategorySlug] || CATEGORY_COLUMNS['womens-fashion'];
-  }, [activeCategorySlug]);
 
   const categoryDropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
@@ -408,12 +398,8 @@ export default function Navbar() {
                     {cat.links.map((item, itemIdx) => (
                       <Link
                         key={itemIdx}
-                        to={
-                          item.slug
-                            ? `/categories/${cat.slug}?sub=${item.slug}`
-                            : `/categories/${cat.slug}`
-                        }
-                        className={`nav-mega-link-item ${itemIdx === 0 ? 'highlight-top' : ''}`}
+                        to={`/categories/${cat.slug}/${item.slug}`}
+                        className="nav-mega-link-item"
                         onClick={() => setIsCategoryOpen(false)}
                       >
                         {item.name}

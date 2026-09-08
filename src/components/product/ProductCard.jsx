@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingBag, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
@@ -86,7 +86,7 @@ export default function ProductCard({ product }) {
     setTimeout(() => setJustAdded(false), 1600);
 
     const sizeMsg = size ? ` (Size ${size})` : '';
-    showToast(`Added "${product.name}"${sizeMsg} to bag!`, 'success');
+    showToast(`Added "${product.name}"${sizeMsg} to cart!`, 'success');
   };
 
   const handleToggleWishlist = async (e) => {
@@ -234,12 +234,12 @@ export default function ProductCard({ product }) {
                 {justAdded ? (
                   <>
                     <Check size={16} strokeWidth={2.8} />
-                    <span>Added to Bag!</span>
+                    <span>Added to Cart!</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingBag size={15} strokeWidth={2.3} />
-                    <span>Add to Bag</span>
+                    <ShoppingCart size={15} strokeWidth={2.3} />
+                    <span>Add to Cart</span>
                   </>
                 )}
               </button>
@@ -253,7 +253,7 @@ export default function ProductCard({ product }) {
                       key={size}
                       onClick={(e) => handleQuickAdd(e, size)}
                       className="size-chip-btn"
-                      title={`Add Size ${size} to bag`}
+                      title={`Add Size ${size} to cart`}
                     >
                       {size}
                     </button>
@@ -270,12 +270,12 @@ export default function ProductCard({ product }) {
               {justAdded ? (
                 <>
                   <Check size={16} strokeWidth={2.8} />
-                  <span>Added to Bag!</span>
+                  <span>Added to Cart!</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag size={15} strokeWidth={2.3} />
-                  <span>Add to Bag</span>
+                  <ShoppingCart size={15} strokeWidth={2.3} />
+                  <span>Add to Cart</span>
                 </>
               )}
             </button>
@@ -464,9 +464,9 @@ export default function ProductCard({ product }) {
           position: absolute;
           top: 12px;
           right: 12px;
-          background: rgba(255, 255, 255, 0.92);
+          background: rgba(255, 255, 255, 0.95);
           backdrop-filter: blur(8px);
-          border: 1px solid rgba(221, 214, 254, 0.8);
+          border: 1.5px solid rgba(192, 132, 252, 0.45);
           border-radius: 50%;
           width: 34px;
           height: 34px;
@@ -474,7 +474,7 @@ export default function ProductCard({ product }) {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
           transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
           z-index: 3;
         }
@@ -482,8 +482,8 @@ export default function ProductCard({ product }) {
         .lumina-heart-btn:hover {
           transform: scale(1.15);
           background: #ffffff;
-          border-color: #c4b5fd;
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+          border-color: #7c3aed;
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
         }
 
         /* ── Card Content Body with Clean Internal Padding ── */

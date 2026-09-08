@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Toast from '../ui/Toast';
+import FloatingActions from '../common/FloatingActions';
 
 export default function PageWrapper({ children }) {
   return (
@@ -9,6 +10,7 @@ export default function PageWrapper({ children }) {
       <Navbar />
       <main style={{ flex: 1, background: '#ffffff' }}>{children}</main>
       <Footer />
+      <FloatingActions />
       <Toast />
     </div>
   );

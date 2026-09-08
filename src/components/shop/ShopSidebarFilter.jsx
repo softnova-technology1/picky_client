@@ -13,24 +13,30 @@ import {
   Gem,
   Smartphone,
   UtensilsCrossed,
-  Crown,
-  Heart,
-  Coffee,
+  Flower,
+  Flame,
+  Cookie,
   Home,
+  Baby,
+  Dumbbell,
+  Shirt,
+  Store,
   Tag,
-  ShoppingBag,
 } from 'lucide-react';
 
-// Pure Lucide icon mapping for departments (Zero emojis)
+// Pure Lucide icon mapping for all 10 departments + All Departments
 const CATEGORY_LUCIDE_ICONS = {
-  'womens-fashion': Sparkles,
-  'artificial-jewellery': Gem,
-  'mobile-accessories': Smartphone,
+  'all': Store,
+  'womens-fashion': Shirt,
   'home-kitchen': UtensilsCrossed,
-  'traditional-tamil-products': Crown,
-  'beauty-personal-care': Heart,
-  'snacks-foods': Coffee,
+  'artificial-jewellery': Gem,
+  'beauty-personal-care': Flower,
+  'mobile-accessories': Smartphone,
+  'traditional-tamil-products': Flame,
+  'snacks-foods': Cookie,
   'home-decor': Home,
+  'kids-products': Baby,
+  'fitness-products': Dumbbell,
 };
 
 export default function ShopSidebarFilter({
@@ -111,7 +117,9 @@ export default function ShopSidebarFilter({
         {/* ── 1. Departments & Categories (Permanently Static & Open) ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
-            <Layers size={14} color="#7c3aed" strokeWidth={2.4} />
+            <div className="section-title-icon-pod">
+              <Layers size={13} strokeWidth={2.3} />
+            </div>
             <span className="sidebar-section-title">Departments</span>
           </div>
 
@@ -122,7 +130,7 @@ export default function ShopSidebarFilter({
               className={`sidebar-category-row ${!selectedCategory ? 'active' : ''}`}
             >
               <div className="row-icon-pod">
-                <ShoppingBag size={13} />
+                <Store size={14} strokeWidth={2.2} />
               </div>
               <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: !selectedCategory ? 800 : 600 }}>
                 All Departments
@@ -136,7 +144,7 @@ export default function ShopSidebarFilter({
                 selectedCategory === cat._id ||
                 selectedCategory.toLowerCase() === cat.slug?.toLowerCase();
 
-              const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Tag;
+              const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Sparkles;
 
               return (
                 <div key={cat._id || cat.slug}>
@@ -146,7 +154,7 @@ export default function ShopSidebarFilter({
                     className={`sidebar-category-row ${isChecked ? 'active' : ''}`}
                   >
                     <div className="row-icon-pod">
-                      <CatIcon size={13} strokeWidth={2.2} />
+                      <CatIcon size={14} strokeWidth={2.2} />
                     </div>
                     <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: isChecked ? 800 : 600 }}>
                       {cat.name}
@@ -194,7 +202,9 @@ export default function ShopSidebarFilter({
         {/* ── 2. Budget & Price Range (Permanently Static & Open) ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
-            <Coins size={14} color="#059669" strokeWidth={2.4} />
+            <div className="section-title-icon-pod">
+              <Coins size={13} strokeWidth={2.3} />
+            </div>
             <span className="sidebar-section-title">Price & Budget</span>
           </div>
 
@@ -231,7 +241,9 @@ export default function ShopSidebarFilter({
         {/* ── 3. Customer Ratings (Permanently Static & Open) ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
-            <Star size={14} color="#d97706" strokeWidth={2.4} />
+            <div className="section-title-icon-pod">
+              <Star size={13} strokeWidth={2.3} />
+            </div>
             <span className="sidebar-section-title">Customer Reviews</span>
           </div>
 
@@ -263,7 +275,9 @@ export default function ShopSidebarFilter({
         {/* ── 4. Discounts & Deals (Permanently Static & Open) ── */}
         <div className="sidebar-section">
           <div className="sidebar-section-title-wrap">
-            <Percent size={14} color="#db2777" strokeWidth={2.4} />
+            <div className="section-title-icon-pod">
+              <Percent size={13} strokeWidth={2.3} />
+            </div>
             <span className="sidebar-section-title">Deals & Discounts</span>
           </div>
 
@@ -356,12 +370,28 @@ export default function ShopSidebarFilter({
         .filter-header-icon-pod {
           width: 28px;
           height: 28px;
-          border-radius: 8px;
-          background: #f3e8ff;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1.5px solid rgba(192, 132, 252, 0.45);
           color: #7c3aed;
           display: flex;
           align-items: center;
           justify-content: center;
+          box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+          flex-shrink: 0;
+        }
+        .section-title-icon-pod {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1.5px solid rgba(192, 132, 252, 0.45);
+          color: #7c3aed;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 1px 4px rgba(124, 58, 237, 0.06);
         }
         .sidebar-active-badge {
           width: 19px;
@@ -409,7 +439,7 @@ export default function ShopSidebarFilter({
         .sidebar-section-title-wrap {
           display: flex;
           align-items: center;
-          gap: 0.45rem;
+          gap: 0.55rem;
           margin-bottom: 0.65rem;
         }
         .sidebar-section-title {
@@ -422,47 +452,69 @@ export default function ShopSidebarFilter({
         .sidebar-content-body {
           display: flex;
           flex-direction: column;
-          gap: 0.3rem;
+          gap: 0.35rem;
         }
         /* Category Rows */
         .sidebar-category-row {
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 0.55rem;
-          padding: 0.4rem 0.6rem;
-          border-radius: 10px;
-          border: 1px solid transparent;
+          gap: 0.65rem;
+          padding: 0.42rem 0.65rem;
+          border-radius: 50px;
+          border: 1.5px solid transparent;
           background: transparent;
           color: #334155;
-          font-size: 0.82rem;
+          font-size: 0.84rem;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar-category-row:hover {
-          background: #f8fafc;
-          border-color: #e2e8f0;
+          background: #fbf9fe;
+          border-color: rgba(221, 214, 254, 0.6);
         }
         .sidebar-category-row.active {
-          background: #f3e8ff;
+          background: #f5edff;
           border-color: #c4b5fd;
-          color: #7c3aed;
+          color: #6d28d9;
         }
         .row-icon-pod {
-          width: 24px;
-          height: 24px;
-          border-radius: 6px;
-          background: #f1f5f9;
-          color: #64748b;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1.5px solid rgba(192, 132, 252, 0.45);
+          color: #7c3aed;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          transition: all 0.15s ease;
+          box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+          transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-category-row:hover .row-icon-pod {
+          transform: scale(1.08);
+          border-color: #7c3aed;
+          box-shadow: 0 3px 10px rgba(124, 58, 237, 0.18);
         }
         .sidebar-category-row.active .row-icon-pod {
-          background: #7c3aed;
+          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+          border-color: #7c3aed;
           color: #ffffff;
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+        }
+        .switch-icon-pod {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1.5px solid rgba(192, 132, 252, 0.45);
+          color: #7c3aed;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+          flex-shrink: 0;
         }
         .check-indicator {
           color: #7c3aed;
