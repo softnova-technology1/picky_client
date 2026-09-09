@@ -26,7 +26,7 @@ export default function ProductList() {
 
   // Local state
   const [allProducts, setAllProducts] = useState([]);
-  const [categories, setCategories] = useState(MOCK_CATEGORIES || defaultCategories);
+  const [categories, setCategories] = useState(defaultCategories);
   const [loading, setLoading] = useState(true);
   const [gridCols, setGridCols] = useState(4); // 4-col compact grid default
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function ProductList() {
           setCategories(items);
         }
       } catch (err) {
-        setCategories(MOCK_CATEGORIES || defaultCategories);
+        setCategories(defaultCategories);
       }
     }
     fetchCategories();
