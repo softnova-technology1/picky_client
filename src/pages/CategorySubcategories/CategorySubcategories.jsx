@@ -1,10 +1,333 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import PageWrapper from '../../components/layout/PageWrapper';
-import ProductCard from '../../components/product/ProductCard';
+import { Sparkles, ChevronRight, ArrowLeft, ShoppingBag, Layers, ArrowRight } from 'lucide-react';
+import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
+import ProductCard from '../../components/product/ProductCard/ProductCard';
 import { categoryService } from '../../services/category.service';
 import { getCategoryBySlug, getSubcategoriesByCategory, getProducts } from '../../data';
-import { Sparkles, ChevronRight, ArrowLeft, ArrowRight, Layers, ShoppingBag } from 'lucide-react';
+import styles from './CategorySubcategories.module.css';
+
+// Curated Flipkart-Style Category-Specific Mini Carousel Banners
+const CATEGORY_MINI_BANNERS = {
+  'womens-fashion': [
+    {
+      badge: 'FESTIVE SPECIAL',
+      title: 'Handloom Sungudi & Silk Sarees',
+      subtitle: 'Flat 35% OFF on Pure Combed Cotton Weaves',
+      code: 'SUNGUDI35',
+      accent: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'NEW ARRIVALS 2026',
+      title: 'Embroidered Rayon Anarkali Sets',
+      subtitle: 'Extra ₹200 OFF on Orders Above ₹1,499',
+      code: 'ANARKALI200',
+      accent: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
+      image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'DAILY ESSENTIALS',
+      title: 'Soft Cotton Leggings & Dupattas',
+      subtitle: 'Starting from ₹199 • 100% Breathable Fit',
+      code: 'DAILYWEAR',
+      accent: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+      image: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'home-kitchen': [
+    {
+      badge: 'KITCHEN HACKS',
+      title: 'Quick Multi-Blade Vegetable Choppers',
+      subtitle: 'Save 45% Time in Daily Cooking Prep',
+      code: 'CHOP45',
+      accent: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+      image: 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'HEALTHY COOKWARE',
+      title: 'Pre-Seasoned Heavy Cast Iron Kadais',
+      subtitle: '100% Natural Organic Oil Seasoning',
+      code: 'CASTIRON',
+      accent: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+      image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'SMART STORAGE',
+      title: 'BPA-Free Airtight Pantry Containers',
+      subtitle: 'Keep Spices & Pulses Fresh For Months',
+      code: 'FRESHBOX',
+      accent: 'linear-gradient(135deg, #4d7c0f 0%, #84cc16 100%)',
+      image: 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'artificial-jewellery': [
+    {
+      badge: 'TEMPLE JEWELRY',
+      title: 'Antique Matte Gold Lakshmi Choker Sets',
+      subtitle: 'Carved Ruby Kemp Stones • Up to 50% OFF',
+      code: 'KEMP50',
+      accent: 'linear-gradient(135deg, #d97706 0%, #fbbf24 100%)',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'TRENDING JHUMKAS',
+      title: 'Kemp Pearl Bell Dome Jhumka Earrings',
+      subtitle: 'Lightweight Festive Polish • Starts @ ₹499',
+      code: 'JHUMKA',
+      accent: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)',
+      image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'BRIDAL COLLECTION',
+      title: '24K Micro Gold Plated Peacock Kasu Mala',
+      subtitle: 'Heritage Coin Motif with Adjustable Dori',
+      code: 'BRIDALMALA',
+      accent: 'linear-gradient(135deg, #b91c1c 0%, #f87171 100%)',
+      image: 'https://images.unsplash.com/photo-1611591475822-79f939316666?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'beauty-personal-care': [
+    {
+      badge: 'HERBAL CARE',
+      title: 'Rosemary & Bhringraj Dense Hair Growth Oil',
+      subtitle: '100% Pure Cold-Pressed Coconut Oil Base',
+      code: 'HERBALOIL',
+      accent: 'linear-gradient(135deg, #059669 0%, #34d399 100%)',
+      image: 'https://images.unsplash.com/photo-1608248597359-2ff6112f45c8?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'HAIR LUXURY',
+      title: 'Pure Mulberry Silk Satin Scrunchies Pack',
+      subtitle: 'Zero Frizz • Anti-Hair Breakage Night Care',
+      code: 'SILKSCRUNCH',
+      accent: 'linear-gradient(135deg, #db2777 0%, #f472b6 100%)',
+      image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'GLOWING SKIN',
+      title: 'Natural Kumkumadi Ayurvedic Face Serums',
+      subtitle: 'Deep Hydration & Radiance Booster',
+      code: 'GLOWSERUM',
+      accent: 'linear-gradient(135deg, #9333ea 0%, #c084fc 100%)',
+      image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'mobile-accessories': [
+    {
+      badge: 'FAST CHARGING',
+      title: 'Heavy Duty 65W Braided Type-C Cables',
+      subtitle: 'Tough Nylon Braid • 480Mbps Data Speed',
+      code: 'FAST65W',
+      accent: 'linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)',
+      image: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'HI-FI AUDIO',
+      title: 'Studio Pro ANC Wireless Over-Ear Headphones',
+      subtitle: '30dB Active Noise Cancellation • 40h Battery',
+      code: 'STUDIOANC',
+      accent: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+      image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'DESK ACCESSORY',
+      title: 'Aluminium Adjustable Phone & Tablet Stands',
+      subtitle: '270° Dual Rotation • Anti-Slip Alloy Base',
+      code: 'ALUSTAND',
+      accent: 'linear-gradient(135deg, #475569 0%, #94a3b8 100%)',
+      image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'traditional-tamil-products': [
+    {
+      badge: 'AUTHENTIC TAMIL',
+      title: 'Nachiarkoil Solid Brass Mayil Kuthu Vilakku',
+      subtitle: '100% Solid Heavy Virgin Brass • Artisan Crafted',
+      code: 'BRASSDEEPAM',
+      accent: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+      image: 'https://images.unsplash.com/photo-1609137144822-26155986ec32?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'HERITAGE CRAFT',
+      title: 'Tanjore Lakshmi Gold Foil Relief Wall Art',
+      subtitle: 'Handcrafted Heritage Gifts for Auspicious Moments',
+      code: 'TANJORE',
+      accent: 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)',
+      image: 'https://images.unsplash.com/photo-1582561424760-0321d75e81fa?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'MADURAI WEAVES',
+      title: 'Authentic Pure Cotton Tie-Dye Sungudi Sarees',
+      subtitle: 'Traditional Zari Border • Made in Tamil Nadu',
+      code: 'MADURAICOTTON',
+      accent: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)',
+      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'snacks-foods': [
+    {
+      badge: 'FRESH & CRUNCHY',
+      title: 'Authentic Manapparai Rice Murukku Jars',
+      subtitle: 'Cold-Pressed Groundnut Oil • Zero Palm Oil',
+      code: 'MURUKKU',
+      accent: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+      image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'NATIVE SWEETS',
+      title: 'Tirunelveli Pure Desi Ghee Wheat Halwa',
+      subtitle: 'Melt-In-Mouth Slow Cooked Recipe',
+      code: 'HALWA',
+      accent: 'linear-gradient(135deg, #9a3412 0%, #ea580c 100%)',
+      image: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'HOMEMADE PODI',
+      title: 'Spicy Garlic Idli Karapodi & South Pickles',
+      subtitle: 'Roasted Lentils & Guntur Chillies',
+      code: 'KARAPODI',
+      accent: 'linear-gradient(135deg, #dc2626 0%, #f87171 100%)',
+      image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'home-decor': [
+    {
+      badge: 'AESTHETIC LIVING',
+      title: 'Solid Pine Wood Tripod Floor & Table Lamps',
+      subtitle: '3000K Warm Golden Eye-Protecting Glow',
+      code: 'WARMLIGHT',
+      accent: 'linear-gradient(135deg, #4338ca 0%, #6366f1 100%)',
+      image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'NORDIC VIBES',
+      title: 'Minimalist Fluted Ceramic Vases & Pots',
+      subtitle: 'Stone-Matte Tactile Finish for Pampas & Florals',
+      code: 'CERAMIC',
+      accent: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'GREEN LIVING',
+      title: 'Artificial Plants with Natural Jute Hangers',
+      subtitle: 'Zero Maintenance Balcony & Room Greenery',
+      code: 'PLANTS',
+      accent: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)',
+      image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'kids-products': [
+    {
+      badge: 'SCREEN-FREE FUN',
+      title: 'Montessori Educational Wooden Shape Toys',
+      subtitle: 'Smooth Organic Pine • Non-Toxic Water Paint',
+      code: 'TOYS',
+      accent: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+      image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'SPEECH THERAPY',
+      title: 'Smart Talking Flashcards Card Readers',
+      subtitle: '112 Double-Sided Cards (224 Words & Sounds)',
+      code: 'FLASHCARDS',
+      accent: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)',
+      image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'BACK TO SCHOOL',
+      title: 'Cute School Accessories & Water Bottles',
+      subtitle: 'BPA-Free Leakproof Insulated Flasks',
+      code: 'SCHOOLPACK',
+      accent: 'linear-gradient(135deg, #db2777 0%, #fb7185 100%)',
+      image: 'https://images.unsplash.com/photo-1546872006-42c78c00b743?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+  'fitness-products': [
+    {
+      badge: 'YOGA & WELLNESS',
+      title: '6mm Cushioned TPE Non-Slip Yoga Mats',
+      subtitle: 'Laser Body Alignment Lines • Joint Protection',
+      code: 'YOGAMAT',
+      accent: 'linear-gradient(135deg, #0f766e 0%, #2dd4bf 100%)',
+      image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'WORKOUT AT HOME',
+      title: 'Heavy Anti-Snap Fabric Resistance Loop Bands',
+      subtitle: 'Set of 3 Resistance Levels • Non-Slip Internal Strips',
+      code: 'FABRICBANDS',
+      accent: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+      image: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=500&auto=format&fit=crop&q=80',
+    },
+    {
+      badge: 'HYDRATION ESSENTIAL',
+      title: '1000ml Vacuum Insulated Stainless Steel Bottles',
+      subtitle: '24 Hours Ice Cold • Leakproof Sports Straw Lid',
+      code: 'SACKBOTTLE',
+      accent: 'linear-gradient(135deg, #0369a1 0%, #38bdf8 100%)',
+      image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&auto=format&fit=crop&q=80',
+    },
+  ],
+};
+
+const MiniCategoryCarousel = ({ categorySlug }) => {
+  const slides = CATEGORY_MINI_BANNERS[categorySlug] || CATEGORY_MINI_BANNERS['womens-fashion'];
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (isHovered || !slides.length) return;
+    const timer = setInterval(() => {
+      setCurrentIdx((prev) => (prev + 1) % slides.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [isHovered, slides.length]);
+
+  const slide = slides[currentIdx];
+
+  return (
+    <div
+      className={styles['flipkart-mini-carousel']}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className={styles['mini-carousel-slide']}>
+        <img src={slide.image} alt={slide.title} className={styles['mini-slide-img']} />
+        <div className={styles['mini-slide-overlay']} style={{ background: slide.accent }} />
+
+        <div className={styles['mini-slide-content']}>
+          <span className={styles['mini-slide-badge']}>
+            ✦ {slide.badge}
+          </span>
+          <h3 className={styles['mini-slide-title']}>{slide.title}</h3>
+          <p className={styles['mini-slide-subtitle']}>{slide.subtitle}</p>
+
+          <div className={styles['mini-slide-action']}>
+            <span className={styles['mini-coupon-tag']}>CODE: <strong>{slide.code}</strong></span>
+            <Link
+              to={`/products?category=${categorySlug}`}
+              className={styles['mini-shop-btn']}
+            >
+              <span>Shop Now</span>
+              <ChevronRight size={13} strokeWidth={3} />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles['mini-carousel-dots']}>
+        {slides.map((_, i) => (
+          <span
+            key={i}
+            className={`${styles['mini-dot']} ${i === currentIdx ? styles['active'] : ''}`}
+            onClick={() => setCurrentIdx(i)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function CategorySubcategories() {
   const { slug } = useParams();
@@ -58,198 +381,108 @@ export default function CategorySubcategories() {
 
   return (
     <PageWrapper>
-      <div style={{ background: '#ffffff', minHeight: '80vh', padding: '2rem 0 5rem' }}>
+      <div className={styles['subcat-page-root']}>
         <div className="container">
           {/* Breadcrumbs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', color: '#64748b', marginBottom: '2rem', flexWrap: 'wrap' }}>
-            <Link to="/" style={{ color: '#64748b', textDecoration: 'none' }}>Home</Link>
+          <div className={styles['breadcrumbs']}>
+            <Link to="/" className={styles['breadcrumb-link']}>Home</Link>
             <ChevronRight size={14} />
-            <Link to="/categories" style={{ color: '#64748b', textDecoration: 'none' }}>Categories</Link>
+            <Link to="/categories" className={styles['breadcrumb-link']}>Categories</Link>
             <ChevronRight size={14} />
-            <span style={{ color: '#7c3aed', fontWeight: 700 }}>{category.name}</span>
+            <span className={styles['breadcrumb-active']}>{category.name}</span>
           </div>
 
-          {/* Department Showcase Hero Header */}
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '24px',
-              padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
-              marginBottom: '2.5rem',
-              boxShadow: '0 10px 30px rgba(124, 58, 237, 0.08)',
-              border: '1.5px solid rgba(192, 132, 252, 0.4)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1.5rem',
-            }}
-          >
-            <div style={{ maxWidth: '680px' }}>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  background: '#f3e8ff',
-                  color: '#6d28d9',
-                  border: '1px solid #e9d5ff',
-                  padding: '0.35rem 0.85rem',
-                  borderRadius: '9999px',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  marginBottom: '0.85rem',
-                }}
-              >
+          {/* Department Showcase Hero Header Card with Flipkart-Style Mini Carousel */}
+          <div className={styles['hero-header-card']}>
+            <div className={styles['hero-left-col']}>
+              <div className={styles['hero-badge']}>
                 <Sparkles size={14} color="#7c3aed" /> Department Showcase
               </div>
-              <h1 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.6rem)', margin: '0 0 0.5rem', color: '#0f172a' }}>
+              <h1 className={styles['hero-title']}>
                 {category.icon ? `${category.icon} ` : ''}{category.name}
               </h1>
-              <p style={{ color: '#64748b', fontSize: '1.02rem', margin: 0, lineHeight: 1.6 }}>
+              <p className={styles['hero-desc']}>
                 {category.subtext || category.description || `Browse curated collections and popular styles in ${category.name}.`}
               </p>
-            </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <Link
-                to="/categories"
-                className="btn btn-outline"
-                style={{
-                  borderRadius: '9999px',
-                  borderColor: '#c084fc',
-                  color: '#6d28d9',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                }}
-              >
-                <ArrowLeft size={16} /> All Categories
-              </Link>
-              <Link
-                to={`/products?category=${category.slug || category._id}`}
-                className="btn btn-primary"
-                style={{
-                  borderRadius: '9999px',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                }}
-              >
-                <ShoppingBag size={16} /> View All {category.name}
-              </Link>
-            </div>
-          </div>
-
-          {/* Sub-Categories Grid */}
-          <div style={{ marginBottom: '3.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div>
-                <h2 style={{ fontSize: '1.4rem', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Layers size={20} color="#7c3aed" /> Browse by Collection ({subcategories.length})
-                </h2>
-                <p style={{ margin: '0.2rem 0 0', color: '#64748b', fontSize: '0.88rem' }}>
-                  Select a specific category to filter and shop matching items.
-                </p>
+              <div className={styles['hero-actions-row']}>
+                <Link
+                  to="/categories"
+                  className={`btn btn-outline ${styles['all-cat-btn']}`}
+                >
+                  <ArrowLeft size={16} /> All Categories
+                </Link>
+                <Link
+                  to={`/products?category=${category.slug || category._id}`}
+                  className={`btn btn-primary ${styles['view-all-btn']}`}
+                >
+                  <ShoppingBag size={16} /> View All {category.name}
+                </Link>
               </div>
             </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '1.5rem',
-              }}
-            >
+            {/* Right Side Flipkart-Like Mini Banner Carousel */}
+            <div className={styles['hero-mini-carousel-wrapper']}>
+              <MiniCategoryCarousel categorySlug={slug} />
+            </div>
+          </div>
+
+          {/* Sub-Categories Outer Container Card (Exact 2nd Image Design) */}
+          <div className={styles['subcat-container-card']}>
+            {/* Header Row */}
+            <div className={styles['subcat-header-row']}>
+              <div className={styles['subcat-header-left']}>
+                <div className={styles['subcat-icon-pod']}>
+                  <Layers size={20} color="#7c3aed" strokeWidth={2.3} />
+                </div>
+                <div>
+                  <div className={styles['title-row']}>
+                    <h2 className={styles['container-title']}>Browse Collections</h2>
+                    <span className={styles['categories-count-badge']}>
+                      {subcategories.length} Categories
+                    </span>
+                  </div>
+                  <p className={styles['container-subtext']}>
+                    Shop curated gear by category
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                to={`/products?category=${category.slug || category._id}`}
+                className={styles['view-all-collections-btn']}
+              >
+                <span>View all collections</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            {/* Horizontal Divider Line */}
+            <div className={styles['header-divider']} />
+
+            {/* Compact Horizontal Cards Grid */}
+            <div className={styles['compact-subcat-grid']}>
               {subcategories.map((sub) => (
                 <Link
                   key={sub._id || sub.slug}
                   to={`/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`}
-                  style={{
-                    textDecoration: 'none',
-                    background: 'white',
-                    borderRadius: '22px',
-                    overflow: 'hidden',
-                    boxShadow: '0 8px 24px rgba(124, 58, 237, 0.06)',
-                    border: '1.5px solid rgba(192, 132, 252, 0.35)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                  className="subcategory-card"
+                  className={styles['compact-subcat-card']}
                 >
-                  {/* Image with Aspect Ratio */}
-                  <div
-                    style={{
-                      position: 'relative',
-                      aspectRatio: '16 / 10',
-                      overflow: 'hidden',
-                      background: '#1e1035',
-                    }}
-                  >
-                    <img
-                      src={sub.image || category.image}
-                      alt={sub.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block',
-                        transition: 'transform 0.4s ease',
-                      }}
-                      className="subcategory-img"
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        background: 'rgba(30, 16, 53, 0.82)',
-                        backdropFilter: 'blur(8px)',
-                        color: '#f3e8ff',
-                        padding: '0.25rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.78rem',
-                        fontWeight: 800,
-                        border: '1px solid rgba(192, 132, 252, 0.4)',
-                      }}
-                    >
-                      {sub.itemCount ? `${sub.itemCount} Items` : 'In Stock'}
-                    </div>
-                  </div>
-
-                  {/* Body Info */}
-                  <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <h3 style={{ fontSize: '1.15rem', color: '#0f172a', margin: '0 0 0.4rem', fontWeight: 800 }}>
+                  <img
+                    src={sub.image || category.image}
+                    alt={sub.name}
+                    className={styles['compact-card-img']}
+                  />
+                  <div className={styles['compact-card-content']}>
+                    <h3 className={styles['compact-card-title']} title={sub.name}>
                       {sub.name}
                     </h3>
-                    <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem', flex: 1 }}>
-                      {sub.description || `Explore trending ${sub.name.toLowerCase()} curated for quality.`}
-                    </p>
-
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.65rem 1rem',
-                        borderRadius: '12px',
-                        background: '#f3e8ff',
-                        color: '#6d28d9',
-                        fontWeight: 700,
-                        fontSize: '0.88rem',
-                        transition: 'all 0.2s ease',
-                      }}
-                      className="subcat-action-btn"
-                    >
-                      <span>Shop {sub.name}</span>
-                      <ArrowRight size={16} />
+                    <span className={styles['compact-card-count']}>
+                      {sub.itemCount ? `${sub.itemCount} items` : 'In stock'}
+                    </span>
+                    <div className={styles['compact-card-action']}>
+                      <span>Shop</span>
+                      <ArrowRight size={13} strokeWidth={2.5} />
                     </div>
                   </div>
                 </Link>
@@ -257,27 +490,37 @@ export default function CategorySubcategories() {
             </div>
           </div>
 
-          {/* Featured Highlights from this Category */}
+          {/* Featured Highlights from this Category (Enhanced Section Container) */}
           {categoryProducts.length > 0 && (
-            <div style={{ marginBottom: '3rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.4rem', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Sparkles size={20} color="#7c3aed" /> Top Picks in {category.name}
-                  </h2>
-                  <p style={{ margin: '0.2rem 0 0', color: '#64748b', fontSize: '0.88rem' }}>
-                    Customer favorites and highest rated items ready for fast dispatch.
-                  </p>
+            <div className={styles['top-picks-container-card']}>
+              <div className={styles['top-picks-header-row']}>
+                <div className={styles['top-picks-header-left']}>
+                  <div className={styles['top-picks-icon-pod']}>
+                    <Sparkles size={20} color="#7c3aed" strokeWidth={2.3} />
+                  </div>
+                  <div>
+                    <div className={styles['title-row']}>
+                      <h2 className={styles['container-title']}>Top Picks in {category.name}</h2>
+                      <span className={styles['picks-badge']}>✦ Customer Favorites</span>
+                    </div>
+                    <p className={styles['container-subtext']}>
+                      Customer favorites and highest rated items ready for fast 24-48h dispatch.
+                    </p>
+                  </div>
                 </div>
+
                 <Link
                   to={`/products?category=${category.slug || category._id}`}
-                  style={{ color: '#7c3aed', fontWeight: 700, fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  className={styles['view-all-collections-btn']}
                 >
-                  View All ({category.itemCount || 10}+ Items) <ArrowRight size={15} />
+                  <span>View All ({category.itemCount || 10}+ Items)</span>
+                  <ArrowRight size={14} />
                 </Link>
               </div>
 
-              <div className="grid-4">
+              <div className={styles['header-divider']} />
+
+              <div className={styles['top-picks-grid']}>
                 {categoryProducts.map((prod) => (
                   <ProductCard key={prod._id || prod.id} product={prod} />
                 ))}
@@ -286,52 +529,19 @@ export default function CategorySubcategories() {
           )}
 
           {/* Quick Option to browse full catalog */}
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '2.2rem 1.5rem',
-              background: 'linear-gradient(135deg, rgba(243, 232, 255, 0.8) 0%, rgba(233, 213, 255, 0.45) 100%)',
-              borderRadius: '20px',
-              border: '1.5px dashed #a855f7',
-            }}
-          >
-            <p style={{ margin: '0 0 0.85rem', color: '#581c87', fontWeight: 700, fontSize: '1.02rem' }}>
+          <div className={styles['catalog-banner']}>
+            <p className={styles['catalog-banner-text']}>
               Want to see all {category.name} products with instant filters and sorting?
             </p>
             <Link
               to={`/products?category=${category.slug || category._id}`}
-              className="btn btn-primary"
-              style={{
-                borderRadius: '9999px',
-                padding: '0.75rem 2rem',
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
+              className={`btn btn-primary ${styles['browse-all-btn']}`}
             >
               Browse All {category.name} <ArrowRight size={16} />
             </Link>
           </div>
         </div>
       </div>
-
-      <style>{`
-        .subcategory-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 16px 36px rgba(124, 58, 237, 0.18), 0 4px 12px rgba(0,0,0,0.06) !important;
-          border-color: #a855f7 !important;
-        }
-        .subcategory-card:hover .subcategory-img {
-          transform: scale(1.08);
-        }
-        .subcategory-card:hover .subcat-action-btn {
-          background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%) !important;
-          color: #ffffff !important;
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-        }
-      `}</style>
     </PageWrapper>
   );
 }
-

@@ -258,7 +258,7 @@ export default function Home() {
       <section className="hp-category-nav">
         <div className="hp-category-scroll">
           {categories.slice(0, 10).map((cat, i) => (
-            <div key={i} className="hp-category-item" onClick={() => navigate(`/products?category=${cat.slug || cat._id}`)}>
+            <div key={i} className="hp-category-item" onClick={() => navigate(`/categories/${cat.slug || cat._id}`)}>
               <div className="hp-category-img-wrapper">
                 <img 
                   src={cat.image || 'https://images.unsplash.com/photo-1611078489935-0cb964de46d6?w=200&auto=format&fit=crop&q=80'} 
@@ -435,10 +435,7 @@ export default function Home() {
           <div className="hp-arrivals-filter-tabs">
             {[
               { id: 'all', label: 'All New Drops' },
-              { id: 'womens-fashion', label: "Women's Fashion" },
-              { id: 'artificial-jewellery', label: 'Jewellery' },
-              { id: 'home-decor', label: 'Home & Living' },
-              { id: 'traditional-tamil-products', label: 'Traditional Crafts' },
+              ...categories.slice(0, 10).map((c) => ({ id: c.slug || c._id, label: c.name })),
             ].map((tab) => (
               <button
                 key={tab.id}

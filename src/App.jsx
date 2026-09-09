@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AdminProtectedRoute } from './components/layout/AdminProtectedRoute';
+import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
 
 // Customer Pages
 import Home from './pages/Home';
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* ── Customer Core Catalog & Browsing ─────── */}
           <Route path="/" element={<Home />} />

@@ -362,6 +362,36 @@ export default function ProductList() {
                     </span>
                   )}
 
+                  {selectedSubCategory && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        background: '#e0e7ff',
+                        color: '#4338ca',
+                        padding: '0.22rem 0.65rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>
+                        {currentCategoryObj?.subcategories?.find(
+                          (s) =>
+                            s.slug === selectedSubCategory ||
+                            s._id === selectedSubCategory ||
+                            s.slug?.toLowerCase() === selectedSubCategory.toLowerCase()
+                        )?.name || selectedSubCategory}
+                      </span>
+                      <X
+                        size={13}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleSubCategoryChange('')}
+                      />
+                    </span>
+                  )}
+
                   {urlMaxPrice && (
                     <span
                       style={{

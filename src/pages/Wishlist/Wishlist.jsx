@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import PageWrapper from '../../components/layout/PageWrapper';
-import PriceDisplay from '../../components/product/PriceDisplay';
+import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
+import ProductCard from '../../components/product/ProductCard/ProductCard';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
-import { Heart, ShoppingCart, Trash2, ArrowRight, Sparkles, X } from 'lucide-react';
+import { Heart, ShoppingBag, Trash2, ArrowRight, AlertTriangle } from 'lucide-react';
+import styles from './Wishlist.module.css';
 
 export default function Wishlist() {
-  const { items, removeItem, setWishlist } = useWishlistStore();
+  const { items, removeItem, setWishlist, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
   const [loading, setLoading] = useState(false);
+  const [productToRemove, setProductToRemove] = useState(null);
 
   useEffect(() => {
     async function loadServerWishlist() {
@@ -36,130 +38,166 @@ export default function Wishlist() {
     loadServerWishlist();
   }, [isLoggedIn, setWishlist]);
 
-  const handleMoveToCart = async (product) => {
-    addItem(product, 1);
-    removeItem(product._id || product.id || product);
+  // Handler for "Move to Cart" button on ProductCard
+  const handleMoveToCart = async (product, size = null) => {
+    const pId = product._id || product.id || product.slug;
+    const itemToAdd = size ? { ...product, selectedSize: size } : product;
+    
+    addItem(itemToAdd, 1);
+    removeItem(pId);
 
     if (isLoggedIn) {
       try {
-        await wishlistService.remove(product._id || product.id || product);
+        await wishlistService.remove(pId);
       } catch (_) {}
     }
 
-    showToast(`Moved "${product.name}" to cart!`, 'success');
+    const sizeMsg = size ? ` (Size ${size})` : '';
+    showToast(`Moved "${product.name}"${sizeMsg} to cart!`, 'success');
   };
 
-  const handleRemove = async (productId) => {
-    removeItem(productId);
+  // Handler to open confirmation modal
+  const promptRemoveProduct = (product) => {
+    setProductToRemove(product);
+  };
+
+  // Confirmed deletion handler
+  const confirmRemove = async () => {
+    if (!productToRemove) return;
+    const pId = productToRemove._id || productToRemove.id || productToRemove.slug;
+    const pName = productToRemove.name || 'Product';
+
+    removeItem(pId);
     if (isLoggedIn) {
       try {
-        await wishlistService.remove(productId);
+        await wishlistService.remove(pId);
       } catch (_) {}
     }
-    showToast('Item removed from wishlist', 'info');
+
+    showToast(`Removed "${pName}" from wishlist`, 'info');
+    setProductToRemove(null);
+  };
+
+  // Move All to Cart handler
+  const handleMoveAllToCart = async () => {
+    if (items.length === 0) return;
+
+    items.forEach((prod) => {
+      addItem(prod, 1);
+    });
+
+    if (isLoggedIn) {
+      try {
+        await wishlistService.clear?.();
+      } catch (_) {}
+    }
+
+    clearWishlist();
+    showToast(`Moved all ${items.length} items to your cart!`, 'success');
   };
 
   return (
     <PageWrapper>
-      <div className="section">
+      <div className={styles['wishlist-root']}>
         <div className="container">
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-              <h1 style={{ fontSize: '2.2rem', margin: 0 }}>
-                My Wishlist
-              </h1>
-              <span style={{ background: '#f3e8ff', color: '#7c3aed', padding: '0.25rem 0.75rem', borderRadius: '100px', fontWeight: 800, fontSize: '0.9rem' }}>
-                {items.length} items
-              </span>
+          {/* ── Header Section ── */}
+          <div className={styles['wishlist-header-row']}>
+            <div className={styles['header-left']}>
+              <div className={styles['header-title-group']}>
+                <h1 className={styles['wishlist-title']}>My Wishlist</h1>
+                <span className={styles['item-count-badge']}>
+                  {items.length} {items.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+              <p className={styles['wishlist-subtitle']}>
+                Save items you like and move them to cart whenever you're ready.
+              </p>
             </div>
-            <p style={{ color: '#64748b' }}>Save items you like and move them to cart whenever you're ready.</p>
+
+            {items.length > 0 && (
+              <div className={styles['header-actions']}>
+                <button
+                  type="button"
+                  onClick={() => clearWishlist()}
+                  className={styles['clear-btn']}
+                >
+                  <Trash2 size={14} /> Clear All
+                </button>
+                <button
+                  type="button"
+                  onClick={handleMoveAllToCart}
+                  className={styles['move-all-btn']}
+                >
+                  <ShoppingBag size={15} /> Move All to Cart
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* ── Content Grid or Empty State ── */}
           {items.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '5rem 1.5rem', maxWidth: '600px', margin: '0 auto' }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#f43f5e' }}>
-                <Heart size={40} />
+            <div className={styles['empty-card']}>
+              <div className={styles['empty-icon-box']}>
+                <Heart size={38} strokeWidth={2.2} />
               </div>
-              <h2>Your Wishlist is Empty</h2>
-              <p style={{ margin: '0.5rem 0 1.75rem', color: '#64748b' }}>
-                Explore curated festival fireworks and tap the heart icon to save your favorites!
+              <h2 className={styles['empty-title']}>Your Wishlist is Empty</h2>
+              <p className={styles['empty-subtext']}>
+                Explore our collections and tap the heart icon on any product to save your favorites!
               </p>
-              <Link to="/products" className="btn btn-primary btn-lg" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                Explore Store <ArrowRight size={18} />
+              <Link to="/products" className={styles['explore-btn']}>
+                <span>Explore Products</span>
+                <ArrowRight size={16} strokeWidth={2.5} />
               </Link>
             </div>
           ) : (
-            <div className="grid-4">
+            <div className={styles['wishlist-grid']}>
               {items.map((product) => {
-                const pId = product._id || product.id || product;
-                const imageSrc =
-                  product.images?.[0] ||
-                  product.image ||
-                  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500';
-
+                const pId = product._id || product.id || product.slug;
                 return (
-                  <div key={pId} className="product-card">
-                    <div style={{ position: 'relative' }}>
-                      <Link to={`/products/${product.slug || ''}`}>
-                        <img
-                          src={imageSrc}
-                          alt={product.name || 'Product'}
-                          className="product-card-image"
-                        />
-                      </Link>
-                      <button
-                        onClick={() => handleRemove(pId)}
-                        style={{
-                          position: 'absolute',
-                          top: '10px',
-                          right: '10px',
-                          background: 'rgba(255, 255, 255, 0.95)',
-                          color: '#ef4444',
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          border: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                        }}
-                        title="Remove from wishlist"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-
-                    <div className="product-card-body">
-                      {product.category?.name && (
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                          {product.category.name}
-                        </span>
-                      )}
-                      <Link to={`/products/${product.slug || ''}`}>
-                        <h3 className="product-card-title">{product.name}</h3>
-                      </Link>
-
-                      <div style={{ margin: '0.5rem 0 1rem' }}>
-                        <PriceDisplay price={product.price} discountPrice={product.discountPrice} size="sm" />
-                      </div>
-
-                      <button
-                        onClick={() => handleMoveToCart(product)}
-                        className="btn btn-primary btn-sm btn-block"
-                        style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                      >
-                        <ShoppingCart size={15} /> Move to Cart
-                      </button>
-                    </div>
-                  </div>
+                  <ProductCard
+                    key={pId}
+                    product={product}
+                    actionText="Move to Cart"
+                    onAction={handleMoveToCart}
+                    onRemoveWishlist={promptRemoveProduct}
+                  />
                 );
               })}
             </div>
           )}
         </div>
       </div>
+
+      {/* ── Remove Confirmation Modal ── */}
+      {productToRemove && (
+        <div className={styles['modal-overlay']} onClick={() => setProductToRemove(null)}>
+          <div className={styles['modal-card']} onClick={(e) => e.stopPropagation()}>
+            <div className={styles['modal-icon-box']}>
+              <AlertTriangle size={28} strokeWidth={2.3} />
+            </div>
+            <h3 className={styles['modal-title']}>Remove from Wishlist?</h3>
+            <p className={styles['modal-text']}>
+              Are you sure you want to remove <strong>"{productToRemove.name}"</strong> from your saved wishlist?
+            </p>
+            <div className={styles['modal-actions']}>
+              <button
+                type="button"
+                className={styles['modal-cancel-btn']}
+                onClick={() => setProductToRemove(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles['modal-confirm-btn']}
+                onClick={confirmRemove}
+              >
+                Remove Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageWrapper>
   );
 }

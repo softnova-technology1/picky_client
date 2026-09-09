@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
 import { wishlistService } from '../../../services/wishlist.service';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, actionText = 'Add to Cart', onAction, onRemoveWishlist }) {
   const navigate = useNavigate();
   const { addItem } = useCartStore();
   const { isInWishlist, toggleItem } = useWishlistStore();
@@ -80,6 +80,13 @@ export default function ProductCard({ product }) {
     e.preventDefault();
     e.stopPropagation();
 
+    if (onAction) {
+      onAction(product, size);
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1600);
+      return;
+    }
+
     const itemToAdd = size ? { ...product, selectedSize: size } : product;
     addItem(itemToAdd, 1);
     setJustAdded(true);
@@ -92,6 +99,12 @@ export default function ProductCard({ product }) {
   const handleToggleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (onRemoveWishlist && inWishlist) {
+      onRemoveWishlist(product);
+      return;
+    }
+
     toggleItem(product);
 
     if (isLoggedIn) {
@@ -134,18 +147,22 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        {/* Floating Wishlist Heart Button (Top-Right) */}
+        {/* Floating Top-Right Action Button (Simple Remove X for Wishlist view or Heart for Catalog) */}
         <button
           onClick={handleToggleWishlist}
           className="lumina-heart-btn"
-          title={inWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
+          title={onRemoveWishlist ? 'Remove from wishlist' : inWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
         >
-          <Heart
-            size={16}
-            color={inWishlist ? '#e11d48' : '#64748b'}
-            fill={inWishlist ? '#e11d48' : 'transparent'}
-            strokeWidth={2.3}
-          />
+          {onRemoveWishlist ? (
+            <X size={15} color="#ef4444" strokeWidth={2.5} />
+          ) : (
+            <Heart
+              size={16}
+              color={inWishlist ? '#e11d48' : '#64748b'}
+              fill={inWishlist ? '#e11d48' : 'transparent'}
+              strokeWidth={2.3}
+            />
+          )}
         </button>
 
         {/* 3-Image Carousel Track */}
@@ -240,7 +257,7 @@ export default function ProductCard({ product }) {
                 ) : (
                   <>
                     <ShoppingCart size={15} strokeWidth={2.3} />
-                    <span>Add to Cart</span>
+                    <span>{actionText}</span>
                   </>
                 )}
               </button>
@@ -276,7 +293,7 @@ export default function ProductCard({ product }) {
               ) : (
                 <>
                   <ShoppingCart size={15} strokeWidth={2.3} />
-                  <span>Add to Cart</span>
+                  <span>{actionText}</span>
                 </>
               )}
             </button>
