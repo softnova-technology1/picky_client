@@ -1,0 +1,11 @@
+.page-wrapper-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.page-wrapper-main {
+  flex: 1;
+  background: #ffffff;
+}

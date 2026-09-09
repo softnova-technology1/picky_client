@@ -1,0 +1,13 @@
+.toast-close-btn {
+  color: white;
+  opacity: 0.7;
+  margin-left: 0.5rem;
+  font-size: 1.1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.toast-close-btn:hover {
+  opacity: 1;
+}

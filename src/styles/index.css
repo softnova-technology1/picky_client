@@ -1,8 +1,7 @@
-@import '../pages/contact/contact.css';
-@import './about.css';
 @import './blog.css';
 @import './legal.css';
 @import './bestseller_hero.css';
+@import './login.css';
 
 /* ─── CSS Variables & Purple Design System ──────────────────────── */
 :root {
@@ -63,7 +62,7 @@ h4 { font-size: 1.1rem; }
 p { line-height: 1.6; color: var(--color-text-muted); }
 
 /* ─── Containers & Layout ────────────────────────────────── */
-.container { max-width: 1240px; margin: 0 auto; padding: 0 1.25rem; }
+.container { max-width: 1440px; margin: 0 auto; padding: 0 1.25rem; }
 .section { padding: 3rem 0; }
 .flex { display: flex; }
 .flex-col { display: flex; flex-direction: column; }
@@ -398,3 +397,111 @@ p { line-height: 1.6; color: var(--color-text-muted); }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── Floating Action Widgets ────────────────────────────── */
+.picky-float-stack-right {
+  position: fixed;
+  bottom: 1.75rem;
+  right: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  z-index: 990;
+}
+
+.picky-float-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  text-decoration: none;
+}
+
+.picky-float-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.45);
+}
+
+.picky-float-chat {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #ffffff;
+}
+
+.picky-chat-ping-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  animation: pingPulse 2s infinite ease-in-out;
+}
+
+@keyframes pingPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.85; }
+}
+
+.picky-float-cart {
+  background: #170b2c;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.picky-cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ec4899;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0f0720;
+}
+
+.picky-float-scroll {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 1.75rem;
+  z-index: 990;
+  background: #170b2c;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
+  transition: all 0.3s ease;
+}
+
+.picky-float-scroll.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.picky-float-scroll:hover {
+  background: #7c3aed;
+  border-color: #a855f7;
+}
+
+.picky-float-scroll-sub {
+  display: none;
+}
+

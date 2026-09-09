@@ -1,0 +1,36 @@
+.calendar-icon {
+  color: #7c3aed;
+}
+
+.search-icon {
+  color: #94a3b8;
+}
+
+.strong-dark {
+  color: #1e1035;
+}
+
+.privacy-box {
+  background: #faf5ff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e9d5ff;
+  margin-top: 1rem;
+}
+
+.privacy-title {
+  margin: 0;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.privacy-text {
+  margin: 0.25rem 0 0 0;
+  color: #581c87;
+}
+
+.toast-icon {
+  color: #10b981;
+  display: inline;
+  margin-right: 6px;
+}

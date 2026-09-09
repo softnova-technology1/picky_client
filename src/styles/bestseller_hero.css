@@ -5,17 +5,24 @@
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(248, 240, 255, 0.58) 100%),
+  min-height: calc(100vh - 80px);
+  height: calc(100vh - 80px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(248, 240, 255, 0.25) 100%),
               url('/images/bestseller_category_bg.jpg') center center / cover no-repeat;
-  padding: 4.5rem 1.5rem 5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
   overflow: hidden;
   border-bottom: 1.5px solid #e9d5ff;
 }
 
 /* Container Frame */
 .bestseller-playful-container {
-  max-width: 1080px;
-  margin: 0 auto;
+  max-width: 1180px;
+  width: 100%;
+  margin: auto 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -274,5 +281,32 @@
   }
   .bestseller-playful-hero-wrapper {
     padding: 3rem 1rem 3.5rem 1rem;
+  }
+}
+
+/* ── 5 Cards Per Row Grid ────────────────────────────────────────── */
+.bestsellers-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem 1.2rem;
+  margin-bottom: 4.5rem;
+}
+
+@media (max-width: 1399px) {
+  .bestsellers-grid-5 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .bestsellers-grid-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bestsellers-grid-5 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 0.8rem;
   }
 }

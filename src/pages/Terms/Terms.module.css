@@ -1,0 +1,36 @@
+.calendar-icon {
+  color: #e11d48;
+}
+
+.search-icon {
+  color: #94a3b8;
+}
+
+.strong-dark {
+  color: #0f172a;
+}
+
+.support-box {
+  background: #f8fafc;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 1rem;
+}
+
+.support-title {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.support-text {
+  margin: 0.25rem 0 0 0;
+  color: #64748b;
+}
+
+.toast-icon {
+  color: #10b981;
+  display: inline;
+  margin-right: 6px;
+}
