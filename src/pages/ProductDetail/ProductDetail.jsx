@@ -66,7 +66,7 @@ export default function ProductDetail() {
     const catSlug = product.category.slug || product.category._id;
     return getProducts({ category: catSlug })
       .filter((p) => p.slug !== slug && p._id !== product._id)
-      .slice(0, 4);
+      .slice(0, 5);
   }, [product, slug]);
 
   if (loading && !product) {
@@ -487,7 +487,7 @@ export default function ProductDetail() {
                 </Link>
               </div>
 
-              <div className="grid-4">
+              <div className="product-grid-5">
                 {relatedProducts.map((relProd) => (
                   <ProductCard key={relProd._id || relProd.id} product={relProd} />
                 ))}

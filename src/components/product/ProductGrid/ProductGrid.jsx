@@ -5,13 +5,14 @@ import { ShoppingBag } from 'lucide-react';
 export default function ProductGrid({ products = [], loading = false }) {
   if (loading) {
     return (
-      <div className="grid-4">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+      <div className="product-grid-5">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
           <div
             key={n}
             className="card"
             style={{
-              height: '320px',
+              height: '340px',
+              borderRadius: '20px',
               background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)',
               backgroundSize: '200% 100%',
               animation: 'pulse 1.5s infinite',
@@ -41,7 +42,7 @@ export default function ProductGrid({ products = [], loading = false }) {
   }
 
   return (
-    <div className="grid-4">
+    <div className="product-grid-5">
       {products.map((product) => (
         <ProductCard key={product._id || product.id} product={product} />
       ))}

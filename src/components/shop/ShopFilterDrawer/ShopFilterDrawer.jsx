@@ -299,7 +299,7 @@ export default function ShopFilterDrawer({
           {/* Section: Minimum Discount */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
-              <Percent size={16} color="#db2777" strokeWidth={2.3} />
+              <Percent size={16} color="#7c3aed" strokeWidth={2.3} />
               <h4
                 style={{
                   fontSize: '0.86rem',
@@ -329,19 +329,19 @@ export default function ShopFilterDrawer({
                       justifyContent: 'space-between',
                       padding: '0.55rem 0.85rem',
                       borderRadius: '10px',
-                      border: isSelected ? '1.5px solid #db2777' : '1px solid #e2e8f0',
-                      background: isSelected ? '#fdf2f8' : '#ffffff',
-                      color: isSelected ? '#be185d' : '#475569',
+                      border: isSelected ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
+                      background: isSelected ? '#f5edff' : '#ffffff',
+                      color: isSelected ? '#6d28d9' : '#475569',
                       fontWeight: isSelected ? 800 : 600,
                       fontSize: '0.84rem',
                       cursor: 'pointer',
                     }}
                   >
                     <span>{opt.label}</span>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#fbcfe8', color: '#be185d', padding: '0.12rem 0.45rem', borderRadius: '9999px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: isSelected ? '#ede9fe' : '#f1f5f9', color: isSelected ? '#7c3aed' : '#64748b', padding: '0.12rem 0.45rem', borderRadius: '9999px' }}>
                       {opt.badge}
                     </span>
-                    {isSelected && <Check size={14} strokeWidth={2.8} />}
+                    {isSelected && <Check size={14} color="#7c3aed" strokeWidth={2.8} />}
                   </button>
                 );
               })}

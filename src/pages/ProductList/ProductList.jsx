@@ -9,8 +9,7 @@ import ShopInFeedBanner from '../../components/shop/ShopInFeedBanner';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
 import { getProducts, categories as defaultCategories, searchProducts } from '../../data';
-import { MOCK_CATEGORIES } from '../../data/adminMockData';
-import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Grid3X3, LayoutGrid, Sparkles, ArrowRight, Check, ChevronRight } from 'lucide-react';
+import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight } from 'lucide-react';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();
@@ -23,6 +22,7 @@ export default function ProductList() {
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
   const sort = searchParams.get('sort') || 'newest';
   const urlMaxPrice = searchParams.get('maxPrice') || '';
+  const urlMinDiscount = searchParams.get('discount') || '';
 
   // Local state
   const [allProducts, setAllProducts] = useState([]);
@@ -35,7 +35,6 @@ export default function ProductList() {
   // Quick Filters State
   const [quickFilters, setQuickFilters] = useState({
     discount40: false,
-    fastDispatch: false,
   });
 
   // Load Categories list
@@ -125,22 +124,18 @@ export default function ProductList() {
       });
     }
 
-    // Discount Filter (40%+)
-    if (quickFilters.discount40) {
+    // Discount Filter
+    const activeDiscountThreshold = urlMinDiscount ? Number(urlMinDiscount) : (quickFilters.discount40 ? 40 : 0);
+    if (activeDiscountThreshold > 0) {
       result = result.filter((p) => {
         const discount = Number(p.discount || p.discountPercentage || 0);
-        if (discount >= 40) return true;
+        if (discount >= activeDiscountThreshold) return true;
         if (p.originalPrice && p.price) {
           const calc = Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
-          return calc >= 40;
+          return calc >= activeDiscountThreshold;
         }
         return false;
       });
-    }
-
-    // Fast Dispatch Filter
-    if (quickFilters.fastDispatch) {
-      result = result.filter((p) => p.isFastDispatch !== false);
     }
 
     // Sorting
@@ -206,6 +201,20 @@ export default function ProductList() {
     setSearchParams(next);
   };
 
+  // Handle Discount Selection
+  const handleDiscountChange = (minDiscount) => {
+    const next = new URLSearchParams(searchParams);
+    if (minDiscount) {
+      next.set('discount', minDiscount);
+    } else {
+      next.delete('discount');
+    }
+    setSearchParams(next);
+    if (quickFilters.discount40 && minDiscount !== '40') {
+      setQuickFilters((prev) => ({ ...prev, discount40: false }));
+    }
+  };
+
   // Handle Quick Filter Toggle
   const handleToggleQuickFilter = (key) => {
     setQuickFilters((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -214,9 +223,7 @@ export default function ProductList() {
   // Reset all filters
   const handleResetAll = () => {
     setQuickFilters({
-      rating4Plus: false,
       discount40: false,
-      fastDispatch: false,
     });
     setSearchParams({});
     if (routeCategorySlug) {
@@ -230,8 +237,7 @@ export default function ProductList() {
     (selectedSubCategory ? 1 : 0) +
     (searchQuery ? 1 : 0) +
     (urlMaxPrice ? 1 : 0) +
-    (quickFilters.discount40 ? 1 : 0) +
-    (quickFilters.fastDispatch ? 1 : 0);
+    (urlMinDiscount || quickFilters.discount40 ? 1 : 0);
 
   // Pagination slice
   const visibleProducts = filteredProducts.slice(0, visibleCount);
@@ -269,6 +275,8 @@ export default function ProductList() {
               onSelectSubCategory={handleSubCategoryChange}
               urlMaxPrice={urlMaxPrice}
               onSelectMaxPrice={handleMaxPriceChange}
+              urlMinDiscount={urlMinDiscount}
+              onSelectDiscount={handleDiscountChange}
               quickFilters={quickFilters}
               onToggleQuickFilter={handleToggleQuickFilter}
               activeFilterCount={activeFilterCount}
@@ -334,8 +342,8 @@ export default function ProductList() {
                     )}
                   </button>
 
-                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>
-                    Showing <strong style={{ color: '#0f172a' }}>{filteredProducts.length}</strong> items
+                  <span style={{ fontSize: '0.94rem', color: '#1e1b4b', fontWeight: 800, letterSpacing: '-0.01em' }}>
+                    {currentCategoryObj ? currentCategoryObj.name : 'All Products'}
                   </span>
 
                   {/* Active Dismissible Tags */}
@@ -408,25 +416,28 @@ export default function ProductList() {
                     </span>
                   )}
 
-                  {quickFilters.discount40 && (
+                  {(urlMinDiscount || quickFilters.discount40) && (
                     <span
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.3rem',
-                        background: '#fdf2f8',
-                        color: '#be185d',
+                        background: '#f3e8ff',
+                        color: '#7c3aed',
                         padding: '0.22rem 0.65rem',
                         borderRadius: '9999px',
                         fontSize: '0.76rem',
                         fontWeight: 700,
                       }}
                     >
-                      <span>40%+ OFF</span>
+                      <span>{urlMinDiscount || 40}%+ OFF</span>
                       <X
                         size={13}
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleToggleQuickFilter('discount40')}
+                        onClick={() => {
+                          handleDiscountChange('');
+                          if (quickFilters.discount40) setQuickFilters((p) => ({ ...p, discount40: false }));
+                        }}
                       />
                     </span>
                   )}
@@ -450,7 +461,7 @@ export default function ProductList() {
                   )}
                 </div>
 
-                {/* Right: Sort Dropdown & Grid View Toggle */}
+                {/* Right: Sort Dropdown */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
@@ -482,57 +493,6 @@ export default function ProductList() {
                       <option value="price_desc">Price: High to Low</option>
                     </select>
                   </div>
-
-                  {/* Grid Layout Switcher */}
-                  <div
-                    className="shop-grid-switcher"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      padding: '0.18rem',
-                      borderRadius: '10px',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setGridCols(3)}
-                      style={{
-                        padding: '0.35rem 0.5rem',
-                        borderRadius: '7px',
-                        border: 'none',
-                        background: gridCols === 3 ? '#7c3aed' : 'transparent',
-                        color: gridCols === 3 ? '#ffffff' : '#64748b',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        transition: 'all 0.15s ease',
-                      }}
-                      title="3-Column Editorial Grid"
-                    >
-                      <LayoutGrid size={15} />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setGridCols(4)}
-                      style={{
-                        padding: '0.35rem 0.5rem',
-                        borderRadius: '7px',
-                        border: 'none',
-                        background: gridCols === 4 ? '#7c3aed' : 'transparent',
-                        color: gridCols === 4 ? '#ffffff' : '#64748b',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        transition: 'all 0.15s ease',
-                      }}
-                      title="4-Column Compact Grid"
-                    >
-                      <Grid3X3 size={15} />
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -546,7 +506,7 @@ export default function ProductList() {
                     gap: '1.5rem',
                   }}
                 >
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                     <div
                       key={n}
                       style={{
@@ -690,13 +650,13 @@ export default function ProductList() {
           category: selectedCategory,
           maxPrice: urlMaxPrice,
           minRating: quickFilters.rating4Plus ? '4.5' : '',
-          minDiscount: quickFilters.discount40 ? '40' : '',
+          minDiscount: urlMinDiscount || (quickFilters.discount40 ? '40' : ''),
         }}
         onUpdateFilter={(key, val) => {
           if (key === 'category') handleCategoryChange(val);
           if (key === 'maxPrice') handleMaxPriceChange(val);
           if (key === 'minRating') setQuickFilters((p) => ({ ...p, rating4Plus: val === '4.5' }));
-          if (key === 'minDiscount') setQuickFilters((p) => ({ ...p, discount40: val === '40' || val === '50' }));
+          if (key === 'minDiscount') handleDiscountChange(val);
         }}
         onResetAll={handleResetAll}
         matchingCount={filteredProducts.length}
@@ -718,18 +678,19 @@ export default function ProductList() {
             flex-direction: column !important;
           }
         }
-        @media (max-width: 1200px) {
+        @media (min-width: 1081px) {
           .shop-catalog-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 1.25rem !important;
           }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 1080px) and (min-width: 769px) {
           .shop-catalog-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             gap: 1rem !important;
           }
         }
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
           .shop-catalog-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 0.75rem !important;
