@@ -10,7 +10,7 @@ export const MOCK_CATEGORIES = [
     subtext: 'Sarees, Kurtis, Leggings, Nightwear, Dupattas',
     icon: '👗',
     badge: 'Popular',
-    image: '/images/glamics_summer_model.jpg',
+    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
     itemCount: 142,
     subcategories: [
       { _id: 'sub-wf-1', name: 'Sarees', slug: 'sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400', itemCount: 48 },

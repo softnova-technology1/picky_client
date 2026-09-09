@@ -8,56 +8,81 @@
   overflow: hidden;
 }
 
-/* ── 1. Compact Skyline & Product Hills Vector Canvas ────────────────────── */
+/* ── 1. 2-Column Flex Skyline Canvas ──────────────────────────────────────── */
 .footer-skyline-canvas-wrap {
   width: 100%;
   overflow: hidden;
   line-height: 0;
-  display: block;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
   background: transparent;
   position: relative;
   z-index: 2;
   margin-bottom: -2px; /* Prevent sub-pixel white gap */
 }
 
-.footer-skyline-svg {
-  width: 100%;
-  height: 120px; /* Compact height as requested */
+.footer-skyline-img {
+  width: 50%;
+  flex: 0 0 50%;
+  height: auto;
+  max-height: 115px;
+  object-fit: cover;
+  object-position: bottom center;
   display: block;
 }
 
 @media (max-width: 768px) {
-  .footer-skyline-svg {
-    height: 95px;
+  .footer-skyline-img {
+    max-height: 85px;
   }
 }
 
 @media (max-width: 480px) {
-  .footer-skyline-svg {
-    height: 80px;
+  .footer-skyline-img {
+    max-height: 60px;
   }
 }
 
-/* ── 2. Lighter Radiant Purple Gradient Footer Body ──────────────────────── */
+/* ── 2. Color Matched Royal Purple Gradient Footer Body ────────────────────── */
 .picky-footer-body {
-  background: linear-gradient(180deg, #380d5e 0%, #2b0849 50%, #1f0535 100%);
+  background: linear-gradient(180deg, #351961 0%, #27114b 50%, #180a33 100%);
   color: #e2e8f0;
-  padding: 2.25rem 1.5rem 1.25rem; /* Reduced height padding */
+  padding: 3.5rem 1.5rem 2.25rem;
   position: relative;
   z-index: 3;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
+}
+
+.picky-footer-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 0%, rgba(192, 132, 252, 0.14), transparent 45%),
+    radial-gradient(circle at 80% 60%, rgba(236, 72, 153, 0.09), transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(124, 58, 237, 0.12), transparent 60%);
+  pointer-events: none;
 }
 
 .footer-container {
-  max-width: 1320px;
+  max-width: 1380px;
   margin: 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
-/* ── 3. Compact Grid Columns ─────────────────────────────────────────────── */
+/* ── 3. Balanced 5-Column Grid ───────────────────────────────────────────── */
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 1fr 1fr 1.15fr;
-  gap: 2rem;
-  margin-bottom: 1.75rem; /* Reduced gap */
+  grid-template-columns: 1.45fr 1.05fr 1.15fr 1.15fr 1.25fr;
+  gap: 2.25rem;
+  align-items: start;
+  margin-bottom: 3.25rem;
 }
 
 @media (max-width: 1200px) {
@@ -68,16 +93,16 @@
     grid-column: span 4;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 1.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 }
 
 @media (max-width: 860px) {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
   }
   .footer-col-newsletter {
     grid-column: span 2;
@@ -91,7 +116,7 @@
 @media (max-width: 540px) {
   .footer-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
   }
   .footer-col-newsletter {
     grid-column: span 1;
@@ -101,16 +126,41 @@
   }
 }
 
-/* ── 4. Column Headings & Links (With Gradient Accents) ──────────────────── */
+/* ── 4. Column Headings & Accent Bar ─────────────────────────────────────── */
 .footer-heading {
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   font-weight: 800;
   background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1.25rem;
   letter-spacing: -0.01em;
   display: inline-block;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.footer-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  background: linear-gradient(90deg, #c084fc 0%, #e879f9 100%);
+  border-radius: 99px;
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.6);
+  transition: width 0.3s ease;
+}
+
+.footer-heading:hover::after {
+  width: 48px;
+}
+
+/* ── 5. Standardized Link Lists & Icon Colors ───────────────────────────── */
+.footer-col {
+  display: flex;
+  flex-direction: column;
 }
 
 .footer-links-list {
@@ -119,49 +169,109 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* Compact list gap */
+  gap: 0.75rem;
 }
 
 .footer-link {
   color: #cbd5e1;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.2s ease;
+  line-height: 1.4;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.6rem;
 }
 
 .footer-link:hover {
   color: #ffffff;
-  transform: translateX(3px);
+  transform: translateX(5px);
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.4);
+}
+
+.footer-link-static {
+  cursor: default;
+}
+
+.footer-link-static:hover {
+  transform: none;
+  text-shadow: none;
+  color: #e2e8f0;
+}
+
+.footer-link-all {
+  color: #c084fc !important;
+  font-weight: 700 !important;
+  gap: 0.45rem;
+}
+
+.footer-link-all:hover {
+  color: #e879f9 !important;
+}
+
+.footer-icon-accent {
+  color: #c084fc;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.footer-link:hover .footer-icon-accent {
+  transform: scale(1.15);
+  color: #e879f9;
+}
+
+.footer-icon-green {
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
+.footer-icon-cyan {
+  color: #38bdf8;
+  flex-shrink: 0;
 }
 
 .footer-link-badge {
   font-size: 0.62rem;
   font-weight: 800;
-  padding: 0.08rem 0.4rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 9999px;
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   line-height: 1;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+  margin-left: 0.2rem;
 }
 
-/* ── 5. Newsletter Column ────────────────────────────────────────────────── */
+/* ── 6. Glassmorphism Newsletter Column ──────────────────────────────────── */
+.footer-col-newsletter {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 1.5rem 1.6rem;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.3s ease;
+}
+
+.footer-col-newsletter:hover {
+  border-color: rgba(192, 132, 252, 0.3);
+}
+
 .footer-newsletter-text {
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   color: #cbd5e1;
-  line-height: 1.5;
-  margin-bottom: 0.85rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
 }
 
 .footer-newsletter-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 1.35rem;
 }
 
 .footer-input-wrap {
@@ -172,15 +282,15 @@
 
 .footer-newsletter-input {
   width: 100%;
-  height: 40px;
-  padding: 0 0.85rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+  height: 44px;
+  padding: 0 1.1rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
   color: #ffffff;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .footer-newsletter-input::placeholder {
@@ -188,127 +298,225 @@
 }
 
 .footer-newsletter-input:focus {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
   border-color: #c084fc;
-  box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.25);
+  box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.25), 0 0 15px rgba(192, 132, 252, 0.2);
 }
 
 .footer-subscribe-btn {
-  height: 40px;
-  padding: 0 1.25rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  height: 44px;
+  padding: 0 1.5rem;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
   color: #ffffff;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(217, 70, 239, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.55rem;
 }
 
 .footer-subscribe-btn:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(217, 70, 239, 0.45);
+  background: linear-gradient(135deg, #9333ea 0%, #db2777 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.5);
 }
 
 /* Social Links */
+.footer-social-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .footer-social-title {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 800;
   color: #e2e8f0;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  letter-spacing: 0.09em;
 }
 
 .footer-social-row {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.75rem;
 }
 
 .footer-social-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #ffffff;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .footer-social-icon:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #c084fc 100%);
-  border-color: #c084fc;
+  background: linear-gradient(135deg, #c084fc 0%, #e879f9 100%);
+  border-color: rgba(255, 255, 255, 0.4);
   color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 8px 20px rgba(192, 132, 252, 0.5);
 }
 
-/* ── 6. Contact & Support Column ─────────────────────────────────────────── */
+/* ── 7. Contact Us Column ────────────────────────────────────────────────── */
+.footer-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  margin-bottom: 1rem;
+}
+
 .footer-contact-item {
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  margin-bottom: 0.65rem;
-  font-size: 0.84rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.86rem;
   color: #cbd5e1;
   line-height: 1.45;
 }
 
+.footer-contact-icon-bg {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .footer-contact-icon {
   color: #c084fc;
-  flex-shrink: 0;
-  margin-top: 0.15rem;
+}
+
+.footer-contact-title {
+  color: #ffffff;
+  font-size: 0.86rem;
+  display: block;
+}
+
+.footer-contact-sub {
+  color: #cbd5e1;
+  font-size: 0.84rem;
 }
 
 .footer-whatsapp-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  background: rgba(34, 197, 94, 0.18);
-  border: 1px solid rgba(34, 197, 94, 0.4);
+  gap: 0.65rem;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1.5px solid rgba(34, 197, 94, 0.4);
   color: #4ade80;
-  padding: 0.4rem 0.8rem;
+  padding: 0.55rem 1.15rem;
   border-radius: 9999px;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   font-weight: 700;
   text-decoration: none;
-  margin-top: 0.3rem;
-  transition: all 0.2s ease;
+  margin-top: 0.35rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
+  position: relative;
+  width: fit-content;
+}
+
+.whatsapp-status-dot {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+  animation: whatsapp-pulse 2s infinite;
+  display: inline-block;
+}
+
+@keyframes whatsapp-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
 }
 
 .footer-whatsapp-chip:hover {
-  background: rgba(34, 197, 94, 0.3);
-  transform: translateY(-1px);
+  background: rgba(34, 197, 94, 0.25);
+  border-color: #4ade80;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35);
+  color: #ffffff;
 }
 
-/* ── 7. Bottom Bar (Centered Copyright) ─────────────────────────────────── */
+/* ── 8. Bottom Bar (Trust Badges & Copyright) ───────────────────────────── */
 .footer-bottom-bar {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 1.25rem;
+  padding-top: 1.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  gap: 0.85rem;
+}
+
+.footer-trust-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.trust-chip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.4rem 0.95rem;
+  border-radius: 9999px;
+  transition: all 0.25s ease;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.trust-icon {
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+.trust-chip-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(192, 132, 252, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .footer-copyright {
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   color: #94a3b8;
-  line-height: 1.4;
+  line-height: 1.6;
   margin: 0;
 }
+
+
