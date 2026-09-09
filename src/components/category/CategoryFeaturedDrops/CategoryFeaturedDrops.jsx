@@ -17,9 +17,9 @@ export default function CategoryFeaturedDrops() {
     .map((slug) => MOCK_PRODUCTS.find((p) => p.slug === slug))
     .filter(Boolean);
 
-  // Fallback to top 4 products if slugs don't match
+  // Fallback to top 5 products if slugs don't match
   const displayProducts =
-    featuredProducts.length === 4 ? featuredProducts : MOCK_PRODUCTS.slice(0, 4);
+    featuredProducts.length >= 5 ? featuredProducts.slice(0, 5) : MOCK_PRODUCTS.slice(0, 5);
 
   return (
     <section className="category-featured-drops-section" style={{ marginBottom: '4.5rem' }}>
@@ -56,13 +56,13 @@ export default function CategoryFeaturedDrops() {
         </div>
       </div>
 
-      {/* ── 4 Cards in 1 Row (Lumina Product Cards) ── */}
+      {/* ── 5 Cards in 1 Row (Lumina Product Cards) ── */}
       <div
         className="category-featured-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-          gap: '1.5rem',
+          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+          gap: '1.25rem',
           marginBottom: '2rem',
         }}
       >
@@ -107,14 +107,14 @@ export default function CategoryFeaturedDrops() {
         }
         @media (max-width: 1100px) {
           .category-featured-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 1.5rem !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 1rem !important;
           }
         }
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
           .category-featured-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1.25rem !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.75rem !important;
           }
         }
       `}</style>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { SlidersHorizontal, Check, RotateCcw, LayoutGrid, Grid3X3, Flame, Tag, Zap } from 'lucide-react';
+import { SlidersHorizontal, Check, RotateCcw, Flame, Tag } from 'lucide-react';
 
 export default function ShopFilterBar({
   onOpenDrawer,
@@ -8,8 +8,6 @@ export default function ShopFilterBar({
   onToggleQuickFilter,
   sort = 'newest',
   onSortChange,
-  gridCols = 4,
-  onChangeGridCols,
   onResetAll,
 }) {
   return (
@@ -58,7 +56,7 @@ export default function ShopFilterBar({
             transition: 'all 0.2s ease',
           }}
         >
-          <SlidersHorizontal size={15} strokeWidth={2.4} />
+          <SlidersHorizontal size={15} />
           <span>Filters</span>
           {activeFilterCount > 0 && (
             <span
@@ -73,7 +71,6 @@ export default function ShopFilterBar({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginLeft: '0.2rem',
               }}
             >
               {activeFilterCount}
@@ -81,34 +78,7 @@ export default function ShopFilterBar({
           )}
         </button>
 
-        <div style={{ width: 1, height: 26, background: '#e2e8f0', margin: '0 0.15rem' }} />
-
-        {/* Quick Filter Chip: Under ₹499 */}
-        <button
-          type="button"
-          onClick={() => onToggleQuickFilter('under499')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.45rem 0.85rem',
-            borderRadius: '9999px',
-            border: quickFilters.under499 ? '1.5px solid #059669' : '1px solid #cbd5e1',
-            background: quickFilters.under499 ? '#ecfdf5' : '#ffffff',
-            color: quickFilters.under499 ? '#047857' : '#475569',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {quickFilters.under499 && <Check size={13} strokeWidth={2.8} />}
-          <span>💰 Under ₹499</span>
-        </button>
-
-
-
-        {/* Quick Filter Chip: 40%+ Discount */}
+        {/* Quick Filter Chip: 40%+ Off */}
         <button
           type="button"
           onClick={() => onToggleQuickFilter('discount40')}
@@ -118,9 +88,9 @@ export default function ShopFilterBar({
             gap: '0.35rem',
             padding: '0.45rem 0.85rem',
             borderRadius: '9999px',
-            border: quickFilters.discount40 ? '1.5px solid #db2777' : '1px solid #cbd5e1',
-            background: quickFilters.discount40 ? '#fdf2f8' : '#ffffff',
-            color: quickFilters.discount40 ? '#be185d' : '#475569',
+            border: quickFilters.discount40 ? '1.5px solid #7c3aed' : '1px solid #cbd5e1',
+            background: quickFilters.discount40 ? '#f3e8ff' : '#ffffff',
+            color: quickFilters.discount40 ? '#6d28d9' : '#475569',
             fontSize: '0.8rem',
             fontWeight: 700,
             cursor: 'pointer',
@@ -129,30 +99,6 @@ export default function ShopFilterBar({
         >
           {quickFilters.discount40 && <Check size={13} strokeWidth={2.8} />}
           <span>🏷️ 40%+ OFF</span>
-        </button>
-
-        {/* Quick Filter Chip: 24h Dispatch */}
-        <button
-          type="button"
-          onClick={() => onToggleQuickFilter('fastDispatch')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.45rem 0.85rem',
-            borderRadius: '9999px',
-            border: quickFilters.fastDispatch ? '1.5px solid #7c3aed' : '1px solid #cbd5e1',
-            background: quickFilters.fastDispatch ? '#f3e8ff' : '#ffffff',
-            color: quickFilters.fastDispatch ? '#6d28d9' : '#475569',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {quickFilters.fastDispatch && <Check size={13} strokeWidth={2.8} />}
-          <Zap size={13} />
-          <span>24h Dispatch</span>
         </button>
 
         {/* Reset All Filters Button */}
@@ -164,11 +110,11 @@ export default function ShopFilterBar({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
-              padding: '0.45rem 0.85rem',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              background: '#f8fafc',
-              color: '#64748b',
+              padding: '0.42rem 0.75rem',
+              borderRadius: '9999px',
+              border: '1px solid #fecaca',
+              background: '#fef2f2',
+              color: '#ef4444',
               fontSize: '0.78rem',
               fontWeight: 700,
               cursor: 'pointer',
@@ -181,7 +127,7 @@ export default function ShopFilterBar({
         )}
       </div>
 
-      {/* ── Right Side: Sort Selector + Grid Layout Switcher ── */}
+      {/* ── Right Side: Sort Selector ── */}
       <div
         style={{
           display: 'flex',
@@ -217,65 +163,7 @@ export default function ShopFilterBar({
             <option value="price_desc">💎 Price: High to Low</option>
           </select>
         </div>
-
-        {/* Grid View Switcher (Desktop only) */}
-        <div
-          className="shop-grid-switcher"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: '#f1f5f9',
-            padding: '0.2rem',
-            borderRadius: '10px',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => onChangeGridCols(4)}
-            style={{
-              padding: '0.35rem 0.5rem',
-              borderRadius: '8px',
-              border: 'none',
-              background: gridCols === 4 ? '#ffffff' : 'transparent',
-              color: gridCols === 4 ? '#7c3aed' : '#64748b',
-              boxShadow: gridCols === 4 ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            title="4-Column Grid View"
-          >
-            <Grid3X3 size={16} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onChangeGridCols(3)}
-            style={{
-              padding: '0.35rem 0.5rem',
-              borderRadius: '8px',
-              border: 'none',
-              background: gridCols === 3 ? '#ffffff' : 'transparent',
-              color: gridCols === 3 ? '#7c3aed' : '#64748b',
-              boxShadow: gridCols === 3 ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            title="3-Column Editorial Grid View"
-          >
-            <LayoutGrid size={16} />
-          </button>
-        </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .shop-grid-switcher {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

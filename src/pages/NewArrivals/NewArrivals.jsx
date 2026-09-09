@@ -601,16 +601,9 @@ export default function NewArrivals() {
             </div>
           ) : (
             <>
-              {/* First 4 Products Grid */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
-                  gap: '1.8rem 1.3rem',
-                  marginBottom: processedProducts.length > 4 ? '3rem' : '4.5rem',
-                }}
-              >
-                {processedProducts.slice(0, 4).map((prod, idx) => (
+              {/* First 5 Products Grid */}
+              <div className="new-arrivals-product-grid">
+                {processedProducts.slice(0, 5).map((prod, idx) => (
                   <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
                 ))}
               </div>
@@ -687,17 +680,10 @@ export default function NewArrivals() {
               </div>
 
               {/* Remaining Products Grid */}
-              {processedProducts.length > 4 && (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(215px, 1fr))',
-                    gap: '1.8rem 1.3rem',
-                    marginBottom: '4.5rem',
-                  }}
-                >
-                  {processedProducts.slice(4).map((prod, idx) => (
-                    <ProductCard key={prod._id || prod.id} product={prod} index={idx + 4} />
+              {processedProducts.length > 5 && (
+                <div className="new-arrivals-product-grid">
+                  {processedProducts.slice(5).map((prod, idx) => (
+                    <ProductCard key={prod._id || prod.id} product={prod} index={idx + 5} />
                   ))}
                 </div>
               )}
@@ -707,6 +693,25 @@ export default function NewArrivals() {
       </div>
 
       <style>{`
+        .new-arrivals-product-grid {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 1.5rem 1.2rem;
+          margin-bottom: 4rem;
+        }
+        @media (max-width: 1100px) {
+          .new-arrivals-product-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+          }
+        }
+        @media (max-width: 768px) {
+          .new-arrivals-product-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.75rem !important;
+          }
+        }
+
         .view-catalog-link:hover {
           background: #7c3aed !important;
           color: #ffffff !important;

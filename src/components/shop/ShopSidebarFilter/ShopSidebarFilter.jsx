@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SlidersHorizontal,
   RotateCcw,
   Check,
+  ChevronDown,
   Layers,
   Coins,
   Percent,
-  Truck,
   Gem,
   Smartphone,
   UtensilsCrossed,
@@ -44,11 +44,36 @@ export default function ShopSidebarFilter({
   onSelectSubCategory,
   urlMaxPrice = '',
   onSelectMaxPrice,
+  urlMinDiscount = '',
+  onSelectDiscount,
   quickFilters = {},
   onToggleQuickFilter,
   activeFilterCount = 0,
   onResetAll,
 }) {
+  const [openSections, setOpenSections] = useState({
+    departments: true,
+    price: true,
+    discounts: true,
+  });
+
+  const toggleSection = (key) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const activeDiscountVal = urlMinDiscount || (quickFilters.discount40 ? '40' : '');
+
+  const handleDiscountClick = (val) => {
+    if (onSelectDiscount) {
+      onSelectDiscount(activeDiscountVal === val ? '' : val);
+    } else if (onToggleQuickFilter) {
+      onToggleQuickFilter('discount40');
+    }
+  };
+
   const budgetOptions = [
     { label: 'All Prices', val: '', min: 0 },
     { label: 'Under ₹299', subtext: 'Pocket Finds', val: '299' },
@@ -76,12 +101,12 @@ export default function ShopSidebarFilter({
       <div className="shop-sidebar-card">
         {/* ── Header: Title & Clear All ── */}
         <div className="sidebar-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <div className="filter-header-icon-pod">
-              <SlidersHorizontal size={15} strokeWidth={2.4} />
+              <SlidersHorizontal size={14} strokeWidth={2.4} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#1e1b4b', letterSpacing: '-0.02em' }}>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#1e1b4b', letterSpacing: '-0.02em' }}>
                 Filter Catalog
               </h3>
             </div>
@@ -99,200 +124,237 @@ export default function ShopSidebarFilter({
               className="sidebar-reset-btn"
               title="Reset all filters"
             >
-              <RotateCcw size={11} className="reset-spin-icon" />
+              <RotateCcw size={10} className="reset-spin-icon" />
               <span>Reset</span>
             </button>
           )}
         </div>
 
-        {/* ── 1. Departments List (Open, Direct Access) ── */}
+        {/* ── 1. Departments List (Collapsible Dropdown) ── */}
         <div className="sidebar-section">
-          <div className="sidebar-section-title-wrap">
-            <div className="section-title-icon-pod">
-              <Layers size={13} strokeWidth={2.3} />
-            </div>
-            <span className="sidebar-section-title">Departments</span>
-          </div>
-
-          <div className="sidebar-content-body">
-            <button
-              type="button"
-              onClick={() => onSelectCategory('')}
-              className={`sidebar-category-row ${!selectedCategory ? 'active' : ''}`}
-            >
-              <div className="row-icon-pod">
-                <Store size={14} strokeWidth={2.2} />
+          <button
+            type="button"
+            onClick={() => toggleSection('departments')}
+            className="sidebar-section-header-btn"
+            aria-expanded={openSections.departments}
+            title={openSections.departments ? 'Click to close departments' : 'Click to open departments'}
+          >
+            <div className="sidebar-section-header-left">
+              <div className="section-title-icon-pod">
+                <Layers size={12} strokeWidth={2.3} />
               </div>
-              <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: !selectedCategory ? 800 : 600 }}>
-                All Departments
-              </span>
-              {!selectedCategory && <Check size={13} strokeWidth={3} className="check-indicator" />}
-            </button>
+              <span className="sidebar-section-title">Departments</span>
+              {!openSections.departments && selectedCategory && (
+                <span className="section-active-indicator" style={{ background: '#f3e8ff', color: '#7c3aed' }}>
+                  {currentCategoryObj?.name || 'Selected'}
+                </span>
+              )}
+            </div>
+            <div className={`chevron-toggle-pod ${openSections.departments ? 'open' : ''}`}>
+              <ChevronDown size={13} strokeWidth={2.5} />
+            </div>
+          </button>
 
-            {categories.map((cat) => {
-              const isChecked =
-                selectedCategory === cat.slug ||
-                selectedCategory === cat._id ||
-                selectedCategory.toLowerCase() === cat.slug?.toLowerCase();
+          {openSections.departments && (
+            <div className="sidebar-content-body">
+              <button
+                type="button"
+                onClick={() => onSelectCategory('')}
+                className={`sidebar-category-row ${!selectedCategory ? 'active' : ''}`}
+              >
+                <div className="row-icon-pod">
+                  <Store size={13} strokeWidth={2.2} />
+                </div>
+                <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: !selectedCategory ? 800 : 600 }}>
+                  All Departments
+                </span>
+                {!selectedCategory && <Check size={12} strokeWidth={3} className="check-indicator" />}
+              </button>
 
-              const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Tag;
+              {categories.map((cat) => {
+                const isChecked =
+                  selectedCategory === cat.slug ||
+                  selectedCategory === cat._id ||
+                  selectedCategory.toLowerCase() === cat.slug?.toLowerCase();
 
-              return (
-                <div key={cat._id || cat.slug}>
+                const CatIcon = CATEGORY_LUCIDE_ICONS[cat.slug] || Tag;
+
+                return (
+                  <div key={cat._id || cat.slug}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectCategory(cat.slug || cat._id)}
+                      className={`sidebar-category-row ${isChecked ? 'active' : ''}`}
+                    >
+                      <div className="row-icon-pod">
+                        <CatIcon size={13} strokeWidth={2.2} />
+                      </div>
+                      <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: isChecked ? 800 : 600 }}>
+                        {cat.name}
+                      </span>
+                      {isChecked && <Check size={12} strokeWidth={3} className="check-indicator" />}
+                    </button>
+
+                    {/* Subcategories if this category is selected */}
+                    {isChecked &&
+                      currentCategoryObj &&
+                      Array.isArray(currentCategoryObj.subcategories) &&
+                      currentCategoryObj.subcategories.length > 0 && (
+                        <div className="sidebar-subcategories-wrap">
+                          <button
+                            type="button"
+                            onClick={() => onSelectSubCategory('')}
+                            className={`sidebar-sub-item ${!selectedSubCategory ? 'active' : ''}`}
+                          >
+                            All {currentCategoryObj.name}
+                          </button>
+                          {currentCategoryObj.subcategories.map((sub) => {
+                            const isSubActive =
+                              selectedSubCategory === sub.slug ||
+                              selectedSubCategory === sub._id ||
+                              selectedSubCategory.toLowerCase() === sub.slug?.toLowerCase();
+                            return (
+                              <button
+                                key={sub._id || sub.slug}
+                                type="button"
+                                onClick={() => onSelectSubCategory(sub.slug || sub._id)}
+                                className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
+                              >
+                                {sub.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── 2. Budget & Price Range (Collapsible Dropdown) ── */}
+        <div className="sidebar-section">
+          <button
+            type="button"
+            onClick={() => toggleSection('price')}
+            className="sidebar-section-header-btn"
+            aria-expanded={openSections.price}
+            title={openSections.price ? 'Click to close price options' : 'Click to open price options'}
+          >
+            <div className="sidebar-section-header-left">
+              <div className="section-title-icon-pod">
+                <Coins size={12} strokeWidth={2.3} />
+              </div>
+              <span className="sidebar-section-title">Price & Budget</span>
+              {!openSections.price && urlMaxPrice && (
+                <span className="section-active-indicator" style={{ background: '#ecfdf5', color: '#059669' }}>
+                  Under ₹{urlMaxPrice}
+                </span>
+              )}
+            </div>
+            <div className={`chevron-toggle-pod ${openSections.price ? 'open' : ''}`}>
+              <ChevronDown size={13} strokeWidth={2.5} />
+            </div>
+          </button>
+
+          {openSections.price && (
+            <div className="sidebar-content-body">
+              {budgetOptions.map((opt) => {
+                const isSelected = urlMaxPrice === opt.val;
+                return (
                   <button
+                    key={opt.label}
                     type="button"
-                    onClick={() => onSelectCategory(cat.slug || cat._id)}
-                    className={`sidebar-category-row ${isChecked ? 'active' : ''}`}
+                    onClick={() => onSelectMaxPrice(opt.val)}
+                    className={`sidebar-budget-row ${isSelected ? 'active' : ''}`}
                   >
-                    <div className="row-icon-pod">
-                      <CatIcon size={14} strokeWidth={2.2} />
+                    <div className="budget-bullet">
+                      {isSelected && <span className="budget-bullet-dot" />}
                     </div>
-                    <span style={{ flexGrow: 1, textAlign: 'left', fontWeight: isChecked ? 800 : 600 }}>
-                      {cat.name}
-                    </span>
-                    {isChecked && <Check size={13} strokeWidth={3} className="check-indicator" />}
+                    <div style={{ flexGrow: 1, textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#065f46' : '#1e293b' }}>
+                        {opt.label}
+                      </div>
+                      {opt.subtext && (
+                        <div style={{ fontSize: '0.68rem', color: isSelected ? '#047857' : '#64748b' }}>
+                          {opt.subtext}
+                        </div>
+                      )}
+                    </div>
+                    {isSelected && <Check size={12} color="#059669" strokeWidth={2.8} />}
                   </button>
-
-                  {/* Subcategories if this category is selected */}
-                  {isChecked &&
-                    currentCategoryObj &&
-                    Array.isArray(currentCategoryObj.subcategories) &&
-                    currentCategoryObj.subcategories.length > 0 && (
-                      <div className="sidebar-subcategories-wrap">
-                        <button
-                          type="button"
-                          onClick={() => onSelectSubCategory('')}
-                          className={`sidebar-sub-item ${!selectedSubCategory ? 'active' : ''}`}
-                        >
-                          All {currentCategoryObj.name}
-                        </button>
-                        {currentCategoryObj.subcategories.map((sub) => {
-                          const isSubActive =
-                            selectedSubCategory === sub.slug ||
-                            selectedSubCategory === sub._id ||
-                            selectedSubCategory.toLowerCase() === sub.slug?.toLowerCase();
-                          return (
-                            <button
-                              key={sub._id || sub.slug}
-                              type="button"
-                              onClick={() => onSelectSubCategory(sub.slug || sub._id)}
-                              className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
-                            >
-                              {sub.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── 2. Budget & Price Range ── */}
-        <div className="sidebar-section">
-          <div className="sidebar-section-title-wrap">
-            <div className="section-title-icon-pod">
-              <Coins size={13} strokeWidth={2.3} />
+        {/* ── 3. Discounts & Deals (Collapsible Dropdown) ── */}
+        <div className="sidebar-section" style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
+          <button
+            type="button"
+            onClick={() => toggleSection('discounts')}
+            className="sidebar-section-header-btn"
+            aria-expanded={openSections.discounts}
+            title={openSections.discounts ? 'Click to close deals options' : 'Click to open deals options'}
+          >
+            <div className="sidebar-section-header-left">
+              <div className="section-title-icon-pod">
+                <Percent size={12} strokeWidth={2.3} />
+              </div>
+              <span className="sidebar-section-title">Deals & Discounts</span>
+              {!openSections.discounts && activeDiscountVal && (
+                <span className="section-active-indicator" style={{ background: '#f3e8ff', color: '#7c3aed' }}>
+                  {activeDiscountVal}%+ OFF
+                </span>
+              )}
             </div>
-            <span className="sidebar-section-title">Price & Budget</span>
-          </div>
+            <div className={`chevron-toggle-pod ${openSections.discounts ? 'open' : ''}`}>
+              <ChevronDown size={13} strokeWidth={2.5} />
+            </div>
+          </button>
 
-          <div className="sidebar-content-body">
-            {budgetOptions.map((opt) => {
-              const isSelected = urlMaxPrice === opt.val;
-              return (
-                <button
-                  key={opt.label}
-                  type="button"
-                  onClick={() => onSelectMaxPrice(opt.val)}
-                  className={`sidebar-budget-row ${isSelected ? 'active' : ''}`}
-                >
-                  <div className="budget-bullet">
-                    {isSelected && <span className="budget-bullet-dot" />}
-                  </div>
-                  <div style={{ flexGrow: 1, textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#065f46' : '#1e293b' }}>
-                      {opt.label}
+          {openSections.discounts && (
+            <div className="sidebar-content-body">
+              {discountOptions.map((opt) => {
+                const isSelected = activeDiscountVal === opt.val;
+                return (
+                  <button
+                    key={opt.val}
+                    type="button"
+                    onClick={() => handleDiscountClick(opt.val)}
+                    className={`sidebar-discount-row ${isSelected ? 'active' : ''}`}
+                  >
+                    <div className="discount-bullet">
+                      {isSelected && <span className="discount-bullet-dot" />}
                     </div>
-                    {opt.subtext && (
-                      <div style={{ fontSize: '0.7rem', color: isSelected ? '#047857' : '#64748b' }}>
-                        {opt.subtext}
-                      </div>
-                    )}
-                  </div>
-                  {isSelected && <Check size={13} color="#059669" strokeWidth={2.8} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 3. Discounts & Deals ── */}
-        <div className="sidebar-section">
-          <div className="sidebar-section-title-wrap">
-            <div className="section-title-icon-pod">
-              <Percent size={13} strokeWidth={2.3} />
+                    <span
+                      style={{
+                        flexGrow: 1,
+                        textAlign: 'left',
+                        fontSize: '0.78rem',
+                        fontWeight: isSelected ? 800 : 600,
+                        color: isSelected ? '#6d28d9' : '#1e293b',
+                      }}
+                    >
+                      {opt.label}
+                    </span>
+                    <span className="discount-pill-badge">
+                      {opt.badge}
+                    </span>
+                    {isSelected && <Check size={12} color="#7c3aed" strokeWidth={2.8} />}
+                  </button>
+                );
+              })}
             </div>
-            <span className="sidebar-section-title">Deals & Discounts</span>
-          </div>
-
-          <div className="sidebar-content-body">
-            {discountOptions.map((opt) => {
-              const isSelected = quickFilters.discount40 && opt.val === '40';
-              return (
-                <button
-                  key={opt.val}
-                  type="button"
-                  onClick={() => onToggleQuickFilter('discount40')}
-                  className={`sidebar-discount-row ${isSelected ? 'active' : ''}`}
-                >
-                  <span style={{ fontSize: '0.82rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#be185d' : '#334155' }}>
-                    {opt.label}
-                  </span>
-                  <span className="discount-pill-badge">
-                    {opt.badge}
-                  </span>
-                  {isSelected && <Check size={13} color="#db2777" strokeWidth={2.8} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 4. Express Delivery ── */}
-        <div className="sidebar-section" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-          <div className="sidebar-switch-card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div className="switch-icon-pod">
-                <Truck size={15} strokeWidth={2.2} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e1b4b' }}>
-                  24h Dispatch
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                  Ready to ship today
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onToggleQuickFilter('fastDispatch')}
-              className={`tactile-switch ${quickFilters.fastDispatch ? 'on' : 'off'}`}
-              aria-label="Toggle 24h express dispatch"
-            >
-              <span className="switch-knob" />
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
       <style>{`
         .shop-sidebar-filter {
-          width: 270px;
+          width: 250px;
           flex-shrink: 0;
           align-self: stretch;
           position: relative;
@@ -301,32 +363,34 @@ export default function ShopSidebarFilter({
           position: sticky !important;
           top: 90px !important;
           background: #ffffff;
-          border-radius: 24px;
+          border-radius: 20px;
           border: 1.5px solid #e2e8f0;
           box-shadow: 0 8px 30px -6px rgba(15, 23, 42, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02);
-          padding: 1.35rem 1.25rem;
+          padding: 1.1rem 0.95rem;
           max-height: calc(100vh - 110px);
           overflow-y: auto;
+          scrollbar-width: none; /* Hide scrollbar Firefox */
+          -ms-overflow-style: none; /* Hide scrollbar IE & Edge */
           z-index: 15;
         }
+        /* Completely hide scrollbar in Chrome, Safari, Edge */
         .shop-sidebar-card::-webkit-scrollbar {
-          width: 4px;
-        }
-        .shop-sidebar-card::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 4px;
+          display: none !important;
+          width: 0px !important;
+          height: 0px !important;
+          background: transparent !important;
         }
         .sidebar-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 0.85rem;
+          padding-bottom: 0.65rem;
           border-bottom: 1.5px solid #f1f5f9;
-          margin-bottom: 0.95rem;
+          margin-bottom: 0.75rem;
         }
         .filter-header-icon-pod {
-          width: 28px;
-          height: 28px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
           background: #ffffff;
           border: 1.5px solid rgba(192, 132, 252, 0.45);
@@ -338,8 +402,8 @@ export default function ShopSidebarFilter({
           flex-shrink: 0;
         }
         .section-title-icon-pod {
-          width: 24px;
-          height: 24px;
+          width: 22px;
+          height: 22px;
           border-radius: 50%;
           background: #ffffff;
           border: 1.5px solid rgba(192, 132, 252, 0.45);
@@ -351,12 +415,12 @@ export default function ShopSidebarFilter({
           box-shadow: 0 1px 4px rgba(124, 58, 237, 0.06);
         }
         .sidebar-active-badge {
-          width: 19px;
-          height: 19px;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
           background: #7c3aed;
           color: #ffffff;
-          font-size: 0.7rem;
+          font-size: 0.68rem;
           font-weight: 900;
           display: inline-flex;
           align-items: center;
@@ -366,13 +430,13 @@ export default function ShopSidebarFilter({
         .sidebar-reset-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.3rem;
+          gap: 0.25rem;
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          padding: 0.25rem 0.6rem;
-          border-radius: 7px;
+          padding: 0.2rem 0.5rem;
+          border-radius: 6px;
           color: #64748b;
-          font-size: 0.74rem;
+          font-size: 0.72rem;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -389,40 +453,98 @@ export default function ShopSidebarFilter({
           transition: transform 0.3s ease;
         }
         .sidebar-section {
-          padding-bottom: 0.95rem;
-          margin-bottom: 0.95rem;
+          padding-bottom: 0.75rem;
+          margin-bottom: 0.75rem;
           border-bottom: 1px solid #f1f5f9;
         }
-        .sidebar-section-title-wrap {
+        /* Collapsible Dropdown Header Button */
+        .sidebar-section-header-btn {
+          width: 100%;
           display: flex;
           align-items: center;
-          gap: 0.55rem;
-          margin-bottom: 0.65rem;
+          justify-content: space-between;
+          background: transparent;
+          border: none;
+          padding: 0.22rem 0.15rem;
+          margin-bottom: 0.45rem;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.15s ease;
+          user-select: none;
+        }
+        .sidebar-section-header-btn:hover {
+          background: #f8fafc;
+        }
+        .sidebar-section-header-left {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+        .chevron-toggle-pod {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #64748b;
+          background: #f1f5f9;
+          transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), background 0.18s ease, color 0.18s ease;
+        }
+        .sidebar-section-header-btn:hover .chevron-toggle-pod {
+          background: #ede9fe;
+          color: #7c3aed;
+        }
+        .chevron-toggle-pod.open {
+          transform: rotate(180deg);
+          background: #ede9fe;
+          color: #7c3aed;
+        }
+        .section-active-indicator {
+          font-size: 0.64rem;
+          font-weight: 800;
+          padding: 0.1rem 0.45rem;
+          border-radius: 9999px;
+          white-space: nowrap;
+          max-width: 95px;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .sidebar-section-title {
-          font-size: 0.78rem;
+          font-size: 0.74rem;
           font-weight: 800;
           color: #475569;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
+        @keyframes fadeInDropdown {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         .sidebar-content-body {
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
+          gap: 0.25rem;
+          animation: fadeInDropdown 0.2s ease-out;
         }
         /* Category Rows */
         .sidebar-category-row {
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 0.65rem;
-          padding: 0.42rem 0.65rem;
+          gap: 0.55rem;
+          padding: 0.3rem 0.55rem;
           border-radius: 50px;
           border: 1.5px solid transparent;
           background: transparent;
           color: #334155;
-          font-size: 0.84rem;
+          font-size: 0.8rem;
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -436,8 +558,8 @@ export default function ShopSidebarFilter({
           color: #6d28d9;
         }
         .row-icon-pod {
-          width: 28px;
-          height: 28px;
+          width: 25px;
+          height: 25px;
           border-radius: 50%;
           background: #ffffff;
           border: 1.5px solid rgba(192, 132, 252, 0.45);
@@ -450,7 +572,7 @@ export default function ShopSidebarFilter({
           transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar-category-row:hover .row-icon-pod {
-          transform: scale(1.08);
+          transform: scale(1.06);
           border-color: #7c3aed;
           box-shadow: 0 3px 10px rgba(124, 58, 237, 0.18);
         }
@@ -464,21 +586,21 @@ export default function ShopSidebarFilter({
           color: #7c3aed;
         }
         .sidebar-subcategories-wrap {
-          margin: 0.3rem 0 0.45rem 1.3rem;
-          padding-left: 0.6rem;
+          margin: 0.2rem 0 0.35rem 1.1rem;
+          padding-left: 0.5rem;
           border-left: 2px solid #e9d5ff;
           display: flex;
           flex-direction: column;
-          gap: 0.2rem;
+          gap: 0.18rem;
         }
         .sidebar-sub-item {
           text-align: left;
           border: none;
           background: transparent;
           color: #64748b;
-          font-size: 0.78rem;
+          font-size: 0.74rem;
           font-weight: 500;
-          padding: 0.25rem 0.5rem;
+          padding: 0.2rem 0.45rem;
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.15s ease;
@@ -497,9 +619,9 @@ export default function ShopSidebarFilter({
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 0.55rem;
-          padding: 0.4rem 0.6rem;
-          border-radius: 10px;
+          gap: 0.45rem;
+          padding: 0.28rem 0.5rem;
+          border-radius: 8px;
           border: 1px solid transparent;
           background: transparent;
           cursor: pointer;
@@ -513,8 +635,8 @@ export default function ShopSidebarFilter({
           border-color: #a7f3d0;
         }
         .budget-bullet {
-          width: 14px;
-          height: 14px;
+          width: 13px;
+          height: 13px;
           border-radius: 50%;
           border: 1.5px solid #cbd5e1;
           display: flex;
@@ -526,8 +648,8 @@ export default function ShopSidebarFilter({
           border-color: #059669;
         }
         .budget-bullet-dot {
-          width: 6px;
-          height: 6px;
+          width: 5px;
+          height: 5px;
           border-radius: 50%;
           background: #059669;
         }
@@ -536,10 +658,10 @@ export default function ShopSidebarFilter({
           width: 100%;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 0.4rem 0.6rem;
-          border-radius: 10px;
-          border: 1px solid transparent;
+          gap: 0.45rem;
+          padding: 0.32rem 0.5rem;
+          border-radius: 8px;
+          border: 1.2px solid transparent;
           background: transparent;
           cursor: pointer;
           transition: all 0.15s ease;
@@ -548,70 +670,44 @@ export default function ShopSidebarFilter({
           background: #f8fafc;
         }
         .sidebar-discount-row.active {
-          background: #fdf2f8;
-          border-color: #fbcfe8;
+          background: #f5edff;
+          border-color: #c4b5fd;
         }
-        .discount-pill-badge {
-          font-size: 0.66rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          background: #f1f5f9;
-          color: #64748b;
-          padding: 0.12rem 0.4rem;
-          border-radius: 9999px;
-        }
-        .sidebar-discount-row.active .discount-pill-badge {
-          background: #fbcfe8;
-          color: #be185d;
-        }
-        /* Switch Card */
-        .sidebar-switch-card {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: #faf5ff;
-          border: 1px solid #e9d5ff;
-          padding: 0.55rem 0.75rem;
-          border-radius: 14px;
-        }
-        .switch-icon-pod {
-          width: 28px;
-          height: 28px;
-          border-radius: 8px;
-          background: #ffffff;
-          color: #7c3aed;
+        .discount-bullet {
+          width: 13px;
+          height: 13px;
+          border-radius: 50%;
+          border: 1.5px solid #cbd5e1;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 6px rgba(124, 58, 237, 0.12);
+          flex-shrink: 0;
+          transition: all 0.15s ease;
         }
-        .tactile-switch {
-          width: 38px;
-          height: 20px;
-          border-radius: 9999px;
-          border: none;
-          background: #cbd5e1;
-          position: relative;
-          cursor: pointer;
-          transition: background 0.25s ease;
-          padding: 0;
+        .sidebar-discount-row.active .discount-bullet {
+          border-color: #7c3aed;
         }
-        .tactile-switch.on {
+        .discount-bullet-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
           background: #7c3aed;
         }
-        .switch-knob {
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: #ffffff;
-          position: absolute;
-          top: 3px;
-          left: 3px;
-          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+        .discount-pill-badge {
+          font-size: 0.62rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+          background: #f1f5f9;
+          color: #64748b;
+          padding: 0.1rem 0.4rem;
+          border-radius: 9999px;
+          flex-shrink: 0;
+          transition: all 0.15s ease;
         }
-        .tactile-switch.on .switch-knob {
-          transform: translateX(18px);
+        .sidebar-discount-row.active .discount-pill-badge {
+          background: #ede9fe;
+          color: #7c3aed;
         }
         @media (max-width: 990px) {
           .shop-sidebar-filter {

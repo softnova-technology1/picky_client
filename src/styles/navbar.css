@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 2rem 0 2.6rem;
+  padding: 0 2rem 0 2.6rem; 
   background: linear-gradient(135deg, #6366f1 0%, #7c3aed 45%, #c026d3 100%);
   clip-path: polygon(24px 0, 100% 0, 100% 100%, 0% 100%);
   color: #ffffff;

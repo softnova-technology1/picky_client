@@ -447,9 +447,9 @@ export default function Home() {
             ))}
           </div>
 
-          {/* 4-Column Product Grid (1 Row of 4 Cards) */}
+          {/* 5-Column Product Grid (1 Row of 5 Cards) */}
           <div className="hp-new-arrivals-grid">
-            {(filteredArrivals.length > 0 ? filteredArrivals : newArrivals).slice(0, 4).map((product, i) => (
+            {(filteredArrivals.length > 0 ? filteredArrivals : newArrivals).slice(0, 5).map((product, i) => (
               <FadeUp key={product._id || product.id || i} delay={i * 60}>
                 <ProductCard product={product} />
               </FadeUp>
@@ -461,7 +461,7 @@ export default function Home() {
 
 
 
-      {/* 07 — BEST SELLERS (1 ROW OF 4 CARDS) */}
+      {/* 07 — BEST SELLERS (1 ROW OF 5 CARDS) */}
       <section className="hp-bestsellers-section">
         <div className="hp-bestsellers-inner">
           <div className="hp-section-header">
@@ -474,7 +474,7 @@ export default function Home() {
             </FadeUp>
           </div>
           <div style={{ marginTop: '2.5rem' }}>
-            <ProductGrid products={featuredProducts.slice(0, 4)} loading={loading} />
+            <ProductGrid products={featuredProducts.slice(0, 5)} loading={loading} />
           </div>
         </div>
       </section>

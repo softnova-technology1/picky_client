@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, X, Sparkles, Copy, Check, ChevronRight, Zap, Tag } from 'lucide-react';
-import { useUiStore } from '../../../store/uiStore';
+import { Search, X, ChevronRight } from 'lucide-react';
 
 export default function ShopHeroSpotlight({
   totalProducts = 0,
@@ -11,15 +10,6 @@ export default function ShopHeroSpotlight({
   onSearchClear,
 }) {
   const [searchInput, setSearchInput] = useState(searchQuery);
-  const [copied, setCopied] = useState(false);
-  const { showToast } = useUiStore();
-
-  const handleCopyCoupon = () => {
-    navigator.clipboard.writeText('PICKY60');
-    setCopied(true);
-    showToast('Coupon "PICKY60" copied! Get 60% OFF at checkout', 'success');
-    setTimeout(() => setCopied(false), 2500);
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -39,12 +29,13 @@ export default function ShopHeroSpotlight({
     <div
       className="shop-hero-spotlight-premium"
       style={{
-        background: 'linear-gradient(135deg, #1e1b4b 0%, #2e1065 55%, #3b0764 100%)',
-        color: '#ffffff',
+        background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #fdf4ff 100%)',
+        color: '#1e1b4b',
         position: 'relative',
-        padding: '2rem 0 2.5rem',
-        marginBottom: '2.5rem',
-        boxShadow: '0 14px 34px -10px rgba(30, 27, 75, 0.35)',
+        padding: '2rem 0 2.3rem',
+        marginBottom: '2.2rem',
+        borderBottom: '1.5px solid #e2d9f3',
+        boxShadow: '0 4px 20px -5px rgba(124, 58, 237, 0.08)',
         overflow: 'hidden',
       }}
     >
@@ -57,7 +48,7 @@ export default function ShopHeroSpotlight({
           width: '450px',
           height: '450px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -69,32 +60,32 @@ export default function ShopHeroSpotlight({
           width: '500px',
           height: '500px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.16) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
 
       <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-        {/* ── Breadcrumbs in White / Translucent ── */}
+        {/* ── Breadcrumbs in Crisp Slate / Purple ── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '0.45rem',
             fontSize: '0.82rem',
-            color: 'rgba(255, 255, 255, 0.65)',
-            marginBottom: '1.25rem',
+            color: '#64748b',
+            marginBottom: '1.15rem',
             flexWrap: 'wrap',
           }}
         >
-          <Link to="/" style={{ color: 'rgba(255, 255, 255, 0.65)', textDecoration: 'none' }}>
+          <Link to="/" style={{ color: '#6d28d9', fontWeight: 600, textDecoration: 'none' }}>
             Home
           </Link>
-          <ChevronRight size={13} />
+          <ChevronRight size={13} color="#94a3b8" />
           <Link
             to="/shop"
             style={{
-              color: categoryName ? 'rgba(255, 255, 255, 0.65)' : '#e9d5ff',
+              color: categoryName ? '#6d28d9' : '#1e1b4b',
               fontWeight: 700,
               textDecoration: 'none',
             }}
@@ -103,14 +94,14 @@ export default function ShopHeroSpotlight({
           </Link>
           {categoryName && (
             <>
-              <ChevronRight size={13} />
-              <span style={{ color: '#ffffff', fontWeight: 800 }}>{categoryName}</span>
+              <ChevronRight size={13} color="#94a3b8" />
+              <span style={{ color: '#1e1b4b', fontWeight: 800 }}>{categoryName}</span>
             </>
           )}
           {searchQuery && (
             <>
-              <ChevronRight size={13} />
-              <span style={{ color: '#fed7aa', fontWeight: 700 }}>&ldquo;{searchQuery}&rdquo;</span>
+              <ChevronRight size={13} color="#94a3b8" />
+              <span style={{ color: '#7c3aed', fontWeight: 700 }}>&ldquo;{searchQuery}&rdquo;</span>
             </>
           )}
         </div>
@@ -125,68 +116,17 @@ export default function ShopHeroSpotlight({
             gap: '2rem',
           }}
         >
-          {/* Left Title & Status Badges */}
+          {/* Left Title */}
           <div style={{ maxWidth: '640px' }}>
-            {/* Live Frosted Status Badges */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                flexWrap: 'wrap',
-                marginBottom: '0.85rem',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  backdropFilter: 'blur(8px)',
-                  color: '#f5d0fe',
-                  padding: '0.28rem 0.85rem',
-                  borderRadius: '9999px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                <Sparkles size={12} strokeWidth={2.6} /> Curated Lifestyle Store
-              </span>
-
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  background: 'rgba(16, 185, 129, 0.18)',
-                  backdropFilter: 'blur(8px)',
-                  color: '#a7f3d0',
-                  padding: '0.28rem 0.85rem',
-                  borderRadius: '9999px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  border: '1px solid rgba(110, 231, 183, 0.3)',
-                }}
-              >
-                <Zap size={12} strokeWidth={2.6} /> 24h Express Dispatch
-              </span>
-            </div>
-
-            {/* Main Heading in Crisp White */}
+            {/* Main Heading in Deep Purple */}
             <h1
               style={{
-                fontSize: 'clamp(2rem, 3.8vw, 2.9rem)',
+                fontSize: 'clamp(2rem, 3.8vw, 2.85rem)',
                 fontWeight: 900,
-                color: '#ffffff',
-                margin: '0 0 0.55rem',
+                color: '#1e1b4b',
+                margin: '0 0 0.5rem',
                 letterSpacing: '-0.025em',
                 lineHeight: 1.15,
-                textShadow: '0 2px 10px rgba(0, 0, 0, 0.25)',
               }}
             >
               {categoryName ? categoryName : searchQuery ? `Results for "${searchQuery}"` : 'Explore Curated Collections'}
@@ -194,18 +134,18 @@ export default function ShopHeroSpotlight({
 
             <p
               style={{
-                color: 'rgba(255, 255, 255, 0.84)',
+                color: '#475569',
                 fontSize: '0.96rem',
                 margin: 0,
-                fontWeight: 400,
+                fontWeight: 500,
                 lineHeight: 1.5,
               }}
             >
-              Discover <strong style={{ color: '#ffffff', fontWeight: 800 }}>{totalProducts}</strong> handpicked, verified items directly dispatched from our Madurai hub.
+              Discover handpicked, verified products directly dispatched from our Madurai hub.
             </p>
           </div>
 
-          {/* Right Action Cluster: Coupon Chip & Search */}
+          {/* Right Action Cluster: Search */}
           <div
             style={{
               display: 'flex',
@@ -214,80 +154,6 @@ export default function ShopHeroSpotlight({
               minWidth: 'min(100%, 390px)',
             }}
           >
-            {/* Click-to-Copy Coupon Card */}
-            <div
-              onClick={handleCopyCoupon}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleCopyCoupon()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(12px)',
-                border: '1.5px dashed rgba(255, 255, 255, 0.32)',
-                borderRadius: '16px',
-                padding: '0.65rem 1.1rem',
-                cursor: 'pointer',
-                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.15)',
-              }}
-              className="premium-coupon-chip"
-              title="Click to copy 60% discount code"
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: '8px',
-                    background: '#ffffff',
-                    color: '#1e1b4b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Tag size={16} strokeWidth={2.6} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.7rem', color: '#fed7aa', fontWeight: 800, textTransform: 'uppercase' }}>
-                    Mega Deal Discount
-                  </div>
-                  <div style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 900, letterSpacing: '0.04em' }}>
-                    PICKY60 • 60% OFF
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  fontSize: '0.76rem',
-                  fontWeight: 800,
-                  color: copied ? '#047857' : '#1e1b4b',
-                  background: copied ? '#a7f3d0' : '#ffffff',
-                  padding: '0.32rem 0.75rem',
-                  borderRadius: '9999px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
-                }}
-              >
-                {copied ? (
-                  <>
-                    <Check size={13} strokeWidth={2.8} /> Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy size={13} strokeWidth={2.4} /> Tap to Copy
-                  </>
-                )}
-              </div>
-            </div>
-
             {/* Live Search Bar */}
             <form
               onSubmit={handleSubmit}
@@ -296,11 +162,12 @@ export default function ShopHeroSpotlight({
                 alignItems: 'center',
                 background: '#ffffff',
                 borderRadius: '16px',
+                border: '1.5px solid #ddd6fe',
                 padding: '0.35rem 0.5rem 0.35rem 1rem',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
+                boxShadow: '0 4px 18px rgba(124, 58, 237, 0.07)',
               }}
             >
-              <Search size={17} color="#64748b" style={{ flexShrink: 0, marginRight: '0.55rem' }} />
+              <Search size={17} color="#7c3aed" style={{ flexShrink: 0, marginRight: '0.55rem' }} />
               <input
                 type="text"
                 placeholder="Search sarees, jewellery, gadgets..."
@@ -336,7 +203,7 @@ export default function ShopHeroSpotlight({
               <button
                 type="submit"
                 style={{
-                  padding: '0.5rem 1.1rem',
+                  padding: '0.5rem 1.15rem',
                   borderRadius: '12px',
                   fontSize: '0.84rem',
                   fontWeight: 800,
@@ -346,7 +213,8 @@ export default function ShopHeroSpotlight({
                   cursor: 'pointer',
                   marginLeft: '0.4rem',
                   flexShrink: 0,
-                  transition: 'background 0.2s ease',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
                 }}
               >
                 Search
@@ -355,14 +223,6 @@ export default function ShopHeroSpotlight({
           </div>
         </div>
       </div>
-
-      <style>{`
-        .premium-coupon-chip:hover {
-          background: rgba(255, 255, 255, 0.18) !important;
-          transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.5) !important;
-        }
-      `}</style>
     </div>
   );
 }

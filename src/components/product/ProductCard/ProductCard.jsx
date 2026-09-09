@@ -305,7 +305,7 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         /* ── Lumina Canvas Card Architecture ── */
         .lumina-product-card {
           width: 100%;
-          max-width: 285px;
+          max-width: 100%;
           margin: 0 auto;
           background: #ffffff;
           border-radius: 20px;
@@ -673,6 +673,51 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
           color: #ffffff;
           border-color: #7c3aed;
           transform: scale(1.15);
+        }
+
+        /* ── Mobile 2-Cards Per Row Optimization ── */
+        @media (max-width: 768px) {
+          .lumina-card-content {
+            padding: 0.65rem 0.65rem 0.75rem 0.65rem;
+          }
+          .lumina-title-text {
+            font-size: 0.82rem;
+          }
+          .lumina-desc-text {
+            font-size: 0.72rem;
+          }
+          .lumina-current-price {
+            font-size: 1rem;
+          }
+          .lumina-original-price {
+            font-size: 0.74rem;
+          }
+          .lumina-action-container {
+            height: 38px;
+          }
+          .lumina-primary-btn {
+            font-size: 0.78rem;
+            gap: 0.35rem;
+          }
+          .lumina-heart-btn {
+            width: 28px;
+            height: 28px;
+            top: 8px;
+            right: 8px;
+          }
+          .lumina-heart-btn svg {
+            width: 14px;
+            height: 14px;
+          }
+          .lumina-badge-pill {
+            top: 8px;
+            left: 8px;
+            font-size: 0.64rem;
+            padding: 0.16rem 0.5rem;
+          }
+          .carousel-slide {
+            padding: 0.5rem 0.5rem 1.2rem 0.5rem;
+          }
         }
       `}</style>
     </div>
