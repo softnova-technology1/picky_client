@@ -262,6 +262,19 @@
   }
 }
 
+/* ─── About Page Container & Sections ─── */
+.section {
+  padding: 3rem 0;
+  width: 100%;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  width: 100%;
+}
+
 /* ─── About Feature Block (2-Column Showcase with Innovative Image Radius) ─── */
 .about-feature-block-wrapper {
   margin: 3.5rem 0 4.5rem 0;
@@ -270,15 +283,19 @@
 
 .about-feature-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(360px, 540px) 1fr;
   gap: 4rem;
   align-items: center;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Left Column: Image with Innovative Organic Border Radius */
 .about-feature-image-col {
   position: relative;
   width: 100%;
+  max-width: 540px;
 }
 
 .about-feature-image-backdrop {
