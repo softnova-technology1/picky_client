@@ -35,7 +35,7 @@ export default function CategorySubcategories() {
           setSubcategories(fallbackCat.subcategories || []);
         }
       }
-      setCategoryProducts(getProducts({ category: slug, limit: 4 }));
+      setCategoryProducts(getProducts({ category: slug, limit: 5 }));
     }
     load();
   }, [slug]);
@@ -277,7 +277,7 @@ export default function CategorySubcategories() {
                 </Link>
               </div>
 
-              <div className="grid-4">
+              <div className="product-grid-5">
                 {categoryProducts.map((prod) => (
                   <ProductCard key={prod._id || prod.id} product={prod} />
                 ))}
