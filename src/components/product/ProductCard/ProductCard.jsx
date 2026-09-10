@@ -100,7 +100,7 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     e.preventDefault();
     e.stopPropagation();
 
-    if (onRemoveWishlist && inWishlist) {
+    if (onRemoveWishlist) {
       onRemoveWishlist(product);
       return;
     }

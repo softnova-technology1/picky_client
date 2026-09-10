@@ -265,8 +265,8 @@ export default function Login({ initialTab = 'login' }) {
                 <div className="picky-promo-desc">Exclusive surprise with your first order</div>
               </div>
 
-              <div className="picky-brand-typography">
-                <h1 className="picky-brand-title">P I C K Y</h1>
+              <div className="picky-brand-typography" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
                 <p className="picky-brand-tagline">BECAUSE EVERY CHOICE MATTERS</p>
               </div>
             </div>

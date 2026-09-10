@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
+import ProductCard from '../../components/product/ProductCard';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
@@ -10,14 +11,11 @@ import styles from './Wishlist.module.css';
 import {
   Heart,
   ShoppingBag,
-  Trash2,
   ArrowRight,
-  LayoutGrid,
-  List,
   Sparkles,
   Bell,
   Tag,
-  X
+  AlertTriangle
 } from 'lucide-react';
 
 // Default Kurta Collection items matching User Screenshot exactly
@@ -32,7 +30,7 @@ const DEFAULT_WISHLIST_ITEMS = [
     image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=700&auto=format&fit=crop&q=80',
     colors: ['#eab308', '#fef08a', '#78350f', '#991b1b'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Kurtas' }
+    category: { name: 'Kurtas', slug: 'womens-fashion' }
   },
   {
     _id: 'w_item_2',
@@ -44,7 +42,7 @@ const DEFAULT_WISHLIST_ITEMS = [
     image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=700&auto=format&fit=crop&q=80',
     colors: ['#f472b6', '#d97706', '#a16207', '#18181b'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Anarkalis' }
+    category: { name: 'Anarkalis', slug: 'womens-fashion' }
   },
   {
     _id: 'w_item_3',
@@ -56,7 +54,7 @@ const DEFAULT_WISHLIST_ITEMS = [
     image: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?w=700&auto=format&fit=crop&q=80',
     colors: ['#fef08a', '#f472b6', '#fb7185', '#0284c7'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Kurtas' }
+    category: { name: 'Kurtas', slug: 'womens-fashion' }
   },
   {
     _id: 'w_item_4',
@@ -68,7 +66,7 @@ const DEFAULT_WISHLIST_ITEMS = [
     image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=700&auto=format&fit=crop&q=80',
     colors: ['#15803d', '#86198f', '#1e1b4b', '#000000'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Kurtas' }
+    category: { name: 'Kurtas', slug: 'womens-fashion' }
   }
 ];
 
@@ -78,14 +76,12 @@ export default function Wishlist() {
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
 
-  const [selectedIds, setSelectedIds] = useState([]);
   const [sortBy, setSortBy] = useState('recent');
-  const [viewMode, setViewMode] = useState('grid');
-  const [itemSizes, setItemSizes] = useState({});
+  const [productToRemove, setProductToRemove] = useState(null);
 
   // Populate default items if store items array is empty on initial render
   useEffect(() => {
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       setWishlist(DEFAULT_WISHLIST_ITEMS);
     }
   }, []);
@@ -108,7 +104,7 @@ export default function Wishlist() {
   }, [isLoggedIn, setWishlist]);
 
   const displayItems = useMemo(() => {
-    let list = [...items];
+    let list = Array.isArray(items) ? [...items] : [];
     if (sortBy === 'price-low') {
       list.sort((a, b) => (a.discountPrice || a.price || 0) - (b.discountPrice || b.price || 0));
     } else if (sortBy === 'price-high') {
@@ -127,59 +123,22 @@ export default function Wishlist() {
   }, 0);
   const priceDrops = displayItems.filter((p) => p.discountPrice && p.discountPrice < p.price).length;
 
-  const allSelected = displayItems.length > 0 && selectedIds.length === displayItems.length;
-
-  const handleToggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds([]);
+  const handleRemoveItem = (product) => {
+    if (!product) return;
+    if (typeof product === 'object') {
+      setProductToRemove(product);
     } else {
-      setSelectedIds(displayItems.map((item) => item._id || item.id));
+      const found = displayItems.find((i) => (i._id || i.id) === product);
+      setProductToRemove(found || { _id: product, id: product, name: 'Product' });
     }
   };
 
-  const handleToggleSelectCard = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
+  const confirmRemove = async () => {
+    if (!productToRemove) return;
+    const pId = productToRemove._id || productToRemove.id;
+    const pName = productToRemove.name || 'Item';
 
-  const handleMoveSingleToCart = async (product) => {
-    const pId = product._id || product.id;
-    const chosenSize = itemSizes[pId] || 'M';
-    addItem({ ...product, selectedSize: chosenSize }, 1);
     removeItem(pId);
-    setSelectedIds((prev) => prev.filter((i) => i !== pId));
-
-    if (isLoggedIn) {
-      try {
-        await wishlistService.remove(pId);
-      } catch (_) {}
-    }
-
-    showToast(`Moved "${product.name}" (${chosenSize}) to your bag!`, 'success');
-  };
-
-  const handleMoveSelectedToCart = async () => {
-    if (selectedIds.length === 0) {
-      showToast('Please select items to move to bag', 'info');
-      return;
-    }
-
-    const itemsToMove = displayItems.filter((i) => selectedIds.includes(i._id || i.id));
-    itemsToMove.forEach((product) => {
-      const pId = product._id || product.id;
-      const chosenSize = itemSizes[pId] || 'M';
-      addItem({ ...product, selectedSize: chosenSize }, 1);
-      removeItem(pId);
-    });
-
-    setSelectedIds([]);
-    showToast(`Moved ${itemsToMove.length} item(s) to your bag!`, 'success');
-  };
-
-  const handleRemoveItem = async (productId) => {
-    removeItem(productId);
-    setSelectedIds((prev) => prev.filter((i) => i !== productId));
     if (isLoggedIn) {
       try {
         await wishlistService.remove(pId);
@@ -190,7 +149,6 @@ export default function Wishlist() {
     setProductToRemove(null);
   };
 
-  // Move All to Cart handler
   const handleMoveAllToCart = async () => {
     if (items.length === 0) return;
 
@@ -208,17 +166,12 @@ export default function Wishlist() {
     showToast(`Moved all ${items.length} items to your cart!`, 'success');
   };
 
-  const handleSizeChange = (pId, size) => {
-    setItemSizes((prev) => ({ ...prev, [pId]: size }));
-  };
-
   return (
     <PageWrapper>
       <div className={styles['wishlist-wrapper']}>
         <div className={styles['container']}>
           {/* ── Luxury Stats Strip (Page Header) ── */}
           <div className={styles['stats-strip']}>
-
             <div className={styles['stats-cards-row']}>
               {/* Stat 1 – Total Items */}
               <div className={styles['stat-card']}>
@@ -286,11 +239,43 @@ export default function Wishlist() {
                 <div className={styles['stat-underline']} />
               </div>
             </div>
-
           </div>
 
+          {/* ── Controls Bar ── */}
+          {displayItems.length > 0 && (
+            <div className={styles['controls-bar']}>
+              <div className={styles['item-count-label']}>
+                MY WISHLIST ({displayItems.length} ITEMS)
+              </div>
 
-          {/* Wishlist Product Items Grid */}
+              <div className={styles['controls-right-group']}>
+                <button
+                  type="button"
+                  onClick={handleMoveAllToCart}
+                  className={styles['btn-move-all']}
+                >
+                  <Sparkles size={16} />
+                  Move All to Bag
+                </button>
+
+                <div className={styles['sort-select-wrapper']}>
+                  <span className={styles['sort-label']}>Sort by:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className={styles['sort-dropdown']}
+                  >
+                    <option value="recent">Recently Added</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="name">Name (A-Z)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Wishlist Product Items Grid using Standard ProductCard */}
           {displayItems.length === 0 ? (
             <div className={styles['empty-card']}>
               <div className={styles['empty-icon-bubble']}>
@@ -311,84 +296,13 @@ export default function Wishlist() {
           ) : (
             <div className={styles['wishlist-grid']}>
               {displayItems.map((product) => {
-                const pId = product._id || product.id;
-                const isSelected = selectedIds.includes(pId);
-                const imageSrc =
-                  product.images?.[0] ||
-                  product.image ||
-                  'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600';
-
-                const currentPrice = product.discountPrice || product.price || 2499;
-                const originalPrice = product.originalPrice || (product.price ? product.price + 1000 : 3499);
-                const swatches = product.colors || ['#eab308', '#fef08a', '#78350f', '#991b1b'];
-
+                const pId = product._id || product.id || product.slug;
                 return (
-                  <div key={pId} className={styles['wishlist-card']}>
-                    {/* Card Image Box */}
-                    <div className={styles['card-image-wrapper']}>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(pId)}
-                        className={styles['card-heart-badge']}
-                        title="Remove from saved"
-                      >
-                        <X size={16} strokeWidth={2.5} />
-                      </button>
-
-                      <Link to={`/products/${product.slug || ''}`}>
-                        <img
-                          src={imageSrc}
-                          alt={product.name || 'Product'}
-                          className={styles['card-img']}
-                        />
-                      </Link>
-                    </div>
-
-                    {/* Card Details Body */}
-                    <div className={styles['card-body']}>
-                      <Link to={`/products/${product.slug || ''}`}>
-                        <h3 className={styles['card-title']}>{product.name}</h3>
-                      </Link>
-                      {/* Swatches & Size Select Row */}
-                      <div className={styles['swatch-size-row']}>
-                        <div className={styles['color-swatches']}>
-                          {swatches.map((col, idx) => (
-                            <span
-                              key={idx}
-                              className={styles['color-dot']}
-                              style={{ backgroundColor: col }}
-                            />
-                          ))}
-                        </div>
-
-                        <select
-                          value={itemSizes[pId] || 'M'}
-                          onChange={(e) => handleSizeChange(pId, e.target.value)}
-                          className={styles['size-select-pill']}
-                        >
-                          <option value="XS">XS</option>
-                          <option value="S">S</option>
-                          <option value="M">M</option>
-                          <option value="L">L</option>
-                          <option value="XL">XL</option>
-                          <option value="XXL">XXL</option>
-                        </select>
-                      </div>
-
-                      {/* Action Buttons Row: Move to Bag + Trash */}
-                      <div className={styles['card-actions-row']}>
-                        <button
-                          type="button"
-                          onClick={() => handleMoveSingleToCart(product)}
-                          className={styles['btn-card-move']}
-                        >
-                          <ShoppingBag size={15} />
-                          <span>Move to Bag</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <ProductCard
+                    key={pId}
+                    product={product}
+                    onRemoveWishlist={handleRemoveItem}
+                  />
                 );
               })}
             </div>

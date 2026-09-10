@@ -57,21 +57,17 @@ export default function AdminLayout({ children, title }) {
       <aside className="admin-sidebar" style={{ width: collapsed ? '80px' : '250px', minWidth: collapsed ? '80px' : '250px' }}>
         {/* Brand Header */}
         <div className="admin-sidebar-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="admin-logo-badge">C</span>
-            <div>
-              <strong style={{ color: 'white', fontSize: '1.1rem', display: 'block' }}>Crackly Admin</strong>
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Merchant Portal</span>
-            </div>
-          </div>
-          {!collapsed && (
-            <div>
-              <div className="admin-logo-text">
-                Picky <span className="admin-logo-badge-small">Admin</span>
+          <Link to={ADMIN} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+            <img src="/images/logo.png" alt="Picky Admin Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+            {!collapsed && (
+              <div>
+                <div className="admin-logo-text" style={{ color: 'white', fontWeight: 800, fontSize: '1.05rem' }}>
+                  Picky <span className="admin-logo-badge-small">Admin</span>
+                </div>
+                <span className="admin-logo-subtitle">Merchant Portal</span>
               </div>
-              <span className="admin-logo-subtitle">Manage Brighter Days</span>
-            </div>
-          )}
+            )}
+          </Link>
         </div>
 
         {/* Navigation List */}
