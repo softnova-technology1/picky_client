@@ -10,7 +10,7 @@ import { wishlistService } from '../../services/wishlist.service';
 import styles from './Wishlist.module.css';
 import {
   Heart,
-  ShoppingBag,
+  ShoppingCart,
   ArrowRight,
   Sparkles,
   Bell,
@@ -194,7 +194,7 @@ export default function Wishlist() {
               {/* Stat 2 – Wishlist Value */}
               <div className={styles['stat-card']}>
                 <div className={styles['stat-icon-wrap']}>
-                  <ShoppingBag size={22} strokeWidth={1.8} />
+                  <ShoppingCart size={22} strokeWidth={1.8} />
                 </div>
                 <div className={styles['stat-value']}>
                   ₹{wishlistValue.toLocaleString('en-IN')}

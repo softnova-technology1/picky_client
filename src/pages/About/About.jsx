@@ -4,6 +4,8 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import AboutHeroSection from './components/AboutHeroSection';
 import AboutFeatureSection from './components/AboutFeatureSection';
 import GlassCountersSection from './components/GlassCountersSection';
+import BuyerProtectionSection from './components/BuyerProtectionSection';
+
 export default function About() {
   return (
     <PageWrapper>
@@ -55,7 +57,8 @@ export default function About() {
         </div>
       </section>
 
-
+      {/* ── Final Section: Picky Buyer Protection Assurance ── */}
+      <BuyerProtectionSection />
     </PageWrapper>
   );
 }

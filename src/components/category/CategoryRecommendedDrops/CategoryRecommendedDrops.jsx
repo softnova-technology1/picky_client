@@ -5,26 +5,62 @@ import ProductCard from '../../product/ProductCard';
 import { MOCK_PRODUCTS } from '../../../data/adminMockData';
 
 export default function CategoryRecommendedDrops() {
-  // 4 handpicked, highest-rated customer favorites across departments
+  // 10 handpicked, highest-rated customer favorites across departments (2 full rows of 5)
   const recommendedSlugs = [
     'authentic-manapparai-crispy-rice-murukku-500g',
     'embroidered-rayon-anarkali-kurti-pant-set',
     'traditional-kemp-pearl-bell-jhumka-earrings',
-    'boompulse-360-portable-wireless-bluetooth-speaker',
+    'studio-pro-hi-fi-wireless-over-ear-headphones-anc',
+    'multi-blade-stainless-steel-quick-vegetable-chopper',
+    'native-special-tirunelveli-pure-desi-ghee-halwa',
+    '22k-gold-plated-luxury-couple-solitaire-rings',
+    'non-slip-6mm-dual-color-alignment-tpe-yoga-mat',
+    'zari-woven-pure-kanchipuram-style-soft-silk-saree',
+    'heavy-duty-65w-braided-fast-charge-type-c-cable',
   ];
 
-  const recommendedProducts = recommendedSlugs
-    .map((slug) => MOCK_PRODUCTS.find((p) => p.slug === slug))
-    .filter(Boolean);
+  const displayProducts = React.useMemo(() => {
+    const matched = recommendedSlugs
+      .map((slug) => MOCK_PRODUCTS.find((p) => p.slug === slug))
+      .filter(Boolean);
 
-  // Fallback to next 5 products if slugs don't match
-  const displayProducts =
-    recommendedProducts.length >= 5 ? recommendedProducts.slice(0, 5) : MOCK_PRODUCTS.slice(4, 9);
+    // If any slug not found, fill up to 10 from MOCK_PRODUCTS
+    if (matched.length < 10) {
+      for (const p of MOCK_PRODUCTS) {
+        if (!matched.some((item) => (item._id || item.id) === (p._id || p.id))) {
+          matched.push(p);
+          if (matched.length === 10) break;
+        }
+      }
+    }
+    return matched.slice(0, 10);
+  }, []);
 
   return (
     <section className="category-recommended-drops-section" style={{ marginBottom: '4.5rem' }}>
       {/* ── Section Header (Centered) ── */}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            padding: '0.32rem 0.95rem',
+            borderRadius: '9999px',
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            color: '#059669',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: '0.85rem',
+          }}
+        >
+          <Award size={13} />
+          <span>Customer Choice • 10 Verified Favorites</span>
+        </div>
+
         <h2
           style={{
             fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
@@ -45,7 +81,7 @@ export default function CategoryRecommendedDrops() {
             fontWeight: 500,
           }}
         >
-          Handpicked customer favorites with 4.8+ ratings & verified reviews
+          Top customer favorites with 4.8+ ratings & verified reviews across 10 departments
         </p>
 
         {/* Decorative Diamond Ornament Divider */}
@@ -56,14 +92,14 @@ export default function CategoryRecommendedDrops() {
         </div>
       </div>
 
-      {/* ── 5 Cards in 1 Row (Lumina Product Cards) ── */}
+      {/* ── 10 Cards in 2 Rows (5 columns × 2 rows on desktop) ── */}
       <div
         className="category-recommended-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
           gap: '1.25rem',
-          marginBottom: '2rem',
+          marginBottom: '2.5rem',
         }}
       >
         {displayProducts.map((prod, idx) => (

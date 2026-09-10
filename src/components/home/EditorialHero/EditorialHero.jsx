@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, ChevronRight, Sparkles, Star, ShieldCheck, Truck, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ChevronRight, Sparkles, ShieldCheck, Truck, Lock, CheckCircle2 } from 'lucide-react';
 
 const EDITORIAL_SLIDES = [
   {
@@ -285,21 +285,28 @@ export default function EditorialHero() {
                   </button>
                 </div>
 
-                {/* Social Proof & Rating Trust Bar */}
-                <div className="editorial-hero-social-proof">
-                  <div className="avatar-group">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Customer" className="avatar-img" />
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Customer" className="avatar-img" />
-                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Customer" className="avatar-img" />
-                  </div>
-                  <div className="social-proof-info">
-                    <div className="social-proof-stars">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={13} fill="#facc15" color="#facc15" />
-                      ))}
-                      <strong style={{ fontSize: '0.85rem', marginLeft: '4px' }}>4.9/5</strong>
+                {/* Premium Trust & Quality Assurance Bar */}
+                <div className="editorial-hero-trust-bar">
+                  <div className="trust-bar-item">
+                    <div className="trust-bar-icon-pod">
+                      <ShieldCheck size={18} strokeWidth={2.4} />
                     </div>
-                    <span className="social-proof-text">10,000+ Happy Shoppers Across India</span>
+                    <div className="trust-bar-text">
+                      <span className="trust-bar-title">100% Certified Authentic</span>
+                      <span className="trust-bar-sub">Direct Handloom & Artisan Sourced</span>
+                    </div>
+                  </div>
+
+                  <div className="trust-bar-divider" />
+
+                  <div className="trust-bar-item">
+                    <div className="trust-bar-icon-pod">
+                      <Sparkles size={16} strokeWidth={2.4} />
+                    </div>
+                    <div className="trust-bar-text">
+                      <span className="trust-bar-title">Picky Quality Standard</span>
+                      <span className="trust-bar-sub">Curated • Inspected • Guaranteed</span>
+                    </div>
                   </div>
                 </div>
 
@@ -380,10 +387,9 @@ export default function EditorialHero() {
                     </div>
                     <h4 className="floating-card-title">{slide.cardTitle}</h4>
                     
-                    <div className="floating-card-rating">
-                      <Star size={12} fill="#facc15" color="#facc15" />
-                      <span>{slide.cardRating}</span>
-                      <span className="rating-count">({slide.cardReviews})</span>
+                    <div className="floating-card-curation">
+                      <CheckCircle2 size={12} color="#059669" strokeWidth={2.5} />
+                      <span>Verified Authentic & Curated</span>
                     </div>
 
                     <div className="floating-card-footer">

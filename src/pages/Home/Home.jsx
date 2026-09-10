@@ -7,8 +7,11 @@ import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
 import { promoOffer, categories, valuePropositions, products as fallbackProducts } from '../../data';
 import { useCartStore } from '../../store/cartStore';
+import { useWishlistStore } from '../../store/wishlistStore';
+import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
-import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingBag, Check } from 'lucide-react';
+import { wishlistService } from '../../services/wishlist.service';
+import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check } from 'lucide-react';
 import '../../styles/home-premium.css';
 
 // ─── Utility Components ──────────────────────────────────────────
@@ -16,10 +19,29 @@ import '../../styles/home-premium.css';
 const FlashDealMiniCard = ({ product }) => {
   const navigate = useNavigate();
   const { addItem } = useCartStore();
+  const { isInWishlist, toggleItem } = useWishlistStore();
+  const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
   const [justAdded, setJustAdded] = useState(false);
 
   if (!product) return null;
+
+  const inWishlist = isInWishlist(product._id || product.id || product.slug);
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItem(product);
+    if (isLoggedIn) {
+      try {
+        await wishlistService.toggle(product._id || product.id);
+      } catch (_) {}
+    }
+    showToast(
+      inWishlist ? `Removed "${product.name}" from wishlist` : `Saved "${product.name}" to wishlist!`,
+      'info'
+    );
+  };
 
   const handleQuickAdd = (e) => {
     e.preventDefault();
@@ -27,7 +49,7 @@ const FlashDealMiniCard = ({ product }) => {
     addItem(product, 1);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1600);
-    showToast(`Added "${product.name}" to bag!`, 'success');
+    showToast(`Added "${product.name}" to cart!`, 'success');
   };
 
   const discountPercent = product.discountPrice && product.discountPrice < product.price
@@ -41,8 +63,22 @@ const FlashDealMiniCard = ({ product }) => {
     >
       <div className="minimal-card-img-wrap">
         {discountPercent > 0 && (
-          <span className="minimal-card-badge">✦ {discountPercent}% OFF</span>
+          <span className="minimal-card-badge">{discountPercent}% OFF</span>
         )}
+
+        <button
+          onClick={handleToggleWishlist}
+          className="minimal-card-heart-btn"
+          title={inWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
+        >
+          <Heart
+            size={16}
+            color={inWishlist ? '#e11d48' : '#64748b'}
+            fill={inWishlist ? '#e11d48' : 'transparent'}
+            strokeWidth={2.3}
+          />
+        </button>
+
         <img
           src={product.images?.[0] || product.image}
           alt={product.name}
@@ -58,12 +94,12 @@ const FlashDealMiniCard = ({ product }) => {
           {justAdded ? (
             <>
               <Check size={16} strokeWidth={2.8} />
-              <span>Added to Bag!</span>
+              <span>Added to Cart!</span>
             </>
           ) : (
             <>
-              <ShoppingBag size={15} strokeWidth={2.3} />
-              <span>Add to Bag</span>
+              <ShoppingCart size={15} strokeWidth={2.3} />
+              <span>Add to Cart</span>
             </>
           )}
         </button>
@@ -142,6 +178,10 @@ export default function Home() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { addItem } = useCartStore();
+  const { isInWishlist, toggleItem } = useWishlistStore();
+  const { isLoggedIn } = useAuthStore();
+  const { showToast } = useUiStore();
 
   // Scroll ref & auto-scroll state for horizontal trending products carousel
   const trendingScrollRef = useRef(null);
@@ -249,6 +289,36 @@ export default function Home() {
     fallbackProducts[8],  // UV400 Polarized Retro Square Acetate Sunglasses
   ];
 
+  const isSpotlightInWishlist = spotlightProduct
+    ? isInWishlist(spotlightProduct._id || spotlightProduct.id || spotlightProduct.slug)
+    : false;
+
+  const handleToggleSpotlightWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!spotlightProduct) return;
+    toggleItem(spotlightProduct);
+    if (isLoggedIn) {
+      try {
+        wishlistService.toggle(spotlightProduct._id || spotlightProduct.id);
+      } catch (_) {}
+    }
+    showToast(
+      isSpotlightInWishlist
+        ? `Removed "${spotlightProduct.name}" from wishlist`
+        : `Saved "${spotlightProduct.name}" to wishlist!`,
+      'info'
+    );
+  };
+
+  const handleSpotlightAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!spotlightProduct) return;
+    addItem(spotlightProduct, 1);
+    showToast(`Added "${spotlightProduct.name}" to cart!`, 'success');
+  };
+
   return (
     <PageWrapper>
       {/* 01 — EDITORIAL PRODUCT-CUTOUT HERO */}
@@ -281,7 +351,7 @@ export default function Home() {
         <div className="hp-horizontal-inner">
           <div className="hp-section-header">
             <FadeUp>
-              <div className="hp-section-badge">✦ POPULAR SELECTION</div>
+              <div className="hp-section-badge">POPULAR SELECTION</div>
               <h2 className="hp-section-title">
                 Trending <span className="editorial-purple-accent">Now</span>
               </h2>
@@ -326,7 +396,7 @@ export default function Home() {
           {/* Header Row: Title + Live Ticking Countdown */}
           <div className="hp-flash-deals-header">
             <FadeUp>
-              <div className="hp-section-badge">⚡ FLASH SALE • LIMITED TIME ONLY</div>
+              <div className="hp-section-badge">FLASH SALE • LIMITED TIME ONLY</div>
               <h2 className="hp-section-title">
                 Limited Time <span className="editorial-purple-accent">Deals</span>
               </h2>
@@ -363,9 +433,21 @@ export default function Home() {
                 className="hp-flash-spotlight-card"
                 onClick={() => navigate(`/products/${spotlightProduct.slug}`)}
               >
-                <div className="spotlight-tag">✦ DEAL OF THE DAY • 32% OFF</div>
+                <div className="spotlight-tag">DEAL OF THE DAY • 32% OFF</div>
                 
                 <div className="spotlight-img-wrap">
+                  <button
+                    onClick={handleToggleSpotlightWishlist}
+                    className="spotlight-heart-btn"
+                    title={isSpotlightInWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
+                  >
+                    <Heart
+                      size={18}
+                      color={isSpotlightInWishlist ? '#e11d48' : '#64748b'}
+                      fill={isSpotlightInWishlist ? '#e11d48' : 'transparent'}
+                      strokeWidth={2.3}
+                    />
+                  </button>
                   <img
                     src={spotlightProduct.images?.[0] || spotlightProduct.image}
                     alt={spotlightProduct.name}
@@ -385,9 +467,9 @@ export default function Home() {
                     <span className="spotlight-savings-tag">Save ₹{spotlightProduct.price - spotlightProduct.discountPrice}</span>
                   </div>
 
-                  <button className="spotlight-cta-btn">
-                    <span>Claim Deal Now</span>
-                    <ArrowRight size={16} />
+                  <button className="spotlight-cta-btn" onClick={handleSpotlightAddToCart}>
+                    <ShoppingCart size={16} strokeWidth={2.3} />
+                    <span>Claim Deal & Add to Cart</span>
                   </button>
                 </div>
               </div>
@@ -411,7 +493,7 @@ export default function Home() {
         <div className="hp-new-arrivals-container">
           <div className="hp-new-arrivals-header">
             <FadeUp>
-              <div className="hp-section-badge">✦ JUST DROPPED • 2026 EDITION</div>
+              <div className="hp-section-badge">JUST DROPPED • 2026 EDITION</div>
               <h2 className="hp-section-title">
                 New <span className="editorial-purple-accent">Arrivals</span>
               </h2>
@@ -466,7 +548,7 @@ export default function Home() {
         <div className="hp-bestsellers-inner">
           <div className="hp-section-header">
             <FadeUp>
-              <div className="hp-section-badge">✦ CUSTOMER FAVORITES</div>
+              <div className="hp-section-badge">CUSTOMER FAVORITES</div>
               <h2 className="hp-section-title">
                 Best <span className="editorial-purple-accent">Sellers</span>
               </h2>
@@ -485,7 +567,7 @@ export default function Home() {
           
           <div className="hp-trust-header">
             <FadeUp>
-              <div className="hp-section-badge">✦ THE PICKY COMMITMENT</div>
+              <div className="hp-section-badge">THE PICKY COMMITMENT</div>
               <h2 className="hp-section-title">
                 Why Shop <span className="editorial-purple-accent">With Us</span>
               </h2>
@@ -546,7 +628,7 @@ export default function Home() {
           
           <div className="hp-reviews-header">
             <FadeUp>
-              <div className="hp-section-badge">✦ REAL REVIEWS • 4.9/5 RATING</div>
+              <div className="hp-section-badge">REAL REVIEWS • 4.9/5 RATING</div>
               <h2 className="hp-section-title">
                 Loved By <span className="editorial-purple-accent">Thousands</span>
               </h2>

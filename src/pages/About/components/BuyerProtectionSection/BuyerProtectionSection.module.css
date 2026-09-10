@@ -1,0 +1,305 @@
+/* ─── Picky Buyer Protection Section CSS Module ────────────────────────────── */
+
+.protectionSection {
+  position: relative;
+  width: 100%;
+  padding: 6rem 1.5rem 7.5rem;
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 50%, #f5f0ff 100%);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Subtle background ambient mesh glow */
+.ambientGlowTop {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.08) 0%, rgba(236, 72, 153, 0.04) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambientGlowBottom {
+  position: absolute;
+  bottom: -80px;
+  right: 5%;
+  width: 600px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.06) 0%, rgba(59, 130, 246, 0.03) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.protectionContainer {
+  max-width: 1320px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Section Header ───────────────────────────────────────────────────────── */
+.headerWrapper {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 4rem;
+}
+
+.trustBadgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1.15rem;
+  border-radius: 9999px;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.22);
+  color: #7c3aed;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.trustBadgeIcon {
+  font-size: 0.72rem;
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+.mainTitle {
+  font-size: clamp(2rem, 3.6vw, 2.75rem);
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 0.85rem;
+}
+
+.titleGradient {
+  background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 45%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subTitle {
+  font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+  font-weight: 500;
+}
+
+/* Decorative Divider */
+.ornamentDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin: 0 auto;
+}
+
+.dividerLineLeft {
+  width: 55px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #c084fc);
+  border-radius: 999px;
+}
+
+.dividerDiamonds {
+  color: #7c3aed;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  font-weight: 800;
+}
+
+.dividerLineRight {
+  width: 55px;
+  height: 2px;
+  background: linear-gradient(90deg, #c084fc, transparent);
+  border-radius: 999px;
+}
+
+/* ── 4-Column Infographic Grid ────────────────────────────────────────────── */
+.infographicGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  padding: 0.75rem 0 2.5rem;
+}
+
+/* Individual Card Container */
+.cardItem {
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 3D Offset Gradient Backplate */
+.cardBackplate {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+  z-index: 1;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Foreground Floating Card */
+.frontCard {
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border-radius: 26px;
+  border: 1.5px solid #eef2f6;
+  box-shadow: 0 14px 34px -10px rgba(15, 23, 42, 0.07), 0 2px 8px rgba(0, 0, 0, 0.02);
+  padding: 2.25rem 1.65rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+  min-height: 335px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Top Icon Pod */
+.iconPod {
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.35rem;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+/* Card Title */
+.cardTitle {
+  font-size: 1.18rem;
+  font-weight: 850;
+  color: #0f172a;
+  margin: 0 0 0.65rem;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+/* Card Description */
+.cardDesc {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.55;
+  margin: 0 0 1.5rem;
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+/* Verified Micro Badge */
+.badgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.4rem;
+  transition: transform 0.3s ease;
+}
+
+/* Solid Gradient Step Disc at Bottom Center */
+.stepDisc {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.98rem;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #ffffff;
+  z-index: 3;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+/* ── Hover Micro-Interactions ─────────────────────────────────────────────── */
+.cardItem:hover {
+  transform: translateY(-10px);
+}
+
+.cardItem:hover .cardBackplate {
+  top: -14px;
+  right: -14px;
+  filter: brightness(1.08) saturate(1.1);
+}
+
+.cardItem:hover .frontCard {
+  box-shadow: 0 24px 50px -10px rgba(15, 23, 42, 0.16), 0 4px 16px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
+}
+
+.cardItem:hover .iconPod {
+  transform: scale(1.14) translateY(-3px) rotate(-3deg);
+}
+
+.cardItem:hover .stepDisc {
+  transform: translateX(-50%) scale(1.15);
+}
+
+.cardItem:hover .badgePill {
+  transform: scale(1.03);
+}
+
+/* ── Responsive Media Queries ────────────────────────────────────────────── */
+@media (max-width: 1180px) {
+  .infographicGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem 1.75rem;
+    padding-bottom: 3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .protectionSection {
+    padding: 4.5rem 1rem 6rem;
+  }
+
+  .infographicGrid {
+    grid-template-columns: 1fr;
+    gap: 2.75rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .mainTitle {
+    font-size: 1.85rem;
+  }
+
+  .frontCard {
+    min-height: auto;
+    padding: 2rem 1.35rem 2.85rem;
+  }
+}

@@ -20,7 +20,7 @@ export default function ProductList() {
   const selectedCategory = searchParams.get('category') || routeCategorySlug || '';
   const selectedSubCategory = searchParams.get('subCategory') || routeSubSlug || '';
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
-  const sort = searchParams.get('sort') || 'newest';
+  const sort = searchParams.get('sort') || 'all';
   const urlMaxPrice = searchParams.get('maxPrice') || '';
   const urlMinDiscount = searchParams.get('discount') || '';
 
@@ -58,7 +58,7 @@ export default function ProductList() {
     async function load() {
       try {
         setLoading(true);
-        const params = { sort };
+        const params = { sort: sort === 'all' ? 'newest' : sort };
         if (selectedCategory) params.category = selectedCategory;
         if (selectedSubCategory) params.subCategory = selectedSubCategory;
 
@@ -86,9 +86,9 @@ export default function ProductList() {
         }
       } catch (err) {
         if (searchQuery.trim()) {
-          setAllProducts(searchProducts(searchQuery, { sort, category: selectedCategory, subCategory: selectedSubCategory }));
+          setAllProducts(searchProducts(searchQuery, { sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
         } else {
-          setAllProducts(getProducts({ sort, category: selectedCategory, subCategory: selectedSubCategory }));
+          setAllProducts(getProducts({ sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
         }
       } finally {
         setLoading(false);
@@ -115,12 +115,63 @@ export default function ProductList() {
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
+    // Category Filter
+    if (selectedCategory) {
+      const catTarget = String(selectedCategory).toLowerCase();
+      result = result.filter((p) => {
+        if (!p.category) return false;
+        if (typeof p.category === 'object') {
+          return (
+            String(p.category.slug || '').toLowerCase() === catTarget ||
+            String(p.category._id || '').toLowerCase() === catTarget ||
+            String(p.category.name || '').toLowerCase() === catTarget
+          );
+        }
+        return String(p.category).toLowerCase() === catTarget;
+      });
+    }
+
+    // SubCategory Filter
+    if (selectedSubCategory) {
+      const subTarget = String(selectedSubCategory).toLowerCase();
+      result = result.filter((p) => {
+        if (!p.subCategory) return false;
+        if (typeof p.subCategory === 'object') {
+          return (
+            String(p.subCategory.slug || '').toLowerCase() === subTarget ||
+            String(p.subCategory._id || '').toLowerCase() === subTarget ||
+            String(p.subCategory.name || '').toLowerCase() === subTarget
+          );
+        }
+        return String(p.subCategory).toLowerCase() === subTarget;
+      });
+    }
+
+    // Search Filter
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.tags?.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+
     // Price Filter
     if (urlMaxPrice) {
-      const maxP = Number(urlMaxPrice);
       result = result.filter((p) => {
-        const price = Number(p.price || p.discountPrice || 0);
-        return price <= maxP;
+        const effectivePrice = Number(p.discountPrice || p.price || 0);
+        if (urlMaxPrice === '2500' || urlMaxPrice === '1000-2500') {
+          return effectivePrice >= 1000 && effectivePrice <= 2500;
+        }
+        if (urlMaxPrice === '5000' || urlMaxPrice === '2500+' || urlMaxPrice === 'above_2500') {
+          return effectivePrice >= 2500;
+        }
+        const maxP = Number(urlMaxPrice);
+        if (!isNaN(maxP) && maxP > 0) {
+          return effectivePrice <= maxP;
+        }
+        return true;
       });
     }
 
@@ -128,25 +179,48 @@ export default function ProductList() {
     const activeDiscountThreshold = urlMinDiscount ? Number(urlMinDiscount) : (quickFilters.discount40 ? 40 : 0);
     if (activeDiscountThreshold > 0) {
       result = result.filter((p) => {
-        const discount = Number(p.discount || p.discountPercentage || 0);
-        if (discount >= activeDiscountThreshold) return true;
-        if (p.originalPrice && p.price) {
-          const calc = Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
-          return calc >= activeDiscountThreshold;
+        if (p.discount && Number(p.discount) >= activeDiscountThreshold) return true;
+        if (p.discountPercentage && Number(p.discountPercentage) >= activeDiscountThreshold) return true;
+
+        const p1 = Number(p.price || 0);
+        const p2 = Number(p.discountPrice || 0);
+        if (p1 > 0 && p2 > 0 && p1 > p2) {
+          const pct = Math.round(((p1 - p2) / p1) * 100);
+          return pct >= activeDiscountThreshold;
         }
+
+        const orig = Number(p.originalPrice || 0);
+        const curr = Number(p.price || p.discountPrice || 0);
+        if (orig > 0 && curr > 0 && orig > curr) {
+          const pct = Math.round(((orig - curr) / orig) * 100);
+          return pct >= activeDiscountThreshold;
+        }
+
         return false;
       });
     }
 
     // Sorting
     if (sort === 'price_asc') {
-      result.sort((a, b) => (a.price || 0) - (b.price || 0));
+      result.sort((a, b) => {
+        const pa = Number(a.discountPrice || a.price || 0);
+        const pb = Number(b.discountPrice || b.price || 0);
+        return pa - pb;
+      });
     } else if (sort === 'price_desc') {
-      result.sort((a, b) => (b.price || 0) - (a.price || 0));
+      result.sort((a, b) => {
+        const pa = Number(a.discountPrice || a.price || 0);
+        const pb = Number(b.discountPrice || b.price || 0);
+        return pb - pa;
+      });
+    } else if (sort === 'featured') {
+      result.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    } else if (sort === 'newest') {
+      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     }
 
     return result;
-  }, [allProducts, quickFilters, urlMaxPrice, sort]);
+  }, [allProducts, quickFilters, urlMaxPrice, urlMinDiscount, selectedCategory, selectedSubCategory, searchQuery, sort]);
 
   // Handle Category Selection
   const handleCategoryChange = (catSlug) => {
@@ -300,8 +374,8 @@ export default function ProductList() {
                   marginBottom: '1.75rem',
                 }}
               >
-                {/* Left: Mobile Filter Button + Product Count + Active Filter Tags */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                {/* Left: Mobile Filter Button + Clean Product Count & Title */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   {/* Mobile Filter Drawer Button (Visible on <= 990px) */}
                   <button
                     type="button"
@@ -342,153 +416,25 @@ export default function ProductList() {
                     )}
                   </button>
 
-                  <span style={{ fontSize: '0.94rem', color: '#1e1b4b', fontWeight: 800, letterSpacing: '-0.01em' }}>
-                    {currentCategoryObj ? currentCategoryObj.name : 'All Products'}
-                  </span>
-
-                  {/* Active Dismissible Tags */}
-                  {selectedCategory && (
+                  {/* Clean Product Title & Count */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
+                      {currentCategoryObj ? currentCategoryObj.name : 'All Products'}
+                    </span>
                     <span
                       style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        background: '#f3e8ff',
-                        color: '#7c3aed',
-                        padding: '0.22rem 0.65rem',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        color: '#6d28d9',
+                        background: '#f5edff',
+                        padding: '0.2rem 0.65rem',
                         borderRadius: '9999px',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
+                        border: '1px solid #ddd6fe',
                       }}
                     >
-                      <span>{currentCategoryObj?.name || selectedCategory}</span>
-                      <X
-                        size={13}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleCategoryChange('')}
-                      />
+                      {filteredProducts.length} {filteredProducts.length === 1 ? 'Product' : 'Products'}
                     </span>
-                  )}
-
-                  {selectedSubCategory && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        background: '#e0e7ff',
-                        color: '#4338ca',
-                        padding: '0.22rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>
-                        {currentCategoryObj?.subcategories?.find(
-                          (s) =>
-                            s.slug === selectedSubCategory ||
-                            s._id === selectedSubCategory ||
-                            s.slug?.toLowerCase() === selectedSubCategory.toLowerCase()
-                        )?.name || selectedSubCategory}
-                      </span>
-                      <X
-                        size={13}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleSubCategoryChange('')}
-                      />
-                    </span>
-                  )}
-
-                  {urlMaxPrice && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        background: '#ecfdf5',
-                        color: '#059669',
-                        padding: '0.22rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>Under ₹{urlMaxPrice}</span>
-                      <X
-                        size={13}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleMaxPriceChange('')}
-                      />
-                    </span>
-                  )}
-
-                  {quickFilters.rating4Plus && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        background: '#fffbeb',
-                        color: '#b45309',
-                        padding: '0.22rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>4.5★+</span>
-                      <X
-                        size={13}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleToggleQuickFilter('rating4Plus')}
-                      />
-                    </span>
-                  )}
-
-                  {(urlMinDiscount || quickFilters.discount40) && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        background: '#f3e8ff',
-                        color: '#7c3aed',
-                        padding: '0.22rem 0.65rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      <span>{urlMinDiscount || 40}%+ OFF</span>
-                      <X
-                        size={13}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => {
-                          handleDiscountChange('');
-                          if (quickFilters.discount40) setQuickFilters((p) => ({ ...p, discount40: false }));
-                        }}
-                      />
-                    </span>
-                  )}
-
-                  {activeFilterCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleResetAll}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#64748b',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Clear All
-                    </button>
-                  )}
+                  </div>
                 </div>
 
                 {/* Right: Sort Dropdown */}
@@ -517,6 +463,7 @@ export default function ProductList() {
                       }}
                       aria-label="Sort products"
                     >
+                      <option value="all">All Products</option>
                       <option value="newest">Newest Arrivals</option>
                       <option value="featured">Best Sellers & Featured</option>
                       <option value="price_asc">Price: Low to High</option>

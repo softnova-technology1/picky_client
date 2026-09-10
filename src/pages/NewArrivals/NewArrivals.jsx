@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import NewArrivalsHero from '../../components/new-arrivals/NewArrivalsHero';
 import ProductCard from '../../components/product/ProductCard';
@@ -7,15 +7,33 @@ import {
   Sparkles,
   ShieldCheck,
   ArrowRight,
-  Clock,
   Zap,
   SlidersHorizontal,
   ChevronDown,
   RotateCcw,
+  Flame,
+  Truck,
+  CheckCircle2,
+  Palette,
+  ArrowDownNarrowWide,
+  ArrowUpNarrowWide,
+  Coins,
+  IndianRupee,
+  Crown,
+  Layers,
+  Percent,
+  BadgePercent,
+  X,
+  Check,
+  ShoppingCart,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCartStore } from '../../store/cartStore';
+import { useUiStore } from '../../store/uiStore';
 
 export default function NewArrivals() {
+  const { addItem } = useCartStore();
+  const { showToast } = useUiStore();
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeSort, setActiveSort] = useState('fresh'); // 'fresh' | 'trending' | 'price-low' | 'price-high'
   const [priceRange, setPriceRange] = useState('all'); // 'all' | 'under500' | '500-1500' | '1500-3000' | 'above3000'
@@ -26,29 +44,6 @@ export default function NewArrivals() {
   const [artisanOnly, setArtisanOnly] = useState(false);
   const [isFilterFolderOpen, setIsFilterFolderOpen] = useState(false);
   const catalogRef = useRef(null);
-
-  // 1. Live Countdown Timer for Next Drop (Ticks every second)
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 4,
-    minutes: 38,
-    seconds: 24,
-  });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: 59, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 6, minutes: 0, seconds: 0 };
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // 10 Core Store Categories + All Drops as Circular Story Avatars (100% Radius)
   const categoryStories = [
@@ -237,6 +232,43 @@ export default function NewArrivals() {
     return count;
   }, [priceRange, discountFilter, expressOnly, inStockOnly, freeDeliveryOnly, artisanOnly, activeSort]);
 
+  const activeFilterTags = useMemo(() => {
+    const tags = [];
+    if (priceRange !== 'all') {
+      const priceLabels = {
+        under500: 'Under ₹500',
+        '500-1500': '₹500 - ₹1,500',
+        '1500-3000': '₹1,500 - ₹3,000',
+        above3000: 'Above ₹3,000',
+      };
+      tags.push({ key: 'price', label: priceLabels[priceRange] || priceRange, onRemove: () => setPriceRange('all') });
+    }
+    if (discountFilter !== 'all') {
+      tags.push({ key: 'discount', label: `${discountFilter}% OFF+`, onRemove: () => setDiscountFilter('all') });
+    }
+    if (expressOnly) {
+      tags.push({ key: 'express', label: '24h Express', onRemove: () => setExpressOnly(false) });
+    }
+    if (freeDeliveryOnly) {
+      tags.push({ key: 'freeDelivery', label: 'Free Shipping', onRemove: () => setFreeDeliveryOnly(false) });
+    }
+    if (inStockOnly) {
+      tags.push({ key: 'inStock', label: 'In Stock', onRemove: () => setInStockOnly(false) });
+    }
+    if (artisanOnly) {
+      tags.push({ key: 'artisan', label: 'Handloom & Artisan', onRemove: () => setArtisanOnly(false) });
+    }
+    if (activeSort !== 'fresh') {
+      const sortLabels = {
+        trending: 'Fast Moving',
+        'price-low': 'Price: Low to High',
+        'price-high': 'Price: High to Low',
+      };
+      tags.push({ key: 'sort', label: sortLabels[activeSort] || activeSort, onRemove: () => setActiveSort('fresh') });
+    }
+    return tags;
+  }, [priceRange, discountFilter, expressOnly, freeDeliveryOnly, inStockOnly, artisanOnly, activeSort]);
+
   const handleResetAllFilters = () => {
     setActiveCategory('all');
     setActiveSort('fresh');
@@ -254,50 +286,45 @@ export default function NewArrivals() {
     }
   };
 
+  // ── Curated Drop Spotlight derived directly from Store MOCK_PRODUCTS ──
+  const featuredCuratedDrop = useMemo(() => {
+    if (activeCategory !== 'all') {
+      const match = MOCK_PRODUCTS.find((p) => p.category?.slug === activeCategory && p.isFeatured);
+      if (match) return match;
+      const anyMatch = MOCK_PRODUCTS.find((p) => p.category?.slug === activeCategory);
+      if (anyMatch) return anyMatch;
+    }
+    // Default flagship drop of the week (Pure Handloom Sungudi Saree)
+    return MOCK_PRODUCTS.find((p) => p._id === 'prod_wf_1') || MOCK_PRODUCTS[0];
+  }, [activeCategory]);
+
+  const curatedVisualImage = useMemo(() => {
+    if (!featuredCuratedDrop) return '/images/pill_model_saree.jpg';
+    if (featuredCuratedDrop._id === 'prod_wf_1') return '/images/pill_model_saree.jpg';
+    if (featuredCuratedDrop._id === 'prod_aj_1') return '/images/pill_model_jewellery.jpg';
+    if (featuredCuratedDrop._id === 'prod_wf_2') return '/images/pill_model_kurti.jpg';
+    if (featuredCuratedDrop._id === 'prod_hk_1') return '/images/pill_model_kitchen.jpg';
+    if (featuredCuratedDrop._id === 'prod_ma_1') return '/images/pill_model_tech.jpg';
+    return featuredCuratedDrop.image || featuredCuratedDrop.images?.[0] || '/images/pill_model_saree.jpg';
+  }, [featuredCuratedDrop]);
+
+  const handleAddCuratedDrop = (e) => {
+    e.preventDefault();
+    if (!featuredCuratedDrop) return;
+    addItem(featuredCuratedDrop, 1);
+    showToast(`Added "${featuredCuratedDrop.name}" to cart! ✨`, 'success');
+  };
+
   return (
     <PageWrapper>
       <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
-        {/* ── 1. Streetwear Hero Showcase & Docked Floating Drop Timing Island (50% Bottom Overlap) ── */}
+        {/* ── 1. Streetwear Hero Showcase ── */}
         <div style={{ paddingTop: '1.75rem', position: 'relative' }}>
           <NewArrivalsHero onExploreClick={handleScrollToCatalog} />
-
-          {/* Floating Drop Status & Urgency Island (Overlaps bottom edge 50%) */}
-          <div className="hero-docked-timing-bar">
-            <div className="container">
-              <div className="drop-status-bar">
-                {/* Feature 1: Live Next Drop Countdown */}
-                <div className="drop-countdown-pod">
-                  <span className="countdown-pulse-dot" />
-                  <div className="countdown-label-group">
-                    <Clock size={16} strokeWidth={2.4} color="#7c3aed" />
-                    <span className="countdown-title">Next Fresh Drop In:</span>
-                  </div>
-                  <div className="countdown-digits-cluster">
-                    <span className="digit-box">{String(timeLeft.hours).padStart(2, '0')}h</span>
-                    <span className="digit-sep">:</span>
-                    <span className="digit-box">{String(timeLeft.minutes).padStart(2, '0')}m</span>
-                    <span className="digit-sep">:</span>
-                    <span className="digit-box digit-sec">{String(timeLeft.seconds).padStart(2, '0')}s</span>
-                  </div>
-                </div>
-
-                {/* Feature 5: Live Activity Social Proof (NO Rating!) */}
-                <div className="drop-activity-pod">
-                  <div className="activity-live-badge">
-                    <span className="live-ping-dot" />
-                    <span>LIVE ACTIVITY</span>
-                  </div>
-                  <span className="activity-text">
-                    <strong style={{ color: '#1e1b4b' }}>38 shoppers</strong> viewing drops right now • <strong style={{ color: '#059669' }}>19 orders</strong> dispatched in the last 2h
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* ── 2. New Arrivals Catalog Section ── */}
-        <div className="container" ref={catalogRef} style={{ scrollMarginTop: '100px' }}>
+        <div className="container" ref={catalogRef} style={{ scrollMarginTop: '100px', marginTop: '2.5rem' }}>
           {/* Header Row: Title & Active Count */}
           <div
             style={{
@@ -398,19 +425,20 @@ export default function NewArrivals() {
             </div>
           </div>
 
-          {/* ── Feature 2: Dedicated Filter Folder Bar ── */}
+          {/* ── Feature 2: Highly Intuitive Quick Filter & Sort Bar ── */}
           <div className="sort-filter-bar">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* Left Group: Folder Toggle & Quick Filters */}
+            <div className="bar-left-group">
               {/* 📁 Filter Folder Toggle Button */}
               <button
                 onClick={() => setIsFilterFolderOpen((prev) => !prev)}
                 className={`sort-pill folder-toggle-btn ${isFilterFolderOpen ? 'open' : ''} ${
                   activeFiltersCount > 0 ? 'has-active' : ''
                 }`}
-                title="Open Advanced Filter Folder"
+                title="Open Curated Filter Folder"
               >
                 <SlidersHorizontal size={15} />
-                <span>Filter Folder</span>
+                <span>All Filters</span>
                 {activeFiltersCount > 0 && (
                   <span className="folder-count-badge">{activeFiltersCount}</span>
                 )}
@@ -423,6 +451,72 @@ export default function NewArrivals() {
                 />
               </button>
 
+              <div className="bar-divider" />
+
+              {/* Quick Sort Options directly accessible on bar */}
+              <div className="quick-pill-cluster">
+                <button
+                  onClick={() => setActiveSort('fresh')}
+                  className={`sort-pill quick-pill ${activeSort === 'fresh' ? 'active' : ''}`}
+                >
+                  <Sparkles size={13} />
+                  <span>Freshest</span>
+                </button>
+                <button
+                  onClick={() => setActiveSort('trending')}
+                  className={`sort-pill quick-pill ${activeSort === 'trending' ? 'active' : ''}`}
+                >
+                  <Flame size={13} />
+                  <span>Trending</span>
+                </button>
+                <button
+                  onClick={() => setActiveSort(activeSort === 'price-low' ? 'price-high' : 'price-low')}
+                  className={`sort-pill quick-pill ${activeSort.startsWith('price-') ? 'active' : ''}`}
+                  title="Toggle Price Sort"
+                >
+                  {activeSort === 'price-high' ? (
+                    <ArrowUpNarrowWide size={13} />
+                  ) : (
+                    <ArrowDownNarrowWide size={13} />
+                  )}
+                  <span>{activeSort === 'price-high' ? 'Price: High to Low' : 'Price: Low to High'}</span>
+                </button>
+              </div>
+
+              <div className="bar-divider desktop-only" />
+
+              {/* Quick Perks / Delivery Toggles directly on bar */}
+              <div className="quick-pill-cluster desktop-only">
+                <button
+                  onClick={() => setExpressOnly((prev) => !prev)}
+                  className={`sort-pill quick-pill ${expressOnly ? 'active' : ''}`}
+                >
+                  <Zap size={13} />
+                  <span>24h Express</span>
+                </button>
+                <button
+                  onClick={() => setFreeDeliveryOnly((prev) => !prev)}
+                  className={`sort-pill quick-pill ${freeDeliveryOnly ? 'active' : ''}`}
+                >
+                  <Truck size={13} />
+                  <span>Free Shipping</span>
+                </button>
+                <button
+                  onClick={() => setInStockOnly((prev) => !prev)}
+                  className={`sort-pill quick-pill ${inStockOnly ? 'active' : ''}`}
+                >
+                  <CheckCircle2 size={13} />
+                  <span>In Stock</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right Group: Product Count & Clear All */}
+            <div className="bar-right-group">
+              <span className="sort-active-count">
+                <strong>{processedProducts.length}</strong> Drops
+              </span>
+
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleResetAllFilters}
@@ -430,134 +524,276 @@ export default function NewArrivals() {
                   title="Reset all filters"
                 >
                   <RotateCcw size={13} />
-                  <span>Reset All Filters</span>
+                  <span>Reset All</span>
                 </button>
               )}
             </div>
           </div>
 
-          {/* ── Expandable Filter Folder Tray (Unfolds when toggled) ── */}
+          {/* ── Active Filter Tags Row (1-click dismissable tags) ── */}
+          {activeFilterTags.length > 0 && (
+            <div className="active-filter-tags-row">
+              <span className="active-tags-label">Applied:</span>
+              <div className="active-tags-list">
+                {activeFilterTags.map((tag) => (
+                  <button
+                    key={tag.key}
+                    onClick={tag.onRemove}
+                    className="active-tag-chip"
+                    title={`Remove ${tag.label}`}
+                  >
+                    <span>{tag.label}</span>
+                    <X size={13} strokeWidth={2.5} />
+                  </button>
+                ))}
+                <button
+                  onClick={handleResetAllFilters}
+                  className="active-tags-clear-link"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Expandable Filter Folder Panel Tray ── */}
           {isFilterFolderOpen && (
             <div className="filter-folder-panel">
+              {/* Folder Header */}
               <div className="folder-header-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                  <SlidersHorizontal size={17} color="#7c3aed" />
-                  <strong style={{ color: '#1e1b4b', fontSize: '1rem', fontWeight: 800 }}>
-                    Curated Filter Folder
-                  </strong>
-                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                    • Tailor your fresh drops
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div className="folder-header-icon-box">
+                    <SlidersHorizontal size={18} color="#7c3aed" />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong style={{ color: '#1e1b4b', fontSize: '1.05rem', fontWeight: 800 }}>
+                        Curated Filter Folder
+                      </strong>
+                      {activeFiltersCount > 0 && (
+                        <span className="folder-active-count-tag">
+                          {activeFiltersCount} active
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+                      Filter drops by price range, perks, discounts & sorting priority
+                    </p>
+                  </div>
                 </div>
-                {activeFiltersCount > 0 && (
-                  <button onClick={handleResetAllFilters} className="folder-reset-link">
-                    Clear All Filters
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {activeFiltersCount > 0 && (
+                    <button onClick={handleResetAllFilters} className="folder-reset-link">
+                      <RotateCcw size={13} />
+                      <span>Reset Filters</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsFilterFolderOpen(false)}
+                    className="folder-close-btn"
+                    title="Close Filter Folder"
+                  >
+                    <X size={16} />
                   </button>
-                )}
+                </div>
               </div>
 
-              <div className="folder-sections-grid">
-                {/* 1. Price Range Filters */}
-                <div className="folder-filter-col">
-                  <span className="col-label">Price Range</span>
-                  <div className="col-chips-group">
+              {/* Symmetrical 4-Card Grid */}
+              <div className="folder-cards-grid">
+                {/* 1. Price Range Card */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <Coins size={15} color="#7c3aed" />
+                      <span className="col-label">Price Range</span>
+                    </div>
+                    {priceRange !== 'all' && (
+                      <span className="group-active-indicator">Active</span>
+                    )}
+                  </div>
+                  <div className="group-chips-stack">
                     {[
-                      { id: 'all', label: 'All Prices' },
-                      { id: 'under500', label: 'Under ₹500' },
-                      { id: '500-1500', label: '₹500 - ₹1,500' },
-                      { id: '1500-3000', label: '₹1,500 - ₹3,000' },
-                      { id: 'above3000', label: 'Above ₹3,000' },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setPriceRange(item.id)}
-                        className={`folder-chip ${priceRange === item.id ? 'active' : ''}`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                      { id: 'all', label: 'All Prices', icon: Coins },
+                      { id: 'under500', label: 'Under ₹500', icon: IndianRupee },
+                      { id: '500-1500', label: '₹500 - ₹1,500', icon: IndianRupee },
+                      { id: '1500-3000', label: '₹1,500 - ₹3,000', icon: IndianRupee },
+                      { id: 'above3000', label: 'Above ₹3,000', icon: Crown },
+                    ].map((item) => {
+                      const IconComp = item.icon;
+                      const isSelected = priceRange === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setPriceRange(item.id)}
+                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <IconComp size={13} strokeWidth={2.2} />
+                            <span>{item.label}</span>
+                          </div>
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* 2. Discount Tiers */}
-                <div className="folder-filter-col">
-                  <span className="col-label">Discount Tiers</span>
-                  <div className="col-chips-group">
+                {/* 2. Discount Tiers Card */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <Percent size={15} color="#7c3aed" />
+                      <span className="col-label">Discount Tiers</span>
+                    </div>
+                    {discountFilter !== 'all' && (
+                      <span className="group-active-indicator">Active</span>
+                    )}
+                  </div>
+                  <div className="group-chips-stack">
                     {[
-                      { id: 'all', label: 'All Items' },
-                      { id: '10', label: '10% OFF+' },
-                      { id: '20', label: '20% OFF+' },
-                      { id: '30', label: '30% OFF+' },
-                      { id: '50', label: '50% OFF+' },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setDiscountFilter(item.id)}
-                        className={`folder-chip ${discountFilter === item.id ? 'active' : ''}`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                      { id: 'all', label: 'All Items', icon: Layers },
+                      { id: '10', label: '10% OFF+', icon: Percent },
+                      { id: '20', label: '20% OFF+', icon: Percent },
+                      { id: '30', label: '30% OFF+', icon: BadgePercent },
+                      { id: '50', label: '50% OFF+', icon: Flame },
+                    ].map((item) => {
+                      const IconComp = item.icon;
+                      const isSelected = discountFilter === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setDiscountFilter(item.id)}
+                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <IconComp size={13} strokeWidth={2.2} />
+                            <span>{item.label}</span>
+                          </div>
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* 3. Sort Priority */}
-                <div className="folder-filter-col">
-                  <span className="col-label">Sort Priority</span>
-                  <div className="col-chips-group">
-                    {[
-                      { id: 'fresh', label: '✨ Freshest Drop' },
-                      { id: 'trending', label: '🔥 Fast Moving' },
-                      { id: 'price-low', label: 'Price: Low to High' },
-                      { id: 'price-high', label: 'Price: High to Low' },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setActiveSort(item.id)}
-                        className={`folder-chip ${activeSort === item.id ? 'active' : ''}`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                {/* 3. Perks & Delivery Card (Combined & Balanced!) */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <Zap size={15} color="#7c3aed" />
+                      <span className="col-label">Perks & Delivery</span>
+                    </div>
+                    {(expressOnly || freeDeliveryOnly || artisanOnly || inStockOnly) && (
+                      <span className="group-active-indicator">Active</span>
+                    )}
                   </div>
-                </div>
-
-                {/* 4. Special Drops & Craft */}
-                <div className="folder-filter-col">
-                  <span className="col-label">Special Drops & Craft</span>
-                  <div className="col-chips-group">
+                  <div className="group-chips-stack">
                     <button
-                      onClick={() => setArtisanOnly((prev) => !prev)}
-                      className={`folder-chip ${artisanOnly ? 'active' : ''}`}
+                      onClick={() => setExpressOnly((prev) => !prev)}
+                      className={`folder-chip ${expressOnly ? 'active' : ''}`}
                     >
-                      ✨ Handloom & Artisan
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <Zap size={13} strokeWidth={2.2} />
+                        <span>24h Express Only</span>
+                      </div>
+                      {expressOnly && <Check size={13} strokeWidth={3} />}
                     </button>
                     <button
                       onClick={() => setFreeDeliveryOnly((prev) => !prev)}
                       className={`folder-chip ${freeDeliveryOnly ? 'active' : ''}`}
                     >
-                      🚚 Free Shipping
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <Truck size={13} strokeWidth={2.2} />
+                        <span>Free Shipping</span>
+                      </div>
+                      {freeDeliveryOnly && <Check size={13} strokeWidth={3} />}
                     </button>
-                  </div>
-                </div>
-
-                {/* 5. Speed & Availability */}
-                <div className="folder-filter-col">
-                  <span className="col-label">Speed & Availability</span>
-                  <div className="col-chips-group">
                     <button
-                      onClick={() => setExpressOnly((prev) => !prev)}
-                      className={`folder-chip ${expressOnly ? 'active' : ''}`}
+                      onClick={() => setArtisanOnly((prev) => !prev)}
+                      className={`folder-chip ${artisanOnly ? 'active' : ''}`}
                     >
-                      ⚡ 24h Express Only
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <Palette size={13} strokeWidth={2.2} />
+                        <span>Handloom & Artisan</span>
+                      </div>
+                      {artisanOnly && <Check size={13} strokeWidth={3} />}
                     </button>
                     <button
                       onClick={() => setInStockOnly((prev) => !prev)}
                       className={`folder-chip ${inStockOnly ? 'active' : ''}`}
                     >
-                      ✅ In Stock Only
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <CheckCircle2 size={13} strokeWidth={2.2} />
+                        <span>In Stock Only</span>
+                      </div>
+                      {inStockOnly && <Check size={13} strokeWidth={3} />}
                     </button>
                   </div>
+                </div>
+
+                {/* 4. Sort Priority Card */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <ArrowDownNarrowWide size={15} color="#7c3aed" />
+                      <span className="col-label">Sort Priority</span>
+                    </div>
+                    {activeSort !== 'fresh' && (
+                      <span className="group-active-indicator">Custom</span>
+                    )}
+                  </div>
+                  <div className="group-chips-stack">
+                    {[
+                      { id: 'fresh', label: 'Freshest Drop', icon: Sparkles },
+                      { id: 'trending', label: 'Fast Moving', icon: Flame },
+                      { id: 'price-low', label: 'Price: Low to High', icon: ArrowDownNarrowWide },
+                      { id: 'price-high', label: 'Price: High to Low', icon: ArrowUpNarrowWide },
+                    ].map((item) => {
+                      const IconComp = item.icon;
+                      const isSelected = activeSort === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setActiveSort(item.id)}
+                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <IconComp size={13} strokeWidth={2.2} />
+                            <span>{item.label}</span>
+                          </div>
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Folder Bottom Action Bar */}
+              <div className="folder-footer-bar">
+                <div className="folder-footer-counter">
+                  Showing <strong>{processedProducts.length}</strong> matching drops
+                </div>
+                <div className="folder-footer-actions">
+                  {activeFiltersCount > 0 && (
+                    <button
+                      onClick={handleResetAllFilters}
+                      className="folder-footer-clear-btn"
+                    >
+                      Reset All
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsFilterFolderOpen(false);
+                      handleScrollToCatalog();
+                    }}
+                    className="folder-apply-btn"
+                  >
+                    <span>Apply & View Drops ({processedProducts.length})</span>
+                    <ArrowRight size={15} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -609,75 +845,123 @@ export default function NewArrivals() {
               </div>
 
               {/* ── Feature 4: Curated Drop of the Week Editorial Spotlight Banner ── */}
-              <div className="curated-drop-banner">
-                <div className="curated-drop-content">
-                  <div className="curated-drop-badge">
-                    <Sparkles size={14} />
-                    <span>Curated Drop of the Week</span>
-                  </div>
-                  <h3 className="curated-drop-title">
-                    The Minimalist Streetwear Edit
-                  </h3>
-                  <p className="curated-drop-desc">
-                    Handcrafted 100% bio-washed heavy cotton silhouette paired with tactical expedition accessories. Freshly dropped & ready to ship.
-                  </p>
-
-                  <div className="curated-drop-perks">
-                    <div className="perk-item">
-                      <Zap size={15} color="#c084fc" />
-                      <span>Ready for 24h Express Dispatch</span>
+              {featuredCuratedDrop && (
+                <div className="curated-drop-banner">
+                  <div className="curated-drop-content">
+                    <div className="curated-drop-badge">
+                      <Sparkles size={14} />
+                      <span>
+                        Curated Drop of the Week • {featuredCuratedDrop.category?.name || "Women's Collection"}
+                      </span>
                     </div>
-                    <div className="perk-item">
-                      <ShieldCheck size={15} color="#c084fc" />
-                      <span>Quality Inspected Heavy Cotton Fabric</span>
-                    </div>
-                  </div>
+                    <h3 className="curated-drop-title">
+                      {featuredCuratedDrop.name}
+                    </h3>
+                    <p className="curated-drop-desc">
+                      {featuredCuratedDrop.description ||
+                        'Handcrafted certified authentic collection from premier artisan weavers. Freshly dropped & ready to ship.'}
+                    </p>
 
-                  <div className="curated-drop-cta-row">
-                    <button
-                      onClick={() => {
-                        setActiveCategory('womens-fashion');
-                        setActiveSort('fresh');
-                        handleScrollToCatalog();
-                      }}
-                      className="curated-drop-btn"
-                    >
-                      <span>Explore Featured Drop</span>
-                      <ArrowRight size={16} />
-                    </button>
-                    <span className="curated-drop-counter-tag">⚡ Only 22 Sets Remaining</span>
-                  </div>
-                </div>
-
-                <div className="curated-drop-visual">
-                  <div className="curated-visual-card">
-                    <img
-                      src="/images/featured_look_hoodie.jpg"
-                      alt="Curated Streetwear Edit"
-                      className="curated-visual-img"
-                      loading="lazy"
-                    />
-                    <div className="curated-visual-glass-pill">
-                      <div>
-                        <strong style={{ display: 'block', fontSize: '0.92rem', color: '#ffffff' }}>
-                          Oversized Core Hoodie
-                        </strong>
-                        <span style={{ fontSize: '0.78rem', color: '#e9d5ff' }}>
-                          Heavy 380 GSM Cotton Fleece
-                        </span>
+                    <div className="curated-drop-perks">
+                      <div className="perk-item">
+                        <Zap size={15} color="#c084fc" />
+                        <span>Ready for 24h Express Dispatch</span>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ display: 'block', fontSize: '1.15rem', fontWeight: 900, color: '#facc15' }}>
-                          ₹899
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', textDecoration: 'line-through' }}>
-                          ₹1,499
+                      <div className="perk-item">
+                        <ShieldCheck size={15} color="#c084fc" />
+                        <span>
+                          {featuredCuratedDrop.characteristics?.[0]
+                            ? `${featuredCuratedDrop.characteristics[0].key}: ${featuredCuratedDrop.characteristics[0].value}`
+                            : '100% Certified Authentic Picky Quality'}
                         </span>
                       </div>
                     </div>
+
+                    <div className="curated-drop-cta-row">
+                      <button
+                        onClick={handleAddCuratedDrop}
+                        className="curated-drop-btn"
+                        type="button"
+                        title="Add this drop to your cart"
+                      >
+                        <ShoppingCart size={16} />
+                        <span>
+                          Add to Bag • ₹{featuredCuratedDrop.discountPrice || featuredCuratedDrop.price}
+                        </span>
+                      </button>
+                      <Link
+                        to={`/product/${featuredCuratedDrop.slug || featuredCuratedDrop._id}`}
+                        className="curated-drop-link-btn"
+                      >
+                        <span>View Details</span>
+                        <ArrowRight size={14} />
+                      </Link>
+                      <span className="curated-drop-counter-tag">
+                        <Zap
+                          size={13}
+                          style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }}
+                        />
+                        <span>Only {featuredCuratedDrop.stock || 15} Sets Remaining</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="curated-drop-visual">
+                    <div className="curated-visual-card">
+                      <img
+                        src={curatedVisualImage}
+                        alt={featuredCuratedDrop.name}
+                        className="curated-visual-img"
+                        loading="lazy"
+                      />
+                      <div className="curated-visual-glass-pill">
+                        <div style={{ maxWidth: '65%' }}>
+                          <strong
+                            style={{
+                              display: 'block',
+                              fontSize: '0.92rem',
+                              color: '#ffffff',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {featuredCuratedDrop.name}
+                          </strong>
+                          <span style={{ fontSize: '0.78rem', color: '#e9d5ff' }}>
+                            {featuredCuratedDrop.subCategory?.name ||
+                              featuredCuratedDrop.category?.name ||
+                              "Women's Fashion"}
+                          </span>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <span
+                            style={{
+                              display: 'block',
+                              fontSize: '1.18rem',
+                              fontWeight: 900,
+                              color: '#facc15',
+                            }}
+                          >
+                            ₹{featuredCuratedDrop.discountPrice || featuredCuratedDrop.price}
+                          </span>
+                          {featuredCuratedDrop.discountPrice && (
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                color: '#cbd5e1',
+                                textDecoration: 'line-through',
+                              }}
+                            >
+                              ₹{featuredCuratedDrop.price}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Remaining Products Grid */}
               {processedProducts.length > 5 && (
@@ -915,150 +1199,50 @@ export default function NewArrivals() {
           font-weight: 800;
         }
 
-        /* ── Feature 1 & 5: Live Drop Countdown & Activity Bar (50% Overlap Docked Island, NO RATING) ── */
-        .hero-docked-timing-bar {
-          position: relative;
-          margin-top: -38px; /* 50% bottom overlap docking into the hero section */
-          z-index: 30;
-          margin-bottom: 2.8rem;
-        }
-
-        .drop-status-bar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          min-height: 72px; /* Increased height as requested */
-          background: linear-gradient(180deg, #ffffff 0%, #faf8ff 50%, #f5edff 100%); /* Gorgeous rich background */
-          border: 2px solid #ede9fe;
-          border-radius: 9999px;
-          padding: 1rem 2.2rem;
-          box-shadow: 0 16px 45px -8px rgba(124, 58, 237, 0.22), 0 4px 18px rgba(0, 0, 0, 0.05);
-          gap: 1.5rem;
-          flex-wrap: wrap;
-        }
-
-        .drop-countdown-pod {
-          display: flex;
-          align-items: center;
-          gap: 0.85rem;
-        }
-
-        .countdown-pulse-dot {
-          width: 11px;
-          height: 11px;
-          border-radius: 50%;
-          background: #7c3aed;
-          box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25);
-          animation: pingDot 1.8s infinite;
-        }
-
-        .countdown-label-group {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .countdown-title {
-          font-size: 0.95rem;
-          font-weight: 800;
-          color: #1e1b4b;
-        }
-
-        .countdown-digits-cluster {
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-        }
-
-        .digit-box {
-          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-          color: #ffffff;
-          font-size: 0.9rem;
-          font-weight: 900;
-          padding: 0.32rem 0.65rem;
-          border-radius: 8px;
-          box-shadow: 0 3px 10px rgba(124, 58, 237, 0.35);
-          font-family: monospace;
-          letter-spacing: 0.04em;
-        }
-
-        .digit-sep {
-          color: #7c3aed;
-          font-weight: 900;
-          font-size: 0.95rem;
-        }
-
-        .drop-activity-pod {
-          display: flex;
-          align-items: center;
-          gap: 0.85rem;
-          font-size: 0.9rem;
-          color: #475569;
-        }
-
-        .activity-live-badge {
-          background: #ecfdf5;
-          color: #059669;
-          font-size: 0.72rem;
-          font-weight: 800;
-          padding: 0.3rem 0.75rem;
-          border-radius: 9999px;
-          border: 1.5px solid rgba(16, 185, 129, 0.35);
-          display: flex;
-          align-items: center;
-          gap: 0.45rem;
-          letter-spacing: 0.06em;
-        }
-
-        .live-ping-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #10b981;
-          animation: pingDot 1.5s infinite;
-        }
-
-        @keyframes pingDot {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.3);
-            opacity: 0.6;
-          }
-        }
-
-        /* ── Feature 2: Quick Sort & Filter Pills + Folder System ── */
+        /* ── Feature 2: Highly Intuitive Quick Sort & Filter System ── */
         .sort-filter-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 1rem;
           flex-wrap: wrap;
-          margin-bottom: 1.5rem;
-          padding: 0.2rem 0;
-        }
-
-        .sort-pills-scroll {
-          display: flex;
-          align-items: center;
-          gap: 0.55rem;
-          overflow-x: auto;
-          scrollbar-width: none;
-          -webkit-overflow-scrolling: touch;
+          margin-bottom: 1.25rem;
           padding: 0.25rem 0;
         }
 
-        .sort-pills-scroll::-webkit-scrollbar {
-          display: none;
+        .bar-left-group {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          flex-wrap: wrap;
+        }
+
+        .bar-divider {
+          width: 1px;
+          height: 24px;
+          background: #e2e8f0;
+          margin: 0 0.15rem;
+        }
+
+        .quick-pill-cluster {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          flex-wrap: wrap;
+        }
+
+        .bar-right-group {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-left: auto;
         }
 
         .sort-pill {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          padding: 0.55rem 1.1rem;
+          padding: 0.52rem 1.05rem;
           border-radius: 9999px;
           background: #ffffff;
           border: 1.5px solid #ede9fe;
@@ -1072,8 +1256,9 @@ export default function NewArrivals() {
         }
 
         .sort-pill:hover {
-          border-color: #a855f7;
+          border-color: #c084fc;
           color: #7c3aed;
+          background: #faf5ff;
           transform: translateY(-1px);
         }
 
@@ -1148,10 +1333,77 @@ export default function NewArrivals() {
           font-weight: 700;
           color: #7c3aed;
           background: #f5edff;
-          padding: 0.35rem 0.85rem;
+          padding: 0.4rem 0.9rem;
           border-radius: 9999px;
           border: 1px solid #ede9fe;
           white-space: nowrap;
+        }
+
+        /* ── Active Filter Tags Row (1-click dismissable chips) ── */
+        .active-filter-tags-row {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          flex-wrap: wrap;
+          margin-bottom: 1.5rem;
+          padding: 0.65rem 1rem;
+          background: #fdfcff;
+          border: 1px dashed #d8b4fe;
+          border-radius: 16px;
+          animation: folderFadeIn 0.2s ease;
+        }
+
+        @keyframes folderFadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .active-tags-label {
+          font-size: 0.76rem;
+          font-weight: 800;
+          color: #7c3aed;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .active-tags-list {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .active-tag-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.35rem 0.75rem;
+          background: #ede9fe;
+          color: #6d28d9;
+          border: 1px solid #c4b5fd;
+          border-radius: 9999px;
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.18s ease;
+        }
+
+        .active-tag-chip:hover {
+          background: #fee2e2;
+          border-color: #fca5a5;
+          color: #dc2626;
+          transform: translateY(-1px);
+        }
+
+        .active-tags-clear-link {
+          background: none;
+          border: none;
+          color: #dc2626;
+          font-size: 0.78rem;
+          font-weight: 800;
+          cursor: pointer;
+          text-decoration: underline;
+          margin-left: 0.25rem;
         }
 
         /* ── Expandable Filter Folder Panel Tray ── */
@@ -1159,9 +1411,9 @@ export default function NewArrivals() {
           background: #ffffff;
           border: 2px solid #ede9fe;
           border-radius: 28px;
-          padding: 1.6rem 2rem;
-          margin-bottom: 2.25rem;
-          box-shadow: 0 14px 40px -8px rgba(124, 58, 237, 0.1), 0 4px 14px rgba(0, 0, 0, 0.03);
+          padding: 1.75rem 2rem;
+          margin-bottom: 2.5rem;
+          box-shadow: 0 16px 45px -10px rgba(124, 58, 237, 0.12), 0 4px 16px rgba(0, 0, 0, 0.03);
           animation: folderSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -1180,82 +1432,237 @@ export default function NewArrivals() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 1.1rem;
-          margin-bottom: 1.35rem;
+          padding-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
           border-bottom: 1.5px solid #f1f5f9;
         }
 
+        .folder-header-icon-box {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: #f5edff;
+          border: 1.5px solid #d8b4fe;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .folder-active-count-tag {
+          font-size: 0.72rem;
+          font-weight: 800;
+          color: #ffffff;
+          background: linear-gradient(135deg, #7c3aed, #9333ea);
+          padding: 0.15rem 0.55rem;
+          border-radius: 9999px;
+          line-height: 1.3;
+        }
+
         .folder-reset-link {
-          background: none;
-          border: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
           color: #dc2626;
-          font-size: 0.82rem;
+          font-size: 0.8rem;
           font-weight: 800;
           cursor: pointer;
-          text-decoration: underline;
-          padding: 0.2rem 0.5rem;
-          border-radius: 6px;
+          padding: 0.4rem 0.85rem;
+          border-radius: 9999px;
           transition: all 0.2s ease;
         }
 
         .folder-reset-link:hover {
-          background: #fef2f2;
-        }
-
-        .folder-sections-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-          gap: 1.6rem;
-        }
-
-        .folder-filter-col {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .col-label {
-          font-size: 0.78rem;
-          font-weight: 800;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .col-chips-group {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.45rem;
-        }
-
-        .folder-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
-          background: #f8fafc;
-          border: 1.5px solid #e2e8f0;
-          color: #334155;
-          padding: 0.45rem 0.95rem;
-          border-radius: 9999px;
-          font-size: 0.82rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          outline: none;
-        }
-
-        .folder-chip:hover {
-          border-color: #c084fc;
-          color: #7c3aed;
-          background: #faf5ff;
+          background: #fee2e2;
+          border-color: #f87171;
+          color: #b91c1c;
           transform: translateY(-1px);
         }
 
-        .folder-chip.active {
-          background: #7c3aed !important;
+        .folder-close-btn {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .folder-close-btn:hover {
+          background: #fee2e2;
+          color: #dc2626;
+          border-color: #fca5a5;
+          transform: rotate(90deg);
+        }
+
+        /* Symmetrical 4-Card Folder Grid */
+        .folder-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.25rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .folder-group-card {
+          background: #fcfaff;
+          border: 1.5px solid #ede9fe;
+          border-radius: 20px;
+          padding: 1.15rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .folder-group-card:hover {
+          border-color: #d8b4fe;
+          box-shadow: 0 6px 18px rgba(124, 58, 237, 0.07);
+        }
+
+        .group-card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 0.65rem;
+          border-bottom: 1px solid #f1edfa;
+        }
+
+        .group-header-left {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .col-label {
+          font-size: 0.8rem;
+          font-weight: 800;
+          color: #1e1b4b;
+          letter-spacing: -0.01em;
+        }
+
+        .group-active-indicator {
+          font-size: 0.68rem;
+          font-weight: 800;
+          color: #7c3aed;
+          background: #ede9fe;
+          padding: 0.12rem 0.45rem;
+          border-radius: 9999px;
+        }
+
+        .group-chips-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+        }
+
+        .group-chips-stack .folder-chip {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.55rem 0.85rem;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 1.2px solid #e2e8f0;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #334155;
+          transition: all 0.18s ease;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .group-chips-stack .folder-chip svg {
+          flex-shrink: 0;
+        }
+
+        .group-chips-stack .folder-chip:hover {
+          border-color: #c084fc;
+          color: #7c3aed;
+          background: #faf5ff;
+          transform: translateX(2px);
+        }
+
+        .group-chips-stack .folder-chip.active {
+          background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%) !important;
           border-color: #7c3aed !important;
           color: #ffffff !important;
+          font-weight: 700;
           box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28);
+        }
+
+        /* Folder Footer Bar */
+        .folder-footer-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 1.25rem;
+          border-top: 1.5px solid #f1f5f9;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        .folder-footer-counter {
+          font-size: 0.88rem;
+          color: #64748b;
+        }
+
+        .folder-footer-counter strong {
+          color: #1e1b4b;
+          font-weight: 800;
+        }
+
+        .folder-footer-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .folder-footer-clear-btn {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          color: #64748b;
+          font-size: 0.82rem;
+          font-weight: 700;
+          padding: 0.6rem 1.15rem;
+          border-radius: 9999px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .folder-footer-clear-btn:hover {
+          background: #fee2e2;
+          border-color: #fca5a5;
+          color: #dc2626;
+        }
+
+        .folder-apply-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+          color: #ffffff;
+          border: none;
+          font-size: 0.85rem;
+          font-weight: 800;
+          padding: 0.65rem 1.4rem;
+          border-radius: 9999px;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+          transition: all 0.2s ease;
+        }
+
+        .folder-apply-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+          background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
         }
 
         /* ── Feature 4: Curated Drop of the Week Editorial Spotlight ── */
@@ -1365,6 +1772,29 @@ export default function NewArrivals() {
           box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
         }
 
+        .curated-drop-link-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          color: #e9d5ff;
+          font-size: 0.88rem;
+          font-weight: 700;
+          text-decoration: none;
+          padding: 0.8rem 1.35rem;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          backdrop-filter: blur(8px);
+          transition: all 0.2s ease;
+        }
+
+        .curated-drop-link-btn:hover {
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.22);
+          border-color: rgba(255, 255, 255, 0.45);
+          transform: translateY(-2px);
+        }
+
         .curated-drop-counter-tag {
           color: #facc15;
           font-size: 0.82rem;
@@ -1408,15 +1838,23 @@ export default function NewArrivals() {
           border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        @media (max-width: 1100px) {
+          .folder-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
         @media (max-width: 990px) {
+          .desktop-only {
+            display: none !important;
+          }
+          .folder-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
           .curated-drop-banner {
             grid-template-columns: 1fr;
             padding: 2rem 1.5rem;
             gap: 2rem;
-          }
-          .drop-status-bar {
-            border-radius: 20px;
-            padding: 0.85rem 1.1rem;
           }
           .circular-categories-track {
             justify-content: flex-start;
@@ -1440,6 +1878,22 @@ export default function NewArrivals() {
           .story-label-text {
             font-size: 0.74rem;
             max-width: 70px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .folder-cards-grid {
+            grid-template-columns: 1fr;
+          }
+          .filter-folder-panel {
+            padding: 1.25rem 1rem;
+          }
+          .folder-footer-bar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .folder-apply-btn {
+            justify-content: center;
           }
         }
       `}</style>

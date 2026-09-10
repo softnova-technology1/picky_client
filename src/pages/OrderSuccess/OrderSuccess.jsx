@@ -5,7 +5,7 @@ import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
-import { CheckCircle2, Package, Truck, ArrowRight, ShoppingBag, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, Package, Truck, ArrowRight, ShoppingCart, ShieldCheck, Sparkles } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
 
 export default function OrderSuccess() {
@@ -93,7 +93,7 @@ export default function OrderSuccess() {
                 to="/products"
                 className={`btn btn-secondary ${styles['action-btn']}`}
               >
-                <ShoppingBag size={16} /> Continue Shopping
+                <ShoppingCart size={16} /> Continue Shopping
               </Link>
             </div>
           </div>

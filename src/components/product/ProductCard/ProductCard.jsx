@@ -141,9 +141,9 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         {/* Sleek Frosted Glass Island Badge (Top-Left) */}
         <div className="lumina-badge-pill">
           {discountPercent > 0 ? (
-            <span>✦ {discountPercent}% OFF</span>
+            <span>{discountPercent}% OFF</span>
           ) : (
-            <span>✦ New Drop</span>
+            <span>New Drop</span>
           )}
         </div>
 
@@ -522,16 +522,18 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
           margin-bottom: 0.65rem;
         }
 
-        /* Line 1: Product Name */
+        /* Line 1: Product Name (2-line clamp for full title readability) */
         .lumina-title-text {
           font-size: 0.91rem;
           font-weight: 800;
           color: #0f172a;
-          margin: 0 0 0.18rem 0;
-          line-height: 1.3;
+          margin: 0 0 0.22rem 0;
+          line-height: 1.35;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
           overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          height: 2.45rem;
           transition: color 0.2s ease;
         }
 

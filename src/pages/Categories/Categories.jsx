@@ -7,7 +7,6 @@ import CategoryBudgetStore from '../../components/category/CategoryBudgetStore';
 import CategoryFeaturedDrops from '../../components/category/CategoryFeaturedDrops';
 import CategoryPromoBanner from '../../components/category/CategoryPromoBanner';
 import CategoryRecommendedDrops from '../../components/category/CategoryRecommendedDrops';
-import CategoryTrustStrip from '../../components/category/CategoryTrustStrip';
 import { MOCK_CATEGORIES } from '../../data/adminMockData';
 import { Sparkles } from 'lucide-react';
 
@@ -48,10 +47,16 @@ export default function Categories() {
         </section>
 
         <div className="container">
-          {/* ── 2. Exclusive 4-Pill Showcase (Exact UI with Top-Right 3D Cutout Pop-Out) ── */}
+          {/* ── 1. Shop By Budget: 4 Capsule Pill Stores (Under ₹199, ₹499, ₹799, ₹1,099+ Luxe) ── */}
           <WomensPillShowcase />
 
-          {/* ── 3. Explore More Categories Section ── */}
+          {/* ── 2. Top Categories: 4 Cinematic Flagship Bento Cards ── */}
+          <CategoryBudgetStore />
+
+          {/* ── 3. Most Recommended Products: High-Rated Customer Favorites ── */}
+          <CategoryRecommendedDrops />
+
+          {/* ── 4. Explore More Categories Section ── */}
           <section className="explore-more-categories-section" style={{ marginBottom: '4.5rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <h2
@@ -88,20 +93,11 @@ export default function Categories() {
             <GlamicsCategoryPills categories={balance6Categories} />
           </section>
 
-          {/* ── 4. Shop By Budget: 4 Interactive Tier Cards ── */}
-          <CategoryBudgetStore />
-
-          {/* ── 5. Top Products: 1 Row of 4 Lumina Product Cards ── */}
+          {/* ── 5. Top Products: Freshly Stocked Flagship Drops ── */}
           <CategoryFeaturedDrops />
 
-          {/* ── 6. Mega Deal & Coupon Spotlight Banner (Up to 60% OFF + Click to Copy) ── */}
+          {/* ── 6. Mega Department Carnival 2026: Deal & Coupon Spotlight Banner ── */}
           <CategoryPromoBanner />
-
-          {/* ── 7. Most Recommended Products: 1 Row of 4 Lumina Product Cards ── */}
-          <CategoryRecommendedDrops />
-
-          {/* ── 8. Customer Assurance Trust Strip (4 Floating Quality Guarantee Pillars) ── */}
-          <CategoryTrustStrip />
         </div>
       </div>
     </PageWrapper>
