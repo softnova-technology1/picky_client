@@ -238,14 +238,43 @@ export function validateCoupon(code, subtotal = 0) {
   };
 }
 
+export function addOrderToStore(newOrder) {
+  if (!newOrder) return;
+  const pId = newOrder._id || newOrder.id || newOrder.orderNumber;
+  const existing = mockOrders.find((o) => (o._id || o.id || o.orderNumber) === pId);
+  if (!existing) {
+    mockOrders.unshift(newOrder);
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem('picky_created_orders') || '[]');
+    const isSaved = saved.some((o) => (o._id || o.id || o.orderNumber) === pId);
+    if (!isSaved) {
+      saved.unshift(newOrder);
+      localStorage.setItem('picky_created_orders', JSON.stringify(saved));
+    }
+  } catch (_) {}
+}
+
 export function getOrders() {
-  return [...mockOrders];
+  let localCreated = [];
+  try {
+    localCreated = JSON.parse(localStorage.getItem('picky_created_orders') || '[]');
+  } catch (_) {}
+  const combined = [...localCreated, ...mockOrders];
+  const uniqueMap = new Map();
+  combined.forEach((o) => {
+    const key = o._id || o.id || o.orderNumber;
+    if (!uniqueMap.has(key)) uniqueMap.set(key, o);
+  });
+  return Array.from(uniqueMap.values());
 }
 
 export function getOrderById(id) {
+  if (!id) return mockOrders[0];
+  const all = getOrders();
   return (
-    mockOrders.find((o) => o._id === id || o.orderNumber === id) ||
-    mockOrders[0]
+    all.find((o) => (o._id || o.id || o.orderNumber) === id || o.orderNumber?.includes(id)) ||
+    all[0]
   );
 }
 
@@ -269,4 +298,5 @@ export default {
   validateCoupon,
   getOrders,
   getOrderById,
+  addOrderToStore,
 };

@@ -147,7 +147,7 @@ export default function Navbar() {
         <div className="floating-nav-pill">
           {/* Brand & Divider (Left) */}
           <Link to="/" className="nav-brand-cluster" title="Picky Home">
-            <img src="/images/logo.png" alt="Picky Logo" style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
+            <img src="/images/logo.png" alt="Picky Logo" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
             <div className="nav-vertical-divider" />
           </Link>
 
@@ -541,7 +541,7 @@ export default function Navbar() {
             {/* Header */}
             <div className="mobile-drawer-header">
               <Link to="/" className="nav-brand-cluster" onClick={() => setIsMobileMenuOpen(false)}>
-                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '42px', width: 'auto', objectFit: 'contain' }} />
               </Link>
               <button
                 type="button"

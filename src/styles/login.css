@@ -569,6 +569,86 @@
     inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   TEMPORARY QUICK DEMO LOGIN (FOR CHECKOUT & PAYMENTS TESTING)
+   ────────────────────────────────────────────────────────────────────────── */
+.picky-demo-login-wrapper {
+  margin-top: 0.85rem;
+  margin-bottom: 0.85rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.picky-demo-login-btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.32) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  color: #fef08a;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+  transition: all 0.22s ease;
+  box-sizing: border-box;
+}
+
+.picky-demo-login-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(217, 119, 6, 0.55) 100%);
+  border-color: #fbbf24;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+}
+
+.picky-demo-login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.picky-zap-icon {
+  color: #fbbf24;
+  animation: pulseZap 2s infinite ease-in-out;
+}
+
+@keyframes pulseZap {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.85; }
+}
+
+.picky-demo-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.picky-demo-divider::before,
+.picky-demo-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.16);
+}
+
+.picky-demo-divider span {
+  padding: 0 0.75rem;
+}
+
 /* Form Inputs */
 .picky-auth-form {
   display: flex;

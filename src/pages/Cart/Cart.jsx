@@ -74,6 +74,31 @@ export default function Cart() {
     }
   };
 
+  const handleRemoveItem = async (item) => {
+    const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
+    removeItem(targetId || item);
+    if (isLoggedIn && targetId) {
+      cartService.removeItem(targetId).catch((err) => {
+        console.warn('Backend cart item remove fallback:', err?.message || err);
+      });
+    }
+    showToast(`Removed "${item.name || 'Item'}" from cart`, 'info');
+  };
+
+  const handleUpdateQty = async (item, newQty) => {
+    const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
+    if (newQty <= 0) {
+      handleRemoveItem(item);
+      return;
+    }
+    updateQty(targetId || item, newQty);
+    if (isLoggedIn && targetId) {
+      cartService.updateQty(targetId, newQty).catch((err) => {
+        console.warn('Backend cart item update fallback:', err?.message || err);
+      });
+    }
+  };
+
   if (items.length === 0) {
     return (
       <PageWrapper>
@@ -143,11 +168,11 @@ export default function Cart() {
                 {items.map((item) => {
                   const itemPrice = item.discountPrice || item.price || 0;
                   const originalPrice = item.price && item.price > itemPrice ? item.price : null;
-                  const itemId = item._id || item.product?._id || item.product || item.id;
+                  const itemId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
                   const itemSlug = item.slug || item.product?.slug;
 
                   return (
-                    <div key={itemId} className={styles['cart-item-row']}>
+                    <div key={itemId || Math.random()} className={styles['cart-item-row']}>
                       {/* Image Box */}
                       <div className={styles['item-img-box']}>
                         <img
@@ -184,7 +209,7 @@ export default function Cart() {
                           <div className={styles['qty-stepper']}>
                             <button
                               type="button"
-                              onClick={() => updateQty(itemId, Math.max(1, (item.quantity || 1) - 1))}
+                              onClick={() => handleUpdateQty(item, (item.quantity || 1) - 1)}
                               className={styles['qty-btn']}
                               aria-label="Decrease quantity"
                             >
@@ -193,7 +218,7 @@ export default function Cart() {
                             <span className={styles['qty-val']}>{item.quantity || 1}</span>
                             <button
                               type="button"
-                              onClick={() => updateQty(itemId, (item.quantity || 1) + 1)}
+                              onClick={() => handleUpdateQty(item, (item.quantity || 1) + 1)}
                               className={styles['qty-btn']}
                               aria-label="Increase quantity"
                             >
@@ -203,7 +228,7 @@ export default function Cart() {
 
                           <button
                             type="button"
-                            onClick={() => removeItem(itemId)}
+                            onClick={() => handleRemoveItem(item)}
                             className={styles['remove-btn']}
                           >
                             <Trash2 size={13} /> Remove
