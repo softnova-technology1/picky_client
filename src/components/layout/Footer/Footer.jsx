@@ -64,7 +64,7 @@ export default function Footer() {
             {/* ── Col 1: Newsletter & Social VIP ── */}
             <div className="footer-col-newsletter">
               <div style={{ marginBottom: '0.85rem' }}>
-                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
               </div>
               <h3 className="footer-heading">Picky's Newsletter</h3>
               <p className="footer-newsletter-text">

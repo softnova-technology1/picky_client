@@ -34,6 +34,7 @@ export default function Navbar() {
   const dropdownMenuRef = useRef(null);
   const categoryTimeoutRef = useRef(null);
   const userMenuRef = useRef(null);
+  const userTimeoutRef = useRef(null);
   const searchInputRef = useRef(null);
 
   const handleCategoryMouseEnter = () => {
@@ -53,9 +54,27 @@ export default function Navbar() {
     }, 180);
   };
 
+  const handleUserMouseEnter = () => {
+    if (userTimeoutRef.current) {
+      clearTimeout(userTimeoutRef.current);
+      userTimeoutRef.current = null;
+    }
+    setIsUserMenuOpen(true);
+  };
+
+  const handleUserMouseLeave = () => {
+    if (userTimeoutRef.current) {
+      clearTimeout(userTimeoutRef.current);
+    }
+    userTimeoutRef.current = setTimeout(() => {
+      setIsUserMenuOpen(false);
+    }, 180);
+  };
+
   useEffect(() => {
     return () => {
       if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
+      if (userTimeoutRef.current) clearTimeout(userTimeoutRef.current);
     };
   }, []);
 
@@ -147,7 +166,7 @@ export default function Navbar() {
         <div className="floating-nav-pill">
           {/* Brand & Divider (Left) */}
           <Link to="/" className="nav-brand-cluster" title="Picky Home">
-            <img src="/images/logo.png" alt="Picky Logo" style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
+            <img src="/images/logo.png" alt="Picky Logo" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
             <div className="nav-vertical-divider" />
           </Link>
 
@@ -284,11 +303,19 @@ export default function Navbar() {
 
             {/* Restored Auth: Profile Chip vs. Violet Gradient Sign In CTA */}
             {isLoggedIn ? (
-              <div className="nav-item-rel" ref={userMenuRef}>
+              <div
+                className="nav-item-rel"
+                ref={userMenuRef}
+                onMouseEnter={handleUserMouseEnter}
+                onMouseLeave={handleUserMouseLeave}
+              >
                 <button
                   type="button"
                   className="nav-user-chip"
-                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    navigate('/account?tab=profile');
+                  }}
                   aria-expanded={isUserMenuOpen}
                 >
                   <div className="nav-user-avatar">
@@ -297,11 +324,22 @@ export default function Navbar() {
                   <span className="nav-user-name">
                     {user?.name?.split(' ')[0] || 'Account'}
                   </span>
-                  <ChevronDown size={13} style={{ color: '#7c3aed' }} />
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      color: '#7c3aed',
+                      transform: isUserMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  />
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="nav-user-menu">
+                  <div
+                    className="nav-user-menu"
+                    onMouseEnter={handleUserMouseEnter}
+                    onMouseLeave={handleUserMouseLeave}
+                  >
                     <div style={{ padding: '0.35rem 0.65rem 0.2rem', fontSize: '0.78rem', color: '#64748b' }}>
                       Signed in as <strong style={{ color: '#1e1b4b', display: 'block' }}>{user?.email || user?.name}</strong>
                     </div>
@@ -541,7 +579,7 @@ export default function Navbar() {
             {/* Header */}
             <div className="mobile-drawer-header">
               <Link to="/" className="nav-brand-cluster" onClick={() => setIsMobileMenuOpen(false)}>
-                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '42px', width: 'auto', objectFit: 'contain' }} />
               </Link>
               <button
                 type="button"

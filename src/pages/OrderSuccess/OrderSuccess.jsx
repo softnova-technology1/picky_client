@@ -3,14 +3,15 @@ import { useParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
+import { getOrderById } from '../../data';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
-import { CheckCircle2, Package, Truck, ArrowRight, ShoppingCart, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, Package, Truck, ArrowRight, ShoppingBag, ShieldCheck, Sparkles, Check } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
 
 export default function OrderSuccess() {
   const { id } = useParams();
-  const [order, setOrder] = useState(null);
+  const [order, setOrder] = useState(() => getOrderById(id));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,9 +20,16 @@ export default function OrderSuccess() {
         setLoading(true);
         const res = await orderService.getById(id);
         const data = res?.data || res;
-        if (data) setOrder(data);
+        if (data && data.orderNumber) {
+          setOrder(data);
+        } else {
+          const fallback = getOrderById(id);
+          if (fallback) setOrder(fallback);
+        }
       } catch (err) {
-        console.warn('Failed to load confirmed order details:', err);
+        console.warn('Failed to load order details:', err);
+        const fallback = getOrderById(id);
+        if (fallback) setOrder(fallback);
       } finally {
         setLoading(false);
       }
@@ -31,71 +39,142 @@ export default function OrderSuccess() {
 
   return (
     <PageWrapper>
-      <div className={`section ${styles['success-section']}`}>
-        <div className={`container ${styles['success-container']}`}>
-          <div className={`card ${styles['success-card']}`}>
-            {/* Animated Celebration Icon */}
+      <div className={styles['success-section']}>
+        <div className={styles['container']}>
+
+          {/* ── 4-STEP STEPPER HEADER BAR WITH CONFIRM ACTIVE ── */}
+          <div className={styles['stepper-wrapper']}>
+            <div className={styles['stepper-header']}>
+              <div className={`${styles['step-item']} ${styles['completed']}`}>
+                <div className={styles['step-target-node']}>
+                  <div className={styles['target-ring']}>
+                    <div className={styles['target-dot']}>
+                      <Check size={11} strokeWidth={3.5} />
+                    </div>
+                  </div>
+                </div>
+                <span className={styles['step-label']}>BAG</span>
+              </div>
+
+              <div className={`${styles['step-connector']} ${styles['active']}`} />
+
+              <div className={`${styles['step-item']} ${styles['completed']}`}>
+                <div className={styles['step-target-node']}>
+                  <div className={styles['target-ring']}>
+                    <div className={styles['target-dot']}>
+                      <Check size={11} strokeWidth={3.5} />
+                    </div>
+                  </div>
+                </div>
+                <span className={styles['step-label']}>CHECKOUT</span>
+              </div>
+
+              <div className={`${styles['step-connector']} ${styles['active']}`} />
+
+              <div className={`${styles['step-item']} ${styles['completed']}`}>
+                <div className={styles['step-target-node']}>
+                  <div className={styles['target-ring']}>
+                    <div className={styles['target-dot']}>
+                      <Check size={11} strokeWidth={3.5} />
+                    </div>
+                  </div>
+                </div>
+                <span className={styles['step-label']}>PAYMENT</span>
+              </div>
+
+              <div className={`${styles['step-connector']} ${styles['active']}`} />
+
+              <div className={`${styles['step-item']} ${styles['active']}`}>
+                <div className={styles['step-target-node']}>
+                  <div className={styles['target-ring']}>
+                    <div className={styles['target-dot']}>
+                      <Check size={11} strokeWidth={3.5} />
+                    </div>
+                  </div>
+                </div>
+                <span className={styles['step-label']}>CONFIRM</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles['success-card-wrapper']}>
+            
+            {/* Circle Checkmark Icon */}
             <div className={styles['check-icon-circle']}>
-              <CheckCircle2 size={44} />
+              <Check size={42} strokeWidth={3} />
             </div>
 
-            <div className={styles['verified-pill']}>
-              <Sparkles size={16} /> Payment Verified & Confirmed
-            </div>
-
+            {/* Thank You Title */}
             <h1 className={styles['success-title']}>
-              Thank You For Your Order!
+              Thank You for Choosing Picky Store
             </h1>
 
-            <p className={styles['success-desc']}>
-              Your festival order has been placed successfully. A real-time receipt and AWB dispatch update will be sent to your WhatsApp number.
+            {/* Subheading Quote */}
+            <p className={styles['success-quote']}>
+              "Your order has been successfully placed and our artisans are preparing your handcrafted order with the utmost care."
             </p>
 
-            {/* Order Details Mini Card */}
-            {loading ? (
-              <Spinner size={32} />
+            {/* Order Info Card */}
+            {loading && !order ? (
+              <div style={{ padding: '2rem 0' }}>
+                <Spinner size={32} />
+              </div>
             ) : order ? (
               <div className={styles['order-info-box']}>
+                
                 <div className={styles['info-row']}>
                   <span className={styles['info-label']}>Order Number</span>
                   <strong className={styles['info-num']}>#{order.orderNumber}</strong>
                 </div>
 
+                {order.razorpayPaymentId && (
+                  <div className={styles['info-row']}>
+                    <span className={styles['info-label']}>Payment Reference ID</span>
+                    <strong className={styles['info-num']} style={{ color: '#656d4a', fontFamily: 'monospace' }}>
+                      {order.razorpayPaymentId}
+                    </strong>
+                  </div>
+                )}
+
                 <div className={styles['info-row']}>
                   <span className={styles['info-label']}>Order Date</span>
-                  <span className={styles['info-date']}>{formatDate(order.createdAt)}</span>
+                  <span className={styles['info-val']}>{formatDate(order.createdAt || new Date())}</span>
                 </div>
 
                 <div className={styles['info-row']}>
-                  <span className={styles['info-label']}>Estimated Dispatch</span>
-                  <span className={styles['info-dispatch']}>
-                    <Truck size={15} /> 24-48 Hours Express
+                  <span className={styles['info-label']}>Dispatch Mode</span>
+                  <span className={styles['info-val']} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Truck size={16} color="#656d4a" /> {order.courier || 'Standard Courier Dispatch'}
                   </span>
                 </div>
 
                 <div className={styles['info-row-last']}>
                   <span className={styles['info-label']}>Total Paid</span>
-                  <strong className={styles['info-total']}>{formatPrice(order.totalAmount)}</strong>
+                  <strong className={styles['info-total']}>{formatPrice(order.totalAmount || order.total || 0)}</strong>
                 </div>
+
               </div>
             ) : null}
 
             {/* Action Buttons */}
             <div className={styles['actions-row']}>
               <Link
-                to={`/orders/${id}`}
-                className={`btn btn-primary ${styles['action-btn']}`}
+                to={`/orders/${id || order?._id || order?.orderNumber}`}
+                className={`${styles['action-btn']} ${styles['primary']}`}
               >
-                Track Live Order <ArrowRight size={16} />
+                <span>Track Live Order Timeline</span>
+                <ArrowRight size={18} />
               </Link>
 
               <Link
                 to="/products"
-                className={`btn btn-secondary ${styles['action-btn']}`}
+                className={`${styles['action-btn']} ${styles['secondary']}`}
               >
-                <ShoppingCart size={16} /> Continue Shopping
+                <ShoppingBag size={18} />
+                <span>Continue Shopping</span>
               </Link>
             </div>
+
           </div>
         </div>
       </div>

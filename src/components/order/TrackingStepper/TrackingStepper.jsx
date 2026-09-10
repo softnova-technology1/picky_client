@@ -1,10 +1,11 @@
 import React from 'react';
-import { CreditCard, Package, Truck, CheckCircle2, Check, XCircle } from 'lucide-react';
+import { CreditCard, PackageCheck, Truck, MapPin, CheckCircle2, Check, XCircle } from 'lucide-react';
 
 const STEPS = [
-  { id: 'confirmed', label: 'Confirmed & Paid', icon: CreditCard },
-  { id: 'shipped', label: 'Dispatched', icon: Package },
-  { id: 'out_for_delivery', label: 'Out for Delivery', icon: Truck },
+  { id: 'confirmed', label: 'Order Placed & Paid', icon: CreditCard },
+  { id: 'processing', label: 'Packed at Warehouse', icon: PackageCheck },
+  { id: 'shipped', label: 'Dispatched & AWB', icon: Truck },
+  { id: 'in_transit', label: 'In Transit', icon: MapPin },
   { id: 'delivered', label: 'Delivered', icon: CheckCircle2 },
 ];
 
@@ -12,7 +13,16 @@ export default function TrackingStepper({ currentStatus }) {
   const normalized = (currentStatus || 'confirmed').toLowerCase();
 
   const getStepState = (stepIndex) => {
-    const statusOrder = { confirmed: 0, shipped: 1, out_for_delivery: 2, delivered: 3, cancelled: -1 };
+    const statusOrder = {
+      confirmed: 0,
+      processing: 1,
+      packed: 1,
+      shipped: 2,
+      in_transit: 3,
+      out_for_delivery: 3,
+      delivered: 4,
+      cancelled: -1,
+    };
     const currentIdx = statusOrder[normalized] ?? 0;
 
     if (normalized === 'cancelled') return 'cancelled';
@@ -23,8 +33,9 @@ export default function TrackingStepper({ currentStatus }) {
 
   const getProgressWidth = () => {
     if (normalized === 'delivered') return '100%';
-    if (normalized === 'out_for_delivery') return '66%';
-    if (normalized === 'shipped') return '33%';
+    if (normalized === 'in_transit' || normalized === 'out_for_delivery') return '75%';
+    if (normalized === 'shipped') return '50%';
+    if (normalized === 'processing' || normalized === 'packed') return '25%';
     return '0%';
   };
 
@@ -37,13 +48,13 @@ export default function TrackingStepper({ currentStatus }) {
   }
 
   return (
-    <div className="stepper-container" style={{ margin: '1.5rem 0' }}>
+    <div className="stepper-container" style={{ margin: '1.75rem 0' }}>
       {/* Background track */}
       <div className="stepper-track">
-        <div className="stepper-progress" style={{ width: getProgressWidth() }} />
+        <div className="stepper-progress" style={{ width: getProgressWidth(), background: 'linear-gradient(90deg, #10b981, #7c3aed)' }} />
       </div>
 
-      {/* Step nodes */}
+      {/* 5 Step nodes */}
       {STEPS.map((step, idx) => {
         const state = getStepState(idx);
         const IconComponent = step.icon;
