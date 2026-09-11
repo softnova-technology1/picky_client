@@ -1,39 +1,45 @@
 import React, { useEffect } from 'react';
+import styles from './Modal.module.css';
 
 export default function Modal({ isOpen, onClose, title, children, maxWidth = 540 }) {
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className={styles.overlay} onClick={onClose} aria-modal="true" role="dialog">
       <div
-        className="modal-card"
+        className={styles.card}
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          {title && <h3 style={{ margin: 0 }}>{title}</h3>}
+        <div className={styles.header}>
+          {title && <h3 className={styles.title}>{title}</h3>}
           <button
+            type="button"
             onClick={onClose}
-            style={{
-              fontSize: '1.5rem',
-              lineHeight: 1,
-              color: '#94a3b8',
-              padding: '0.25rem',
-              borderRadius: '4px',
-            }}
+            className={styles.closeBtn}
+            aria-label="Close modal"
           >
             &times;
           </button>
         </div>
-        <div>{children}</div>
+        <div className={styles.body}>{children}</div>
       </div>
     </div>
   );
