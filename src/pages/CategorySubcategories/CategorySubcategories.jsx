@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Sparkles, ChevronRight, ArrowLeft, ShoppingBag, Layers, ArrowRight } from 'lucide-react';
+import { Sparkles, ChevronRight, ArrowLeft, ShoppingCart, Layers, ArrowRight } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
 import { categoryService } from '../../services/category.service';
@@ -416,7 +416,7 @@ export default function CategorySubcategories() {
                   to={`/products?category=${category.slug || category._id}`}
                   className={`btn btn-primary ${styles['view-all-btn']}`}
                 >
-                  <ShoppingBag size={16} /> View All {category.name}
+                  <ShoppingCart size={16} /> View All {category.name}
                 </Link>
               </div>
             </div>

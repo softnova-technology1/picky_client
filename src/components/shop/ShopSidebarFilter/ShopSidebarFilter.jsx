@@ -116,18 +116,6 @@ export default function ShopSidebarFilter({
               </span>
             )}
           </div>
-
-          {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={onResetAll}
-              className="sidebar-reset-btn"
-              title="Reset all filters"
-            >
-              <RotateCcw size={10} className="reset-spin-icon" />
-              <span>Reset</span>
-            </button>
-          )}
         </div>
 
         {/* ── 1. Departments List (Collapsible Dropdown) ── */}
@@ -266,7 +254,7 @@ export default function ShopSidebarFilter({
                   <button
                     key={opt.label}
                     type="button"
-                    onClick={() => onSelectMaxPrice(opt.val)}
+                    onClick={() => onSelectMaxPrice(urlMaxPrice === opt.val ? '' : opt.val)}
                     className={`sidebar-budget-row ${isSelected ? 'active' : ''}`}
                   >
                     <div className="budget-bullet">
@@ -282,7 +270,6 @@ export default function ShopSidebarFilter({
                         </div>
                       )}
                     </div>
-                    {isSelected && <Check size={12} color="#059669" strokeWidth={2.8} />}
                   </button>
                 );
               })}
@@ -343,13 +330,27 @@ export default function ShopSidebarFilter({
                     <span className="discount-pill-badge">
                       {opt.badge}
                     </span>
-                    {isSelected && <Check size={12} color="#7c3aed" strokeWidth={2.8} />}
                   </button>
                 );
               })}
             </div>
           )}
         </div>
+
+        {/* ── 4. Unified Bottom Filter Reset Action ── */}
+        {activeFilterCount > 0 && (
+          <div className="sidebar-bottom-action">
+            <button
+              type="button"
+              onClick={onResetAll}
+              className="sidebar-bottom-clear-btn"
+              title="Clear all active filters"
+            >
+              <RotateCcw size={13} className="reset-spin-icon" />
+              <span>Clear All Filters ({activeFilterCount})</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -427,26 +428,36 @@ export default function ShopSidebarFilter({
           justify-content: center;
           box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35);
         }
-        .sidebar-reset-btn {
-          display: inline-flex;
+        .sidebar-bottom-action {
+          margin-top: 1rem;
+          padding-top: 0.85rem;
+          border-top: 1.5px dashed #e2e8f0;
+        }
+        .sidebar-bottom-clear-btn {
+          width: 100%;
+          display: flex;
           align-items: center;
-          gap: 0.25rem;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          padding: 0.2rem 0.5rem;
-          border-radius: 6px;
-          color: #64748b;
-          font-size: 0.72rem;
-          font-weight: 700;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.58rem 0.85rem;
+          border-radius: 12px;
+          background: #f5f3ff;
+          color: #7c3aed;
+          border: 1.5px solid #ddd6fe;
+          font-size: 0.78rem;
+          font-weight: 800;
+          letter-spacing: -0.01em;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .sidebar-reset-btn:hover {
-          background: #fef2f2;
-          color: #ef4444;
-          border-color: #fecaca;
+        .sidebar-bottom-clear-btn:hover {
+          background: #ede9fe;
+          border-color: #c4b5fd;
+          color: #6d28d9;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.15);
         }
-        .sidebar-reset-btn:hover .reset-spin-icon {
+        .sidebar-bottom-clear-btn:hover .reset-spin-icon {
           transform: rotate(-180deg);
         }
         .reset-spin-icon {

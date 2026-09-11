@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, ArrowRight, ShoppingCart, Shirt, Leaf, Diamond, Heart } from 'lucide-react';
+import { Sparkles, ArrowRight, ShoppingCart, Shirt, Leaf, Diamond } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useUiStore } from '../../../store/uiStore';
 
@@ -10,19 +10,19 @@ export default function NewArrivalsHero({ onExploreClick }) {
   const handleAddFeaturedLook = (e) => {
     e.preventDefault();
     const featuredProduct = {
-      _id: 'featured_graffiti_hoodie',
+      _id: 'featured_lilac_hoodie',
       id: 'featured_hoodie_2026',
-      name: 'Graffiti Lilac Hoodie',
-      slug: 'graffiti-lilac-hoodie',
-      price: 2499,
-      discountPrice: 1499,
-      image: '/images/featured_look_hoodie.jpg',
-      images: ['/images/featured_look_hoodie.jpg'],
+      name: 'Lilac Comfort Hoodie',
+      slug: 'lilac-comfort-hoodie',
+      price: 2199,
+      discountPrice: 1299,
+      image: '/images/pill_model_western.jpg',
+      images: ['/images/pill_model_western.jpg'],
       category: { name: "Women's Fashion", slug: 'womens-fashion' },
-      stock: 25,
+      stock: 35,
     };
     addItem(featuredProduct, 1);
-    showToast('Added "Graffiti Lilac Hoodie" to cart! ✨', 'success');
+    showToast('Added "Lilac Comfort Hoodie" to cart! ✨', 'success');
   };
 
   return (
@@ -83,7 +83,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
             </h1>
 
             <p className="hero-subtext">
-              Elevate your everyday look with fresh pieces that speak you. Curated streetwear & authentic comfort.
+              Elevate your everyday look with fresh pieces crafted for you. Curated women's fashion & authentic comfort.
             </p>
 
             <button
@@ -96,28 +96,6 @@ export default function NewArrivalsHero({ onExploreClick }) {
                 <ArrowRight size={14} />
               </div>
             </button>
-
-            {/* Social Proof Frosted Pill */}
-            <div className="social-proof-capsule">
-              <div className="avatar-group">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                  alt="Shopper"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-                  alt="Shopper"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
-                  alt="Shopper"
-                />
-              </div>
-              <div className="social-caption">
-                <span>Loved by 20K+ Trendsetters</span>
-                <Heart size={13} fill="#ffffff" color="#ffffff" />
-              </div>
-            </div>
           </div>
 
           {/* 2. CENTER COLUMN: Flawless Overlapping Streetwear Girl Model */}
@@ -171,14 +149,14 @@ export default function NewArrivalsHero({ onExploreClick }) {
               <div className="featured-look-card-box">
                 <div className="featured-card-img">
                   <img
-                    src="/images/featured_look_hoodie.jpg"
-                    alt="Graffiti Lilac Hoodie"
+                    src="/images/pill_model_western.jpg"
+                    alt="Lilac Comfort Hoodie - Women's Fashion"
                   />
                 </div>
 
                 <div className="featured-card-meta">
-                  <h4 className="card-item-title">Graffiti Hoodie</h4>
-                  <p className="card-item-sub">Streetwear Essential</p>
+                  <h4 className="card-item-title">Lilac Comfort Hoodie</h4>
+                  <p className="card-item-sub">Women's Relaxed Fit</p>
 
                   <button
                     onClick={handleAddFeaturedLook}
@@ -187,7 +165,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
                     title="Add to cart"
                   >
                     <ShoppingCart size={13} />
-                    <span>₹1,499</span>
+                    <span>₹1,299</span>
                   </button>
                 </div>
               </div>
@@ -243,7 +221,9 @@ export default function NewArrivalsHero({ onExploreClick }) {
         .top-main-word {
           font-size: clamp(2.4rem, 4vw, 4.2rem);
           font-weight: 900;
-          color: #7c3aed;
+          background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #6d28d9 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
           text-transform: uppercase;
           letter-spacing: -0.01em;
           line-height: 1;
@@ -263,16 +243,20 @@ export default function NewArrivalsHero({ onExploreClick }) {
           50% { transform: scale(1.15) rotate(12deg); opacity: 1; }
         }
 
-        /* ── Purple Main Card (Picky Signature Royal Purple) ── */
+        /* ── Luminous Light Purple & Lavender Luxury Gradient Card ── */
         .new-arrivals-purple-card {
           position: relative;
-          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+          background: 
+            radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.45) 0%, transparent 40%),
+            radial-gradient(circle at 86% 82%, rgba(233, 213, 255, 0.5) 0%, transparent 45%),
+            radial-gradient(circle at 50% 50%, rgba(192, 132, 252, 0.25) 0%, transparent 60%),
+            linear-gradient(135deg, #c084fc 0%, #a855f7 35%, #8b5cf6 70%, #7c3aed 100%);
           border-radius: 40px;
           min-height: 500px;
           padding: clamp(2rem, 3.5vw, 3.25rem);
-          box-shadow: 0 25px 60px -15px rgba(109, 40, 217, 0.4);
+          box-shadow: 0 25px 60px -15px rgba(168, 85, 247, 0.35), 0 8px 24px rgba(124, 58, 237, 0.15);
           overflow: visible; /* Allows model head to overlap top border */
-          border: 1.5px solid rgba(216, 180, 254, 0.4);
+          border: 2px solid rgba(255, 255, 255, 0.65);
         }
 
         .card-bg-waves {
@@ -310,15 +294,16 @@ export default function NewArrivalsHero({ onExploreClick }) {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          background: rgba(255, 255, 255, 0.18);
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.28);
+          backdrop-filter: blur(12px);
           color: #ffffff;
           padding: 0.4rem 1.1rem;
           border-radius: 9999px;
           font-size: 0.82rem;
           font-weight: 700;
           letter-spacing: 0.04em;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          border: 1.5px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.15);
         }
 
         .hero-heading {
@@ -328,15 +313,16 @@ export default function NewArrivalsHero({ onExploreClick }) {
           color: #ffffff;
           margin: 0;
           letter-spacing: -0.025em;
-          text-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+          text-shadow: 0 4px 18px rgba(91, 33, 182, 0.35);
         }
 
         .hero-subtext {
           font-size: clamp(0.92rem, 1.1vw, 1.05rem);
-          line-height: 1.5;
-          color: rgba(255, 255, 255, 0.92);
+          line-height: 1.55;
+          color: rgba(255, 255, 255, 0.95);
           margin: 0;
           max-width: 360px;
+          text-shadow: 0 2px 8px rgba(91, 33, 182, 0.25);
         }
 
         .explore-now-btn {
@@ -375,44 +361,6 @@ export default function NewArrivalsHero({ onExploreClick }) {
         .explore-now-btn:hover .arrow-circle {
           transform: translateX(3px);
           border-color: #ffffff;
-        }
-
-        .social-proof-capsule {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.75rem;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(14px);
-          border: 1px solid rgba(255, 255, 255, 0.35);
-          border-radius: 20px;
-          padding: 0.55rem 1.1rem;
-        }
-
-        .avatar-group {
-          display: flex;
-          align-items: center;
-        }
-
-        .avatar-group img {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          border: 2px solid #ffffff;
-          object-fit: cover;
-          margin-left: -7px;
-        }
-
-        .avatar-group img:first-child {
-          margin-left: 0;
-        }
-
-        .social-caption {
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          color: #ffffff;
-          font-size: 0.8rem;
-          font-weight: 700;
         }
 
         /* ── Column 2: Center Streetwear Girl (Clean Chroma Cutout) ── */
@@ -506,19 +454,20 @@ export default function NewArrivalsHero({ onExploreClick }) {
           width: 42px;
           height: 42px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.28);
           backdrop-filter: blur(8px);
           color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(255, 255, 255, 0.25);
+          border: 1.5px solid rgba(255, 255, 255, 0.55);
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
           transition: transform 0.2s ease;
         }
 
         .mini-badge-item:hover .badge-icon-wrap {
           transform: scale(1.08);
-          background: rgba(255, 255, 255, 0.25);
+          background: rgba(255, 255, 255, 0.38);
         }
 
         .mini-badge-item span {
@@ -527,6 +476,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
           font-weight: 700;
           max-width: 75px;
           line-height: 1.15;
+          text-shadow: 0 2px 6px rgba(91, 33, 182, 0.25);
         }
 
         /* Featured Look Card */
@@ -538,10 +488,17 @@ export default function NewArrivalsHero({ onExploreClick }) {
         }
 
         .featured-look-title-label {
-          font-size: 0.84rem;
+          font-size: 0.78rem;
           font-weight: 800;
           color: #ffffff;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          background: rgba(255, 255, 255, 0.28);
+          backdrop-filter: blur(8px);
+          border: 1.5px solid rgba(255, 255, 255, 0.55);
+          border-radius: 9999px;
+          padding: 0.25rem 0.85rem;
+          box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
         }
 
         .featured-look-card-box {
@@ -549,17 +506,17 @@ export default function NewArrivalsHero({ onExploreClick }) {
           border-radius: 24px;
           padding: 0.95rem;
           width: 215px;
-          box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
-          border: 1px solid rgba(255, 255, 255, 0.9);
+          box-shadow: 0 18px 45px rgba(109, 40, 217, 0.22), 0 4px 12px rgba(0, 0, 0, 0.05);
+          border: 1.5px solid rgba(255, 255, 255, 0.9);
           display: flex;
           flex-direction: column;
           gap: 0.65rem;
-          transition: transform 0.3s ease;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .featured-look-card-box:hover {
           transform: translateY(-4px);
-          box-shadow: 0 24px 50px rgba(0, 0, 0, 0.32);
+          box-shadow: 0 24px 50px rgba(109, 40, 217, 0.32);
         }
 
         .featured-card-img {
@@ -608,11 +565,11 @@ export default function NewArrivalsHero({ onExploreClick }) {
           align-items: center;
           justify-content: center;
           gap: 0.4rem;
-          background: #7c3aed;
+          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
           color: #ffffff;
           border: none;
           border-radius: 9999px;
-          padding: 0.45rem 1.15rem;
+          padding: 0.5rem 1.15rem;
           font-size: 0.85rem;
           font-weight: 800;
           cursor: pointer;

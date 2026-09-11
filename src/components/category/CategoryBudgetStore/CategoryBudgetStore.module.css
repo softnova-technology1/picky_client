@@ -1,1 +1,212 @@
-/* CategoryBudgetStore CSS Module */
+/* ─── Featured Departments Bento Grid CSS Module ─────────────────────────── */
+
+.departmentsSection {
+  margin-bottom: 4.5rem;
+  position: relative;
+}
+
+/* ── Section Header ── */
+.headerWrapper {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-weight: 900;
+  color: #1e1b4b;
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.025em;
+}
+
+.sectionSubtitle {
+  font-size: 0.92rem;
+  color: #64748b;
+  margin: 0 0 0.85rem;
+  font-weight: 500;
+}
+
+.diamondDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dividerLineLeft {
+  width: 45px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #c084fc);
+}
+
+.dividerDiamonds {
+  color: #7c3aed;
+  font-size: 0.75rem;
+}
+
+.dividerLineRight {
+  width: 45px;
+  height: 1.5px;
+  background: linear-gradient(90deg, #c084fc, transparent);
+}
+
+/* ── Bento Grid: Row 1 = 2fr + 1fr, Row 2 = 1fr + 2fr ── */
+.bentoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.bentoWide {
+  grid-column: span 2;
+}
+
+.bentoCompact {
+  grid-column: span 1;
+}
+
+.bentoCard {
+  position: relative;
+  border-radius: 26px;
+  overflow: hidden;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 350px;
+  padding: 1.65rem 1.85rem;
+  box-sizing: border-box;
+  box-shadow: 0 14px 34px -10px rgba(15, 23, 42, 0.28), 0 3px 10px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bentoCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px -10px rgba(15, 23, 42, 0.42), 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Photo Background Wrapper */
+.photoWrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.bgPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bentoCard:hover .bgPhoto {
+  transform: scale(1.06);
+}
+
+.scrimOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.3s ease;
+}
+
+/* Top Row: Floating Frosted Pill Badge */
+.topRow {
+  position: relative;
+  z-index: 3;
+}
+
+.frostedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid transparent;
+}
+
+/* Bottom Content Area */
+.bottomContent {
+  position: relative;
+  z-index: 3;
+}
+
+.cardTitle {
+  font-size: clamp(1.35rem, 1.8vw, 1.7rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.cardSubtext {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.86);
+  line-height: 1.45;
+  margin: 0 0 1.25rem;
+  font-weight: 450;
+  max-width: 520px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* White Signature Button */
+.whiteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+}
+
+.bentoCard:hover .whiteBtn {
+  background: #7c3aed;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.btnArrow {
+  transition: transform 0.25s ease;
+}
+
+.bentoCard:hover .btnArrow {
+  transform: translate(2px, -2px);
+}
+
+/* ── Responsive Media Queries ── */
+@media (max-width: 992px) {
+  .bentoGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .bentoWide,
+  .bentoCompact {
+    grid-column: span 1;
+  }
+
+  .bentoCard {
+    min-height: 310px;
+    padding: 1.5rem;
+  }
+}

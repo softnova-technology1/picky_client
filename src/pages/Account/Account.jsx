@@ -18,18 +18,12 @@ import {
   MapPin,
   Heart,
   LogOut,
-  ShieldCheck,
-  Truck,
-  ExternalLink,
-  ChevronRight,
-  Sparkles,
   Search,
-  LayoutDashboard,
 } from 'lucide-react';
 
 export default function Account() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentTab = searchParams.get('tab') || 'overview';
+  const currentTab = searchParams.get('tab') || 'profile';
   const navigate = useNavigate();
 
   const { user, logout } = useAuthStore();
@@ -64,97 +58,10 @@ export default function Account() {
     navigate('/');
   };
 
-  // Find most recent active order for the dashboard widget
-  const activeOrder = orders.find(
-    (o) => o.status === 'confirmed' || o.status === 'shipped' || o.status === 'out_for_delivery'
-  );
-
   return (
     <PageWrapper>
       <div className="section" style={{ background: '#ffffff', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
         <div className="container" style={{ maxWidth: '1100px' }}>
-          {/* Top Profile Header Card */}
-          <div
-            style={{
-              background: 'linear-gradient(135deg, #1e1035 0%, #2e1065 60%, #4c1d95 100%)',
-              color: '#ffffff',
-              borderRadius: '24px',
-              padding: 'clamp(1.5rem, 3vw, 2.25rem)',
-              marginBottom: '2rem',
-              boxShadow: '0 12px 36px rgba(76, 29, 149, 0.25)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1.25rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '20px',
-                  background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.75rem',
-                  fontWeight: 800,
-                  boxShadow: '0 4px 16px rgba(168, 85, 247, 0.4)',
-                }}
-              >
-                {user?.name ? user.name[0].toUpperCase() : <User size={28} />}
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <h1 style={{ margin: 0, fontSize: 'clamp(1.3rem, 2.5vw, 1.8rem)', color: '#ffffff' }}>
-                    {user?.name || 'Valued Customer'}
-                  </h1>
-                  <span
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      color: '#e9d5ff',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: '20px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    Verified Customer
-                  </span>
-                </div>
-                <p style={{ margin: '0.35rem 0 0', color: '#c4b5fd', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span>📱 {user?.phone || 'No phone linked'}</span>
-                  {user?.email && <span>• ✉️ {user.email}</span>}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setLogoutModalOpen(true)}
-              style={{
-                background: 'rgba(239, 68, 68, 0.2)',
-                color: '#fca5a5',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                padding: '0.6rem 1.15rem',
-                borderRadius: '12px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <LogOut size={15} /> Sign Out
-            </button>
-          </div>
-
           {/* Account Body Grid: Sidebar Nav + Tab Content */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
             {/* Left Navigation Sidebar */}
@@ -172,7 +79,7 @@ export default function Account() {
               }}
             >
               <button
-                onClick={() => handleTabChange('overview')}
+                onClick={() => handleTabChange('profile')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -180,17 +87,17 @@ export default function Account() {
                   padding: '0.85rem 1rem',
                   borderRadius: '12px',
                   border: 'none',
-                  background: currentTab === 'overview' ? '#f3e8ff' : 'transparent',
-                  color: currentTab === 'overview' ? '#6b21a8' : '#475569',
-                  fontWeight: currentTab === 'overview' ? 700 : 500,
+                  background: currentTab === 'profile' ? '#f3e8ff' : 'transparent',
+                  color: currentTab === 'profile' ? '#6b21a8' : '#475569',
+                  fontWeight: currentTab === 'profile' ? 700 : 500,
                   fontSize: '0.92rem',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.15s ease',
                 }}
               >
-                <LayoutDashboard size={18} color={currentTab === 'overview' ? '#7c3aed' : '#64748b'} />
-                <span>Account Overview</span>
+                <User size={18} color={currentTab === 'profile' ? '#7c3aed' : '#64748b'} />
+                <span>My Profile</span>
               </button>
 
               <button
@@ -220,28 +127,6 @@ export default function Account() {
                     {orders.length}
                   </span>
                 )}
-              </button>
-
-              <button
-                onClick={() => handleTabChange('profile')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: currentTab === 'profile' ? '#f3e8ff' : 'transparent',
-                  color: currentTab === 'profile' ? '#6b21a8' : '#475569',
-                  fontWeight: currentTab === 'profile' ? 700 : 500,
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <User size={18} color={currentTab === 'profile' ? '#7c3aed' : '#64748b'} />
-                <span>My Profile</span>
               </button>
 
               <button
@@ -290,6 +175,30 @@ export default function Account() {
                   </span>
                 )}
               </Link>
+
+              <div style={{ height: '1px', background: '#f1f5f9', margin: '0.4rem 0' }} />
+
+              <button
+                onClick={() => setLogoutModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#ef4444',
+                  fontWeight: 600,
+                  fontSize: '0.92rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <LogOut size={18} color="#ef4444" />
+                <span>Sign Out</span>
+              </button>
             </div>
 
             {/* Right Main Content Pane */}
@@ -303,120 +212,7 @@ export default function Account() {
                 gridColumn: '2 / -1',
               }}
             >
-              {/* TAB 1: OVERVIEW */}
-              {currentTab === 'overview' && (
-                <div>
-                  {/* Active Order Highlight Widget */}
-                  {activeOrder && (
-                    <div
-                      style={{
-                        background: 'linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%)',
-                        border: '1.5px solid #d8b4fe',
-                        borderRadius: '16px',
-                        padding: '1.25rem 1.5rem',
-                        marginBottom: '2rem',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                        <div>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#6d28d9', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                            <Truck size={14} /> Active Shipment in Progress
-                          </div>
-                          <h4 style={{ margin: '0.25rem 0 0.15rem', fontSize: '1.1rem', color: '#0f172a' }}>
-                            Order #{activeOrder.orderNumber}
-                          </h4>
-                          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                            Placed on {formatDate(activeOrder.createdAt)} • Total: {formatPrice(activeOrder.totalAmount)}
-                          </span>
-                        </div>
-                        <Link
-                          to={`/orders/${activeOrder._id}`}
-                          className="btn btn-primary"
-                          style={{ padding: '0.55rem 1.15rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-                        >
-                          <Search size={14} /> Track Live AWB
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Summary Metric Stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Total Orders</span>
-                      <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.6rem', color: '#0f172a' }}>{orders.length}</h3>
-                    </div>
-                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Wishlist Items</span>
-                      <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.6rem', color: '#0f172a' }}>{wishlistItems.length}</h3>
-                    </div>
-                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>WhatsApp OTP Status</span>
-                      <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.1rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <ShieldCheck size={18} /> Verified
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Recent Orders Snippet */}
-                  <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>Recent Orders</h3>
-                    <button
-                      onClick={() => handleTabChange('orders')}
-                      style={{ background: 'none', border: 'none', color: '#7c3aed', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                    >
-                      View All <ChevronRight size={14} />
-                    </button>
-                  </div>
-
-                  {loadingOrders ? (
-                    <Spinner size={30} />
-                  ) : orders.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '14px' }}>
-                      <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '0.92rem' }}>No orders placed yet.</p>
-                      <Link to="/products" className="btn btn-primary btn-sm">
-                        Start Shopping Now
-                      </Link>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {orders.slice(0, 3).map((ord) => (
-                        <div
-                          key={ord._id}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '1rem 1.25rem',
-                            borderRadius: '12px',
-                            background: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <div>
-                            <strong style={{ color: '#0f172a', fontSize: '0.95rem', display: 'block' }}>
-                              #{ord.orderNumber}
-                            </strong>
-                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                              {formatDate(ord.createdAt)} • {formatPrice(ord.totalAmount)}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <Badge status={ord.status} />
-                            <Link to={`/orders/${ord._id}`} className="btn btn-secondary btn-sm" style={{ fontSize: '0.8rem' }}>
-                              View ➔
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 2: MY ORDERS */}
+              {/* TAB 1: MY ORDERS */}
               {currentTab === 'orders' && (
                 <div>
                   <div style={{ marginBottom: '1.75rem' }}>
@@ -441,100 +237,139 @@ export default function Account() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                      {orders.map((order) => (
-                        <div
-                          key={order._id}
-                          style={{
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '16px',
-                            padding: '1.25rem',
-                            background: '#ffffff',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                          }}
-                        >
+                      {orders.map((order) => {
+                        const totalFormatted = formatPrice(order.total ?? order.totalAmount ?? 0);
+                        return (
                           <div
+                            key={order._id}
                             style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'flex-start',
-                              flexWrap: 'wrap',
-                              gap: '0.75rem',
-                              borderBottom: '1px solid #f1f5f9',
-                              paddingBottom: '0.85rem',
-                              marginBottom: '0.85rem',
+                              border: '1.5px solid #e2e8f0',
+                              borderRadius: '16px',
+                              background: '#ffffff',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                              overflow: 'hidden',
+                              transition: 'all 0.2s ease',
                             }}
                           >
-                            <div>
-                              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Order Number</span>
-                              <h4 style={{ margin: '0.1rem 0 0.2rem', fontSize: '1.05rem', color: '#0f172a' }}>
-                                #{order.orderNumber}
-                              </h4>
-                              <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Placed on {formatDate(order.createdAt)}</span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <Badge status={order.status} />
-                              <Link
-                                to={`/orders/${order._id}`}
-                                className="btn btn-outline btn-sm"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                              >
-                                <Search size={14} /> Track Order
-                              </Link>
-                            </div>
-                          </div>
-
-                          {/* Order items preview row */}
-                          <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                            {order.items?.map((item, idx) => (
-                              <div
-                                key={idx}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.65rem',
-                                  minWidth: '200px',
-                                  background: '#f8fafc',
-                                  padding: '0.45rem 0.65rem',
-                                  borderRadius: '8px',
-                                  border: '1px solid #e2e8f0',
-                                }}
-                              >
-                                <img
-                                  src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=120'}
-                                  alt={item.name}
-                                  style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
-                                />
-                                <div style={{ overflow: 'hidden' }}>
-                                  <div style={{ fontWeight: 600, fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {item.name}
-                                  </div>
-                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Qty: {item.quantity}</span>
-                                </div>
+                            {/* Card Header Bar */}
+                            <div
+                              style={{
+                                background: '#f8fafc',
+                                borderBottom: '1px solid #e2e8f0',
+                                padding: '1rem 1.25rem',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: '0.75rem',
+                              }}
+                            >
+                              <div>
+                                <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a', display: 'block' }}>
+                                  Order #{order.orderNumber}
+                                </span>
+                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                  Placed on {formatDate(order.createdAt)}
+                                </span>
                               </div>
-                            ))}
-                          </div>
 
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              borderTop: '1px solid #f1f5f9',
-                              paddingTop: '0.75rem',
-                              marginTop: '0.75rem',
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            <span style={{ color: '#64748b' }}>Total Paid: <strong style={{ color: '#0f172a' }}>{formatPrice(order.totalAmount)}</strong></span>
-                            {order.trackingId && (
-                              <span style={{ color: '#7c3aed', fontSize: '0.82rem', fontWeight: 600 }}>
-                                AWB: {order.trackingId}
-                              </span>
-                            )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Badge status={order.status} />
+                                <Link
+                                  to={`/orders/${order._id}`}
+                                  className="btn btn-primary btn-sm"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    fontSize: '0.82rem',
+                                    padding: '0.45rem 0.9rem',
+                                    borderRadius: '8px',
+                                  }}
+                                >
+                                  <Search size={14} /> Track Order
+                                </Link>
+                              </div>
+                            </div>
+
+                            {/* Card Items Body */}
+                            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              {order.items?.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1rem',
+                                    paddingBottom: idx !== order.items.length - 1 ? '1rem' : 0,
+                                    borderBottom: idx !== order.items.length - 1 ? '1px dashed #f1f5f9' : 'none',
+                                  }}
+                                >
+                                  <img
+                                    src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=160'}
+                                    alt={item.name}
+                                    style={{
+                                      width: '56px',
+                                      height: '56px',
+                                      borderRadius: '10px',
+                                      objectFit: 'cover',
+                                      border: '1px solid #e2e8f0',
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h4
+                                      style={{
+                                        margin: '0 0 0.25rem',
+                                        fontSize: '0.92rem',
+                                        color: '#0f172a',
+                                        fontWeight: 600,
+                                        lineHeight: 1.4,
+                                      }}
+                                    >
+                                      {item.name}
+                                    </h4>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.82rem', color: '#64748b' }}>
+                                      <span>Quantity: <strong style={{ color: '#334155' }}>{item.quantity}</strong></span>
+                                      {item.price && (
+                                        <span>• Price: <strong style={{ color: '#334155' }}>{formatPrice(item.price)}</strong></span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Card Footer Bar */}
+                            <div
+                              style={{
+                                background: '#faf5ff',
+                                borderTop: '1px solid #ede9fe',
+                                padding: '0.85rem 1.25rem',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <div style={{ fontSize: '0.88rem', color: '#475569' }}>
+                                Total Paid: <strong style={{ color: '#0f172a', fontSize: '1rem' }}>{totalFormatted}</strong>
+                              </div>
+
+                              {order.trackingId ? (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6d28d9', background: '#ede9fe', padding: '0.25rem 0.65rem', borderRadius: '6px', fontWeight: 600 }}>
+                                  🚚 {order.courier || 'Express'}: {order.trackingId}
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
+                                  ✓ 100% Prepaid Verified
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
