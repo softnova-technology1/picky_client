@@ -450,7 +450,7 @@ export default function Checkout() {
                         </div>
 
                         {/* Flat, House No., Apartment */}
-                        <div className={`${styles['form-group']} ${styles['full-width']}`}>
+                        <div className={styles['form-group']}>
                           <label className={styles['field-label']}>FLAT, HOUSE NO., APARTMENT *</label>
                           <input
                             type="text"
@@ -459,6 +459,19 @@ export default function Checkout() {
                             value={formData.street}
                             onChange={handleInputChange}
                             placeholder="House / Flat No., Building, Street Name"
+                            className={styles['field-input']}
+                          />
+                        </div>
+
+                        {/* Landmark */}
+                        <div className={styles['form-group']}>
+                          <label className={styles['field-label']}>LANDMARK (OPTIONAL)</label>
+                          <input
+                            type="text"
+                            name="landmark"
+                            value={formData.landmark}
+                            onChange={handleInputChange}
+                            placeholder="E.g. Near Apollo Hospital, Park, etc."
                             className={styles['field-input']}
                           />
                         </div>
@@ -596,7 +609,7 @@ export default function Checkout() {
                       <div className={`${styles['detail-col']} ${styles['full-row']}`}>
                         <span className={styles['detail-label']}>Shipping Address</span>
                         <span className={styles['detail-value']}>
-                          {formData.street}, {formData.city}, {formData.state} - {formData.pincode}
+                          {formData.street}{formData.landmark ? `, Landmark: ${formData.landmark}` : ''}, {formData.city}, {formData.state} - {formData.pincode}
                         </span>
                       </div>
                     </div>

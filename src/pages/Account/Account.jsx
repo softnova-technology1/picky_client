@@ -18,8 +18,9 @@ import {
   MapPin,
   Heart,
   LogOut,
-  Search,
+  Truck,
   CheckCircle2,
+  Filter,
 } from 'lucide-react';
 
 export default function Account() {
@@ -33,6 +34,7 @@ export default function Account() {
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [orderFilter, setOrderFilter] = useState('all');
 
   useEffect(() => {
     async function loadOrders() {
@@ -229,23 +231,6 @@ export default function Account() {
                     <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                       {user?.name || 'My Account'}
                     </h2>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        background: '#ecfdf5',
-                        color: '#059669',
-                        border: '1px solid #a7f3d0',
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.65rem',
-                        borderRadius: '999px',
-                      }}
-                    >
-                      <CheckCircle2 size={13} color="#059669" />
-                      Verified Member
-                    </span>
                   </div>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '0.88rem', color: '#64748b' }}>
                     {user?.phone ? `📱 +91 ${user.phone}` : user?.email || 'Manage your orders, profile & delivery addresses'}
@@ -360,29 +345,111 @@ export default function Account() {
                     border: '1.5px solid rgba(221, 214, 254, 0.75)',
                   }}
                 >
-                  <div style={{ marginBottom: '1.75rem' }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
                     <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0 0 0.35rem' }}>My Orders</h2>
                     <p style={{ color: '#64748b', fontSize: '0.92rem', margin: 0 }}>
-                      Track current shipments and view historical invoices.
+                      Track current shipments and view your order history.
                     </p>
                   </div>
+
+                  {/* ── Order Status Filter Chips ── */}
+                  {!loadingOrders && orders.length > 0 && (() => {
+                    const filterOptions = [
+                      { key: 'all', label: 'All Orders', color: '#7c3aed', bg: '#ede9fe', activeBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', activeColor: '#fff' },
+                      { key: 'pending', label: 'Pending', color: '#d97706', bg: '#fef3c7', activeBg: 'linear-gradient(135deg, #d97706, #b45309)', activeColor: '#fff' },
+                      { key: 'processing', label: 'Processing', color: '#2563eb', bg: '#dbeafe', activeBg: 'linear-gradient(135deg, #2563eb, #1d4ed8)', activeColor: '#fff' },
+                      { key: 'shipped', label: 'Shipped', color: '#7c3aed', bg: '#f3e8ff', activeBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', activeColor: '#fff' },
+                      { key: 'delivered', label: 'Delivered', color: '#059669', bg: '#d1fae5', activeBg: 'linear-gradient(135deg, #059669, #047857)', activeColor: '#fff' },
+                      { key: 'cancelled', label: 'Cancelled', color: '#dc2626', bg: '#fee2e2', activeBg: 'linear-gradient(135deg, #dc2626, #b91c1c)', activeColor: '#fff' },
+                    ];
+                    return (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          marginBottom: '1.5rem',
+                          padding: '0.85rem 1rem',
+                          background: '#f8fafc',
+                          borderRadius: '14px',
+                          border: '1.5px solid #f1f5f9',
+                        }}
+                      >
+                        <Filter size={14} color="#94a3b8" style={{ marginRight: '0.25rem', flexShrink: 0 }} />
+                        {filterOptions.map((opt) => {
+                          const isActive = orderFilter === opt.key;
+                          const statusCount = opt.key === 'all'
+                            ? orders.length
+                            : orders.filter((o) => (o.status || '').toLowerCase() === opt.key).length;
+                          if (opt.key !== 'all' && statusCount === 0) return null;
+                          return (
+                            <button
+                              key={opt.key}
+                              onClick={() => setOrderFilter(opt.key)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                padding: '0.38rem 0.85rem',
+                                borderRadius: '999px',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                border: 'none',
+                                outline: 'none',
+                                transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                                background: isActive ? opt.activeBg : opt.bg,
+                                color: isActive ? opt.activeColor : opt.color,
+                                boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                                transform: isActive ? 'translateY(-1px)' : 'none',
+                              }}
+                            >
+                              {opt.label}
+                              <span
+                                style={{
+                                  background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)',
+                                  borderRadius: '999px',
+                                  padding: '0 0.4rem',
+                                  fontSize: '0.72rem',
+                                }}
+                              >
+                                {statusCount}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {loadingOrders ? (
                     <Spinner size={36} />
                   ) : orders.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#f8fafc', borderRadius: '16px' }}>
                       <Package size={40} color="#7c3aed" style={{ marginBottom: '1rem' }} />
-                      <h4 style={{ margin: '0 0 0.4rem', color: '#0f172a' }}>No orders found</h4>
+                      <h4 style={{ margin: '0 0 0.4rem', color: '#0f172a' }}>No orders yet</h4>
                       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-                        Browse our catalog of genuine fireworks and festive items.
+                        Discover our authentic Tamil traditional crafts and place your first order!
                       </p>
-                      <Link to="/products" className="btn btn-primary">
-                        Browse Products Catalog
+                      <Link to="/shop" className="btn btn-primary">
+                        Shop Now
                       </Link>
                     </div>
-                  ) : (
+                  ) : (() => {
+                    const filteredOrders = orderFilter === 'all'
+                      ? orders
+                      : orders.filter((o) => (o.status || '').toLowerCase() === orderFilter);
+                    return filteredOrders.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '2.5rem 1.5rem', background: '#f8fafc', borderRadius: '16px' }}>
+                        <Package size={32} color="#94a3b8" style={{ marginBottom: '0.75rem' }} />
+                        <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
+                          No <strong>{orderFilter}</strong> orders found.
+                        </p>
+                      </div>
+                    ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                      {orders.map((order) => {
+                      {filteredOrders.map((order) => {
                         const totalFormatted = formatPrice(order.total ?? order.totalAmount ?? 0);
                         return (
                           <div
@@ -534,7 +601,7 @@ export default function Account() {
                                 to={`/orders/${order._id}`}
                                 className="order-track-btn"
                               >
-                                <Search size={15} strokeWidth={2.5} />
+                                <Truck size={15} strokeWidth={2.5} />
                                 <span>Track Order</span>
                                 <span style={{ fontSize: '0.95rem', marginLeft: '0.1rem' }}>→</span>
                               </Link>
@@ -543,7 +610,8 @@ export default function Account() {
                         );
                       })}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               )}
 

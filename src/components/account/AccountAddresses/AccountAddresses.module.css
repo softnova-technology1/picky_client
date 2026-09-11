@@ -328,6 +328,24 @@
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
+.editBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.editBtn:hover {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
 .deleteBtn {
   background: none;
   border: none;

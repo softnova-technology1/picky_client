@@ -15,6 +15,7 @@ import {
   Zap,
   Truck,
   ShieldCheck,
+  Pencil,
 } from 'lucide-react';
 import styles from './AccountAddresses.module.css';
 
@@ -49,6 +50,7 @@ export default function AccountAddresses() {
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAddr, setEditingAddr] = useState(null); // null = add new, object = editing existing
   const [newAddr, setNewAddr] = useState({
     fullName: user?.name || '',
     phone: user?.phone || '',
@@ -75,6 +77,7 @@ export default function AccountAddresses() {
   };
 
   const handleOpenAdd = () => {
+    setEditingAddr(null);
     setNewAddr({
       fullName: user?.name || '',
       phone: user?.phone || '',
@@ -88,6 +91,12 @@ export default function AccountAddresses() {
     setIsModalOpen(true);
   };
 
+  const handleOpenEdit = (addr) => {
+    setEditingAddr(addr);
+    setNewAddr({ ...addr });
+    setIsModalOpen(true);
+  };
+
   const handleAddAddress = (e) => {
     e.preventDefault();
     if (!newAddr.street || !newAddr.city || !newAddr.pincode) {
@@ -95,6 +104,27 @@ export default function AccountAddresses() {
       return;
     }
 
+    // ── EDIT existing address ──
+    if (editingAddr) {
+      let updatedList = addresses.map((a) =>
+        a.id === editingAddr.id ? { ...a, ...newAddr } : a
+      );
+      if (newAddr.isDefault) {
+        updatedList = updatedList.map((a) => ({ ...a, isDefault: a.id === editingAddr.id }));
+      }
+      saveToStorage(updatedList);
+      setIsModalOpen(false);
+      showToast('Address updated successfully!', 'success');
+      const def = updatedList.find((a) => a.isDefault);
+      if (def) {
+        authService.updateProfile({
+          defaultAddress: { street: def.street, city: def.city, state: def.state, pincode: def.pincode, landmark: def.landmark },
+        }).catch(() => null);
+      }
+      return;
+    }
+
+    // ── ADD new address ──
     const created = {
       id: `addr_${Date.now()}`,
       ...newAddr,
@@ -249,14 +279,27 @@ export default function AccountAddresses() {
                 </span>
               )}
 
-              <button
-                type="button"
-                onClick={() => handleDeleteAddress(addr.id)}
-                className={styles.deleteBtn}
-                title="Delete address"
-              >
-                <Trash2 size={16} />
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {/* Edit Button */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenEdit(addr)}
+                  className={styles.editBtn}
+                  title="Edit address"
+                >
+                  <Pencil size={15} />
+                </button>
+
+                {/* Delete Button */}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAddress(addr.id)}
+                  className={styles.deleteBtn}
+                  title="Delete address"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -277,8 +320,12 @@ export default function AccountAddresses() {
         </div>
       </div>
 
-      {/* Add Address Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Delivery Address">
+      {/* Add / Edit Address Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingAddr ? 'Edit Delivery Address' : 'Add Delivery Address'}
+      >
         <form onSubmit={handleAddAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Input
             label="Recipient Full Name"
