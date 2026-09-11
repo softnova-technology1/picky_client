@@ -19,6 +19,7 @@ import {
   Heart,
   LogOut,
   Search,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function Account() {
@@ -58,163 +59,307 @@ export default function Account() {
     navigate('/');
   };
 
+  const userInitials = user?.name
+    ? user.name
+        .trim()
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'ME';
+
   return (
     <PageWrapper>
-      <div className="section" style={{ background: '#ffffff', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
+      <style>{`
+        .account-tab-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.65rem;
+          padding: 0.75rem 1.25rem;
+          border-radius: 14px;
+          font-size: 0.92rem;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+          outline: none;
+          border: 1.5px solid transparent;
+          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+          white-space: nowrap;
+          user-select: none;
+        }
+        .account-tab-btn:hover {
+          transform: translateY(-2px);
+        }
+        .account-tab-inactive {
+          background: #ffffff;
+          color: #475569;
+          border-color: #e2e8f0;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+        }
+        .account-tab-inactive:hover {
+          background: #faf5ff;
+          color: #6d28d9;
+          border-color: #c4b5fd;
+          box-shadow: 0 6px 16px rgba(124, 58, 237, 0.1);
+        }
+        .account-tab-active {
+          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+          color: #ffffff !important;
+          border-color: #6d28d9;
+          box-shadow: 0 8px 20px -3px rgba(124, 58, 237, 0.38);
+        }
+        .account-logout-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.6rem 1.15rem;
+          border-radius: 12px;
+          border: 1.5px solid #fecaca;
+          background: #fff1f2;
+          color: #e11d48;
+          font-weight: 600;
+          font-size: 0.88rem;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .account-logout-btn:hover {
+          background: #ffe4e6;
+          border-color: #fda4af;
+          color: #be123c;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(225, 29, 72, 0.12);
+        }
+        .account-tabs-row::-webkit-scrollbar {
+          display: none;
+        }
+        .account-tabs-row {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .order-card-box {
+          border: 1.5px solid #e2e8f0;
+          border-radius: 18px;
+          background: #ffffff;
+          box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.04);
+          overflow: hidden;
+          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .order-card-box:hover {
+          transform: translateY(-2px);
+          border-color: #c4b5fd;
+          box-shadow: 0 14px 30px -8px rgba(124, 58, 237, 0.12);
+        }
+        .order-track-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+          color: #ffffff !important;
+          padding: 0.6rem 1.25rem;
+          border-radius: 12px;
+          font-size: 0.86rem;
+          font-weight: 700;
+          text-decoration: none;
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+          border: 1px solid #6d28d9;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          white-space: nowrap;
+        }
+        .order-track-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 7px 20px rgba(124, 58, 237, 0.45);
+          background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+        }
+      `}</style>
+
+      <div className="section" style={{ background: 'linear-gradient(135deg, #faf7ff 0%, #f4effe 50%, #f8f5fe 100%)', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
         <div className="container" style={{ maxWidth: '1100px' }}>
-          {/* Account Body Grid: Sidebar Nav + Tab Content */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
-            {/* Left Navigation Sidebar */}
+          {/* Executive Top Profile Header & Navigation Bar */}
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.94)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '24px',
+              padding: '1.5rem 1.75rem',
+              marginBottom: '2rem',
+              boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
+              border: '1.5px solid rgba(221, 214, 254, 0.75)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+            }}
+          >
+            {/* Top Row: User Identity & Sign Out */}
             <div
               style={{
-                background: '#ffffff',
-                borderRadius: '20px',
-                padding: '1rem',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                border: '1px solid #f1f5f9',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '0.35rem',
-                gridColumn: '1 / span 1',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
               }}
             >
+              {/* User Avatar + Details */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '18px',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.3rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.5px',
+                    boxShadow: '0 8px 20px -4px rgba(124, 58, 237, 0.4)',
+                    border: '3px solid #ffffff',
+                    flexShrink: 0,
+                  }}
+                >
+                  {userInitials}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+                      {user?.name || 'My Account'}
+                    </h2>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        background: '#ecfdf5',
+                        color: '#059669',
+                        border: '1px solid #a7f3d0',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      <CheckCircle2 size={13} color="#059669" />
+                      Verified Member
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.88rem', color: '#64748b' }}>
+                    {user?.phone ? `📱 +91 ${user.phone}` : user?.email || 'Manage your orders, profile & delivery addresses'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Sign Out Action Button */}
+              <button
+                onClick={() => setLogoutModalOpen(true)}
+                className="account-logout-btn"
+                title="Sign out of your account"
+              >
+                <LogOut size={16} color="#e11d48" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+
+            {/* Subtle Divider */}
+            <div style={{ height: '1px', background: 'rgba(226, 232, 240, 0.85)', width: '100%' }} />
+
+            {/* Horizontal Segmented Navigation Tabs */}
+            <div
+              className="account-tabs-row"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                overflowX: 'auto',
+                paddingBottom: '0.2rem',
+              }}
+            >
+              {/* Tab 1: Profile */}
               <button
                 onClick={() => handleTabChange('profile')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: currentTab === 'profile' ? '#f3e8ff' : 'transparent',
-                  color: currentTab === 'profile' ? '#6b21a8' : '#475569',
-                  fontWeight: currentTab === 'profile' ? 700 : 500,
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`account-tab-btn ${currentTab === 'profile' ? 'account-tab-active' : 'account-tab-inactive'}`}
               >
-                <User size={18} color={currentTab === 'profile' ? '#7c3aed' : '#64748b'} />
+                <User size={18} color={currentTab === 'profile' ? '#ffffff' : '#7c3aed'} />
                 <span>My Profile</span>
               </button>
 
+              {/* Tab 2: Orders */}
               <button
                 onClick={() => handleTabChange('orders')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: currentTab === 'orders' ? '#f3e8ff' : 'transparent',
-                  color: currentTab === 'orders' ? '#6b21a8' : '#475569',
-                  fontWeight: currentTab === 'orders' ? 700 : 500,
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`account-tab-btn ${currentTab === 'orders' ? 'account-tab-active' : 'account-tab-inactive'}`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Package size={18} color={currentTab === 'orders' ? '#7c3aed' : '#64748b'} />
-                  <span>My Orders</span>
-                </div>
+                <Package size={18} color={currentTab === 'orders' ? '#ffffff' : '#7c3aed'} />
+                <span>My Orders</span>
                 {orders.length > 0 && (
-                  <span style={{ background: '#ede9fe', color: '#6d28d9', fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 700 }}>
+                  <span
+                    style={{
+                      background: currentTab === 'orders' ? 'rgba(255, 255, 255, 0.25)' : '#ede9fe',
+                      color: currentTab === 'orders' ? '#ffffff' : '#6d28d9',
+                      fontSize: '0.74rem',
+                      padding: '0.15rem 0.55rem',
+                      borderRadius: '999px',
+                      fontWeight: 700,
+                    }}
+                  >
                     {orders.length}
                   </span>
                 )}
               </button>
 
+              {/* Tab 3: Addresses */}
               <button
                 onClick={() => handleTabChange('addresses')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: currentTab === 'addresses' ? '#f3e8ff' : 'transparent',
-                  color: currentTab === 'addresses' ? '#6b21a8' : '#475569',
-                  fontWeight: currentTab === 'addresses' ? 700 : 500,
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`account-tab-btn ${currentTab === 'addresses' ? 'account-tab-active' : 'account-tab-inactive'}`}
               >
-                <MapPin size={18} color={currentTab === 'addresses' ? '#7c3aed' : '#64748b'} />
+                <MapPin size={18} color={currentTab === 'addresses' ? '#ffffff' : '#7c3aed'} />
                 <span>Saved Addresses</span>
               </button>
 
+              {/* Tab 4: Wishlist Link */}
               <Link
                 to="/wishlist"
+                className="account-tab-btn account-tab-inactive"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  color: '#475569',
-                  fontWeight: 500,
-                  fontSize: '0.92rem',
-                  textDecoration: 'none',
+                  border: '1.5px solid #e2e8f0',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Heart size={18} color="#ec4899" />
-                  <span>My Wishlist</span>
-                </div>
+                <Heart size={18} color="#ec4899" fill={wishlistItems.length > 0 ? '#ec4899' : 'none'} />
+                <span>My Wishlist</span>
                 {wishlistItems.length > 0 && (
-                  <span style={{ background: '#fce7f3', color: '#be185d', fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 700 }}>
+                  <span
+                    style={{
+                      background: '#fce7f3',
+                      color: '#be185d',
+                      fontSize: '0.74rem',
+                      padding: '0.15rem 0.55rem',
+                      borderRadius: '999px',
+                      fontWeight: 700,
+                    }}
+                  >
                     {wishlistItems.length}
                   </span>
                 )}
               </Link>
-
-              <div style={{ height: '1px', background: '#f1f5f9', margin: '0.4rem 0' }} />
-
-              <button
-                onClick={() => setLogoutModalOpen(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#ef4444',
-                  fontWeight: 600,
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <LogOut size={18} color="#ef4444" />
-                <span>Sign Out</span>
-              </button>
             </div>
+          </div>
 
-            {/* Right Main Content Pane */}
-            <div
-              style={{
-                background: '#ffffff',
-                borderRadius: '20px',
-                padding: 'clamp(1.5rem, 3vw, 2.25rem)',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                border: '1px solid #f1f5f9',
-                gridColumn: '2 / -1',
-              }}
-            >
+          {/* Main Tab Content Area */}
+          <div className="account-main-content" style={{ width: '100%' }}>
               {/* TAB 1: MY ORDERS */}
               {currentTab === 'orders' && (
-                <div>
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.94)',
+                    borderRadius: '24px',
+                    padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                    boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08)',
+                    border: '1.5px solid rgba(221, 214, 254, 0.75)',
+                  }}
+                >
                   <div style={{ marginBottom: '1.75rem' }}>
                     <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0 0 0.35rem' }}>My Orders</h2>
                     <p style={{ color: '#64748b', fontSize: '0.92rem', margin: 0 }}>
@@ -242,58 +387,55 @@ export default function Account() {
                         return (
                           <div
                             key={order._id}
-                            style={{
-                              border: '1.5px solid #e2e8f0',
-                              borderRadius: '16px',
-                              background: '#ffffff',
-                              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                              overflow: 'hidden',
-                              transition: 'all 0.2s ease',
-                            }}
+                            className="order-card-box"
                           >
                             {/* Card Header Bar */}
                             <div
                               style={{
-                                background: '#f8fafc',
+                                background: 'linear-gradient(135deg, #fbfaff 0%, #f8fafc 100%)',
                                 borderBottom: '1px solid #e2e8f0',
-                                padding: '1rem 1.25rem',
+                                padding: '1rem 1.35rem',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 flexWrap: 'wrap',
-                                gap: '0.75rem',
+                                gap: '0.85rem',
                               }}
                             >
-                              <div>
-                                <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a', display: 'block' }}>
-                                  Order #{order.orderNumber}
-                                </span>
-                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                                  Placed on {formatDate(order.createdAt)}
-                                </span>
-                              </div>
-
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <Badge status={order.status} />
-                                <Link
-                                  to={`/orders/${order._id}`}
-                                  className="btn btn-primary btn-sm"
+                                <div
                                   style={{
-                                    display: 'inline-flex',
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '12px',
+                                    background: '#f3e8ff',
+                                    display: 'flex',
                                     alignItems: 'center',
-                                    gap: '0.35rem',
-                                    fontSize: '0.82rem',
-                                    padding: '0.45rem 0.9rem',
-                                    borderRadius: '8px',
+                                    justifyContent: 'center',
+                                    color: '#7c3aed',
+                                    flexShrink: 0,
                                   }}
                                 >
-                                  <Search size={14} /> Track Order
-                                </Link>
+                                  <Package size={20} />
+                                </div>
+                                <div>
+                                  <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
+                                    Order #{order.orderNumber}
+                                  </span>
+                                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                    Placed on {formatDate(order.createdAt)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Prominent, Uncluttered Status Badge */}
+                              <div>
+                                <Badge status={order.status} />
                               </div>
                             </div>
 
                             {/* Card Items Body */}
-                            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ padding: '1.25rem 1.35rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               {order.items?.map((item, idx) => (
                                 <div
                                   key={idx}
@@ -309,19 +451,20 @@ export default function Account() {
                                     src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=160'}
                                     alt={item.name}
                                     style={{
-                                      width: '56px',
-                                      height: '56px',
-                                      borderRadius: '10px',
+                                      width: '60px',
+                                      height: '60px',
+                                      borderRadius: '12px',
                                       objectFit: 'cover',
-                                      border: '1px solid #e2e8f0',
+                                      border: '1.5px solid #ede9fe',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                                       flexShrink: 0,
                                     }}
                                   />
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <h4
                                       style={{
-                                        margin: '0 0 0.25rem',
-                                        fontSize: '0.92rem',
+                                        margin: '0 0 0.35rem',
+                                        fontSize: '0.94rem',
                                         color: '#0f172a',
                                         fontWeight: 600,
                                         lineHeight: 1.4,
@@ -329,10 +472,24 @@ export default function Account() {
                                     >
                                       {item.name}
                                     </h4>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.82rem', color: '#64748b' }}>
-                                      <span>Quantity: <strong style={{ color: '#334155' }}>{item.quantity}</strong></span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                                      <span
+                                        style={{
+                                          background: '#f8fafc',
+                                          border: '1px solid #e2e8f0',
+                                          color: '#475569',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 600,
+                                          padding: '0.15rem 0.55rem',
+                                          borderRadius: '6px',
+                                        }}
+                                      >
+                                        Qty: {item.quantity}
+                                      </span>
                                       {item.price && (
-                                        <span>• Price: <strong style={{ color: '#334155' }}>{formatPrice(item.price)}</strong></span>
+                                        <span style={{ color: '#7c3aed', fontWeight: 700, fontSize: '0.92rem' }}>
+                                          {formatPrice(item.price)}
+                                        </span>
                                       )}
                                     </div>
                                   </div>
@@ -340,32 +497,47 @@ export default function Account() {
                               ))}
                             </div>
 
-                            {/* Card Footer Bar */}
+                            {/* Card Footer Bar - With Track Order on the Right */}
                             <div
                               style={{
-                                background: '#faf5ff',
+                                background: 'linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%)',
                                 borderTop: '1px solid #ede9fe',
-                                padding: '0.85rem 1.25rem',
+                                padding: '1rem 1.35rem',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 flexWrap: 'wrap',
-                                gap: '0.5rem',
+                                gap: '0.85rem',
                               }}
                             >
-                              <div style={{ fontSize: '0.88rem', color: '#475569' }}>
-                                Total Paid: <strong style={{ color: '#0f172a', fontSize: '1rem' }}>{totalFormatted}</strong>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                                <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+                                  Total Paid:{' '}
+                                  <strong style={{ color: '#0f172a', fontSize: '1.15rem', fontWeight: 800, marginLeft: '0.2rem' }}>
+                                    {totalFormatted}
+                                  </strong>
+                                </div>
+
+                                {order.trackingId ? (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6d28d9', background: '#ede9fe', border: '1px solid #ddd6fe', padding: '0.25rem 0.65rem', borderRadius: '8px', fontWeight: 600 }}>
+                                    🚚 {order.courier || 'Express'}: {order.trackingId}
+                                  </div>
+                                ) : (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '8px', fontWeight: 600 }}>
+                                    ✓ 100% Prepaid Verified
+                                  </span>
+                                )}
                               </div>
 
-                              {order.trackingId ? (
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6d28d9', background: '#ede9fe', padding: '0.25rem 0.65rem', borderRadius: '6px', fontWeight: 600 }}>
-                                  🚚 {order.courier || 'Express'}: {order.trackingId}
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
-                                  ✓ 100% Prepaid Verified
-                                </span>
-                              )}
+                              {/* Right: Prominent Track Order Button */}
+                              <Link
+                                to={`/orders/${order._id}`}
+                                className="order-track-btn"
+                              >
+                                <Search size={15} strokeWidth={2.5} />
+                                <span>Track Order</span>
+                                <span style={{ fontSize: '0.95rem', marginLeft: '0.1rem' }}>→</span>
+                              </Link>
                             </div>
                           </div>
                         );
@@ -376,11 +548,22 @@ export default function Account() {
               )}
 
               {/* TAB 3: PROFILE */}
-              {currentTab === 'profile' && <AccountProfile />}
+              {currentTab === 'profile' && (
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.94)',
+                    borderRadius: '24px',
+                    padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                    boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08)',
+                    border: '1.5px solid rgba(221, 214, 254, 0.75)',
+                  }}
+                >
+                  <AccountProfile />
+                </div>
+              )}
 
               {/* TAB 4: ADDRESSES */}
               {currentTab === 'addresses' && <AccountAddresses />}
-            </div>
           </div>
         </div>
       </div>

@@ -5,7 +5,18 @@ import { authService } from '../../../services/auth.service';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
-import { MapPin, Plus, Trash2, CheckCircle2, Home, Building } from 'lucide-react';
+import {
+  MapPin,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Compass,
+  Smartphone,
+  Zap,
+  Truck,
+  ShieldCheck,
+} from 'lucide-react';
+import styles from './AccountAddresses.module.css';
 
 const STORAGE_KEY = 'picky-saved-addresses';
 
@@ -54,6 +65,13 @@ export default function AccountAddresses() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     } catch (_) {}
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'A';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
   const handleOpenAdd = () => {
@@ -135,172 +153,135 @@ export default function AccountAddresses() {
         },
       }).catch(() => null);
     }
-    showToast('Default delivery address updated', 'success');
+    showToast('Primary delivery address updated', 'success');
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0 0 0.35rem' }}>Address Book</h2>
-          <p style={{ color: '#64748b', fontSize: '0.92rem', margin: 0 }}>
-            Saved delivery locations for faster 1-click checkout.
+    <div className={styles.container}>
+      {/* ── 1. Hero Showcase Banner (With 3D Background Image) ── */}
+      <div className={styles.heroBanner}>
+        <div className={styles.heroContent}>
+          <div className={styles.heroBadge}>
+            <MapPin size={13} /> Delivery Addresses
+          </div>
+          <h2 className={styles.heroTitle}>Saved Addresses</h2>
+          <p className={styles.heroSubtitle}>
+            Manage your delivery locations for fast, hassle-free doorstep delivery.
           </p>
         </div>
-        <Button
-          onClick={handleOpenAdd}
-          variant="primary"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.65rem 1.25rem' }}
-        >
-          <Plus size={16} /> Add New Address
-        </Button>
+
+        <div className={styles.heroStatusCard}>
+          <span className={styles.pulseDot} />
+          <div>
+            <div className={styles.statusLabel}>Saved Locations</div>
+            <div className={styles.statusVal}>
+              {addresses.length} {addresses.length === 1 ? 'Address Saved' : 'Addresses Saved'}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {addresses.length === 0 ? (
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '2px dashed #e2e8f0',
-            padding: '3rem 2rem',
-            textAlign: 'center',
-          }}
-        >
+      {/* ── 2. Cards Grid ── */}
+      <div className={styles.grid}>
+        {addresses.map((addr) => (
           <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              background: '#faf5ff',
-              color: '#7c3aed',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '1rem',
-            }}
+            key={addr.id}
+            className={`${styles.addressCard} ${addr.isDefault ? styles.isDefault : styles.notDefault}`}
           >
-            <MapPin size={26} />
-          </div>
-          <h4 style={{ margin: '0 0 0.35rem', fontSize: '1.15rem', color: '#0f172a' }}>No addresses saved yet</h4>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '380px', margin: '0 auto 1.5rem' }}>
-            Add your shipping address so you don&rsquo;t have to type it every time you order festival items.
-          </p>
-          <Button onClick={handleOpenAdd} variant="primary" style={{ padding: '0.65rem 1.25rem' }}>
-            + Add First Address
-          </Button>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
-          {addresses.map((addr) => (
-            <div
-              key={addr.id}
-              style={{
-                background: '#ffffff',
-                borderRadius: '16px',
-                border: addr.isDefault ? '2px solid #7c3aed' : '1px solid #e2e8f0',
-                padding: '1.5rem',
-                boxShadow: addr.isDefault ? '0 8px 24px rgba(124, 58, 237, 0.1)' : '0 2px 8px rgba(0,0,0,0.02)',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.05rem' }}>
-                    {addr.fullName || 'Receiver'}
-                  </span>
-                  {addr.isDefault && (
-                    <span
-                      style={{
-                        background: '#f3e8ff',
-                        color: '#7c3aed',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '20px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      Default
-                    </span>
-                  )}
+            <div>
+              {/* Card Top: Recipient Avatar, Name & Pincode Stamp */}
+              <div className={styles.cardTop}>
+                <div className={styles.recipientGroup}>
+                  <div className={styles.avatarCircle}>
+                    {getInitials(addr.fullName)}
+                  </div>
+                  <div>
+                    <h4 className={styles.recipientName}>{addr.fullName || 'Receiver'}</h4>
+                    {addr.isDefault && (
+                      <span className={styles.primaryPill} style={{ marginTop: '0.25rem' }}>
+                        <CheckCircle2 size={11} /> Primary
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <p style={{ color: '#475569', fontSize: '0.9rem', margin: '0 0 0.5rem', lineHeight: 1.5 }}>
-                  {addr.street}
-                  {addr.landmark && `, near ${addr.landmark}`}
-                  <br />
-                  {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
+                {addr.pincode && (
+                  <span className={styles.pincodeStamp}>
+                    PIN • {addr.pincode}
+                  </span>
+                )}
+              </div>
+
+              {/* Address Details */}
+              <div className={styles.addressDetails}>
+                <p className={styles.addressRow}>
+                  <MapPin size={16} className={styles.addressIcon} />
+                  <span>
+                    {addr.street}
+                    {addr.landmark && `, near ${addr.landmark}`}
+                    <br />
+                    {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
+                  </span>
                 </p>
 
                 {addr.phone && (
-                  <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>
-                    📱 Phone: {addr.phone}
-                  </p>
+                  <div className={styles.phoneChip}>
+                    <Smartphone size={13} style={{ color: '#7c3aed' }} />
+                    <span>{addr.phone}</span>
+                  </div>
                 )}
-              </div>
-
-              <div
-                style={{
-                  borderTop: '1px solid #f1f5f9',
-                  paddingTop: '0.85rem',
-                  marginTop: '1rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                {!addr.isDefault ? (
-                  <button
-                    onClick={() => handleSetDefault(addr.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#7c3aed',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  >
-                    Set as Default
-                  </button>
-                ) : (
-                  <span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <CheckCircle2 size={13} /> Active Default
-                  </span>
-                )}
-
-                <button
-                  onClick={() => handleDeleteAddress(addr.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    padding: '0.2rem',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                  title="Delete address"
-                >
-                  <Trash2 size={16} />
-                </button>
               </div>
             </div>
-          ))}
+
+            {/* Card Footer: Status & Actions */}
+            <div className={styles.cardFooter}>
+              {!addr.isDefault ? (
+                <button
+                  type="button"
+                  onClick={() => handleSetDefault(addr.id)}
+                  className={styles.setPrimaryBtn}
+                >
+                  Set as Primary
+                </button>
+              ) : (
+                <span className={styles.primaryStatusText}>
+                  <CheckCircle2 size={13} /> Active Primary
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleDeleteAddress(addr.id)}
+                className={styles.deleteBtn}
+                title="Delete address"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Add Address Card Box */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleOpenAdd}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenAdd()}
+          className={styles.addCard}
+        >
+          <div className={styles.addCardPortal}>
+            <Plus size={28} />
+          </div>
+          <span className={styles.addCardTitle}>+ Add New Address</span>
+          <span className={styles.addCardSubtitle}>Click to add a new home, office, or alternate delivery address</span>
         </div>
-      )}
+      </div>
 
       {/* Add Address Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Delivery Address">
         <form onSubmit={handleAddAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Input
-            label="Recipient Full Name *"
+            label="Recipient Full Name"
             value={newAddr.fullName}
             onChange={(e) => setNewAddr({ ...newAddr, fullName: e.target.value })}
             placeholder="Name of person receiving order"
@@ -308,7 +289,7 @@ export default function AccountAddresses() {
           />
 
           <Input
-            label="Phone Number *"
+            label="Phone Number"
             value={newAddr.phone}
             onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
             placeholder="10-digit mobile number"
@@ -317,7 +298,7 @@ export default function AccountAddresses() {
           />
 
           <Input
-            label="Door / Flat / House No, Street Address *"
+            label="Door / Flat / House No, Street Address"
             value={newAddr.street}
             onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
             placeholder="e.g. 14/2, Anna Street, Gandhi Nagar"
@@ -333,14 +314,14 @@ export default function AccountAddresses() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <Input
-              label="City / Town *"
+              label="City / Town"
               value={newAddr.city}
               onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
               placeholder="e.g. Chennai / Madurai"
               required
             />
             <Input
-              label="PIN Code *"
+              label="PIN Code"
               value={newAddr.pincode}
               onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
               placeholder="6-digit PIN"
@@ -350,7 +331,7 @@ export default function AccountAddresses() {
           </div>
 
           <Input
-            label="State *"
+            label="State"
             value={newAddr.state}
             onChange={(e) => setNewAddr({ ...newAddr, state: e.target.value })}
             placeholder="State"
@@ -364,7 +345,7 @@ export default function AccountAddresses() {
               onChange={(e) => setNewAddr({ ...newAddr, isDefault: e.target.checked })}
               style={{ accentColor: '#7c3aed', width: 16, height: 16 }}
             />
-            <span>Set as my default shipping address</span>
+            <span>Set as my primary shipping address</span>
           </label>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
