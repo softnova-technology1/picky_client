@@ -19,7 +19,8 @@ import {
   MonitorPlay,
   MessageCircle,
   CheckCircle2,
-  Send
+  Send,
+  Star
 } from 'lucide-react';
 
 export default function Contact() {
@@ -254,19 +255,22 @@ export default function Contact() {
                 ></iframe>
                 {/* Floating Info Card */}
                 <div className="k-map-card">
-                  <h4>Ktchen Showroom</h4>
-                  <p>London Eye, London, UK</p>
+                  <h4>Picky Experience Center</h4>
+                  <p>Usman Road, T. Nagar, Chennai, Tamil Nadu</p>
                   <div className="k-map-rating">
-                    <span>4.8</span>
-                    <div className="k-stars">★★★★★</div>
-                    <span className="k-reviews">(1,245 reviews)</span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
+                      ))}
+                    </div>
+                    <span>4.9</span>
                   </div>
                   <a 
-                    href="https://maps.google.com/?q=London+Eye+London+UK" 
+                    href="https://maps.google.com/?q=T+Nagar+Chennai+Tamil+Nadu" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
-                    View larger map
+                    View on Google Maps ↗
                   </a>
                 </div>
               </div>

@@ -8,6 +8,8 @@ import {
   MOCK_COUPONS,
 } from './adminMockData';
 
+export * from './reviewsData';
+
 // Re-export synchronized collections
 export const categories = MOCK_CATEGORIES;
 export const products = MOCK_PRODUCTS;

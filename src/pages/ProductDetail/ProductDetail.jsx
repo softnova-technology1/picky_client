@@ -9,9 +9,10 @@ import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
-import { getProductBySlug, getProducts } from '../../data';
+import { getProductBySlug, getProducts, getProductReviews } from '../../data';
 import styles from './ProductDetail.module.css';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
+import DeliveryOptions from '../../components/product/DeliveryOptions';
 import {
   ArrowRight,
   ShoppingCart,
@@ -20,7 +21,9 @@ import {
   RotateCcw,
   ShieldCheck,
   Star,
-  Zap
+  Zap,
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 
 export default function ProductDetail() {
@@ -31,6 +34,10 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('M');
   const [activeDetailTab, setActiveDetailTab] = useState('description');
+
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const productReviews = useMemo(() => getProductReviews(product), [product]);
 
   const { addItem } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
@@ -126,12 +133,18 @@ export default function ProductDetail() {
     showToast(`Added ${quantity} × "${product.name}" (${selectedSize}) to your bag!`, 'success');
   };
 
+  const handleBuyNow = () => {
+    addItem({ ...product, selectedSize }, quantity);
+    navigate('/checkout');
+  };
+
   const currentPrice = product.discountPrice || product.price || 2499;
   const originalPrice = product.price ? product.price + 1000 : 3499;
   const hasDiscount = true;
   const percentageOff = product.discountPrice
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 20;
+  const savingsAmount = originalPrice - currentPrice;
 
   return (
     <PageWrapper>
@@ -140,20 +153,41 @@ export default function ProductDetail() {
           {/* Main Target Showcase Card */}
           <div className={styles['showcase-card']}>
             <div className={styles['showcase-grid']}>
-              {/* Left Column: Gallery (Vertical Thumbnails + Main Hero Image + Script Overlay) */}
+              {/* Left Column: Gallery with Floating Wishlist */}
               <div>
                 <Gallery
                   images={product.images || [product.image]}
                   productName={product.name}
+                  inWishlist={inWishlist}
+                  onToggleWishlist={handleToggleWishlist}
                 />
               </div>
 
-              {/* Right Column: Product Details & Controls (Matching Image 1 Exactly) */}
+              {/* Right Column: Product Details & Controls */}
               <div className={styles['details-col']}>
-                {/* Category Breadcrumb */}
-                <div className={styles['category-tag']}>
-                  {product.category?.name || 'WOMEN'} / {product.subCategory?.name || 'KURTAS'}
-                </div>
+                {/* ── Clickable Multi-Level Breadcrumb Nav (Item 9) ── */}
+                <nav className={styles['breadcrumb-nav']} aria-label="Breadcrumb">
+                  <Link to="/" className={styles['breadcrumb-link']}>Home</Link>
+                  <span className={styles['breadcrumb-sep']}>/</span>
+                  <Link to="/products" className={styles['breadcrumb-link']}>Products</Link>
+                  {product.category?.name && (
+                    <>
+                      <span className={styles['breadcrumb-sep']}>/</span>
+                      <Link
+                        to={`/products?category=${product.category?.slug || ''}`}
+                        className={styles['breadcrumb-link']}
+                      >
+                        {product.category.name}
+                      </Link>
+                    </>
+                  )}
+                  {product.subCategory?.name && (
+                    <>
+                      <span className={styles['breadcrumb-sep']}>/</span>
+                      <span className={styles['breadcrumb-sub']}>{product.subCategory.name}</span>
+                    </>
+                  )}
+                </nav>
 
                 {/* Main Product Title */}
                 <h1 className={styles['product-title']}>
@@ -165,8 +199,67 @@ export default function ProductDetail() {
                   A contemporary take on traditional craftsmanship.
                 </p>
 
-                {/* Pricing & Rating Row */}
-                <div className={styles['price-rating-row']}>
+                {/* Product Metadata & Trust Bar (Rating, Urgency Stock, Clickable Authentic Tag) */}
+                <div className={styles['product-meta-bar']}>
+                  <div className={styles['rating-block']}>
+                    <div className={styles['stars']}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
+                      ))}
+                    </div>
+                    <span className={styles['rating-num']}>
+                      {product.rating ? Number(product.rating).toFixed(1) : '4.8'}
+                    </span>
+                  </div>
+
+                  {/* Scarcity Messaging (Item 4) */}
+                  {product.stock !== undefined ? (
+                    <span
+                      className={`${styles['stock-pill']} ${
+                        product.stock > 0
+                          ? product.stock <= 5
+                            ? styles['critical-stock']
+                            : product.stock <= 10
+                            ? styles['low-stock']
+                            : styles['in-stock']
+                          : styles['out-of-stock']
+                      }`}
+                    >
+                      <span
+                        className={`${styles['stock-dot']} ${
+                          product.stock > 0 && product.stock <= 10 ? styles['pulse'] : ''
+                        }`}
+                      />
+                      {product.stock > 0
+                        ? product.stock <= 5
+                          ? `Only ${product.stock} left in stock!`
+                          : product.stock <= 10
+                          ? `Only ${product.stock} left in stock`
+                          : 'In Stock'
+                        : 'Out of Stock'}
+                    </span>
+                  ) : (
+                    <span className={`${styles['stock-pill']} ${styles['in-stock']}`}>
+                      <span className={styles['stock-dot']} />
+                      In Stock
+                    </span>
+                  )}
+
+                  {/* Clickable 100% Authentic Badge (Item 8) */}
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(true)}
+                    className={styles['meta-tag-pill']}
+                    title="Click to view authenticity certification & guarantees"
+                  >
+                    <ShieldCheck size={14} color="#7c3aed" />
+                    <span>100% Authentic</span>
+                    <Info size={12} color="#7c3aed" />
+                  </button>
+                </div>
+
+                {/* Clean Dedicated Luxury Price Row with Concrete Savings (Item 1) */}
+                <div className={styles['price-row']}>
                   <span className={styles['main-price']}>
                     ₹{currentPrice.toLocaleString('en-IN')}
                   </span>
@@ -176,23 +269,10 @@ export default function ProductDetail() {
                         ₹{originalPrice.toLocaleString('en-IN')}
                       </span>
                       <span className={styles['discount-pill']}>
-                        {percentageOff}% OFF
+                        Save ₹{savingsAmount.toLocaleString('en-IN')} ({percentageOff}% OFF)
                       </span>
                     </>
                   )}
-
-                  <div className={styles['rating-block']}>
-                    <div className={styles['stars']}>
-                      <Star size={14} fill="#d9a04a" color="#d9a04a" />
-                      <Star size={14} fill="#d9a04a" color="#d9a04a" />
-                      <Star size={14} fill="#d9a04a" color="#d9a04a" />
-                      <Star size={14} fill="#d9a04a" color="#d9a04a" />
-                      <Star size={14} fill="#d9a04a" color="#d9a04a" />
-                    </div>
-                    <span>4.8</span>
-                    <span style={{ opacity: 0.5 }}>|</span>
-                    <span>128 Reviews</span>
-                  </div>
                 </div>
 
                 <div className={styles['section-divider']} />
@@ -241,37 +321,30 @@ export default function ProductDetail() {
                   </div>
                 </div>
 
-                {/* Action Buttons Row */}
+                {/* Action Buttons Row: [ ADD TO CART ] and [ BUY NOW ] Side-by-Side */}
                 <div className={styles['action-row']}>
-                  <button onClick={handleAddToCart} className={styles['btn-add-bag']}>
-                    <div className={styles['btn-icon-bubble-left']}>
-                      <ShoppingCart size={20} color="#ffffff" />
-                    </div>
-                    <div className={styles['btn-divider']} />
-                    <span className={styles['btn-title']}>ADD TO BAG</span>
-                    <div className={styles['btn-icon-bubble-right']}>
-                      <ArrowRight size={20} color="#ffffff" />
-                    </div>
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className={styles['btn-add-cart-outline']}
+                    title="Add item to your shopping bag"
+                  >
+                    <ShoppingCart size={19} strokeWidth={2.2} />
+                    <span>ADD TO CART</span>
                   </button>
 
                   <button
-                    onClick={handleToggleWishlist}
-                    className={`${styles['btn-save-wishlist']} ${
-                      inWishlist ? styles['active'] : ''
-                    }`}
+                    type="button"
+                    onClick={handleBuyNow}
+                    className={styles['btn-buy-now-solid']}
+                    title="Proceed directly to checkout"
                   >
-                    <div className={styles['btn-save-bubble']}>
-                      <Heart
-                        size={20}
-                        fill={inWishlist ? '#e11d48' : 'transparent'}
-                        color={inWishlist ? '#e11d48' : '#e11d48'}
-                        strokeWidth={2.2}
-                      />
-                    </div>
-                    <div className={styles['btn-save-divider']} />
-                    <span className={styles['btn-save-title']}>SAVE</span>
+                    <span>BUY NOW</span>
                   </button>
                 </div>
+
+                {/* Delivery Options & Pincode Checker (Matching Images 2 & 3) */}
+                <DeliveryOptions />
 
                 {/* Trust Features Strip */}
                 <div className={styles['trust-strip']}>
@@ -329,7 +402,7 @@ export default function ProductDetail() {
                     activeDetailTab === 'reviews' ? styles['active'] : ''
                   }`}
                 >
-                  Reviews
+                  Rating &amp; Reviews
                 </button>
               </div>
             </div>
@@ -428,151 +501,180 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Tab 3: Reviews Panel (Matching Image 2) */}
+              {/* Tab 3: Rating & Reviews Panel */}
               {activeDetailTab === 'reviews' && (
-                <div className={styles['reviews-grid-container']}>
-                  {/* Left Column: Rating Details & Write Review CTA */}
-                  <div className={styles['rating-details-col']}>
-                    <h3 className={styles['reviews-section-title']}>Rating Details</h3>
+                <div style={{ maxWidth: '780px', margin: '0.5rem auto' }}>
+                  {/* Clean Top Rating Score Banner */}
+                  <div
+                    style={{
+                      maxWidth: '380px',
+                      margin: '0 auto 2rem',
+                      textAlign: 'center',
+                      padding: '1.75rem 1.5rem',
+                      background: '#f8fafc',
+                      borderRadius: '16px',
+                      border: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: '#7c3aed',
+                        background: '#f3e8ff',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '9999px',
+                        display: 'inline-block',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      Customer Rating
+                    </span>
 
-                    <div className={styles['rating-bars-list']}>
-                      <div className={styles['rating-bar-row']}>
-                        <span className={styles['rating-star-num']}>5</span>
-                        <div className={styles['progress-track']}>
-                          <div className={styles['progress-fill']} style={{ width: '82%' }} />
-                        </div>
-                        <span className={styles['rating-percent-val']}>82%</span>
-                      </div>
-
-                      <div className={styles['rating-bar-row']}>
-                        <span className={styles['rating-star-num']}>4</span>
-                        <div className={styles['progress-track']}>
-                          <div className={styles['progress-fill']} style={{ width: '12%' }} />
-                        </div>
-                        <span className={styles['rating-percent-val']}>12%</span>
-                      </div>
-
-                      <div className={styles['rating-bar-row']}>
-                        <span className={styles['rating-star-num']}>3</span>
-                        <div className={styles['progress-track']}>
-                          <div className={styles['progress-fill']} style={{ width: '4%' }} />
-                        </div>
-                        <span className={styles['rating-percent-val']}>4%</span>
-                      </div>
-
-                      <div className={styles['rating-bar-row']}>
-                        <span className={styles['rating-star-num']}>2</span>
-                        <div className={styles['progress-track']}>
-                          <div className={styles['progress-fill']} style={{ width: '1%' }} />
-                        </div>
-                        <span className={styles['rating-percent-val']}>1%</span>
-                      </div>
-
-                      <div className={styles['rating-bar-row']}>
-                        <span className={styles['rating-star-num']}>1</span>
-                        <div className={styles['progress-track']}>
-                          <div className={styles['progress-fill']} style={{ width: '1%' }} />
-                        </div>
-                        <span className={styles['rating-percent-val']}>1%</span>
-                      </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        marginBottom: '0.5rem',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '3.4rem',
+                          fontWeight: 900,
+                          color: '#0f172a',
+                          lineHeight: 1,
+                          letterSpacing: '-0.03em',
+                        }}
+                      >
+                        {product.rating ? Number(product.rating).toFixed(1) : '4.8'}
+                      </span>
+                      <span style={{ fontSize: '1.35rem', fontWeight: 600, color: '#94a3b8' }}>
+                        / 5.0
+                      </span>
                     </div>
 
-                    <div className={styles['write-review-box']}>
-                      <p className={styles['write-review-prompt']}>
-                        Are you a customer? Share your experience with Picky Premium Store.
-                      </p>
-                      <button type="button" className={styles['btn-write-review']}>
-                        Write a Review
-                      </button>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.35rem' }}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={20} fill="#f59e0b" color="#f59e0b" />
+                      ))}
                     </div>
                   </div>
 
-                  {/* Right Column: Latest Customer Reviews */}
-                  <div className={styles['reviews-list-col']}>
-                    <div className={styles['reviews-header-row']}>
-                      <h3 className={styles['reviews-section-title']} style={{ margin: 0 }}>
-                        Latest Customer Reviews
-                      </h3>
-                      <div className={styles['reviews-header-right']}>
-                        <span className={styles['sort-text']}>Sort by: <strong>Most Recent</strong></span>
-                        <span className={styles['view-all-link']}>View All &rarr;</span>
-                      </div>
-                    </div>
+                  {/* Customer Reviews Section */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <h3
+                      style={{
+                        fontSize: '1.15rem',
+                        fontWeight: 800,
+                        color: '#0f172a',
+                        margin: '0 0 0.25rem 0',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      Verified Customer Reviews
+                    </h3>
 
-                    {/* Review Card 1 */}
-                    <div className={styles['review-card']}>
-                      <div className={styles['review-card-header']}>
-                        <div className={styles['reviewer-profile']}>
-                          <div className={styles['reviewer-avatar']}>SL</div>
-                          <div className={styles['reviewer-info']}>
-                            <span className={styles['reviewer-name']}>Sarah L.</span>
-                            <span className={styles['reviewer-verified']}>
-                              Verified Buyer &bull; October 12, 2025
-                            </span>
+                    {productReviews.map((rev) => (
+                      <div
+                        key={rev.id}
+                        style={{
+                          background: '#ffffff',
+                          borderRadius: '16px',
+                          border: '1px solid #e2e8f0',
+                          padding: '1.4rem 1.6rem',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            marginBottom: '0.85rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            {rev.avatar ? (
+                              <img
+                                src={rev.avatar}
+                                alt={rev.name}
+                                style={{
+                                  width: '42px',
+                                  height: '42px',
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                  border: '1.5px solid #f1f5f9',
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '42px',
+                                  height: '42px',
+                                  borderRadius: '50%',
+                                  background: '#f3e8ff',
+                                  color: '#7c3aed',
+                                  fontWeight: 800,
+                                  fontSize: '0.92rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                {rev.initials || rev.name.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>
+                                {rev.name}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: '0.78rem',
+                                  color: '#64748b',
+                                  marginTop: '2px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                }}
+                              >
+                                {rev.verified && (
+                                  <span style={{ color: '#16a34a', fontWeight: 600 }}>
+                                    Verified Buyer
+                                  </span>
+                                )}
+                                {rev.city && <span>• {rev.city}</span>}
+                                {rev.date && <span>• {rev.date}</span>}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '2px' }}>
+                            {[...Array(rev.rating || 5)].map((_, i) => (
+                              <Star key={i} size={15} fill="#f59e0b" color="#f59e0b" />
+                            ))}
                           </div>
                         </div>
 
-                        <div className={styles['review-stars']}>
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                        </div>
+                        <p
+                          style={{
+                            color: '#334155',
+                            fontSize: '0.92rem',
+                            lineHeight: 1.6,
+                            margin: '0',
+                            fontWeight: 400,
+                          }}
+                        >
+                          “{rev.comment}”
+                        </p>
                       </div>
-
-                      <p className={styles['review-text-content']}>
-                        &ldquo;Absolutely incredible! The quality exceeded my expectations and the delivery was super fast. Highly recommend.&rdquo;
-                      </p>
-
-                      <div className={styles['review-thumbnails-row']}>
-                        <img
-                          src={product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200'}
-                          alt="Review attachment"
-                          className={styles['review-thumb']}
-                        />
-                        <img
-                          src={product.images?.[1] || product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200'}
-                          alt="Review attachment"
-                          className={styles['review-thumb']}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Review Card 2 */}
-                    <div className={styles['review-card']}>
-                      <div className={styles['review-card-header']}>
-                        <div className={styles['reviewer-profile']}>
-                          <div className={styles['reviewer-avatar']} style={{ background: '#bfdbfe', color: '#1e40af' }}>MR</div>
-                          <div className={styles['reviewer-info']}>
-                            <span className={styles['reviewer-name']}>Michael R.</span>
-                            <span className={styles['reviewer-verified']}>
-                              Verified Buyer &bull; September 28, 2025
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className={styles['review-stars']}>
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                          <Star size={14} fill="#f59e0b" color="#f59e0b" />
-                        </div>
-                      </div>
-
-                      <p className={styles['review-text-content']}>
-                        &ldquo;A premium product through and through. The detailing is perfect and it feels extremely durable in hand.&rdquo;
-                      </p>
-
-                      <div className={styles['review-thumbnails-row']}>
-                        <img
-                          src={product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200'}
-                          alt="Review attachment"
-                          className={styles['review-thumb']}
-                        />
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -602,8 +704,71 @@ export default function ProductDetail() {
             </div>
           </div>
         )}
+
+        {/* ── 100% Authenticity Guarantee Modal (Item 8) ── */}
+        {showAuthModal && (
+          <div className={styles['auth-modal-overlay']} onClick={() => setShowAuthModal(false)}>
+            <div className={styles['auth-modal-card']} onClick={(e) => e.stopPropagation()}>
+              <div className={styles['auth-modal-header']}>
+                <div className={styles['auth-modal-title-wrap']}>
+                  <ShieldCheck size={26} color="#7c3aed" />
+                  <h3 className={styles['auth-modal-title']}>100% Authenticity Guarantee</h3>
+                </div>
+                <button
+                  onClick={() => setShowAuthModal(false)}
+                  className={styles['auth-modal-close']}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={styles['auth-modal-body']}>
+                <div className={styles['auth-feature-item']}>
+                  <div className={styles['auth-feature-badge']}>✓</div>
+                  <div className={styles['auth-feature-content']}>
+                    <strong>Direct Artisan & Certified Brand Sourcing</strong>
+                    <p>Every product is sourced directly from verified master weavers, registered artisans, and authorized manufacturer hubs across India.</p>
+                  </div>
+                </div>
+
+                <div className={styles['auth-feature-item']}>
+                  <div className={styles['auth-feature-badge']}>✓</div>
+                  <div className={styles['auth-feature-content']}>
+                    <strong>3-Tier Quality Inspection</strong>
+                    <p>Rigorous physical verification of raw materials, weave strength, stitching, color-fastness, and finishing standards before packaging.</p>
+                  </div>
+                </div>
+
+                <div className={styles['auth-feature-item']}>
+                  <div className={styles['auth-feature-badge']}>✓</div>
+                  <div className={styles['auth-feature-content']}>
+                    <strong>Tamper-Evident Packaging</strong>
+                    <p>Packaged in specialized security-sealed bags with unique QC batch seals to ensure zero transit tampering.</p>
+                  </div>
+                </div>
+
+                <div className={styles['auth-feature-item']}>
+                  <div className={styles['auth-feature-badge']}>✓</div>
+                  <div className={styles['auth-feature-content']}>
+                    <strong>7-Day Doorstep Replacement / Refund</strong>
+                    <p>If you find any deviation from the promised quality or authenticity, claim an instant doorstep pickup with 100% full refund.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles['auth-modal-footer']}>
+                <button
+                  onClick={() => setShowAuthModal(false)}
+                  className={styles['auth-modal-btn']}
+                >
+                  Close & Continue Shopping
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>{/* end .product-detail-wrapper */}
     </PageWrapper>
-
   );
 }

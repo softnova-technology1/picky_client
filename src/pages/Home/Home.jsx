@@ -5,7 +5,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import ProductGrid from '../../components/product/ProductGrid';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
-import { promoOffer, categories, valuePropositions, products as fallbackProducts } from '../../data';
+import { promoOffer, categories, valuePropositions, products as fallbackProducts, REVIEWS_DATA } from '../../data';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
@@ -654,39 +654,14 @@ export default function Home() {
           </div>
 
           <div className="hp-reviews-grid">
-            {[
-              {
-                name: 'Priya Sharma',
-                city: 'Chennai',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-                review: 'Absolutely stunning quality! The packaging was exquisite and the pure cotton Madurai Sungudi Saree exceeded all my expectations. Will definitely order again.',
-                item: 'Pure Cotton Madurai Saree',
-                date: '2 days ago',
-              },
-              {
-                name: 'Rahul Mehta',
-                city: 'Bengaluru',
-                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-                review: 'Fast delivery across state lines! The Studio Pro Wireless ANC Headphones deliver crisp, high-fidelity acoustics. Truly premium experience from start to finish.',
-                item: 'Studio Pro ANC Headphones',
-                date: '1 week ago',
-              },
-              {
-                name: 'Anita Krishnan',
-                city: 'Mumbai',
-                avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-                review: 'The Antique Matte Gold Temple Choker is breathtaking! The craftsmanship is unmatched, and I received endless compliments at the festive gathering.',
-                item: 'Temple Choker Necklace Set',
-                date: '3 days ago',
-              },
-            ].map((rev, idx) => (
-              <FadeUp key={idx} delay={150 + idx * 100}>
+            {REVIEWS_DATA.slice(0, 3).map((rev, idx) => (
+              <FadeUp key={rev.id || idx} delay={150 + idx * 100}>
                 <div className="hp-review-card">
                   <div className="hp-review-watermark">“</div>
                   
                   <div className="hp-review-card-top">
                     <div className="hp-review-stars">
-                      {[...Array(5)].map((_, i) => (
+                      {[...Array(rev.rating || 5)].map((_, i) => (
                         <Star key={i} size={16} fill="#f59e0b" color="#f59e0b" />
                       ))}
                     </div>
@@ -695,13 +670,13 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <p className="hp-review-text">"{rev.review}"</p>
+                  <p className="hp-review-text">"{rev.comment}"</p>
 
                   <div className="hp-review-footer">
                     <img src={rev.avatar} alt={rev.name} className="hp-review-avatar" />
                     <div className="hp-review-user-info">
                       <h4 className="hp-review-user-name">{rev.name}</h4>
-                      <span className="hp-review-user-meta">{rev.city} • Purchased {rev.item}</span>
+                      <span className="hp-review-user-meta">{rev.city} • Purchased {rev.productName}</span>
                     </div>
                   </div>
                 </div>

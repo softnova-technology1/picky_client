@@ -1,43 +1,41 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import styles from '../../About.module.css';
+import { REVIEWS_DATA } from '../../../../data/reviewsData';
 
 export default function AboutReviewsSection() {
+  // Select 4 rich Indian customer reviews from centralized dataset
   const testimonials = [
     {
-      id: 'test-1',
-      name: 'Saanchi Singhvi',
+      id: REVIEWS_DATA[0].id,
+      name: `${REVIEWS_DATA[0].name} (${REVIEWS_DATA[0].city.split(',')[0]})`,
       rating: 5,
-      quote:
-        'You welcomed my shy daughter into your classroom with such warmth. Thanks to your gentle guidance, she\'s now making friends, speaking up, and loving school every day.',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      quote: REVIEWS_DATA[0].comment,
+      avatar: REVIEWS_DATA[0].avatar,
       avatarPosition: 'left',
     },
     {
-      id: 'test-2',
-      name: 'Ansh Suvarna',
+      id: REVIEWS_DATA[2].id,
+      name: `${REVIEWS_DATA[2].name} (${REVIEWS_DATA[2].city.split(',')[0]})`,
       rating: 5,
-      quote:
-        'Our son cried a little on his first day, but soon he was thriving—he loves school. Your dedication truly sets the tone for his love of learning.',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+      quote: REVIEWS_DATA[2].comment,
+      avatar: REVIEWS_DATA[2].avatar,
       avatarPosition: 'right',
     },
     {
-      id: 'test-3',
-      name: 'Adyan Shoeb',
+      id: REVIEWS_DATA[1].id,
+      name: `${REVIEWS_DATA[1].name} (${REVIEWS_DATA[1].city.split(',')[0]})`,
       rating: 5,
-      quote:
-        'Our child has blossomed in your Pre-KG class—her drawings are now vibrant and detailed, he confidently writes his name and simple words, and excitedly narrates his creations at home. Thank you for nurturing her creativity and expression',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+      quote: REVIEWS_DATA[1].comment,
+      avatar: REVIEWS_DATA[1].avatar,
       avatarPosition: 'left',
     },
     {
-      id: 'test-4',
-      name: 'Vinayak Sivagurunathan',
+      id: REVIEWS_DATA[3].id,
+      name: `${REVIEWS_DATA[3].name} (${REVIEWS_DATA[3].city.split(',')[0]})`,
       rating: 5,
-      quote:
-        'Our son has started loving numbers and developed interest in Mathematics due to your positive reinforcement and encouragement.',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+      quote: REVIEWS_DATA[3].comment,
+      avatar: REVIEWS_DATA[3].avatar,
       avatarPosition: 'right',
     },
   ];

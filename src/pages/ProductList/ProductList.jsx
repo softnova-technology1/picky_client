@@ -560,7 +560,7 @@ export default function ProductList() {
                     style={{
                       display: 'grid',
                       gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
-                      gap: '1.5rem',
+                      gap: '2.25rem 1.35rem',
                     }}
                   >
                     {visibleProducts.map((product, idx) => {
