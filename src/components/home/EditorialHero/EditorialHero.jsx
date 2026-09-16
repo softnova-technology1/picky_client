@@ -1,490 +1,374 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, ChevronRight, Sparkles, ShieldCheck, Truck, Lock, CheckCircle2 } from 'lucide-react';
-
-const EDITORIAL_SLIDES = [
-  {
-    id: 'slide_1',
-    eyebrow: 'NEW COLLECTION 2026',
-    titleLine1: 'Made to',
-    titleAccent: 'Belong.',
-    subtitle: 'Discover thoughtfully selected products that bring timeless character and contemporary style into everyday life.',
-    primaryCtaText: 'SHOP COLLECTION',
-    primaryCtaLink: '/categories/womens-fashion',
-    secondaryCtaText: 'EXPLORE PRODUCTS',
-    secondaryCtaLink: '/categories',
-    giantText: 'BELONG',
-    productImage: '/images/products/saree.png',
-    secondaryCutoutImage: '/images/products/gold_ring.png',
-    secondaryCutoutLabel: '22K Gold Accent',
-    productAlt: 'Pure Cotton Handloom Madurai Sungudi Saree',
-    cardLabel: 'FEATURED PICK',
-    cardTitle: 'Handcrafted Sungudi Saree',
-    cardPrice: '₹1,299',
-    cardOriginalPrice: '₹1,899',
-    cardRating: 4.8,
-    cardReviews: 168,
-    cardBadge: '100% PURE COTTON',
-    cardLink: '/products/pure-cotton-handloom-madurai-sungudi-saree',
-    tags: ['Handcrafted', 'Madurai Zari', '100% Combed Cotton'],
-  },
-  {
-    id: 'slide_2',
-    eyebrow: 'TIMELESS DETAILS 2026',
-    titleLine1: 'Crafted With',
-    titleAccent: 'Character.',
-    subtitle: 'Artisanal craftsmanship designed to elevate your living spaces with understated luxury and warm ambient light.',
-    primaryCtaText: 'SHOP COLLECTION',
-    primaryCtaLink: '/categories/home-decor',
-    secondaryCtaText: 'EXPLORE PRODUCTS',
-    secondaryCtaLink: '/categories',
-    giantText: 'CRAFTED',
-    productImage: '/images/products/speaker.png',
-    secondaryCutoutImage: '/images/products/sunglasses.png',
-    secondaryCutoutLabel: 'UV400 Polarized',
-    productAlt: 'BoomPulse 360 Portable Wireless Speaker & Lamp',
-    cardLabel: 'CURATOR CHOICE',
-    cardTitle: 'Ambient Speaker & Lamp',
-    cardPrice: '₹1,399',
-    cardOriginalPrice: '₹1,999',
-    cardRating: 4.9,
-    cardReviews: 210,
-    cardBadge: '360° SPATIAL SOUND',
-    cardLink: '/products/boompulse-360-portable-wireless-bluetooth-speaker',
-    tags: ['Solid Pine Wood', 'Warm 3000K LED', 'Bluetooth 5.3'],
-  },
-  {
-    id: 'slide_3',
-    eyebrow: 'EVERYDAY ELEGANCE 2026',
-    titleLine1: 'Designed for',
-    titleAccent: 'Today.',
-    subtitle: 'Exquisite heritage jewellery and handcrafted accessories designed for timeless distinction in every moment.',
-    primaryCtaText: 'SHOP COLLECTION',
-    primaryCtaLink: '/categories/artificial-jewellery',
-    secondaryCtaText: 'EXPLORE PRODUCTS',
-    secondaryCtaLink: '/categories',
-    giantText: 'ELEGANCE',
-    productImage: '/images/products/necklace.png',
-    secondaryCutoutImage: '/images/products/jhumkas.png',
-    secondaryCutoutLabel: 'Matching Jhumkas',
-    productAlt: 'Antique Matte Gold Temple Choker Necklace Set',
-    cardLabel: 'HERITAGE EDITION',
-    cardTitle: 'Temple Choker Set',
-    cardPrice: '₹1,299',
-    cardOriginalPrice: '₹2,499',
-    cardRating: 4.9,
-    cardReviews: 220,
-    cardBadge: '24K MICRO GOLD',
-    cardLink: '/product/antique-matte-gold-temple-choker-necklace-set',
-    tags: ['Matte Gold Polish', 'Kemp Stones', 'Festive Bridal'],
-  },
-];
-
-// ── Subtle Tamil Heritage SVG Line Art Motifs (3-5% Opacity) ──
-const TamilKolamMotif = () => (
-  <svg
-    className="editorial-tamil-motif motif-kolam"
-    viewBox="0 0 200 200"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path
-      d="M100 20 C110 50, 150 50, 150 100 C150 150, 110 150, 100 180 C90 150, 50 150, 50 100 C50 50, 90 50, 100 20 Z"
-      stroke="#663399"
-      strokeWidth="1.2"
-      strokeDasharray="4 2"
-    />
-    <path
-      d="M20 100 C50 110, 50 150, 100 150 C150 150, 150 110, 180 100 C150 90, 150 50, 100 50 C50 50, 50 90, 20 100 Z"
-      stroke="#663399"
-      strokeWidth="1.2"
-    />
-    <circle cx="100" cy="100" r="30" stroke="#663399" strokeWidth="1" />
-    <circle cx="100" cy="100" r="10" stroke="#663399" strokeWidth="1.5" />
-    <circle cx="100" cy="50" r="4" fill="#663399" />
-    <circle cx="100" cy="150" r="4" fill="#663399" />
-    <circle cx="50" cy="100" r="4" fill="#663399" />
-    <circle cx="150" cy="100" r="4" fill="#663399" />
-  </svg>
-);
-
-const TempleArchMotif = () => (
-  <svg
-    className="editorial-tamil-motif motif-temple"
-    viewBox="0 0 240 240"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path d="M120 15 L145 45 H95 L120 15 Z" stroke="#663399" strokeWidth="1.2" />
-    <path d="M85 45 H155 V75 H85 Z" stroke="#663399" strokeWidth="1.2" />
-    <path d="M70 75 H170 V115 H70 Z" stroke="#663399" strokeWidth="1.2" />
-    <path d="M55 115 H185 V165 H55 Z" stroke="#663399" strokeWidth="1.2" />
-    <path d="M40 165 H200 V225 H40 Z" stroke="#663399" strokeWidth="1.2" />
-    <path d="M100 225 C100 190, 140 190, 140 225" stroke="#663399" strokeWidth="1.5" />
-    <line x1="120" y1="45" x2="120" y2="225" stroke="#663399" strokeWidth="0.8" strokeDasharray="3 3" />
-  </svg>
-);
-
-const FloralTamilMotif = () => (
-  <svg
-    className="editorial-tamil-motif motif-floral"
-    viewBox="0 0 180 180"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path d="M90 10 C100 45, 135 45, 170 90 C135 135, 100 135, 90 170 C80 135, 45 135, 10 90 C45 45, 80 45, 90 10 Z" stroke="#663399" strokeWidth="1" />
-    <circle cx="90" cy="90" r="22" stroke="#663399" strokeWidth="1" />
-    <path d="M90 35 L90 145 M35 90 L145 90" stroke="#663399" strokeWidth="0.8" strokeDasharray="2 2" />
-  </svg>
-);
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { heroSlides } from '../../../data/data';
 
 export default function EditorialHero() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
-  const containerRef = useRef(null);
   const timerRef = useRef(null);
   const navigate = useNavigate();
 
-  const totalSlides = EDITORIAL_SLIDES.length;
+  const slides = heroSlides || [];
+  const totalSlides = slides.length;
 
-  // Mouse Parallax Effect (Desktop)
-  const handleMouseMove = (e) => {
-    if (window.innerWidth < 1024 || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    const normX = (e.clientX - centerX) / (rect.width / 2);
-    const normY = (e.clientY - centerY) / (rect.height / 2);
-
-    setParallaxOffset({
-      x: Math.max(-1, Math.min(1, normX)),
-      y: Math.max(-1, Math.min(1, normY)),
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setParallaxOffset({ x: 0, y: 0 });
-    setIsPaused(false);
-  };
-
-  const SLIDE_DURATION = 5000;
-
-  // Auto-play Timer (5s continuous cycle)
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
+    if (isPaused || totalSlides === 0) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % totalSlides);
-    }, SLIDE_DURATION);
+    }, 3200);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [currentSlide, totalSlides]);
+  }, [isPaused, totalSlides]);
 
-  const handlePrev = () => {
+  const handlePrev = (e) => {
+    e.stopPropagation();
     setCurrentSlide((prev) => (prev === 0 ? totalSlides - 1 : prev - 1));
   };
 
-  const handleNext = () => {
+  const handleNext = (e) => {
+    e.stopPropagation();
     setCurrentSlide((prev) => (prev + 1) % totalSlides);
   };
 
+  if (totalSlides === 0) return null;
+
   return (
     <section
-      ref={containerRef}
-      className="editorial-hero-section"
-      onMouseMove={handleMouseMove}
-      aria-label="Editorial Hero Section"
+      className="picky-hero-banner-carousel"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      style={{
+        position: 'relative',
+        width: '100%',
+        minHeight: 'clamp(400px, 45vw, 580px)',
+        backgroundColor: '#0f1117',
+        overflow: 'hidden',
+        userSelect: 'none',
+      }}
     >
-      {/* ── Slide Timer Progress Line (Directly Below Navbar Border) ── */}
-      <div className="editorial-hero-timer-bar">
-        <div
-          key={currentSlide}
-          className="editorial-hero-timer-progress"
-          style={{ animationDuration: `${SLIDE_DURATION}ms` }}
-        />
-      </div>
+      {/* ── Diagonal Split Collage Slides (Loaded from mock data) ── */}
+      {slides.map((slide, index) => {
+        const isActive = index === currentSlide;
+        return (
+          <div
+            key={slide.id || index}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: isActive ? 1 : 0,
+              visibility: isActive ? 'visible' : 'hidden',
+              transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s ease',
+              pointerEvents: isActive ? 'auto' : 'none',
+              zIndex: isActive ? 1 : 0,
+            }}
+          >
+            {/* Left Diagonal Image Container (58% width framing for full model view) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '58%',
+                height: '100%',
+                clipPath: 'polygon(0 0, 100% 0, 72% 100%, 0 100%)',
+                WebkitClipPath: 'polygon(0 0, 100% 0, 72% 100%, 0 100%)',
+                overflow: 'hidden',
+              }}
+            >
+              <img
+                src={slide.leftImage}
+                alt={`${slide.title} Left`}
+                className={isActive ? 'active-zoom-bg' : ''}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center 15%',
+                  display: 'block',
+                }}
+              />
+            </div>
 
-      {/* ── Single Premium Editorial Background Image ── */}
-      <div className="editorial-hero-single-bg">
-        <img src="/images/hero-bg.png" alt="" className="editorial-hero-single-bg-img" />
-        <div className="editorial-hero-single-bg-overlay" />
-      </div>
+            {/* Right Diagonal Image Container (58% width framing for full model view) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: '42%',
+                width: '58%',
+                height: '100%',
+                clipPath: 'polygon(28% 0, 100% 0, 100% 100%, 0 100%)',
+                WebkitClipPath: 'polygon(28% 0, 100% 0, 100% 100%, 0 100%)',
+                overflow: 'hidden',
+              }}
+            >
+              <img
+                src={slide.rightImage}
+                alt={`${slide.title} Right`}
+                className={isActive ? 'active-zoom-bg' : ''}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center 15%',
+                  display: 'block',
+                }}
+              />
+            </div>
 
-      {/* ── Subtle Tamil Motifs in Background (3-5% Opacity) ── */}
-      <TamilKolamMotif />
-      <TempleArchMotif />
-      <FloralTamilMotif />
+            {/* Subtle Overlay Shadow */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.06) 0%, transparent 60%)',
+                pointerEvents: 'none',
+                zIndex: 2,
+              }}
+            />
+          </div>
+        );
+      })}
 
-      {/* ── Background Ambient Glow & Pulsing Aura Ring ── */}
-      <div
-        className="editorial-hero-bg-glow"
+      {/* ── Center Frosted Glass Card ── */}
+      {slides.map((slide, index) => {
+        const isActive = index === currentSlide;
+        if (!isActive) return null;
+        return (
+          <div
+            key={`card_${slide.id}`}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 5,
+              width: 'clamp(280px, 32vw, 360px)',
+              padding: '2.2rem 2.2rem 2rem',
+              borderRadius: '24px',
+              background: 'rgba(255, 255, 255, 0.88)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.6)',
+              boxShadow: '0 20px 45px rgba(0, 0, 0, 0.14), 0 4px 14px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center',
+              animation: 'centerCardPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+            }}
+          >
+            <span
+              style={{
+                display: 'block',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.14em',
+                color: '#777777',
+                textTransform: 'uppercase',
+                marginBottom: '0.4rem',
+              }}
+            >
+              {slide.eyebrow}
+            </span>
+
+            <h2
+              style={{
+                fontSize: 'clamp(2rem, 3.2vw, 2.6rem)',
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                color: '#111111',
+                textTransform: 'uppercase',
+                margin: '0 0 0.15rem 0',
+                fontFamily: "'Inter', system-ui, sans-serif",
+              }}
+            >
+              {slide.title}
+            </h2>
+
+            <h3
+              style={{
+                fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+                color: '#111111',
+                textTransform: 'uppercase',
+                margin: '0 0 1.1rem 0',
+              }}
+            >
+              {slide.subtitle}
+            </h3>
+
+            {/* Divider bar */}
+            <div
+              style={{
+                width: '36px',
+                height: '2.5px',
+                backgroundColor: '#111111',
+                margin: '0 auto 1.3rem',
+                borderRadius: '2px',
+              }}
+            />
+
+            {/* CTA Button */}
+            <button
+              onClick={() => navigate(slide.ctaLink || '/products')}
+              className="carousel-cta-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #111111',
+                paddingBottom: '3px',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                letterSpacing: '0.1em',
+                color: '#111111',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+              }}
+            >
+              <span>{slide.ctaText || 'SHOP NOW'}</span>
+              <ArrowRight size={14} strokeWidth={2.5} />
+            </button>
+          </div>
+        );
+      })}
+
+      {/* ── Left Circular Navigation Arrow ── */}
+      <button
+        onClick={handlePrev}
+        aria-label="Previous Slide"
+        className="carousel-arrow-btn arrow-btn-left"
         style={{
-          transform: `translate3d(${parallaxOffset.x * 4}px, ${parallaxOffset.y * 4}px, 0)`,
+          position: 'absolute',
+          left: '24px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 10,
+          width: '46px',
+          height: '46px',
+          borderRadius: '50%',
+          background: '#ffffff',
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+          color: '#111111',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)',
+          transition: 'all 0.25s ease',
         }}
-      />
-      <div className="editorial-hero-aura-ring" />
-      <div className="editorial-hero-bg-mesh" />
+      >
+        <ChevronLeft size={22} strokeWidth={2.2} />
+      </button>
 
-      {/* ── Main Composition Container ── */}
-      <div className="editorial-hero-container">
-        
-        {/* Left Editorial Content Column */}
-        <div className="editorial-hero-content-col">
-          {EDITORIAL_SLIDES.map((slide, idx) => {
-            const isActive = idx === currentSlide;
-            return (
-              <div
-                key={slide.id}
-                className={`editorial-hero-slide-text ${isActive ? 'active' : ''}`}
-                aria-hidden={!isActive}
-              >
-                <div className="editorial-eyebrow">
-                  <span className="editorial-eyebrow-dot" />
-                  <span>{slide.eyebrow}</span>
-                </div>
+      {/* ── Right Circular Navigation Arrow ── */}
+      <button
+        onClick={handleNext}
+        aria-label="Next Slide"
+        className="carousel-arrow-btn arrow-btn-right"
+        style={{
+          position: 'absolute',
+          right: '24px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 10,
+          width: '46px',
+          height: '46px',
+          borderRadius: '50%',
+          background: '#ffffff',
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+          color: '#111111',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)',
+          transition: 'all 0.25s ease',
+        }}
+      >
+        <ChevronRight size={22} strokeWidth={2.2} />
+      </button>
 
-                <h1 className="editorial-hero-title">
-                  <span className="title-line-1">{slide.titleLine1}</span>
-                  <span className="editorial-purple-accent">{slide.titleAccent}</span>
-                </h1>
-
-                <p className="editorial-hero-desc">{slide.subtitle}</p>
-
-                {/* Micro Feature Tags */}
-                <div className="editorial-hero-tags">
-                  {slide.tags.map((tag, tIdx) => (
-                    <span key={tIdx} className="hero-tag-pill">
-                      <ShieldCheck size={12} className="tag-icon" /> {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Primary & Secondary Action CTAs */}
-                <div className="editorial-hero-cta-group">
-                  <button
-                    className="editorial-btn-primary"
-                    onClick={() => navigate(slide.primaryCtaLink)}
-                  >
-                    <span>{slide.primaryCtaText}</span>
-                    <ArrowRight size={18} className="btn-arrow-icon" />
-                  </button>
-
-                  <button
-                    className="editorial-btn-secondary"
-                    onClick={() => navigate(slide.secondaryCtaLink)}
-                  >
-                    {slide.secondaryCtaText}
-                  </button>
-                </div>
-
-                {/* Premium Trust & Quality Assurance Bar */}
-                <div className="editorial-hero-trust-bar">
-                  <div className="trust-bar-item">
-                    <div className="trust-bar-icon-pod">
-                      <ShieldCheck size={18} strokeWidth={2.4} />
-                    </div>
-                    <div className="trust-bar-text">
-                      <span className="trust-bar-title">100% Certified Authentic</span>
-                      <span className="trust-bar-sub">Direct Handloom & Artisan Sourced</span>
-                    </div>
-                  </div>
-
-                  <div className="trust-bar-divider" />
-
-                  <div className="trust-bar-item">
-                    <div className="trust-bar-icon-pod">
-                      <Sparkles size={16} strokeWidth={2.4} />
-                    </div>
-                    <div className="trust-bar-text">
-                      <span className="trust-bar-title">Picky Quality Standard</span>
-                      <span className="trust-bar-sub">Curated • Inspected • Guaranteed</span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Right Stage: Floating Cutouts + Giant Typography + Info Badge Card */}
-        <div className="editorial-hero-stage-col">
-          {EDITORIAL_SLIDES.map((slide, idx) => {
-            const isActive = idx === currentSlide;
-            return (
-              <div
-                key={slide.id}
-                className={`editorial-hero-slide-stage ${isActive ? 'active' : ''}`}
-              >
-                {/* Giant Low-Opacity Background Typography */}
-                <div
-                  className="editorial-giant-word"
-                  style={{
-                    transform: `translate3d(${parallaxOffset.x * 5}px, ${parallaxOffset.y * 5}px, 0)`,
-                  }}
-                >
-                  {slide.giantText}
-                </div>
-
-                {/* Main Floating Studio Product Cutout */}
-                <div
-                  className="editorial-product-cutout-wrapper"
-                  style={{
-                    transform: `translate3d(${parallaxOffset.x * 8}px, ${parallaxOffset.y * 8}px, 0)`,
-                  }}
-                >
-                  <div className="editorial-product-float-inner">
-                    <img
-                      src={slide.productImage}
-                      alt={slide.productAlt}
-                      className="editorial-product-img"
-                      loading={idx === 0 ? 'eager' : 'lazy'}
-                    />
-                    {/* Soft Studio Radial Oval Shadow */}
-                    <div className="editorial-product-shadow" />
-                  </div>
-                </div>
-
-                {/* Secondary Mini Floating Product Cutout */}
-                {slide.secondaryCutoutImage && (
-                  <div
-                    className="editorial-secondary-cutout-float"
-                    style={{
-                      transform: `translate3d(${parallaxOffset.x * 12}px, ${parallaxOffset.y * 12}px, 0)`,
-                    }}
-                  >
-                    <div className="secondary-cutout-inner">
-                      <img src={slide.secondaryCutoutImage} alt={slide.secondaryCutoutLabel} />
-                    </div>
-                    <span className="secondary-cutout-tag">{slide.secondaryCutoutLabel}</span>
-                  </div>
-                )}
-
-                {/* Floating Product Details Badge Card */}
-                <div
-                  className="editorial-floating-badge-card"
-                  onClick={() => navigate(slide.cardLink)}
-                  style={{
-                    transform: `translate3d(${parallaxOffset.x * 10}px, ${parallaxOffset.y * 10}px, 0)`,
-                  }}
-                >
-                  <div className="floating-card-thumb">
-                    <img src={slide.productImage} alt={slide.cardTitle} />
-                  </div>
-                  <div className="floating-card-body">
-                    <div className="floating-card-header">
-                      <Sparkles size={13} className="floating-card-sparkle" />
-                      <span className="floating-card-label">{slide.cardLabel}</span>
-                      <span className="floating-card-badge">{slide.cardBadge}</span>
-                    </div>
-                    <h4 className="floating-card-title">{slide.cardTitle}</h4>
-                    
-                    <div className="floating-card-curation">
-                      <CheckCircle2 size={12} color="#059669" strokeWidth={2.5} />
-                      <span>Verified Authentic & Curated</span>
-                    </div>
-
-                    <div className="floating-card-footer">
-                      <div className="card-prices">
-                        <span className="floating-card-price">{slide.cardPrice}</span>
-                        {slide.cardOriginalPrice && (
-                          <span className="floating-card-orig-price">{slide.cardOriginalPrice}</span>
-                        )}
-                      </div>
-                      <span className="floating-card-action">
-                        VIEW <ChevronRight size={13} />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            );
-          })}
-        </div>
+      {/* ── Bottom Pagination Dots ── */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '22px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          display: 'flex',
+          gap: '9px',
+          alignItems: 'center',
+        }}
+      >
+        {slides.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentSlide(idx);
+            }}
+            aria-label={`Go to slide ${idx + 1}`}
+            style={{
+              width: currentSlide === idx ? '10px' : '8px',
+              height: currentSlide === idx ? '10px' : '8px',
+              borderRadius: '50%',
+              background: currentSlide === idx ? '#111111' : 'rgba(0, 0, 0, 0.3)',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              transition: 'all 0.25s ease',
+            }}
+          />
+        ))}
       </div>
 
-      {/* ── Slide Navigation & Editorial Controls Footer ── */}
-      <div className="editorial-hero-controls-bar">
-        <div className="editorial-controls-inner">
-          
-          {/* Slide Counter */}
-          <div className="editorial-slide-counter">
-            <span className="counter-current">
-              {String(currentSlide + 1).padStart(2, '0')}
-            </span>
-            <span className="counter-divider">/</span>
-            <span className="counter-total">
-              {String(totalSlides).padStart(2, '0')}
-            </span>
-          </div>
+      <style>{`
+        /* Fast & Smooth Zoom In Effect for active slide background */
+        .active-zoom-bg {
+          animation: carouselZoomIn 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
 
-          {/* Interactive Progress Step Indicators */}
-          <div className="editorial-progress-container">
-            {EDITORIAL_SLIDES.map((_, sIdx) => {
-              const isSelected = sIdx === currentSlide;
-              return (
-                <button
-                  key={sIdx}
-                  className={`editorial-step-pill ${isSelected ? 'active' : ''}`}
-                  onClick={() => setCurrentSlide(sIdx)}
-                  aria-label={`Go to hero slide ${sIdx + 1}`}
-                >
-                  <span className="step-pill-fill" />
-                </button>
-              );
-            })}
-          </div>
+        @keyframes carouselZoomIn {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1.08);
+          }
+        }
 
-          {/* 3 Quick Store Value Props */}
-          <div className="editorial-hero-trust-props">
-            <div className="trust-prop-item">
-              <Truck size={14} className="trust-prop-icon" />
-              <span>Fast Courier Dispatch</span>
-            </div>
-            <div className="trust-prop-item">
-              <Lock size={14} className="trust-prop-icon" />
-              <span>Razorpay Encrypted</span>
-            </div>
-            <div className="trust-prop-item">
-              <CheckCircle2 size={14} className="trust-prop-icon" />
-              <span>100% Quality Curated</span>
-            </div>
-          </div>
+        @keyframes centerCardPop {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -46%) scale(0.94);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
 
-          {/* Previous & Next Circular Navigation Buttons */}
-          <div className="editorial-nav-buttons">
-            <button
-              className="editorial-nav-btn"
-              onClick={handlePrev}
-              onMouseEnter={() => setIsPaused(true)}
-              onFocus={() => setIsPaused(true)}
-              aria-label="Previous Hero Slide"
-            >
-              <ArrowLeft size={18} />
-            </button>
+        .carousel-arrow-btn:hover {
+          background: #111111 !important;
+          color: #ffffff !important;
+          transform: translateY(-50%) scale(1.08) !important;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
+        }
 
-            <button
-              className="editorial-nav-btn"
-              onClick={handleNext}
-              onMouseEnter={() => setIsPaused(true)}
-              onFocus={() => setIsPaused(true)}
-              aria-label="Next Hero Slide"
-            >
-              <ArrowRight size={18} />
-            </button>
-          </div>
-
-        </div>
-      </div>
+        .carousel-cta-btn:hover {
+          color: #663399 !important;
+          border-color: #663399 !important;
+          gap: 0.65rem !important;
+        }
+      `}</style>
     </section>
   );
 }
