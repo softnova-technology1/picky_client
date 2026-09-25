@@ -7,6 +7,8 @@ import { useUiStore } from '../../store/uiStore';
 import { orderService } from '../../services/order.service';
 import { addOrderToStore } from '../../data';
 import { formatPrice } from '../../utils/formatPrice';
+import { MOCK_COUPONS } from '../../data/adminMockData';
+import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
 import {
   CreditCard,
@@ -48,6 +50,7 @@ export default function Checkout() {
   const { items, updateQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
   const { user } = useAuthStore();
   const { showToast } = useUiStore();
+  const { addOrder } = useOrderStore();
 
   // Workflow step: 1 = 'checkout' (Shipping & Delivery Form), 2 = 'payment' (Payment Method & Order Summary)
   const [checkoutStep, setCheckoutStep] = useState(1);
@@ -114,7 +117,7 @@ export default function Checkout() {
   // Final Payable
   const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee - (couponDiscount || 0));
 
-  // Handle Promo Code Application
+  // Handle Promo Code Application — validated against centralized MOCK_COUPONS
   const handleApplyPromo = (e) => {
     e.preventDefault();
     setPromoError('');
@@ -123,20 +126,49 @@ export default function Checkout() {
       setPromoError('Please enter a coupon code');
       return;
     }
-    if (code === 'MAZHAI10' || code === 'PICKY10' || code === 'WELCOME10') {
-      const discount = Math.round(subtotal * 0.1);
-      setCoupon(code, discount);
-      showToast(`🎉 Coupon "${code}" applied! You saved ${formatPrice(discount)}.`, 'success');
-      setPromoCodeInput('');
-    } else if (code === 'SAVE100' || code === 'FLAT100') {
-      const discount = Math.min(subtotal, 100);
-      setCoupon(code, discount);
-      showToast(`🎉 Coupon "${code}" applied! ₹100 discount applied.`, 'success');
-      setPromoCodeInput('');
-    } else {
-      setPromoError('Invalid coupon code. Try MAZHAI10 or PICKY10');
-      showToast('Invalid coupon code', 'error');
+
+    // Find matching active coupon from MOCK_COUPONS
+    const matched = MOCK_COUPONS.find(
+      (c) => c.code.toUpperCase() === code && c.isActive
+    );
+
+    if (!matched) {
+      const inactive = MOCK_COUPONS.find((c) => c.code.toUpperCase() === code);
+      if (inactive) {
+        setPromoError(`Coupon "${code}" has expired or is no longer active.`);
+      } else {
+        const activeCodes = MOCK_COUPONS.filter((c) => c.isActive).map((c) => c.code).join(', ');
+        setPromoError(`Invalid coupon. Try: ${activeCodes}`);
+      }
+      showToast('Coupon code is invalid or inactive', 'error');
+      return;
     }
+
+    if (matched.minOrderAmount && subtotal < matched.minOrderAmount) {
+      setPromoError(
+        `Minimum order of ${formatPrice(matched.minOrderAmount)} required for coupon "${code}".`
+      );
+      showToast(`Min. order ${formatPrice(matched.minOrderAmount)} needed`, 'error');
+      return;
+    }
+
+    let discount = 0;
+    if (matched.type === 'percentage') {
+      discount = Math.round((subtotal * matched.value) / 100);
+      if (matched.maxDiscountAmount) {
+        discount = Math.min(discount, matched.maxDiscountAmount);
+      }
+    } else {
+      // flat
+      discount = Math.min(subtotal, matched.value);
+    }
+
+    setCoupon(code, discount);
+    const savingText = matched.type === 'percentage'
+      ? `${matched.value}% OFF — saved ${formatPrice(discount)}`
+      : `₹${matched.value} OFF applied`;
+    showToast(`🎉 Coupon "${code}" applied! ${savingText}.`, 'success');
+    setPromoCodeInput('');
   };
 
   const handleRemovePromo = () => {
@@ -231,6 +263,7 @@ export default function Checkout() {
                   createdAt: new Date().toISOString(),
                 };
                 addOrderToStore(newOrder);
+                addOrder(newOrder);
                 clearCart();
                 showToast('🎉 Payment Successful! Order placed successfully.', 'success');
                 navigate(`/order-success/${newOrder._id}`);
@@ -281,6 +314,7 @@ export default function Checkout() {
       };
 
       addOrderToStore(newOrder);
+      addOrder(newOrder);
       clearCart();
       setLoading(false);
       showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');

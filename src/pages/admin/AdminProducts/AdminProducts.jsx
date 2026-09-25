@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Edit2, Trash2, CheckCircle2, Sparkles } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
@@ -11,7 +11,7 @@ import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
-import { MOCK_TOP_PRODUCTS, MOCK_CATEGORIES } from '../../../data/adminMockData';
+import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data';
 
 export default function AdminProducts() {
   const { showToast } = useUiStore();
@@ -28,6 +28,7 @@ export default function AdminProducts() {
   const [formData, setFormData] = useState({
     name: '',
     category: '',
+    subCategory: '',
     price: '',
     discountPrice: '',
     description: '',
@@ -48,11 +49,11 @@ export default function AdminProducts() {
       ]);
       const pList = prodRes?.data?.data || prodRes?.data || [];
       const cList = catRes?.data || [];
-      setProducts(pList.length > 0 ? pList : MOCK_TOP_PRODUCTS);
+      setProducts(pList.length > 0 ? pList : MOCK_PRODUCTS);
       setCategories(cList.length > 0 ? cList : MOCK_CATEGORIES);
     } catch (err) {
       console.error('Failed to load products:', err);
-      setProducts(MOCK_TOP_PRODUCTS);
+      setProducts(MOCK_PRODUCTS);
       setCategories(MOCK_CATEGORIES);
     } finally {
       setLoading(false);
@@ -74,9 +75,12 @@ export default function AdminProducts() {
   const handleOpenAdd = () => {
     setEditingProduct(null);
     const defaultCat = categories[0]?._id || '';
+    const defaultCatObj = categories.find((c) => c._id === defaultCat);
+    const defaultSub = defaultCatObj?.subcategories?.[0]?.name || '';
     setFormData({
       name: '',
       category: defaultCat,
+      subCategory: defaultSub,
       price: '',
       discountPrice: '',
       description: '',
@@ -92,9 +96,11 @@ export default function AdminProducts() {
   const handleOpenEdit = (p) => {
     setEditingProduct(p);
     const catId = p.category?._id || p.category || '';
+    const subName = p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '');
     setFormData({
       name: p.name || '',
       category: catId,
+      subCategory: subName,
       price: p.price ? String(p.price) : '',
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       description: p.description || '',
@@ -168,6 +174,7 @@ export default function AdminProducts() {
                   stock: Number(formData.stock),
                   isFeatured: formData.isFeatured,
                   category: categories.find((c) => c._id === formData.category) || p.category,
+                  subCategory: { name: formData.subCategory || 'General' },
                 }
               : p
           )
@@ -184,6 +191,7 @@ export default function AdminProducts() {
           stock: Number(formData.stock),
           isFeatured: formData.isFeatured,
           category: categories.find((c) => c._id === formData.category) || { name: 'General' },
+          subCategory: { name: formData.subCategory || 'General' },
           images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'],
         };
         setProducts((prev) => [newProduct, ...prev]);
@@ -213,6 +221,14 @@ export default function AdminProducts() {
   const currentCategoryObj = categories.find((c) => c._id === formData.category);
   const currentCategorySpecs = currentCategoryObj?.characteristics || [];
 
+  const availableSubCategories = useMemo(() => {
+    if (!formData.category) return [];
+    if (currentCategoryObj?.subcategories && currentCategoryObj.subcategories.length > 0) {
+      return currentCategoryObj.subcategories;
+    }
+    return MOCK_SUBCATEGORIES.filter((s) => s.categoryId === formData.category);
+  }, [formData.category, currentCategoryObj]);
+
   const toggleMultiSelect = (charName, val) => {
     const current = Array.isArray(charValues[charName]) ? charValues[charName] : [];
     const exists = current.includes(val);
@@ -220,6 +236,72 @@ export default function AdminProducts() {
       ...charValues,
       [charName]: exists ? current.filter((x) => x !== val) : [...current, val],
     });
+  };
+
+  // Stock status formatting rules:
+  // stock <= 0 (or missing/negative) -> "Out of Stock"
+  // stock >= 1 && stock <= 5 -> "{stock} Left"
+  // stock > 5 -> "{stock} In Stock"
+  const renderStockBadge = (stock) => {
+    const qty = Number(stock);
+    if (isNaN(qty) || qty <= 0) {
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '0.2rem 0.55rem',
+            borderRadius: '6px',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            background: '#fee2e2',
+            color: '#dc2626',
+            border: '1px solid #fecaca',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Out of Stock
+        </span>
+      );
+    }
+    if (qty >= 1 && qty <= 5) {
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '0.2rem 0.55rem',
+            borderRadius: '6px',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            background: '#fef3c7',
+            color: '#d97706',
+            border: '1px solid #fde68a',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ⚠️ {qty} Left
+        </span>
+      );
+    }
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '0.2rem 0.55rem',
+          borderRadius: '6px',
+          fontSize: '0.78rem',
+          fontWeight: 700,
+          background: '#dcfce7',
+          color: '#16a34a',
+          border: '1px solid #bbf7d0',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        ● {qty} In Stock
+      </span>
+    );
   };
 
   return (
@@ -257,81 +339,107 @@ export default function AdminProducts() {
               <tr>
                 <th>Product</th>
                 <th>Category</th>
+                <th>Subcategory</th>
                 <th>Price</th>
-                <th>Discount Price</th>
+                <th>Selling Price</th>
+                <th>Stock</th>
                 <th>Featured</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
-                <tr key={p._id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <img
-                        src={p.images?.[0] || p.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
-                        alt={p.name}
-                        style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
-                      />
-                      <div>
-                        <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>{p.name}</strong>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>/{p.slug}</span>
+              {products.map((p) => {
+                const subCatName =
+                  p.subCategory?.name ||
+                  (typeof p.subCategory === 'string' ? p.subCategory : null) ||
+                  '—';
+                return (
+                  <tr key={p._id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <img
+                          src={p.images?.[0] || p.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
+                          alt={p.name}
+                          style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
+                        />
+                        <div>
+                          <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>{p.name}</strong>
+                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>/{p.slug}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      style={{
-                        background: '#ede8f8',
-                        color: '#5b21b6',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '6px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {p.category?.name || 'General'}
-                    </span>
-                  </td>
-                  <td><strong style={{ color: '#1e1b4b' }}>{formatPrice(p.price)}</strong></td>
-                  <td>
-                    {p.discountPrice ? (
-                      <span style={{ color: '#16a34a', fontWeight: 700 }}>{formatPrice(p.discountPrice)}</span>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    {p.isFeatured ? (
-                      <span className="adm-status-pill adm-status-confirmed" style={{ fontSize: '0.75rem' }}>
-                        ⭐ Featured
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          background: '#ede8f8',
+                          color: '#5b21b6',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {p.category?.name || 'General'}
                       </span>
-                    ) : (
-                      <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Standard</span>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                      <button
-                        onClick={() => handleOpenEdit(p)}
-                        className="admin-period-select-btn"
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          color: '#334155',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                        }}
                       >
-                        <Edit2 size={13} color="#7c3aed" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        className="admin-period-select-btn"
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', color: '#dc2626' }}
-                      >
-                        <Trash2 size={13} color="#dc2626" />
-                        <span>Deactivate</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {subCatName}
+                      </span>
+                    </td>
+                    <td><strong style={{ color: '#1e1b4b' }}>{formatPrice(p.price)}</strong></td>
+                    <td>
+                      {p.discountPrice ? (
+                        <span style={{ color: '#16a34a', fontWeight: 700 }}>{formatPrice(p.discountPrice)}</span>
+                      ) : (
+                        <span style={{ color: '#94a3b8' }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      {renderStockBadge(p.stock)}
+                    </td>
+                    <td>
+                      {p.isFeatured ? (
+                        <span className="adm-status-pill adm-status-confirmed" style={{ fontSize: '0.75rem' }}>
+                          ⭐ Featured
+                        </span>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Standard</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <button
+                          onClick={() => handleOpenEdit(p)}
+                          className="admin-period-select-btn"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                        >
+                          <Edit2 size={13} color="#7c3aed" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p._id)}
+                          className="admin-period-select-btn"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', color: '#dc2626' }}
+                        >
+                          <Trash2 size={13} color="#dc2626" />
+                          <span>Deactivate</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -354,25 +462,50 @@ export default function AdminProducts() {
               required
             />
 
-            <div className="form-group">
-              <label className="form-label">Category *</label>
-              <select
-                value={formData.category}
-                onChange={(e) => {
-                  setFormData({ ...formData, category: e.target.value });
-                  // If category changed, clear or reset characteristics
-                  if (!editingProduct) setCharValues({});
-                }}
-                className="form-select"
-                required
-              >
-                <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name} {c.characteristics?.length ? `(${c.characteristics.length} specs)` : ''}
-                  </option>
-                ))}
-              </select>
+            {/* Category & Subcategory Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Category *</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => {
+                    const newCat = e.target.value;
+                    const catObj = categories.find((c) => c._id === newCat);
+                    const defaultSub = catObj?.subcategories?.[0]?.name || '';
+                    setFormData({
+                      ...formData,
+                      category: newCat,
+                      subCategory: defaultSub,
+                    });
+                    if (!editingProduct) setCharValues({});
+                  }}
+                  className="form-select"
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name} {c.characteristics?.length ? `(${c.characteristics.length} specs)` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Subcategory</label>
+                <select
+                  value={formData.subCategory}
+                  onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                  className="form-select"
+                >
+                  <option value="">Select Subcategory</option>
+                  {availableSubCategories.map((sub, i) => (
+                    <option key={sub._id || i} value={sub.name}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Price, Discount Price, and Stock Quantity Grid */}
@@ -386,7 +519,7 @@ export default function AdminProducts() {
                 required
               />
               <Input
-                label="Discount Price (Rs.)"
+                label="Selling Price (Rs.)"
                 type="number"
                 placeholder="e.g. 2499"
                 value={formData.discountPrice}

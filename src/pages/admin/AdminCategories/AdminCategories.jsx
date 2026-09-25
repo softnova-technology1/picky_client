@@ -9,7 +9,7 @@ import Spinner from '../../../components/ui/Spinner';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
-import { MOCK_CATEGORIES } from '../../../data/adminMockData';
+import { MOCK_CATEGORIES } from '../../../data/categoryMockData';
 
 export default function AdminCategories() {
   const { showToast } = useUiStore();

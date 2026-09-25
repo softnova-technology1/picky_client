@@ -22,21 +22,23 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
-import { MOCK_ORDERS } from '../../../data/adminMockData';
+import { MOCK_ORDERS_EXTENDED, COMMON_COURIERS } from '../../../data/adminMockData';
+import { useOrderStore } from '../../../store/orderStore';
 
 const ADMIN = '/pickyadmin-softnova2026';
-const COURIERS = ['DTDC Express', 'Blue Dart', 'Delhivery', 'Shadowfax', 'Ecom Express', 'India Post Speed Post'];
 
 export default function AdminOrderDetail() {
   const { id } = useParams();
   const { showToast } = useUiStore();
+  const { getOrderById, updateOrder, updateOrderStatus: storeUpdateStatus, updateOrderTracking } = useOrderStore();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // AWB Entry state
+  // Manual AWB Entry state (supports extensible courier list + Other)
   const [trackingId, setTrackingId] = useState('');
-  const [courier, setCourier] = useState('DTDC Express');
+  const [courier, setCourier] = useState('DTDC');
+  const [customCourier, setCustomCourier] = useState('');
   const [shipLoading, setShipLoading] = useState(false);
 
   // Status Change state
@@ -53,18 +55,36 @@ export default function AdminOrderDetail() {
         if (data && data.orderNumber) {
           setOrder(data);
           if (data.trackingId) setTrackingId(data.trackingId);
-          if (data.courier) setCourier(data.courier);
+          if (data.courier) {
+            if (COMMON_COURIERS.includes(data.courier)) {
+              setCourier(data.courier);
+            } else {
+              setCourier('Other');
+              setCustomCourier(data.courier);
+            }
+          }
           setNewStatus(data.status);
         } else {
           throw new Error('Order not found');
         }
       } catch (err) {
-        console.error('Order detail fallback to mock:', err);
+        console.error('Order detail fallback to mock store:', err);
+        // Try shared orderStore first (has session-placed orders), then MOCK_ORDERS_EXTENDED
+        const storeMatch = getOrderById(id);
         const mockMatch =
-          MOCK_ORDERS.find((o) => o._id === id || o.orderNumber === id) || MOCK_ORDERS[0];
+          storeMatch ||
+          MOCK_ORDERS_EXTENDED.find((o) => o._id === id || o.orderNumber === id) ||
+          MOCK_ORDERS_EXTENDED[0];
         setOrder(mockMatch);
         if (mockMatch.trackingId) setTrackingId(mockMatch.trackingId);
-        if (mockMatch.courier) setCourier(mockMatch.courier);
+        if (mockMatch.courier) {
+          if (COMMON_COURIERS.includes(mockMatch.courier)) {
+            setCourier(mockMatch.courier);
+          } else {
+            setCourier('Other');
+            setCustomCourier(mockMatch.courier);
+          }
+        }
         setNewStatus(mockMatch.status);
       } finally {
         setLoading(false);
@@ -80,22 +100,29 @@ export default function AdminOrderDetail() {
       return;
     }
 
+    const activeCourier = courier === 'Other' ? (customCourier.trim() || 'Other Courier') : courier;
+
     try {
       setShipLoading(true);
-      const res = await adminService.addTracking(id, { trackingId: trackingId.trim(), courier }).catch(() => null);
-      const updated = res?.data || {
+      await adminService.addTracking(id, { trackingId: trackingId.trim(), courier: activeCourier }).catch(() => null);
+      // Update shared store so customer /orders page reflects AWB immediately
+      updateOrderTracking(id, { trackingId: trackingId.trim(), courier: activeCourier });
+      storeUpdateStatus(id, 'shipped');
+      const updated = {
         ...order,
         trackingId: trackingId.trim(),
-        courier,
+        courier: activeCourier,
         status: 'shipped',
       };
       setOrder(updated);
       setNewStatus('shipped');
-      showToast('🚀 Order marked as Shipped! WhatsApp notification dispatched to customer.', 'success');
+      showToast('🚀 Order marked as Shipped! AWB saved and customer view updated.', 'success');
     } catch (err) {
-      setOrder((prev) => ({ ...prev, trackingId: trackingId.trim(), courier, status: 'shipped' }));
+      updateOrderTracking(id, { trackingId: trackingId.trim(), courier: activeCourier });
+      storeUpdateStatus(id, 'shipped');
+      setOrder((prev) => ({ ...prev, trackingId: trackingId.trim(), courier: activeCourier, status: 'shipped' }));
       setNewStatus('shipped');
-      showToast('🚀 Order marked as Shipped! WhatsApp notification dispatched to customer.', 'success');
+      showToast('🚀 Order marked as Shipped! AWB saved and customer view updated.', 'success');
     } finally {
       setShipLoading(false);
     }
@@ -105,8 +132,10 @@ export default function AdminOrderDetail() {
     e.preventDefault();
     try {
       setStatusLoading(true);
-      const res = await adminService.updateOrderStatus(id, { status: newStatus, note: statusNote }).catch(() => null);
-      const updated = res?.data || {
+      await adminService.updateOrderStatus(id, { status: newStatus, note: statusNote }).catch(() => null);
+      // Propagate to shared store — customer /orders and /orders/:id will reflect this
+      storeUpdateStatus(id, newStatus);
+      const updated = {
         ...order,
         status: newStatus,
         statusHistory: [
@@ -116,8 +145,9 @@ export default function AdminOrderDetail() {
       };
       setOrder(updated);
       setStatusNote('');
-      showToast(`Order status changed to "${newStatus}"!`, 'success');
+      showToast(`✅ Order status updated to "${newStatus}". Customer view synced.`, 'success');
     } catch (err) {
+      storeUpdateStatus(id, newStatus);
       setOrder((prev) => ({
         ...prev,
         status: newStatus,
@@ -127,7 +157,7 @@ export default function AdminOrderDetail() {
         ],
       }));
       setStatusNote('');
-      showToast(`Order status changed to "${newStatus}"!`, 'success');
+      showToast(`✅ Order status updated to "${newStatus}". Customer view synced.`, 'success');
     } finally {
       setStatusLoading(false);
     }
@@ -221,7 +251,7 @@ export default function AdminOrderDetail() {
                       fontWeight: 600,
                     }}
                   >
-                    {COURIERS.map((c) => (
+                    {COMMON_COURIERS.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -235,6 +265,18 @@ export default function AdminOrderDetail() {
                   required
                 />
               </div>
+
+              {courier === 'Other' && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <Input
+                    label="Custom Courier Name *"
+                    placeholder="e.g. ST Courier, Regional Express, Local Transport"
+                    value={customCourier}
+                    onChange={(e) => setCustomCourier(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -251,7 +293,7 @@ export default function AdminOrderDetail() {
                 }}
               >
                 <Send size={15} />
-                <span>{order.status === 'shipped' ? 'Update AWB & Re-notify Customer' : 'Mark as Shipped & Send WhatsApp'}</span>
+                <span>{order.status === 'shipped' ? 'Update AWB & Re-notify Customer' : 'Mark as Shipped & Save AWB'}</span>
               </button>
             </form>
           </div>
@@ -326,11 +368,10 @@ export default function AdminOrderDetail() {
                     fontWeight: 600,
                   }}
                 >
-                  <option value="confirmed">Confirmed & Paid (Razorpay)</option>
+                  <option value="confirmed">Confirmed (Pending AWB)</option>
                   <option value="shipped">Shipped & Dispatched</option>
-                  <option value="out_for_delivery">Out for Delivery</option>
-                  <option value="delivered">Delivered (Triggers WhatsApp)</option>
-                  <option value="cancelled">Cancelled (Auto-Restores Stock)</option>
+                  <option value="delivered">Delivered (Verified by Admin)</option>
+                  <option value="cancelled">Cancelled (Restore Stock)</option>
                 </select>
               </div>
 
