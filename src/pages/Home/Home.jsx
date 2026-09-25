@@ -324,21 +324,65 @@ export default function Home() {
       {/* 01 — EDITORIAL PRODUCT-CUTOUT HERO */}
       <EditorialHero />
 
-      {/* 02 — FLOATING CATEGORY NAVIGATION */}
+      {/* 02 — DOME / ARCH CATEGORY NAVIGATION SECTION */}
       <section className="hp-category-nav">
-        <div className="hp-category-scroll">
-          {categories.slice(0, 10).map((cat, i) => (
-            <div key={i} className="hp-category-item" onClick={() => navigate(`/categories/${cat.slug || cat._id}`)}>
-              <div className="hp-category-img-wrapper">
-                <img 
-                  src={cat.image || 'https://images.unsplash.com/photo-1611078489935-0cb964de46d6?w=200&auto=format&fit=crop&q=80'} 
-                  alt={cat.name} 
-                  className="hp-category-img"
-                />
+        <div className="hp-category-container">
+          {/* Header Bar */}
+          <div className="hp-cat-header-wrap">
+            <div className="hp-cat-header-center">
+              <div className="hp-cat-eyebrow">
+                <span className="hp-line" />
+                <span>SHOP BY</span>
+                <span className="hp-line" />
               </div>
-              <span className="hp-category-name">{cat.name}</span>
+              <h2 className="hp-cat-title">
+                Top <span className="purple-accent-text">Categories</span>
+              </h2>
+              <p className="hp-cat-subtitle">Everything you need, in one place</p>
             </div>
-          ))}
+
+            <button className="hp-cat-view-all-btn" onClick={() => navigate('/categories')}>
+              <span>View All</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {/* Dome / Arch Category Row */}
+          <div className="hp-category-scroll">
+            {categories.slice(0, 10).map((cat, i) => {
+              return (
+                <div
+                  key={cat.slug || cat._id || i}
+                  className="hp-category-item"
+                  onClick={() => navigate(`/categories/${cat.slug || cat._id}`)}
+                >
+                  {/* Dome / Arch Image Card */}
+                  <div className="hp-category-arch-wrapper">
+                    <img
+                      src={cat.image || 'https://images.unsplash.com/photo-1611078489935-0cb964de46d6?w=400'}
+                      alt={cat.name}
+                      className="hp-category-arch-img"
+                    />
+                    <div className="hp-arch-purple-tint" />
+                    {/* Floating Bottom Center Arrow Button — Uniform Picky Theme */}
+                    <div className="hp-category-arrow-badge">
+                      <ArrowRight size={14} className="hp-arrow-icon" strokeWidth={2.8} />
+                    </div>
+                  </div>
+
+                  {/* Category Label */}
+                  <span className="hp-category-name">{cat.name}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom Quality Tagline Divider */}
+          <div className="hp-cat-bottom-tagline">
+            <span className="hp-tagline-line" />
+            <span className="hp-tagline-text">QUALITY PRODUCTS &nbsp;|&nbsp; BETTER LIVING</span>
+            <span className="hp-tagline-line" />
+          </div>
         </div>
       </section>
 
