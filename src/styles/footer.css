@@ -20,7 +20,8 @@
   background: transparent;
   position: relative;
   z-index: 2;
-  margin-bottom: -2px; /* Prevent sub-pixel white gap */
+  margin-bottom: -2px;
+  /* Prevent sub-pixel white gap */
 }
 
 .footer-skyline-img {
@@ -47,7 +48,7 @@
 
 /* ── 2. Color Matched Royal Purple Gradient Footer Body ────────────────────── */
 .picky-footer-body {
-  background: linear-gradient(180deg, #351961 0%, #27114b 50%, #180a33 100%);
+  background: linear-gradient(180deg, #1c093b 0%, #27114b 50%, #0a011d 100%);
   color: #e2e8f0;
   padding: 3.5rem 1.5rem 2.25rem;
   position: relative;
@@ -62,7 +63,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 0%, rgba(192, 132, 252, 0.14), transparent 45%),
     radial-gradient(circle at 80% 60%, rgba(236, 72, 153, 0.09), transparent 50%),
     radial-gradient(circle at 50% 100%, rgba(124, 58, 237, 0.12), transparent 60%);
@@ -89,6 +90,7 @@
   .footer-grid {
     grid-template-columns: 1.4fr 1fr 1fr 1fr;
   }
+
   .footer-col-contact {
     grid-column: span 4;
     display: grid;
@@ -104,9 +106,11 @@
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
   }
+
   .footer-col-newsletter {
     grid-column: span 2;
   }
+
   .footer-col-contact {
     grid-column: span 2;
     grid-template-columns: 1fr;
@@ -118,9 +122,11 @@
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+
   .footer-col-newsletter {
     grid-column: span 1;
   }
+
   .footer-col-contact {
     grid-column: span 1;
   }
@@ -449,9 +455,11 @@
   0% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
   }
+
   70% {
     box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
   }
@@ -518,5 +526,3 @@
   line-height: 1.6;
   margin: 0;
 }
-
-

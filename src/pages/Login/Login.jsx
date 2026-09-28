@@ -283,7 +283,12 @@ export default function Login({ initialTab = 'login' }) {
         {/* ── VISUAL PANEL: LUXURY FASHION CURATION & BADGES ── */}
         <div
           className="picky-auth-left"
-          style={{ backgroundImage: `url('/images/login_luxury_bg.jpg')` }}
+          style={{ 
+            backgroundImage: activeTab === 'signup' 
+              ? `url('/images/top_category_jewellery.jpg')` 
+              : `url('/images/picky_all_categories_bg.jpg')`,
+            transition: 'background-image 0.65s ease-in-out'
+          }}
         >
           {/* Floating Pill and Glowing Orb on dividing seam */}
           <div className="picky-floating-member-badge">

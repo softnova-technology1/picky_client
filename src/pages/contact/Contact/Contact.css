@@ -95,7 +95,7 @@
    1. HERO SECTION
    ========================================================================== */
 .k-hero-section {
-  background: url('/images/contact_hero_bg.jpg') center center / cover no-repeat;
+  background: url('/images/contact_hero_bg.png') center center / cover no-repeat;
   color: #2e1065;
   min-height: calc(100vh - 70px);
   display: flex;
@@ -182,7 +182,7 @@
   font-weight: 800;
   margin: 0 0 24px;
   line-height: 1.1;
-  color: #2e1065;
+  color: #170933;
 }
 
 .k-hero-title span {
@@ -461,14 +461,14 @@
    2. CONTACT INFORMATION
    ========================================================================== */
 .k-info-section {
-  padding: 180px 0 80px;
+  padding: 60px 0 60px;
   position: relative;
   z-index: 10;
 }
 
 .k-section-header {
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -484,17 +484,18 @@
 .k-info-card {
   background-color: var(--k-white);
   border-radius: 100px;
-  padding: 45px 24px 55px;
+  padding: 35px 20px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 20px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+  gap: 16px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.04);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   width: 100%;
-  max-width: 215px;
-  min-height: 290px;
+  max-width: 235px;
+  min-height: 240px;
 }
 
 .k-info-card:hover {
@@ -506,13 +507,13 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f87171, #8b5cf6);
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: var(--k-white);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(248, 113, 113, 0.25);
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.25);
   transition: transform 0.4s ease;
 }
 
@@ -527,17 +528,20 @@
 }
 
 .k-card-text h3 {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   margin: 0;
-  color: var(--k-title-dark);
+  color: #1e1b4b;
+  letter-spacing: -0.2px;
+  word-break: break-word;
 }
 
 .k-card-text p {
-  font-size: 14px;
-  color: var(--k-text-dark);
+  font-size: 13px;
+  color: #475569;
   margin: 0;
   line-height: 1.6;
+  font-weight: 500;
 }
 
 /* ==========================================================================

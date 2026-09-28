@@ -17,11 +17,11 @@
 
 /* Main Luxury Showcase Outer Container */
 .showcase-card {
-  background: #ffffff;
-  border-radius: 26px;
-  padding: clamp(1.75rem, 3vw, 2.5rem);
-  box-shadow: 0 20px 50px -10px rgba(124, 58, 237, 0.08);
-  border: 1.5px solid rgba(233, 213, 255, 0.7);
+  background: linear-gradient(155deg, #ffffff 0%, #fdfcff 40%, #faf5ff 100%);
+  border-radius: 36px;
+  padding: clamp(2rem, 3.5vw, 3rem);
+  box-shadow: 0 32px 80px -15px rgba(124, 58, 237, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 203, 255, 0.85);
   margin-bottom: 3rem;
   position: relative;
 }
@@ -84,12 +84,14 @@
 }
 
 .product-title {
-  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #0f172a;
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #0f172a 0%, #3b0764 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   line-height: 1.25;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 .product-subtitle {
@@ -203,16 +205,17 @@
 .meta-tag-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.76rem;
-  font-weight: 700;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
   color: #6d28d9;
-  background: #f3e8ff;
-  border: 1px solid #e9d5ff;
-  padding: 0.22rem 0.65rem;
-  border-radius: 6px;
+  background: rgba(243, 232, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(233, 213, 255, 0.9);
+  padding: 0.3rem 0.8rem;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .meta-tag-pill:hover {
@@ -261,13 +264,15 @@
 }
 
 .discount-pill {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  color: #15803d;
-  border: 1px solid #86efac;
-  font-size: 0.8rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.85rem;
   font-weight: 800;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  letter-spacing: 0.02em;
 }
 
 /* Divider Line */
@@ -340,10 +345,11 @@
 
 .size-btn.selected {
   border: 2px solid #7c3aed;
-  background: #f3e8ff;
+  background: linear-gradient(135deg, #f3e8ff 0%, #faf5ff 100%);
   color: #7c3aed;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  font-weight: 900;
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.18), inset 0 1px 0 rgba(255,255,255,1);
+  transform: translateY(-2px);
 }
 
 /* Quantity Stepper */
@@ -401,57 +407,58 @@
 /* Secondary High-End Outline ADD TO CART Button */
 .btn-add-cart-outline {
   flex: 1;
-  height: 50px;
+  height: 54px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
   padding: 0 1.25rem;
   border-radius: 9999px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
   color: #7c3aed;
-  border: 2px solid #7c3aed;
-  font-size: 0.92rem;
+  border: 2px solid rgba(192, 132, 252, 0.6);
+  font-size: 0.95rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.08);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.08);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-add-cart-outline:hover {
-  background: #faf5ff;
-  border-color: #6d28d9;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: #9333ea;
   color: #6d28d9;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.22);
 }
 
 /* Primary Commanding BUY NOW Solid Button */
 .btn-buy-now-solid {
   flex: 1;
-  height: 50px;
+  height: 54px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
   padding: 0 1.25rem;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 60%, #5b21b6 100%);
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #5b21b6 100%);
   color: #ffffff;
   border: none;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.32);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.3);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-buy-now-solid:hover {
-  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(124, 58, 237, 0.45);
+  background: linear-gradient(135deg, #a855f7 0%, #6d28d9 100%);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(124, 58, 237, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.4);
 }
 
 /* Trust Features Strip */

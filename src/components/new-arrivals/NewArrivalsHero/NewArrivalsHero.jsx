@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, ArrowRight, ShoppingCart, Shirt, Leaf, Diamond } from 'lucide-react';
+import { Sparkles, ArrowRight, ShoppingCart, Star, ShieldCheck, Grid } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useUiStore } from '../../../store/uiStore';
 
@@ -10,19 +10,19 @@ export default function NewArrivalsHero({ onExploreClick }) {
   const handleAddFeaturedLook = (e) => {
     e.preventDefault();
     const featuredProduct = {
-      _id: 'featured_lilac_hoodie',
-      id: 'featured_hoodie_2026',
-      name: 'Lilac Comfort Hoodie',
-      slug: 'lilac-comfort-hoodie',
-      price: 2199,
-      discountPrice: 1299,
-      image: '/images/pill_model_western.jpg',
-      images: ['/images/pill_model_western.jpg'],
-      category: { name: "Women's Fashion", slug: 'womens-fashion' },
-      stock: 35,
+      _id: 'featured_tech_hub',
+      id: 'featured_tech_2026',
+      name: 'Pro Wireless Headphones',
+      slug: 'pro-wireless-headphones',
+      price: 4999,
+      discountPrice: 2499,
+      image: '/images/pill_tech_product.jpg',
+      images: ['/images/pill_tech_product.jpg'],
+      category: { name: "Electronics", slug: 'electronics' },
+      stock: 45,
     };
     addItem(featuredProduct, 1);
-    showToast('Added "Lilac Comfort Hoodie" to cart! ✨', 'success');
+    showToast('Added "Pro Wireless Headphones" to cart! ✨', 'success');
   };
 
   return (
@@ -30,16 +30,16 @@ export default function NewArrivalsHero({ onExploreClick }) {
       {/* ── Top Typography: Define Your STYLE / Own Your WORLD ✦ ── */}
       <div className="new-arrivals-top-row">
         <div className="top-headline-left">
-          <span className="top-sub">Define Your</span>
-          <span className="top-main-word">STYLE</span>
+          <span className="top-sub">Shop All</span>
+          <span className="top-main-word">CATEGORIES</span>
         </div>
 
         {/* Center Clearance Gap for Model's Beanie */}
         <div className="top-headline-center-spacer" />
 
         <div className="top-headline-right">
-          <span className="top-sub">Own Your</span>
-          <span className="top-main-word">WORLD</span>
+          <span className="top-sub">For Every</span>
+          <span className="top-main-word">LIFESTYLE</span>
           <span className="top-sparkle-star">✦</span>
         </div>
       </div>
@@ -74,16 +74,16 @@ export default function NewArrivalsHero({ onExploreClick }) {
           <div className="col-left">
             <div className="new-collection-pill">
               <Sparkles size={13} />
-              <span>New Collection 2026</span>
+              <span>New Arrivals 2026</span>
             </div>
 
             <h1 className="hero-heading">
-              Where Comfort <br />
-              Meets Confidence
+              Everything You <br />
+              Need, All Here
             </h1>
 
             <p className="hero-subtext">
-              Elevate your everyday look with fresh pieces crafted for you. Curated women's fashion & authentic comfort.
+              Explore our vast selection of premium electronics, home essentials, fashion, and more. Handpicked for quality and everyday value.
             </p>
 
             <button
@@ -120,43 +120,43 @@ export default function NewArrivalsHero({ onExploreClick }) {
             <div className="right-feature-badges">
               <div className="mini-badge-item">
                 <div className="badge-icon-wrap">
-                  <Shirt size={20} strokeWidth={1.8} />
+                  <Star size={20} strokeWidth={1.8} />
                 </div>
-                <span>Premium Quality</span>
+                <span>Top Rated</span>
               </div>
 
               <div className="mini-badge-item">
                 <div className="badge-icon-wrap">
-                  <Leaf size={20} strokeWidth={1.8} />
+                  <ShieldCheck size={20} strokeWidth={1.8} />
                 </div>
-                <span>Sustainable Fashion</span>
+                <span>Trusted Quality</span>
               </div>
 
               <div className="mini-badge-item">
                 <div className="badge-icon-wrap">
-                  <Diamond size={20} strokeWidth={1.8} />
+                  <Grid size={20} strokeWidth={1.8} />
                 </div>
-                <span>Limited Edition</span>
+                <span>Vast Selection</span>
               </div>
             </div>
 
             {/* Featured Look Label & Card */}
             <div className="featured-look-wrapper">
               <div className="featured-look-title-label">
-                <span>Featured Look</span>
+                <span>Trending Now</span>
               </div>
 
               <div className="featured-look-card-box">
                 <div className="featured-card-img">
                   <img
-                    src="/images/pill_model_western.jpg"
-                    alt="Lilac Comfort Hoodie - Women's Fashion"
+                    src="/images/pill_tech_product.jpg"
+                    alt="Pro Wireless Headphones - Electronics"
                   />
                 </div>
 
                 <div className="featured-card-meta">
-                  <h4 className="card-item-title">Lilac Comfort Hoodie</h4>
-                  <p className="card-item-sub">Women's Relaxed Fit</p>
+                  <h4 className="card-item-title">Pro Wireless Headphones</h4>
+                  <p className="card-item-sub">Premium Electronics</p>
 
                   <button
                     onClick={handleAddFeaturedLook}
@@ -165,7 +165,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
                     title="Add to cart"
                   >
                     <ShoppingCart size={13} />
-                    <span>₹1,299</span>
+                    <span>₹2,499</span>
                   </button>
                 </div>
               </div>
