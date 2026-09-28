@@ -33,10 +33,12 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminProducts from './pages/admin/AdminProducts';
-import AdminCategories from './pages/admin/AdminCategories';
+import AdminSubCategories from './pages/admin/AdminSubCategories';
+import AdminInventory from './pages/admin/AdminInventory';
 import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminReports from './pages/admin/AdminReports';
 import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminCustomization from './pages/admin/AdminCustomization';
 
 const ADMIN = '/pickyadmin-softnova2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
@@ -88,10 +90,13 @@ export default function App() {
           <Route path={`${ADMIN}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/categories`} element={<Navigate to={`${ADMIN}/subcategories`} replace />} />
+          <Route path={`${ADMIN}/subcategories`} element={<AdminProtectedRoute><AdminSubCategories /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/reports`} element={<AdminProtectedRoute><AdminReports /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
 
           {/* ── Catch-all 404 Page ───────────────────── */}
           <Route path="*" element={<NotFound />} />

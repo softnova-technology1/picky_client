@@ -25,6 +25,7 @@ import { formatPrice } from '../../../utils/formatPrice';
 import {
   MOCK_SALES_SUMMARY,
   MOCK_TOP_PRODUCTS,
+  MOCK_TOP_PRODUCTS_REPORT,
   MOCK_COUPONS,
 } from '../../../data/adminMockData';
 
@@ -53,10 +54,10 @@ export default function AdminReports() {
         }
 
         const topData = topRes?.data || topRes;
-        if (Array.isArray(topData) && topData.length > 0) {
+        if (Array.isArray(topData) && topData.length > 0 && topData[0].unitsSold !== undefined) {
           setTopProducts(topData);
         } else {
-          setTopProducts(MOCK_TOP_PRODUCTS);
+          setTopProducts(MOCK_TOP_PRODUCTS_REPORT);
         }
 
         const coupData = coupRes?.data || coupRes;
@@ -68,7 +69,7 @@ export default function AdminReports() {
       } catch (err) {
         console.error('Failed to load reports:', err);
         setSummary(MOCK_SALES_SUMMARY);
-        setTopProducts(MOCK_TOP_PRODUCTS);
+        setTopProducts(MOCK_TOP_PRODUCTS_REPORT);
         setCoupons(MOCK_COUPONS);
       } finally {
         setLoading(false);
@@ -87,14 +88,18 @@ export default function AdminReports() {
     { day: '5 Sep', revenue: 24980 },
   ];
 
+  // Dynamic Y-axis max calculation with ~10% headroom
+  const maxRevenueVal = Math.max(...chartData.map((d) => d.revenue || 0));
+  const dynamicYAxisMax = Math.ceil((maxRevenueVal * 1.1) / 1000) * 1000;
+
   return (
     <AdminLayout title="Analytics & Financial Reports">
       {loading ? (
         <Spinner size={40} />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          {/* Header Row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Header Row: Standardized 24px gap */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
                 Store Financial Overview
@@ -107,19 +112,20 @@ export default function AdminReports() {
             <button
               className="admin-period-select-btn"
               onClick={() => alert('Financial CSV Report Download Started')}
+              style={{ padding: '8px 16px' }}
             >
               <Download size={15} color="#7c3aed" />
               <span>Export CSV Report</span>
             </button>
           </div>
 
-          {/* Revenue Breakdown - 4 Clean Cards */}
+          {/* Revenue Breakdown - 4 Clean Cards with balanced internal padding */}
           <div className="metrics-grid">
             <div className="metric-card">
               <div className="metric-icon-wrap" style={{ background: '#ede8f8', color: '#7c3aed' }}>
-                <DollarSign size={22} />
+                <DollarSign size={20} />
               </div>
-              <div>
+              <div className="metric-info-col">
                 <div className="metric-val">{formatPrice(summary?.totalRevenue || 124980)}</div>
                 <div className="metric-label">Gross Revenue</div>
               </div>
@@ -127,9 +133,9 @@ export default function AdminReports() {
 
             <div className="metric-card">
               <div className="metric-icon-wrap" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                <Tag size={22} />
+                <Tag size={20} />
               </div>
-              <div>
+              <div className="metric-info-col">
                 <div className="metric-val">{formatPrice(summary?.totalDiscount || 18500)}</div>
                 <div className="metric-label">Total Discounts Given</div>
               </div>
@@ -137,9 +143,9 @@ export default function AdminReports() {
 
             <div className="metric-card">
               <div className="metric-icon-wrap" style={{ background: '#e0f2fe', color: '#0284c7' }}>
-                <PackageCheck size={22} />
+                <PackageCheck size={20} />
               </div>
-              <div>
+              <div className="metric-info-col">
                 <div className="metric-val">{summary?.confirmedOrders || 142}</div>
                 <div className="metric-label">Fulfilled Orders</div>
               </div>
@@ -147,9 +153,9 @@ export default function AdminReports() {
 
             <div className="metric-card">
               <div className="metric-icon-wrap" style={{ background: '#ede9fe', color: '#4338ca' }}>
-                <Users size={22} />
+                <Users size={20} />
               </div>
-              <div>
+              <div className="metric-info-col">
                 <div className="metric-val">{(summary?.totalCustomers || 1024).toLocaleString()}</div>
                 <div className="metric-label">Total Buyers</div>
               </div>
@@ -157,22 +163,26 @@ export default function AdminReports() {
           </div>
 
           {/* Sales Revenue Trend Chart */}
-          <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div className="card" style={{ padding: '24px', margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
                   Revenue Velocity (Last 7 Days)
                 </h3>
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Daily aggregated checkout earnings</span>
               </div>
-              <div className="admin-period-select-btn" style={{ padding: '0.35rem 0.85rem', fontSize: '0.78rem' }}>
+              <div className="admin-period-select-btn" style={{ padding: '4px 12px', fontSize: '0.78rem' }}>
                 <span>INR (₹)</span>
               </div>
             </div>
 
-            <div style={{ width: '100%', height: 220 }}>
+            <div style={{ width: '100%', height: 230 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 12, right: 16, left: -10, bottom: 4 }}
+                  barCategoryGap="20%"
+                >
                   <defs>
                     <linearGradient id="reportsBarGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.9} />
@@ -184,27 +194,34 @@ export default function AdminReports() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    tickFormatter={(v) => `₹${v / 1000}K`}
+                    domain={[0, dynamicYAxisMax]}
+                    tickFormatter={(v) => (v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`)}
                   />
                   <Tooltip
                     formatter={(val) => [formatPrice(val), 'Revenue']}
                     contentStyle={{
                       background: '#1e1b4b',
                       color: '#fff',
-                      borderRadius: 10,
+                      borderRadius: 12,
                       border: 'none',
                       fontSize: '0.82rem',
+                      padding: '8px 12px',
                     }}
                   />
-                  <Bar dataKey="revenue" fill="url(#reportsBarGrad)" radius={[8, 8, 0, 0]} barSize={34} />
+                  <Bar
+                    dataKey="revenue"
+                    fill="url(#reportsBarGrad)"
+                    radius={[8, 8, 0, 0]}
+                    maxBarSize={44}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Top Selling Products */}
-          <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div className="card" style={{ padding: '24px', margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
                   Top 5 Best Selling Products
@@ -214,19 +231,19 @@ export default function AdminReports() {
             </div>
 
             <div className="table-container">
-              <table className="admin-table">
+              <table className="admin-table admin-table-fixed">
                 <thead>
                   <tr>
-                    <th>Product</th>
-                    <th>Units Sold</th>
-                    <th>Total Generated</th>
+                    <th style={{ width: '50%' }}>Product</th>
+                    <th style={{ width: '25%' }}>Units Sold</th>
+                    <th style={{ width: '25%' }}>Total Generated</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topProducts.map((p, idx) => (
                     <tr key={p._id || idx}>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <td style={{ width: '50%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img
                             src={p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
                             alt={p.name}
@@ -238,10 +255,10 @@ export default function AdminReports() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ width: '25%' }}>
                         <strong style={{ color: '#1e1b4b' }}>{p.unitsSold} units</strong>
                       </td>
-                      <td>
+                      <td style={{ width: '25%' }}>
                         <strong style={{ color: '#7c3aed', fontSize: '0.95rem' }}>{formatPrice(p.totalRevenue)}</strong>
                       </td>
                     </tr>
@@ -252,8 +269,8 @@ export default function AdminReports() {
           </div>
 
           {/* Active Coupons & Promotions */}
-          <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div className="card" style={{ padding: '24px', margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
                   Active Promotional Coupons

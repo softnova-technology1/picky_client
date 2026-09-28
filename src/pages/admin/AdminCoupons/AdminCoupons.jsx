@@ -362,8 +362,15 @@ export default function AdminCoupons() {
         <Spinner size={36} />
       ) : activeTab === 'coupons' ? (
         /* ── COUPONS TABLE ─────────────────────────────────────────────────── */
-        <div className="table-container">
-          <table className="admin-table">
+        <div>
+          <div style={{ background: '#faf8fe', border: '1px solid #ede8f8', borderRadius: '10px', padding: '0.65rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Tag size={15} color="#7c3aed" />
+            <span style={{ fontSize: '0.82rem', color: '#4c1d95', fontWeight: 600 }}>
+              <strong>Promo Coupons:</strong> Customer manually enters coupon code at checkout to claim discounts.
+            </span>
+          </div>
+          <div className="table-container">
+            <table className="admin-table">
             <thead>
               <tr>
                 <th>Coupon Code</th>
@@ -454,10 +461,18 @@ export default function AdminCoupons() {
             </tbody>
           </table>
         </div>
+      </div>
       ) : (
         /* ── DISCOUNTS TABLE ───────────────────────────────────────────────── */
-        <div className="table-container">
-          <table className="admin-table">
+        <div>
+          <div style={{ background: '#faf8fe', border: '1px solid #ede8f8', borderRadius: '10px', padding: '0.65rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Zap size={15} color="#7c3aed" />
+            <span style={{ fontSize: '0.82rem', color: '#4c1d95', fontWeight: 600 }}>
+              <strong>Automatic Offers:</strong> System automatically applies eligible offers at checkout when cart criteria are met.
+            </span>
+          </div>
+          <div className="table-container">
+            <table className="admin-table">
             <thead>
               <tr>
                 <th>Offer Name</th>
@@ -546,6 +561,7 @@ export default function AdminCoupons() {
             </tbody>
           </table>
         </div>
+      </div>
       )}
 
       {/* ── CREATE / EDIT COUPON MODAL ───────────────────────────────────────── */}

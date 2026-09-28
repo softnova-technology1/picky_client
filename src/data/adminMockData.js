@@ -2,167 +2,20 @@
 // Single source of truth for both Admin Management Portal and Customer Store.
 // Features 10 Core Store Categories & Curated Products.
 
-export const MOCK_CATEGORIES = [
-  {
-    _id: 'cat-1',
-    name: "Women's Fashion",
-    slug: 'womens-fashion',
-    subtext: 'Sarees, Kurtis, Leggings, Nightwear, Dupattas',
-    icon: '👗',
-    badge: 'Popular',
-    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
-    itemCount: 142,
-    subcategories: [
-      { _id: 'sub-wf-1', name: 'Sarees', slug: 'sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400', itemCount: 48 },
-      { _id: 'sub-wf-2', name: 'Kurtis', slug: 'kurtis', image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400', itemCount: 36 },
-      { _id: 'sub-wf-3', name: 'Leggings', slug: 'leggings', image: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400', itemCount: 24 },
-      { _id: 'sub-wf-4', name: 'Nightwear', slug: 'nightwear', image: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=400', itemCount: 18 },
-      { _id: 'sub-wf-5', name: 'Dupattas', slug: 'dupattas', image: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=400', itemCount: 16 },
-    ],
-  },
-  {
-    _id: 'cat-2',
-    name: 'Home & Kitchen',
-    slug: 'home-kitchen',
-    subtext: 'Storage boxes, Choppers, Organizers, Cookware',
-    icon: '🍳',
-    badge: 'Hot Deals',
-    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&auto=format&fit=crop&q=80',
-    itemCount: 98,
-    subcategories: [
-      { _id: 'sub-hk-1', name: 'Storage boxes', slug: 'storage-boxes', image: 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400', itemCount: 28 },
-      { _id: 'sub-hk-2', name: 'Choppers', slug: 'choppers', image: 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=400', itemCount: 22 },
-      { _id: 'sub-hk-3', name: 'Organizers', slug: 'organizers', image: 'https://images.unsplash.com/photo-1595475207225-428b62bda831?w=400', itemCount: 26 },
-      { _id: 'sub-hk-4', name: 'Cookware', slug: 'cookware', image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=400', itemCount: 22 },
-    ],
-  },
-  {
-    _id: 'cat-3',
-    name: 'Artificial Jewellery',
-    slug: 'artificial-jewellery',
-    subtext: 'Earrings, Chains, Bangles, Necklace sets',
-    icon: '💍',
-    badge: 'Trending',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop&q=80',
-    itemCount: 120,
-    subcategories: [
-      { _id: 'sub-aj-1', name: 'Earrings', slug: 'earrings', image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=400', itemCount: 38 },
-      { _id: 'sub-aj-2', name: 'Chains', slug: 'chains', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400', itemCount: 28 },
-      { _id: 'sub-aj-3', name: 'Bangles', slug: 'bangles', image: 'https://images.unsplash.com/photo-1611591475822-79f939316666?w=400', itemCount: 26 },
-      { _id: 'sub-aj-4', name: 'Necklace sets', slug: 'necklace-sets', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400', itemCount: 28 },
-    ],
-  },
-  {
-    _id: 'cat-4',
-    name: 'Beauty & Personal Care',
-    slug: 'beauty-personal-care',
-    subtext: 'Hair accessories, skincare, herbal products',
-    icon: '✨',
-    badge: null,
-    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80',
-    itemCount: 86,
-    subcategories: [
-      { _id: 'sub-bp-1', name: 'Hair accessories', slug: 'hair-accessories', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400', itemCount: 32 },
-      { _id: 'sub-bp-2', name: 'Skincare', slug: 'skincare', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400', itemCount: 30 },
-      { _id: 'sub-bp-3', name: 'Herbal products', slug: 'herbal-products', image: 'https://images.unsplash.com/photo-1608248597359-2ff6112f45c8?w=400', itemCount: 24 },
-    ],
-  },
-  {
-    _id: 'cat-5',
-    name: 'Mobile Accessories',
-    slug: 'mobile-accessories',
-    subtext: 'Cases, Chargers, Cables, Stands, Earbuds',
-    icon: '📱',
-    badge: 'Best Seller',
-    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop&q=80',
-    itemCount: 165,
-    subcategories: [
-      { _id: 'sub-ma-1', name: 'Cases', slug: 'cases', image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400', itemCount: 52 },
-      { _id: 'sub-ma-2', name: 'Chargers', slug: 'chargers', image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400', itemCount: 34 },
-      { _id: 'sub-ma-3', name: 'Cables', slug: 'cables', image: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=400', itemCount: 28 },
-      { _id: 'sub-ma-4', name: 'Stands', slug: 'stands', image: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400', itemCount: 22 },
-      { _id: 'sub-ma-5', name: 'Earbuds', slug: 'earbuds', image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400', itemCount: 29 },
-    ],
-  },
-  {
-    _id: 'cat-6',
-    name: 'Traditional Tamil Products',
-    slug: 'traditional-tamil-products',
-    subtext: 'Sungudi sarees, brass items, Tanjore crafts',
-    icon: '🪔',
-    badge: 'Authentic Tamil',
-    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
-    itemCount: 74,
-    subcategories: [
-      { _id: 'sub-tp-1', name: 'Sungudi sarees', slug: 'sungudi-sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400', itemCount: 28 },
-      { _id: 'sub-tp-2', name: 'Brass items', slug: 'brass-items', image: 'https://images.unsplash.com/photo-1609137144822-26155986ec32?w=400', itemCount: 24 },
-      { _id: 'sub-tp-3', name: 'Tanjore crafts', slug: 'tanjore-crafts', image: 'https://images.unsplash.com/photo-1582561424760-0321d75e81fa?w=400', itemCount: 22 },
-    ],
-  },
-  {
-    _id: 'cat-7',
-    name: 'Snacks & Foods',
-    slug: 'snacks-foods',
-    subtext: 'Murukku, mixture, pickles, podi, sweets',
-    icon: '🍿',
-    badge: 'Fresh & Crunchy',
-    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
-    itemCount: 62,
-    subcategories: [
-      { _id: 'sub-sf-1', name: 'Murukku', slug: 'murukku', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400', itemCount: 18 },
-      { _id: 'sub-sf-2', name: 'Mixture', slug: 'mixture', image: 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=400', itemCount: 14 },
-      { _id: 'sub-sf-3', name: 'Pickles', slug: 'pickles', image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281290?w=400', itemCount: 12 },
-      { _id: 'sub-sf-4', name: 'Podi', slug: 'podi', image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400', itemCount: 10 },
-      { _id: 'sub-sf-5', name: 'Sweets', slug: 'sweets', image: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400', itemCount: 8 },
-    ],
-  },
-  {
-    _id: 'cat-8',
-    name: 'Home Décor',
-    slug: 'home-decor',
-    subtext: 'Wall décor, artificial plants, lamps, organizers',
-    icon: '🏡',
-    badge: null,
-    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600&auto=format&fit=crop&q=80',
-    itemCount: 91,
-    subcategories: [
-      { _id: 'sub-hd-1', name: 'Wall décor', slug: 'wall-decor', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400', itemCount: 28 },
-      { _id: 'sub-hd-2', name: 'Artificial plants', slug: 'artificial-plants', image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400', itemCount: 22 },
-      { _id: 'sub-hd-3', name: 'Lamps', slug: 'lamps', image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400', itemCount: 21 },
-      { _id: 'sub-hd-4', name: 'Organizers', slug: 'decor-organizers', image: 'https://images.unsplash.com/photo-1595475207225-428b62bda831?w=400', itemCount: 20 },
-    ],
-  },
-  {
-    _id: 'cat-9',
-    name: 'Kids Products',
-    slug: 'kids-products',
-    subtext: 'Toys, stationery, school accessories',
-    icon: '🧸',
-    badge: null,
-    image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=600&auto=format&fit=crop&q=80',
-    itemCount: 88,
-    subcategories: [
-      { _id: 'sub-kp-1', name: 'Toys', slug: 'toys', image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400', itemCount: 34 },
-      { _id: 'sub-kp-2', name: 'Stationery', slug: 'stationery', image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400', itemCount: 28 },
-      { _id: 'sub-kp-3', name: 'School accessories', slug: 'school-accessories', image: 'https://images.unsplash.com/photo-1546872006-42c78c00b743?w=400', itemCount: 26 },
-    ],
-  },
-  {
-    _id: 'cat-10',
-    name: 'Fitness Products',
-    slug: 'fitness-products',
-    subtext: 'Resistance bands, yoga accessories, bottles',
-    icon: '🧘',
-    badge: 'Fitness Essential',
-    image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
-    itemCount: 55,
-    subcategories: [
-      { _id: 'sub-fp-1', name: 'Resistance bands', slug: 'resistance-bands', image: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=400', itemCount: 18 },
-      { _id: 'sub-fp-2', name: 'Yoga accessories', slug: 'yoga-accessories', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400', itemCount: 20 },
-      { _id: 'sub-fp-3', name: 'Bottles', slug: 'bottles', image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400', itemCount: 17 },
-    ],
-  },
-];
+import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from './categoryMockData';
+import { MOCK_INVENTORY, INVENTORY_KPIS, STOCK_ADJUST_REASONS, calculateInventoryKPIs } from './inventoryMockData';
+import { MOCK_STORE_CUSTOMIZATION } from './customizationMockData';
+
+export {
+  MOCK_CATEGORIES,
+  MOCK_SUBCATEGORIES,
+  MOCK_INVENTORY,
+  INVENTORY_KPIS,
+  STOCK_ADJUST_REASONS,
+  calculateInventoryKPIs,
+  MOCK_STORE_CUSTOMIZATION,
+};
+
 
 // ── Curated Real Store Products Across 10 Categories ──────────────────────────
 export const MOCK_PRODUCTS = [
@@ -178,7 +31,7 @@ export const MOCK_PRODUCTS = [
     subCategory: { _id: 'sub-wf-1', name: 'Sarees', slug: 'sarees' },
     images: ['/images/products/saree.png'],
     image: '/images/products/saree.png',
-    stock: 45,
+    stock: 42,
     rating: 4.8,
     isFeatured: true,
     tags: ['Cotton', 'Handloom', 'Traditional', 'Madurai'],
@@ -201,7 +54,7 @@ export const MOCK_PRODUCTS = [
     subCategory: { _id: 'sub-wf-2', name: 'Kurtis', slug: 'kurtis' },
     images: ['/images/pill_model_kurti.png'],
     image: '/images/pill_model_kurti.png',
-    stock: 38,
+    stock: 3,
     rating: 4.7,
     isFeatured: true,
     tags: ['Anarkali', 'Rayon', 'Festive', 'Kurti'],
@@ -223,7 +76,7 @@ export const MOCK_PRODUCTS = [
     subCategory: { _id: 'sub-wf-6', name: 'T-Shirts & Tops', slug: 't-shirts' },
     images: ['/images/products/tshirt.png'],
     image: '/images/products/tshirt.png',
-    stock: 60,
+    stock: 0,
     rating: 4.9,
     isFeatured: false,
     tags: ['T-Shirt', 'Streetwear', 'Cotton', 'Graphic Tee'],
@@ -823,9 +676,12 @@ export const MOCK_PRODUCTS = [
 export const MOCK_TOP_PRODUCTS = MOCK_PRODUCTS.slice(0, 8);
 
 export const MOCK_SALES_SUMMARY = {
-  totalRevenue: 248980,
+  totalRevenue: 225980,
   totalOrders: 312,
-  confirmedOrders: 184,
+  eligibleOrders: 292,
+  deliveredOrders: 248,
+  confirmedOrders: 44,
+  cancelledOrders: 20,
   totalDiscount: 24500,
   totalCustomers: 1240,
   totalProducts: MOCK_PRODUCTS.length,
@@ -937,14 +793,16 @@ export const MOCK_ORDERS = [
 ];
 
 export const MOCK_COUPONS = [
-  { _id: 'coup_1', code: 'WELCOME100', type: 'flat', value: 100, minOrderAmount: 999, maxUsagePerUser: 1, isActive: true },
-  { _id: 'coup_2', code: 'PICKY15', type: 'percentage', value: 15, minOrderAmount: 1500, maxDiscountAmount: 400, maxUsagePerUser: 2, isActive: true },
-  { _id: 'coup_3', code: 'TAMILFEST', type: 'flat', value: 200, minOrderAmount: 1999, maxUsagePerUser: 1, isActive: true },
+  { _id: 'coup_1', code: 'WELCOME100', type: 'flat', value: 100, minOrderAmount: 999, maxUsagePerUser: 1, usageCount: 84, isActive: true },
+  { _id: 'coup_2', code: 'PICKY15', type: 'percentage', value: 15, minOrderAmount: 1500, maxDiscountAmount: 400, maxUsagePerUser: 2, usageCount: 132, isActive: true },
+  { _id: 'coup_3', code: 'TAMILFEST', type: 'flat', value: 200, minOrderAmount: 1999, maxUsagePerUser: 1, usageCount: 47, isActive: true },
+  { _id: 'coup_4', code: 'NAVARATRI20', type: 'percentage', value: 20, minOrderAmount: 999, maxDiscountAmount: 300, maxUsagePerUser: 1, usageCount: 0, isActive: false },
 ];
 
 export const MOCK_DISCOUNTS = [
-  { _id: 'disc_1', name: 'Free Shipping Above ₹499', type: 'flat', value: 60, minOrderAmount: 499, isActive: true },
-  { _id: 'disc_2', name: 'Combo Festive Flat 10%', type: 'percentage', value: 10, minOrderAmount: 2499, isActive: true },
+  { _id: 'disc_1', name: 'Free Shipping Above ₹499', type: 'flat', value: 60, minOrderAmount: 499, appliesTo: 'all', isActive: true },
+  { _id: 'disc_2', name: 'Combo Festive Flat 10%', type: 'percentage', value: 10, minOrderAmount: 2499, appliesTo: 'all', isActive: true },
+  { _id: 'disc_3', name: 'First Order Welcome Gift', type: 'flat', value: 150, minOrderAmount: 699, appliesTo: 'first_order', isActive: true },
 ];
 
 export const MOCK_CUSTOMERS = [
@@ -952,4 +810,215 @@ export const MOCK_CUSTOMERS = [
   { _id: 'cust_2', name: 'Suresh Kumar', phone: '+91 97890 87654', email: 'suresh@example.com', city: 'Madurai', totalOrders: 3, totalSpent: 3850, joinedDate: '2026-07-04' },
   { _id: 'cust_3', name: 'Divya Balaji', phone: '+91 94441 55667', email: 'divya@example.com', city: 'Coimbatore', totalOrders: 5, totalSpent: 8900, joinedDate: '2026-05-20' },
   { _id: 'cust_4', name: 'Anand Natarajan', phone: '+91 98840 99881', email: 'anand@example.com', city: 'Tiruchirappalli', totalOrders: 2, totalSpent: 2490, joinedDate: '2026-08-11' },
+  { _id: 'cust_5', name: 'Priya Sundaram', phone: '+91 93849 20123', email: 'priya.s@example.com', city: 'Salem', totalOrders: 6, totalSpent: 11240, joinedDate: '2026-04-17' },
+  { _id: 'cust_6', name: 'Rajan Murugesan', phone: '+91 90039 55441', email: 'rajan.m@example.com', city: 'Erode', totalOrders: 1, totalSpent: 1299, joinedDate: '2026-09-01' },
+  { _id: 'cust_7', name: 'Lalitha Krishnamurthy', phone: '+91 99449 87766', email: 'lalitha.k@example.com', city: 'Thanjavur', totalOrders: 7, totalSpent: 14890, joinedDate: '2026-03-08' },
+  { _id: 'cust_8', name: 'Karthik Selvam', phone: '+91 95001 33224', email: 'karthik.s@example.com', city: 'Vellore', totalOrders: 2, totalSpent: 3200, joinedDate: '2026-07-29' },
 ];
+
+// ─── Extended Orders Mock (more variety for Orders page) ─────────────────────
+export const MOCK_ORDERS_EXTENDED = [
+  {
+    _id: 'ord_101',
+    orderNumber: 'ORD-2026-8801',
+    customer: { name: 'Kavitha Ramachandran', phone: '+91 98401 23456', email: 'kavitha@example.com' },
+    shippingAddress: { fullName: 'Kavitha R', street: 'Flat 4A, Green Garden Apts, Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' },
+    items: [
+      { name: 'Pure Cotton Handloom Madurai Sungudi Saree', price: 1299, quantity: 1, image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300' },
+      { name: 'Antique Matte Gold Temple Choker Necklace Set', price: 1299, quantity: 1, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300' },
+    ],
+    totalAmount: 2598,
+    status: 'shipped',
+    trackingId: 'DTDC-TN-9823412',
+    courier: 'DTDC Express',
+    createdAt: '2026-09-04T10:30:00Z',
+  },
+  {
+    _id: 'ord_102',
+    orderNumber: 'ORD-2026-8802',
+    customer: { name: 'Suresh Kumar', phone: '+91 97890 87654', email: 'suresh@example.com' },
+    shippingAddress: { fullName: 'Suresh K', street: '22, North Veli Street', city: 'Madurai', state: 'Tamil Nadu', pincode: '625001' },
+    items: [
+      { name: 'Multi-Blade Stainless Steel Quick Vegetable Chopper (900ml)', price: 499, quantity: 2, image: 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=300' },
+      { name: 'Authentic Manapparai Crispy Rice Murukku (500g Jar)', price: 249, quantity: 2, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300' },
+    ],
+    totalAmount: 1496,
+    status: 'confirmed',
+    trackingId: '',
+    courier: '',
+    createdAt: '2026-09-05T14:20:00Z',
+  },
+  {
+    _id: 'ord_103',
+    orderNumber: 'ORD-2026-8803',
+    customer: { name: 'Divya Balaji', phone: '+91 94441 55667', email: 'divya@example.com' },
+    shippingAddress: { fullName: 'Divya B', street: '18, Cross Cut Road, Gandhipuram', city: 'Coimbatore', state: 'Tamil Nadu', pincode: '641012' },
+    items: [
+      { name: 'Non-Slip 6mm Dual-Color TPE Alignment Yoga Mat with Strap', price: 1199, quantity: 1, image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300' },
+      { name: 'Double-Walled Vacuum Insulated Stainless Steel Sipper (1000ml)', price: 899, quantity: 1, image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=300' },
+    ],
+    totalAmount: 2098,
+    status: 'delivered',
+    trackingId: 'DELH-8823190',
+    courier: 'Delhivery',
+    createdAt: '2026-09-01T09:15:00Z',
+  },
+  {
+    _id: 'ord_104',
+    orderNumber: 'ORD-2026-8804',
+    customer: { name: 'Priya Sundaram', phone: '+91 93849 20123', email: 'priya.s@example.com' },
+    shippingAddress: { fullName: 'Priya S', street: '7, Nehru Nagar, Fairlands', city: 'Salem', state: 'Tamil Nadu', pincode: '636016' },
+    items: [
+      { name: 'Premium Silicone & Fabric Resistance Loop Band Set of 3', price: 599, quantity: 1, image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=300' },
+    ],
+    totalAmount: 599,
+    status: 'confirmed',
+    trackingId: '',
+    courier: '',
+    createdAt: '2026-09-06T16:45:00Z',
+  },
+  {
+    _id: 'ord_105',
+    orderNumber: 'ORD-2026-8805',
+    customer: { name: 'Lalitha Krishnamurthy', phone: '+91 99449 87766', email: 'lalitha.k@example.com' },
+    shippingAddress: { fullName: 'Lalitha K', street: '3, Rajaji Road, Big Bazaar Street', city: 'Thanjavur', state: 'Tamil Nadu', pincode: '613001' },
+    items: [
+      { name: 'Traditional Pure Brass Handcrafted Annam Kuthu Vilakku (Pair)', price: 2999, quantity: 1, image: 'https://images.unsplash.com/photo-1602166741820-1d3cd5c8c0b9?w=300' },
+      { name: 'Heritage Lakshmi Kasu Mala 24K Gold Plated Kemp Necklace', price: 1349, quantity: 1, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300' },
+    ],
+    totalAmount: 4348,
+    status: 'shipped',
+    trackingId: 'EKART-TN-5521340',
+    courier: 'Ekart Logistics',
+    createdAt: '2026-09-03T11:00:00Z',
+  },
+  {
+    _id: 'ord_106',
+    orderNumber: 'ORD-2026-8806',
+    customer: { name: 'Karthik Selvam', phone: '+91 95001 33224', email: 'karthik.s@example.com' },
+    shippingAddress: { fullName: 'Karthik S', street: '56, CMC Area, Sathuvachari', city: 'Vellore', state: 'Tamil Nadu', pincode: '632009' },
+    items: [
+      { name: 'Smart Talking Flash Cards Educational Audio Toy (224 Words)', price: 799, quantity: 1, image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=300' },
+    ],
+    totalAmount: 799,
+    status: 'cancelled',
+    trackingId: '',
+    courier: '',
+    createdAt: '2026-09-02T08:30:00Z',
+  },
+];
+
+// ─── Top Products (with sales metrics for Reports page) ──────────────────────
+export const MOCK_TOP_PRODUCTS_REPORT = MOCK_PRODUCTS.slice(0, 5).map((p, idx) => ({
+  ...p,
+  unitsSold: [182, 149, 134, 116, 98][idx],
+  totalRevenue: Math.round(p.discountPrice * [182, 149, 134, 116, 98][idx]),
+}));
+
+// ─── Recent Activity Feed (for future Dashboard Activity widget) ─────────────
+export const MOCK_ACTIVITY_FEED = [
+  { id: 'act_1', type: 'cancelled', icon: '❌', message: 'Order #ORD-2026-8806 was cancelled — Karthik Selvam', time: '2 min ago', color: '#ef4444' },
+  { id: 'act_2', type: 'delivery', icon: '✅', message: 'Order #ORD-2026-8803 marked delivered — Divya Balaji, Coimbatore', time: '18 min ago', color: '#16a34a' },
+  { id: 'act_3', type: 'customer', icon: '👤', message: 'New customer registered: Rajan Murugesan (Erode)', time: '1 hr ago', color: '#0284c7' },
+  { id: 'act_4', type: 'stock', icon: '⚠️', message: 'Low stock alert: Manapparai Murukku — only 3 units left', time: '2 hrs ago', color: '#d97706' },
+  { id: 'act_5', type: 'coupon', icon: '🏷️', message: 'Coupon TAMILFEST used 5 times today', time: '3 hrs ago', color: '#5b21b6' },
+  { id: 'act_6', type: 'order', icon: '🛒', message: 'Order #ORD-2026-8805 shipped via Ekart — Lalitha K', time: '4 hrs ago', color: '#7c3aed' },
+];
+
+// ─── Supported Multi-Courier Partners (Extensible) ──────────────────────────
+export const COMMON_COURIERS = [
+  'DTDC',
+  'Blue Dart',
+  'Delhivery',
+  'Shadowfax',
+  'Ecom Express',
+  'India Post Speed Post',
+  'ST Courier',
+  'Professional Couriers',
+  'Rathimeena',
+  'Other',
+];
+
+// ─── Dashboard Upcoming Tasks ───────────────────────────────────────────────
+export const MOCK_STORE_TASKS = [
+  {
+    id: 1,
+    title: 'Dispatch AWB: ORD-2026-8802 (Suresh Kumar)',
+    date: 'Madurai • Due Today',
+    completed: false,
+  },
+  {
+    id: 2,
+    title: 'Track DTDC-TN-9823412 — ORD-2026-8801',
+    date: 'Chennai • In Transit',
+    completed: false,
+  },
+  {
+    id: 3,
+    title: 'Verify Delivery for ORD-2026-8803 (Divya Balaji)',
+    date: 'Coimbatore • Manual Check',
+    completed: false,
+    isVerifyDelivery: true,
+  },
+  {
+    id: 4,
+    title: 'Low Stock Alert: Manapparai Murukku (3 jars left)',
+    date: 'Inventory Warning',
+    completed: false,
+  },
+];
+
+// ─── E-Commerce Store Sales Pipeline Tiers ──────────────────────────────────
+export const MOCK_FUNNEL_STAGES = [
+  {
+    id: 'visitors',
+    name: 'Store Visitors',
+    count: '1,250',
+    color: '#6d28d9',
+    textColor: '#ffffff',
+    points: '0,0 210,0 193,32 17,32',
+    labelY: 20,
+    lineY: 16,
+  },
+  {
+    id: 'browsed',
+    name: 'Catalog Browsed',
+    count: '860',
+    color: '#7c3aed',
+    textColor: '#ffffff',
+    points: '19,36 191,36 174,68 36,68',
+    labelY: 56,
+    lineY: 52,
+  },
+  {
+    id: 'cart',
+    name: 'Added to Cart',
+    count: '420',
+    color: '#8b5cf6',
+    textColor: '#ffffff',
+    points: '38,72 172,72 155,104 55,104',
+    labelY: 92,
+    lineY: 88,
+  },
+  {
+    id: 'checkout',
+    name: 'Checkout',
+    count: '220',
+    color: '#a855f7',
+    textColor: '#ffffff',
+    points: '57,108 153,108 136,140 74,140',
+    labelY: 128,
+    lineY: 124,
+  },
+  {
+    id: 'orders',
+    name: 'Orders Placed',
+    count: '184',
+    color: '#c084fc',
+    textColor: '#2e1065',
+    points: '76,144 134,144 122,176 88,176',
+    labelY: 164,
+    lineY: 160,
+  },
+];
+

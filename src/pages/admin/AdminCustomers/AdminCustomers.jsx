@@ -130,11 +130,12 @@ export default function AdminCustomers() {
               <thead>
                 <tr>
                   <th>Customer</th>
-                  <th>WhatsApp Phone</th>
+                  <th>Mobile Number</th>
                   <th>Email</th>
                   <th>Location</th>
                   <th>Orders</th>
                   <th>Lifetime Value</th>
+                  <th>Joined</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -180,10 +181,17 @@ export default function AdminCustomers() {
                       </span>
                     </td>
                     <td>
-                      <strong style={{ color: '#1e1b4b' }}>{c.ordersCount} orders</strong>
+                      <strong style={{ color: '#1e1b4b' }}>
+                        {c.totalOrders || c.ordersCount || 0} {(c.totalOrders || c.ordersCount || 0) === 1 ? 'order' : 'orders'}
+                      </strong>
                     </td>
                     <td>
                       <strong style={{ color: '#7c3aed' }}>{formatPrice(c.totalSpent)}</strong>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                        {c.joinedDate ? new Date(c.joinedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
+                      </span>
                     </td>
                     <td>
                       <a

@@ -4,12 +4,14 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
+import { useOrderStore } from '../../store/orderStore';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import { Package, Search, ArrowRight } from 'lucide-react';
 import styles from './Orders.module.css';
 
 export default function Orders() {
+  const { orders: mockOrders } = useOrderStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,15 +20,22 @@ export default function Orders() {
       try {
         setLoading(true);
         const res = await orderService.list();
-        setOrders(res?.data?.data || res?.data || []);
+        const apiOrders = res?.data?.data || res?.data || [];
+        if (apiOrders.length > 0) {
+          setOrders(apiOrders);
+        } else {
+          // Fallback: use shared mock order store (shows customer's session orders + mock seed)
+          setOrders(mockOrders);
+        }
       } catch (err) {
         console.error('Failed to load orders:', err);
+        setOrders(mockOrders);
       } finally {
         setLoading(false);
       }
     }
     loadOrders();
-  }, []);
+  }, [mockOrders]);
 
   return (
     <PageWrapper>
@@ -92,11 +101,11 @@ export default function Orders() {
 
                   <div className={styles['order-card-footer']}>
                     <span className={styles['order-payment-text']}>
-                      Payment: <strong className={styles['order-payment-method']}>{order.paymentMethod}</strong>
+                      Payment: <strong className={styles['order-payment-method']}>{order.paymentMethod || order.courier || 'Online'}</strong>
                     </span>
                     <div>
                       <span className={styles['order-total-label']}>Total:</span>
-                      <strong className={styles['order-total-value']}>{formatPrice(order.total)}</strong>
+                      <strong className={styles['order-total-value']}>{formatPrice(order.totalAmount || order.total)}</strong>
                     </div>
                   </div>
                 </div>
