@@ -12,6 +12,8 @@ export const STOCK_ADJUST_REASONS = [
   'Promotional Allocation',
 ];
 
+export const LOW_STOCK_THRESHOLD = 5;
+
 export const calculateInventoryKPIs = (items = []) => {
   const totalProducts = items.length;
   let inStock = 0;
@@ -22,13 +24,13 @@ export const calculateInventoryKPIs = (items = []) => {
 
   items.forEach((item) => {
     const stock = Number(item.currentStock) || 0;
-    const threshold = Number(item.lowStockThreshold) || 5;
+    const threshold = Number(item.lowStockThreshold) || LOW_STOCK_THRESHOLD;
     totalStockUnits += stock;
     totalStockValue += stock * (item.sellingPrice || item.price || 0);
 
     if (stock <= 0) {
       outOfStock += 1;
-    } else if (stock <= threshold || (stock >= 1 && stock <= 5)) {
+    } else if (stock <= threshold) {
       lowStock += 1;
     } else {
       inStock += 1;

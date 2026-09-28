@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { MOCK_PRODUCTS } from '../data/adminMockData';
+import { LOW_STOCK_THRESHOLD } from '../data/inventoryMockData';
 
 // ─── Picky Shared Mock Stock Store ───────────────────────────────────────────
 // Single source of truth for product stock levels in mock mode.
@@ -57,7 +58,7 @@ export const useMockStockStore = create((set, get) => ({
         subCategory: p.subCategory?.name || 'General',
         image: p.images?.[0] || p.image || '',
         currentStock: map[p._id] ?? p.stock ?? 0,
-        lowStockThreshold: 5,
+        lowStockThreshold: LOW_STOCK_THRESHOLD,
         price: p.price,
         sellingPrice: p.discountPrice || p.price,
         lastUpdated: new Date().toLocaleDateString('en-IN'),

@@ -2097,16 +2097,6 @@
   gap: 16px;
 }
 
-.admin-layout .luxury-date-range-pill {
-  height: 36px;
-  min-height: 36px;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #ffffff;
-  border: 1.5px solid #e9d5ff;
 /* ─── Modern Innovative Dashboard Header ────────────────────────────── */
 .admin-layout .luxury-dash-header {
   display: flex;
