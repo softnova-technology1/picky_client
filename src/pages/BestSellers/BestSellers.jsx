@@ -8,7 +8,6 @@ import { MOCK_PRODUCTS } from '../../data/adminMockData';
 import { getProducts } from '../../data';
 import {
   Flame,
-  Award,
   Star,
   Zap,
   RotateCcw,
@@ -397,32 +396,7 @@ export default function BestSellers() {
             <div className="bestsellers-grid-5">
               {filteredProducts.map((prod, idx) => (
                 <div key={prod._id || prod.id} style={{ position: 'relative' }}>
-                  {/* Top 3 Best Seller Rank Badge */}
-                  {idx < 3 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '-10px',
-                        left: '12px',
-                        zIndex: 10,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        padding: '0.28rem 0.75rem',
-                        borderRadius: '9999px',
-                        background: idx === 0 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : idx === 1 ? 'linear-gradient(135deg, #64748b 0%, #475569 100%)' : 'linear-gradient(135deg, #b45309 0%, #78350f 100%)',
-                        color: '#ffffff',
-                        fontSize: '0.74rem',
-                        fontWeight: 900,
-                        letterSpacing: '0.04em',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        border: '1.5px solid #ffffff',
-                      }}
-                    >
-                      <Award size={12} />
-                      <span>#{idx + 1} BESTSELLER</span>
-                    </div>
-                  )}
+
                   <ProductCard product={prod} index={idx} />
                 </div>
               ))}

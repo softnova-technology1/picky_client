@@ -65,7 +65,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
       <div
         className="hero-static-card"
         style={{
-          background: 'linear-gradient(135deg, #f8f6fd 0%, #f1ecfa 45%, #e7def7 100%)',
+          background: 'linear-gradient(135deg, #fdfcff 0%, #f5f0fa 45%, #e8ddf5 100%)',
           borderRadius: '32px',
           overflow: 'hidden',
           position: 'relative',
@@ -73,10 +73,20 @@ export default function CategoryHeroCarousel({ categories = [] }) {
           alignItems: 'center',
           height: '100%',
           padding: 'clamp(2rem, 4vw, 3.8rem) clamp(2rem, 4vw, 3.8rem)',
-          boxShadow: '0 20px 50px -12px rgba(124, 58, 237, 0.12)',
-          border: '1px solid rgba(216, 180, 254, 0.55)',
+          boxShadow: '0 24px 60px -15px rgba(124, 58, 237, 0.2), inset 0 1px 0 rgba(255,255,255,0.8)',
+          border: '1px solid rgba(216, 180, 254, 0.65)',
         }}
       >
+        {/* Subtle Luxury Dot Grid Pattern */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'radial-gradient(rgba(124, 58, 237, 0.25) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          opacity: 0.6,
+          zIndex: 1,
+          pointerEvents: 'none',
+        }} />
         {/* Left Column Typography & Actions */}
         <div
           style={{
@@ -146,20 +156,22 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                 display: 'inline-flex',
                 alignItems: 'baseline',
                 gap: '0.5rem',
-                background: '#ffffff',
-                padding: '0.45rem 1.1rem',
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                padding: '0.5rem 1.25rem',
                 borderRadius: '9999px',
-                border: '1px solid #e9d5ff',
-                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 1)',
+                boxShadow: '0 8px 20px rgba(124, 58, 237, 0.12), inset 0 2px 5px rgba(255, 255, 255, 0.5)',
               }}
             >
-              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Starting From</span>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.02em' }}>Starting From</span>
               <span
                 style={{
                   color: '#7c3aed',
-                  fontSize: 'clamp(1.4rem, 2vw, 1.85rem)',
+                  fontSize: 'clamp(1.5rem, 2.2vw, 1.95rem)',
                   fontWeight: 900,
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.03em',
+                  textShadow: '0 2px 10px rgba(124, 58, 237, 0.2)',
                 }}
               >
                 ₹129
@@ -170,17 +182,20 @@ export default function CategoryHeroCarousel({ categories = [] }) {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                background: 'rgba(255, 255, 255, 0.7)',
-                padding: '0.45rem 0.85rem',
+                gap: '0.5rem',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%)',
+                backdropFilter: 'blur(12px)',
+                padding: '0.6rem 1rem',
                 borderRadius: '9999px',
-                border: '1px solid rgba(221, 214, 254, 0.7)',
-                color: '#6b21a8',
-                fontSize: '0.8rem',
-                fontWeight: 700,
+                border: '1px solid rgba(255, 255, 255, 0.8)',
+                color: '#5b21b6',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                boxShadow: '0 4px 15px rgba(124, 58, 237, 0.08)',
               }}
             >
-              <span>🔥 100% Quality Inspected</span>
+              <span style={{ filter: 'drop-shadow(0 2px 4px rgba(255,150,0,0.3))' }}>🔥</span> 
+              <span>100% Quality Inspected</span>
             </div>
           </div>
 
@@ -221,8 +236,8 @@ export default function CategoryHeroCarousel({ categories = [] }) {
             width: '62%',
             pointerEvents: 'none',
             overflow: 'hidden',
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.85) 18%, black 42%)',
-            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.85) 18%, black 42%)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.05) 5%, rgba(0,0,0,0.9) 25%, black 45%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.05) 5%, rgba(0,0,0,0.9) 25%, black 45%)',
           }}
         >
           <img
@@ -331,24 +346,34 @@ export default function CategoryHeroCarousel({ categories = [] }) {
               background: '#24143f',
             }}
           >
-            <img
-              key={currentCategory.slug || currentCategory._id}
-              src={
-                currentCategory.slug === 'womens-fashion'
-                  ? '/images/glamics_summer_model.jpg'
-                  : currentCategory.image || '/images/glamics_summer_model.jpg'
-              }
-              alt={currentCategory.name}
-              className={`category-carousel-img ${isTransitioning ? 'fade-out' : 'fade-in'}`}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center 12%',
-                display: 'block',
-                transition: 'transform 0.5s ease, opacity 0.25s ease',
-              }}
-            />
+            {safeCategories.map((cat, idx) => {
+              const isActive = idx === currentIdx;
+              const imgSrc = cat.slug === 'womens-fashion' 
+                ? '/images/glamics_summer_model.jpg' 
+                : (cat.image || '/images/glamics_summer_model.jpg');
+
+              return (
+                <img
+                  key={cat._id || cat.slug || idx}
+                  src={imgSrc}
+                  alt={cat.name}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center 12%',
+                    display: 'block',
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive ? 'scale(1)' : 'scale(1.1)',
+                    transition: 'transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease',
+                    zIndex: isActive ? 2 : 1,
+                    pointerEvents: 'none',
+                  }}
+                />
+              );
+            })}
 
             {/* Radiant Top & Bottom Gradient Scrim for Flawless Readability */}
             <div
@@ -356,7 +381,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                 position: 'absolute',
                 inset: 0,
                 background:
-                  'linear-gradient(180deg, rgba(16, 8, 30, 0.55) 0%, rgba(16, 8, 30, 0.1) 35%, rgba(12, 5, 24, 0.92) 85%, rgba(12, 5, 24, 0.98) 100%)',
+                  'linear-gradient(180deg, rgba(16, 8, 30, 0.4) 0%, rgba(16, 8, 30, 0) 30%, rgba(12, 5, 24, 0.4) 60%, rgba(10, 5, 20, 0.95) 90%, rgba(8, 4, 18, 1) 100%)',
               }}
             />
           </div>
@@ -418,12 +443,18 @@ export default function CategoryHeroCarousel({ categories = [] }) {
 
           {/* Bottom Floating Information: Department Name, Subtext & Explore CTA */}
           <div
+            key={`info-${currentIdx}`}
+            className="premium-text-slide-up"
             style={{
               marginTop: 'auto',
               position: 'relative',
               zIndex: 4,
-              padding: 'clamp(1.25rem, 2.5vw, 1.85rem)',
+              padding: 'clamp(1.5rem, 3vw, 2.2rem)',
               color: '#ffffff',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.03) 100%)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
             }}
           >
             {/* Category Title */}
@@ -593,6 +624,22 @@ export default function CategoryHeroCarousel({ categories = [] }) {
           .hero-model-bg {
             opacity: 0.35 !important;
             width: 75% !important;
+          }
+        }
+        
+        /* Premium Text Animation on Slide Change */
+        .premium-text-slide-up {
+          animation: textSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes textSlideUp {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>

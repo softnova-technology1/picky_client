@@ -121,7 +121,7 @@ export default function Contact() {
               </div>
               <h2 className="k-section-title">Our Contact Information</h2>
               <p className="k-section-desc">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.
+                Reach out to us directly through any of the channels below. We're always here to assist you.
               </p>
             </div>
 
@@ -131,8 +131,8 @@ export default function Contact() {
                   <Phone size={26} />
                 </div>
                 <div className="k-card-text">
-                  <h3>(+654) 6544 55</h3>
-                  <p>Call us anytime<br/>Mon - Sat, 9AM - 6PM</p>
+                  <h3>+91 83002 95721</h3>
+                  <p>+91 6385118083<br/>Mon - Sat, 9AM - 8PM</p>
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ export default function Contact() {
                   <Mail size={26} />
                 </div>
                 <div className="k-card-text">
-                  <h3>mail@ktchn.com</h3>
+                  <h3>pickysn2026@gmail.com</h3>
                   <p>Drop us an email<br/>We reply within 24hrs</p>
                 </div>
               </div>
@@ -151,8 +151,8 @@ export default function Contact() {
                   <MapPin size={26} />
                 </div>
                 <div className="k-card-text">
-                  <h3>London Eye, UK</h3>
-                  <p>Visit our showroom<br/>Open on weekdays</p>
+                  <h3>Peravurani, TN</h3>
+                  <p>1st Floor, Softnova Apartment<br/>SNV Mahal back side, near SBI bank</p>
                 </div>
               </div>
 
@@ -165,8 +165,8 @@ export default function Contact() {
                   </svg>
                 </div>
                 <div className="k-card-text">
-                  <h3>@ktchn.design</h3>
-                  <p>Follow us on Instagram<br/>For daily inspiration</p>
+                  <h3>@picky.co.in</h3>
+                  <p>Follow us on Instagram<br/>For daily updates</p>
                 </div>
               </div>
             </div>
@@ -236,16 +236,16 @@ export default function Contact() {
                 <div className="k-eyebrow-line-dark"></div>
                 <span className="k-eyebrow-dark">OUR LOCATION</span>
               </div>
-              <h2 className="k-section-title k-map-title">Visit Our Showroom</h2>
+              <h2 className="k-section-title k-map-title">Visit Our Store</h2>
               <p className="k-section-desc k-map-desc">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.
+                Experience our curated collections in person. Drop by our store located in the heart of Peravurani.
               </p>
 
               {/* Google Map Interactive Iframe */}
               <div className="k-map-box">
                 <iframe
-                  title="Ktchen Showroom Location"
-                  src="https://maps.google.com/maps?q=London%20Eye,%20London,%20UK&t=&z=14&ie=UTF8&iwloc=&output=embed"
+                  title="Picky Store Location"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15682.261947230621!2d79.23122712952882!3d10.29749550302482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5518b3f2e1a3d9%3A0x6b8f3a3e6f7b1b3a!2sPeravurani%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1698765432100!5m2!1sen!2sin"
                   width="100%"
                   height="100%"
                   style={{ border: 0, width: '100%', height: '100%' }}
@@ -256,7 +256,7 @@ export default function Contact() {
                 {/* Floating Info Card */}
                 <div className="k-map-card">
                   <h4>Picky Experience Center</h4>
-                  <p>Usman Road, T. Nagar, Chennai, Tamil Nadu</p>
+                  <p>1st Floor, Softnova Apartment, Peravurani</p>
                   <div className="k-map-rating">
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                       {[...Array(5)].map((_, i) => (
