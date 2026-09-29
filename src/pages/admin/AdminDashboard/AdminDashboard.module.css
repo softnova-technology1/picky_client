@@ -148,16 +148,17 @@
   transition: opacity 0.28s ease;
 }
 
-/* Subtle background sparkline overlay */
+/* Subtle background sparkline overlay - contained safely */
 .kpiSparklineBg {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 140px;
-  height: 65px;
-  opacity: 0.16;
+  right: -5px;
+  bottom: -5px;
+  width: 130px;
+  height: 60px;
+  opacity: 0.18;
   pointer-events: none;
   transition: opacity 0.28s ease, transform 0.28s ease;
+  overflow: hidden;
 }
 
 .kpiCard:hover {
@@ -171,8 +172,8 @@
 }
 
 .kpiCard:hover .kpiSparklineBg {
-  opacity: 0.35;
-  transform: scale(1.05) translateY(-2px);
+  opacity: 0.38;
+  transform: scale(1.04) translateY(-2px);
 }
 
 .kpiHeaderRow {
@@ -220,18 +221,36 @@
 }
 
 .kpiLabel {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #475569;
   letter-spacing: -0.01em;
 }
 
+.trendBadge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2.5px 7.5px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.trendUp {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
 .kpiVal {
-  font-size: 2.35rem;
+  font-size: 1.72rem;
   font-weight: 850;
   color: #0f172a;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
   margin: 0;
   position: relative;
   z-index: 2;
@@ -283,46 +302,66 @@
   margin: 0;
 }
 
-.cardBadge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  background: #ede8f8;
-  color: #7c3aed;
+.graphHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.cardDropdown {
-  height: 32px;
-  font-size: 0.78rem;
-  padding: 0 12px;
-  border-radius: 9999px;
-  background: #ffffff;
-  border: 1.5px solid #ede8f8;
-  font-weight: 700;
-  color: #334155;
+.radioPillGroup {
   display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.radioPillBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  padding: 4px 6px;
   transition: all 0.2s ease;
   font-family: inherit;
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.04);
 }
 
-.cardDropdown:hover {
-  background: #faf8fe;
-  border-color: #d8b4fe;
-  color: #7c3aed;
+.radioDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  box-sizing: border-box;
+  display: inline-block;
+  transition: all 0.2s ease;
 }
 
-.optionsBtn {
+.radioPillBtn:hover {
+  color: #5b21b6;
+}
+
+.radioPillActive {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.radioPillActive .radioDot {
+  border-color: #5b21b6;
+  background: #5b21b6;
+  box-shadow: inset 0 0 0 2.5px #ffffff;
+}
+
+.moreOptionsBtn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #faf8fe;
-  border: 1px solid #ede8f8;
-  color: #7c3aed;
+  background: transparent;
+  border: none;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -330,10 +369,68 @@
   transition: all 0.2s ease;
 }
 
-.optionsBtn:hover {
-  background: #ede8f8;
-  color: #5b21b6;
-  transform: scale(1.05);
+.moreOptionsBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Metric Summary Banner matching Image 2 */
+.revenueBannerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-top: 4px;
+}
+
+.revenueBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.greenCircleBadge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  flex-shrink: 0;
+}
+
+.revenueBigAmount {
+  font-size: 1.85rem;
+  font-weight: 850;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.revenueBannerRight {
+  text-align: right;
+}
+
+.revenueGrowthPct {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #16a34a;
+  line-height: 1.2;
+}
+
+.revenueGrowthSub {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.graphAxisFont {
+  font-family: inherit;
+  letter-spacing: -0.01em;
 }
 
 /* ─── 1st Graph: Revenue Spline Area Curve ───────────────────────────── */
@@ -357,7 +454,7 @@
   z-index: 10;
   pointer-events: none;
   min-width: 155px;
-  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .tooltipTitle {
@@ -386,6 +483,40 @@
   border-radius: 50%;
   display: inline-block;
   margin-right: 5px;
+}
+
+/* Comparison Legend Footer */
+.graphLegendFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 10px;
+  padding-right: 8px;
+}
+
+.graphLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.legendDotCurrent {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5b21b6;
+  box-shadow: 0 0 6px rgba(91, 33, 182, 0.4);
+}
+
+.legendDotPrev {
+  width: 14px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #94a3b8 0 3px, transparent 3px 6px);
+  border-radius: 1px;
 }
 
 /* ─── 2nd Graph: Orders Donut Status Breakdown Chart (Rounded Spaced Slices) ─ */
@@ -536,16 +667,18 @@
   transform: translateX(3px);
 }
 
-/* Recent Orders Table */
+/* Recent Orders Table with Increased Column Gap & Spacing */
 .ordersTable {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.84rem;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-size: 0.85rem;
+  margin-top: 4px;
 }
 
 .ordersTable th {
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 18px;
   color: #64748b;
   font-weight: 700;
   font-size: 0.74rem;
@@ -555,18 +688,34 @@
 }
 
 .ordersTable td {
-  padding: 11px 12px;
+  padding: 14px 18px;
+  border-top: 1px solid #f8fafc;
   border-bottom: 1px solid #f1f5f9;
   color: #1e1b4b;
   vertical-align: middle;
+  transition: background 0.15s ease;
 }
 
-.ordersTable tr:last-child td {
-  border-bottom: none;
+.ordersTable tbody tr:nth-child(even) td {
+  background: #faf7ff;
+}
+
+.ordersTable tbody tr:nth-child(odd) td {
+  background: #ffffff;
+}
+
+.ordersTable td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.ordersTable td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
 .ordersTable tr:hover td {
-  background: #faf8fe;
+  background: #f1e9fe !important;
 }
 
 .customerAvatarBadge {
@@ -603,6 +752,7 @@
   background: #dcfce7;
   color: #166534;
 }
+
 .statusDelivered .statusPulseDot {
   background: #16a34a;
 }
@@ -611,6 +761,7 @@
   background: #ede8f8;
   color: #5b21b6;
 }
+
 .statusShipped .statusPulseDot {
   background: #7c3aed;
 }
@@ -619,6 +770,7 @@
   background: #eff6ff;
   color: #1d4ed8;
 }
+
 .statusConfirmed .statusPulseDot {
   background: #2563eb;
 }
@@ -627,6 +779,7 @@
   background: #fee2e2;
   color: #991b1b;
 }
+
 .statusCancelled .statusPulseDot {
   background: #dc2626;
 }
@@ -665,9 +818,21 @@
 .topRankNum {
   font-size: 0.74rem;
   font-weight: 800;
-  color: #7c3aed;
-  width: 18px;
+  color: #64748b;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+}
+
+.topRankFirst {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
 }
 
 .topProductImg {
@@ -708,12 +873,15 @@
   .dashboardContainer {
     padding: 18px 20px 36px;
   }
+
   .kpiGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .middleGrid {
     grid-template-columns: 1fr;
   }
+
   .bottomGrid {
     grid-template-columns: 1fr;
   }
@@ -723,6 +891,7 @@
   .dashboardContainer {
     padding: 14px 14px 28px;
   }
+
   .kpiGrid {
     grid-template-columns: 1fr;
   }

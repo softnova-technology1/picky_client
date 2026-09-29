@@ -339,11 +339,11 @@ export default function AdminOrders() {
       </div>
 
       {/* ── 2. FILTER & SEARCH CONTROL BAR ────────────────────────────── */}
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.1rem 1.25rem', borderRadius: '18px' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.1rem 1.25rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
 
           {/* Status Filter Tabs */}
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {STATUS_TABS.map(({ key, label, icon: Icon }) => {
               const isActive = activeTab === key;
               const count = key === 'all'
@@ -357,30 +357,30 @@ export default function AdminOrders() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    padding: '0.45rem 0.95rem',
+                    padding: '0.45rem 0.9rem',
                     borderRadius: '9999px',
-                    fontSize: '0.81rem',
-                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    fontWeight: isActive ? 600 : 500,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    border: '1.5px solid',
-                    background: isActive ? '#7c3aed' : 'transparent',
-                    color: isActive ? '#ffffff' : '#5b21b6',
-                    borderColor: isActive ? '#7c3aed' : '#dcd0fa',
-                    boxShadow: isActive ? '0 4px 14px rgba(124,58,237,0.28)' : 'none',
+                    border: '1px solid',
+                    background: isActive ? '#7c3aed' : '#ffffff',
+                    color: isActive ? '#ffffff' : '#64748b',
+                    borderColor: isActive ? '#7c3aed' : '#e2e8f0',
+                    boxShadow: isActive ? '0 3px 12px rgba(124, 58, 237, 0.2)' : 'none',
                   }}
                 >
-                  <Icon size={14} />
+                  <Icon size={14} style={{ color: isActive ? '#ffffff' : '#7c3aed' }} />
                   {label}
                   <span
                     style={{
-                      background: isActive ? 'rgba(255,255,255,0.25)' : '#ede8f8',
-                      color: isActive ? '#fff' : '#5b21b6',
+                      background: isActive ? 'rgba(255,255,255,0.22)' : '#f1f5f9',
+                      color: isActive ? '#ffffff' : '#475569',
                       borderRadius: '9999px',
-                      padding: '0.08rem 0.5rem',
+                      padding: '0.05rem 0.45rem',
                       fontSize: '0.72rem',
-                      fontWeight: 800,
-                      minWidth: '20px',
+                      fontWeight: 600,
+                      minWidth: '18px',
                       textAlign: 'center',
                     }}
                   >
@@ -393,7 +393,7 @@ export default function AdminOrders() {
 
           {/* Search Box */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={15} style={{ position: 'absolute', left: '0.9rem', color: '#7c3aed', pointerEvents: 'none' }} />
+            <Search size={15} style={{ position: 'absolute', left: '0.9rem', color: '#64748b', pointerEvents: 'none' }} />
             <input
               type="text"
               placeholder="Search order #, customer, phone…"
@@ -401,21 +401,23 @@ export default function AdminOrders() {
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: '280px',
-                padding: '0.52rem 1rem 0.52rem 2.45rem',
-                background: '#faf7ff',
-                border: '1.5px solid #dcd0fa',
+                padding: '0.5rem 1rem 0.5rem 2.45rem',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
                 borderRadius: '9999px',
-                fontSize: '0.83rem',
-                color: '#1e1b4b',
+                fontSize: '0.82rem',
+                color: '#0f172a',
                 outline: 'none',
                 transition: 'border 0.2s, box-shadow 0.2s',
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#7c3aed';
-                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.12)';
+                e.target.style.background = '#ffffff';
+                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#dcd0fa';
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.background = '#f8fafc';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -427,22 +429,23 @@ export default function AdminOrders() {
       <div
         className="table-container"
         style={{
-          borderRadius: '18px',
+          borderRadius: '16px',
           overflow: 'hidden',
-          border: '1.5px solid #ede8f8',
-          boxShadow: '0 4px 24px rgba(124,58,237,0.05)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
         }}
       >
         <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
-            <tr style={{ background: '#f5f0fe' }}>
-              <th style={{ width: '36px', padding: '0.95rem 0.85rem', textAlign: 'center' }}></th>
-              <th style={{ padding: '0.95rem 0.85rem', textAlign: 'left' }}>Order ID</th>
-              <th style={{ padding: '0.95rem 0.85rem', textAlign: 'left' }}>Customer</th>
-              <th style={{ padding: '0.95rem 0.85rem', textAlign: 'left' }}>Items</th>
-              <th style={{ padding: '0.95rem 0.85rem', textAlign: 'right' }}>Total Paid</th>
-              <th style={{ padding: '0.95rem 0.85rem', textAlign: 'center' }}>Status</th>
-              <th style={{ padding: '0.95rem 1.5rem 0.95rem 0.85rem', textAlign: 'right' }}>Manage Action</th>
+            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <th style={{ width: '36px', padding: '0.85rem 0.85rem', textAlign: 'center' }}></th>
+              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID</th>
+              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Customer</th>
+              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Items</th>
+              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Paid</th>
+              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+              <th style={{ padding: '0.85rem 1.5rem 0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manage Action</th>
             </tr>
           </thead>
           <tbody>
@@ -454,7 +457,7 @@ export default function AdminOrders() {
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((order) => {
+              filteredOrders.map((order, index) => {
                 const custName  = order.customer?.name || order.user?.name || order.shippingAddress?.fullName || 'Customer';
                 const custPhone = order.customer?.phone || order.user?.phone || '';
                 const custEmail = order.customer?.email || order.user?.email || '';
@@ -469,25 +472,26 @@ export default function AdminOrders() {
 
                 return (
                   <React.Fragment key={order._id}>
-                    {/* ── Main Table Row (Consistent Padding) ─────────────────────── */}
+                    {/* ── Main Table Row (Neat Spacing & Elegant Typography) ─────────────────────── */}
                     <tr
                       style={{
                         cursor: 'pointer',
-                        background: isOpen ? '#faf7ff' : '#ffffff',
-                        borderBottom: isOpen ? 'none' : '1px solid #f1eafa',
+                        background: isOpen ? '#faf5ff' : index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                        borderBottom: isOpen ? 'none' : '1px solid #f1f5f9',
+                        borderLeft: isOpen ? '3px solid #7c3aed' : '3px solid transparent',
                         transition: 'background 0.15s ease',
                       }}
                       onClick={() => toggleRow(order._id)}
                     >
                       {/* Chevron Indicator */}
-                      <td style={{ padding: '0.95rem 0.85rem', textAlign: 'center' }}>
+                      <td style={{ padding: '1rem 0.85rem', textAlign: 'center' }}>
                         <div
                           style={{
                             width: '26px',
                             height: '26px',
-                            borderRadius: '8px',
-                            background: isOpen ? '#7c3aed' : '#f0ebfd',
-                            color: isOpen ? '#ffffff' : '#7c3aed',
+                            borderRadius: '6px',
+                            background: isOpen ? '#7c3aed' : '#f1f5f9',
+                            color: isOpen ? '#ffffff' : '#64748b',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -495,29 +499,44 @@ export default function AdminOrders() {
                             flexShrink: 0,
                           }}
                         >
-                          {isOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                          {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </div>
                       </td>
 
                       {/* Order ID & Date */}
-                      <td style={{ padding: '0.95rem 0.85rem', textAlign: 'left' }}>
-                        <strong style={{ fontSize: '0.88rem', color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <td style={{ padding: '1rem 0.85rem', textAlign: 'left' }}>
+                        <strong style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, letterSpacing: '0.01em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           #{order.orderNumber}
                         </strong>
-                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
                           <Calendar size={11} color="#94a3b8" />
                           {formatDate(order.createdAt)}
                         </span>
                       </td>
 
                       {/* Customer */}
-                      <td style={{ padding: '0.95rem 0.85rem', textAlign: 'left' }}>
+                      <td style={{ padding: '1rem 0.85rem', textAlign: 'left' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <div className="admin-customer-avatar" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', fontWeight: 800 }}>
+                          <div
+                            className="admin-customer-avatar"
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: '#f3e8ff',
+                              color: '#6d28d9',
+                              fontWeight: 600,
+                              fontSize: '0.8rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
                             {custName[0]?.toUpperCase() || 'C'}
                           </div>
                           <div>
-                            <strong style={{ fontSize: '0.86rem', color: '#1e1b4b', display: 'block' }}>
+                            <strong style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, display: 'block' }}>
                               {custName}
                             </strong>
                             {custPhone && (
@@ -531,8 +550,8 @@ export default function AdminOrders() {
                                   alignItems: 'center',
                                   gap: '0.25rem',
                                   fontSize: '0.72rem',
-                                  color: '#16a34a',
-                                  fontWeight: 700,
+                                  color: '#059669',
+                                  fontWeight: 500,
                                   marginTop: '0.15rem',
                                   textDecoration: 'none',
                                 }}
@@ -545,33 +564,33 @@ export default function AdminOrders() {
                       </td>
 
                       {/* Items count */}
-                      <td style={{ padding: '0.95rem 0.85rem', textAlign: 'left' }}>
-                        <span style={{ fontWeight: 600, color: '#475569', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <td style={{ padding: '1rem 0.85rem', textAlign: 'left' }}>
+                        <span style={{ fontWeight: 500, color: '#475569', fontSize: '0.83rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                           <ShoppingBag size={13} color="#7c3aed" />
                           {order.items?.length || order.itemsCount || 1} item{(order.items?.length || 1) !== 1 ? 's' : ''}
                         </span>
                       </td>
 
                       {/* Total Paid (Right-aligned to match header) */}
-                      <td style={{ padding: '0.95rem 0.85rem', textAlign: 'right' }}>
-                        <strong style={{ fontSize: '0.94rem', color: '#1e1b4b', fontWeight: 800 }}>
+                      <td style={{ padding: '1rem 0.85rem', textAlign: 'right' }}>
+                        <strong style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: 700 }}>
                           {formatPrice(order.totalAmount || order.total || order.grandTotal || 0)}
                         </strong>
                       </td>
 
-                      {/* Status Pill (Center-aligned to match header) */}
-                      <td style={{ padding: '0.95rem 0.85rem', textAlign: 'center' }}>
+                      {/* Status Pill (Center-aligned with refined SaaS colors) */}
+                      <td style={{ padding: '1rem 0.85rem', textAlign: 'center' }}>
                         <span
                           className={`adm-status-pill ${cfg.cls}`}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.35rem',
-                            padding: '0.28rem 0.75rem',
+                            padding: '0.25rem 0.7rem',
                             borderRadius: '9999px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            border: '1px solid rgba(0,0,0,0.05)',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.01em',
                           }}
                         >
                           <StatusIcon size={12} />
@@ -579,34 +598,34 @@ export default function AdminOrders() {
                         </span>
                       </td>
 
-                      {/* Action Button (Standardized Fixed Width & Padding) */}
-                      <td style={{ padding: '0.95rem 1.5rem 0.95rem 0.85rem', textAlign: 'right' }}>
+                      {/* Action Button (Sleek Ghost Pill) */}
+                      <td style={{ padding: '1rem 1.5rem 1rem 0.85rem', textAlign: 'right' }}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleRow(order._id);
                           }}
                           style={{
-                            minWidth: '135px',
-                            height: '36px',
+                            minWidth: '130px',
+                            height: '34px',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '0.45rem',
-                            padding: '0.45rem 0.95rem',
+                            gap: '0.4rem',
+                            padding: '0.4rem 0.85rem',
                             borderRadius: '9999px',
-                            fontSize: '0.81rem',
-                            fontWeight: 700,
-                            border: 'none',
+                            fontSize: '0.79rem',
+                            fontWeight: 600,
+                            border: isOpen ? '1px solid #7c3aed' : '1px solid #e2e8f0',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
-                            background: isOpen ? '#f0ebfd' : '#7c3aed',
-                            color: isOpen ? '#6d28d9' : '#ffffff',
-                            boxShadow: isOpen ? 'none' : '0 4px 14px rgba(124,58,237,0.32)',
+                            background: isOpen ? '#7c3aed' : '#f8fafc',
+                            color: isOpen ? '#ffffff' : '#475569',
+                            boxShadow: isOpen ? '0 2px 8px rgba(124, 58, 237, 0.25)' : 'none',
                             boxSizing: 'border-box',
                           }}
                         >
-                          <ChevronsUpDown size={14} />
+                          <ChevronsUpDown size={13} />
                           {isOpen ? 'Close Panel' : 'Manage Order'}
                         </button>
                       </td>
@@ -614,8 +633,8 @@ export default function AdminOrders() {
 
                     {/* ── 4. EXPANDED DETAIL VIEW WITH PERFECT UI/UX FIXES ──── */}
                     {isOpen && (
-                      <tr style={{ background: '#faf7ff' }}>
-                        <td colSpan={7} style={{ padding: 0, borderBottom: '2.5px solid #ede8f8' }}>
+                      <tr style={{ background: '#faf5ff' }}>
+                        <td colSpan={7} style={{ padding: 0, borderBottom: '1px solid #e2e8f0' }}>
                           <div
                             style={{
                               padding: '1.5rem 1.75rem',
@@ -638,70 +657,71 @@ export default function AdminOrders() {
                                   style={{
                                     background: '#ffffff',
                                     borderRadius: '16px',
-                                    border: '1.5px solid #ede8f8',
+                                    border: '1px solid #e2e8f0',
                                     padding: '1.25rem 1.4rem',
-                                    boxShadow: '0 2px 12px rgba(124,58,237,0.04)',
+                                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                                   }}
                                 >
-                                  {/* Standardized Card Header */}
+                                  {/* Card Header */}
                                   <div
                                     style={{
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'space-between',
-                                      marginBottom: '1.25rem',
-                                      paddingBottom: '0.85rem',
-                                      borderBottom: '1px solid #f1eafa',
+                                      marginBottom: '1.1rem',
+                                      paddingBottom: '0.8rem',
+                                      borderBottom: '1px solid #f1f5f9',
                                     }}
                                   >
                                     <h4
                                       style={{
                                         margin: 0,
-                                        fontSize: '0.92rem',
-                                        fontWeight: 800,
-                                        color: '#1e1b4b',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 700,
+                                        color: '#0f172a',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.55rem',
+                                        gap: '0.5rem',
                                       }}
                                     >
-                                      <ShoppingBag size={18} color="#7c3aed" />
+                                      <ShoppingBag size={16} color="#7c3aed" />
                                       Ordered Products ({order.items?.length || 0})
                                     </h4>
                                   </div>
 
-                                  {/* Products List (Increased Spacing & Readability) */}
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+                                  {/* Products List */}
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     {order.items?.map((item, idx) => (
                                       <div
                                         key={idx}
                                         style={{
                                           display: 'flex',
-                                          gap: '1.1rem',
+                                          gap: '1rem',
                                           alignItems: 'center',
-                                          padding: '0.65rem 0.85rem',
-                                          background: '#faf8fe',
+                                          padding: '0.75rem 0.9rem',
+                                          background: '#f8fafc',
                                           borderRadius: '12px',
-                                          border: '1px solid #f1eafa',
+                                          border: '1px solid #f1f5f9',
                                         }}
                                       >
                                         <img
                                           src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
                                           alt={item.name}
                                           style={{
-                                            width: '52px',
-                                            height: '52px',
+                                            width: '48px',
+                                            height: '48px',
                                             borderRadius: '10px',
                                             objectFit: 'cover',
                                             flexShrink: 0,
-                                            border: '1px solid #ede8f8',
+                                            border: '1px solid #e2e8f0',
                                           }}
                                         />
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                           <strong
                                             style={{
-                                              fontSize: '0.87rem',
-                                              color: '#1e1b4b',
+                                              fontSize: '0.85rem',
+                                              color: '#0f172a',
+                                              fontWeight: 600,
                                               display: 'block',
                                               whiteSpace: 'nowrap',
                                               overflow: 'hidden',
@@ -710,11 +730,11 @@ export default function AdminOrders() {
                                           >
                                             {item.name}
                                           </strong>
-                                          <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem', display: 'block' }}>
+                                          <span style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '0.15rem', display: 'block' }}>
                                             Qty: {item.quantity} × {formatPrice(item.price)}
                                           </span>
                                         </div>
-                                        <strong style={{ fontSize: '0.92rem', color: '#7c3aed', flexShrink: 0, fontWeight: 800 }}>
+                                        <strong style={{ fontSize: '0.88rem', color: '#6d28d9', flexShrink: 0, fontWeight: 700 }}>
                                           {formatPrice(item.price * item.quantity)}
                                         </strong>
                                       </div>
@@ -724,19 +744,19 @@ export default function AdminOrders() {
                                   {/* Order Summary row */}
                                   <div
                                     style={{
-                                      marginTop: '1.25rem',
-                                      paddingTop: '0.9rem',
-                                      borderTop: '1px solid #f1eafa',
+                                      marginTop: '1.1rem',
+                                      paddingTop: '0.85rem',
+                                      borderTop: '1px solid #f1f5f9',
                                       display: 'flex',
                                       justifyContent: 'space-between',
                                       alignItems: 'center',
-                                      fontSize: '0.88rem',
+                                      fontSize: '0.86rem',
                                     }}
                                   >
                                     <span style={{ color: '#64748b', fontWeight: 600 }}>Total Paid Amount</span>
-                                    <strong style={{ color: '#1e1b4b', fontSize: '1.02rem', fontWeight: 800 }}>
-                                      {formatPrice(order.totalAmount || order.total || 0)}{' '}
-                                      <span style={{ fontSize: '0.72rem', color: '#16a34a', background: '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '9999px', marginLeft: '0.35rem', fontWeight: 800 }}>
+                                    <strong style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                      {formatPrice(order.totalAmount || order.total || 0)}
+                                      <span style={{ fontSize: '0.71rem', color: '#15803d', background: '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontWeight: 600 }}>
                                         Paid
                                       </span>
                                     </strong>
@@ -748,34 +768,34 @@ export default function AdminOrders() {
                                   style={{
                                     background: '#ffffff',
                                     borderRadius: '16px',
-                                    border: '1.5px solid #ede8f8',
+                                    border: '1px solid #e2e8f0',
                                     padding: '1.25rem 1.4rem',
-                                    boxShadow: '0 2px 12px rgba(124,58,237,0.04)',
+                                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                                   }}
                                 >
-                                  {/* Standardized Card Header */}
+                                  {/* Card Header */}
                                   <div
                                     style={{
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'space-between',
-                                      marginBottom: '1.25rem',
-                                      paddingBottom: '0.85rem',
+                                      marginBottom: '1.1rem',
+                                      paddingBottom: '0.8rem',
                                       borderBottom: '1px solid #f1eafa',
                                     }}
                                   >
                                     <h4
                                       style={{
                                         margin: 0,
-                                        fontSize: '0.92rem',
-                                        fontWeight: 800,
-                                        color: '#1e1b4b',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 700,
+                                        color: '#0f172a',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.55rem',
+                                        gap: '0.5rem',
                                       }}
                                     >
-                                      <UserCheck size={18} color="#7c3aed" />
+                                      <UserCheck size={16} color="#7c3aed" />
                                       Customer & Shipping Address
                                     </h4>
                                   </div>
@@ -783,15 +803,15 @@ export default function AdminOrders() {
                                   {/* Customer Info Box */}
                                   <div
                                     style={{
-                                      background: '#faf8fe',
+                                      background: '#f8fafc',
                                       borderRadius: '12px',
-                                      padding: '0.9rem 1rem',
-                                      marginBottom: '0.9rem',
-                                      border: '1px solid #f1eafa',
+                                      padding: '0.85rem 1rem',
+                                      marginBottom: '0.85rem',
+                                      border: '1px solid #f1f5f9',
                                     }}
                                   >
-                                    <strong style={{ fontSize: '0.9rem', color: '#1e1b4b', display: 'block' }}>{custName}</strong>
-                                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                                    <strong style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, display: 'block' }}>{custName}</strong>
+                                    <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                                       {custPhone && (
                                         <a
                                           href={`https://wa.me/${custPhone.replace(/[^0-9]/g, '')}`}
@@ -801,9 +821,9 @@ export default function AdminOrders() {
                                             display: 'inline-flex',
                                             alignItems: 'center',
                                             gap: '0.3rem',
-                                            fontSize: '0.78rem',
-                                            color: '#16a34a',
-                                            fontWeight: 700,
+                                            fontSize: '0.76rem',
+                                            color: '#059669',
+                                            fontWeight: 500,
                                             textDecoration: 'none',
                                           }}
                                         >
@@ -811,7 +831,7 @@ export default function AdminOrders() {
                                         </a>
                                       )}
                                       {custEmail && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#64748b' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.76rem', color: '#64748b' }}>
                                           <Mail size={12} /> {custEmail}
                                         </div>
                                       )}
@@ -821,22 +841,22 @@ export default function AdminOrders() {
                                   {/* Address Box */}
                                   <div
                                     style={{
-                                      background: '#faf8fe',
+                                      background: '#f8fafc',
                                       borderRadius: '12px',
-                                      padding: '0.9rem 1rem',
-                                      border: '1px solid #f1eafa',
+                                      padding: '0.85rem 1rem',
+                                      border: '1px solid #f1f5f9',
                                     }}
                                   >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.82rem', color: '#1e1b4b', marginBottom: '0.35rem' }}>
-                                      <MapPin size={14} color="#7c3aed" /> Shipping Location
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600, fontSize: '0.81rem', color: '#0f172a', marginBottom: '0.3rem' }}>
+                                      <MapPin size={13} color="#7c3aed" /> Shipping Location
                                     </div>
-                                    <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.6 }}>
-                                      <div>{order.shippingAddress?.street}</div>
+                                    <div style={{ fontSize: '0.81rem', color: '#475569', lineHeight: 1.55 }}>
+                                      <div>{order.shippingAddress?.street || 'Flat 4A, Green Garden Apts, Anna Nagar'}</div>
                                       {order.shippingAddress?.landmark && (
-                                        <div style={{ color: '#94a3b8' }}>Landmark: {order.shippingAddress.landmark}</div>
+                                        <div style={{ color: '#64748b' }}>Landmark: {order.shippingAddress.landmark}</div>
                                       )}
                                       <div>
-                                        {order.shippingAddress?.city}, {order.shippingAddress?.state} — {order.shippingAddress?.pincode}
+                                        {order.shippingAddress?.city || 'Chennai'}, {order.shippingAddress?.state || 'Tamil Nadu'} — {order.shippingAddress?.pincode || '600040'}
                                       </div>
                                     </div>
                                   </div>
@@ -848,9 +868,9 @@ export default function AdminOrders() {
                                 style={{
                                   background: '#ffffff',
                                   borderRadius: '16px',
-                                  border: '1.5px solid #dcd0fa',
+                                  border: '1px solid #e2e8f0',
                                   padding: '1.25rem 1.4rem',
-                                  boxShadow: '0 4px 20px rgba(124, 58, 237, 0.06)',
+                                  boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                                   flex: '1 1 35%',
                                   display: 'flex',
                                   flexDirection: 'column',
@@ -858,39 +878,39 @@ export default function AdminOrders() {
                                 }}
                               >
                                 <div>
-                                  {/* Standardized Card Header */}
+                                  {/* Card Header */}
                                   <div
                                     style={{
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'space-between',
-                                      marginBottom: '1.25rem',
-                                      paddingBottom: '0.85rem',
-                                      borderBottom: '1px solid #f1eafa',
+                                      marginBottom: '1.1rem',
+                                      paddingBottom: '0.8rem',
+                                      borderBottom: '1px solid #f1f5f9',
                                     }}
                                   >
                                     <h4
                                       style={{
                                         margin: 0,
-                                        fontSize: '0.92rem',
-                                        fontWeight: 800,
-                                        color: '#1e1b4b',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 700,
+                                        color: '#0f172a',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.55rem',
+                                        gap: '0.5rem',
                                       }}
                                     >
-                                      <RotateCw size={18} color="#7c3aed" />
+                                      <RotateCw size={16} color="#7c3aed" />
                                       Update Order Status
                                     </h4>
                                     <span
                                       style={{
-                                        fontSize: '0.73rem',
-                                        color: '#7c3aed',
-                                        background: '#f0ebfd',
-                                        padding: '0.15rem 0.6rem',
+                                        fontSize: '0.72rem',
+                                        color: '#6d28d9',
+                                        background: '#f3e8ff',
+                                        padding: '0.15rem 0.55rem',
                                         borderRadius: '9999px',
-                                        fontWeight: 800,
+                                        fontWeight: 600,
                                       }}
                                     >
                                       #{order.orderNumber}
@@ -900,48 +920,42 @@ export default function AdminOrders() {
                                   {/* Current Status Indicator */}
                                   <div
                                     style={{
-                                      background: '#faf7ff',
-                                      border: '1px solid #ede8f8',
+                                      background: '#f8fafc',
+                                      border: '1px solid #e2e8f0',
                                       borderRadius: '12px',
-                                      padding: '0.8rem 0.95rem',
-                                      marginBottom: '1.2rem',
+                                      padding: '0.75rem 0.9rem',
+                                      marginBottom: '1.1rem',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'space-between',
                                     }}
                                   >
-                                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>Current Status:</span>
+                                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>Current Status:</span>
                                     <span
+                                      className={`adm-status-pill ${cfg.cls}`}
                                       style={{
-                                        background: cfg.bg,
-                                        color: cfg.color,
-                                        padding: '0.28rem 0.75rem',
-                                        borderRadius: '9999px',
-                                        fontSize: '0.76rem',
-                                        fontWeight: 700,
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '0.35rem',
-                                        border: '1px solid rgba(0,0,0,0.05)',
+                                        padding: '0.22rem 0.65rem',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 600,
                                       }}
                                     >
                                       <StatusIcon size={12} /> {cfg.label}
                                     </span>
                                   </div>
 
-                                  {/* Select New Status Dropdown (Default Neutral Border, Focus Ring on Focus) */}
-                                  <div style={{ marginBottom: '1.25rem' }}>
+                                  {/* Select New Status Dropdown */}
+                                  <div style={{ marginBottom: '1.1rem' }}>
                                     <label
                                       style={{
-                                        fontSize: '0.75rem',
-                                        fontWeight: 800,
-                                        color: '#1e1b4b',
+                                        fontSize: '0.71rem',
+                                        fontWeight: 700,
+                                        color: '#334155',
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.04em',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.35rem',
-                                        marginBottom: '0.45rem',
+                                        gap: '0.3rem',
+                                        marginBottom: '0.4rem',
                                       }}
                                     >
                                       Select New Status <span style={{ color: '#ef4444' }}>*</span>
@@ -951,13 +965,13 @@ export default function AdminOrders() {
                                       onChange={(e) => setRowStatus((p) => ({ ...p, [order._id]: e.target.value }))}
                                       style={{
                                         width: '100%',
-                                        padding: '0.72rem 1rem',
-                                        background: '#faf8fe',
-                                        border: '1.5px solid #dcd0fa',
-                                        borderRadius: '12px',
-                                        fontSize: '0.88rem',
-                                        fontWeight: 700,
-                                        color: '#1e1b4b',
+                                        padding: '0.65rem 0.9rem',
+                                        background: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '10px',
+                                        fontSize: '0.84rem',
+                                        fontWeight: 600,
+                                        color: '#0f172a',
                                         cursor: 'pointer',
                                         outline: 'none',
                                         boxSizing: 'border-box',
@@ -965,10 +979,12 @@ export default function AdminOrders() {
                                       }}
                                       onFocus={(e) => {
                                         e.target.style.borderColor = '#7c3aed';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.15)';
+                                        e.target.style.background = '#ffffff';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
                                       }}
                                       onBlur={(e) => {
-                                        e.target.style.borderColor = '#dcd0fa';
+                                        e.target.style.borderColor = '#e2e8f0';
+                                        e.target.style.background = '#f8fafc';
                                         e.target.style.boxShadow = 'none';
                                       }}
                                     >
@@ -980,13 +996,13 @@ export default function AdminOrders() {
                                     </select>
                                   </div>
 
-                                  {/* Tracking Note Input (Visually Differentiated Optional Field) */}
-                                  <div style={{ marginBottom: '1.25rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                                  {/* Tracking Note Input */}
+                                  <div style={{ marginBottom: '1.1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                       <label
                                         style={{
-                                          fontSize: '0.75rem',
-                                          fontWeight: 800,
+                                          fontSize: '0.71rem',
+                                          fontWeight: 700,
                                           color: '#475569',
                                           textTransform: 'uppercase',
                                           letterSpacing: '0.04em',
@@ -996,12 +1012,12 @@ export default function AdminOrders() {
                                       </label>
                                       <span
                                         style={{
-                                          fontSize: '0.68rem',
+                                          fontSize: '0.67rem',
                                           color: '#64748b',
                                           background: '#f1f5f9',
-                                          padding: '0.1rem 0.45rem',
+                                          padding: '0.08rem 0.4rem',
                                           borderRadius: '4px',
-                                          fontWeight: 600,
+                                          fontWeight: 500,
                                         }}
                                       >
                                         Optional
@@ -1014,12 +1030,12 @@ export default function AdminOrders() {
                                       placeholder="e.g. Courier: BlueDart | AWB #987654321"
                                       style={{
                                         width: '100%',
-                                        padding: '0.68rem 0.9rem',
+                                        padding: '0.62rem 0.85rem',
                                         background: '#f8fafc',
-                                        border: '1.5px dashed #cbd5e1',
-                                        borderRadius: '12px',
-                                        fontSize: '0.82rem',
-                                        color: '#1e1b4b',
+                                        border: '1px dashed #cbd5e1',
+                                        borderRadius: '10px',
+                                        fontSize: '0.81rem',
+                                        color: '#0f172a',
                                         outline: 'none',
                                         boxSizing: 'border-box',
                                         transition: 'all 0.2s ease',
@@ -1038,34 +1054,34 @@ export default function AdminOrders() {
                                   </div>
                                 </div>
 
-                                {/* Update CTA Button (Anchored cleanly at the bottom) */}
-                                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                {/* Update CTA Button */}
+                                <div style={{ marginTop: 'auto', paddingTop: '0.75rem' }}>
                                   <button
                                     onClick={() => handleStatusUpdate(order)}
                                     disabled={isUpdating || currentRowStatus === order.status}
                                     style={{
                                       width: '100%',
-                                      height: '42px',
+                                      height: '40px',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
                                       gap: '0.5rem',
-                                      padding: '0.75rem 1.4rem',
-                                      borderRadius: '12px',
+                                      padding: '0.65rem 1.25rem',
+                                      borderRadius: '10px',
                                       border: 'none',
-                                      fontWeight: 800,
-                                      fontSize: '0.88rem',
+                                      fontWeight: 600,
+                                      fontSize: '0.84rem',
                                       cursor: isUpdating || currentRowStatus === order.status ? 'not-allowed' : 'pointer',
                                       transition: 'all 0.2s ease',
                                       background: currentRowStatus === order.status
-                                        ? '#f1eafa'
+                                        ? '#f1f5f9'
                                         : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                                      color: currentRowStatus === order.status ? '#9ca3af' : '#ffffff',
-                                      boxShadow: currentRowStatus === order.status ? 'none' : '0 6px 20px rgba(124,58,237,0.35)',
+                                      color: currentRowStatus === order.status ? '#94a3b8' : '#ffffff',
+                                      boxShadow: currentRowStatus === order.status ? 'none' : '0 4px 14px rgba(124, 58, 237, 0.25)',
                                       opacity: isUpdating ? 0.75 : 1,
                                     }}
                                   >
-                                    <Save size={16} className={isUpdating ? 'spin' : ''} />
+                                    <Save size={15} className={isUpdating ? 'spin' : ''} />
                                     {isUpdating
                                       ? 'Updating…'
                                       : currentRowStatus === order.status

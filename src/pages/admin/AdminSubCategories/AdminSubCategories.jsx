@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   FolderTree,
@@ -19,6 +19,8 @@ import {
   X,
   ArrowRight,
   Copy,
+  Command,
+  RotateCcw,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
@@ -30,6 +32,7 @@ import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data/categoryMockD
 export default function AdminSubCategories() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchInputRef = useRef(null);
 
   // Categories list state (10 fixed categories, can have specs edited)
   const [categories, setCategories] = useState(() => MOCK_CATEGORIES);
@@ -39,6 +42,21 @@ export default function AdminSubCategories() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('all'); // 'all' or 'cat-1', 'cat-2', etc.
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
+
+  // Global Ctrl+K / Cmd+K shortcut to focus unique search bar
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          searchInputRef.current.select();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Add / Edit Sub-Category Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,11 +144,26 @@ export default function AdminSubCategories() {
       slug: '',
       categoryId: defaultCatId,
       description: '',
-      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400',
+      image: '',
       displayOrder: subcategories.length + 1,
       status: 'active',
     });
     setIsModalOpen(true);
+  };
+
+  // Handle local image file upload
+  const handleImageFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({ ...prev, image: previewUrl }));
+      showToast('Cover image selected!', 'success');
+    }
+  };
+
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, image: '' }));
   };
 
   // Open Edit Sub-Category modal
@@ -339,12 +372,50 @@ export default function AdminSubCategories() {
   return (
     <AdminLayout title="Sub-Categories Management">
       <style>{`
-        .sub-img-hover:hover {
-          transform: scale(1.08) !important;
+        .subcat-kpi-card {
+          background: #ffffff;
+          border-radius: 16px;
+          border: 1px solid #e2e8f0;
+          padding: 1.25rem 1.4rem;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
-        .metrics-card-hover:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(124, 58, 237, 0.08) !important;
+        .subcat-kpi-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08);
+          border-color: #cbd5e1;
+        }
+        .subcat-search-box:focus-within {
+          border-color: #7c3aed !important;
+          background: #ffffff !important;
+          box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12), 0 4px 16px rgba(124, 58, 237, 0.05) !important;
+        }
+        .subcat-table-row-even {
+          background-color: #ffffff;
+          transition: background-color 0.18s ease;
+        }
+        .subcat-table-row-odd {
+          background-color: #faf7ff;
+          transition: background-color 0.18s ease;
+        }
+        .subcat-table-row-even:hover,
+        .subcat-table-row-odd:hover {
+          background-color: #f1e9fe !important;
+        }
+        .subcat-action-btn {
+          transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .subcat-action-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+        .subcat-tab-scroll::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
 
@@ -354,50 +425,65 @@ export default function AdminSubCategories() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1.25rem',
+          marginBottom: '1.4rem',
           flexWrap: 'wrap',
           gap: '1rem',
         }}
       >
         <div>
-          <h2
-            style={{
-              fontSize: '1.45rem',
-              fontWeight: 800,
-              color: '#1e1b4b',
-              margin: '0 0 0.25rem',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Sub-Categories & Department Catalog
-          </h2>
-          <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h2
+              style={{
+                fontSize: '1.45rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                margin: 0,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Sub-Categories & Department Catalog
+            </h2>
+            <span
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                background: '#f3e8ff',
+                color: '#7c3aed',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '9999px',
+                border: '1px solid #e9d5ff',
+              }}
+            >
+              {subcategories.length} Total Sub-Categories
+            </span>
+          </div>
+          <span style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
             Manage dynamic sub-categories and specifications across all 10 fixed store departments
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Quick Manage Specs button for currently active tab */}
           {currentCategoryObj && (
             <button
               onClick={() => handleOpenSpecs(currentCategoryObj)}
+              className="subcat-action-btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 padding: '0.55rem 1rem',
                 borderRadius: '10px',
-                border: '1.5px solid #c4b5fd',
-                background: '#ede8f8',
-                color: '#5b21b6',
+                border: '1.5px solid #ddd6fe',
+                background: '#faf5ff',
+                color: '#6d28d9',
                 fontWeight: 700,
                 fontSize: '0.84rem',
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)',
-                transition: 'all 0.15s ease',
+                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.06)',
               }}
             >
-              <Sliders size={15} color="#6d28d9" />
+              <Sliders size={15} color="#7c3aed" />
               <span>Specs: {currentCategoryObj.name} ({currentCategoryObj.characteristics?.length || 0})</span>
             </button>
           )}
@@ -405,119 +491,191 @@ export default function AdminSubCategories() {
           {/* Add Sub-Category Button */}
           <button
             onClick={handleOpenAdd}
-            className="admin-period-select-btn"
+            className="subcat-action-btn"
             style={{
-              background: '#7c3aed',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
               color: '#ffffff',
-              borderColor: '#7c3aed',
               fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)',
+              fontSize: '0.86rem',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
             }}
           >
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={2.5} />
             <span>Add Sub-Category</span>
           </button>
         </div>
       </div>
 
-      {/* ─── Top 4 Metric KPI Cards ────────────────────────────────────────── */}
-      <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
-        {/* Total Sub-Categories */}
-        <div
-          className="metric-card"
-          style={{
-            borderTop: '3.5px solid #7c3aed',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-          }}
-        >
-          <div className="metric-icon-wrap" style={{ background: '#ede8f8', color: '#7c3aed' }}>
+      {/* ─── Top 4 Metric KPI Cards (Ultra-Premium SaaS Cards) ─────────────── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '1rem',
+          marginBottom: '1.4rem',
+        }}
+      >
+        {/* Card 1: Total Sub-Categories */}
+        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #7c3aed' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                TOTAL SUB-CATEGORIES
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.total}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
+              ★ Master Catalog Registry
+            </div>
+          </div>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+              color: '#7c3aed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #ddd6fe',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
+            }}
+          >
             <FolderTree size={22} />
           </div>
-          <div>
-            <div className="metric-val" style={{ color: '#1e1b4b', fontWeight: 800 }}>{kpis.total}</div>
-            <div className="metric-label" style={{ fontSize: '0.8rem', color: '#64748b' }}>Total Sub-Categories</div>
-          </div>
         </div>
 
-        {/* Active Sub-Categories */}
-        <div
-          className="metric-card"
-          style={{
-            borderTop: '3.5px solid #16a34a',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-          }}
-        >
-          <div className="metric-icon-wrap" style={{ background: '#dcfce7', color: '#16a34a' }}>
+        {/* Card 2: Active Sub-Categories */}
+        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                ACTIVE SUB-CATEGORIES
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.active}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
+              100% Active & Published
+            </div>
+          </div>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+              color: '#16a34a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #bbf7d0',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
+            }}
+          >
             <CheckCircle2 size={22} />
           </div>
-          <div>
-            <div className="metric-val" style={{ color: '#1e1b4b', fontWeight: 800 }}>{kpis.active}</div>
-            <div className="metric-label" style={{ fontSize: '0.8rem', color: '#64748b' }}>Active Sub-Categories</div>
-          </div>
         </div>
 
-        {/* Parent Categories Covered */}
-        <div
-          className="metric-card"
-          style={{
-            borderTop: '3.5px solid #2563eb',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-          }}
-        >
-          <div className="metric-icon-wrap" style={{ background: '#eff6ff', color: '#2563eb' }}>
+        {/* Card 3: Fixed Departments Covered */}
+        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #2563eb' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                DEPARTMENTS COVERED
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.distinctCategories} <span style={{ fontSize: '1.05rem', color: '#94a3b8', fontWeight: 600 }}>/ {categories.length}</span>
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 600, marginTop: '0.35rem' }}>
+              10 Fixed Store Verticals
+            </div>
+          </div>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #bfdbfe',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.12)',
+            }}
+          >
             <Layers size={22} />
           </div>
-          <div>
-            <div className="metric-val" style={{ color: '#1e1b4b', fontWeight: 800 }}>
-              {kpis.distinctCategories} / {categories.length}
-            </div>
-            <div className="metric-label" style={{ fontSize: '0.8rem', color: '#64748b' }}>Fixed Departments Covered</div>
-          </div>
         </div>
 
-        {/* Total Catalog Items */}
-        <div
-          className="metric-card"
-          style={{
-            borderTop: '3.5px solid #d97706',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-          }}
-        >
-          <div className="metric-icon-wrap" style={{ background: '#fef3c7', color: '#d97706' }}>
-            <Package size={22} />
-          </div>
+        {/* Card 4: Total Items Cataloged */}
+        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
           <div>
-            <div className="metric-val" style={{ color: '#1e1b4b', fontWeight: 800 }}>{kpis.totalProducts}</div>
-            <div className="metric-label" style={{ fontSize: '0.8rem', color: '#64748b' }}>Total Items Cataloged</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                TOTAL ITEMS CATALOGED
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.totalProducts}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: '0.35rem' }}>
+              Live Product Inventory
+            </div>
+          </div>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              color: '#d97706',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #fde68a',
+              boxShadow: '0 2px 8px rgba(217, 119, 6, 0.12)',
+            }}
+          >
+            <Package size={22} />
           </div>
         </div>
       </div>
 
       {/* ─── 10 Fixed Categories Horizontal Tab Strip ─────────────────────── */}
       <div
-        className="card"
         style={{
           marginBottom: '1.25rem',
-          padding: '0.65rem 0.85rem',
+          padding: '0.55rem 0.75rem',
           borderRadius: '14px',
           background: '#ffffff',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
-          position: 'relative',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
         }}
       >
         <div
+          className="subcat-tab-scroll"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.45rem',
             overflowX: 'auto',
-            paddingBottom: '0.15rem',
+            paddingBottom: '0.1rem',
             scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
           }}
         >
           {/* 'All' Tab */}
@@ -527,11 +685,11 @@ export default function AdminSubCategories() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              padding: '0.55rem 1rem',
+              padding: '0.5rem 0.95rem',
               borderRadius: '10px',
               border: '1.5px solid',
               borderColor: selectedCategoryTab === 'all' ? '#7c3aed' : '#e2e8f0',
-              background: selectedCategoryTab === 'all' ? '#7c3aed' : '#f8fafc',
+              background: selectedCategoryTab === 'all' ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : '#f8fafc',
               color: selectedCategoryTab === 'all' ? '#ffffff' : '#334155',
               fontWeight: 700,
               fontSize: '0.82rem',
@@ -539,7 +697,7 @@ export default function AdminSubCategories() {
               cursor: 'pointer',
               boxShadow:
                 selectedCategoryTab === 'all'
-                  ? '0 4px 14px rgba(124, 58, 237, 0.3)'
+                  ? '0 4px 12px rgba(124, 58, 237, 0.28)'
                   : 'none',
               transition: 'all 0.15s ease',
             }}
@@ -547,7 +705,7 @@ export default function AdminSubCategories() {
             <span>📁 All Departments</span>
             <span
               style={{
-                fontSize: '0.72rem',
+                fontSize: '0.7rem',
                 padding: '0.1rem 0.45rem',
                 borderRadius: '999px',
                 background: selectedCategoryTab === 'all' ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
@@ -572,17 +730,17 @@ export default function AdminSubCategories() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  padding: '0.55rem 0.95rem',
+                  padding: '0.5rem 0.9rem',
                   borderRadius: '10px',
                   border: '1.5px solid',
                   borderColor: isSelected ? '#7c3aed' : '#e2e8f0',
-                  background: isSelected ? '#7c3aed' : '#f8fafc',
+                  background: isSelected ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : '#f8fafc',
                   color: isSelected ? '#ffffff' : '#334155',
                   fontWeight: 700,
                   fontSize: '0.82rem',
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
-                  boxShadow: isSelected ? '0 4px 14px rgba(124, 58, 237, 0.3)' : 'none',
+                  boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.28)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -590,7 +748,7 @@ export default function AdminSubCategories() {
                 <span>{cat.name}</span>
                 <span
                   style={{
-                    fontSize: '0.72rem',
+                    fontSize: '0.7rem',
                     padding: '0.1rem 0.45rem',
                     borderRadius: '999px',
                     background: isSelected ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
@@ -610,9 +768,9 @@ export default function AdminSubCategories() {
       {currentCategoryObj && (
         <div
           style={{
-            background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-            border: '1.5px solid #ddd6fe',
-            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+            border: '1.5px solid #e9d5ff',
+            borderRadius: '14px',
             padding: '1rem 1.25rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -620,6 +778,7 @@ export default function AdminSubCategories() {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '1rem',
+            boxShadow: '0 2px 10px rgba(124, 58, 237, 0.04)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
@@ -627,49 +786,51 @@ export default function AdminSubCategories() {
               style={{
                 width: '46px',
                 height: '46px',
-                borderRadius: '10px',
-                background: '#7c3aed',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                 color: '#fff',
                 fontSize: '1.4rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 10px rgba(124, 58, 237, 0.25)',
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
               }}
             >
               {currentCategoryObj.icon || '🏷️'}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                <strong style={{ fontSize: '1.05rem', color: '#2e1065', fontWeight: 800 }}>
+                <strong style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: 800 }}>
                   {currentCategoryObj.name}
                 </strong>
                 <span
                   style={{
                     fontSize: '0.72rem',
-                    padding: '0.15rem 0.5rem',
+                    padding: '0.15rem 0.55rem',
                     borderRadius: '999px',
                     background: '#dcfce7',
-                    color: '#166534',
+                    color: '#15803d',
                     fontWeight: 700,
+                    border: '1px solid #bbf7d0',
                   }}
                 >
                   Fixed Department
                 </span>
                 <span style={{ fontSize: '0.78rem', color: '#6d28d9', fontWeight: 600 }}>
-                  Slug: <code>/{currentCategoryObj.slug}</code>
+                  Path: <code style={{ background: 'rgba(255,255,255,0.7)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>/{currentCategoryObj.slug}</code>
                 </span>
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#5b21b6', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.2rem' }}>
                 {currentCategoryObj.subtext || 'Department catalog groupings & product attributes'}
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
             {/* Manage Specs Button */}
             <button
               onClick={() => handleOpenSpecs(currentCategoryObj)}
+              className="subcat-action-btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -682,10 +843,10 @@ export default function AdminSubCategories() {
                 fontSize: '0.82rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.1)',
+                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)',
               }}
             >
-              <Sliders size={14} color="#6d28d9" />
+              <Sliders size={14} color="#7c3aed" />
               <span>
                 Manage Specs ({currentCategoryObj.characteristics?.length || 0})
               </span>
@@ -694,6 +855,7 @@ export default function AdminSubCategories() {
             {/* Quick Add Sub-Category for this Department */}
             <button
               onClick={handleOpenAdd}
+              className="subcat-action-btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -701,11 +863,12 @@ export default function AdminSubCategories() {
                 padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
                 background: '#7c3aed',
-                border: '1.5px solid #7c3aed',
+                border: '1px solid #7c3aed',
                 color: '#ffffff',
                 fontSize: '0.82rem',
                 fontWeight: 700,
                 cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
               }}
             >
               <Plus size={14} />
@@ -715,8 +878,17 @@ export default function AdminSubCategories() {
         </div>
       )}
 
-      {/* ─── Controls & Filter Bar ────────────────────────────────────────── */}
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.15rem' }}>
+      {/* ─── Controls & Unique Search Bar ─────────────────────────────────── */}
+      <div
+        style={{
+          marginBottom: '1.4rem',
+          padding: '1rem 1.25rem',
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -726,79 +898,136 @@ export default function AdminSubCategories() {
             gap: '1rem',
           }}
         >
-          {/* Search Box */}
+          {/* Unique Search Box with Focus Glow & Shortcuts */}
           <div
+            className="subcat-search-box"
             style={{
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
               flex: '1',
-              minWidth: '260px',
+              minWidth: '280px',
+              background: '#f8fafc',
+              border: '1.5px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '0.2rem 0.5rem 0.2rem 0.8rem',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
-            <Search size={16} style={{ position: 'absolute', left: '1rem', color: '#7c3aed' }} />
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                background: '#ede9fe',
+                color: '#7c3aed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '0.65rem',
+                flexShrink: 0,
+              }}
+            >
+              <Search size={15} strokeWidth={2.5} />
+            </div>
+
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search by sub-category name, slug, or keywords..."
+              placeholder="Search by sub-category name, slug, department, or keywords..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.6rem 2.4rem 0.6rem 2.7rem',
-                background: '#ede8f8',
-                border: '1.5px solid #dfd5f5',
-                borderRadius: '9999px',
-                fontSize: '0.85rem',
-                color: '#1e1b4b',
-                fontWeight: 500,
+                background: 'transparent',
+                border: 'none',
+                fontSize: '0.86rem',
+                color: '#0f172a',
+                fontWeight: 600,
                 outline: 'none',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.04)',
+                padding: '0.45rem 0',
               }}
             />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
+
+            {/* Right side shortcut badge or clear button */}
+            {searchTerm ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    background: '#ede9fe',
+                    color: '#7c3aed',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '999px',
+                  }}
+                >
+                  {filteredSubcategories.length} found
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  style={{
+                    background: '#f1f5f9',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '22px',
+                    height: '22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                  }}
+                  title="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            ) : (
+              <span
                 style={{
-                  position: 'absolute',
-                  right: '0.85rem',
-                  background: '#ddd6fe',
-                  border: 'none',
-                  borderRadius: '999px',
-                  width: '20px',
-                  height: '20px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  color: '#94a3b8',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '0.15rem 0.45rem',
+                  letterSpacing: '0.04em',
+                  flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#5b21b6',
+                  gap: '0.2rem',
                 }}
-                title="Clear search"
               >
-                <X size={12} />
-              </button>
+                <Command size={10} /> K
+              </span>
             )}
           </div>
 
-          {/* Department Filter (Dropdown mirror) */}
+          {/* Department Filter Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Department:
             </label>
             <select
               value={selectedCategoryTab}
               onChange={(e) => setSelectedCategoryTab(e.target.value)}
               style={{
-                padding: '0.55rem 0.85rem',
+                padding: '0.52rem 0.85rem',
                 borderRadius: '10px',
-                border: '1.5px solid #dfd5f5',
+                border: '1.5px solid #e2e8f0',
                 background: '#ffffff',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                color: '#1e1b4b',
+                color: '#0f172a',
                 outline: 'none',
                 cursor: 'pointer',
+                transition: 'border-color 0.15s ease',
               }}
+              onFocus={(e) => (e.target.style.borderColor = '#7c3aed')}
+              onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
             >
               <option value="all">All 10 Departments</option>
               {categories.map((cat) => (
@@ -809,335 +1038,432 @@ export default function AdminSubCategories() {
             </select>
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Status:
             </label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
               style={{
-                padding: '0.55rem 0.85rem',
+                padding: '0.52rem 0.85rem',
                 borderRadius: '10px',
-                border: '1.5px solid #dfd5f5',
+                border: '1.5px solid #e2e8f0',
                 background: '#ffffff',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                color: '#1e1b4b',
+                color: '#0f172a',
                 outline: 'none',
                 cursor: 'pointer',
+                transition: 'border-color 0.15s ease',
               }}
+              onFocus={(e) => (e.target.style.borderColor = '#7c3aed')}
+              onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
             >
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </select>
           </div>
+
+          {/* Reset Filters Quick Button if filtered */}
+          {(searchTerm || selectedCategoryTab !== 'all' || selectedStatus !== 'all') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategoryTab('all');
+                setSelectedStatus('all');
+              }}
+              className="subcat-action-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.52rem 0.85rem',
+                borderRadius: '10px',
+                border: '1.5px solid #cbd5e1',
+                background: '#f8fafc',
+                color: '#475569',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+              title="Reset all filters"
+            >
+              <RotateCcw size={13} />
+              <span>Reset</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ─── Sub-Categories Table ─────────────────────────────────────────── */}
-      <div className="table-container">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th style={{ fontWeight: 800, color: '#475569' }}>Sub-Category</th>
-              <th style={{ fontWeight: 800, color: '#475569' }}>Parent Department</th>
-              <th style={{ fontWeight: 800, color: '#475569' }}>Slug / Path</th>
-              <th style={{ fontWeight: 800, color: '#475569', textAlign: 'center' }}>Item Count</th>
-              <th style={{ fontWeight: 800, color: '#475569', textAlign: 'center' }}>Display Order</th>
-              <th style={{ fontWeight: 800, color: '#475569' }}>Status</th>
-              <th style={{ fontWeight: 800, color: '#475569', textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSubcategories.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={7}
-                  style={{ textAlign: 'center', padding: '3.5rem 1rem', color: '#64748b' }}
-                >
-                  <FolderTree size={36} style={{ margin: '0 auto 0.5rem', opacity: 0.4 }} />
-                  <div style={{ fontWeight: 600 }}>No sub-categories match the current search or filters.</div>
-                </td>
+      {/* ─── Ultra-Neat Sub-Categories Table ───────────────────────────────── */}
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
+          overflow: 'hidden',
+          marginBottom: '2rem',
+        }}
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              textAlign: 'left',
+            }}
+          >
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  SUB-CATEGORY
+                </th>
+                <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  PARENT DEPARTMENT
+                </th>
+                <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  SLUG / PATH
+                </th>
+                <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
+                  ITEM COUNT
+                </th>
+                <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
+                  DISPLAY ORDER
+                </th>
+                <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
+                  STATUS
+                </th>
+                <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>
+                  ACTIONS
+                </th>
               </tr>
-            ) : (
-              filteredSubcategories.map((sub) => {
-                const parent = categories.find((c) => c._id === sub.categoryId);
-                const parentSlug = parent?.slug || 'womens-fashion';
-                const fullSlug = `/${parentSlug}/${sub.slug}`;
+            </thead>
+            <tbody>
+              {filteredSubcategories.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    style={{ textAlign: 'center', padding: '4rem 1rem', color: '#64748b' }}
+                  >
+                    <FolderTree size={38} style={{ margin: '0 auto 0.6rem', color: '#cbd5e1' }} />
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#334155' }}>No sub-categories found</div>
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                      Try adjusting your search terms or filters
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredSubcategories.map((sub, index) => {
+                  const parent = categories.find((c) => c._id === sub.categoryId);
+                  const parentSlug = parent?.slug || 'womens-fashion';
+                  const fullSlug = `/${parentSlug}/${sub.slug}`;
 
-                return (
-                  <tr key={sub._id}>
-                    {/* Sub-Category Name & Image */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <div style={{ overflow: 'hidden', borderRadius: '10px', flexShrink: 0 }}>
-                          <img
-                            src={
-                              sub.image ||
-                              'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100'
-                            }
-                            alt={sub.name}
+                  return (
+                    <tr
+                      key={sub._id}
+                      className={index % 2 === 0 ? 'subcat-table-row-even' : 'subcat-table-row-odd'}
+                      style={{
+                        borderBottom: index !== filteredSubcategories.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      }}
+                    >
+                      {/* 1. Sub-Category Name & Image */}
+                      <td style={{ padding: '0.9rem 1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <div
                             style={{
                               width: '44px',
                               height: '44px',
-                              objectFit: 'cover',
                               borderRadius: '10px',
+                              overflow: 'hidden',
+                              flexShrink: 0,
                               border: '1.5px solid #e2e8f0',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-                              transition: 'transform 0.25s ease',
-                              display: 'block',
-                            }}
-                            className="sub-img-hover"
-                          />
-                        </div>
-                        <div>
-                          <strong
-                            style={{
-                              fontSize: '0.92rem',
-                              color: '#1e1b4b',
-                              display: 'block',
-                              fontWeight: 700,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                              background: '#f8fafc',
                             }}
                           >
-                            {sub.name}
-                          </strong>
-                          {sub.description && (
-                            <span
+                            <img
+                              src={
+                                sub.image ||
+                                'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100'
+                              }
+                              alt={sub.name}
                               style={{
-                                fontSize: '0.76rem',
-                                color: '#64748b',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 1,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                maxWidth: '280px',
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block',
+                                transition: 'transform 0.2s ease',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+                              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
+                            />
+                          </div>
+                          <div>
+                            <strong
+                              style={{
+                                fontSize: '0.9rem',
+                                color: '#0f172a',
+                                display: 'block',
+                                fontWeight: 700,
                               }}
                             >
-                              {sub.description}
-                            </span>
-                          )}
+                              {sub.name}
+                            </strong>
+                            {sub.description && (
+                              <span
+                                style={{
+                                  fontSize: '0.75rem',
+                                  color: '#64748b',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 1,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  maxWidth: '260px',
+                                  marginTop: '0.15rem',
+                                }}
+                              >
+                                {sub.description}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Parent Department */}
-                    <td>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontSize: '0.8rem',
-                          padding: '0.28rem 0.7rem',
-                          borderRadius: '8px',
-                          background: '#ede8f8',
-                          color: '#5b21b6',
-                          fontWeight: 700,
-                          border: '1px solid #ddd6fe',
-                        }}
-                      >
-                        {parent?.icon || '📁'} {parent?.name || sub.categoryName}
-                      </span>
-                    </td>
-
-                    {/* Slug / Path with 1-Click Copy Button */}
-                    <td>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <code
-                          style={{
-                            fontSize: '0.78rem',
-                            padding: '0.22rem 0.55rem',
-                            borderRadius: '6px',
-                            background: '#f1f5f9',
-                            color: '#334155',
-                            border: '1px solid #cbd5e1',
-                            fontFamily: 'monospace',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {fullSlug}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopySlug(fullSlug, e)}
-                          style={{
-                            background: '#ffffff',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '6px',
-                            padding: '0.25rem 0.4rem',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#64748b',
-                            transition: 'all 0.15s ease',
-                          }}
-                          title="Copy slug path"
-                        >
-                          <Copy size={12} />
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* Item Count */}
-                    <td style={{ textAlign: 'center' }}>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontWeight: 700,
-                          fontSize: '0.83rem',
-                          color: '#1e1b4b',
-                          background: '#f5f3ff',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '8px',
-                          border: '1px solid #ddd6fe',
-                        }}
-                      >
-                        <Package size={14} color="#7c3aed" />
-                        {sub.itemCount || 0} products
-                      </span>
-                    </td>
-
-                    {/* Display Order */}
-                    <td style={{ textAlign: 'center' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          minWidth: '28px',
-                          textAlign: 'center',
-                          padding: '0.18rem 0.55rem',
-                          borderRadius: '8px',
-                          background: '#f8fafc',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          color: '#475569',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                        }}
-                      >
-                        #{sub.displayOrder || 1}
-                      </span>
-                    </td>
-
-                    {/* Status Toggle */}
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(sub)}
-                        style={{
-                          border: 'none',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          padding: 0,
-                        }}
-                        title="Click to toggle status"
-                      >
+                      {/* 2. Parent Department */}
+                      <td style={{ padding: '0.9rem 1rem' }}>
                         <span
-                          className={`adm-status-pill ${
-                            sub.status === 'active'
-                              ? 'adm-status-delivered'
-                              : 'adm-status-cancelled'
-                          }`}
-                          style={{ cursor: 'pointer', fontWeight: 700 }}
-                        >
-                          {sub.status === 'active' ? '● Active' : '○ Inactive'}
-                        </span>
-                      </button>
-                    </td>
-
-                    {/* Compact Actions Group */}
-                    <td>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'flex-end',
-                          gap: '0.35rem',
-                        }}
-                      >
-                        {/* View Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenView(sub)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
-                            padding: '0.35rem 0.65rem',
-                            borderRadius: '8px',
-                            border: '1px solid #bfdbfe',
-                            background: '#eff6ff',
-                            color: '#1d4ed8',
+                            gap: '0.35rem',
                             fontSize: '0.78rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                          }}
-                          title="View Details"
-                        >
-                          <Eye size={13} color="#1d4ed8" />
-                          <span>View</span>
-                        </button>
-
-                        {/* Edit Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(sub)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.3rem',
-                            padding: '0.35rem 0.65rem',
+                            padding: '0.25rem 0.65rem',
                             borderRadius: '8px',
-                            border: '1px solid #ddd6fe',
-                            background: '#f5f3ff',
+                            background: '#f3e8ff',
                             color: '#6d28d9',
-                            fontSize: '0.78rem',
                             fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
+                            border: '1px solid #e9d5ff',
                           }}
-                          title="Edit Sub-Category"
                         >
-                          <Edit2 size={13} color="#6d28d9" />
-                          <span>Edit</span>
-                        </button>
+                          {parent?.icon || '📁'} {parent?.name || sub.categoryName}
+                        </span>
+                      </td>
 
-                        {/* Delete Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(sub._id, sub.name)}
+                      {/* 3. Slug / Path with 1-Click Copy Button */}
+                      <td style={{ padding: '0.9rem 1rem' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <code
+                            style={{
+                              fontSize: '0.76rem',
+                              padding: '0.22rem 0.55rem',
+                              borderRadius: '6px',
+                              background: '#f8fafc',
+                              color: '#334155',
+                              border: '1px solid #e2e8f0',
+                              fontFamily: 'monospace',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {fullSlug}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopySlug(fullSlug, e)}
+                            className="subcat-action-btn"
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              padding: '0.25rem 0.4rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#64748b',
+                            }}
+                            title="Copy slug path"
+                          >
+                            <Copy size={12} />
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* 4. Item Count */}
+                      <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
+                        <span
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0.35rem 0.55rem',
-                            borderRadius: '8px',
-                            border: '1px solid #fecaca',
-                            background: '#fef2f2',
-                            color: '#dc2626',
-                            fontSize: '0.78rem',
+                            gap: '0.35rem',
                             fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
+                            fontSize: '0.8rem',
+                            color: '#0f172a',
+                            background: '#f8fafc',
+                            padding: '0.22rem 0.65rem',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0',
                           }}
-                          title="Delete Sub-Category"
                         >
-                          <Trash2 size={13} color="#dc2626" />
+                          <Package size={13} color="#7c3aed" />
+                          {sub.itemCount || 0} items
+                        </span>
+                      </td>
+
+                      {/* 5. Display Order */}
+                      <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            minWidth: '28px',
+                            textAlign: 'center',
+                            padding: '0.18rem 0.55rem',
+                            borderRadius: '6px',
+                            background: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            color: '#475569',
+                          }}
+                        >
+                          #{sub.displayOrder || 1}
+                        </span>
+                      </td>
+
+                      {/* 6. Status Toggle */}
+                      <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(sub)}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                          title="Click to toggle status"
+                        >
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.25rem 0.7rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              background: sub.status === 'active' ? '#dcfce7' : '#fee2e2',
+                              color: sub.status === 'active' ? '#15803d' : '#b91c1c',
+                              border: `1px solid ${sub.status === 'active' ? '#bbf7d0' : '#fecaca'}`,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: sub.status === 'active' ? '#16a34a' : '#ef4444',
+                              }}
+                            />
+                            {sub.status === 'active' ? 'Active' : 'Inactive'}
+                          </span>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      </td>
+
+                      {/* 7. Actions Group */}
+                      <td style={{ padding: '0.9rem 1.25rem', textAlign: 'right' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: '0.35rem',
+                          }}
+                        >
+                          {/* View Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenView(sub)}
+                            className="subcat-action-btn"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              padding: '0.32rem 0.65rem',
+                              borderRadius: '8px',
+                              border: '1px solid #bfdbfe',
+                              background: '#eff6ff',
+                              color: '#1d4ed8',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="View Details"
+                          >
+                            <Eye size={12} color="#1d4ed8" />
+                            <span>View</span>
+                          </button>
+
+                          {/* Edit Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(sub)}
+                            className="subcat-action-btn"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              padding: '0.32rem 0.65rem',
+                              borderRadius: '8px',
+                              border: '1px solid #ddd6fe',
+                              background: '#f5f3ff',
+                              color: '#6d28d9',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="Edit Sub-Category"
+                          >
+                            <Edit2 size={12} color="#6d28d9" />
+                            <span>Edit</span>
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(sub._id, sub.name)}
+                            className="subcat-action-btn"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '0.32rem 0.55rem',
+                              borderRadius: '8px',
+                              border: '1px solid #fecaca',
+                              background: '#fff1f2',
+                              color: '#be123c',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="Delete Sub-Category"
+                          >
+                            <Trash2 size={12} color="#be123c" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ─── 1. Add / Edit Sub-Category Modal ──────────────────────────────── */}
@@ -1145,18 +1471,42 @@ export default function AdminSubCategories() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingItem ? `Edit Sub-Category: ${editingItem.name}` : 'Add New Sub-Category'}
+        maxWidth={640}
       >
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem', padding: '0.25rem 0' }}>
           {/* Parent Department Selection */}
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label" style={{ fontWeight: 700 }}>
-              Parent Department / Category *
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.55rem', letterSpacing: '0.02em' }}>
+              <span>Parent Department / Category</span>
+              <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <select
-              className="form-input"
               value={formData.categoryId}
               onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
               required
+              style={{
+                width: '100%',
+                padding: '0.8rem 1rem',
+                borderRadius: '12px',
+                border: '1.5px solid #e2e8f0',
+                background: '#f8fafc',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                color: '#0f172a',
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#7c3aed';
+                e.target.style.background = '#ffffff';
+                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.background = '#f8fafc';
+                e.target.style.boxShadow = 'none';
+              }}
             >
               {categories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
@@ -1164,130 +1514,357 @@ export default function AdminSubCategories() {
                 </option>
               ))}
             </select>
-            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-              Sub-category will be grouped under this department and inherit its specifications.
+            <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '0.45rem', lineHeight: 1.4 }}>
+              Sub-category will be grouped under this department and inherit its product specifications.
             </span>
           </div>
 
-          {/* Name & Slug */}
+          {/* Name & Slug (2-Column Grid with comfortable spacing) */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '1rem',
-              marginBottom: '1rem',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1.25rem',
             }}
           >
             <div>
-              <label className="form-label" style={{ fontWeight: 700 }}>
-                Sub-Category Name *
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.55rem', letterSpacing: '0.02em' }}>
+                <span>Sub-Category Name</span>
+                <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
                 type="text"
-                placeholder="e.g. Sarees or Wireless Chargers"
-                className="form-input"
+                placeholder="e.g. Sarees, Wireless Chargers"
                 value={formData.name}
                 onChange={handleNameChange}
                 required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem 1rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid #e2e8f0',
+                  background: '#f8fafc',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: '#0f172a',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.18s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#7c3aed';
+                  e.target.style.background = '#ffffff';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.background = '#f8fafc';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
             </div>
 
             <div>
-              <label className="form-label" style={{ fontWeight: 700 }}>
-                Slug / URL Key *
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.55rem', letterSpacing: '0.02em' }}>
+                <span>Slug / URL Key</span>
+                <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
                 type="text"
                 placeholder="e.g. sarees or wireless-chargers"
-                className="form-input"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 required
+                style={{
+                  width: '100%',
+                  padding: '0.8rem 1rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid #e2e8f0',
+                  background: '#f8fafc',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: '#0f172a',
+                  fontFamily: 'monospace',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.18s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#7c3aed';
+                  e.target.style.background = '#ffffff';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.background = '#f8fafc';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
             </div>
           </div>
 
           {/* Description */}
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label" style={{ fontWeight: 700 }}>
-              Description
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.55rem', letterSpacing: '0.02em' }}>
+              <span>Description</span>
+              <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '0.74rem' }}>(Optional)</span>
             </label>
             <textarea
-              rows={3}
-              className="form-textarea"
-              placeholder="Brief description for collection banners and search engines..."
+              rows={2}
+              placeholder="Brief description for collection banners, SEO, and storefront browsing..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '0.8rem 1rem',
+                borderRadius: '12px',
+                border: '1.5px solid #e2e8f0',
+                background: '#f8fafc',
+                fontSize: '0.88rem',
+                color: '#0f172a',
+                outline: 'none',
+                boxSizing: 'border-box',
+                lineHeight: 1.5,
+                resize: 'vertical',
+                transition: 'all 0.18s ease',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#7c3aed';
+                e.target.style.background = '#ffffff';
+                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.background = '#f8fafc';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
-          {/* Image URL & Preview */}
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label" style={{ fontWeight: 700 }}>
-              Thumbnail Image URL
-            </label>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <input
-                type="url"
-                placeholder="https://images.unsplash.com/..."
-                className="form-input"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                style={{ flex: 1 }}
-              />
-              {formData.image && (
-                <img
-                  src={formData.image}
-                  alt="Preview"
-                  style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '8px',
-                    objectFit: 'cover',
-                    border: '1px solid #cbd5e1',
-                  }}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Display Order & Status */}
+          {/* ── Side-by-Side: Compact Cover Image (Left) + Display Order & Status (Right) ── */}
           <div
             style={{
+              background: '#faf5ff',
+              borderRadius: '16px',
+              border: '1.5px solid #ede9fe',
+              padding: '1.2rem',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '1rem',
-              marginBottom: '1.5rem',
+              gridTemplateColumns: '150px 1fr',
+              gap: '1.5rem',
+              alignItems: 'center',
             }}
           >
+            {/* Left: Compact Cover Image Dropzone (Exact 150px x 145px) */}
             <div>
-              <label className="form-label" style={{ fontWeight: 700 }}>
-                Display Order
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                  Cover Image
+                </label>
+              </div>
+
+              <label
+                style={{
+                  width: '150px',
+                  height: '145px',
+                  borderRadius: '14px',
+                  border: formData.image ? '1.5px solid #ddd6fe' : '2px dashed #cbd5e1',
+                  background: '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
+                  boxShadow: formData.image ? '0 4px 14px rgba(124, 58, 237, 0.08)' : 'none',
+                  boxSizing: 'border-box',
+                }}
+                onMouseEnter={(e) => {
+                  if (!formData.image) {
+                    e.currentTarget.style.borderColor = '#7c3aed';
+                    e.currentTarget.style.background = '#f5f3ff';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!formData.image) {
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.background = '#ffffff';
+                  }
+                }}
+              >
+                <input type="file" accept="image/*" onChange={handleImageFileSelect} style={{ display: 'none' }} />
+
+                {formData.image ? (
+                  <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                    <img
+                      src={formData.image}
+                      alt="Subcategory Cover"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+
+                    {/* Top-Left Cover Badge */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '7px',
+                        left: '7px',
+                        background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                        color: '#ffffff',
+                        fontSize: '0.62rem',
+                        fontWeight: 800,
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '9999px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                        zIndex: 2,
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      ⭐ COVER
+                    </div>
+
+                    {/* Hover Overlay with Change & Remove options */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(15, 23, 42, 0.72)',
+                        backdropFilter: 'blur(2px)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        opacity: 0,
+                        transition: 'opacity 0.2s ease',
+                        zIndex: 3,
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                    >
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, letterSpacing: '0.01em' }}>Change Image</span>
+                      <button
+                        type="button"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          handleRemoveImage();
+                        }}
+                        style={{
+                          background: '#ef4444',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.28rem 0.65rem',
+                          borderRadius: '8px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)',
+                        }}
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '0.75rem', color: '#64748b' }}>
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+                        color: '#7c3aed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 0.45rem',
+                        border: '1px solid #ddd6fe',
+                      }}
+                    >
+                      <Sparkles size={18} />
+                    </div>
+                    <strong style={{ fontSize: '0.82rem', color: '#0f172a', display: 'block', fontWeight: 700, marginBottom: '0.2rem' }}>
+                      Upload Photo
+                    </strong>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', fontWeight: 500 }}>
+                      PNG, JPG up to 5MB
+                    </span>
+                  </div>
+                )}
               </label>
-              <input
-                type="number"
-                min="1"
-                className="form-input"
-                value={formData.displayOrder}
-                onChange={(e) => setFormData({ ...formData, displayOrder: e.target.value })}
-              />
             </div>
 
-            <div>
-              <label className="form-label" style={{ fontWeight: 700 }}>
-                Status
-              </label>
-              <select
-                className="form-input"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <option value="active">Active (Visible on Store)</option>
-                <option value="inactive">Inactive (Hidden)</option>
-              </select>
+            {/* Right: Stacked Display Order & Publishing Status Inputs */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center' }}>
+              {/* Display Order */}
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'block', marginBottom: '0.45rem' }}>
+                  Display Order
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.displayOrder}
+                  onChange={(e) => setFormData({ ...formData, displayOrder: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid #e2e8f0',
+                    background: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.18s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#7c3aed';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e2e8f0';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+              {/* Publishing Status */}
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'block', marginBottom: '0.45rem' }}>
+                  Publishing Status
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid #e2e8f0',
+                    background: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    color: '#0f172a',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#7c3aed';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e2e8f0';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  <option value="active">Active (Visible on Storefront)</option>
+                  <option value="inactive">Inactive (Hidden Draft)</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1296,21 +1873,47 @@ export default function AdminSubCategories() {
             style={{
               display: 'flex',
               justifyContent: 'flex-end',
-              gap: '0.75rem',
-              borderTop: '1px solid #e2e8f0',
-              paddingTop: '1rem',
+              gap: '0.85rem',
+              borderTop: '1px solid #f1f5f9',
+              paddingTop: '1.35rem',
+              marginTop: '0.35rem',
             }}
           >
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="btn btn-secondary"
+              className="subcat-action-btn"
+              style={{
+                padding: '0.7rem 1.4rem',
+                borderRadius: '11px',
+                border: '1.5px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#475569',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
             >
               Cancel
             </button>
-            <Button type="submit" variant="primary" loading={modalLoading}>
-              {editingItem ? 'Save Changes' : 'Create Sub-Category'}
-            </Button>
+            <button
+              type="submit"
+              disabled={modalLoading}
+              className="subcat-action-btn"
+              style={{
+                padding: '0.7rem 1.75rem',
+                borderRadius: '11px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                color: '#ffffff',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(124, 58, 237, 0.32)',
+              }}
+            >
+              {modalLoading ? 'Saving...' : editingItem ? 'Save Changes' : 'Create Sub-Category'}
+            </button>
           </div>
         </form>
       </Modal>
@@ -1320,22 +1923,23 @@ export default function AdminSubCategories() {
         isOpen={isSpecsModalOpen}
         onClose={() => setIsSpecsModalOpen(false)}
         title={`Department Specifications: ${specsCategory?.name || ''}`}
+        maxWidth={740}
       >
         <div style={{ maxHeight: '75vh', overflowY: 'auto', paddingRight: '0.35rem' }}>
           <div
             style={{
-              background: '#f5f3ff',
+              background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
               border: '1px solid #ddd6fe',
-              borderRadius: '8px',
-              padding: '0.75rem 1rem',
-              marginBottom: '1.25rem',
+              borderRadius: '12px',
+              padding: '0.9rem 1.15rem',
+              marginBottom: '1.4rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.65rem',
+              gap: '0.75rem',
             }}
           >
-            <Sparkles size={20} color="#7c3aed" />
-            <span style={{ fontSize: '0.82rem', color: '#5b21b6' }}>
+            <Sparkles size={22} color="#7c3aed" />
+            <span style={{ fontSize: '0.84rem', color: '#5b21b6', lineHeight: 1.5 }}>
               These attributes (e.g. Fabric, Size, Material, Battery) dynamically generate input
               fields when creating products under <strong>{specsCategory?.name}</strong>.
             </span>
@@ -1346,8 +1950,8 @@ export default function AdminSubCategories() {
             style={{
               marginBottom: '1.5rem',
               background: '#f8fafc',
-              padding: '1rem',
-              borderRadius: '8px',
+              padding: '1.15rem',
+              borderRadius: '12px',
               border: '1px solid #e2e8f0',
             }}
           >
@@ -1356,10 +1960,10 @@ export default function AdminSubCategories() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '0.75rem',
+                marginBottom: '0.9rem',
               }}
             >
-              <h4 style={{ margin: 0, fontSize: '0.92rem', color: '#1e293b' }}>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
                 Configured Attributes ({specsList.length})
               </h4>
             </div>
@@ -1368,7 +1972,7 @@ export default function AdminSubCategories() {
               <p
                 style={{
                   margin: 0,
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
                   color: '#94a3b8',
                   fontStyle: 'italic',
                 }}
@@ -1376,7 +1980,7 @@ export default function AdminSubCategories() {
                 No specifications defined yet. Add custom attributes using the form below.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 {specsList.map((spec, idx) => (
                   <div
                     key={idx}
@@ -1385,21 +1989,22 @@ export default function AdminSubCategories() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       background: '#ffffff',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '6px',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
                       border: '1px solid #e2e8f0',
-                      gap: '0.75rem',
+                      gap: '0.85rem',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
                     }}
                   >
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.6rem',
+                        gap: '0.65rem',
                         flexWrap: 'wrap',
                       }}
                     >
-                      <strong style={{ fontSize: '0.88rem', color: '#1e1b4b' }}>
+                      <strong style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: 700 }}>
                         {spec.name || spec.key}
                       </strong>
                       <span
@@ -1407,8 +2012,8 @@ export default function AdminSubCategories() {
                           fontSize: '0.72rem',
                           textTransform: 'uppercase',
                           fontWeight: 700,
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: '4px',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '6px',
                           background: '#ede8f8',
                           color: '#5b21b6',
                         }}
@@ -1422,15 +2027,15 @@ export default function AdminSubCategories() {
                             color: '#dc2626',
                             fontWeight: 700,
                             background: '#fee2e2',
-                            padding: '0.1rem 0.35rem',
-                            borderRadius: '3px',
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '4px',
                           }}
                         >
                           *Required
                         </span>
                       )}
                       {spec.values && spec.values.length > 0 && (
-                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                           {spec.values.map((v, vIdx) => (
                             <span
                               key={vIdx}
@@ -1438,9 +2043,10 @@ export default function AdminSubCategories() {
                                 fontSize: '0.72rem',
                                 background: '#f1f5f9',
                                 color: '#475569',
-                                padding: '0.1rem 0.35rem',
-                                borderRadius: '3px',
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '4px',
                                 border: '1px solid #cbd5e1',
+                                fontWeight: 500,
                               }}
                             >
                               {v}
@@ -1453,16 +2059,19 @@ export default function AdminSubCategories() {
                       type="button"
                       onClick={() => handleRemoveSpec(idx)}
                       style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ef4444',
+                        background: '#fee2e2',
+                        border: '1px solid #fecaca',
+                        color: '#dc2626',
                         cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        padding: '0.25rem',
+                        borderRadius: '6px',
+                        padding: '0.3rem 0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                       title="Remove specification"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
@@ -1473,46 +2082,63 @@ export default function AdminSubCategories() {
           {/* Add New Spec Sub-Form */}
           <div
             style={{
-              background: '#fff',
+              background: '#ffffff',
               border: '1.5px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '1rem',
+              borderRadius: '12px',
+              padding: '1.15rem',
               marginBottom: '1.5rem',
             }}
           >
-            <h4 style={{ margin: '0 0 0.85rem', fontSize: '0.92rem', color: '#0f172a' }}>
+            <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
               + Add New Department Specification
             </h4>
 
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '0.75rem',
-                marginBottom: '0.75rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '1rem',
+                marginBottom: '1rem',
               }}
             >
               <div>
-                <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 700 }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.4rem' }}>
                   Attribute Name *
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Size, Fabric, Battery Capacity"
-                  className="form-input"
                   value={newSpec.name}
                   onChange={(e) => setNewSpec({ ...newSpec, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e2e8f0',
+                    fontSize: '0.86rem',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 700 }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.4rem' }}>
                   Input Field Type *
                 </label>
                 <select
-                  className="form-input"
                   value={newSpec.type}
                   onChange={(e) => setNewSpec({ ...newSpec, type: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e2e8f0',
+                    fontSize: '0.86rem',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    background: '#ffffff',
+                  }}
                 >
                   <option value="select">Dropdown (Single Select)</option>
                   <option value="multi_select">Multi-Select (Pill Tags)</option>
@@ -1524,18 +2150,26 @@ export default function AdminSubCategories() {
             </div>
 
             {(newSpec.type === 'select' || newSpec.type === 'multi_select') && (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 700 }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.4rem' }}>
                   Options / Values (Comma-separated) *
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. S, M, L, XL, XXL or Pure Cotton, Soft Silk, Rayon"
-                  className="form-input"
                   value={newSpec.valuesInput}
                   onChange={(e) => setNewSpec({ ...newSpec, valuesInput: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1.5px solid #e2e8f0',
+                    fontSize: '0.86rem',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
                 />
-                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginTop: '0.3rem' }}>
                   Separate individual options with commas.
                 </span>
               </div>
@@ -1546,7 +2180,7 @@ export default function AdminSubCategories() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginTop: '0.85rem',
+                marginTop: '1rem',
               }}
             >
               <label
@@ -1554,7 +2188,9 @@ export default function AdminSubCategories() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  color: '#334155',
                   cursor: 'pointer',
                   userSelect: 'none',
                 }}
@@ -1570,8 +2206,18 @@ export default function AdminSubCategories() {
               <button
                 type="button"
                 onClick={handleAddSpec}
-                className="btn btn-secondary btn-sm"
-                style={{ background: '#7c3aed', color: '#fff', border: 'none' }}
+                className="subcat-action-btn"
+                style={{
+                  background: '#7c3aed',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.55rem 1.1rem',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+                }}
               >
                 + Add to List
               </button>
@@ -1583,8 +2229,8 @@ export default function AdminSubCategories() {
             style={{
               background: '#f8fafc',
               border: '1.5px dashed #cbd5e1',
-              borderRadius: '8px',
-              padding: '1rem',
+              borderRadius: '12px',
+              padding: '1.15rem',
               marginBottom: '1.5rem',
             }}
           >
@@ -1593,14 +2239,14 @@ export default function AdminSubCategories() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                marginBottom: '0.75rem',
+                marginBottom: '0.9rem',
               }}
             >
               <span style={{ fontSize: '1.1rem' }}>👁️</span>
-              <strong style={{ fontSize: '0.88rem', color: '#334155' }}>
-                Live Add Product Form Preview
+              <strong style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: 800 }}>
+                Live Product Form Preview
               </strong>
-              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+              <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
                 (Simulates how these attributes render in Add Product form)
               </span>
             </div>
@@ -1608,7 +2254,7 @@ export default function AdminSubCategories() {
             {specsList.length === 0 ? (
               <p
                 style={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.82rem',
                   color: '#94a3b8',
                   margin: 0,
                   fontStyle: 'italic',
@@ -1620,7 +2266,7 @@ export default function AdminSubCategories() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                   gap: '1rem',
                 }}
               >
@@ -1629,17 +2275,17 @@ export default function AdminSubCategories() {
                     key={idx}
                     style={{
                       background: '#ffffff',
-                      padding: '0.75rem',
-                      borderRadius: '6px',
+                      padding: '0.85rem',
+                      borderRadius: '8px',
                       border: '1px solid #e2e8f0',
                     }}
                   >
                     <label
                       style={{
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
                         display: 'block',
-                        marginBottom: '0.35rem',
+                        marginBottom: '0.4rem',
                         color: '#1e293b',
                       }}
                     >
@@ -1649,8 +2295,7 @@ export default function AdminSubCategories() {
 
                     {spec.type === 'select' && (
                       <select
-                        className="form-input"
-                        style={{ fontSize: '0.82rem', padding: '0.4rem' }}
+                        style={{ width: '100%', fontSize: '0.84rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                         value={previewValues[spec.name || spec.key] || ''}
                         onChange={(e) =>
                           setPreviewValues({
@@ -1669,7 +2314,7 @@ export default function AdminSubCategories() {
                     )}
 
                     {spec.type === 'multi_select' && (
-                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                         {spec.values?.map((v, i) => {
                           const isChecked = (
                             previewValues[spec.name || spec.key] || []
@@ -1680,15 +2325,15 @@ export default function AdminSubCategories() {
                               type="button"
                               onClick={() => togglePreviewMulti(spec.name || spec.key, v)}
                               style={{
-                                fontSize: '0.75rem',
-                                padding: '0.2rem 0.5rem',
-                                borderRadius: '4px',
+                                fontSize: '0.76rem',
+                                padding: '0.25rem 0.6rem',
+                                borderRadius: '6px',
                                 border: '1px solid',
                                 borderColor: isChecked ? '#7c3aed' : '#cbd5e1',
                                 background: isChecked ? '#ede8f8' : '#f8fafc',
                                 color: isChecked ? '#5b21b6' : '#475569',
                                 cursor: 'pointer',
-                                fontWeight: isChecked ? 700 : 400,
+                                fontWeight: isChecked ? 700 : 500,
                               }}
                             >
                               {isChecked ? `✓ ${v}` : v}
@@ -1702,8 +2347,7 @@ export default function AdminSubCategories() {
                       <input
                         type="text"
                         placeholder={`Enter ${spec.name || spec.key}...`}
-                        className="form-input"
-                        style={{ fontSize: '0.82rem', padding: '0.4rem' }}
+                        style={{ width: '100%', fontSize: '0.84rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
                         value={previewValues[spec.name || spec.key] || ''}
                         onChange={(e) =>
                           setPreviewValues({
@@ -1718,8 +2362,7 @@ export default function AdminSubCategories() {
                       <input
                         type="number"
                         placeholder="e.g. 50"
-                        className="form-input"
-                        style={{ fontSize: '0.82rem', padding: '0.4rem' }}
+                        style={{ width: '100%', fontSize: '0.84rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
                         value={previewValues[spec.name || spec.key] || ''}
                         onChange={(e) =>
                           setPreviewValues({
@@ -1731,7 +2374,7 @@ export default function AdminSubCategories() {
                     )}
 
                     {spec.type === 'boolean' && (
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', gap: '0.45rem' }}>
                         <button
                           type="button"
                           onClick={() =>
@@ -1742,9 +2385,9 @@ export default function AdminSubCategories() {
                           }
                           style={{
                             flex: 1,
-                            fontSize: '0.75rem',
-                            padding: '0.3rem',
-                            borderRadius: '4px',
+                            fontSize: '0.78rem',
+                            padding: '0.35rem',
+                            borderRadius: '6px',
                             border: '1px solid',
                             borderColor:
                               previewValues[spec.name || spec.key] === 'Yes'
@@ -1759,7 +2402,7 @@ export default function AdminSubCategories() {
                                 ? '#166534'
                                 : '#475569',
                             cursor: 'pointer',
-                            fontWeight: 600,
+                            fontWeight: 700,
                           }}
                         >
                           Yes
@@ -1774,9 +2417,9 @@ export default function AdminSubCategories() {
                           }
                           style={{
                             flex: 1,
-                            fontSize: '0.75rem',
-                            padding: '0.3rem',
-                            borderRadius: '4px',
+                            fontSize: '0.78rem',
+                            padding: '0.35rem',
+                            borderRadius: '6px',
                             border: '1px solid',
                             borderColor:
                               previewValues[spec.name || spec.key] === 'No'
@@ -1791,7 +2434,7 @@ export default function AdminSubCategories() {
                                 ? '#991b1b'
                                 : '#475569',
                             cursor: 'pointer',
-                            fontWeight: 600,
+                            fontWeight: 700,
                           }}
                         >
                           No
@@ -1808,210 +2451,359 @@ export default function AdminSubCategories() {
             style={{
               display: 'flex',
               justifyContent: 'flex-end',
-              gap: '0.75rem',
+              gap: '0.85rem',
               borderTop: '1px solid #e2e8f0',
-              paddingTop: '1rem',
+              paddingTop: '1.25rem',
             }}
           >
             <button
               type="button"
               onClick={() => setIsSpecsModalOpen(false)}
-              className="btn btn-secondary"
+              className="subcat-action-btn"
+              style={{
+                padding: '0.65rem 1.35rem',
+                borderRadius: '10px',
+                border: '1.5px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#475569',
+                fontSize: '0.86rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
             >
               Cancel
             </button>
-            <Button
+            <button
               type="button"
-              variant="primary"
-              loading={specsLoading}
+              disabled={specsLoading}
               onClick={handleSaveSpecs}
+              className="subcat-action-btn"
+              style={{
+                padding: '0.65rem 1.6rem',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                color: '#ffffff',
+                fontSize: '0.86rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+              }}
             >
-              Save Department Specs
-            </Button>
+              {specsLoading ? 'Saving...' : 'Save Department Specs'}
+            </button>
           </div>
         </div>
       </Modal>
 
-      {/* ─── 3. View Sub-Category Details Modal ────────────────────────────── */}
+      {/* ─── 3. View Sub-Category Details Modal (Ultra-Luxurious Showcase) ── */}
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title={viewingItem ? `Sub-Category: ${viewingItem.name}` : 'Details'}
+        title="Sub-Category Details"
+        maxWidth={620}
       >
-        {viewingItem && (
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                gap: '1.25rem',
-                alignItems: 'center',
-                marginBottom: '1.5rem',
-                background: '#f8fafc',
-                padding: '1rem',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <img
-                src={
-                  viewingItem.image ||
-                  'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400'
-                }
-                alt={viewingItem.name}
+        {viewingItem && (() => {
+          const parent = categories.find((c) => c._id === viewingItem.categoryId);
+          const parentSlug = parent?.slug || 'womens-fashion';
+          const fullPath = `/${parentSlug}/${viewingItem.slug}`;
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem', padding: '0.2rem 0' }}>
+              {/* Showcase Hero Banner Card */}
+              <div
                 style={{
-                  width: '72px',
-                  height: '72px',
-                  borderRadius: '12px',
-                  objectFit: 'cover',
-                  border: '1px solid #cbd5e1',
+                  display: 'flex',
+                  gap: '1.4rem',
+                  alignItems: 'center',
+                  background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+                  padding: '1.35rem',
+                  borderRadius: '16px',
+                  border: '1.5px solid #e9d5ff',
+                  boxShadow: '0 4px 16px rgba(124, 58, 237, 0.06)',
                 }}
-              />
-              <div>
-                <h3
+              >
+                <div
                   style={{
-                    margin: '0 0 0.25rem',
-                    fontSize: '1.2rem',
-                    fontWeight: 800,
-                    color: '#1e1b4b',
+                    width: '84px',
+                    height: '84px',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: '2px solid #ffffff',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                    background: '#ffffff',
                   }}
                 >
-                  {viewingItem.name}
-                </h3>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <span
+                  <img
+                    src={
+                      viewingItem.image ||
+                      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400'
+                    }
+                    alt={viewingItem.name}
                     style={{
-                      fontSize: '0.78rem',
-                      padding: '0.2rem 0.55rem',
-                      borderRadius: '6px',
-                      background: '#ede8f8',
-                      color: '#5b21b6',
-                      fontWeight: 700,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '999px',
+                        background: '#ffffff',
+                        color: '#6d28d9',
+                        border: '1px solid #ddd6fe',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                      }}
+                    >
+                      {parent?.icon || '🏷️'} {parent?.name || viewingItem.categoryName}
+                    </span>
+
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '999px',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        background: viewingItem.status === 'active' ? '#dcfce7' : '#fee2e2',
+                        color: viewingItem.status === 'active' ? '#15803d' : '#b91c1c',
+                        border: `1px solid ${viewingItem.status === 'active' ? '#bbf7d0' : '#fecaca'}`,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: viewingItem.status === 'active' ? '#16a34a' : '#ef4444',
+                        }}
+                      />
+                      {viewingItem.status === 'active' ? 'Active Storefront' : 'Hidden Draft'}
+                    </span>
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: '0 0 0.4rem',
+                      fontSize: '1.35rem',
+                      fontWeight: 800,
+                      color: '#0f172a',
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.2,
                     }}
                   >
-                    Department: {viewingItem.categoryName}
-                  </span>
-                  <span
-                    className={`adm-status-pill ${
-                      viewingItem.status === 'active'
-                        ? 'adm-status-delivered'
-                        : 'adm-status-cancelled'
-                    }`}
-                  >
-                    {viewingItem.status === 'active' ? 'Active' : 'Inactive'}
-                  </span>
+                    {viewingItem.name}
+                  </h3>
+
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <code
+                      style={{
+                        fontSize: '0.78rem',
+                        fontFamily: 'monospace',
+                        fontWeight: 600,
+                        color: '#5b21b6',
+                        background: 'rgba(255, 255, 255, 0.75)',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e9d5ff',
+                      }}
+                    >
+                      {fullPath}
+                    </code>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '0.75rem',
-                marginBottom: '1.25rem',
-              }}
-            >
+              {/* 4-Item Parameter Grid (Spacious, modern SaaS cards) */}
               <div
                 style={{
-                  background: '#f8fafc',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '1rem',
                 }}
               >
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
-                  SLUG PATH
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e1b4b', marginTop: '0.2rem' }}>
-                  /{viewingItem.slug}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background: '#f8fafc',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
-                  ITEMS CATALOGED
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e1b4b', marginTop: '0.2rem' }}>
-                  {viewingItem.itemCount || 0} Products
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background: '#f8fafc',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
-                  DISPLAY ORDER
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e1b4b', marginTop: '0.2rem' }}>
-                  #{viewingItem.displayOrder || 1}
-                </div>
-              </div>
-            </div>
-
-            {viewingItem.description && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <strong
+                {/* 1. Parent Department */}
+                <div
                   style={{
-                    fontSize: '0.82rem',
-                    color: '#475569',
-                    display: 'block',
-                    marginBottom: '0.35rem',
+                    background: '#ffffff',
+                    padding: '1rem 1.15rem',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e2e8f0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
                   }}
                 >
-                  Description:
-                </strong>
-                <p
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                    PARENT DEPARTMENT
+                  </div>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a' }}>
+                    {parent?.icon} {parent?.name || viewingItem.categoryName}
+                  </div>
+                </div>
+
+                {/* 2. Items Cataloged */}
+                <div
                   style={{
-                    margin: 0,
-                    fontSize: '0.88rem',
-                    color: '#1e1b4b',
-                    lineHeight: 1.5,
+                    background: '#ffffff',
+                    padding: '1rem 1.15rem',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e2e8f0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                    PRODUCTS CATALOGED
+                  </div>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Package size={16} color="#7c3aed" />
+                    <span>{viewingItem.itemCount || 0} Products</span>
+                  </div>
+                </div>
+
+                {/* 3. Display Sequence */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1rem 1.15rem',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e2e8f0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                    DISPLAY SEQUENCE
+                  </div>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a' }}>
+                    Priority Position #{viewingItem.displayOrder || 1}
+                  </div>
+                </div>
+
+                {/* 4. Direct URL Route */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1rem 1.15rem',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e2e8f0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                    STOREFRONT ROUTE
+                  </div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#2563eb', fontFamily: 'monospace' }}>
+                    {fullPath}
+                  </div>
+                </div>
+              </div>
+
+              {/* Description Section */}
+              {viewingItem.description && (
+                <div
+                  style={{
                     background: '#f8fafc',
-                    padding: '0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
+                    padding: '1.15rem',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e2e8f0',
                   }}
                 >
-                  {viewingItem.description}
-                </p>
-              </div>
-            )}
+                  <div
+                    style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: '#64748b',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      marginBottom: '0.45rem',
+                    }}
+                  >
+                    Sub-Category Description
+                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.9rem',
+                      color: '#1e293b',
+                      lineHeight: 1.6,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {viewingItem.description}
+                  </p>
+                </div>
+              )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-              <button
-                type="button"
-                onClick={() => setIsViewModalOpen(false)}
-                className="btn btn-secondary"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  handleOpenEdit(viewingItem);
+              {/* Action Buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.85rem',
+                  borderTop: '1px solid #f1f5f9',
+                  paddingTop: '1.25rem',
+                  marginTop: '0.25rem',
                 }}
-                className="btn btn-primary"
               >
-                <Edit2 size={14} style={{ marginRight: '0.35rem' }} />
-                Edit Sub-Category
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setIsViewModalOpen(false)}
+                  className="subcat-action-btn"
+                  style={{
+                    padding: '0.65rem 1.35rem',
+                    borderRadius: '11px',
+                    border: '1.5px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#475569',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    handleOpenEdit(viewingItem);
+                  }}
+                  className="subcat-action-btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.65rem 1.6rem',
+                    borderRadius: '11px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.3)',
+                  }}
+                >
+                  <Edit2 size={14} />
+                  <span>Edit Sub-Category</span>
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </Modal>
     </AdminLayout>
   );
 }
+

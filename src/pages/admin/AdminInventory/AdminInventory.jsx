@@ -528,14 +528,38 @@ export default function AdminInventory() {
 
   return (
     <AdminLayout title="Inventory & Stock Management">
-      {/* ─── 4 Clickable Top KPI Stat Cards ───────────────────────────────── */}
+      <style>{`
+        .inventory-kpi-card {
+          background: #ffffff;
+          border-radius: 16px;
+          border: 1.5px solid #e2e8f0;
+          padding: 1.25rem 1.4rem;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          cursor: pointer;
+          user-select: none;
+          outline: none;
+        }
+        .inventory-kpi-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08);
+          border-color: #cbd5e1;
+        }
+      `}</style>
+
+      {/* ─── 4 Clickable Top KPI Stat Cards (Ultra-Premium SaaS Cards) ──────── */}
       <div
         className="metrics-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '1rem',
-          marginBottom: '1.5rem',
+          marginBottom: '1.4rem',
         }}
       >
         {/* Card 1: Total Product Units */}
@@ -549,70 +573,48 @@ export default function AdminInventory() {
               setSelectedStatus('all');
             }
           }}
-          className="metric-card"
-          title="Click to clear status filter and view all products"
+          className="inventory-kpi-card"
+          title="Click to view all inventory products"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            padding: '1.1rem 1.25rem',
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: selectedStatus === 'all' ? '2px solid #7c3aed' : '1.5px solid #ede8f8',
+            borderLeft: '4px solid #7c3aed',
+            borderColor: selectedStatus === 'all' ? '#7c3aed' : '#e2e8f0',
+            borderLeftColor: '#7c3aed',
             boxShadow:
               selectedStatus === 'all'
-                ? '0 4px 18px rgba(124, 58, 237, 0.16)'
-                : '0 2px 12px rgba(124, 58, 237, 0.04)',
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-            outline: 'none',
+                ? '0 6px 20px rgba(124, 58, 237, 0.16)'
+                : '0 2px 10px rgba(0, 0, 0, 0.02)',
           }}
         >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                TOTAL PRODUCT UNITS
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.totalStockUnits.toLocaleString()}
+              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#7c3aed', marginLeft: '0.35rem' }}>Units</span>
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
+              ★ Live Master Inventory
+            </div>
+          </div>
           <div
-            className="metric-icon-wrap"
             style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+              color: '#7c3aed',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              border: '1px solid #ddd6fe',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
               flexShrink: 0,
-              background: '#ede8f8',
-              color: '#7c3aed',
             }}
           >
             <Boxes size={22} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              className="metric-val"
-              style={{
-                fontSize: '1.55rem',
-                fontWeight: 800,
-                color: '#1e1b4b',
-                lineHeight: 1.15,
-                marginBottom: '2px',
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.35rem',
-              }}
-            >
-              <span>{kpis.totalStockUnits.toLocaleString()}</span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#7c3aed' }}>Units</span>
-            </div>
-            <div
-              className="metric-label"
-              style={{
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              Total Product Units
-            </div>
           </div>
         </div>
 
@@ -627,66 +629,48 @@ export default function AdminInventory() {
               setSelectedStatus((prev) => (prev === 'in_stock' ? 'all' : 'in_stock'));
             }
           }}
-          className="metric-card"
+          className="inventory-kpi-card"
           title="Click to filter by In Stock items"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            padding: '1.1rem 1.25rem',
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: selectedStatus === 'in_stock' ? '2px solid #7c3aed' : '1.5px solid #ede8f8',
+            borderLeft: '4px solid #16a34a',
+            borderColor: selectedStatus === 'in_stock' ? '#16a34a' : '#e2e8f0',
+            borderLeftColor: '#16a34a',
             boxShadow:
               selectedStatus === 'in_stock'
-                ? '0 4px 18px rgba(124, 58, 237, 0.16)'
-                : '0 2px 12px rgba(124, 58, 237, 0.04)',
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-            outline: 'none',
+                ? '0 6px 20px rgba(22, 163, 74, 0.16)'
+                : '0 2px 10px rgba(0, 0, 0, 0.02)',
           }}
         >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                IN STOCK ITEMS
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.inStock}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
+              Ready for Dispatch
+            </div>
+          </div>
           <div
-            className="metric-icon-wrap"
             style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+              color: '#16a34a',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              border: '1px solid #bbf7d0',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
               flexShrink: 0,
-              background: '#dcfce7',
-              color: '#16a34a',
             }}
           >
             <CheckCircle2 size={22} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              className="metric-val"
-              style={{
-                fontSize: '1.55rem',
-                fontWeight: 800,
-                color: '#1e1b4b',
-                lineHeight: 1.15,
-                marginBottom: '2px',
-              }}
-            >
-              {kpis.inStock}
-            </div>
-            <div
-              className="metric-label"
-              style={{
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              In Stock Items
-            </div>
           </div>
         </div>
 
@@ -701,66 +685,47 @@ export default function AdminInventory() {
               setSelectedStatus((prev) => (prev === 'low_stock' ? 'all' : 'low_stock'));
             }
           }}
-          className="metric-card"
+          className="inventory-kpi-card"
           title={`Click to filter by Low Stock items (≤ ${LOW_STOCK_THRESHOLD})`}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            padding: '1.1rem 1.25rem',
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: selectedStatus === 'low_stock' ? '2px solid #7c3aed' : '1.5px solid #ede8f8',
+            borderLeft: '4px solid #d97706',
+            borderColor: selectedStatus === 'low_stock' ? '#d97706' : '#e2e8f0',
+            borderLeftColor: '#d97706',
             boxShadow:
               selectedStatus === 'low_stock'
-                ? '0 4px 18px rgba(124, 58, 237, 0.16)'
-                : '0 2px 12px rgba(124, 58, 237, 0.04)',
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-            outline: 'none',
+                ? '0 6px 20px rgba(217, 119, 6, 0.16)'
+                : '0 2px 10px rgba(0, 0, 0, 0.02)',
           }}
         >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                LOW STOCK ALERTS
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.lowStock}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: '0.35rem' }}>
+              ⚠ Needs Restock (≤ {LOW_STOCK_THRESHOLD} units)
+            </div>
+          </div>
           <div
-            className="metric-icon-wrap"
             style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              color: '#d97706',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              border: '1px solid #fde68a',
+              boxShadow: '0 2px 8px rgba(217, 119, 6, 0.12)',
               flexShrink: 0,
-              background: '#fef3c7',
-              color: '#d97706',
             }}
           >
             <AlertTriangle size={22} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              className="metric-val"
-              style={{
-                fontSize: '1.55rem',
-                fontWeight: 800,
-                color: '#1e1b4b',
-                lineHeight: 1.15,
-                marginBottom: '2px',
-              }}
-            >
-              {kpis.lowStock}
-            </div>
-            <div
-              className="metric-label"
-              style={{
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              Low Stock Alerts (≤ {LOW_STOCK_THRESHOLD})
-            </div>
           </div>
         </div>
 
@@ -775,66 +740,47 @@ export default function AdminInventory() {
               setSelectedStatus((prev) => (prev === 'out_of_stock' ? 'all' : 'out_of_stock'));
             }
           }}
-          className="metric-card"
+          className="inventory-kpi-card"
           title="Click to filter by Out of Stock items"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            padding: '1.1rem 1.25rem',
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: selectedStatus === 'out_of_stock' ? '2px solid #7c3aed' : '1.5px solid #ede8f8',
+            borderLeft: '4px solid #dc2626',
+            borderColor: selectedStatus === 'out_of_stock' ? '#dc2626' : '#e2e8f0',
+            borderLeftColor: '#dc2626',
             boxShadow:
               selectedStatus === 'out_of_stock'
-                ? '0 4px 18px rgba(124, 58, 237, 0.16)'
-                : '0 2px 12px rgba(124, 58, 237, 0.04)',
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-            outline: 'none',
+                ? '0 6px 20px rgba(220, 38, 38, 0.16)'
+                : '0 2px 10px rgba(0, 0, 0, 0.02)',
           }}
         >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                OUT OF STOCK ITEMS
+              </span>
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+              {kpis.outOfStock}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 600, marginTop: '0.35rem' }}>
+              ✕ Unavailable (0 Stock)
+            </div>
+          </div>
           <div
-            className="metric-icon-wrap"
             style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%)',
+              color: '#dc2626',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              border: '1px solid #fecaca',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.12)',
               flexShrink: 0,
-              background: '#fee2e2',
-              color: '#dc2626',
             }}
           >
             <XCircle size={22} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              className="metric-val"
-              style={{
-                fontSize: '1.55rem',
-                fontWeight: 800,
-                color: '#1e1b4b',
-                lineHeight: 1.15,
-                marginBottom: '2px',
-              }}
-            >
-              {kpis.outOfStock}
-            </div>
-            <div
-              className="metric-label"
-              style={{
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              Out of Stock Items
-            </div>
           </div>
         </div>
       </div>
@@ -1407,8 +1353,8 @@ export default function AdminInventory() {
                     Number(item.currentStock) > 0 &&
                     Number(item.currentStock) <= (Number(item.lowStockThreshold) || LOW_STOCK_THRESHOLD);
 
-                  // Row background: Selected (light purple) > Out of Stock (very light red) > Default (white)
-                  const rowBg = isChecked ? '#faf5ff' : isOutOfStock ? '#fef2f2' : '#ffffff';
+                  // Row background: Selected (light purple) > Out of Stock (very light red) > Alternating (white / soft lavender)
+                  const rowBg = isChecked ? '#faf5ff' : isOutOfStock ? '#fef2f2' : index % 2 === 0 ? '#ffffff' : '#faf7ff';
 
                   return (
                     <tr

@@ -9,6 +9,9 @@ import {
   Download,
   ArrowRight,
   Sparkles,
+  TrendingUp,
+  ArrowUpRight,
+  MoreVertical,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import { adminService } from '../../../services/admin.service';
@@ -23,18 +26,21 @@ import styles from './AdminDashboard.module.css';
 
 const ADMIN = '/pickyadmin-softnova2026';
 
-// ─── 1. Left Graph: Revenue Overview Glowing Spline Wave Chart ───────────────
+// ─── 1. Left Graph: Total Revenue Premium Spline Chart ───────────────────────
 function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
+  const svgRef = React.useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
   const maxValue = 40000;
-  const gridLines = [40000, 30000, 20000, 10000, 5000, 0];
+  // Grid line Y values: 36k, 30k, 24k, 18k, 12k, 6k, 0
+  const gridLines = [36000, 30000, 24000, 18000, 12000, 6000, 0];
   const chartWidth = 540;
   const chartHeight = 220;
-  const paddingLeft = 60;
-  const paddingRight = 35;
-  const chartTop = 25;
-  const chartBottom = 175;
+  const paddingLeft = 45;
+  const paddingRight = 20;
+  const chartTop = 20;
+  const chartBottom = 180;
 
-  // Calculate points coordinates
+  // Calculate point coordinates (Only current period)
   const points = useMemo(() => {
     if (!data.length) return [];
     const usableWidth = chartWidth - paddingLeft - paddingRight;
@@ -43,39 +49,57 @@ function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
     return data.map((item, idx) => {
       const x = paddingLeft + idx * stepX;
       const y = chartBottom - (item.revenue / maxValue) * (chartBottom - chartTop);
-      const yPrev = chartBottom - ((item.revenue * 0.78) / maxValue) * (chartBottom - chartTop);
-      return { ...item, idx, x, y, yPrev };
+      return { ...item, idx, x, y };
     });
   }, [data, maxValue]);
 
-  // Generate smooth cubic bezier SVG path string
-  const { pathLine, pathArea, pathPrev } = useMemo(() => {
-    if (points.length < 2) return { pathLine: '', pathArea: '', pathPrev: '' };
+  // Generate smooth cubic bezier SVG path strings for Line and Area Gradient Fill
+  const { pathLine, pathArea } = useMemo(() => {
+    if (points.length < 2) return { pathLine: '', pathArea: '' };
 
-    const getBezierPath = (pts, keyY = 'y') => {
-      let d = `M ${pts[0].x},${pts[0][keyY]}`;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const p0 = pts[Math.max(0, i - 1)];
-        const p1 = pts[i];
-        const p2 = pts[i + 1];
-        const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    let d = `M ${points[0].x},${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
 
-        const cp1x = p1.x + (p2.x - p0.x) / 5;
-        const cp1y = p1[keyY] + (p2[keyY] - p0[keyY]) / 5;
-        const cp2x = p2.x - (p3.x - p1.x) / 5;
-        const cp2y = p2[keyY] - (p3[keyY] - p1[keyY]) / 5;
+      const cp1x = p1.x + (p2.x - p0.x) / 4.5;
+      const cp1y = p1.y + (p2.y - p0.y) / 4.5;
+      const cp2x = p2.x - (p3.x - p1.x) / 4.5;
+      const cp2y = p2.y - (p3.y - p1.y) / 4.5;
 
-        d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2[keyY]}`;
-      }
-      return d;
-    };
+      d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+    }
 
-    const lineD = getBezierPath(points, 'y');
-    const prevD = getBezierPath(points, 'yPrev');
-    const areaD = `${lineD} L ${points[points.length - 1].x},${chartBottom} L ${points[0].x},${chartBottom} Z`;
+    const areaD = `${d} L ${points[points.length - 1].x},${chartBottom} L ${points[0].x},${chartBottom} Z`;
 
-    return { pathLine: lineD, pathArea: areaD, pathPrev: prevD };
+    return { pathLine: d, pathArea: areaD };
   }, [points, chartBottom]);
+
+  // Dynamic real-time mouse move handler (smoothly tracks cursor when hovered)
+  const handleMouseMove = (e) => {
+    setIsHovered(true);
+    if (!svgRef.current || !points.length) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const svgX = (mouseX / rect.width) * chartWidth;
+
+    let closestIdx = 0;
+    let minDistance = Math.abs(svgX - points[0].x);
+
+    for (let i = 1; i < points.length; i++) {
+      const dist = Math.abs(svgX - points[i].x);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIdx = i;
+      }
+    }
+
+    if (closestIdx !== activeIndex) {
+      onSelectIndex(closestIdx);
+    }
+  };
 
   // Tooltip position
   const activePt = points[activeIndex] || points[0];
@@ -84,172 +108,163 @@ function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
   return (
     <div className={styles.chartContainer}>
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-        style={{ width: '100%', height: '100%', overflow: 'visible' }}
+        style={{ width: '100%', height: '100%', overflow: 'visible', cursor: 'crosshair' }}
         preserveAspectRatio="none"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onMouseMove={handleMouseMove}
       >
         <defs>
-          {/* Picky Purple Wave Gradient Area */}
-          <linearGradient id="purpleRevGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4" />
-            <stop offset="60%" stopColor="#8b5cf6" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+          {/* Multi-stop Gradient Area Shade Fill */}
+          <linearGradient id="purpleGradientShade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#5b21b6" stopOpacity="0.18" />
+            <stop offset="60%" stopColor="#7c3aed" stopOpacity="0.04" />
+            <stop offset="100%" stopColor="#5b21b6" stopOpacity="0.0" />
           </linearGradient>
 
-          {/* Stroke Glow Filter */}
-          <filter id="glowRevenue" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="5" stdDeviation="5" floodColor="#7c3aed" floodOpacity="0.4" />
+          {/* Wave Curve Shadow Filter */}
+          <filter id="cleanLineShadow" x="-10%" y="-10%" width="120%" height="130%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#5b21b6" floodOpacity="0.2" />
           </filter>
         </defs>
 
-        {/* Horizontal Dashed Grid Lines & Y-Axis Labels */}
+        {/* 1. Horizontal Dashed Grid lines */}
         {gridLines.map((val) => {
           const y = chartBottom - (val / maxValue) * (chartBottom - chartTop);
           return (
             <g key={val}>
               <line
-                x1={paddingLeft - 5}
+                x1={paddingLeft}
                 y1={y}
-                x2={chartWidth - paddingRight + 15}
+                x2={chartWidth - paddingRight}
                 y2={y}
-                stroke="#f1f5f9"
-                strokeWidth="1.5"
-                strokeDasharray="4 4"
+                stroke="#e2e8f0"
+                strokeWidth="1"
+                strokeDasharray="3 3"
               />
               <text
-                x={paddingLeft - 15}
+                x={paddingLeft - 10}
                 y={y + 4}
                 fontSize="11"
-                fontWeight="600"
-                fill="#94a3b8"
+                fontWeight="500"
+                fill="#64748b"
                 textAnchor="end"
+                className={styles.graphAxisFont}
               >
-                {val >= 1000 ? `₹${val / 1000}k` : `₹${val}`}
+                {val === 0 ? '0' : `${val / 1000}k`}
               </text>
             </g>
           );
         })}
 
-        {/* Previous Period Wave (Dashed reference line) */}
-        {pathPrev && (
+        {/* 2. Vertical Grid Ticks & X-Axis Day Labels */}
+        {points.map((pt, idx) => (
+          <g key={`vgrid-${idx}`}>
+            <line
+              x1={pt.x}
+              y1={chartBottom}
+              x2={pt.x}
+              y2={chartBottom + 5}
+              stroke="#cbd5e1"
+              strokeWidth="1.2"
+            />
+            <text
+              x={pt.x}
+              y={204}
+              fontSize="12"
+              fontWeight={isHovered && idx === activeIndex ? '800' : '500'}
+              fill={isHovered && idx === activeIndex ? '#5b21b6' : '#64748b'}
+              textAnchor="middle"
+              className={styles.graphAxisFont}
+            >
+              {pt.day}
+            </text>
+          </g>
+        ))}
+
+        {/* 3. Gradient Area Shade Fill beneath Primary Line */}
+        {pathArea && (
           <path
-            d={pathPrev}
-            fill="none"
-            stroke="#cbd5e1"
-            strokeWidth="2"
-            strokeDasharray="4 4"
-            strokeLinecap="round"
+            d={pathArea}
+            fill="url(#purpleGradientShade)"
+            style={{ transition: 'd 0.3s ease' }}
           />
         )}
 
-        {/* Area Gradient Fill */}
-        {pathArea && <path d={pathArea} fill="url(#purpleRevGrad)" />}
-
-        {/* Primary Glowing Spline Wave Curve */}
+        {/* 4. Primary Wave Spline Curve Line with Reduced Stroke (2.4px) */}
         {pathLine && (
           <path
             d={pathLine}
             fill="none"
-            stroke="#7c3aed"
-            strokeWidth="3.8"
+            stroke="#5b21b6"
+            strokeWidth="2.4"
             strokeLinecap="round"
-            filter="url(#glowRevenue)"
+            filter="url(#cleanLineShadow)"
           />
         )}
 
-        {/* Active Day Vertical Scanning Beam Line */}
-        {activePt && (
+        {/* 5. Active Scanning Beam Line (Only shown on hover) */}
+        {isHovered && activePt && (
           <line
             x1={activePt.x}
             y1={chartTop}
             x2={activePt.x}
             y2={chartBottom}
-            stroke="#7c3aed"
-            strokeWidth="2"
+            stroke="#5b21b6"
+            strokeWidth="1.5"
             strokeDasharray="3 3"
-            style={{ opacity: 0.7 }}
+            style={{ opacity: 0.6, transition: 'x1 0.18s ease-out, x2 0.18s ease-out' }}
           />
         )}
 
-        {/* Data Points on Curve & Interactive Nodes */}
+        {/* Data Point Dots on Curve */}
         {points.map((pt, idx) => {
-          const isSelected = idx === activeIndex;
+          const isSelected = isHovered && idx === activeIndex;
           return (
-            <g
-              key={idx}
-              onClick={() => onSelectIndex(idx)}
-              style={{ cursor: 'pointer' }}
-            >
-              {/* Invisible Hitbox for Easy Clicking */}
-              <circle cx={pt.x} cy={pt.y} r="18" fill="transparent" />
+            <g key={idx} style={{ cursor: 'pointer' }}>
+              <circle cx={pt.x} cy={pt.y} r="14" fill="transparent" />
 
-              {/* Pulsing Concentric Outer Ring for Active Node */}
-              {isSelected && (
-                <circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r="9"
-                  fill="none"
-                  stroke="#7c3aed"
-                  strokeWidth="2"
-                  opacity="0.4"
-                />
-              )}
-
-              {/* Vertex Dot */}
               <circle
                 cx={pt.x}
                 cy={pt.y}
-                r={isSelected ? 6 : 4}
-                fill={isSelected ? '#7c3aed' : '#ffffff'}
-                stroke="#7c3aed"
-                strokeWidth={isSelected ? 3 : 2.5}
+                r={isSelected ? 5.5 : 3.5}
+                fill={isSelected ? '#ffffff' : '#5b21b6'}
+                stroke="#5b21b6"
+                strokeWidth={isSelected ? 2.5 : 1.5}
                 style={{
-                  transition: 'all 0.25s ease',
-                  filter: isSelected
-                    ? 'drop-shadow(0 0 8px rgba(124, 58, 237, 0.8))'
-                    : 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))',
+                  filter: isSelected ? 'drop-shadow(0 2px 6px rgba(91, 33, 182, 0.4))' : 'none',
+                  transition: 'all 0.18s ease-out',
                 }}
               />
-
-              {/* X-Axis Day Labels */}
-              <text
-                x={pt.x}
-                y={202}
-                fontSize="12"
-                fontWeight={isSelected ? '800' : '600'}
-                fill={isSelected ? '#7c3aed' : '#64748b'}
-                textAnchor="middle"
-              >
-                {pt.day}
-              </text>
             </g>
           );
         })}
       </svg>
 
-      {/* Floating Dynamic Tooltip over selected node */}
-      {data[activeIndex] && (
+      {/* Floating Tooltip (Appears ONLY when hovering over graph line/canvas) */}
+      {isHovered && data[activeIndex] && (
         <div
           className={styles.floatingTooltip}
           style={{ left: `${tooltipLeftPercent}%` }}
         >
           <div className={styles.tooltipTitle}>
             <span>{data[activeIndex].label || 'August 2026'}</span>
-            <Sparkles size={12} color="#7c3aed" />
+            <Sparkles size={12} color="#5b21b6" />
           </div>
           <div className={styles.tooltipRow}>
             <span style={{ display: 'flex', alignItems: 'center' }}>
-              <span className={styles.tooltipDot} style={{ background: '#7c3aed' }} />
+              <span className={styles.tooltipDot} style={{ background: '#5b21b6' }} />
               Revenue
             </span>
-            <strong style={{ color: '#7c3aed', fontWeight: 800 }}>
+            <strong style={{ color: '#5b21b6', fontWeight: 800 }}>
               {data[activeIndex].revenueFormatted || '₹31,000'}
             </strong>
           </div>
           <div className={styles.tooltipRow}>
             <span style={{ display: 'flex', alignItems: 'center' }}>
-              <span className={styles.tooltipDot} style={{ background: '#94a3b8' }} />
+              <span className={styles.tooltipDot} style={{ background: '#64748b' }} />
               Orders
             </span>
             <strong style={{ color: '#0f172a', fontWeight: 800 }}>
@@ -315,13 +330,12 @@ function createRoundedDonutSector(cx, cy, rIn, rOut, a0Deg, a1Deg, cornerRadius 
 function OrdersDonutChart({ totalOrders = 2343 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const cx = 135;
-  const cy = 120;
-  const rOut = 100;
-  const rIn = 60;
+  const cy = 115;
+  const rOut = 98;
+  const rIn = 62;
   const rMid = (rOut + rIn) / 2;
 
   // 4 Status Breakdown Categories (Cancelled, Shipped, Delivered, Confirmed)
-  // Ordered so Cancelled (6%) is perfectly centered at the top (-90°)
   const orderBreakdown = [
     {
       id: 'cancelled',
@@ -335,14 +349,14 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
       name: 'Shipped',
       count: 656,
       pct: 28.0,
-      color: '#5c67f5', // Blue / Violet
+      color: '#6366f1', // Indigo Violet
     },
     {
       id: 'delivered',
       name: 'Delivered',
       count: 984,
       pct: 42.0,
-      color: '#00a5f7', // Sky Cyan
+      color: '#0ea5e9', // Sky Cyan
     },
     {
       id: 'confirmed',
@@ -355,7 +369,6 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
 
   // Calculate 100% accurate rounded, spaced annular sectors with radial displacement vectors
   const slices = useMemo(() => {
-    // 6% = 21.6 deg. Centering Cancelled at -90 deg -> start at -90 - 10.8 = -100.8 deg
     let currentAngle = -100.8;
 
     return orderBreakdown.map((item) => {
@@ -371,7 +384,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
       const textX = cx + rMid * Math.cos(radMid);
       const textY = cy + rMid * Math.sin(radMid);
 
-      // Radial pop-out vector for hover animation (outward along bisector)
+      // Radial pop-out vector for hover animation
       const offsetDist = 9;
       const dx = Math.cos(radMid) * offsetDist;
       const dy = Math.sin(radMid) * offsetDist;
@@ -389,7 +402,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
     });
   }, [cx, cy, rIn, rOut, rMid]);
 
-  // Legend items in standard order (Shipped, Delivered, Confirmed, Cancelled)
+  // Legend items order
   const legendOrder = ['shipped', 'delivered', 'confirmed', 'cancelled'];
   const legendItems = legendOrder.map((id) => orderBreakdown.find((item) => item.id === id)).filter(Boolean);
 
@@ -399,7 +412,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
     <div className={styles.donutWrapper}>
       <div className={styles.donutSvgContainer}>
         <svg
-          viewBox="0 0 270 240"
+          viewBox="0 0 270 230"
           style={{ width: '100%', height: '100%', overflow: 'visible' }}
         >
           {/* Rounded, Spaced Donut Slices with Radial Hover Pop-out */}
@@ -431,7 +444,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
                     transition: 'filter 0.25s ease',
                   }}
                 />
-                {/* Percentage label directly inside the slice */}
+                {/* Percentage label inside the slice */}
                 <text
                   x={slice.textX}
                   y={slice.textY}
@@ -469,7 +482,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
         </div>
       </div>
 
-      {/* Horizontal Legend matching Reference Image 1 */}
+      {/* Horizontal Interactive Legend Badges */}
       <div className={styles.legendInlineRow}>
         {legendItems.map((item) => {
           const sliceIndex = orderBreakdown.findIndex((b) => b.id === item.id);
@@ -478,28 +491,19 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
           return (
             <div
               key={item.id}
-              className={styles.legendInlineItem}
+              className={`${styles.legendInlineItem} ${isHovered ? styles.legendInlineItemActive : ''}`}
               onMouseEnter={() => setHoveredIndex(sliceIndex)}
               onMouseLeave={() => setHoveredIndex(null)}
-              style={{
-                cursor: 'pointer',
-                opacity: hoveredIndex !== null && !isHovered ? 0.45 : 1,
-                transform: isHovered ? 'translateY(-2px)' : 'none',
-                transition: 'all 0.2s ease',
-              }}
             >
               <span
                 className={styles.legendColorDot}
                 style={{ background: item.color }}
               />
-              <span
-                style={{
-                  fontWeight: isHovered ? 800 : 700,
-                  color: isHovered ? item.color : '#475569',
-                  transition: 'color 0.2s ease',
-                }}
-              >
+              <span className={styles.legendText}>
                 {item.name}
+              </span>
+              <span className={styles.legendPctBadge} style={{ color: item.color }}>
+                {item.pct}%
               </span>
             </div>
           );
@@ -514,7 +518,7 @@ export default function AdminDashboard() {
   const { showToast } = useUiStore();
   const [summary, setSummary] = useState(null);
   const [activeBarIndex, setActiveBarIndex] = useState(3);
-  const [timeframe, setTimeframe] = useState('This Month');
+  const [timeframe, setTimeframe] = useState('Week');
 
   // Fetch live statistics seamlessly falling back to MOCK_SALES_SUMMARY
   useEffect(() => {
@@ -580,14 +584,14 @@ export default function AdminDashboard() {
     return MOCK_TOP_PRODUCTS_REPORT.slice(0, 5);
   }, []);
 
-  // Sparkline SVGs for KPI Cards
+  // Sparkline SVGs for KPI Cards without overflow leakage
   const sparkline1 = (
-    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
-      <path d="M0 35 Q 25 30, 45 18 T 100 8 L 100 40 L 0 40 Z" fill="url(#sparkGrad1)" />
-      <path d="M0 35 Q 25 30, 45 18 T 100 8" fill="none" stroke="#2563eb" strokeWidth="2.5" />
+    <svg viewBox="0 0 120 45" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
+      <path d="M0 38 Q 30 32, 60 20 T 120 8 L 120 45 L 0 45 Z" fill="url(#sparkGrad1)" />
+      <path d="M0 38 Q 30 32, 60 20 T 120 8" fill="none" stroke="#2563eb" strokeWidth="2.5" />
       <defs>
         <linearGradient id="sparkGrad1" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -595,12 +599,12 @@ export default function AdminDashboard() {
   );
 
   const sparkline2 = (
-    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
-      <path d="M0 30 Q 30 35, 60 15 T 100 5 L 100 40 L 0 40 Z" fill="url(#sparkGrad2)" />
-      <path d="M0 30 Q 30 35, 60 15 T 100 5" fill="none" stroke="#10b981" strokeWidth="2.5" />
+    <svg viewBox="0 0 120 45" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
+      <path d="M0 32 Q 35 38, 70 18 T 120 6 L 120 45 L 0 45 Z" fill="url(#sparkGrad2)" />
+      <path d="M0 32 Q 35 38, 70 18 T 120 6" fill="none" stroke="#10b981" strokeWidth="2.5" />
       <defs>
         <linearGradient id="sparkGrad2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -608,12 +612,12 @@ export default function AdminDashboard() {
   );
 
   const sparkline3 = (
-    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
-      <path d="M0 15 Q 35 30, 65 25 T 100 32 L 100 40 L 0 40 Z" fill="url(#sparkGrad3)" />
-      <path d="M0 15 Q 35 30, 65 25 T 100 32" fill="none" stroke="#f97316" strokeWidth="2.5" />
+    <svg viewBox="0 0 120 45" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
+      <path d="M0 18 Q 40 32, 75 22 T 120 30 L 120 45 L 0 45 Z" fill="url(#sparkGrad3)" />
+      <path d="M0 18 Q 40 32, 75 22 T 120 30" fill="none" stroke="#f97316" strokeWidth="2.5" />
       <defs>
         <linearGradient id="sparkGrad3" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f97316" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="#f97316" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -621,12 +625,12 @@ export default function AdminDashboard() {
   );
 
   const sparkline4 = (
-    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
-      <path d="M0 38 Q 30 25, 55 18 T 100 4 L 100 40 L 0 40 Z" fill="url(#sparkGrad4)" />
-      <path d="M0 38 Q 30 25, 55 18 T 100 4" fill="none" stroke="#7c3aed" strokeWidth="2.5" />
+    <svg viewBox="0 0 120 45" preserveAspectRatio="none" className={styles.kpiSparklineBg}>
+      <path d="M0 40 Q 35 28, 65 18 T 120 5 L 120 45 L 0 45 Z" fill="url(#sparkGrad4)" />
+      <path d="M0 40 Q 35 28, 65 18 T 120 5" fill="none" stroke="#7c3aed" strokeWidth="2.5" />
       <defs>
         <linearGradient id="sparkGrad4" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.35" />
+          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.28" />
           <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -636,7 +640,7 @@ export default function AdminDashboard() {
   return (
     <AdminLayout title="Dashboard">
       <div className={styles.dashboardContainer}>
-        {/* ─── 1. Header Overview Row (Matching 2nd Reference Image) ───────── */}
+        {/* ─── 1. Header Overview Row ───────── */}
         <div className={styles.headerRow}>
           <div className={styles.titleArea}>
             <h1 className={styles.pageTitle}>Sales Overview</h1>
@@ -644,7 +648,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className={styles.headerActions}>
-            {/* Segmented Timeframe Control [ Week | This Month | Year ] (Exact Match to 2nd Image) */}
+            {/* Segmented Timeframe Control [ Week | This Month | Year ] */}
             <div className={styles.segmentedControl}>
               {['Week', 'This Month', 'Year'].map((tab) => (
                 <button
@@ -661,7 +665,7 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            {/* Export Button (Exact Match to 2nd Image) */}
+            {/* Export Button */}
             <button
               className={styles.exportBtn}
               onClick={() => showToast('Exporting dashboard sales report (CSV/PDF)...', 'info')}
@@ -673,16 +677,19 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ─── 2. Top 4 Clean & Luxury KPI Cards (Total Revenue, Total Orders, Customers, Total Products) ─── */}
+        {/* ─── 2. Top 4 Ultra-Premium KPI Cards ─── */}
         <div className={styles.kpiGrid}>
           {/* Card 1: Total Revenue */}
           <div className={styles.kpiCard}>
             {sparkline4}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.purple}`}>
-                <DollarSign size={15} />
+                <DollarSign size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Revenue</span>
+              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
+                <TrendingUp size={11} /> +14.2%
+              </span>
             </div>
             <div className={styles.kpiVal}>$8,220.64</div>
           </div>
@@ -692,9 +699,12 @@ export default function AdminDashboard() {
             {sparkline1}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.blue}`}>
-                <ShoppingCart size={15} />
+                <ShoppingCart size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Orders</span>
+              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
+                <TrendingUp size={11} /> +8.5%
+              </span>
             </div>
             <div className={styles.kpiVal}>2,500</div>
           </div>
@@ -704,9 +714,12 @@ export default function AdminDashboard() {
             {sparkline2}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.green}`}>
-                <Users size={15} />
+                <Users size={16} />
               </div>
               <span className={styles.kpiLabel}>Customers</span>
+              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
+                <TrendingUp size={11} /> +12.1%
+              </span>
             </div>
             <div className={styles.kpiVal}>110</div>
           </div>
@@ -716,9 +729,12 @@ export default function AdminDashboard() {
             {sparkline3}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.orange}`}>
-                <Package size={15} />
+                <Package size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Products</span>
+              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
+                <TrendingUp size={11} /> +5.4%
+              </span>
             </div>
             <div className={styles.kpiVal}>72</div>
           </div>
@@ -726,14 +742,62 @@ export default function AdminDashboard() {
 
         {/* ─── 3. Middle Row: Revenue Wave Chart + Orders Donut Status Breakdown ─ */}
         <div className={styles.middleGrid}>
-          {/* Left Column: Revenue Overview Spline Wave Chart */}
+          {/* Left Column: Total Revenue Spline Wave Chart (Matches Image 2 Design Reference) */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Revenue Overview</h2>
-              <button className={styles.cardDropdown}>
-                <span>This Week</span>
-                <ChevronDown size={13} className={styles.pillChevron} />
-              </button>
+              <h2 className={styles.cardTitle}>Total Revenue</h2>
+
+              <div className={styles.graphHeaderActions}>
+                {/* Radio / Pill Selection (Monthly / Weekly matching Image 2) */}
+                <div className={styles.radioPillGroup}>
+                  <button
+                    type="button"
+                    className={`${styles.radioPillBtn} ${timeframe === 'This Month' || timeframe === 'Year' ? styles.radioPillActive : ''}`}
+                    onClick={() => {
+                      setTimeframe('This Month');
+                      showToast('Viewing Monthly data', 'info');
+                    }}
+                  >
+                    <span className={styles.radioDot} />
+                    <span>Monthly</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.radioPillBtn} ${timeframe === 'Week' ? styles.radioPillActive : ''}`}
+                    onClick={() => {
+                      setTimeframe('Week');
+                      showToast('Viewing Weekly data', 'info');
+                    }}
+                  >
+                    <span className={styles.radioDot} />
+                    <span>Weekly</span>
+                  </button>
+                </div>
+
+                {/* More Options Button (⋮ matching Image 2) */}
+                <button
+                  className={styles.moreOptionsBtn}
+                  onClick={() => showToast('Revenue analysis options', 'info')}
+                  title="More Options"
+                >
+                  <MoreVertical size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Metric Summary Banner (Green Circle Badge + Big Revenue Readout + Growth % matching Image 2) */}
+            <div className={styles.revenueBannerRow}>
+              <div className={styles.revenueBannerLeft}>
+                <div className={styles.greenCircleBadge}>
+                  <ArrowUpRight size={20} strokeWidth={2.8} />
+                </div>
+                <div className={styles.revenueBigAmount}>$ 459,234.08</div>
+              </div>
+
+              <div className={styles.revenueBannerRight}>
+                <div className={styles.revenueGrowthPct}>+0.6%</div>
+                <div className={styles.revenueGrowthSub}>Than Last week</div>
+              </div>
             </div>
 
             {/* Interactive Revenue Spline Wave Chart */}
@@ -747,10 +811,12 @@ export default function AdminDashboard() {
           {/* Right Column: Orders Status Donut Chart Breakdown */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Orders Overview</h2>
+              <div className={styles.cardTitleWrap}>
+                <h2 className={styles.cardTitle}>Orders Overview</h2>
+              </div>
             </div>
 
-            {/* Modern Segmented Donut Chart (Delivered, Shipped, Confirmed, Cancelled) */}
+            {/* Modern Segmented Donut Chart */}
             <OrdersDonutChart totalOrders={2343} />
           </div>
         </div>
@@ -786,11 +852,11 @@ export default function AdminDashboard() {
 
                   const customerInitials = order.customer?.name
                     ? order.customer.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)
                     : 'CU';
 
                   const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
@@ -842,7 +908,9 @@ export default function AdminDashboard() {
               {topProducts.map((prod, idx) => (
                 <div key={prod._id || prod.id} className={styles.topProductRow}>
                   <div className={styles.topProductLeft}>
-                    <span className={styles.topRankNum}>#{idx + 1}</span>
+                    <span className={`${styles.topRankNum} ${idx === 0 ? styles.topRankFirst : ''}`}>
+                      #{idx + 1}
+                    </span>
                     <img
                       src={
                         prod.image ||
@@ -874,3 +942,4 @@ export default function AdminDashboard() {
     </AdminLayout>
   );
 }
+

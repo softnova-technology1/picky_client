@@ -15,10 +15,10 @@ export default function Gallery({
 
   const [selectedIdx, setSelectedIdx] = useState(0);
 
-  // Ensure 4 thumbnail slots exist
-  const displayImages = Array.from({ length: 4 }).map((_, i) => {
-    return defaultImages[i % defaultImages.length];
-  });
+  const displayImages =
+    images && images.length > 0
+      ? images
+      : ['/images/about_showroom_featured.jpg'];
 
   const handlePrev = () => {
     setSelectedIdx((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
@@ -30,8 +30,15 @@ export default function Gallery({
 
   return (
     <div className={styles['gallery-container']}>
-      {/* Left Column: Simple Clean Vertical Thumbnails */}
-      <div className={styles['thumb-column']}>
+      {/* Left Column: Clean Vertical Thumbnails for Up to 10+ Images */}
+      <div
+        className={styles['thumb-column']}
+        style={{
+          maxHeight: '560px',
+          overflowY: 'auto',
+          paddingRight: '4px',
+        }}
+      >
         {displayImages.map((imgUrl, idx) => (
           <button
             key={idx}
@@ -79,15 +86,39 @@ export default function Gallery({
           </button>
         )}
 
+        {/* Top-Left Active Image Index Pill */}
+        {displayImages.length > 1 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '1.25rem',
+              left: '1.25rem',
+              background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(8px)',
+              color: '#ffffff',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              padding: '0.3rem 0.75rem',
+              borderRadius: '9999px',
+              letterSpacing: '0.05em',
+              zIndex: 4,
+            }}
+          >
+            {selectedIdx + 1} / {displayImages.length}
+          </div>
+        )}
+
         {/* Circular Arrow Navigation Controls */}
-        <div className={styles['arrow-nav-group']}>
-          <button onClick={handlePrev} className={styles['arrow-btn']} title="Previous image">
-            <ChevronLeft size={18} />
-          </button>
-          <button onClick={handleNext} className={styles['arrow-btn']} title="Next image">
-            <ChevronRight size={18} />
-          </button>
-        </div>
+        {displayImages.length > 1 && (
+          <div className={styles['arrow-nav-group']}>
+            <button onClick={handlePrev} className={styles['arrow-btn']} title="Previous image">
+              <ChevronLeft size={18} />
+            </button>
+            <button onClick={handleNext} className={styles['arrow-btn']} title="Next image">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -20,8 +20,8 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // View Mode: 'table' | 'form'
+  const [viewMode, setViewMode] = useState('table');
   const [modalLoading, setModalLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -35,10 +35,13 @@ export default function AdminProducts() {
     tags: '',
     stock: '50',
     isFeatured: false,
+    isActive: true,
   });
 
   const [charValues, setCharValues] = useState({});
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [primaryPreview, setPrimaryPreview] = useState(null);
+  const [secondaryPreviews, setSecondaryPreviews] = useState([]);
 
   async function loadData() {
     try {
@@ -64,7 +67,7 @@ export default function AdminProducts() {
     loadData();
   }, []);
 
-  // Open modal if action=add is triggered from Quick Actions
+  // Open form workspace if action=add is triggered from Quick Actions
   useEffect(() => {
     if (searchParams.get('action') === 'add') {
       handleOpenAdd();
@@ -87,10 +90,13 @@ export default function AdminProducts() {
       tags: '',
       stock: '50',
       isFeatured: false,
+      isActive: true,
     });
     setCharValues({});
     setSelectedFiles([]);
-    setIsModalOpen(true);
+    setPrimaryPreview(null);
+    setSecondaryPreviews([]);
+    setViewMode('form');
   };
 
   const handleOpenEdit = (p) => {
@@ -107,6 +113,7 @@ export default function AdminProducts() {
       tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
       stock: p.stock !== undefined ? String(p.stock) : '50',
       isFeatured: !!p.isFeatured,
+      isActive: true,
     });
 
     // Populate characteristics
@@ -118,8 +125,65 @@ export default function AdminProducts() {
     }
     setCharValues(initialChars);
 
+    // Set image previews
+    const imgs = p.images || (p.image ? [p.image] : []);
+    setPrimaryPreview(imgs[0] || null);
+    setSecondaryPreviews(imgs.slice(1));
     setSelectedFiles([]);
-    setIsModalOpen(true);
+    setViewMode('form');
+  };
+
+  const handlePrimaryFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPrimaryPreview(URL.createObjectURL(file));
+      setSelectedFiles((prev) => [file, ...prev.slice(1)]);
+    }
+  };
+
+  const handleSecondaryFileSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const remainingSlots = 10 - secondaryPreviews.length;
+      if (remainingSlots <= 0) {
+        showToast('Maximum 10 secondary gallery images allowed', 'warning');
+        return;
+      }
+      const filesToAdd = files.slice(0, remainingSlots);
+      const newUrls = filesToAdd.map((f) => URL.createObjectURL(f));
+      setSecondaryPreviews((prev) => [...prev, ...newUrls]);
+      setSelectedFiles((prev) => [...prev, ...filesToAdd]);
+      if (files.length > remainingSlots) {
+        showToast(`Added ${remainingSlots} images. (Limit is 10 max)`, 'info');
+      }
+    }
+  };
+
+  const handleSetAsCover = (index) => {
+    const targetUrl = secondaryPreviews[index];
+    if (!targetUrl) return;
+    const oldPrimary = primaryPreview;
+    setPrimaryPreview(targetUrl);
+    setSecondaryPreviews((prev) => {
+      const updated = [...prev];
+      if (oldPrimary) {
+        updated[index] = oldPrimary;
+      } else {
+        updated.splice(index, 1);
+      }
+      return updated;
+    });
+    showToast('Promoted gallery image to Primary Cover!', 'success');
+  };
+
+  const handleRemovePrimary = () => {
+    if (secondaryPreviews.length > 0) {
+      setPrimaryPreview(secondaryPreviews[0]);
+      setSecondaryPreviews((prev) => prev.slice(1));
+      showToast('First gallery image set as Primary Cover', 'info');
+    } else {
+      setPrimaryPreview(null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -173,6 +237,7 @@ export default function AdminProducts() {
                   discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
                   stock: Number(formData.stock),
                   isFeatured: formData.isFeatured,
+                  images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : p.images,
                   category: categories.find((c) => c._id === formData.category) || p.category,
                   subCategory: { name: formData.subCategory || 'General' },
                 }
@@ -192,12 +257,12 @@ export default function AdminProducts() {
           isFeatured: formData.isFeatured,
           category: categories.find((c) => c._id === formData.category) || { name: 'General' },
           subCategory: { name: formData.subCategory || 'General' },
-          images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'],
+          images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'],
         };
         setProducts((prev) => [newProduct, ...prev]);
         showToast('Product created successfully', 'success');
       }
-      setIsModalOpen(false);
+      setViewMode('table');
     } catch (err) {
       showToast(err.message || 'Failed to save product', 'error');
     } finally {
@@ -250,13 +315,13 @@ export default function AdminProducts() {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            padding: '0.2rem 0.55rem',
-            borderRadius: '6px',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            background: '#fee2e2',
-            color: '#dc2626',
-            border: '1px solid #fecaca',
+            padding: '0.22rem 0.6rem',
+            borderRadius: '9999px',
+            fontSize: '0.74rem',
+            fontWeight: 600,
+            background: '#fff1f2',
+            color: '#be123c',
+            border: '1px solid #ffe4e6',
             whiteSpace: 'nowrap',
           }}
         >
@@ -270,13 +335,13 @@ export default function AdminProducts() {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            padding: '0.2rem 0.55rem',
-            borderRadius: '6px',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            background: '#fef3c7',
-            color: '#d97706',
-            border: '1px solid #fde68a',
+            padding: '0.22rem 0.6rem',
+            borderRadius: '9999px',
+            fontSize: '0.74rem',
+            fontWeight: 600,
+            background: '#fffbe6',
+            color: '#b45309',
+            border: '1px solid #fef3c7',
             whiteSpace: 'nowrap',
           }}
         >
@@ -289,454 +354,1138 @@ export default function AdminProducts() {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          padding: '0.2rem 0.55rem',
-          borderRadius: '6px',
-          fontSize: '0.78rem',
-          fontWeight: 700,
-          background: '#dcfce7',
-          color: '#16a34a',
-          border: '1px solid #bbf7d0',
+          gap: '0.25rem',
+          padding: '0.22rem 0.6rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 600,
+          background: '#f0fdf4',
+          color: '#15803d',
+          border: '1px solid #dcfce7',
           whiteSpace: 'nowrap',
         }}
       >
-        ● {qty} In Stock
+        <span style={{ fontSize: '0.55rem' }}>●</span> {qty} In Stock
       </span>
     );
   };
 
   return (
     <AdminLayout title="Product Catalog Management">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-            Live Store Inventory
-          </h2>
-          <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-            Manage catalog specifications, prices, and high-resolution media
-          </span>
-        </div>
-        <button
-          onClick={handleOpenAdd}
-          className="admin-period-select-btn"
-          style={{
-            background: '#7c3aed',
-            color: '#ffffff',
-            borderColor: '#7c3aed',
-            boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-          }}
-        >
-          <Plus size={16} />
-          <span>Add New Product</span>
-        </button>
-      </div>
 
-      {loading ? (
-        <Spinner size={36} />
-      ) : (
-        <div className="table-container">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Subcategory</th>
-                <th>Price</th>
-                <th>Selling Price</th>
-                <th>Stock</th>
-                <th>Featured</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => {
-                const subCatName =
-                  p.subCategory?.name ||
-                  (typeof p.subCategory === 'string' ? p.subCategory : null) ||
-                  '—';
-                return (
-                  <tr key={p._id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+      {/* ── MODE 1: FULL WORKSPACE FORM (ADD / EDIT PRODUCT) ────────────────────────── */}
+      {viewMode === 'form' ? (
+        <div style={{ animation: 'ordAccordionIn 0.2s ease' }}>
+
+          {/* Top Header Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.5rem 1.1rem',
+                borderRadius: '9999px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                background: '#ffffff',
+                color: '#475569',
+                border: '1px solid #e2e8f0',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#ffffff';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+              }}
+            >
+              ← Back to Products Catalog
+            </button>
+
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.01em' }}>
+              {editingProduct ? `Edit Product: ${editingProduct.name}` : 'Add New Product'}
+            </h2>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(320px, 380px) 1fr',
+                gap: '1.75rem',
+                alignItems: 'start',
+                marginBottom: '2rem',
+              }}
+            >
+              {/* ── LEFT COLUMN: High-Impact Image Upload & Visual Gallery ── */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+                {/* Media Container Card */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '16px',
+                    border: '1px solid #e2e8f0',
+                    padding: '1.25rem',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  {/* Primary Cover Image Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: 0 }}>
+                      <span style={{ color: '#7c3aed' }}>★</span> PRIMARY COVER IMAGE
+                    </label>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#7c3aed', background: '#f3e8ff', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
+                      3:4 Ratio
+                    </span>
+                  </div>
+
+                  {/* Primary Image Dropzone Box */}
+                  <label
+                    style={{
+                      height: '310px',
+                      borderRadius: '14px',
+                      border: primaryPreview ? '1.5px solid #e2e8f0' : '2px dashed #cbd5e1',
+                      background: '#f8fafc',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      transition: 'all 0.2s ease',
+                      boxShadow: primaryPreview ? '0 4px 16px rgba(0,0,0,0.04)' : 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!primaryPreview) {
+                        e.currentTarget.style.borderColor = '#7c3aed';
+                        e.currentTarget.style.background = '#faf5ff';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!primaryPreview) {
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                        e.currentTarget.style.background = '#f8fafc';
+                      }
+                    }}
+                  >
+                    <input type="file" accept="image/*" onChange={handlePrimaryFileSelect} style={{ display: 'none' }} />
+
+                    {primaryPreview ? (
+                      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                         <img
-                          src={p.images?.[0] || p.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
-                          alt={p.name}
-                          style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
+                          src={primaryPreview}
+                          alt="Primary Product Cover"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                        <div>
-                          <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>{p.name}</strong>
-                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>/{p.slug}</span>
+
+                        {/* Top-Left Cover Badge */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '10px',
+                            left: '10px',
+                            background: '#7c3aed',
+                            color: '#ffffff',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '9999px',
+                            boxShadow: '0 2px 8px rgba(124, 58, 237, 0.4)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            zIndex: 2,
+                          }}
+                        >
+                          ⭐ COVER IMAGE
+                        </div>
+
+                        {/* Hover Overlay with Change & Remove options */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(15, 23, 42, 0.65)',
+                            color: '#ffffff',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.6rem',
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                            zIndex: 3,
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                        >
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Click anywhere to change</span>
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              handleRemovePrimary();
+                            }}
+                            style={{
+                              background: '#ef4444',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '0.35rem 0.8rem',
+                              borderRadius: '8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            🗑️ Remove Cover
+                          </button>
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          background: '#ede8f8',
-                          color: '#5b21b6',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {p.category?.name || 'General'}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          background: '#f8fafc',
-                          border: '1px solid #e2e8f0',
-                          color: '#334155',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {subCatName}
-                      </span>
-                    </td>
-                    <td><strong style={{ color: '#1e1b4b' }}>{formatPrice(p.price)}</strong></td>
-                    <td>
-                      {p.discountPrice ? (
-                        <span style={{ color: '#16a34a', fontWeight: 700 }}>{formatPrice(p.discountPrice)}</span>
-                      ) : (
-                        <span style={{ color: '#94a3b8' }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      {renderStockBadge(p.stock)}
-                    </td>
-                    <td>
-                      {p.isFeatured ? (
-                        <span className="adm-status-pill adm-status-confirmed" style={{ fontSize: '0.75rem' }}>
-                          ⭐ Featured
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748b' }}>
+                        <div
+                          style={{
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '50%',
+                            background: '#f1f5f9',
+                            color: '#7c3aed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 0.85rem',
+                          }}
+                        >
+                          <Sparkles size={24} />
+                        </div>
+                        <strong style={{ fontSize: '0.88rem', color: '#0f172a', display: 'block', fontWeight: 700, marginBottom: '0.25rem' }}>
+                          Upload Cover Image
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>
+                          Drag & drop or click to browse
                         </span>
-                      ) : (
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Standard</span>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
-                        <button
-                          onClick={() => handleOpenEdit(p)}
-                          className="admin-period-select-btn"
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                        >
-                          <Edit2 size={13} color="#7c3aed" />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p._id)}
-                          className="admin-period-select-btn"
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', color: '#dc2626' }}
-                        >
-                          <Trash2 size={13} color="#dc2626" />
-                          <span>Deactivate</span>
-                        </button>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginTop: '0.35rem' }}>
+                          Recommended: 3:4 (e.g. 600×800px)
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    )}
+                  </label>
 
-      {/* Add / Edit Product Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingProduct ? 'Edit Product' : 'Add New Product'}
-        maxWidth={640}
-      >
-        <form onSubmit={handleSubmit}>
-          <div style={{ maxHeight: '76vh', overflowY: 'auto', paddingRight: '0.4rem' }}>
-            <Input
-              label="Product Name *"
-              placeholder="e.g. AeroSound Pro Wireless Headphones"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+                  {/* Secondary Gallery Images Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.25rem', marginBottom: '0.6rem' }}>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                      GALLERY IMAGES <span style={{ color: '#7c3aed', fontWeight: 700 }}>({secondaryPreviews.length}/10 MAX)</span>
+                    </label>
+                    <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                      Hover image to set cover
+                    </span>
+                  </div>
 
-            {/* Category & Subcategory Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Category *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => {
-                    const newCat = e.target.value;
-                    const catObj = categories.find((c) => c._id === newCat);
-                    const defaultSub = catObj?.subcategories?.[0]?.name || '';
-                    setFormData({
-                      ...formData,
-                      category: newCat,
-                      subCategory: defaultSub,
-                    });
-                    if (!editingProduct) setCharValues({});
-                  }}
-                  className="form-select"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name} {c.characteristics?.length ? `(${c.characteristics.length} specs)` : ''}
-                    </option>
-                  ))}
-                </select>
+                  {/* 5-Column Compact Secondary Gallery Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
+                    {/* Render existing secondary previews */}
+                    {secondaryPreviews.map((url, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          height: '76px',
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          position: 'relative',
+                          border: '1px solid #e2e8f0',
+                          background: '#f8fafc',
+                        }}
+                      >
+                        <img src={url} alt={`Gallery ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        
+                        {/* Index Badge */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '3px',
+                            left: '3px',
+                            background: 'rgba(15, 23, 42, 0.65)',
+                            color: '#ffffff',
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            padding: '0.1rem 0.35rem',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          #{i + 1}
+                        </div>
+
+                        {/* Hover Overlay with Cover Star & Delete */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(15, 23, 42, 0.75)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.35rem',
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleSetAsCover(i)}
+                            title="Promote to Primary Cover"
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: '#7c3aed',
+                              color: '#ffffff',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.72rem',
+                            }}
+                          >
+                            ⭐
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSecondaryPreviews((prev) => prev.filter((_, idx) => idx !== i))}
+                            title="Delete Image"
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: '#ef4444',
+                              color: '#ffffff',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.72rem',
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Add Gallery Images Tile if < 10 */}
+                    {secondaryPreviews.length < 10 && (
+                      <label
+                        style={{
+                          height: '76px',
+                          borderRadius: '10px',
+                          border: '1.5px dashed #cbd5e1',
+                          background: '#f8fafc',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          transition: 'all 0.15s ease',
+                          textAlign: 'center',
+                          padding: '0.2rem',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#7c3aed';
+                          e.currentTarget.style.color = '#7c3aed';
+                          e.currentTarget.style.background = '#faf5ff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#cbd5e1';
+                          e.currentTarget.style.color = '#64748b';
+                          e.currentTarget.style.background = '#f8fafc';
+                        }}
+                      >
+                        <input type="file" multiple accept="image/*" onChange={handleSecondaryFileSelect} style={{ display: 'none' }} />
+                        <Plus size={16} style={{ marginBottom: '0.1rem' }} />
+                        <span style={{ fontSize: '0.62rem', fontWeight: 700, lineHeight: 1.1 }}>
+                          + Add ({10 - secondaryPreviews.length})
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Subcategory</label>
-                <select
-                  value={formData.subCategory}
-                  onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
-                  className="form-select"
-                >
-                  <option value="">Select Subcategory</option>
-                  {availableSubCategories.map((sub, i) => (
-                    <option key={sub._id || i} value={sub.name}>
-                      {sub.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Price, Discount Price, and Stock Quantity Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
-              <Input
-                label="Price (Rs.) *"
-                type="number"
-                placeholder="e.g. 3999"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                required
-              />
-              <Input
-                label="Selling Price (Rs.)"
-                type="number"
-                placeholder="e.g. 2499"
-                value={formData.discountPrice}
-                onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
-              />
-              <Input
-                label="Stock Quantity *"
-                type="number"
-                placeholder="e.g. 50"
-                value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                required
-              />
-            </div>
-
-            {/* 🌟 DYNAMIC CATEGORY CHARACTERISTICS SECTION */}
-            {currentCategorySpecs.length > 0 && (
+              {/* ── RIGHT COLUMN: Structured Product Information Form Workspace ── */}
               <div
                 style={{
-                  background: '#f8fafc',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  border: '1.5px solid #e2e8f0',
-                  marginBottom: '1.25rem',
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  border: '1px solid #e2e8f0',
+                  padding: '1.6rem 1.75rem 5.5rem',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.25rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '1rem' }}>⚙️</span>
-                    <strong style={{ fontSize: '0.88rem', color: '#1e293b' }}>
-                      {currentCategoryObj?.name} Specifications
-                    </strong>
-                  </div>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                    Auto-loaded from category configuration
-                  </span>
+                {/* 1. Basic Details */}
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                    PRODUCT NAME <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pure Cotton Handloom Madurai Sungudi Saree / AeroSound Pro Headphones"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.72rem 1rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '0.88rem',
+                      color: '#0f172a',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#7c3aed';
+                      e.target.style.background = '#ffffff';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.background = '#f8fafc';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
-                  {currentCategorySpecs.map((char, idx) => (
-                    <div key={idx} style={{ background: 'white', padding: '0.65rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', marginBottom: '0.3rem', color: '#334155' }}>
-                        {char.name} {char.required && <span style={{ color: '#ef4444' }}>*</span>}
+                {/* 2. Detailed Description */}
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                    DETAILED DESCRIPTION <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="Detailed product features, specifications, and washing/usage instructions..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.72rem 1rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '0.85rem',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      lineHeight: 1.5,
+                      resize: 'vertical',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#7c3aed';
+                      e.target.style.background = '#ffffff';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.background = '#f8fafc';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+
+                {/* 3. Category & Subcategory Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                      CATEGORY <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => {
+                        const newCat = e.target.value;
+                        const catObj = categories.find((c) => c._id === newCat);
+                        const defaultSub = catObj?.subcategories?.[0]?.name || '';
+                        setFormData({
+                          ...formData,
+                          category: newCat,
+                          subCategory: defaultSub,
+                        });
+                        if (!editingProduct) setCharValues({});
+                      }}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.68rem 0.9rem',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.name} {c.characteristics?.length ? `(${c.characteristics.length} specs)` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                      SUBCATEGORY
+                    </label>
+                    <select
+                      value={formData.subCategory}
+                      onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.68rem 0.9rem',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="">Select Subcategory</option>
+                      {availableSubCategories.map((sub, i) => (
+                        <option key={sub._id || i} value={sub.name}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 4. Pricing & Inventory Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                      M.R.P PRICE (₹) <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 3999"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.68rem 0.9rem',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        SELLING PRICE (₹)
                       </label>
-
-                      {/* 1. Single Select Dropdown */}
-                      {char.type === 'select' && (
-                        <select
-                          className="form-input"
-                          style={{ fontSize: '0.82rem', padding: '0.4rem' }}
-                          value={charValues[char.name] || ''}
-                          onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
-                          required={char.required}
-                        >
-                          <option value="">Select {char.name}...</option>
-                          {char.values?.map((v, i) => (
-                            <option key={i} value={v}>{v}</option>
-                          ))}
-                        </select>
-                      )}
-
-                      {/* 2. Multi-Select Pills */}
-                      {char.type === 'multi_select' && (
-                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                          {char.values?.map((v, i) => {
-                            const current = Array.isArray(charValues[char.name]) ? charValues[char.name] : [];
-                            const isSelected = current.includes(v);
-                            return (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => toggleMultiSelect(char.name, v)}
-                                style={{
-                                  fontSize: '0.74rem',
-                                  padding: '0.2rem 0.45rem',
-                                  borderRadius: '4px',
-                                  border: '1px solid',
-                                  borderColor: isSelected ? '#6366f1' : '#cbd5e1',
-                                  background: isSelected ? '#ede9fe' : '#f8fafc',
-                                  color: isSelected ? '#5b21b6' : '#475569',
-                                  cursor: 'pointer',
-                                  fontWeight: isSelected ? 600 : 400,
-                                }}
-                              >
-                                {isSelected ? `✓ ${v}` : v}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* 3. Text Input */}
-                      {char.type === 'text' && (
-                        <input
-                          type="text"
-                          placeholder={`Enter ${char.name}...`}
-                          className="form-input"
-                          style={{ fontSize: '0.82rem', padding: '0.4rem' }}
-                          value={charValues[char.name] || ''}
-                          onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
-                          required={char.required}
-                        />
-                      )}
-
-                      {/* 4. Number Input */}
-                      {char.type === 'number' && (
-                        <input
-                          type="number"
-                          placeholder="e.g. 100"
-                          className="form-input"
-                          style={{ fontSize: '0.82rem', padding: '0.4rem' }}
-                          value={charValues[char.name] || ''}
-                          onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
-                          required={char.required}
-                        />
-                      )}
-
-                      {/* 5. Yes / No Toggle */}
-                      {char.type === 'boolean' && (
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => setCharValues({ ...charValues, [char.name]: 'Yes' })}
-                            style={{
-                              flex: 1,
-                              fontSize: '0.75rem',
-                              padding: '0.3rem',
-                              borderRadius: '4px',
-                              border: '1px solid',
-                              borderColor: charValues[char.name] === 'Yes' ? '#16a34a' : '#cbd5e1',
-                              background: charValues[char.name] === 'Yes' ? '#dcfce7' : '#fff',
-                              color: charValues[char.name] === 'Yes' ? '#166534' : '#475569',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                            }}
-                          >
-                            Yes
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCharValues({ ...charValues, [char.name]: 'No' })}
-                            style={{
-                              flex: 1,
-                              fontSize: '0.75rem',
-                              padding: '0.3rem',
-                              borderRadius: '4px',
-                              border: '1px solid',
-                              borderColor: charValues[char.name] === 'No' ? '#ef4444' : '#cbd5e1',
-                              background: charValues[char.name] === 'No' ? '#fee2e2' : '#fff',
-                              color: charValues[char.name] === 'No' ? '#991b1b' : '#475569',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                            }}
-                          >
-                            No
-                          </button>
-                        </div>
+                      {formData.price && formData.discountPrice && Number(formData.price) > Number(formData.discountPrice) && (
+                        <span style={{ fontSize: '0.68rem', color: '#15803d', background: '#dcfce7', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
+                          {Math.round(((Number(formData.price) - Number(formData.discountPrice)) / Number(formData.price)) * 100)}% OFF
+                        </span>
                       )}
                     </div>
-                  ))}
+                    <input
+                      type="number"
+                      placeholder="e.g. 2499"
+                      value={formData.discountPrice}
+                      onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.68rem 0.9rem',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        color: '#15803d',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                      STOCK QUANTITY <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 50"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.68rem 0.9rem',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Dynamic Product Specifications */}
+                {currentCategorySpecs.length > 0 && (
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      padding: '1.1rem 1.25rem',
+                      borderRadius: '14px',
+                      border: '1px solid #e2e8f0',
+                      marginTop: '0.3rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                      <strong style={{ fontSize: '0.78rem', color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                        {currentCategoryObj?.name} SPECIFICATIONS
+                      </strong>
+                      <span style={{ fontSize: '0.71rem', color: '#64748b' }}>
+                        Auto-loaded from category configuration
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                      {currentCategorySpecs.map((char, idx) => (
+                        <div key={idx} style={{ background: '#ffffff', padding: '0.7rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                          <label style={{ fontSize: '0.74rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem', color: '#334155' }}>
+                            {char.name} {char.required && <span style={{ color: '#ef4444' }}>*</span>}
+                          </label>
+
+                          {char.type === 'select' && (
+                            <select
+                              style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }}
+                              value={charValues[char.name] || ''}
+                              onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                              required={char.required}
+                            >
+                              <option value="">Select {char.name}...</option>
+                              {char.values?.map((v, i) => (
+                                <option key={i} value={v}>{v}</option>
+                              ))}
+                            </select>
+                          )}
+
+                          {char.type === 'multi_select' && (
+                            <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                              {char.values?.map((v, i) => {
+                                const current = Array.isArray(charValues[char.name]) ? charValues[char.name] : [];
+                                const isSelected = current.includes(v);
+                                return (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => toggleMultiSelect(char.name, v)}
+                                    style={{
+                                      fontSize: '0.72rem',
+                                      padding: '0.2rem 0.5rem',
+                                      borderRadius: '9999px',
+                                      border: '1px solid',
+                                      borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                                      background: isSelected ? '#f3e8ff' : '#ffffff',
+                                      color: isSelected ? '#6d28d9' : '#475569',
+                                      cursor: 'pointer',
+                                      fontWeight: isSelected ? 600 : 400,
+                                    }}
+                                  >
+                                    {isSelected ? `✓ ${v}` : v}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {(char.type === 'text' || char.type === 'number') && (
+                            <input
+                              type={char.type}
+                              placeholder={`e.g. ${char.name}...`}
+                              style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box' }}
+                              value={charValues[char.name] || ''}
+                              onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                              required={char.required}
+                            />
+                          )}
+
+                          {char.type === 'boolean' && (
+                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                              <button
+                                type="button"
+                                onClick={() => setCharValues({ ...charValues, [char.name]: 'Yes' })}
+                                style={{
+                                  flex: 1,
+                                  fontSize: '0.75rem',
+                                  padding: '0.3rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid',
+                                  borderColor: charValues[char.name] === 'Yes' ? '#16a34a' : '#cbd5e1',
+                                  background: charValues[char.name] === 'Yes' ? '#dcfce7' : '#fff',
+                                  color: charValues[char.name] === 'Yes' ? '#15803d' : '#475569',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCharValues({ ...charValues, [char.name]: 'No' })}
+                                style={{
+                                  flex: 1,
+                                  fontSize: '0.75rem',
+                                  padding: '0.3rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid',
+                                  borderColor: charValues[char.name] === 'No' ? '#ef4444' : '#cbd5e1',
+                                  background: charValues[char.name] === 'No' ? '#fff1f2' : '#fff',
+                                  color: charValues[char.name] === 'No' ? '#be123c' : '#475569',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                No
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Tags & Options */}
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
+                    TAGS (COMMA-SEPARATED)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. saree, traditional, cotton, festive"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.68rem 0.9rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '0.84rem',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                {/* Checkbox Options Container */}
+                <div style={{ background: '#f8fafc', padding: '0.85rem 1.1rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.84rem', fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.isFeatured}
+                      onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                      style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                    />
+                    ⭐ Featured Product
+                  </label>
+
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.84rem', fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.isActive}
+                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                      style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                    />
+                    ✅ Active Status
+                  </label>
                 </div>
               </div>
-            )}
-
-            <div className="form-group">
-              <label className="form-label">Description *</label>
-              <textarea
-                rows={3}
-                className="form-textarea"
-                placeholder="Detailed description of features and specs..."
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                required
-              />
             </div>
 
-            <Input
-              label="Tags (Comma-separated)"
-              placeholder="e.g. wireless, headphones, anc, audio"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-            />
+            {/* ── STICKY BOTTOM ACTION BAR ────────────────────────────────── */}
+            <div
+              style={{
+                position: 'sticky',
+                bottom: '1.5rem',
+                zIndex: 20,
+                background: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '0.9rem 1.4rem',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '1.75rem',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => showToast(`Preview: ${formData.name || 'Product'} (₹${formData.discountPrice || formData.price || 0})`, 'info')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.55rem 1.1rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  background: '#f8fafc',
+                  color: '#475569',
+                  border: '1px solid #e2e8f0',
+                  cursor: 'pointer',
+                }}
+              >
+                👁️ Preview
+              </button>
 
-            <div className="form-group">
-              <label className="form-label">Product Images (Upload)</label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
-                className="form-input"
-              />
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  style={{
+                    padding: '0.55rem 1.25rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    background: '#f1f5f9',
+                    color: '#475569',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={modalLoading}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.6rem 1.6rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                    color: '#ffffff',
+                    border: 'none',
+                    cursor: modalLoading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.3)',
+                    opacity: modalLoading ? 0.75 : 1,
+                  }}
+                >
+                  {modalLoading ? <Spinner size={16} color="#fff" /> : null}
+                  <span>{editingProduct ? 'Save Product Changes' : 'Create Product'}</span>
+                </button>
+              </div>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              <input
-                type="checkbox"
-                id="isFeatured"
-                checked={formData.isFeatured}
-                onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-              />
-              <label htmlFor="isFeatured" style={{ fontSize: '0.88rem', fontWeight: 600 }}>
-                Show on Featured / Trending list
-              </label>
+          </form>
+        </div>
+      ) : (
+        /* ── MODE 2: TABLE INVENTORY VIEW ─────────────────────────────────────── */
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+                Live Store Inventory
+              </h2>
+              <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                Manage catalog specifications, prices, and high-resolution media
+              </span>
             </div>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary">
-              Cancel
+            <button
+              onClick={handleOpenAdd}
+              className="admin-period-select-btn"
+              style={{
+                background: '#7c3aed',
+                color: '#ffffff',
+                borderColor: '#7c3aed',
+                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+              }}
+            >
+              <Plus size={16} />
+              <span>Add New Product</span>
             </button>
-            <Button type="submit" variant="primary" loading={modalLoading}>
-              {editingProduct ? 'Save Changes' : 'Create Product'}
-            </Button>
           </div>
-        </form>
-      </Modal>
+
+          {loading ? (
+            <Spinner size={36} />
+          ) : (
+            <div
+              className="table-container"
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+              }}
+            >
+              <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Product</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subcategory</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>M.R.P</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Selling Price</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stock</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((p, index) => {
+                    const subCatName =
+                      p.subCategory?.name ||
+                      (typeof p.subCategory === 'string' ? p.subCategory : null) ||
+                      '—';
+                    return (
+                      <tr
+                        key={p._id}
+                        style={{
+                          background: index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                          borderBottom: '1px solid #f1f5f9',
+                          transition: 'background 0.15s ease',
+                        }}
+                      >
+                        {/* Product Cell with Clean Truncated Title & Image Thumbnail */}
+                        <td style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', maxWidth: '280px' }}>
+                            <img
+                              src={p.images?.[0] || p.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
+                              alt={p.name}
+                              style={{
+                                width: '44px',
+                                height: '44px',
+                                borderRadius: '10px',
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                                border: '1px solid #e2e8f0',
+                                background: '#f8fafc',
+                              }}
+                            />
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <strong
+                                title={p.name}
+                                style={{
+                                  fontSize: '0.86rem',
+                                  color: '#0f172a',
+                                  fontWeight: 600,
+                                  display: 'block',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                {p.name}
+                              </strong>
+                              <span style={{ fontSize: '0.71rem', color: '#64748b', marginTop: '0.15rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                ID: #{p._id?.slice(-6) || p.slug?.slice(0, 12) || 'PRD'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Category Chip */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'left' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '0.22rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: '#f3e8ff',
+                              color: '#6d28d9',
+                              border: '1px solid #e9d8fd',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {p.category?.name || 'General'}
+                          </span>
+                        </td>
+
+                        {/* Subcategory Chip */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'left' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '0.22rem 0.6rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.74rem',
+                              fontWeight: 500,
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              color: '#475569',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {subCatName}
+                          </span>
+                        </td>
+
+                        {/* MRP / Original Price */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.85rem', color: p.discountPrice ? '#94a3b8' : '#0f172a', fontWeight: p.discountPrice ? 500 : 600, textDecoration: p.discountPrice ? 'line-through' : 'none' }}>
+                            {formatPrice(p.price)}
+                          </span>
+                        </td>
+
+                        {/* Selling Price */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'right' }}>
+                          {p.discountPrice ? (
+                            <strong style={{ fontSize: '0.88rem', color: '#15803d', fontWeight: 700 }}>
+                              {formatPrice(p.discountPrice)}
+                            </strong>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>
+                          )}
+                        </td>
+
+                        {/* Stock Status Badge */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'center' }}>
+                          {renderStockBadge(p.stock)}
+                        </td>
+
+                        {/* Featured Status Badge */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'center' }}>
+                          {p.isFeatured ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                padding: '0.22rem 0.6rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.74rem',
+                                fontWeight: 600,
+                                background: '#fefce8',
+                                color: '#a16207',
+                                border: '1px solid #fef08a',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              ⭐ Featured
+                            </span>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 500 }}>Standard</span>
+                          )}
+                        </td>
+
+                        {/* Actions Buttons */}
+                        <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => handleOpenEdit(p)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.76rem',
+                                fontWeight: 600,
+                                background: '#f8fafc',
+                                color: '#6d28d9',
+                                border: '1px solid #e2e8f0',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#f3e8ff';
+                                e.currentTarget.style.borderColor = '#e9d8fd';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#f8fafc';
+                                e.currentTarget.style.borderColor = '#e2e8f0';
+                              }}
+                            >
+                              <Edit2 size={12} color="#6d28d9" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(p._id)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.76rem',
+                                fontWeight: 600,
+                                background: '#fff1f2',
+                                color: '#be123c',
+                                border: '1px solid #ffe4e6',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#ffe4e6';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#fff1f2';
+                              }}
+                            >
+                              <Trash2 size={12} color="#be123c" />
+                              <span>Deactivate</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
     </AdminLayout>
   );
 }

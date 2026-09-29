@@ -8,6 +8,7 @@ import { MOCK_PRODUCTS } from '../../data/adminMockData';
 import { getProducts } from '../../data';
 import {
   Flame,
+  Award,
   Star,
   Zap,
   RotateCcw,

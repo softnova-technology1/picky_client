@@ -119,45 +119,170 @@ export default function AdminReports() {
             </button>
           </div>
 
-          {/* Revenue Breakdown - 4 Clean Cards with balanced internal padding */}
-          <div className="metrics-grid">
-            <div className="metric-card">
-              <div className="metric-icon-wrap" style={{ background: '#ede8f8', color: '#7c3aed' }}>
-                <DollarSign size={20} />
+          {/* Revenue Breakdown - 4 Luxury SaaS KPI Cards */}
+          <style>{`
+            .reports-kpi-card {
+              background: #ffffff;
+              border-radius: 16px;
+              border: 1.5px solid #e2e8f0;
+              padding: 1.25rem 1.4rem;
+              position: relative;
+              overflow: hidden;
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+              transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .reports-kpi-card:hover {
+              transform: translateY(-3px);
+              box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08);
+              border-color: #cbd5e1;
+            }
+          `}</style>
+          <div
+            className="metrics-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '1rem',
+              marginBottom: '1.4rem',
+            }}
+          >
+            {/* Card 1: Gross Revenue */}
+            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #7c3aed' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    GROSS REVENUE
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                  {formatPrice(summary?.totalRevenue || 124980)}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
+                  ★ Net Sales Volume
+                </div>
               </div>
-              <div className="metric-info-col">
-                <div className="metric-val">{formatPrice(summary?.totalRevenue || 124980)}</div>
-                <div className="metric-label">Gross Revenue</div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+                  color: '#7c3aed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #ddd6fe',
+                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
+                  flexShrink: 0,
+                }}
+              >
+                <DollarSign size={22} />
               </div>
             </div>
 
-            <div className="metric-card">
-              <div className="metric-icon-wrap" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                <Tag size={20} />
+            {/* Card 2: Total Discounts Given */}
+            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    TOTAL DISCOUNTS GIVEN
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                  {formatPrice(summary?.totalDiscount || 18500)}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
+                  Promo Savings
+                </div>
               </div>
-              <div className="metric-info-col">
-                <div className="metric-val">{formatPrice(summary?.totalDiscount || 18500)}</div>
-                <div className="metric-label">Total Discounts Given</div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                  color: '#16a34a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #bbf7d0',
+                  boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
+                  flexShrink: 0,
+                }}
+              >
+                <Tag size={22} />
               </div>
             </div>
 
-            <div className="metric-card">
-              <div className="metric-icon-wrap" style={{ background: '#e0f2fe', color: '#0284c7' }}>
-                <PackageCheck size={20} />
+            {/* Card 3: Fulfilled Orders */}
+            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    FULFILLED ORDERS
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                  {summary?.confirmedOrders || 142}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 600, marginTop: '0.35rem' }}>
+                  100% Shipped & Delivered
+                </div>
               </div>
-              <div className="metric-info-col">
-                <div className="metric-val">{summary?.confirmedOrders || 142}</div>
-                <div className="metric-label">Fulfilled Orders</div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                  color: '#0284c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #bae6fd',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.12)',
+                  flexShrink: 0,
+                }}
+              >
+                <PackageCheck size={22} />
               </div>
             </div>
 
-            <div className="metric-card">
-              <div className="metric-icon-wrap" style={{ background: '#ede9fe', color: '#4338ca' }}>
-                <Users size={20} />
+            {/* Card 4: Total Buyers */}
+            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    TOTAL BUYERS
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                  {(summary?.totalCustomers || 1024).toLocaleString()}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: '0.35rem' }}>
+                  Verified Active Accounts
+                </div>
               </div>
-              <div className="metric-info-col">
-                <div className="metric-val">{(summary?.totalCustomers || 1024).toLocaleString()}</div>
-                <div className="metric-label">Total Buyers</div>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                  color: '#d97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #fde68a',
+                  boxShadow: '0 2px 8px rgba(217, 119, 6, 0.12)',
+                  flexShrink: 0,
+                }}
+              >
+                <Users size={22} />
               </div>
             </div>
           </div>
