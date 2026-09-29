@@ -30,6 +30,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
@@ -123,219 +124,44 @@ export default function AdminOrders() {
   return (
     <AdminLayout title="Orders & Dispatch Dashboard">
 
-      {/* ── 1. INNOVATIVE DASHBOARD STATS CARDS WITH CIRCLE ICON CONTAINERS ──────────────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '1.75rem',
-        }}
-      >
-        {/* Card 1: Total Orders */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '1.35rem 1.4rem',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f6f0ff 100%)',
-            border: '1.5px solid #e9d8fd',
-            borderRadius: '20px',
-            boxShadow: '0 8px 30px rgba(124, 58, 237, 0.07)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.78rem', color: '#6b21a8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-                Total Orders
-              </span>
-              <strong style={{ fontSize: '1.65rem', color: '#1e1b4b', fontWeight: 900, display: 'block', marginTop: '0.2rem' }}>
-                {totalOrders}
-              </strong>
-            </div>
-            {/* Circle Icon Wrapper */}
-            <div
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
-                flexShrink: 0,
-              }}
-            >
-              <ShoppingBag size={22} />
-            </div>
-          </div>
-          {/* Progress bar indicator */}
-          <div style={{ marginTop: '1.1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.73rem', color: '#64748b', fontWeight: 600, marginBottom: '0.35rem' }}>
-              <span>Live Order Volume</span>
-              <span style={{ color: '#7c3aed', fontWeight: 700 }}>100%</span>
-            </div>
-            <div style={{ height: '6px', width: '100%', background: '#ede8f8', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(90deg, #7c3aed, #a855f7)', borderRadius: '9999px' }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Ready to Dispatch */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '1.35rem 1.4rem',
-            background: 'linear-gradient(135deg, #ffffff 0%, #fffdf2 100%)',
-            border: '1.5px solid #fde68a',
-            borderRadius: '20px',
-            boxShadow: '0 8px 30px rgba(217, 119, 6, 0.07)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.78rem', color: '#b45309', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-                Ready to Dispatch
-              </span>
-              <strong style={{ fontSize: '1.65rem', color: '#1e1b4b', fontWeight: 900, display: 'block', marginTop: '0.2rem' }}>
-                {confirmedCount}
-              </strong>
-            </div>
-            {/* Circle Icon Wrapper */}
-            <div
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #d97706, #b45309)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(217, 119, 6, 0.35)',
-                flexShrink: 0,
-              }}
-            >
-              <Clock size={22} />
-            </div>
-          </div>
-          {/* Progress bar indicator */}
-          <div style={{ marginTop: '1.1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.73rem', color: '#64748b', fontWeight: 600, marginBottom: '0.35rem' }}>
-              <span>Action Required</span>
-              <span style={{ color: '#d97706', fontWeight: 700 }}>{totalOrders ? Math.round((confirmedCount / totalOrders) * 100) : 0}%</span>
-            </div>
-            <div style={{ height: '6px', width: '100%', background: '#fef3c7', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div style={{ width: `${totalOrders ? (confirmedCount / totalOrders) * 100 : 0}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #d97706)', borderRadius: '9999px' }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Shipped & Transit */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '1.35rem 1.4rem',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
-            border: '1.5px solid #bfdbfe',
-            borderRadius: '20px',
-            boxShadow: '0 8px 30px rgba(37, 99, 235, 0.07)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-                Shipped / Transit
-              </span>
-              <strong style={{ fontSize: '1.65rem', color: '#1e1b4b', fontWeight: 900, display: 'block', marginTop: '0.2rem' }}>
-                {shippedCount}
-              </strong>
-            </div>
-            {/* Circle Icon Wrapper */}
-            <div
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(37, 99, 235, 0.35)',
-                flexShrink: 0,
-              }}
-            >
-              <Truck size={22} />
-            </div>
-          </div>
-          {/* Progress bar indicator */}
-          <div style={{ marginTop: '1.1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.73rem', color: '#64748b', fontWeight: 600, marginBottom: '0.35rem' }}>
-              <span>In Transit</span>
-              <span style={{ color: '#2563eb', fontWeight: 700 }}>{totalOrders ? Math.round((shippedCount / totalOrders) * 100) : 0}%</span>
-            </div>
-            <div style={{ height: '6px', width: '100%', background: '#dbeafe', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div style={{ width: `${totalOrders ? (shippedCount / totalOrders) * 100 : 0}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #1d4ed8)', borderRadius: '9999px' }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Total Order Revenue */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            padding: '1.35rem 1.4rem',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)',
-            border: '1.5px solid #bbf7d0',
-            borderRadius: '20px',
-            boxShadow: '0 8px 30px rgba(22, 163, 74, 0.07)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
-                Total Order Revenue
-              </span>
-              <strong style={{ fontSize: '1.55rem', color: '#16a34a', fontWeight: 900, display: 'block', marginTop: '0.2rem' }}>
-                {formatPrice(totalRevenue)}
-              </strong>
-            </div>
-            {/* Circle Icon Wrapper */}
-            <div
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #16a34a, #15803d)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(22, 163, 74, 0.35)',
-                flexShrink: 0,
-              }}
-            >
-              <TrendingUp size={22} />
-            </div>
-          </div>
-          {/* Progress bar indicator */}
-          <div style={{ marginTop: '1.1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.73rem', color: '#64748b', fontWeight: 600, marginBottom: '0.35rem' }}>
-              <span>Fulfilled Ratio</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>{deliveredCount}/{totalOrders} Delivered</span>
-            </div>
-            <div style={{ height: '6px', width: '100%', background: '#dcfce7', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div style={{ width: `${totalOrders ? (deliveredCount / totalOrders) * 100 : 0}%`, height: '100%', background: 'linear-gradient(90deg, #22c55e, #15803d)', borderRadius: '9999px' }} />
-            </div>
-          </div>
-        </div>
+      {/* ── 1. INNOVATIVE DASHBOARD STATS CARDS (REFERENCE MATCH) ──────────────── */}
+      <div className="kpi-progress-grid">
+        <AdminStatCard
+          title="TOTAL ORDERS"
+          value={totalOrders}
+          icon={<ShoppingBag size={22} />}
+          variant="purple"
+          footerLabel="Live Order Volume"
+          footerValue="100%"
+          progress={100}
+        />
+        <AdminStatCard
+          title="READY TO DISPATCH"
+          value={confirmedCount}
+          icon={<Clock size={22} />}
+          variant="amber"
+          footerLabel="Action Required"
+          footerValue={`${totalOrders ? Math.round((confirmedCount / totalOrders) * 100) : 0}%`}
+          progress={totalOrders ? (confirmedCount / totalOrders) * 100 : 0}
+        />
+        <AdminStatCard
+          title="SHIPPED / TRANSIT"
+          value={shippedCount}
+          icon={<Truck size={22} />}
+          variant="blue"
+          footerLabel="In Transit"
+          footerValue={`${totalOrders ? Math.round((shippedCount / totalOrders) * 100) : 0}%`}
+          progress={totalOrders ? (shippedCount / totalOrders) * 100 : 0}
+        />
+        <AdminStatCard
+          title="TOTAL ORDER REVENUE"
+          value={formatPrice(totalRevenue)}
+          icon={<TrendingUp size={22} />}
+          variant="green"
+          footerLabel="Fulfilled Ratio"
+          footerValue={`${deliveredCount}/${totalOrders} Delivered`}
+          progress={totalOrders ? (deliveredCount / totalOrders) * 100 : 0}
+        />
       </div>
 
       {/* ── 2. FILTER & SEARCH CONTROL BAR ────────────────────────────── */}

@@ -23,6 +23,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -513,147 +514,44 @@ export default function AdminSubCategories() {
         </div>
       </div>
 
-      {/* ─── Top 4 Metric KPI Cards (Ultra-Premium SaaS Cards) ─────────────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.4rem',
-        }}
-      >
-        {/* Card 1: Total Sub-Categories */}
-        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                TOTAL SUB-CATEGORIES
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.total}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
-              ★ Master Catalog Registry
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-              color: '#7c3aed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #ddd6fe',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
-            }}
-          >
-            <FolderTree size={22} />
-          </div>
-        </div>
-
-        {/* Card 2: Active Sub-Categories */}
-        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                ACTIVE SUB-CATEGORIES
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.active}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
-              100% Active & Published
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-              color: '#16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #bbf7d0',
-              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
-            }}
-          >
-            <CheckCircle2 size={22} />
-          </div>
-        </div>
-
-        {/* Card 3: Fixed Departments Covered */}
-        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #2563eb' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                DEPARTMENTS COVERED
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.distinctCategories} <span style={{ fontSize: '1.05rem', color: '#94a3b8', fontWeight: 600 }}>/ {categories.length}</span>
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: 600, marginTop: '0.35rem' }}>
-              10 Fixed Store Verticals
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #bfdbfe',
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.12)',
-            }}
-          >
-            <Layers size={22} />
-          </div>
-        </div>
-
-        {/* Card 4: Total Items Cataloged */}
-        <div className="subcat-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                TOTAL ITEMS CATALOGED
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.totalProducts}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: '0.35rem' }}>
-              Live Product Inventory
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-              color: '#d97706',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #fde68a',
-              boxShadow: '0 2px 8px rgba(217, 119, 6, 0.12)',
-            }}
-          >
-            <Package size={22} />
-          </div>
-        </div>
+      {/* ─── Top 4 Metric KPI Progress Cards (Reference Design) ─────────────── */}
+      <div className="kpi-progress-grid">
+        <AdminStatCard
+          title="TOTAL SUB-CATEGORIES"
+          value={kpis.total}
+          icon={<FolderTree size={22} />}
+          variant="purple"
+          footerLabel="Master Catalog Registry"
+          footerValue="100%"
+          progress={100}
+        />
+        <AdminStatCard
+          title="ACTIVE SUB-CATEGORIES"
+          value={kpis.active}
+          icon={<CheckCircle2 size={22} />}
+          variant="green"
+          footerLabel="Published Status"
+          footerValue={`${kpis.total ? Math.round((kpis.active / kpis.total) * 100) : 0}% Active`}
+          progress={kpis.total ? (kpis.active / kpis.total) * 100 : 0}
+        />
+        <AdminStatCard
+          title="DEPARTMENTS COVERED"
+          value={`${kpis.distinctCategories} / ${categories.length}`}
+          icon={<Layers size={22} />}
+          variant="blue"
+          footerLabel="Store Verticals"
+          footerValue={`${Math.round((kpis.distinctCategories / (categories.length || 1)) * 100)}% Coverage`}
+          progress={(kpis.distinctCategories / (categories.length || 1)) * 100}
+        />
+        <AdminStatCard
+          title="TOTAL ITEMS CATALOGED"
+          value={kpis.totalProducts}
+          icon={<Package size={22} />}
+          variant="amber"
+          footerLabel="Live Inventory"
+          footerValue={`${kpis.totalProducts} Items`}
+          progress={100}
+        />
       </div>
 
       {/* ─── 10 Fixed Categories Horizontal Tab Strip ─────────────────────── */}

@@ -18,8 +18,10 @@ import {
   YAxis,
   Tooltip,
   Cell,
+  CartesianGrid,
 } from 'recharts';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import { formatPrice } from '../../../utils/formatPrice';
 import { useOrderStore } from '../../../store/orderStore';
 import { useCouponStore, getCouponStatus } from '../../../store/couponStore';
@@ -265,8 +267,9 @@ export default function AdminReports() {
     return Math.ceil((maxRevenueVal * 1.15) / step) * step;
   }, [maxRevenueVal]);
 
-  // Focused bar state for accessible keyboard navigation
+  // Focused and hovered bar state for interactive chart animation
   const [focusedBar, setFocusedBar] = useState(null);
+  const [hoveredBarIndex, setHoveredBarIndex] = useState(null);
 
   const handleExportCSV = () => {
     const rows = [
@@ -413,67 +416,77 @@ export default function AdminReports() {
           </div>
         </div>
 
-        {/* Revenue Breakdown - 5 Responsive Metric Cards */}
-        <div className="metrics-grid">
+        {/* Revenue Breakdown - 5 Responsive Metric Progress Cards */}
+        <div className="kpi-progress-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
           {/* 1. Gross Revenue */}
-          <div className="metric-card">
-            <div className="metric-icon-wrap" style={{ background: '#ede8f8', color: '#7c3aed' }}>
-              <DollarSign size={20} />
-            </div>
-            <div className="metric-info-col">
-              <div className="metric-val">{formatPrice(grossRevenue)}</div>
-              <div className="metric-label">Gross Revenue</div>
-            </div>
-          </div>
+          <AdminStatCard
+            title="GROSS REVENUE"
+            value={formatPrice(grossRevenue)}
+            icon={<DollarSign size={22} />}
+            variant="purple"
+            footerLabel="Total Sales Volume"
+            footerValue="100%"
+            progress={100}
+          />
 
-          {/* 2. Net Revenue (Requirement 2: Gross Revenue minus Total Discounts Given) */}
-          <div className="metric-card">
-            <div className="metric-icon-wrap" style={{ background: '#d1fae5', color: '#059669' }}>
-              <TrendingUp size={20} />
-            </div>
-            <div className="metric-info-col">
-              <div className="metric-val" style={{ color: '#059669' }}>{formatPrice(netRevenue)}</div>
-              <div className="metric-label">Net Revenue</div>
-            </div>
-          </div>
+          {/* 2. Net Revenue (Gross Revenue minus Total Discounts Given) */}
+          <AdminStatCard
+            title="NET REVENUE"
+            value={formatPrice(netRevenue)}
+            icon={<TrendingUp size={22} />}
+            variant="green"
+            footerLabel="Earnings Margin"
+            footerValue={`${grossRevenue ? Math.round((netRevenue / grossRevenue) * 100) : 100}% of Gross`}
+            progress={grossRevenue ? (netRevenue / grossRevenue) * 100 : 100}
+          />
 
           {/* 3. Total Discounts Given */}
-          <div className="metric-card">
-            <div className="metric-icon-wrap" style={{ background: '#fef3c7', color: '#d97706' }}>
-              <Tag size={20} />
-            </div>
-            <div className="metric-info-col">
-              <div className="metric-val">{formatPrice(totalDiscounts)}</div>
-              <div className="metric-label">Total Discounts Given</div>
-            </div>
-          </div>
+          <AdminStatCard
+            title="TOTAL DISCOUNTS"
+            value={formatPrice(totalDiscounts)}
+            icon={<Tag size={22} />}
+            variant="amber"
+            footerLabel="Promotional Savings"
+            footerValue={`${grossRevenue ? Math.round((totalDiscounts / grossRevenue) * 100) : 0}% Deducted`}
+            progress={grossRevenue ? (totalDiscounts / grossRevenue) * 100 : 0}
+          />
 
           {/* 4. Fulfilled Orders */}
-          <div className="metric-card">
-            <div className="metric-icon-wrap" style={{ background: '#e0f2fe', color: '#0284c7' }}>
-              <PackageCheck size={20} />
-            </div>
-            <div className="metric-info-col">
-              <div className="metric-val">{fulfilledOrdersCount}</div>
-              <div className="metric-label">Fulfilled Orders</div>
-            </div>
-          </div>
+          <AdminStatCard
+            title="FULFILLED ORDERS"
+            value={fulfilledOrdersCount}
+            icon={<PackageCheck size={22} />}
+            variant="blue"
+            footerLabel="Delivered Deliveries"
+            footerValue={`${validOrders.length} In Range`}
+            progress={validOrders.length ? (fulfilledOrdersCount / validOrders.length) * 100 : 0}
+          />
 
-          {/* 5. Customers Who Ordered (Requirement 3: Unique customers with at least 1 order in period) */}
-          <div className="metric-card">
-            <div className="metric-icon-wrap" style={{ background: '#ede9fe', color: '#4338ca' }}>
-              <Users size={20} />
-            </div>
-            <div className="metric-info-col">
-              <div className="metric-val">{customersWhoOrderedCount}</div>
-              <div className="metric-label">Customers Who Ordered</div>
-            </div>
-          </div>
+          {/* 5. Customers Who Ordered */}
+          <AdminStatCard
+            title="ACTIVE BUYERS"
+            value={customersWhoOrderedCount}
+            icon={<Users size={22} />}
+            variant="purple"
+            footerLabel="Unique Accounts"
+            footerValue={`${customersWhoOrderedCount} Customers`}
+            progress={100}
+          />
         </div>
 
         {/* Sales Revenue Trend Chart */}
-        <div className="card" style={{ padding: '24px', margin: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div
+          className="card"
+          style={{
+            padding: '24px 28px',
+            margin: 0,
+            borderRadius: '16px',
+            border: '1.5px solid #ede8f8',
+            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.04)',
+            background: '#ffffff',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
                 Revenue Velocity ({rangeLabels[activeRange]})
@@ -499,68 +512,151 @@ export default function AdminReports() {
             </span>
           </div>
 
-          <div style={{ width: '100%', height: 230 }}>
+          <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
-                margin={{ top: 12, right: 16, left: -10, bottom: 4 }}
-                barCategoryGap="20%"
+                margin={{ top: 14, right: 16, left: -10, bottom: 6 }}
+                barCategoryGap="24%"
+                onMouseLeave={() => setHoveredBarIndex(null)}
               >
                 <defs>
+                  {/* Default rich multi-stop gradient */}
                   <linearGradient id="reportsBarGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.6} />
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={1} />
+                    <stop offset="50%" stopColor="#8b5cf6" stopOpacity={0.88} />
+                    <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.4} />
                   </linearGradient>
+
+                  {/* Active/Hover elevated gradient */}
+                  <linearGradient id="reportsBarGradHover" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6d28d9" stopOpacity={1} />
+                    <stop offset="50%" stopColor="#7c3aed" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.65} />
+                  </linearGradient>
+
+                  {/* Ambient drop shadow filters for SVG bars */}
+                  <filter id="barShadow" x="-15%" y="-15%" width="130%" height="130%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#7c3aed" floodOpacity="0.16" />
+                  </filter>
+                  <filter id="activeBarShadow" x="-25%" y="-25%" width="150%" height="150%">
+                    <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#7c3aed" floodOpacity="0.32" />
+                  </filter>
                 </defs>
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+
+                {/* Subtle dashed horizontal grid lines */}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1e8ff" opacity={0.75} />
+
+                <XAxis
+                  dataKey="day"
+                  axisLine={{ stroke: '#f1e8ff', strokeWidth: 1.5 }}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 11.5, fontWeight: 600 }}
+                  dy={6}
+                />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 11 }}
+                  tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
                   domain={[0, dynamicYAxisMax]}
-                  tickFormatter={(v) => (v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`)}
+                  dx={-4}
+                  tickFormatter={(v) => (v >= 1000 ? `₹${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k` : `₹${v}`)}
                 />
-                {/* Requirement 6: Hover/Focus Tooltip showing exact date and revenue amount */}
+
+                {/* Floating dark glassmorphic tooltip */}
                 <Tooltip
-                  cursor={{ fill: 'rgba(124, 58, 237, 0.08)', radius: 6 }}
+                  cursor={{ fill: 'rgba(124, 58, 237, 0.05)', radius: 8 }}
                   content={({ active, payload }) => {
                     const item = active && payload && payload.length ? payload[0].payload : focusedBar;
                     if (!item) return null;
                     return (
                       <div
                         style={{
-                          background: '#1e1b4b',
+                          background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
                           color: '#ffffff',
-                          borderRadius: '10px',
-                          padding: '8px 14px',
-                          fontSize: '0.84rem',
-                          fontWeight: 600,
-                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '12px',
+                          padding: '10px 16px',
+                          boxShadow: '0 10px 25px -3px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(124, 58, 237, 0.3)',
+                          minWidth: '150px',
+                          backdropFilter: 'blur(8px)',
                         }}
                       >
-                        <span>{item.fullDate || item.day} — {formatPrice(item.revenue)}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                          <span
+                            style={{
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              background: '#a855f7',
+                              display: 'inline-block',
+                              boxShadow: '0 0 6px #c084fc',
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              color: '#94a3b8',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            {item.fullDate || item.day}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '1.15rem',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            letterSpacing: '-0.02em',
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: '5px',
+                          }}
+                        >
+                          <span>{formatPrice(item.revenue)}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700 }}>earnings</span>
+                        </div>
                       </div>
                     );
                   }}
                 />
+
                 <Bar
                   dataKey="revenue"
                   fill="url(#reportsBarGrad)"
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={44}
+                  radius={[8, 8, 2, 2]}
+                  maxBarSize={38}
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      tabIndex={0}
-                      role="graphics-symbol"
-                      aria-label={`${entry.fullDate || entry.day} — ${formatPrice(entry.revenue)}`}
-                      style={{ outline: 'none', cursor: 'pointer' }}
-                      onFocus={() => setFocusedBar(entry)}
-                      onBlur={() => setFocusedBar(null)}
-                    />
-                  ))}
+                  {chartData.map((entry, index) => {
+                    const isHovered = hoveredBarIndex === index;
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        tabIndex={0}
+                        role="graphics-symbol"
+                        aria-label={`${entry.fullDate || entry.day} — ${formatPrice(entry.revenue)}`}
+                        style={{
+                          outline: 'none',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                        fill={isHovered ? 'url(#reportsBarGradHover)' : 'url(#reportsBarGrad)'}
+                        filter={isHovered ? 'url(#activeBarShadow)' : 'url(#barShadow)'}
+                        onMouseEnter={() => setHoveredBarIndex(index)}
+                        onMouseLeave={() => setHoveredBarIndex(null)}
+                        onFocus={() => {
+                          setFocusedBar(entry);
+                          setHoveredBarIndex(index);
+                        }}
+                        onBlur={() => {
+                          setFocusedBar(null);
+                          setHoveredBarIndex(null);
+                        }}
+                      />
+                    );
+                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

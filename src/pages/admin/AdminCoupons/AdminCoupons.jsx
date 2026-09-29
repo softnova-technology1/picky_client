@@ -1,7 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Power, Tag, Zap, Copy, Check, Search, Info } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Power,
+  Tag,
+  Zap,
+  Copy,
+  Check,
+  Search,
+  Info,
+  CheckCircle2,
+  Sparkles,
+  Clock,
+  TrendingUp,
+  Gift,
+  Ticket,
+  AlertTriangle,
+} from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -538,9 +557,25 @@ export default function AdminCoupons() {
     showToast(`Discount rule "${d.name}" deleted permanently`, 'success');
   };
 
+  // Derived KPIs for Promo & Offers Dashboard
+  const totalCampaigns = coupons.length + discounts.length;
+  const activeCouponsCount = useMemo(
+    () => coupons.filter((c) => getCouponStatus(c) === 'Active').length,
+    [coupons]
+  );
+  const activeDiscountsCount = useMemo(
+    () => discounts.filter((d) => d.isActive !== false).length,
+    [discounts]
+  );
+  const totalClaimsCount = useMemo(() => {
+    const cCount = coupons.reduce((sum, c) => sum + (Number(c.usageCount) || 0), 0);
+    const dCount = discounts.reduce((sum, d) => sum + (Number(d.totalUses || d.usageCount) || 0), 0);
+    return cCount + dCount;
+  }, [coupons, discounts]);
+
   return (
     <AdminLayout title="Coupons & Promotional Offers">
-      {/* Header & Top Action Bar */}
+      {/* Header & Page Title */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
@@ -550,65 +585,180 @@ export default function AdminCoupons() {
             Drive repeat purchases with checkout codes and tiered store discounts
           </span>
         </div>
-
-        {activeTab === 'discounts' && (
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button
-              onClick={handleOpenAddDiscount}
-              className="admin-period-select-btn"
-              style={{
-                background: '#7c3aed',
-                color: '#ffffff',
-                borderColor: '#7c3aed',
-                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-              }}
-            >
-              <Plus size={16} />
-              <span>Create Automatic Offer</span>
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Modern Shaded Lavender Pill Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        <button
-          onClick={() => handleTabChange('coupons')}
-          style={{
-            padding: '0.45rem 1.15rem',
-            borderRadius: '9999px',
-            fontSize: '0.84rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            border: '1px solid',
-            background: activeTab === 'coupons' ? '#7c3aed' : '#ede8f8',
-            color: activeTab === 'coupons' ? '#ffffff' : '#4c1d95',
-            borderColor: activeTab === 'coupons' ? '#7c3aed' : '#dfd5f5',
-            boxShadow: activeTab === 'coupons' ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none',
-          }}
-        >
-          🏷️ Promo Coupons ({coupons.length})
-        </button>
+      {/* ── 1. Top 4 Metric KPI Progress Cards (Reference Design) ── */}
+      <div className="kpi-progress-grid">
+        <AdminStatCard
+          title="TOTAL PROMOTIONS"
+          value={totalCampaigns}
+          icon={<Ticket size={22} />}
+          variant="purple"
+          footerLabel="Campaign Inventory"
+          footerValue="100% Volume"
+          progress={100}
+        />
+        <AdminStatCard
+          title="ACTIVE COUPONS"
+          value={activeCouponsCount}
+          icon={<CheckCircle2 size={22} />}
+          variant="green"
+          footerLabel="Redeemable at Checkout"
+          footerValue={`${coupons.length ? Math.round((activeCouponsCount / coupons.length) * 100) : 0}% Active`}
+          progress={coupons.length ? (activeCouponsCount / coupons.length) * 100 : 0}
+        />
+        <AdminStatCard
+          title="AUTOMATIC OFFERS"
+          value={activeDiscountsCount}
+          icon={<Zap size={22} />}
+          variant="amber"
+          footerLabel="Cart Tier Triggers"
+          footerValue={`${activeDiscountsCount}/${discounts.length} Active`}
+          progress={discounts.length ? (activeDiscountsCount / (discounts.length || 1)) * 100 : 0}
+        />
+        <AdminStatCard
+          title="TOTAL REDEMPTIONS"
+          value={totalClaimsCount.toLocaleString()}
+          icon={<Sparkles size={22} />}
+          variant="blue"
+          footerLabel="Checkout Savings Claimed"
+          footerValue={`${totalClaimsCount} Uses`}
+          progress={100}
+        />
+      </div>
 
-        <button
-          onClick={() => handleTabChange('discounts')}
+      {/* ── 2. Modern Segmented Tab Switcher & Action CTA Bar ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.4rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div
           style={{
-            padding: '0.45rem 1.15rem',
+            display: 'inline-flex',
+            background: '#ffffff',
+            padding: '5px',
             borderRadius: '9999px',
-            fontSize: '0.84rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            border: '1px solid',
-            background: activeTab === 'discounts' ? '#7c3aed' : '#ede8f8',
-            color: activeTab === 'discounts' ? '#ffffff' : '#4c1d95',
-            borderColor: activeTab === 'discounts' ? '#7c3aed' : '#dfd5f5',
-            boxShadow: activeTab === 'discounts' ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none',
+            border: '1.5px solid #ede8f8',
+            boxShadow: '0 2px 10px rgba(124, 58, 237, 0.04)',
+            gap: '0.4rem',
           }}
         >
-          ⚡ Automatic Offers ({discounts.length})
-        </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('coupons')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.55rem 1.3rem',
+              borderRadius: '9999px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              border: 'none',
+              background: activeTab === 'coupons' ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : 'transparent',
+              color: activeTab === 'coupons' ? '#ffffff' : '#64748b',
+              boxShadow: activeTab === 'coupons' ? '0 4px 14px rgba(124, 58, 237, 0.3)' : 'none',
+            }}
+          >
+            <Tag size={15} color={activeTab === 'coupons' ? '#ffffff' : '#7c3aed'} />
+            <span>Promo Coupons</span>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                padding: '0.12rem 0.5rem',
+                borderRadius: '9999px',
+                background: activeTab === 'coupons' ? 'rgba(255, 255, 255, 0.22)' : '#f3e8ff',
+                color: activeTab === 'coupons' ? '#ffffff' : '#7c3aed',
+              }}
+            >
+              {coupons.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('discounts')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.55rem 1.3rem',
+              borderRadius: '9999px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              border: 'none',
+              background: activeTab === 'discounts' ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : 'transparent',
+              color: activeTab === 'discounts' ? '#ffffff' : '#64748b',
+              boxShadow: activeTab === 'discounts' ? '0 4px 14px rgba(124, 58, 237, 0.3)' : 'none',
+            }}
+          >
+            <Zap size={15} color={activeTab === 'discounts' ? '#ffffff' : '#f59e0b'} />
+            <span>Automatic Offers</span>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                padding: '0.12rem 0.5rem',
+                borderRadius: '9999px',
+                background: activeTab === 'discounts' ? 'rgba(255, 255, 255, 0.22)' : '#fef3c7',
+                color: activeTab === 'discounts' ? '#ffffff' : '#b45309',
+              }}
+            >
+              {discounts.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Primary Action Button */}
+        {activeTab === 'coupons' ? (
+          <button
+            onClick={handleOpenAddCoupon}
+            className="admin-period-select-btn"
+            style={{
+              height: '42px',
+              padding: '0 1.35rem',
+              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '12px',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.86rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            <span>Create Coupon Code</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleOpenAddDiscount}
+            className="admin-period-select-btn"
+            style={{
+              height: '42px',
+              padding: '0 1.35rem',
+              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '12px',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.86rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            <span>Create Automatic Offer</span>
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -616,49 +766,50 @@ export default function AdminCoupons() {
       ) : activeTab === 'coupons' ? (
         /* ── COUPONS TABLE ─────────────────────────────────────────────────── */
         <div>
-          {/* Header Controls Row: Search + Filter on Left, Create Coupon on Right */}
+          {/* Header Controls Row: Search + Filter */}
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: '1rem',
               flexWrap: 'wrap',
               gap: '0.85rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flex: 1 }}>
               {/* Search by coupon code */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: '260px' }}>
                 <Search
-                  size={15}
-                  style={{ position: 'absolute', left: '0.95rem', color: '#7c3aed', pointerEvents: 'none' }}
+                  size={16}
+                  style={{ position: 'absolute', left: '1rem', color: '#7c3aed', pointerEvents: 'none' }}
                 />
                 <input
                   type="text"
-                  placeholder="Search by coupon code..."
+                  placeholder="Search by coupon code (e.g. WELCOME100)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
-                    width: '260px',
+                    width: '100%',
                     height: '42px',
-                    padding: '0 1rem 0 2.5rem',
+                    padding: '0 1rem 0 2.6rem',
                     background: '#ffffff',
                     border: '1.5px solid #e2e8f0',
                     borderRadius: '12px',
                     fontSize: '0.84rem',
                     color: '#1e1b4b',
+                    fontWeight: 500,
                     outline: 'none',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
                     transition: 'all 0.18s ease',
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#7c3aed';
-                    e.target.style.boxShadow = '0 0 0 3.5px rgba(124, 58, 237, 0.16)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.12)';
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = '#e2e8f0';
-                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.04)';
+                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.03)';
                   }}
                 />
               </div>
@@ -668,43 +819,46 @@ export default function AdminCoupons() {
                 value={statusFilter}
                 onChange={(val) => setStatusFilter(val)}
                 options={[
-                  { value: 'ALL', label: 'All Status' },
-                  { value: 'Active', label: 'Active' },
-                  { value: 'Disabled', label: 'Disabled' },
-                  { value: 'Expired', label: 'Expired' },
+                  { value: 'ALL', label: 'All Statuses' },
+                  { value: 'Active', label: 'Active Codes' },
+                  { value: 'Disabled', label: 'Disabled Codes' },
+                  { value: 'Expired', label: 'Expired Codes' },
                 ]}
-                minWidth="145px"
+                minWidth="155px"
               />
             </div>
-
-            {/* Create Coupon Code Button */}
-            <button
-              onClick={handleOpenAddCoupon}
-              className="admin-period-select-btn"
-              style={{
-                height: '42px',
-                padding: '0 1.25rem',
-                background: '#7c3aed',
-                color: '#ffffff',
-                borderColor: '#7c3aed',
-                borderRadius: '12px',
-                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.84rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <Plus size={16} />
-              <span>Create Coupon Code</span>
-            </button>
           </div>
 
-          <div style={{ background: '#faf8fe', border: '1px solid #ede8f8', borderRadius: '10px', padding: '0.65rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <Tag size={15} color="#7c3aed" />
-            <span style={{ fontSize: '0.82rem', color: '#4c1d95', fontWeight: 600 }}>
+          {/* Luxury Ambient Info Banner */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #fbf9fe 0%, #f6f0ff 100%)',
+              border: '1px solid #ede8f8',
+              borderRadius: '12px',
+              padding: '0.75rem 1.1rem',
+              marginBottom: '1.15rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              boxShadow: '0 1px 4px rgba(124, 58, 237, 0.03)',
+            }}
+          >
+            <div
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '8px',
+                background: '#ede8f8',
+                color: '#7c3aed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Ticket size={16} />
+            </div>
+            <span style={{ fontSize: '0.82rem', color: '#4c1d95', fontWeight: 600, lineHeight: 1.4 }}>
               <strong>Promo Coupons:</strong> Customer manually enters coupon code at checkout to claim discounts.
             </span>
           </div>
@@ -716,21 +870,22 @@ export default function AdminCoupons() {
               WebkitOverflowScrolling: 'touch',
               borderRadius: '16px',
               border: '1.5px solid #ede8f8',
-              boxShadow: '0 2px 12px rgba(124, 58, 237, 0.04)',
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.04)',
+              background: '#ffffff',
             }}
           >
             <table className="admin-table" style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
               <thead>
-                <tr>
-                  <th style={{ whiteSpace: 'nowrap' }}>Coupon Code</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Applicable On</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Discount Value</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Min. Order</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Max Cap</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Validity</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Total Uses</th>
-                  <th style={{ whiteSpace: 'nowrap' }}>Status</th>
-                  <th style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>Actions</th>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 1rem' }}>Coupon Code</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Applicable On</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Discount Value</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Min. Order</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Max Cap</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Validity</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Total Uses</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Status</th>
+                  <th style={{ whiteSpace: 'nowrap', textAlign: 'center', padding: '0.85rem 1rem' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -740,8 +895,8 @@ export default function AdminCoupons() {
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
                         <div
                           style={{
-                            width: '46px',
-                            height: '46px',
+                            width: '48px',
+                            height: '48px',
                             borderRadius: '50%',
                             background: '#ede8f8',
                             display: 'flex',
@@ -750,7 +905,7 @@ export default function AdminCoupons() {
                             color: '#7c3aed',
                           }}
                         >
-                          <Search size={20} />
+                          <Search size={22} />
                         </div>
                         <strong style={{ fontSize: '0.98rem', color: '#1e1b4b' }}>
                           {coupons.length === 0 ? 'No promo coupons created yet' : 'No coupons found'}
@@ -785,7 +940,7 @@ export default function AdminCoupons() {
                     </td>
                   </tr>
                 ) : (
-                  filteredCoupons.map((c) => {
+                  filteredCoupons.map((c, index) => {
                     const status = getCouponStatus(c);
                     const expiring = isExpiringSoon(c, status);
                     const limit =
@@ -800,75 +955,87 @@ export default function AdminCoupons() {
                         key={c._id}
                         id={`coupon-row-${(c.code || '').toUpperCase()}`}
                         style={{
-                          transition: 'background-color 0.4s ease',
+                          background: index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                          transition: 'background-color 0.2s ease',
                           backgroundColor:
                             highlightedRow === (c.code || '').toUpperCase()
                               ? '#ede8f8'
                               : undefined,
+                          borderBottom: '1px solid #f1f5f9',
                         }}
                       >
-                        {/* 1. COUPON CODE */}
-                        <td>
+                        {/* 1. COUPON CODE (Ticket Badge) */}
+                        <td style={{ padding: '0.85rem 1rem' }}>
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
                             <code
                               style={{
-                                fontSize: '0.92rem',
+                                fontSize: '0.88rem',
                                 fontWeight: 800,
-                                letterSpacing: '0.04em',
-                                background: '#ede8f8',
-                                color: '#5b21b6',
-                                padding: '0.25rem 0.65rem',
-                                borderRadius: '6px',
-                                border: '1px solid #dfd5f5',
+                                letterSpacing: '0.05em',
+                                background: '#f5f0ff',
+                                color: '#6d28d9',
+                                padding: '0.3rem 0.75rem',
+                                borderRadius: '8px',
+                                border: '1.5px dashed #c084fc',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                boxShadow: 'inset 0 1px 2px rgba(124, 58, 237, 0.06)',
                               }}
                             >
+                              <Ticket size={13} style={{ opacity: 0.75 }} />
                               {c.code}
                             </code>
                             <button
                               type="button"
                               onClick={() => handleCopyCode(c.code)}
-                              title={copiedCode === c.code ? 'Copied!' : 'Copy coupon code'}
+                              title={copiedCode === c.code ? 'Copied to Clipboard!' : 'Copy coupon code'}
                               aria-label={`Copy coupon code ${c.code}`}
                               style={{
-                                background: copiedCode === c.code ? '#dcfce7' : '#f5f3ff',
+                                background: copiedCode === c.code ? '#dcfce7' : '#ffffff',
                                 border: `1px solid ${copiedCode === c.code ? '#86efac' : '#ddd6fe'}`,
-                                borderRadius: '6px',
-                                padding: '0.3rem',
+                                borderRadius: '8px',
+                                padding: '0.32rem',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: copiedCode === c.code ? '#15803d' : '#7c3aed',
                                 transition: 'all 0.15s ease',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                               }}
                             >
-                              {copiedCode === c.code ? <Check size={13} /> : <Copy size={13} />}
+                              {copiedCode === c.code ? <Check size={14} /> : <Copy size={14} />}
                             </button>
                           </div>
                         </td>
 
                         {/* 2. APPLICABLE ON */}
-                        <td>
+                        <td style={{ padding: '0.85rem 0.85rem' }}>
                           {renderApplicableBadge(c.applicableOn)}
                         </td>
 
                         {/* 3. DISCOUNT VALUE */}
-                        <td>
-                          <strong style={{ color: '#1e1b4b' }}>
+                        <td style={{ padding: '0.85rem 0.85rem' }}>
+                          <strong style={{ color: '#1e1b4b', fontSize: '0.92rem', fontWeight: 800 }}>
                             {c.type === 'percentage' ? `${c.value}% OFF` : `${formatPrice(c.value)} Flat`}
                           </strong>
                         </td>
 
                         {/* 4. MIN. ORDER */}
-                        <td>{c.minOrderAmount ? formatPrice(c.minOrderAmount) : 'No Minimum'}</td>
+                        <td style={{ padding: '0.85rem 0.85rem', color: '#475569', fontWeight: 600 }}>
+                          {c.minOrderAmount ? formatPrice(c.minOrderAmount) : 'No Minimum'}
+                        </td>
 
                         {/* 5. MAX CAP */}
-                        <td>{c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}</td>
+                        <td style={{ padding: '0.85rem 0.85rem', color: '#475569', fontWeight: 600 }}>
+                          {c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}
+                        </td>
 
                         {/* 6. VALIDITY */}
-                        <td>
+                        <td style={{ padding: '0.85rem 0.85rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 600, whiteSpace: 'nowrap' }}>
                               {c.validFrom && c.validTill
                                 ? `${formatValidityDate(c.validFrom)} - ${formatValidityDate(c.validTill)}`
                                 : c.validTill
@@ -883,7 +1050,7 @@ export default function AdminCoupons() {
                                   gap: '0.2rem',
                                   fontSize: '0.68rem',
                                   fontWeight: 700,
-                                  padding: '0.15rem 0.45rem',
+                                  padding: '0.15rem 0.5rem',
                                   borderRadius: '9999px',
                                   background: '#fff7ed',
                                   color: '#c2410c',
@@ -891,24 +1058,24 @@ export default function AdminCoupons() {
                                   whiteSpace: 'nowrap',
                                 }}
                               >
-                                Expiring soon
+                                ⚠️ Expiring soon
                               </span>
                             )}
                           </div>
                         </td>
 
                         {/* 7. TOTAL USES */}
-                        <td>
+                        <td style={{ padding: '0.85rem 0.85rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <span style={{ fontWeight: 600, color: '#334155' }}>{c.usageCount || 0} times</span>
-                            <span style={{ fontSize: '0.74rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-                              {limit !== null ? `Max ${limit} per customer` : 'No per-customer limit'}
+                            <span style={{ fontWeight: 700, color: '#1e1b4b', fontSize: '0.86rem' }}>{c.usageCount || 0} times</span>
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                              {limit !== null ? `Max ${limit} per customer` : 'No limit per customer'}
                             </span>
                           </div>
                         </td>
 
                         {/* 8. STATUS */}
-                        <td>
+                        <td style={{ padding: '0.85rem 0.85rem' }}>
                           {status === 'Expired' ? (
                             <span
                               className="adm-status-pill"
@@ -928,13 +1095,20 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 9. ACTIONS */}
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                        <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', alignItems: 'center' }}>
                             {status !== 'Expired' && (
                               <button
                                 onClick={() => handleToggleCoupon(c)}
                                 className="admin-period-select-btn"
-                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                                style={{
+                                  padding: '0.38rem 0.75rem',
+                                  fontSize: '0.78rem',
+                                  borderRadius: '8px',
+                                  background: c.isActive ? '#ffffff' : '#f0fdf4',
+                                  borderColor: c.isActive ? '#e2e8f0' : '#bbf7d0',
+                                  color: c.isActive ? '#64748b' : '#15803d',
+                                }}
                                 title={c.isActive ? 'Disable coupon' : 'Activate coupon'}
                               >
                                 <Power size={13} color={c.isActive ? '#64748b' : '#16a34a'} />
@@ -944,7 +1118,15 @@ export default function AdminCoupons() {
                             <button
                               onClick={() => handleOpenEditCoupon(c)}
                               className="admin-period-select-btn"
-                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                              style={{
+                                padding: '0.38rem 0.75rem',
+                                fontSize: '0.78rem',
+                                borderRadius: '8px',
+                                background: '#ffffff',
+                                borderColor: '#e2e8f0',
+                                color: '#7c3aed',
+                              }}
+                              title="Edit coupon"
                             >
                               <Edit2 size={13} color="#7c3aed" />
                               <span>Edit</span>
@@ -952,7 +1134,15 @@ export default function AdminCoupons() {
                             <button
                               onClick={() => handleDeleteCoupon(c)}
                               className="admin-period-select-btn"
-                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', color: '#dc2626' }}
+                              style={{
+                                padding: '0.38rem 0.75rem',
+                                fontSize: '0.78rem',
+                                borderRadius: '8px',
+                                background: '#ffffff',
+                                borderColor: '#fee2e2',
+                                color: '#dc2626',
+                              }}
+                              title="Delete coupon"
                             >
                               <Trash2 size={13} color="#dc2626" />
                               <span>Delete</span>
@@ -970,12 +1160,40 @@ export default function AdminCoupons() {
       ) : (
         /* ── DISCOUNTS TABLE ───────────────────────────────────────────────── */
         <div>
-          <div style={{ background: '#faf8fe', border: '1px solid #ede8f8', borderRadius: '10px', padding: '0.65rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <Zap size={15} color="#7c3aed" />
-            <span style={{ fontSize: '0.82rem', color: '#4c1d95', fontWeight: 600 }}>
+          {/* Luxury Ambient Info Banner for Automatic Offers */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #fbf9fe 0%, #f6f0ff 100%)',
+              border: '1px solid #ede8f8',
+              borderRadius: '12px',
+              padding: '0.75rem 1.1rem',
+              marginBottom: '1.15rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              boxShadow: '0 1px 4px rgba(124, 58, 237, 0.03)',
+            }}
+          >
+            <div
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '8px',
+                background: '#ede8f8',
+                color: '#7c3aed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Zap size={16} />
+            </div>
+            <span style={{ fontSize: '0.82rem', color: '#4c1d95', fontWeight: 600, lineHeight: 1.4 }}>
               <strong>Automatic Offers:</strong> System automatically applies eligible offers at checkout when cart criteria are met. Only the highest-priority eligible offer is applied per order, unless marked Stackable.
             </span>
           </div>
+
           <div
             className="table-container"
             style={{
@@ -983,22 +1201,22 @@ export default function AdminCoupons() {
               WebkitOverflowScrolling: 'touch',
               borderRadius: '16px',
               border: '1.5px solid #ede8f8',
-              boxShadow: '0 2px 12px rgba(124, 58, 237, 0.04)',
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.04)',
               background: '#ffffff',
             }}
           >
             <table className="admin-table" style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
               <thead>
-                <tr>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Offer Name</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Applicable On</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Target Audience</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Condition</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Benefit</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Max Discount</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Validity</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>Total Uses</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '12px 10px' }}>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 1rem' }}>Offer Name</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Applicable On</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Target Audience</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Condition</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Benefit</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Max Discount</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Validity</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>Total Uses</th>
+                  <th style={{ whiteSpace: 'nowrap', padding: '0.85rem 0.85rem' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', verticalAlign: 'middle' }}>
                       <span>Status</span>
                       <span
@@ -1015,7 +1233,7 @@ export default function AdminCoupons() {
                       </span>
                     </div>
                   </th>
-                  <th style={{ whiteSpace: 'nowrap', textAlign: 'center', padding: '12px 10px' }}>Actions</th>
+                  <th style={{ whiteSpace: 'nowrap', textAlign: 'center', padding: '0.85rem 1rem' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1025,8 +1243,8 @@ export default function AdminCoupons() {
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
                         <div
                           style={{
-                            width: '46px',
-                            height: '46px',
+                            width: '48px',
+                            height: '48px',
                             borderRadius: '50%',
                             background: '#ede8f8',
                             display: 'flex',
@@ -1035,7 +1253,7 @@ export default function AdminCoupons() {
                             color: '#7c3aed',
                           }}
                         >
-                          <Zap size={20} />
+                          <Zap size={22} />
                         </div>
                         <strong style={{ fontSize: '0.98rem', color: '#1e1b4b' }}>
                           No automatic offers created yet
@@ -1047,15 +1265,22 @@ export default function AdminCoupons() {
                     </td>
                   </tr>
                 ) : (
-                  discounts.map((d) => {
+                  discounts.map((d, index) => {
                     const status = getDiscountStatus(d);
                     const expiring = isExpiringSoon(d, status);
                     const bType = d.benefitType || d.type || 'flat';
 
                     return (
-                      <tr key={d._id}>
+                      <tr
+                        key={d._id}
+                        style={{
+                          background: index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                          borderBottom: '1px solid #f1f5f9',
+                          transition: 'background-color 0.2s ease',
+                        }}
+                      >
                         {/* 1. OFFER NAME */}
-                        <td style={{ padding: '14px 10px', minWidth: '180px' }}>
+                        <td style={{ padding: '0.85rem 1rem', minWidth: '180px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-start' }}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                               <strong style={{ fontSize: '0.92rem', color: '#1e1b4b' }}>{d.name}</strong>
@@ -1075,7 +1300,7 @@ export default function AdminCoupons() {
                                   }}
                                   title="This offer can be stacked with other eligible promotions"
                                 >
-                                  Stackable
+                                  ✨ Stackable
                                 </span>
                               )}
                             </div>
@@ -1088,12 +1313,12 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 2. APPLICABLE ON */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
                           {renderApplicableBadge(d.applicableOn)}
                         </td>
 
                         {/* 3. TARGET AUDIENCE */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
                           <span
                             style={{
                               fontSize: '0.78rem',
@@ -1113,7 +1338,7 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 4. CONDITION */}
-                        <td style={{ padding: '14px 10px', maxWidth: '190px' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', maxWidth: '190px' }}>
                           <span
                             style={{
                               fontSize: '0.8rem',
@@ -1132,14 +1357,14 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 5. BENEFIT */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
-                          <strong style={{ color: '#1e1b4b', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
+                          <strong style={{ color: '#1e1b4b', fontSize: '0.92rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
                             {bType === 'percentage' ? `${d.value}% OFF` : `${formatPrice(d.value)} Flat`}
                           </strong>
                         </td>
 
                         {/* 6. MAX DISCOUNT */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
                           {bType === 'flat' ? (
                             <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.95rem' }}>—</span>
                           ) : d.maxDiscountAmount ? (
@@ -1152,14 +1377,14 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 7. VALIDITY */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
                           {!d.validFrom && !d.validTill ? (
                             <span style={{ fontSize: '0.84rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap' }}>
                               No expiry
                             </span>
                           ) : (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 600, whiteSpace: 'nowrap' }}>
                                 {d.validFrom && d.validTill
                                   ? `${formatValidityDate(d.validFrom)} - ${formatValidityDate(d.validTill)}`
                                   : d.validTill
@@ -1174,7 +1399,7 @@ export default function AdminCoupons() {
                                     gap: '0.2rem',
                                     fontSize: '0.68rem',
                                     fontWeight: 700,
-                                    padding: '0.15rem 0.45rem',
+                                    padding: '0.15rem 0.5rem',
                                     borderRadius: '9999px',
                                     background: '#fff7ed',
                                     color: '#c2410c',
@@ -1182,7 +1407,7 @@ export default function AdminCoupons() {
                                     whiteSpace: 'nowrap',
                                   }}
                                 >
-                                  Expiring soon
+                                  ⚠️ Expiring soon
                                 </span>
                               )}
                             </div>
@@ -1190,14 +1415,14 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 8. TOTAL USES */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
-                          <span style={{ fontWeight: 600, color: '#334155', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontWeight: 700, color: '#1e1b4b', fontSize: '0.86rem', whiteSpace: 'nowrap' }}>
                             {d.totalUses !== undefined ? d.totalUses : 0} times
                           </span>
                         </td>
 
                         {/* 9. STATUS */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '0.85rem 0.85rem', whiteSpace: 'nowrap' }}>
                           {status === 'Expired' ? (
                             <span
                               className="adm-status-pill"
@@ -1217,13 +1442,20 @@ export default function AdminCoupons() {
                         </td>
 
                         {/* 10. ACTIONS */}
-                        <td style={{ padding: '14px 10px', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                        <td style={{ padding: '0.85rem 1rem', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', alignItems: 'center' }}>
                             {status !== 'Expired' && (
                               <button
                                 onClick={() => handleToggleDiscount(d)}
                                 className="admin-period-select-btn"
-                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                                style={{
+                                  padding: '0.38rem 0.75rem',
+                                  fontSize: '0.78rem',
+                                  borderRadius: '8px',
+                                  background: d.isActive ? '#ffffff' : '#f0fdf4',
+                                  borderColor: d.isActive ? '#e2e8f0' : '#bbf7d0',
+                                  color: d.isActive ? '#64748b' : '#15803d',
+                                }}
                                 title={d.isActive ? 'Disable offer' : 'Activate offer'}
                               >
                                 <Power size={13} color={d.isActive ? '#64748b' : '#16a34a'} />
@@ -1233,7 +1465,15 @@ export default function AdminCoupons() {
                             <button
                               onClick={() => handleOpenEditDiscount(d)}
                               className="admin-period-select-btn"
-                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                              style={{
+                                padding: '0.38rem 0.75rem',
+                                fontSize: '0.78rem',
+                                borderRadius: '8px',
+                                background: '#ffffff',
+                                borderColor: '#e2e8f0',
+                                color: '#7c3aed',
+                              }}
+                              title="Edit offer"
                             >
                               <Edit2 size={13} color="#7c3aed" />
                               <span>Edit</span>
@@ -1241,7 +1481,15 @@ export default function AdminCoupons() {
                             <button
                               onClick={() => handleDeleteDiscount(d)}
                               className="admin-period-select-btn"
-                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', color: '#dc2626' }}
+                              style={{
+                                padding: '0.38rem 0.75rem',
+                                fontSize: '0.78rem',
+                                borderRadius: '8px',
+                                background: '#ffffff',
+                                borderColor: '#fee2e2',
+                                color: '#dc2626',
+                              }}
+                              title="Delete offer"
                             >
                               <Trash2 size={13} color="#dc2626" />
                               <span>Delete</span>

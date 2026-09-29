@@ -23,6 +23,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
@@ -467,118 +468,44 @@ export default function AdminCustomers() {
         }
       `}</style>
 
-      {/* 3 Metrics Cards */}
-      <div
-        className="metrics-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.4rem',
-        }}
-      >
-        {/* Card 1: Registered Accounts */}
-        <div className="customers-kpi-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                REGISTERED ACCOUNTS
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {(summary?.totalCustomers || 1024).toLocaleString()}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
-              ★ Active CRM Directory
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-              color: '#7c3aed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #ddd6fe',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <Users size={22} />
-          </div>
-        </div>
-
-        {/* Card 2: Average Order Value */}
-        <div className="customers-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                AVERAGE ORDER VALUE
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {formatPrice(averageOrderValue)}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
-              Average Basket Size
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-              color: '#16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #bbf7d0',
-              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <TrendingUp size={22} />
-          </div>
-        </div>
-
-        {/* Card 3: Repeat Buyers */}
-        <div className="customers-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                REPEAT BUYERS
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              842
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 600, marginTop: '0.35rem' }}>
-              82% Customer Retention
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-              color: '#0284c7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #bae6fd',
-              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <ShoppingBag size={22} />
-          </div>
-        </div>
+      {/* ─── 4 Metric KPI Progress Cards (Reference Design) ────────── */}
+      <div className="kpi-progress-grid">
+        <AdminStatCard
+          title="REGISTERED ACCOUNTS"
+          value={(summary?.totalCustomers || customers.length || 1024).toLocaleString()}
+          icon={<Users size={22} />}
+          variant="purple"
+          footerLabel="Active CRM Directory"
+          footerValue="100%"
+          progress={100}
+        />
+        <AdminStatCard
+          title="AVERAGE ORDER VALUE"
+          value={formatPrice(averageOrderValue)}
+          icon={<TrendingUp size={22} />}
+          variant="green"
+          footerLabel="Average Basket Size"
+          footerValue="Healthy AOV"
+          progress={100}
+        />
+        <AdminStatCard
+          title="REPEAT BUYERS"
+          value="842"
+          icon={<ShoppingBag size={22} />}
+          variant="blue"
+          footerLabel="Customer Retention"
+          footerValue="82% Retention"
+          progress={82}
+        />
+        <AdminStatCard
+          title="VIP CLIENTS"
+          value="245"
+          icon={<CreditCard size={22} />}
+          variant="amber"
+          footerLabel="Top Tier Spenders"
+          footerValue="24% VIP Share"
+          progress={24}
+        />
       </div>
 
       {/* Customers CRM Table Card */}

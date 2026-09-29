@@ -198,8 +198,8 @@ export default function Select({
                   background: isSelected
                     ? '#ede8f8'
                     : isHighlighted
-                    ? '#faf5ff'
-                    : 'transparent',
+                      ? '#faf5ff'
+                      : 'transparent',
                   cursor: 'pointer',
                   transition: 'background 0.12s ease',
                 }}

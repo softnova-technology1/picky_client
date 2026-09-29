@@ -22,6 +22,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -552,237 +553,52 @@ export default function AdminInventory() {
         }
       `}</style>
 
-      {/* ─── 4 Clickable Top KPI Stat Cards (Ultra-Premium SaaS Cards) ──────── */}
-      <div
-        className="metrics-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.4rem',
-        }}
-      >
-        {/* Card 1: Total Product Units */}
-        <div
-          role="button"
-          tabIndex={0}
+      {/* ─── 4 Clickable Top KPI Progress Cards (Reference Design) ──────── */}
+      <div className="kpi-progress-grid">
+        <AdminStatCard
+          title="TOTAL PRODUCT UNITS"
+          value={`${kpis.totalStockUnits.toLocaleString()} Units`}
+          icon={<Boxes size={22} />}
+          variant="purple"
+          footerLabel="Live Master Inventory"
+          footerValue="100%"
+          progress={100}
+          isActive={selectedStatus === 'all'}
           onClick={() => setSelectedStatus('all')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setSelectedStatus('all');
-            }
-          }}
-          className="inventory-kpi-card"
-          title="Click to view all inventory products"
-          style={{
-            borderLeft: '4px solid #7c3aed',
-            borderColor: selectedStatus === 'all' ? '#7c3aed' : '#e2e8f0',
-            borderLeftColor: '#7c3aed',
-            boxShadow:
-              selectedStatus === 'all'
-                ? '0 6px 20px rgba(124, 58, 237, 0.16)'
-                : '0 2px 10px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                TOTAL PRODUCT UNITS
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.totalStockUnits.toLocaleString()}
-              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#7c3aed', marginLeft: '0.35rem' }}>Units</span>
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
-              ★ Live Master Inventory
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-              color: '#7c3aed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #ddd6fe',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <Boxes size={22} />
-          </div>
-        </div>
-
-        {/* Card 2: In Stock Items */}
-        <div
-          role="button"
-          tabIndex={0}
+        />
+        <AdminStatCard
+          title="IN STOCK ITEMS"
+          value={kpis.inStock}
+          icon={<CheckCircle2 size={22} />}
+          variant="green"
+          footerLabel="Ready for Dispatch"
+          footerValue={`${kpis.totalProducts ? Math.round((kpis.inStock / kpis.totalProducts) * 100) : 0}% In Stock`}
+          progress={kpis.totalProducts ? (kpis.inStock / kpis.totalProducts) * 100 : 0}
+          isActive={selectedStatus === 'in_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'in_stock' ? 'all' : 'in_stock'))}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setSelectedStatus((prev) => (prev === 'in_stock' ? 'all' : 'in_stock'));
-            }
-          }}
-          className="inventory-kpi-card"
-          title="Click to filter by In Stock items"
-          style={{
-            borderLeft: '4px solid #16a34a',
-            borderColor: selectedStatus === 'in_stock' ? '#16a34a' : '#e2e8f0',
-            borderLeftColor: '#16a34a',
-            boxShadow:
-              selectedStatus === 'in_stock'
-                ? '0 6px 20px rgba(22, 163, 74, 0.16)'
-                : '0 2px 10px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                IN STOCK ITEMS
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.inStock}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
-              Ready for Dispatch
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-              color: '#16a34a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #bbf7d0',
-              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <CheckCircle2 size={22} />
-          </div>
-        </div>
-
-        {/* Card 3: Low Stock Alerts */}
-        <div
-          role="button"
-          tabIndex={0}
+        />
+        <AdminStatCard
+          title="LOW STOCK ALERTS"
+          value={kpis.lowStock}
+          icon={<AlertTriangle size={22} />}
+          variant="amber"
+          footerLabel={`Needs Restock (≤ ${LOW_STOCK_THRESHOLD})`}
+          footerValue={`${kpis.lowStock} Items`}
+          progress={kpis.totalProducts ? (kpis.lowStock / kpis.totalProducts) * 100 : 0}
+          isActive={selectedStatus === 'low_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'low_stock' ? 'all' : 'low_stock'))}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setSelectedStatus((prev) => (prev === 'low_stock' ? 'all' : 'low_stock'));
-            }
-          }}
-          className="inventory-kpi-card"
-          title={`Click to filter by Low Stock items (≤ ${LOW_STOCK_THRESHOLD})`}
-          style={{
-            borderLeft: '4px solid #d97706',
-            borderColor: selectedStatus === 'low_stock' ? '#d97706' : '#e2e8f0',
-            borderLeftColor: '#d97706',
-            boxShadow:
-              selectedStatus === 'low_stock'
-                ? '0 6px 20px rgba(217, 119, 6, 0.16)'
-                : '0 2px 10px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                LOW STOCK ALERTS
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.lowStock}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: '0.35rem' }}>
-              ⚠ Needs Restock (≤ {LOW_STOCK_THRESHOLD} units)
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-              color: '#d97706',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #fde68a',
-              boxShadow: '0 2px 8px rgba(217, 119, 6, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <AlertTriangle size={22} />
-          </div>
-        </div>
-
-        {/* Card 4: Out of Stock Items */}
-        <div
-          role="button"
-          tabIndex={0}
+        />
+        <AdminStatCard
+          title="OUT OF STOCK ITEMS"
+          value={kpis.outOfStock}
+          icon={<XCircle size={22} />}
+          variant="red"
+          footerLabel="Requires Attention"
+          footerValue={`${kpis.outOfStock} Depleted`}
+          progress={kpis.totalProducts ? (kpis.outOfStock / kpis.totalProducts) * 100 : 0}
+          isActive={selectedStatus === 'out_of_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'out_of_stock' ? 'all' : 'out_of_stock'))}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setSelectedStatus((prev) => (prev === 'out_of_stock' ? 'all' : 'out_of_stock'));
-            }
-          }}
-          className="inventory-kpi-card"
-          title="Click to filter by Out of Stock items"
-          style={{
-            borderLeft: '4px solid #dc2626',
-            borderColor: selectedStatus === 'out_of_stock' ? '#dc2626' : '#e2e8f0',
-            borderLeftColor: '#dc2626',
-            boxShadow:
-              selectedStatus === 'out_of_stock'
-                ? '0 6px 20px rgba(220, 38, 38, 0.16)'
-                : '0 2px 10px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                OUT OF STOCK ITEMS
-              </span>
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-              {kpis.outOfStock}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 600, marginTop: '0.35rem' }}>
-              ✕ Unavailable (0 Stock)
-            </div>
-          </div>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%)',
-              color: '#dc2626',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #fecaca',
-              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.12)',
-              flexShrink: 0,
-            }}
-          >
-            <XCircle size={22} />
-          </div>
-        </div>
+        />
       </div>
 
       {/* ─── Controls & Filter Bar ────────────────────────────────────────── */}

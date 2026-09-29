@@ -28,6 +28,7 @@ import {
   Share2,
   Copy,
   ExternalLink,
+  Zap,
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -163,21 +164,23 @@ export default function AdminLayout({ children, title }) {
       >
         {/* Brand Header */}
         <div className="admin-sidebar-header">
-          <Link to={ADMIN} className="admin-sidebar-brand-link">
-            {/* 3-Ring Geometric Logo with Vibrant Gradient Glow */}
-            <div className="admin-sidebar-brand-icon">
-              <svg width="30" height="30" viewBox="0 0 28 28" fill="none">
-                <circle cx="14" cy="8.5" r="5" stroke="#7025fb" strokeWidth="2.4" />
-                <circle cx="9" cy="17" r="5" stroke="#7025fb" strokeWidth="2.4" />
-                <circle cx="19" cy="17" r="5" stroke="#7025fb" strokeWidth="2.4" />
-              </svg>
-            </div>
-            {!collapsed && (
-              <div className="admin-brand-info">
-                <span className="admin-brand-title">Picky Admin</span>
-                <span className="admin-brand-sub">Luxury CRM • v2.6</span>
-              </div>
-            )}
+          <Link to={ADMIN} className="admin-sidebar-brand-link" title="Picky Admin Dashboard">
+            {/* White Picky Brand Logo (Centered & Enlarged) */}
+            <img
+              src="/images/logo.png"
+              alt="Picky Logo"
+              className="admin-sidebar-logo-img"
+              style={{
+                height: collapsed ? '38px' : '58px',
+                width: 'auto',
+                maxWidth: collapsed ? '52px' : '200px',
+                objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
+                display: 'block',
+                margin: '0 auto',
+                transition: 'all 0.25s ease',
+              }}
+            />
           </Link>
         </div>
 
@@ -472,55 +475,102 @@ export default function AdminLayout({ children, title }) {
 
           {/* Right: Quick Action + Notifications + Profile Chip */}
           <div className="admin-topbar-right">
-            {/* + Quick Action Button with Dropdown */}
-            <div className="admin-quick-add-wrap" ref={quickAddRef}>
+            {/* Quick Actions Button with High Z-Index Luxury Dropdown */}
+            <div className="admin-quick-add-wrap admin-quick-actions-wrap" ref={quickAddRef}>
               <button
-                className="admin-quick-add-btn"
+                className="admin-quick-add-btn admin-quick-actions-btn"
                 onClick={() => setQuickAddOpen(!quickAddOpen)}
-                title="Create New Store Entry"
+                title="Quick Store Actions & Shortcuts"
+                aria-expanded={quickAddOpen}
               >
-                <Plus size={15} />
-                <span>Quick Add</span>
-                <ChevronDown size={13} className={quickAddOpen ? 'rotate-180' : ''} />
+                <Zap size={14} className="admin-quick-action-btn-icon" />
+                <span>Quick Actions</span>
+                <ChevronDown size={13} className={`admin-quick-action-chevron ${quickAddOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {quickAddOpen && (
-                <div className="admin-quick-add-dropdown">
-                  <Link
-                    to={`${ADMIN}/products`}
-                    className="admin-quick-add-item"
-                    onClick={() => setQuickAddOpen(false)}
-                  >
-                    <Package size={14} /> Add New Product
-                  </Link>
-                  <Link
-                    to={`${ADMIN}/inventory`}
-                    className="admin-quick-add-item"
-                    onClick={() => setQuickAddOpen(false)}
-                  >
-                    <Boxes size={14} /> Stock & Inventory
-                  </Link>
-                  <Link
-                    to={`${ADMIN}/coupons`}
-                    className="admin-quick-add-item"
-                    onClick={() => setQuickAddOpen(false)}
-                  >
-                    <Tag size={14} /> Create Coupon Code
-                  </Link>
-                  <Link
-                    to={`${ADMIN}/orders`}
-                    className="admin-quick-add-item"
-                    onClick={() => setQuickAddOpen(false)}
-                  >
-                    <ShoppingBag size={14} /> Manage Orders
-                  </Link>
-                  <Link
-                    to={`${ADMIN}/customization`}
-                    className="admin-quick-add-item"
-                    onClick={() => setQuickAddOpen(false)}
-                  >
-                    <Palette size={14} /> Store Customization
-                  </Link>
+                <div className="admin-quick-add-dropdown admin-quick-actions-dropdown">
+                  <div className="admin-quick-actions-header">
+                    <span className="admin-quick-actions-title">Store Shortcuts</span>
+                    <span className="admin-quick-actions-pill">⚡ Fast Access</span>
+                  </div>
+
+                  <div className="admin-quick-actions-list">
+                    <Link
+                      to={`${ADMIN}/products`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-purple">
+                        <Package size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Add New Product</span>
+                        <span className="admin-quick-action-sub">Create catalog items</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+
+                    <Link
+                      to={`${ADMIN}/inventory`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-indigo">
+                        <Boxes size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Stock & Inventory</span>
+                        <span className="admin-quick-action-sub">Manage variants & units</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+
+                    <Link
+                      to={`${ADMIN}/coupons`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-amber">
+                        <Tag size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Create Coupon Code</span>
+                        <span className="admin-quick-action-sub">Promotions & vouchers</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+
+                    <Link
+                      to={`${ADMIN}/orders`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-emerald">
+                        <ShoppingBag size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Manage Orders</span>
+                        <span className="admin-quick-action-sub">Track sales & dispatch</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+
+                    <Link
+                      to={`${ADMIN}/customization`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-pink">
+                        <Palette size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Store Customization</span>
+                        <span className="admin-quick-action-sub">Banners & theme layout</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

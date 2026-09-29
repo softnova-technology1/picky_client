@@ -1,7 +1,19 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Edit2, Trash2, CheckCircle2, Sparkles } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  Sparkles,
+  Package,
+  PackageCheck,
+  AlertTriangle,
+  TrendingUp,
+  ShoppingBag,
+} from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminStatCard from '../../../components/common/AdminStatCard';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -369,6 +381,25 @@ export default function AdminProducts() {
       </span>
     );
   };
+
+  // ─── Products Metric Calculations ─────────────────────────────────────────
+  const totalProducts = products.length;
+  const inStockCount = useMemo(
+    () => products.filter((p) => (Number(p.stock) || 0) > 5).length,
+    [products]
+  );
+  const lowStockCount = useMemo(
+    () => products.filter((p) => (Number(p.stock) || 0) > 0 && (Number(p.stock) || 0) <= 5).length,
+    [products]
+  );
+  const outOfStockCount = useMemo(
+    () => products.filter((p) => (Number(p.stock) || 0) <= 0).length,
+    [products]
+  );
+  const activeCount = useMemo(
+    () => products.filter((p) => p.isActive !== false).length,
+    [products]
+  );
 
   return (
     <AdminLayout title="Product Catalog Management">
@@ -1248,6 +1279,46 @@ export default function AdminProducts() {
               <Plus size={16} />
               <span>Add New Product</span>
             </button>
+          </div>
+
+          {/* ── Top 4 Metric KPI Progress Cards (Reference Design) ── */}
+          <div className="kpi-progress-grid">
+            <AdminStatCard
+              title="TOTAL PRODUCTS"
+              value={totalProducts}
+              icon={<Package size={22} />}
+              variant="purple"
+              footerLabel="Live Catalog Volume"
+              footerValue="100%"
+              progress={100}
+            />
+            <AdminStatCard
+              title="READY / IN STOCK"
+              value={inStockCount}
+              icon={<PackageCheck size={22} />}
+              variant="amber"
+              footerLabel="Healthy Stock"
+              footerValue={`${totalProducts ? Math.round((inStockCount / totalProducts) * 100) : 0}% Ready to Ship`}
+              progress={totalProducts ? (inStockCount / totalProducts) * 100 : 0}
+            />
+            <AdminStatCard
+              title="OUT OF STOCK / LOW"
+              value={outOfStockCount + lowStockCount}
+              icon={<AlertTriangle size={22} />}
+              variant="blue"
+              footerLabel="Attention Required"
+              footerValue={`${outOfStockCount} Out · ${lowStockCount} Low`}
+              progress={totalProducts ? ((outOfStockCount + lowStockCount) / totalProducts) * 100 : 0}
+            />
+            <AdminStatCard
+              title="ACTIVE STOREFRONT"
+              value={activeCount}
+              icon={<Sparkles size={22} />}
+              variant="green"
+              footerLabel="Published Ratio"
+              footerValue={`${activeCount}/${totalProducts} Published`}
+              progress={totalProducts ? (activeCount / totalProducts) * 100 : 0}
+            />
           </div>
 
           {loading ? (
