@@ -12,6 +12,10 @@ export default function Select({
   ariaLabel,
   align = 'left', // 'left' | 'right'
   direction = 'down', // 'down' | 'up'
+  height = '42px',
+  borderRadius = '12px',
+  buttonStyle = {},
+  className = '',
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -101,6 +105,7 @@ export default function Select({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={ariaLabel || label}
+        className={className}
         onClick={() => setIsOpen((prev) => !prev)}
         style={{
           display: 'flex',
@@ -108,9 +113,9 @@ export default function Select({
           justifyContent: 'space-between',
           gap: '0.65rem',
           width: '100%',
-          height: '42px',
+          height,
           padding: '0 0.95rem',
-          borderRadius: '12px',
+          borderRadius,
           border: isOpen ? '1.5px solid #7c3aed' : '1.5px solid #e2e8f0',
           background: '#ffffff',
           fontSize: '0.84rem',
@@ -123,6 +128,7 @@ export default function Select({
             : '0 1px 3px rgba(0, 0, 0, 0.04)',
           transition: 'all 0.18s ease',
           whiteSpace: 'nowrap',
+          ...buttonStyle,
         }}
         onFocus={(e) => {
           e.currentTarget.style.borderColor = '#7c3aed';
