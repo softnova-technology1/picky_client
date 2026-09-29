@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   DollarSign,
   Tag,
@@ -7,7 +8,6 @@ import {
   Download,
   Users,
   Calendar,
-  Layers,
   ArrowUpRight,
 } from 'lucide-react';
 import {
@@ -17,360 +17,592 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Cell,
 } from 'recharts';
 import AdminLayout from '../../../components/layout/AdminLayout';
-import Spinner from '../../../components/ui/Spinner';
-import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
-import {
-  MOCK_SALES_SUMMARY,
-  MOCK_TOP_PRODUCTS,
-  MOCK_TOP_PRODUCTS_REPORT,
-  MOCK_COUPONS,
-} from '../../../data/adminMockData';
+import { useOrderStore } from '../../../store/orderStore';
+import { useCouponStore, getCouponStatus } from '../../../store/couponStore';
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatShortDate(d) {
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
+}
+
+function formatFullDate(d) {
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function formatInputDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export default function AdminReports() {
-  const [summary, setSummary] = useState(null);
-  const [topProducts, setTopProducts] = useState([]);
-  const [coupons, setCoupons] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    async function loadReports() {
-      try {
-        setLoading(true);
-        const [sumRes, topRes, coupRes] = await Promise.all([
-          adminService.getSalesSummary().catch(() => null),
-          adminService.getTopProducts(5).catch(() => null),
-          adminService.getCoupons().catch(() => null),
-        ]);
+  // Stores
+  const { orders } = useOrderStore();
+  const { coupons } = useCouponStore();
 
-        // Use real backend data if populated, otherwise seamlessly use rich mock data
-        const sumData = sumRes?.data || sumRes;
-        if (sumData && sumData.totalOrders > 0) {
-          setSummary(sumData);
-        } else {
-          setSummary(MOCK_SALES_SUMMARY);
-        }
+  // Date Range state synced to URL
+  const rangeParam = searchParams.get('range') || '7days';
+  const startParam = searchParams.get('start') || '';
+  const endParam = searchParams.get('end') || '';
 
-        const topData = topRes?.data || topRes;
-        if (Array.isArray(topData) && topData.length > 0 && topData[0].unitsSold !== undefined) {
-          setTopProducts(topData);
-        } else {
-          setTopProducts(MOCK_TOP_PRODUCTS_REPORT);
-        }
+  const validRanges = ['today', '7days', '30days', 'custom'];
+  const activeRange = validRanges.includes(rangeParam) ? rangeParam : '7days';
 
-        const coupData = coupRes?.data || coupRes;
-        if (Array.isArray(coupData) && coupData.length > 0) {
-          setCoupons(coupData);
-        } else {
-          setCoupons(MOCK_COUPONS);
-        }
-      } catch (err) {
-        console.error('Failed to load reports:', err);
-        setSummary(MOCK_SALES_SUMMARY);
-        setTopProducts(MOCK_TOP_PRODUCTS_REPORT);
-        setCoupons(MOCK_COUPONS);
-      } finally {
-        setLoading(false);
+  // Default custom range bounds
+  const now = useMemo(() => new Date(), []);
+  const defaultCustomEnd = useMemo(() => formatInputDate(now), [now]);
+  const defaultCustomStart = useMemo(() => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 30);
+    return formatInputDate(d);
+  }, [now]);
+
+  const customStart = startParam || defaultCustomStart;
+  const customEnd = endParam || defaultCustomEnd;
+
+  const handleRangeChange = (newRange) => {
+    setSearchParams((prev) => {
+      const sp = new URLSearchParams(prev);
+      sp.set('range', newRange);
+      if (newRange !== 'custom') {
+        sp.delete('start');
+        sp.delete('end');
+      } else {
+        sp.set('start', customStart);
+        sp.set('end', customEnd);
       }
+      return sp;
+    });
+  };
+
+  const handleCustomDateChange = (type, val) => {
+    setSearchParams((prev) => {
+      const sp = new URLSearchParams(prev);
+      sp.set('range', 'custom');
+      if (type === 'start') {
+        sp.set('start', val);
+      } else {
+        sp.set('end', val);
+      }
+      return sp;
+    });
+  };
+
+  // Compute start/end Date objects for filtering
+  const { rangeStart, rangeEnd } = useMemo(() => {
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    let start;
+
+    if (activeRange === 'today') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    } else if (activeRange === '30days') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+    } else if (activeRange === 'custom') {
+      const sParts = customStart.split('-').map(Number);
+      const eParts = customEnd.split('-').map(Number);
+      start = sParts.length === 3 ? new Date(sParts[0], sParts[1] - 1, sParts[2], 0, 0, 0, 0) : new Date(0);
+      const customEndDate = eParts.length === 3 ? new Date(eParts[0], eParts[1] - 1, eParts[2], 23, 59, 59, 999) : end;
+      return { rangeStart: start, rangeEnd: customEndDate };
+    } else {
+      // '7days' default
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
     }
-    loadReports();
-  }, []);
 
-  const chartData = [
-    { day: '30 Aug', revenue: 11000 },
-    { day: '31 Aug', revenue: 16000 },
-    { day: '1 Sep', revenue: 12000 },
-    { day: '2 Sep', revenue: 18000 },
-    { day: '3 Sep', revenue: 17000 },
-    { day: '4 Sep', revenue: 22000 },
-    { day: '5 Sep', revenue: 24980 },
-  ];
+    return { rangeStart: start, rangeEnd: end };
+  }, [now, activeRange, customStart, customEnd]);
 
-  // Dynamic Y-axis max calculation with ~10% headroom
-  const maxRevenueVal = Math.max(...chartData.map((d) => d.revenue || 0));
-  const dynamicYAxisMax = Math.ceil((maxRevenueVal * 1.1) / 1000) * 1000;
+  // Filter orders by date range
+  const filteredOrders = useMemo(() => {
+    return (orders || []).filter((o) => {
+      if (!o.createdAt) return false;
+      const t = new Date(o.createdAt).getTime();
+      return !isNaN(t) && t >= rangeStart.getTime() && t <= rangeEnd.getTime();
+    });
+  }, [orders, rangeStart, rangeEnd]);
+
+  // Valid (non-cancelled) orders in period
+  const validOrders = useMemo(() => {
+    return filteredOrders.filter((o) => o.status !== 'cancelled');
+  }, [filteredOrders]);
+
+  // Metrics recomputed dynamically from filtered orders
+  const grossRevenue = useMemo(() => {
+    return validOrders.reduce((sum, o) => {
+      const sub = o.subtotal !== undefined ? o.subtotal : (o.totalAmount || 0) + (o.discountAmount || 0);
+      return sum + sub;
+    }, 0);
+  }, [validOrders]);
+
+  const totalDiscounts = useMemo(() => {
+    return validOrders.reduce((sum, o) => sum + (o.discountAmount || 0), 0);
+  }, [validOrders]);
+
+  const netRevenue = useMemo(() => {
+    return Math.max(0, grossRevenue - totalDiscounts);
+  }, [grossRevenue, totalDiscounts]);
+
+  const fulfilledOrdersCount = useMemo(() => {
+    return validOrders.filter((o) => o.status === 'delivered' || o.status === 'shipped' || o.status === 'confirmed').length;
+  }, [validOrders]);
+
+  const customersWhoOrderedCount = useMemo(() => {
+    const set = new Set();
+    validOrders.forEach((o) => {
+      const identifier = o.customer?.email || o.customer?.phone || o.customer?.name || o.customerId;
+      if (identifier) set.add(identifier);
+    });
+    return set.size;
+  }, [validOrders]);
+
+  // Top 5 Best Selling Products dynamically calculated from filtered orders
+  const topProducts = useMemo(() => {
+    const map = {};
+    validOrders.forEach((o) => {
+      (o.items || []).forEach((item) => {
+        const key = item.name;
+        if (!map[key]) {
+          map[key] = {
+            name: item.name,
+            image: item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100',
+            unitsSold: 0,
+            totalRevenue: 0,
+          };
+        }
+        const qty = item.quantity || 1;
+        map[key].unitsSold += qty;
+        map[key].totalRevenue += (item.price || 0) * qty;
+      });
+    });
+
+    return Object.values(map)
+      .sort((a, b) => b.unitsSold - a.unitsSold)
+      .slice(0, 5);
+  }, [validOrders]);
+
+  // Revenue Velocity chart data computed dynamically from filtered orders
+  const chartData = useMemo(() => {
+    if (activeRange === 'today') {
+      const intervals = [
+        { label: '8 AM', hStart: 0, hEnd: 9 },
+        { label: '10 AM', hStart: 9, hEnd: 11 },
+        { label: '12 PM', hStart: 11, hEnd: 13 },
+        { label: '2 PM', hStart: 13, hEnd: 15 },
+        { label: '4 PM', hStart: 15, hEnd: 17 },
+        { label: '6 PM', hStart: 17, hEnd: 19 },
+        { label: '8 PM', hStart: 19, hEnd: 24 },
+      ];
+
+      return intervals.map((inv) => {
+        const bucketOrders = validOrders.filter((o) => {
+          const dt = new Date(o.createdAt);
+          const h = dt.getHours();
+          return h >= inv.hStart && h < inv.hEnd;
+        });
+        const rev = bucketOrders.reduce((sum, o) => {
+          return sum + (o.subtotal !== undefined ? o.subtotal : (o.totalAmount || 0) + (o.discountAmount || 0));
+        }, 0);
+
+        return {
+          day: inv.label,
+          fullDate: `${formatFullDate(now)} at ${inv.label}`,
+          revenue: rev,
+        };
+      });
+    }
+
+    // Daily buckets for '7days', '30days', and 'custom'
+    const buckets = [];
+    const curr = new Date(rangeStart);
+    // Limit maximum buckets to 60 for clean rendering
+    let safetyCounter = 0;
+
+    while (curr <= rangeEnd && safetyCounter < 60) {
+      safetyCounter++;
+      const dayYear = curr.getFullYear();
+      const dayMonth = curr.getMonth();
+      const dayDate = curr.getDate();
+      const fullDateStr = formatFullDate(curr);
+      const shortDateStr = formatShortDate(curr);
+
+      const dayOrders = validOrders.filter((o) => {
+        const od = new Date(o.createdAt);
+        return od.getFullYear() === dayYear && od.getMonth() === dayMonth && od.getDate() === dayDate;
+      });
+
+      const dayRevenue = dayOrders.reduce((sum, o) => {
+        return sum + (o.subtotal !== undefined ? o.subtotal : (o.totalAmount || 0) + (o.discountAmount || 0));
+      }, 0);
+
+      buckets.push({
+        day: shortDateStr,
+        fullDate: fullDateStr,
+        revenue: dayRevenue,
+      });
+
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    return buckets;
+  }, [activeRange, validOrders, rangeStart, rangeEnd, now]);
+
+  // Dynamic Y-axis max calculation with ~15% headroom
+  const maxRevenueVal = useMemo(() => {
+    return Math.max(0, ...chartData.map((d) => d.revenue || 0));
+  }, [chartData]);
+
+  const dynamicYAxisMax = useMemo(() => {
+    if (maxRevenueVal === 0) return 5000;
+    const step = maxRevenueVal > 10000 ? 5000 : 1000;
+    return Math.ceil((maxRevenueVal * 1.15) / step) * step;
+  }, [maxRevenueVal]);
+
+  // Focused bar state for accessible keyboard navigation
+  const [focusedBar, setFocusedBar] = useState(null);
+
+  const handleExportCSV = () => {
+    const rows = [
+      ['Metric', 'Value'],
+      ['Date Range', activeRange],
+      ['Gross Revenue', grossRevenue],
+      ['Net Revenue', netRevenue],
+      ['Total Discounts Given', totalDiscounts],
+      ['Fulfilled Orders', fulfilledOrdersCount],
+      ['Customers Who Ordered', customersWhoOrderedCount],
+      [],
+      ['Top 5 Products', 'Units Sold', 'Total Revenue'],
+      ...topProducts.map((p) => [p.name, p.unitsSold, p.totalRevenue]),
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `financial-report-${activeRange}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const rangeLabels = {
+    today: 'Today',
+    '7days': 'Last 7 Days',
+    '30days': 'Last 30 Days',
+    custom: 'Custom Range',
+  };
 
   return (
     <AdminLayout title="Analytics & Financial Reports">
-      {loading ? (
-        <Spinner size={40} />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Header Row: Standardized 24px gap */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-                Store Financial Overview
-              </h2>
-              <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                Audited transaction volume and promotional sales metrics
-              </span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Header Row: Title, Date Range Filter & Action Controls */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+              Store Financial Overview
+            </h2>
+            <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+              Audited transaction volume and promotional sales metrics ({rangeLabels[activeRange]})
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Date Range Control (Segmented Selector) */}
+            <div
+              style={{
+                display: 'inline-flex',
+                background: '#ede8f8',
+                padding: '3px',
+                borderRadius: '12px',
+                border: '1px solid #dfd5f5',
+                gap: '2px',
+              }}
+            >
+              {[
+                { id: 'today', label: 'Today' },
+                { id: '7days', label: 'Last 7 Days' },
+                { id: '30days', label: 'Last 30 Days' },
+                { id: 'custom', label: 'Custom' },
+              ].map((btn) => {
+                const isSelected = activeRange === btn.id;
+                return (
+                  <button
+                    key={btn.id}
+                    type="button"
+                    onClick={() => handleRangeChange(btn.id)}
+                    style={{
+                      padding: '6px 13px',
+                      borderRadius: '9px',
+                      border: 'none',
+                      fontSize: '0.81rem',
+                      fontWeight: isSelected ? 700 : 600,
+                      cursor: 'pointer',
+                      background: isSelected ? '#7c3aed' : 'transparent',
+                      color: isSelected ? '#ffffff' : '#4c1d95',
+                      boxShadow: isSelected ? '0 2px 8px rgba(124, 58, 237, 0.28)' : 'none',
+                      transition: 'all 0.16s ease',
+                    }}
+                  >
+                    {btn.label}
+                  </button>
+                );
+              })}
             </div>
 
+            {/* Custom Range Date Pickers */}
+            {activeRange === 'custom' && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#ffffff',
+                  padding: '4px 10px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #dfd5f5',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                }}
+              >
+                <Calendar size={14} color="#7c3aed" />
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.8rem',
+                    color: '#1e1b4b',
+                    fontWeight: 600,
+                    outline: 'none',
+                  }}
+                />
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>to</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.8rem',
+                    color: '#1e1b4b',
+                    fontWeight: 600,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Export CSV Report */}
             <button
               className="admin-period-select-btn"
-              onClick={() => alert('Financial CSV Report Download Started')}
+              onClick={handleExportCSV}
               style={{ padding: '8px 16px' }}
+              title="Download filtered CSV report"
             >
               <Download size={15} color="#7c3aed" />
               <span>Export CSV Report</span>
             </button>
           </div>
+        </div>
 
-          {/* Revenue Breakdown - 4 Luxury SaaS KPI Cards */}
-          <style>{`
-            .reports-kpi-card {
-              background: #ffffff;
-              border-radius: 16px;
-              border: 1.5px solid #e2e8f0;
-              padding: 1.25rem 1.4rem;
-              position: relative;
-              overflow: hidden;
-              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-              transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-            }
-            .reports-kpi-card:hover {
-              transform: translateY(-3px);
-              box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08);
-              border-color: #cbd5e1;
-            }
-          `}</style>
-          <div
-            className="metrics-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '1rem',
-              marginBottom: '1.4rem',
-            }}
-          >
-            {/* Card 1: Gross Revenue */}
-            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    GROSS REVENUE
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-                  {formatPrice(summary?.totalRevenue || 124980)}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#7c3aed', fontWeight: 600, marginTop: '0.35rem' }}>
-                  ★ Net Sales Volume
-                </div>
-              </div>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid #ddd6fe',
-                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.12)',
-                  flexShrink: 0,
-                }}
-              >
-                <DollarSign size={22} />
-              </div>
+        {/* Revenue Breakdown - 5 Responsive Metric Cards */}
+        <div className="metrics-grid">
+          {/* 1. Gross Revenue */}
+          <div className="metric-card">
+            <div className="metric-icon-wrap" style={{ background: '#ede8f8', color: '#7c3aed' }}>
+              <DollarSign size={20} />
             </div>
-
-            {/* Card 2: Total Discounts Given */}
-            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    TOTAL DISCOUNTS GIVEN
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-                  {formatPrice(summary?.totalDiscount || 18500)}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
-                  Promo Savings
-                </div>
-              </div>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-                  color: '#16a34a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid #bbf7d0',
-                  boxShadow: '0 2px 8px rgba(22, 163, 74, 0.12)',
-                  flexShrink: 0,
-                }}
-              >
-                <Tag size={22} />
-              </div>
-            </div>
-
-            {/* Card 3: Fulfilled Orders */}
-            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    FULFILLED ORDERS
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-                  {summary?.confirmedOrders || 142}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 600, marginTop: '0.35rem' }}>
-                  100% Shipped & Delivered
-                </div>
-              </div>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-                  color: '#0284c7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid #bae6fd',
-                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.12)',
-                  flexShrink: 0,
-                }}
-              >
-                <PackageCheck size={22} />
-              </div>
-            </div>
-
-            {/* Card 4: Total Buyers */}
-            <div className="reports-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    TOTAL BUYERS
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-                  {(summary?.totalCustomers || 1024).toLocaleString()}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: '0.35rem' }}>
-                  Verified Active Accounts
-                </div>
-              </div>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                  color: '#d97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid #fde68a',
-                  boxShadow: '0 2px 8px rgba(217, 119, 6, 0.12)',
-                  flexShrink: 0,
-                }}
-              >
-                <Users size={22} />
-              </div>
+            <div className="metric-info-col">
+              <div className="metric-val">{formatPrice(grossRevenue)}</div>
+              <div className="metric-label">Gross Revenue</div>
             </div>
           </div>
 
-          {/* Sales Revenue Trend Chart */}
-          <div className="card" style={{ padding: '24px', margin: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-                  Revenue Velocity (Last 7 Days)
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Daily aggregated checkout earnings</span>
-              </div>
-              <div className="admin-period-select-btn" style={{ padding: '4px 12px', fontSize: '0.78rem' }}>
-                <span>INR (₹)</span>
-              </div>
+          {/* 2. Net Revenue (Requirement 2: Gross Revenue minus Total Discounts Given) */}
+          <div className="metric-card">
+            <div className="metric-icon-wrap" style={{ background: '#d1fae5', color: '#059669' }}>
+              <TrendingUp size={20} />
+            </div>
+            <div className="metric-info-col">
+              <div className="metric-val" style={{ color: '#059669' }}>{formatPrice(netRevenue)}</div>
+              <div className="metric-label">Net Revenue</div>
+            </div>
+          </div>
+
+          {/* 3. Total Discounts Given */}
+          <div className="metric-card">
+            <div className="metric-icon-wrap" style={{ background: '#fef3c7', color: '#d97706' }}>
+              <Tag size={20} />
+            </div>
+            <div className="metric-info-col">
+              <div className="metric-val">{formatPrice(totalDiscounts)}</div>
+              <div className="metric-label">Total Discounts Given</div>
+            </div>
+          </div>
+
+          {/* 4. Fulfilled Orders */}
+          <div className="metric-card">
+            <div className="metric-icon-wrap" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+              <PackageCheck size={20} />
+            </div>
+            <div className="metric-info-col">
+              <div className="metric-val">{fulfilledOrdersCount}</div>
+              <div className="metric-label">Fulfilled Orders</div>
+            </div>
+          </div>
+
+          {/* 5. Customers Who Ordered (Requirement 3: Unique customers with at least 1 order in period) */}
+          <div className="metric-card">
+            <div className="metric-icon-wrap" style={{ background: '#ede9fe', color: '#4338ca' }}>
+              <Users size={20} />
+            </div>
+            <div className="metric-info-col">
+              <div className="metric-val">{customersWhoOrderedCount}</div>
+              <div className="metric-label">Customers Who Ordered</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sales Revenue Trend Chart */}
+        <div className="card" style={{ padding: '24px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+                Revenue Velocity ({rangeLabels[activeRange]})
+              </h3>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Daily aggregated checkout earnings</span>
             </div>
 
-            <div style={{ width: '100%', height: 230 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 12, right: 16, left: -10, bottom: 4 }}
-                  barCategoryGap="20%"
+            {/* Requirement 7: Plain non-interactive currency label */}
+            <span
+              style={{
+                padding: '4px 12px',
+                fontSize: '0.78rem',
+                background: '#f8fafc',
+                color: '#64748b',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                userSelect: 'none',
+              }}
+            >
+              INR (₹)
+            </span>
+          </div>
+
+          <div style={{ width: '100%', height: 230 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 12, right: 16, left: -10, bottom: 4 }}
+                barCategoryGap="20%"
+              >
+                <defs>
+                  <linearGradient id="reportsBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 11 }}
+                  domain={[0, dynamicYAxisMax]}
+                  tickFormatter={(v) => (v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`)}
+                />
+                {/* Requirement 6: Hover/Focus Tooltip showing exact date and revenue amount */}
+                <Tooltip
+                  cursor={{ fill: 'rgba(124, 58, 237, 0.08)', radius: 6 }}
+                  content={({ active, payload }) => {
+                    const item = active && payload && payload.length ? payload[0].payload : focusedBar;
+                    if (!item) return null;
+                    return (
+                      <div
+                        style={{
+                          background: '#1e1b4b',
+                          color: '#ffffff',
+                          borderRadius: '10px',
+                          padding: '8px 14px',
+                          fontSize: '0.84rem',
+                          fontWeight: 600,
+                          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                        }}
+                      >
+                        <span>{item.fullDate || item.day} — {formatPrice(item.revenue)}</span>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="revenue"
+                  fill="url(#reportsBarGrad)"
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={44}
                 >
-                  <defs>
-                    <linearGradient id="reportsBarGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#c4b5fd" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    domain={[0, dynamicYAxisMax]}
-                    tickFormatter={(v) => (v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`)}
-                  />
-                  <Tooltip
-                    formatter={(val) => [formatPrice(val), 'Revenue']}
-                    contentStyle={{
-                      background: '#1e1b4b',
-                      color: '#fff',
-                      borderRadius: 12,
-                      border: 'none',
-                      fontSize: '0.82rem',
-                      padding: '8px 12px',
-                    }}
-                  />
-                  <Bar
-                    dataKey="revenue"
-                    fill="url(#reportsBarGrad)"
-                    radius={[8, 8, 0, 0]}
-                    maxBarSize={44}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      tabIndex={0}
+                      role="graphics-symbol"
+                      aria-label={`${entry.fullDate || entry.day} — ${formatPrice(entry.revenue)}`}
+                      style={{ outline: 'none', cursor: 'pointer' }}
+                      onFocus={() => setFocusedBar(entry)}
+                      onBlur={() => setFocusedBar(null)}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Selling Products (Filtered by selected range) */}
+        <div className="card" style={{ padding: '24px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+                Top 5 Best Selling Products
+              </h3>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                Ranked by units sold in selected period ({rangeLabels[activeRange]})
+              </span>
             </div>
           </div>
 
-          {/* Top Selling Products */}
-          <div className="card" style={{ padding: '24px', margin: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-                  Top 5 Best Selling Products
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Ranked by units sold</span>
-              </div>
-            </div>
-
-            <div className="table-container">
-              <table className="admin-table admin-table-fixed">
-                <thead>
+          <div className="table-container">
+            <table className="admin-table admin-table-fixed">
+              <thead>
+                <tr>
+                  <th style={{ width: '50%' }}>Product</th>
+                  <th style={{ width: '25%' }}>Units Sold</th>
+                  <th style={{ width: '25%' }}>Total Generated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topProducts.length === 0 ? (
                   <tr>
-                    <th style={{ width: '50%' }}>Product</th>
-                    <th style={{ width: '25%' }}>Units Sold</th>
-                    <th style={{ width: '25%' }}>Total Generated</th>
+                    <td colSpan={3} style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#64748b' }}>
+                      No orders found in the selected date range.
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {topProducts.map((p, idx) => (
-                    <tr key={p._id || idx}>
+                ) : (
+                  topProducts.map((p, idx) => (
+                    <tr key={p.name || idx}>
                       <td style={{ width: '50%' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img
-                            src={p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
+                            src={p.image}
                             alt={p.name}
                             style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }}
                           />
@@ -387,50 +619,89 @@ export default function AdminReports() {
                         <strong style={{ color: '#7c3aed', fontSize: '0.95rem' }}>{formatPrice(p.totalRevenue)}</strong>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Promotional Coupons Overview (Requirement 1 & 5) */}
+        <div className="card" style={{ padding: '24px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+                Promotional Coupons Overview
+              </h3>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                Live customer checkout discount codes and voucher lifecycle status
+              </span>
             </div>
           </div>
 
-          {/* Active Coupons & Promotions */}
-          <div className="card" style={{ padding: '24px', margin: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-                  Active Promotional Coupons
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Live customer checkout discount codes</span>
-              </div>
-            </div>
-
-            <div className="table-container">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Coupon Code</th>
-                    <th>Discount Type</th>
-                    <th>Value</th>
-                    <th>Min Order</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {coupons.map((c) => (
-                    <tr key={c._id}>
+          <div className="table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Coupon Code</th>
+                  <th>Discount Type</th>
+                  <th>Value</th>
+                  <th>Min Order</th>
+                  <th>Max Cap</th>
+                  <th>Total Uses</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {coupons.map((c) => {
+                  const status = getCouponStatus(c);
+                  return (
+                    <tr key={c._id || c.code}>
+                      {/* Coupon Code - Click navigates to Coupons page with highlight */}
                       <td>
-                        <code
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/pickyadmin-softnova2026/coupons?tab=coupons&highlight=${encodeURIComponent(c.code)}`)
+                          }
+                          title={`View ${c.code} on Coupons page`}
                           style={{
-                            background: '#ede8f8',
-                            color: '#5b21b6',
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '6px',
-                            fontWeight: 700,
-                            fontSize: '0.85rem',
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            textAlign: 'left',
                           }}
                         >
-                          {c.code}
-                        </code>
+                          <code
+                            style={{
+                              background: '#ede8f8',
+                              color: '#5b21b6',
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '6px',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              border: '1px solid #dfd5f5',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#7c3aed';
+                              e.currentTarget.style.color = '#ffffff';
+                              e.currentTarget.style.borderColor = '#7c3aed';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#ede8f8';
+                              e.currentTarget.style.color = '#5b21b6';
+                              e.currentTarget.style.borderColor = '#dfd5f5';
+                            }}
+                          >
+                            {c.code}
+                            <ArrowUpRight size={12} />
+                          </code>
+                        </button>
                       </td>
                       <td style={{ textTransform: 'capitalize' }}>{c.type}</td>
                       <td>
@@ -439,23 +710,39 @@ export default function AdminReports() {
                         </strong>
                       </td>
                       <td>{formatPrice(c.minOrderAmount || 0)}</td>
+                      {/* Requirement 5: MAX CAP column */}
+                      <td>{c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}</td>
+                      {/* Requirement 5: TOTAL USES column */}
                       <td>
-                        <span
-                          className={`adm-status-pill ${
-                            c.isActive ? 'adm-status-delivered' : 'adm-status-cancelled'
-                          }`}
-                        >
-                          {c.isActive ? 'Active' : 'Disabled'}
-                        </span>
+                        <strong style={{ color: '#334155' }}>{c.usageCount || 0} times</strong>
+                      </td>
+                      {/* Requirement 1: STATUS badge matching Coupons page */}
+                      <td>
+                        {status === 'Expired' ? (
+                          <span
+                            className="adm-status-pill"
+                            style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}
+                          >
+                            Expired
+                          </span>
+                        ) : status === 'Disabled' ? (
+                          <span className="adm-status-pill adm-status-cancelled">
+                            Disabled
+                          </span>
+                        ) : (
+                          <span className="adm-status-pill adm-status-delivered">
+                            Active
+                          </span>
+                        )}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+      </div>
     </AdminLayout>
   );
 }
