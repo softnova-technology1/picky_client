@@ -9,33 +9,153 @@ import {
   Download,
   ArrowRight,
   Sparkles,
-  TrendingUp,
   ArrowUpRight,
-  MoreVertical,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import {
   MOCK_SALES_SUMMARY,
   MOCK_ORDERS,
+  MOCK_ORDERS_EXTENDED,
   MOCK_TOP_PRODUCTS_REPORT,
 } from '../../../data/adminMockData';
 import styles from './AdminDashboard.module.css';
 
 const ADMIN = '/pickyadmin-softnova2026';
 
+const TIMEFRAME_OPTIONS = [
+  { value: 'Week', label: 'Week' },
+  { value: 'This Month', label: 'This Month' },
+  { value: 'Year', label: 'Year' },
+];
+
+// ─── Timeframe-Specific Coordinated Analytics Data Matrix ────────────────────
+const TIMEFRAME_CONFIG = {
+  Week: {
+    kpis: {
+      totalRevenue: '$28,450.00',
+      totalOrders: '2,880',
+      customers: '142',
+      totalProducts: '72',
+    },
+    revenueCard: {
+      headlineAmount: '$ 28,450.00',
+      growthPct: '+12.4%',
+      growthSub: 'Than Last week',
+      maxValue: 50000,
+      gridLines: [50000, 40000, 30000, 20000, 10000, 0],
+    },
+    revenueData: [
+      { day: 'Mon', revenue: 18400, ordersCount: 340, revenueFormatted: '₹18,400', label: 'Monday, Aug 31' },
+      { day: 'Tue', revenue: 24800, ordersCount: 390, revenueFormatted: '₹24,800', label: 'Tuesday, Sep 01' },
+      { day: 'Wed', revenue: 16200, ordersCount: 280, revenueFormatted: '₹16,200', label: 'Wednesday, Sep 02' },
+      { day: 'Thu', revenue: 32600, ordersCount: 450, revenueFormatted: '₹32,600', label: 'Thursday, Sep 03' },
+      { day: 'Fri', revenue: 28900, ordersCount: 410, revenueFormatted: '₹28,900', label: 'Friday, Sep 04' },
+      { day: 'Sat', revenue: 46500, ordersCount: 530, revenueFormatted: '₹46,500', label: 'Saturday, Sep 05' },
+      { day: 'Sun', revenue: 38200, ordersCount: 480, revenueFormatted: '₹38,200', label: 'Sunday, Sep 06' },
+    ],
+    ordersOverview: {
+      totalOrders: 2880,
+      breakdown: [
+        { id: 'cancelled', name: 'Cancelled', count: 144, pct: 5.0, color: '#ef4444' },
+        { id: 'shipped', name: 'Shipped', count: 806, pct: 28.0, color: '#6366f1' },
+        { id: 'delivered', name: 'Delivered', count: 1296, pct: 45.0, color: '#0ea5e9' },
+        { id: 'confirmed', name: 'Confirmed', count: 634, pct: 22.0, color: '#10b981' },
+      ],
+    },
+  },
+  'This Month': {
+    kpis: {
+      totalRevenue: '$118,400.00',
+      totalOrders: '7,900',
+      customers: '580',
+      totalProducts: '72',
+    },
+    revenueCard: {
+      headlineAmount: '$ 118,400.00',
+      growthPct: '+18.2%',
+      growthSub: 'Than Last month',
+      maxValue: 200000,
+      gridLines: [200000, 160000, 120000, 80000, 40000, 0],
+    },
+    revenueData: [
+      { day: 'Wk 1', revenue: 92000, ordersCount: 1450, revenueFormatted: '₹92,000', label: 'Week 1 (Sep 01 - 07)' },
+      { day: 'Wk 2', revenue: 134000, ordersCount: 1890, revenueFormatted: '₹1,34,000', label: 'Week 2 (Sep 08 - 14)' },
+      { day: 'Wk 3', revenue: 148000, ordersCount: 2100, revenueFormatted: '₹1,48,000', label: 'Week 3 (Sep 15 - 21)' },
+      { day: 'Wk 4', revenue: 175500, ordersCount: 2460, revenueFormatted: '₹1,75,500', label: 'Week 4 (Sep 22 - 28)' },
+    ],
+    ordersOverview: {
+      totalOrders: 7900,
+      breakdown: [
+        { id: 'cancelled', name: 'Cancelled', count: 474, pct: 6.0, color: '#ef4444' },
+        { id: 'shipped', name: 'Shipped', count: 2212, pct: 28.0, color: '#6366f1' },
+        { id: 'delivered', name: 'Delivered', count: 3555, pct: 45.0, color: '#0ea5e9' },
+        { id: 'confirmed', name: 'Confirmed', count: 1659, pct: 21.0, color: '#10b981' },
+      ],
+    },
+  },
+  Year: {
+    kpis: {
+      totalRevenue: '$459,234.08',
+      totalOrders: '56,700',
+      customers: '3,420',
+      totalProducts: '72',
+    },
+    revenueCard: {
+      headlineAmount: '$ 459,234.08',
+      growthPct: '+24.6%',
+      growthSub: 'Than Last year',
+      maxValue: 1000000,
+      gridLines: [1000000, 800000, 600000, 400000, 200000, 0],
+    },
+    revenueData: [
+      { day: 'Jan', revenue: 450000, ordersCount: 6200, revenueFormatted: '₹4,50,000', label: 'January 2026' },
+      { day: 'Mar', revenue: 620000, ordersCount: 8400, revenueFormatted: '₹6,20,000', label: 'March 2026' },
+      { day: 'May', revenue: 510000, ordersCount: 7100, revenueFormatted: '₹5,10,000', label: 'May 2026' },
+      { day: 'Jul', revenue: 840000, ordersCount: 11300, revenueFormatted: '₹8,40,000', label: 'July 2026' },
+      { day: 'Sep', revenue: 760000, ordersCount: 10500, revenueFormatted: '₹7,60,000', label: 'September 2026' },
+      { day: 'Nov', revenue: 980000, ordersCount: 13200, revenueFormatted: '₹9,80,000', label: 'November 2026' },
+    ],
+    ordersOverview: {
+      totalOrders: 56700,
+      breakdown: [
+        { id: 'cancelled', name: 'Cancelled', count: 2268, pct: 4.0, color: '#ef4444' },
+        { id: 'shipped', name: 'Shipped', count: 15876, pct: 28.0, color: '#6366f1' },
+        { id: 'delivered', name: 'Delivered', count: 26649, pct: 47.0, color: '#0ea5e9' },
+        { id: 'confirmed', name: 'Confirmed', count: 11907, pct: 21.0, color: '#10b981' },
+      ],
+    },
+  },
+};
+
+// Formats Y-axis grid tick numbers gracefully (e.g. 1000k, 200k, 50k, 0)
+function formatAxisTick(val) {
+  if (val === 0) return '0';
+  if (val >= 1000000) {
+    return val % 1000000 === 0 ? `${val / 1000000}M` : `${(val / 1000000).toFixed(1)}M`;
+  }
+  if (val >= 1000) {
+    return `${Math.round(val / 1000)}k`;
+  }
+  return `${val}`;
+}
+
 // ─── 1. Left Graph: Total Revenue Premium Spline Chart ───────────────────────
-function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
+function RevenueWaveChart({
+  data = [],
+  activeIndex = 3,
+  onSelectIndex,
+  maxValue = 50000,
+  gridLines = [50000, 40000, 30000, 20000, 10000, 0],
+}) {
   const svgRef = React.useRef(null);
   const [isHovered, setIsHovered] = useState(false);
-  const maxValue = 40000;
-  // Grid line Y values: 36k, 30k, 24k, 18k, 12k, 6k, 0
-  const gridLines = [36000, 30000, 24000, 18000, 12000, 6000, 0];
   const chartWidth = 540;
   const chartHeight = 220;
-  const paddingLeft = 45;
+  const paddingLeft = 48;
   const paddingRight = 20;
   const chartTop = 20;
   const chartBottom = 180;
@@ -145,7 +265,7 @@ function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
                 strokeDasharray="3 3"
               />
               <text
-                x={paddingLeft - 10}
+                x={paddingLeft - 8}
                 y={y + 4}
                 fontSize="11"
                 fontWeight="500"
@@ -153,7 +273,7 @@ function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
                 textAnchor="end"
                 className={styles.graphAxisFont}
               >
-                {val === 0 ? '0' : `${val / 1000}k`}
+                {formatAxisTick(val)}
               </text>
             </g>
           );
@@ -268,7 +388,7 @@ function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
               Orders
             </span>
             <strong style={{ color: '#0f172a', fontWeight: 800 }}>
-              {data[activeIndex].ordersCount || '440'} orders
+              {data[activeIndex].ordersCount?.toLocaleString() || '440'} orders
             </strong>
           </div>
         </div>
@@ -277,57 +397,40 @@ function RevenueWaveChart({ data = [], activeIndex = 3, onSelectIndex }) {
   );
 }
 
-// Helper function: generates true rounded spaced annular donut sector path
-function createRoundedDonutSector(cx, cy, rIn, rOut, a0Deg, a1Deg, cornerRadius = 5.5, gapDeg = 4.0) {
+// Helper function: generates clean annular donut sector path with smooth gap separation
+function createDonutSector(cx, cy, rIn, rOut, a0Deg, a1Deg, gapDeg = 3.5) {
   const span = a1Deg - a0Deg;
-  const effectiveGap = Math.min(gapDeg, span * 0.25);
+  // Scaled gap so tiny slices (< 8%) remain clear and proportional
+  const effectiveGap = Math.min(gapDeg, span * 0.22);
   const a0 = (a0Deg + effectiveGap / 2) * (Math.PI / 180);
   const a1 = (a1Deg - effectiveGap / 2) * (Math.PI / 180);
   const angleSpan = a1 - a0;
 
-  if (angleSpan <= 0.01) return '';
+  if (angleSpan <= 0.005) return '';
 
-  const crOut = Math.min(cornerRadius, (rOut - rIn) / 2.5, (rOut * angleSpan) / 3.5);
-  const crIn = Math.min(cornerRadius, (rOut - rIn) / 2.5, (rIn * angleSpan) / 3.5);
+  const x1Out = cx + rOut * Math.cos(a0);
+  const y1Out = cy + rOut * Math.sin(a0);
+  const x2Out = cx + rOut * Math.cos(a1);
+  const y2Out = cy + rOut * Math.sin(a1);
 
-  const daOut = crOut / rOut;
-  const daIn = crIn / rIn;
+  const x2In = cx + rIn * Math.cos(a1);
+  const y2In = cy + rIn * Math.sin(a1);
+  const x1In = cx + rIn * Math.cos(a0);
+  const y1In = cy + rIn * Math.sin(a0);
 
-  // Outer Arc Start & End
-  const pOutStart = { x: cx + rOut * Math.cos(a0 + daOut), y: cy + rOut * Math.sin(a0 + daOut) };
-  const pOutEnd = { x: cx + rOut * Math.cos(a1 - daOut), y: cy + rOut * Math.sin(a1 - daOut) };
-
-  // Outer End Corner to Radial End
-  const pRadOutEnd = { x: cx + (rOut - crOut) * Math.cos(a1), y: cy + (rOut - crOut) * Math.sin(a1) };
-  const pRadInEnd = { x: cx + (rIn + crIn) * Math.cos(a1), y: cy + (rIn + crIn) * Math.sin(a1) };
-
-  // Inner End Corner to Inner Arc
-  const pInEnd = { x: cx + rIn * Math.cos(a1 - daIn), y: cy + rIn * Math.sin(a1 - daIn) };
-  const pInStart = { x: cx + rIn * Math.cos(a0 + daIn), y: cy + rIn * Math.sin(a0 + daIn) };
-
-  // Inner Start Corner to Radial Start
-  const pRadInStart = { x: cx + (rIn + crIn) * Math.cos(a0), y: cy + (rIn + crIn) * Math.sin(a0) };
-  const pRadOutStart = { x: cx + (rOut - crOut) * Math.cos(a0), y: cy + (rOut - crOut) * Math.sin(a0) };
-
-  const largeArcOuter = (a1 - a0 - 2 * daOut) > Math.PI ? 1 : 0;
-  const largeArcInner = (a1 - a0 - 2 * daIn) > Math.PI ? 1 : 0;
+  const largeArc = angleSpan > Math.PI ? 1 : 0;
 
   return [
-    `M ${pOutStart.x.toFixed(2)} ${pOutStart.y.toFixed(2)}`,
-    `A ${rOut} ${rOut} 0 ${largeArcOuter} 1 ${pOutEnd.x.toFixed(2)} ${pOutEnd.y.toFixed(2)}`,
-    `A ${crOut} ${crOut} 0 0 1 ${pRadOutEnd.x.toFixed(2)} ${pRadOutEnd.y.toFixed(2)}`,
-    `L ${pRadInEnd.x.toFixed(2)} ${pRadInEnd.y.toFixed(2)}`,
-    `A ${crIn} ${crIn} 0 0 1 ${pInEnd.x.toFixed(2)} ${pInEnd.y.toFixed(2)}`,
-    `A ${rIn} ${rIn} 0 ${largeArcInner} 0 ${pInStart.x.toFixed(2)} ${pInStart.y.toFixed(2)}`,
-    `A ${crIn} ${crIn} 0 0 1 ${pRadInStart.x.toFixed(2)} ${pRadInStart.y.toFixed(2)}`,
-    `L ${pRadOutStart.x.toFixed(2)} ${pRadOutStart.y.toFixed(2)}`,
-    `A ${crOut} ${crOut} 0 0 1 ${pOutStart.x.toFixed(2)} ${pOutStart.y.toFixed(2)}`,
+    `M ${x1Out.toFixed(2)} ${y1Out.toFixed(2)}`,
+    `A ${rOut} ${rOut} 0 ${largeArc} 1 ${x2Out.toFixed(2)} ${y2Out.toFixed(2)}`,
+    `L ${x2In.toFixed(2)} ${y2In.toFixed(2)}`,
+    `A ${rIn} ${rIn} 0 ${largeArc} 0 ${x1In.toFixed(2)} ${y1In.toFixed(2)}`,
     'Z',
   ].join(' ');
 }
 
 // ─── 2. Right Graph: Orders Overview Segmented Donut Breakdown Chart ─────────
-function OrdersDonutChart({ totalOrders = 2343 }) {
+function OrdersDonutChart({ data }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const cx = 135;
   const cy = 115;
@@ -335,8 +438,8 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
   const rIn = 62;
   const rMid = (rOut + rIn) / 2;
 
-  // 4 Status Breakdown Categories (Cancelled, Shipped, Delivered, Confirmed)
-  const orderBreakdown = [
+  const totalOrders = data?.totalOrders ?? 2343;
+  const orderBreakdown = data?.breakdown ?? [
     {
       id: 'cancelled',
       name: 'Cancelled',
@@ -367,9 +470,9 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
     },
   ];
 
-  // Calculate 100% accurate rounded, spaced annular sectors with radial displacement vectors
+  // Calculate clean annular sectors and center labels
   const slices = useMemo(() => {
-    let currentAngle = -100.8;
+    let currentAngle = -90;
 
     return orderBreakdown.map((item) => {
       const spanDeg = (item.pct / 100) * 360;
@@ -377,17 +480,12 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
       const a1 = currentAngle + spanDeg;
       const midAngle = (a0 + a1) / 2;
 
-      const path = createRoundedDonutSector(cx, cy, rIn, rOut, a0, a1, 5.5, 4.0);
+      const path = createDonutSector(cx, cy, rIn, rOut, a0, a1, 3.5);
 
       // Percentage label coordinates right in the middle of each sector
       const radMid = (midAngle * Math.PI) / 180;
       const textX = cx + rMid * Math.cos(radMid);
       const textY = cy + rMid * Math.sin(radMid);
-
-      // Radial pop-out vector for hover animation
-      const offsetDist = 9;
-      const dx = Math.cos(radMid) * offsetDist;
-      const dy = Math.sin(radMid) * offsetDist;
 
       currentAngle += spanDeg;
 
@@ -396,11 +494,9 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
         path,
         textX,
         textY,
-        dx,
-        dy,
       };
     });
-  }, [cx, cy, rIn, rOut, rMid]);
+  }, [orderBreakdown, cx, cy, rIn, rOut, rMid]);
 
   // Legend items order
   const legendOrder = ['shipped', 'delivered', 'confirmed', 'cancelled'];
@@ -415,7 +511,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
           viewBox="0 0 270 230"
           style={{ width: '100%', height: '100%', overflow: 'visible' }}
         >
-          {/* Rounded, Spaced Donut Slices with Radial Hover Pop-out */}
+          {/* Donut Slices with Smooth Center-Scaled Hover Interaction (Zero Jitter / No Override) */}
           {slices.map((slice, idx) => {
             const isHovered = hoveredIndex === idx;
             const isAnyHovered = hoveredIndex !== null;
@@ -427,21 +523,23 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
                 onMouseLeave={() => setHoveredIndex(null)}
                 style={{
                   cursor: 'pointer',
-                  transform: isHovered
-                    ? `translate(${slice.dx.toFixed(2)}px, ${slice.dy.toFixed(2)}px)`
-                    : 'translate(0px, 0px)',
-                  transition: 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease',
-                  opacity: isAnyHovered && !isHovered ? 0.55 : 1,
+                  transformOrigin: `${cx}px ${cy}px`,
+                  transform: isHovered ? 'scale(1.045)' : 'scale(1)',
+                  transition: 'transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease',
+                  opacity: isAnyHovered && !isHovered ? 0.45 : 1,
                 }}
               >
                 <path
                   d={slice.path}
                   fill={slice.color}
+                  stroke="#ffffff"
+                  strokeWidth="3.2"
+                  strokeLinejoin="round"
                   style={{
                     filter: isHovered
-                      ? `drop-shadow(0 8px 18px ${slice.color}85)`
-                      : 'drop-shadow(0 2px 5px rgba(0,0,0,0.06))',
-                    transition: 'filter 0.25s ease',
+                      ? `drop-shadow(0 6px 16px ${slice.color}85)`
+                      : 'drop-shadow(0 1px 3px rgba(0,0,0,0.05))',
+                    transition: 'filter 0.2s ease',
                   }}
                 />
                 {/* Percentage label inside the slice */}
@@ -449,7 +547,7 @@ function OrdersDonutChart({ totalOrders = 2343 }) {
                   x={slice.textX}
                   y={slice.textY}
                   fill="#ffffff"
-                  fontSize="11"
+                  fontSize={slice.pct < 6 ? '10' : '11'}
                   fontWeight="800"
                   textAnchor="middle"
                   dominantBaseline="central"
@@ -538,45 +636,22 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
-  // Performance Data for Revenue Wave Chart (responsive to timeframe)
-  const revenueWaveData = useMemo(() => {
-    if (timeframe === 'Week') {
-      return [
-        { day: 'Mon', revenue: 18000, ordersCount: 380, revenueFormatted: '₹18,000', label: 'Aug 31, 2026' },
-        { day: 'Tue', revenue: 24000, ordersCount: 410, revenueFormatted: '₹24,000', label: 'Sep 01, 2026' },
-        { day: 'Wed', revenue: 12000, ordersCount: 290, revenueFormatted: '₹12,000', label: 'Sep 02, 2026' },
-        { day: 'Thu', revenue: 31000, ordersCount: 440, revenueFormatted: '₹31,000', label: 'Sep 03, 2026' },
-        { day: 'Fri', revenue: 26000, ordersCount: 390, revenueFormatted: '₹26,000', label: 'Sep 04, 2026' },
-        { day: 'Sat', revenue: 36000, ordersCount: 465, revenueFormatted: '₹36,000', label: 'Sep 05, 2026' },
-        { day: 'Sun', revenue: 21000, ordersCount: 340, revenueFormatted: '₹21,000', label: 'Sep 06, 2026' },
-      ];
-    } else if (timeframe === 'Year') {
-      return [
-        { day: 'Jan', revenue: 22000, ordersCount: 310, revenueFormatted: '₹22,000', label: 'January 2026' },
-        { day: 'Mar', revenue: 29000, ordersCount: 420, revenueFormatted: '₹29,000', label: 'March 2026' },
-        { day: 'May', revenue: 19000, ordersCount: 280, revenueFormatted: '₹19,000', label: 'May 2026' },
-        { day: 'Jul', revenue: 35000, ordersCount: 490, revenueFormatted: '₹35,000', label: 'July 2026' },
-        { day: 'Sep', revenue: 31000, ordersCount: 440, revenueFormatted: '₹31,000', label: 'September 2026' },
-        { day: 'Nov', revenue: 38000, ordersCount: 520, revenueFormatted: '₹38,000', label: 'November 2026' },
-      ];
-    }
-    // Default 'This Month'
-    return [
-      { day: 'Wk 1', revenue: 19000, ordersCount: 320, revenueFormatted: '₹19,000', label: 'Sep 01 - 07, 2026' },
-      { day: 'Wk 2', revenue: 28000, ordersCount: 430, revenueFormatted: '₹28,000', label: 'Sep 08 - 14, 2026' },
-      { day: 'Wk 3', revenue: 31000, ordersCount: 440, revenueFormatted: '₹31,000', label: 'Sep 15 - 21, 2026' },
-      { day: 'Wk 4', revenue: 36000, ordersCount: 485, revenueFormatted: '₹36,000', label: 'Sep 22 - 28, 2026' },
-    ];
+  // Timeframe Active Dataset
+  const currentData = useMemo(() => {
+    return TIMEFRAME_CONFIG[timeframe] || TIMEFRAME_CONFIG['Week'];
   }, [timeframe]);
 
   // Keep active index bounded when timeframe data length changes
   useEffect(() => {
-    setActiveBarIndex((prev) => Math.min(prev, revenueWaveData.length - 1));
-  }, [revenueWaveData]);
+    setActiveBarIndex((prev) => Math.min(prev, (currentData.revenueData.length || 1) - 1));
+  }, [timeframe, currentData]);
 
-  // Recent Orders (First 5 orders)
+  // Recent Orders (5 orders matching 5 Top Products)
   const recentOrders = useMemo(() => {
-    return MOCK_ORDERS.slice(0, 5);
+    const pool = (MOCK_ORDERS_EXTENDED && MOCK_ORDERS_EXTENDED.length >= 5)
+      ? MOCK_ORDERS_EXTENDED
+      : MOCK_ORDERS;
+    return pool.slice(0, 5);
   }, []);
 
   // Top Products (Top 5 products)
@@ -648,22 +723,28 @@ export default function AdminDashboard() {
           </div>
 
           <div className={styles.headerActions}>
-            {/* Segmented Timeframe Control [ Week | This Month | Year ] */}
-            <div className={styles.segmentedControl}>
-              {['Week', 'This Month', 'Year'].map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  className={`${styles.segmentedTab} ${timeframe === tab ? styles.segmentedTabActive : ''}`}
-                  onClick={() => {
-                    setTimeframe(tab);
-                    showToast(`Viewing data for ${tab}`, 'info');
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+            {/* Timeframe Dropdown Selection */}
+            <Select
+              value={timeframe}
+              onChange={(val) => {
+                setTimeframe(val);
+                showToast(`Viewing data for ${val}`, 'info');
+              }}
+              options={TIMEFRAME_OPTIONS}
+              minWidth="92px"
+              height="36px"
+              borderRadius="9999px"
+              buttonStyle={{
+                border: '1.5px solid #ede8f8',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                color: '#1e1b4b',
+                padding: '0 0.65rem',
+                gap: '0.35rem',
+                boxShadow: '0 1px 3px rgba(124, 58, 237, 0.04)',
+              }}
+              ariaLabel="Select timeframe"
+            />
 
             {/* Export Button */}
             <button
@@ -687,11 +768,8 @@ export default function AdminDashboard() {
                 <DollarSign size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Revenue</span>
-              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
-                <TrendingUp size={11} /> +14.2%
-              </span>
             </div>
-            <div className={styles.kpiVal}>$8,220.64</div>
+            <div className={styles.kpiVal}>{currentData.kpis.totalRevenue}</div>
           </div>
 
           {/* Card 2: Total Orders */}
@@ -702,11 +780,8 @@ export default function AdminDashboard() {
                 <ShoppingCart size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Orders</span>
-              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
-                <TrendingUp size={11} /> +8.5%
-              </span>
             </div>
-            <div className={styles.kpiVal}>2,500</div>
+            <div className={styles.kpiVal}>{currentData.kpis.totalOrders}</div>
           </div>
 
           {/* Card 3: Customers */}
@@ -717,11 +792,8 @@ export default function AdminDashboard() {
                 <Users size={16} />
               </div>
               <span className={styles.kpiLabel}>Customers</span>
-              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
-                <TrendingUp size={11} /> +12.1%
-              </span>
             </div>
-            <div className={styles.kpiVal}>110</div>
+            <div className={styles.kpiVal}>{currentData.kpis.customers}</div>
           </div>
 
           {/* Card 4: Total Products */}
@@ -732,77 +804,39 @@ export default function AdminDashboard() {
                 <Package size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Products</span>
-              <span className={`${styles.trendBadge} ${styles.trendUp}`}>
-                <TrendingUp size={11} /> +5.4%
-              </span>
             </div>
-            <div className={styles.kpiVal}>72</div>
+            <div className={styles.kpiVal}>{currentData.kpis.totalProducts}</div>
           </div>
         </div>
 
         {/* ─── 3. Middle Row: Revenue Wave Chart + Orders Donut Status Breakdown ─ */}
         <div className={styles.middleGrid}>
-          {/* Left Column: Total Revenue Spline Wave Chart (Matches Image 2 Design Reference) */}
+          {/* Left Column: Total Revenue Spline Wave Chart */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Total Revenue</h2>
-
-              <div className={styles.graphHeaderActions}>
-                {/* Radio / Pill Selection (Monthly / Weekly matching Image 2) */}
-                <div className={styles.radioPillGroup}>
-                  <button
-                    type="button"
-                    className={`${styles.radioPillBtn} ${timeframe === 'This Month' || timeframe === 'Year' ? styles.radioPillActive : ''}`}
-                    onClick={() => {
-                      setTimeframe('This Month');
-                      showToast('Viewing Monthly data', 'info');
-                    }}
-                  >
-                    <span className={styles.radioDot} />
-                    <span>Monthly</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.radioPillBtn} ${timeframe === 'Week' ? styles.radioPillActive : ''}`}
-                    onClick={() => {
-                      setTimeframe('Week');
-                      showToast('Viewing Weekly data', 'info');
-                    }}
-                  >
-                    <span className={styles.radioDot} />
-                    <span>Weekly</span>
-                  </button>
-                </div>
-
-                {/* More Options Button (⋮ matching Image 2) */}
-                <button
-                  className={styles.moreOptionsBtn}
-                  onClick={() => showToast('Revenue analysis options', 'info')}
-                  title="More Options"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
             </div>
 
-            {/* Metric Summary Banner (Green Circle Badge + Big Revenue Readout + Growth % matching Image 2) */}
+            {/* Metric Summary Banner */}
             <div className={styles.revenueBannerRow}>
               <div className={styles.revenueBannerLeft}>
                 <div className={styles.greenCircleBadge}>
                   <ArrowUpRight size={20} strokeWidth={2.8} />
                 </div>
-                <div className={styles.revenueBigAmount}>$ 459,234.08</div>
+                <div className={styles.revenueBigAmount}>{currentData.revenueCard.headlineAmount}</div>
               </div>
 
-              <div className={styles.revenueBannerRight}>
-                <div className={styles.revenueGrowthPct}>+0.6%</div>
-                <div className={styles.revenueGrowthSub}>Than Last week</div>
+              <div className={styles.revenueLiveBadge}>
+                <span className={styles.livePulseDot} />
+                <span className={styles.liveBadgeText}>Live Analytics</span>
               </div>
             </div>
 
-            {/* Interactive Revenue Spline Wave Chart */}
+            {/* Interactive Revenue Spline Wave Chart with Dynamic Scaling Y-Axis */}
             <RevenueWaveChart
-              data={revenueWaveData}
+              data={currentData.revenueData}
+              maxValue={currentData.revenueCard.maxValue}
+              gridLines={currentData.revenueCard.gridLines}
               activeIndex={activeBarIndex}
               onSelectIndex={setActiveBarIndex}
             />
@@ -814,10 +848,14 @@ export default function AdminDashboard() {
               <div className={styles.cardTitleWrap}>
                 <h2 className={styles.cardTitle}>Orders Overview</h2>
               </div>
+              <div className={styles.ordersStatusBadge}>
+                <span className={styles.bluePulseDot} />
+                <span className={styles.ordersBadgeText}>Live Orders</span>
+              </div>
             </div>
 
-            {/* Modern Segmented Donut Chart */}
-            <OrdersDonutChart totalOrders={2343} />
+            {/* Modern Dynamic Segmented Donut Chart */}
+            <OrdersDonutChart data={currentData.ordersOverview} />
           </div>
         </div>
 
@@ -908,7 +946,17 @@ export default function AdminDashboard() {
               {topProducts.map((prod, idx) => (
                 <div key={prod._id || prod.id} className={styles.topProductRow}>
                   <div className={styles.topProductLeft}>
-                    <span className={`${styles.topRankNum} ${idx === 0 ? styles.topRankFirst : ''}`}>
+                    <span
+                      className={`${styles.topRankNum} ${
+                        idx === 0
+                          ? styles.topRankFirst
+                          : idx === 1
+                          ? styles.topRankSecond
+                          : idx === 2
+                          ? styles.topRankThird
+                          : ''
+                      }`}
+                    >
                       #{idx + 1}
                     </span>
                     <img

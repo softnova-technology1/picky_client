@@ -25,6 +25,12 @@ import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data';
 
+const PREDEFINED_TAGS = [
+  'Traditional', 'Handloom', 'Cotton', 'Festive', 'Trending', 
+  'New Arrival', 'Premium', 'Bestseller', 'Silk', 'Daily Wear', 
+  'Party Wear', 'Organic', 'Gift Item'
+];
+
 export default function AdminProducts() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -100,7 +106,7 @@ export default function AdminProducts() {
       discountPrice: '',
       description: '',
       tags: '',
-      stock: '50',
+      stock: '',
       isFeatured: false,
       isActive: true,
     });
@@ -123,7 +129,7 @@ export default function AdminProducts() {
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       description: p.description || '',
       tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
-      stock: p.stock !== undefined ? String(p.stock) : '50',
+      stock: p.stock !== undefined ? String(p.stock) : '',
       isFeatured: !!p.isFeatured,
       isActive: true,
     });
@@ -200,6 +206,10 @@ export default function AdminProducts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.discountPrice && Number(formData.discountPrice) > Number(formData.price)) {
+      showToast('Selling Price cannot exceed M.R.P!', 'error');
+      return;
+    }
     if (!formData.name.trim() || !formData.price || !formData.category) {
       showToast('Please fill in required product fields', 'error');
       return;
@@ -210,7 +220,7 @@ export default function AdminProducts() {
     payload.append('category', formData.category);
     payload.append('price', Number(formData.price));
     if (formData.discountPrice) payload.append('discountPrice', Number(formData.discountPrice));
-    payload.append('stock', Number(formData.stock) || 50);
+    payload.append('stock', Number(formData.stock) || 0);
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
 
@@ -877,7 +887,7 @@ export default function AdminProducts() {
                       <option value="">Select Category</option>
                       {categories.map((c) => (
                         <option key={c._id} value={c._id}>
-                          {c.name} {c.characteristics?.length ? `(${c.characteristics.length} specs)` : ''}
+                          {c.name}
                         </option>
                       ))}
                     </select>
@@ -960,15 +970,21 @@ export default function AdminProducts() {
                         width: '100%',
                         padding: '0.68rem 0.9rem',
                         background: '#f8fafc',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid',
+                        borderColor: formData.price && formData.discountPrice && Number(formData.discountPrice) > Number(formData.price) ? '#ef4444' : '#e2e8f0',
                         borderRadius: '10px',
                         fontSize: '0.84rem',
                         fontWeight: 600,
-                        color: '#15803d',
+                        color: formData.price && formData.discountPrice && Number(formData.discountPrice) > Number(formData.price) ? '#ef4444' : '#15803d',
                         outline: 'none',
                         boxSizing: 'border-box',
                       }}
                     />
+                    {formData.price && formData.discountPrice && Number(formData.discountPrice) > Number(formData.price) && (
+                      <span style={{ fontSize: '0.7rem', color: '#ef4444', display: 'block', marginTop: '0.35rem', fontWeight: 600 }}>
+                        ⚠️ Selling price cannot exceed M.R.P
+                      </span>
+                    )}
                   </div>
 
                   <div>
@@ -1144,8 +1160,46 @@ export default function AdminProducts() {
                       color: '#0f172a',
                       outline: 'none',
                       boxSizing: 'border-box',
+                      marginBottom: '0.6rem'
                     }}
                   />
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {PREDEFINED_TAGS.map(tag => {
+                      const isSelected = formData.tags.toLowerCase().includes(tag.toLowerCase());
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            let currentTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+                            const tagLower = tag.toLowerCase();
+                            const existingIdx = currentTags.findIndex(t => t.toLowerCase() === tagLower);
+                            
+                            if (existingIdx >= 0) {
+                              currentTags.splice(existingIdx, 1);
+                            } else {
+                              currentTags.push(tag);
+                            }
+                            setFormData({ ...formData, tags: currentTags.join(', ') });
+                          }}
+                          style={{
+                            fontSize: '0.72rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '9999px',
+                            border: '1px solid',
+                            borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                            background: isSelected ? '#f3e8ff' : '#ffffff',
+                            color: isSelected ? '#6d28d9' : '#475569',
+                            cursor: 'pointer',
+                            fontWeight: isSelected ? 600 : 400,
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {isSelected ? `✓ ${tag}` : `+ ${tag}`}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Checkbox Options Container */}

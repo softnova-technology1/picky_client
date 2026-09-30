@@ -39,20 +39,22 @@ import { useUiStore } from '../../../store/uiStore';
 
 // ─── Status Tabs Configuration ──────────────────────────────────────────────
 const STATUS_TABS = [
-  { key: 'all',       label: 'All Orders',  icon: ShoppingBag, color: '#7c3aed' },
-  { key: 'confirmed', label: 'Confirmed',   icon: Clock,       color: '#d97706' },
-  { key: 'shipped',   label: 'Shipped',     icon: Truck,       color: '#2563eb' },
-  { key: 'delivered', label: 'Delivered',   icon: BadgeCheck,  color: '#16a34a' },
-  { key: 'cancelled', label: 'Cancelled',   icon: XCircle,     color: '#dc2626' },
+  { key: 'all',       label: 'All Orders',      icon: ShoppingBag, color: '#7c3aed' },
+  { key: 'confirmed', label: 'Order Confirmed', icon: Clock,       color: '#d97706' },
+  { key: 'packing',   label: 'Order Packing',   icon: Package,     color: '#8b5cf6' },
+  { key: 'shipped',   label: 'Order Shipping',  icon: Truck,       color: '#2563eb' },
+  { key: 'delivered', label: 'Order Delivered', icon: BadgeCheck,  color: '#16a34a' },
+  { key: 'cancelled', label: 'Cancelled Order', icon: XCircle,     color: '#dc2626' },
 ];
 
 // ─── Status Visual Config ───────────────────────────────────────────────────
 const STATUS_CFG = {
-  confirmed:        { cls: 'adm-status-processing', label: 'Confirmed',        icon: Clock,       bg: '#fffbebfb', color: '#b45309' },
-  shipped:          { cls: 'adm-status-shipped',     label: 'Shipped',          icon: Truck,       bg: '#eff6ff',   color: '#1d4ed8' },
-  out_for_delivery: { cls: 'adm-status-shipped',     label: 'Out for Delivery', icon: PackageCheck,bg: '#f0f9ff',   color: '#0369a1' },
-  delivered:        { cls: 'adm-status-delivered',    label: 'Delivered',        icon: BadgeCheck,  bg: '#f0fdf4',   color: '#15803d' },
-  cancelled:        { cls: 'adm-status-cancelled',    label: 'Cancelled',        icon: XCircle,     bg: '#fef2f2',   color: '#b91c1c' },
+  confirmed:        { cls: 'adm-status-processing', label: 'Order Confirmed', icon: Clock,       bg: '#fffbebfb', color: '#b45309' },
+  packing:          { cls: 'adm-status-processing', label: 'Order Packing',   icon: Package,     bg: '#f3e8ff',   color: '#7c3aed' },
+  shipped:          { cls: 'adm-status-shipped',     label: 'Order Shipping',  icon: Truck,       bg: '#eff6ff',   color: '#1d4ed8' },
+  out_for_delivery: { cls: 'adm-status-shipped',     label: 'Order Shipping',  icon: PackageCheck,bg: '#f0f9ff',   color: '#0369a1' },
+  delivered:        { cls: 'adm-status-delivered',    label: 'Order Delivered', icon: BadgeCheck,  bg: '#f0fdf4',   color: '#15803d' },
+  cancelled:        { cls: 'adm-status-cancelled',    label: 'Cancelled Order', icon: XCircle,     bg: '#fef2f2',   color: '#b91c1c' },
 };
 
 export default function AdminOrders() {
@@ -71,6 +73,7 @@ export default function AdminOrders() {
   // ─── Dashboard Stats Calculations ────────────────────────────────────────
   const totalOrders = storeOrders.length;
   const confirmedCount = storeOrders.filter((o) => o.status === 'confirmed').length;
+  const packingCount = storeOrders.filter((o) => o.status === 'packing').length;
   const shippedCount = storeOrders.filter((o) => o.status === 'shipped' || o.status === 'out_for_delivery').length;
   const deliveredCount = storeOrders.filter((o) => o.status === 'delivered').length;
   const totalRevenue = storeOrders.reduce((acc, o) => {
@@ -814,11 +817,11 @@ export default function AdminOrders() {
                                         e.target.style.boxShadow = 'none';
                                       }}
                                     >
-                                      <option value="confirmed">⚡ Confirmed (Ready to Ship)</option>
-                                      <option value="shipped">🚚 Shipped & Dispatched</option>
-                                      <option value="out_for_delivery">📦 Out for Delivery</option>
-                                      <option value="delivered">🎉 Delivered to Customer</option>
-                                      <option value="cancelled">❌ Cancelled</option>
+                                      <option value="confirmed">⚡ Order Confirmed</option>
+                                      <option value="packing">📦 Order Packing</option>
+                                      <option value="shipped">🚚 Order Shipping</option>
+                                      <option value="delivered">🎉 Order Delivered</option>
+                                      <option value="cancelled">❌ Cancelled Order</option>
                                     </select>
                                   </div>
 
