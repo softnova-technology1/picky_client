@@ -684,6 +684,9 @@ export const MOCK_SALES_SUMMARY = {
   cancelledOrders: 20,
   totalDiscount: 24500,
   totalCustomers: 1240,
+  totalBuyers: 986,
+  repeatBuyers: 842,
+  onceBuyers: 144,
   totalProducts: MOCK_PRODUCTS.length,
   dailySales: [
     { _id: '2026-08-31', sales: 18000, orders: 12 },
@@ -934,6 +937,12 @@ export const MOCK_CUSTOMERS = [
   { _id: 'cust_6', name: 'Rajan Murugesan', phone: '+91 90039 55441', email: 'rajan.m@example.com', city: 'Erode', totalOrders: 1, totalSpent: 1299, joinedDate: '2026-09-01' },
   { _id: 'cust_7', name: 'Lalitha Krishnamurthy', phone: '+91 99449 87766', email: 'lalitha.k@example.com', city: 'Thanjavur', totalOrders: 7, totalSpent: 14890, joinedDate: '2026-03-08' },
   { _id: 'cust_8', name: 'Karthik Selvam', phone: '+91 95001 33224', email: 'karthik.s@example.com', city: 'Vellore', totalOrders: 2, totalSpent: 3200, joinedDate: '2026-07-29' },
+  { _id: 'cust_9', name: 'Deepak Rajan', phone: '+91 98410 77889', email: 'deepak.r@example.com', city: 'Chennai', totalOrders: 0, totalSpent: 0, joinedDate: '2026-09-18' },
+  { _id: 'cust_10', name: 'Sneha Venkatesh', phone: '+91 98405 66778', email: 'sneha.v@example.com', city: 'Coimbatore', totalOrders: 1, totalSpent: 1850, joinedDate: '2026-08-25' },
+  { _id: 'cust_11', name: 'Meena Swaminathan', phone: '+91 97908 44332', email: 'meena.s@example.com', city: 'Madurai', totalOrders: 0, totalSpent: 0, joinedDate: '2026-09-22' },
+  { _id: 'cust_12', name: 'Manoj Prabhakar', phone: '+91 94432 99881', email: 'manoj.p@example.com', city: 'Salem', totalOrders: 1, totalSpent: 1499, joinedDate: '2026-09-05' },
+  { _id: 'cust_13', name: 'Vigneshwaran P', phone: '+91 98845 11223', email: 'vignesh.p@example.com', city: 'Tiruchirappalli', totalOrders: 0, totalSpent: 0, joinedDate: '2026-09-28' },
+  { _id: 'cust_14', name: 'Harish Raghavan', phone: '+91 90031 22334', email: 'harish.r@example.com', city: 'Chennai', totalOrders: 3, totalSpent: 5200, joinedDate: '2026-06-30' },
 ];
 
 // ─── Extended Orders Mock (more variety for Orders page) ─────────────────────

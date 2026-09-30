@@ -260,16 +260,16 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Customers</span>}
           </NavLink>
 
-          {/* 8. Coupons */}
+          {/* 8. Discount & Coupons */}
           <NavLink
             to={`${ADMIN}/coupons`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Coupons"
+            title="Discount & Coupons"
           >
             <div className="admin-nav-icon-wrap">
               <Tag size={19} />
             </div>
-            {!collapsed && <span className="admin-nav-label">Coupons</span>}
+            {!collapsed && <span className="admin-nav-label">Discount & Coupons</span>}
           </NavLink>
 
           {/* 9. Reports */}
