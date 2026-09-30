@@ -553,16 +553,14 @@ export default function AdminInventory() {
         }
       `}</style>
 
-      {/* ─── 4 Clickable Top KPI Progress Cards (Reference Design) ──────── */}
+      {/* ─── 4 Clickable Top KPI Cards ──────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard
           title="TOTAL PRODUCT UNITS"
           value={`${kpis.totalStockUnits.toLocaleString()} Units`}
           icon={<Boxes size={22} />}
           variant="purple"
-          footerLabel="Live Master Inventory"
-          footerValue="100%"
-          progress={100}
+          showProgress={false}
           isActive={selectedStatus === 'all'}
           onClick={() => setSelectedStatus('all')}
         />
@@ -571,9 +569,7 @@ export default function AdminInventory() {
           value={kpis.inStock}
           icon={<CheckCircle2 size={22} />}
           variant="green"
-          footerLabel="Ready for Dispatch"
-          footerValue={`${kpis.totalProducts ? Math.round((kpis.inStock / kpis.totalProducts) * 100) : 0}% In Stock`}
-          progress={kpis.totalProducts ? (kpis.inStock / kpis.totalProducts) * 100 : 0}
+          showProgress={false}
           isActive={selectedStatus === 'in_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'in_stock' ? 'all' : 'in_stock'))}
         />
@@ -582,9 +578,7 @@ export default function AdminInventory() {
           value={kpis.lowStock}
           icon={<AlertTriangle size={22} />}
           variant="amber"
-          footerLabel={`Needs Restock (≤ ${LOW_STOCK_THRESHOLD})`}
-          footerValue={`${kpis.lowStock} Items`}
-          progress={kpis.totalProducts ? (kpis.lowStock / kpis.totalProducts) * 100 : 0}
+          showProgress={false}
           isActive={selectedStatus === 'low_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'low_stock' ? 'all' : 'low_stock'))}
         />
@@ -593,9 +587,7 @@ export default function AdminInventory() {
           value={kpis.outOfStock}
           icon={<XCircle size={22} />}
           variant="red"
-          footerLabel="Requires Attention"
-          footerValue={`${kpis.outOfStock} Depleted`}
-          progress={kpis.totalProducts ? (kpis.outOfStock / kpis.totalProducts) * 100 : 0}
+          showProgress={false}
           isActive={selectedStatus === 'out_of_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'out_of_stock' ? 'all' : 'out_of_stock'))}
         />
@@ -1067,6 +1059,8 @@ export default function AdminInventory() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     background: '#f5f0fe',
+                    width: '200px',
+                    minWidth: '200px',
                   }}
                 >
                   Action
@@ -1352,6 +1346,9 @@ export default function AdminInventory() {
                           padding: '0.95rem 1.5rem 0.95rem 0.85rem',
                           verticalAlign: 'middle',
                           whiteSpace: 'nowrap',
+                          width: '200px',
+                          minWidth: '200px',
+                          textAlign: 'right',
                         }}
                       >
                         <div
@@ -1360,6 +1357,7 @@ export default function AdminInventory() {
                             alignItems: 'center',
                             justifyContent: 'flex-end',
                             gap: '0.5rem',
+                            width: '100%',
                           }}
                         >
                           {/* Icon-Only View Button with Tooltip */}
@@ -1369,6 +1367,7 @@ export default function AdminInventory() {
                             className="admin-period-select-btn"
                             style={{
                               width: '32px',
+                              minWidth: '32px',
                               height: '32px',
                               padding: 0,
                               display: 'inline-flex',
@@ -1380,6 +1379,7 @@ export default function AdminInventory() {
                               color: '#475569',
                               cursor: 'pointer',
                               fontWeight: 600,
+                              flexShrink: 0,
                               transition: 'all 0.15s ease',
                             }}
                             title={`View ${item.productName} overview`}
@@ -1394,11 +1394,14 @@ export default function AdminInventory() {
                               type="button"
                               onClick={() => handleOpenRestock(item)}
                               style={{
-                                padding: '0.4rem 0.85rem',
-                                fontSize: '0.78rem',
+                                width: '116px',
+                                minWidth: '116px',
                                 height: '32px',
+                                padding: '0.4rem 0.5rem',
+                                fontSize: '0.78rem',
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '0.35rem',
                                 borderRadius: '8px',
                                 background: isOutOfStock ? '#fee2e2' : '#fef3c7',
@@ -1406,6 +1409,7 @@ export default function AdminInventory() {
                                 color: isOutOfStock ? '#b91c1c' : '#b45309',
                                 fontWeight: 700,
                                 cursor: 'pointer',
+                                flexShrink: 0,
                                 transition: 'all 0.15s ease',
                               }}
                               title="Quick Restock (Add Stock)"
@@ -1419,11 +1423,14 @@ export default function AdminInventory() {
                               onClick={() => handleOpenAdjust(item)}
                               className="admin-period-select-btn"
                               style={{
-                                padding: '0.4rem 0.85rem',
-                                fontSize: '0.78rem',
+                                width: '116px',
+                                minWidth: '116px',
                                 height: '32px',
+                                padding: '0.4rem 0.5rem',
+                                fontSize: '0.78rem',
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '0.35rem',
                                 borderRadius: '8px',
                                 background: '#ede8f8',
@@ -1431,6 +1438,7 @@ export default function AdminInventory() {
                                 color: '#5b13df',
                                 fontWeight: 700,
                                 cursor: 'pointer',
+                                flexShrink: 0,
                                 transition: 'all 0.15s ease',
                               }}
                               title="Adjust Stock Quantity"
@@ -1455,7 +1463,7 @@ export default function AdminInventory() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'center',
               padding: '0.9rem 1.4rem',
               borderTop: '1px solid #f1eafa',
               background: '#fcfbfe',
@@ -1463,14 +1471,7 @@ export default function AdminInventory() {
               gap: '1rem',
             }}
           >
-            {/* Left: Showing Count Indicator */}
-            <div style={{ fontSize: '0.82rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-              Showing <strong style={{ color: '#1e1b4b' }}>{startIndex + 1}</strong> to{' '}
-              <strong style={{ color: '#1e1b4b' }}>{endIndex}</strong> of{' '}
-              <strong style={{ color: '#1e1b4b' }}>{sortedItems.length}</strong> products
-            </div>
-
-            {/* Center: Pagination Controls (First, Prev, 1 2 3 ... N, Next, Last) */}
+            {/* Pagination Controls (First, Prev, 1 2 3 ... N, Next, Last) */}
             <div
               style={{
                 display: 'flex',
@@ -1637,26 +1638,6 @@ export default function AdminInventory() {
                 <span>Last</span>
                 <ChevronsRight size={14} />
               </button>
-            </div>
-
-            {/* Right: Rows per page selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <label
-                htmlFor="inv-rows-per-page"
-                style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', whiteSpace: 'nowrap' }}
-              >
-                Rows per page:
-              </label>
-              <Select
-                id="inv-rows-per-page"
-                ariaLabel="Rows per page"
-                value={String(itemsPerPage)}
-                onChange={handleRowsPerPageChange}
-                options={rowsPerPageOptions}
-                minWidth="125px"
-                align="right"
-                direction="up"
-              />
             </div>
           </div>
         )}
