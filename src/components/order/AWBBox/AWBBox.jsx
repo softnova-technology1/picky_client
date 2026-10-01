@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Copy, Check, Truck, ExternalLink } from 'lucide-react';
+import styles from '../OrderTracker/OrderTracker.module.css';
 
 export default function AWBBox({ trackingId, courier }) {
   const [copied, setCopied] = useState(false);
@@ -12,35 +14,34 @@ export default function AWBBox({ trackingId, courier }) {
   };
 
   return (
-    <div className="awb-box">
+    <div className={styles.awbContainer}>
       <div>
-        <span style={{ fontSize: '0.8rem', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>
-          Courier Partner: <strong style={{ color: 'white' }}>{courier || 'Express Delivery'}</strong>
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <span className="awb-number">{trackingId}</span>
+        <div className={styles.awbLabel}>
+          <Truck size={15} />
+          Courier Partner: <span className={styles.courierBadge}>{courier || 'Express Delivery'}</span>
+        </div>
+        <div className={styles.awbNumberRow}>
+          <span className={styles.awbCode}>{trackingId}</span>
           <button
             onClick={handleCopy}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              padding: '0.4rem 0.8rem',
-              borderRadius: '6px',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              transition: 'var(--transition)',
-            }}
+            className={`${styles.copyAwbBtn} ${copied ? styles.copied : ''}`}
           >
-            {copied ? '✓ Copied!' : '📋 Copy AWB'}
+            {copied ? (
+              <>
+                <Check size={16} /> Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={16} /> Copy AWB
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      <div style={{ fontSize: '0.82rem', color: '#c7d2fe', maxWidth: '280px' }}>
-        🚀 Track this package on the courier website using your AWB number. Updates are also sent live to your WhatsApp.
+      <div className={styles.awbNoteText}>
+        <ExternalLink size={18} style={{ flexShrink: 0, marginTop: '2px', color: '#38bdf8' }} />
+        <span>Track package live via courier portal using your AWB number. Real-time updates are also broadcast to WhatsApp.</span>
       </div>
     </div>
   );

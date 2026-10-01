@@ -1,0 +1,252 @@
+﻿/* ─── ProductVariantSelector — Category-Aware Variant UI ────────────────── */
+
+.variant-section {
+  margin-bottom: 0;
+}
+
+.variant-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.variant-icon {
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.variant-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+/* ── Shared pill grid ── */
+.pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ── Clothing size pills ── */
+.size-pill {
+  min-width: 48px;
+  height: 44px;
+  padding: 0 1rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.size-pill:hover {
+  border-color: #a78bfa;
+  color: #7c3aed;
+  background: #faf5ff;
+  transform: translateY(-1px);
+}
+
+.size-pill.selected {
+  border-color: #7c3aed;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Weight / cable-length pills ── */
+.weight-pill {
+  padding: 0 1.1rem;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.weight-pill:hover {
+  border-color: #a78bfa;
+  color: #7c3aed;
+  background: #faf5ff;
+  transform: translateY(-1px);
+}
+
+.weight-pill.selected {
+  border-color: #7c3aed;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Volume pills ── */
+.volume-pill {
+  padding: 0 1.1rem;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.volume-pill:hover {
+  border-color: #38bdf8;
+  background: #e0f2fe;
+  transform: translateY(-1px);
+}
+
+.volume-pill.selected {
+  border-color: #0284c7;
+  background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Resistance grid ── */
+.resistance-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.resistance-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  gap: 0.15rem;
+  font-family: inherit;
+}
+
+.resistance-pill:hover {
+  border-color: #a78bfa;
+  background: #faf5ff;
+  transform: translateY(-2px);
+}
+
+.resistance-pill.selected {
+  border-color: #7c3aed;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+  transform: translateY(-2px);
+}
+
+.resistance-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #334155;
+}
+
+.resistance-pill.selected .resistance-name {
+  color: #ffffff;
+}
+
+.resistance-sub {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.resistance-pill.selected .resistance-sub {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Free size tag ── */
+.free-size-tag {
+  display: flex;
+  align-items: center;
+}
+
+.free-size-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px solid #86efac;
+  border-radius: 12px;
+}
+
+.free-size-badge {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.free-size-note {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #4ade80;
+  color: #15803d;
+  border-left: 1.5px solid #86efac;
+  padding-left: 0.6rem;
+}
+
+/* ── Food metadata row (shelf life + veg badge) ── */
+.food-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.shelf-badge {
+  font-size: 0.78rem;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.3rem 0.7rem;
+}
+
+.shelf-badge strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.veg-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  padding: 0.3rem 0.65rem;
+}
+
+/* ── Size hint text ── */
+.size-hint {
+  margin-top: 0.55rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}

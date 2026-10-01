@@ -68,7 +68,7 @@
 }
 
 .legal-hero-title {
-  font-family: Georgia, 'Playfair Display', 'Inter', serif;
+  font-family: var(--font-primary);
   font-size: clamp(2.5rem, 5vw, 3.8rem);
   font-weight: 800;
   color: #ffffff;

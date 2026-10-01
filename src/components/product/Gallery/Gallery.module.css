@@ -88,7 +88,7 @@
 }
 
 .script-text {
-  font-family: Georgia, 'Playfair Display', serif;
+  font-family: var(--font-primary);
   font-style: italic;
   font-size: clamp(1.4rem, 2.5vw, 1.8rem);
   color: #2e1065;

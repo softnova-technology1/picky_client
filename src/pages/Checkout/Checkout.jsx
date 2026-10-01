@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
+import Modal from '../../components/ui/Modal/Modal';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
@@ -89,6 +90,8 @@ export default function Checkout() {
   const [showRzModal, setShowRzModal] = useState(false);
   const [rzTab, setRzTab] = useState('card');
   const [upiId, setUpiId] = useState('');
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const [showCancelPaymentConfirm, setShowCancelPaymentConfirm] = useState(false);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -371,7 +374,11 @@ export default function Checkout() {
               {/* Step 2: CHECKOUT */}
               <div
                 className={`${styles['step-item']} ${checkoutStep === 1 ? styles['active'] : styles['completed']}`}
-                onClick={() => checkoutStep > 1 && setCheckoutStep(1)}
+                onClick={() => {
+                  if (checkoutStep > 1) {
+                    setShowBackConfirm(true);
+                  }
+                }}
                 style={{ cursor: checkoutStep > 1 ? 'pointer' : 'default' }}
               >
                 <div className={styles['step-target-node']}>
@@ -560,19 +567,7 @@ export default function Checkout() {
                         <div className={styles['mode-price']}>₹60</div>
                       </div>
 
-                      {/* Option 2: Self Pickup */}
-                      <div
-                        className={`${styles['delivery-mode-card']} ${deliveryMode === 'pickup' ? styles['selected'] : ''}`}
-                        onClick={() => setDeliveryMode('pickup')}
-                      >
-                        <div className={styles['mode-info']}>
-                          <span className={styles['mode-title']}>SELF PICKUP</span>
-                          <span className={styles['mode-desc']}>
-                            ANA Complex– 1st Floor, Sethu Road, Peravurani, Thanjavur, Tamil Nadu, India 614804
-                          </span>
-                        </div>
-                        <div className={`${styles['mode-price']} ${styles['free']}`}>FREE</div>
-                      </div>
+
 
                     </div>
                   </div>
@@ -607,7 +602,7 @@ export default function Checkout() {
                       </h3>
                       <button
                         type="button"
-                        onClick={() => setCheckoutStep(1)}
+                        onClick={() => setShowBackConfirm(true)}
                         className={styles['btn-edit-address']}
                       >
                         <Edit3 size={12} /> Edit Address
@@ -635,7 +630,7 @@ export default function Checkout() {
                         <span className={styles['detail-value']}>
                           <span className={styles['delivery-badge']}>
                             <Truck size={12} />
-                            {deliveryMode === 'pickup' ? 'Self Store Pickup (FREE)' : 'Standard Delivery (₹60)'}
+                            Standard Delivery (₹60)
                           </span>
                         </span>
                       </div>
@@ -881,7 +876,7 @@ export default function Checkout() {
 
       {/* ── SIMULATED RAZORPAY MODAL ── */}
       {showRzModal && (
-        <div className={styles['modal-overlay']} onClick={() => setShowRzModal(false)}>
+        <div className={styles['modal-overlay']} onClick={() => setShowCancelPaymentConfirm(true)}>
           <div className={styles['rz-modal-card']} onClick={(e) => e.stopPropagation()}>
             <div className={styles['rz-modal-header']}>
               <div className={styles['rz-logo-wrap']}>
@@ -890,7 +885,7 @@ export default function Checkout() {
               </div>
               <button
                 type="button"
-                onClick={() => setShowRzModal(false)}
+                onClick={() => setShowCancelPaymentConfirm(true)}
                 style={{ background: 'none', border: 'none', color: '#78716c', cursor: 'pointer' }}
               >
                 <X size={20} />
@@ -1021,6 +1016,27 @@ export default function Checkout() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modals */}
+      <Modal isOpen={showBackConfirm} onClose={() => setShowBackConfirm(false)} title="Cancel Payment">
+        <p style={{ margin: '0 0 1.5rem', color: '#475569' }}>
+          Are you sure you want to go back? This will cancel the payment process.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <button onClick={() => setShowBackConfirm(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Stay</button>
+          <button onClick={() => { setCheckoutStep(1); setShowBackConfirm(false); }} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Go Back</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showCancelPaymentConfirm} onClose={() => setShowCancelPaymentConfirm(false)} title="Cancel Payment">
+        <p style={{ margin: '0 0 1.5rem', color: '#475569' }}>
+          Are you sure you want to cancel the payment?
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <button onClick={() => setShowCancelPaymentConfirm(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Continue Payment</button>
+          <button onClick={() => { setShowRzModal(false); setShowCancelPaymentConfirm(false); }} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Cancel Payment</button>
+        </div>
+      </Modal>
     </PageWrapper>
   );
 }

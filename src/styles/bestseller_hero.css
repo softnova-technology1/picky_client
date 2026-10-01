@@ -179,7 +179,7 @@
 }
 
 .playful-title-line {
-  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-primary);
   font-size: clamp(2.4rem, 5.5vw, 4.4rem);
   font-weight: 800;
   color: #111827;
@@ -189,9 +189,9 @@
 
 /* Italic Script Purple Text with Wavy Underline */
 .playful-script-purple {
-  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-family: var(--font-primary);
   font-style: italic;
-  font-weight: 600;
+  font-weight: 700;
   color: #7c3aed;
   position: relative;
   display: inline-block;
@@ -209,9 +209,9 @@
 
 /* Italic Script Yellow/Gold Text with Brush Underline */
 .playful-script-yellow {
-  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-family: var(--font-primary);
   font-style: italic;
-  font-weight: 600;
+  font-weight: 700;
   color: #d97706;
   position: relative;
   display: inline-block;

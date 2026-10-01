@@ -11,7 +11,7 @@
     overflow: hidden;
     position: relative;
     border: 1px solid #ede9fe;
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family: var(--font-secondary);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -237,6 +237,7 @@
 }
 
 .ref-product-title {
+    font-family: var(--font-secondary);
     color: #111827;
     font-size: 0.95rem;
     font-weight: 800;

@@ -400,7 +400,7 @@
 }
 
 .about-feature-heading-italic {
-  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-family: var(--font-primary);
   font-style: italic;
   font-weight: 500;
   color: #0f4c5c;
@@ -593,7 +593,7 @@
 }
 
 .testimony-main-title {
-  font-family: Georgia, 'Playfair Display', 'Times New Roman', serif;
+  font-family: var(--font-primary);
   font-size: clamp(2.8rem, 5vw, 3.8rem);
   font-weight: 700;
   color: #2e1065;
@@ -602,7 +602,7 @@
 }
 
 .testimony-author-credit {
-  font-family: Georgia, serif;
+  font-family: var(--font-primary);
   font-size: 1.05rem;
   color: #7c3aed;
   font-style: italic;

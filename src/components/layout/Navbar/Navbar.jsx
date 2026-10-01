@@ -22,6 +22,7 @@ import { useWishlistStore } from '../../../store/wishlistStore';
 import { MEGAMENU_ALL_CATEGORIES } from '../../../data/categoriesData';
 import CategoryIcon from '../../common/CategoryIcon';
 import GlamicsMarqueeTicker from '../../category/GlamicsMarqueeTicker';
+import Modal from '../../ui/Modal/Modal';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,6 +30,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const categoryDropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
@@ -371,10 +373,7 @@ export default function Navbar() {
                     <div className="nav-user-menu-divider" />
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        logout();
-                      }}
+                      onClick={() => setShowLogoutConfirm(true)}
                       className="nav-user-menu-link"
                       style={{
                         width: '100%',
@@ -680,10 +679,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      logout();
-                    }}
+                    onClick={() => setShowLogoutConfirm(true)}
                     style={{
                       background: '#fee2e2',
                       color: '#dc2626',
@@ -712,6 +708,16 @@ export default function Navbar() {
           </div>
         </div>
       )}
+      {/* Logout Confirmation Modal */}
+      <Modal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} title="Sign Out">
+        <p style={{ margin: '0 0 1.5rem', color: '#475569' }}>
+          Are you sure you want to sign out of your account?
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <button onClick={() => setShowLogoutConfirm(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={() => { logout(); setShowLogoutConfirm(false); setIsUserMenuOpen(false); setIsMobileMenuOpen(false); }} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Sign Out</button>
+        </div>
+      </Modal>
     </>
   );
 }

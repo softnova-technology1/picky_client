@@ -45,7 +45,7 @@ export const useCartStore = create(
             },
           ];
         }
-        set({ items: newItems, total: calcTotal(newItems) });
+        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
       },
 
       updateQty: (target, quantity) => {
@@ -59,7 +59,7 @@ export const useCartStore = create(
             : currentItems.map((i) =>
                 String(getItemId(i)) === targetId ? { ...i, quantity } : i
               );
-        set({ items: newItems, total: calcTotal(newItems) });
+        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
       },
 
       removeItem: (target) => {
@@ -67,7 +67,7 @@ export const useCartStore = create(
         if (!targetId) return;
 
         const newItems = get().items.filter((i) => String(getItemId(i)) !== targetId);
-        set({ items: newItems, total: calcTotal(newItems) });
+        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
       },
 
       clearCart: () => set({ items: [], total: 0, coupon: null, couponDiscount: 0 }),
