@@ -227,7 +227,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
           text-transform: uppercase;
           letter-spacing: -0.01em;
           line-height: 1;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: var(--font-primary);
         }
 
         .top-sparkle-star {
@@ -307,8 +307,9 @@ export default function NewArrivalsHero({ onExploreClick }) {
         }
 
         .hero-heading {
+          font-family: var(--font-primary);
           font-size: clamp(2.1rem, 3.2vw, 3.4rem);
-          font-weight: 900;
+          font-weight: 800;
           line-height: 1.08;
           color: #ffffff;
           margin: 0;

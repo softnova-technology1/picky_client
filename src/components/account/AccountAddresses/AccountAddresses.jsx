@@ -50,6 +50,7 @@ export default function AccountAddresses() {
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState(null);
   const [editingAddr, setEditingAddr] = useState(null); // null = add new, object = editing existing
   const [newAddr, setNewAddr] = useState({
     fullName: user?.name || '',
@@ -157,12 +158,18 @@ export default function AccountAddresses() {
   };
 
   const handleDeleteAddress = (id) => {
-    const next = addresses.filter((a) => a.id !== id);
+    setAddressToDelete(id);
+  };
+
+  const confirmDeleteAddress = () => {
+    if (!addressToDelete) return;
+    const next = addresses.filter((a) => a.id !== addressToDelete);
     if (next.length > 0 && !next.some((a) => a.isDefault)) {
       next[0].isDefault = true;
     }
     saveToStorage(next);
     showToast('Address removed', 'info');
+    setAddressToDelete(null);
   };
 
   const handleSetDefault = (id) => {
@@ -404,6 +411,16 @@ export default function AccountAddresses() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!addressToDelete} onClose={() => setAddressToDelete(null)} title="Delete Address">
+        <p style={{ margin: '0 0 1.5rem', color: '#475569' }}>
+          Are you sure you want to delete this address?
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <button onClick={() => setAddressToDelete(null)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={confirmDeleteAddress} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+        </div>
       </Modal>
     </div>
   );

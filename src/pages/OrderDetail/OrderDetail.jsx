@@ -8,6 +8,8 @@ import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import { getOrderById } from '../../data';
+import { ArrowLeft, ShoppingBag, MapPin, CreditCard, MessageCircle, FileText, ChevronRight } from 'lucide-react';
+import styles from './OrderDetail.module.css';
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -30,7 +32,6 @@ export default function OrderDetail() {
     }
     fetchOrder();
   }, [id]);
-
 
   if (loading) {
     return (
@@ -56,92 +57,156 @@ export default function OrderDetail() {
   return (
     <PageWrapper>
       <div className="section">
-        <div className="container" style={{ maxWidth: '960px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>
-            <Link to="/orders">My Orders</Link> ➔ <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Order #{order.orderNumber}</span>
+        <div className={styles.pageContainer}>
+          {/* Animated Breadcrumb Nav */}
+          <div className={styles.breadcrumbNav}>
+            <Link to="/orders" className={styles.breadcrumbLink}>
+              <ArrowLeft size={16} /> My Orders
+            </Link>
+            <ChevronRight size={14} />
+            <span className={styles.breadcrumbCurrent}>Order #{order.orderNumber}</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-            <div>
-              <h1 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Order #{order.orderNumber}</h1>
-              <p style={{ margin: 0, color: '#475569' }}>
-                Placed on {formatDate(order.createdAt)} • <span style={{ color: '#16a34a', fontWeight: 600 }}>💳 Paid via Razorpay</span>
-                {order.razorpayPaymentId && <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: '0.5rem' }}>({order.razorpayPaymentId})</span>}
-              </p>
+          {/* Hero Order Header Card */}
+          <div className={styles.headerCard}>
+            <div className={styles.headerMainInfo}>
+              <div className={styles.headerTitleGroup}>
+                <h1 className={styles.orderTitle}>Order #{order.orderNumber}</h1>
+                <Badge status={order.status} />
+              </div>
+              <div className={styles.metaRow}>
+                <span>Placed on {formatDate(order.createdAt)}</span>
+                <span>•</span>
+                <span className={styles.paymentPill}>
+                  <CreditCard size={14} /> Paid via Razorpay
+                </span>
+                {order.razorpayPaymentId && (
+                  <span className={styles.razorpayIdTag}>
+                    Ref: {order.razorpayPaymentId}
+                  </span>
+                )}
+              </div>
             </div>
-            <Badge status={order.status} />
+
+            <div className={styles.headerActions}>
+              <button 
+                onClick={() => window.print()}
+                className={styles.actionBtn}
+                title="Print or Save Invoice PDF"
+              >
+                <FileText size={16} /> Print Receipt
+              </button>
+            </div>
           </div>
 
-          {/* Live Order Tracker */}
-          <OrderTracker orderId={order._id} initialData={order} />
+          {/* Live Order Tracker - ALWAYS EXPANDED */}
+          <div className={styles.trackerSectionWrapper}>
+            <OrderTracker orderId={order._id} initialData={order} />
+          </div>
 
-          {/* Details Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
-            {/* Items Card */}
-            <div className="card" style={{ padding: '1.75rem' }}>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                Purchased Items ({order.items?.length})
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Main Details Grid - ALWAYS EXPANDED, NO COLLAPSED WORKFLOWS */}
+          <div className={styles.mainGrid}>
+            {/* Items & Invoice Breakdown Card */}
+            <div className={styles.glassCard}>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>
+                  <span className={styles.cardTitleIcon}>
+                    <ShoppingBag size={18} />
+                  </span>
+                  Purchased Items ({order.items?.length || 0})
+                </h3>
+              </div>
+
+              <div className={styles.itemsList}>
                 {order.items?.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <img
-                      src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=160'}
-                      alt={item.name}
-                      style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#0f172a', display: 'block' }}>
-                        {item.name}
-                      </strong>
-                      <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                        Qty: {item.quantity} × {formatPrice(item.price)}
-                      </span>
+                  <div key={idx} className={styles.itemRow}>
+                    <div className={styles.itemImageWrapper}>
+                      <img
+                        src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=160'}
+                        alt={item.name}
+                        className={styles.itemImg}
+                      />
                     </div>
-                    <strong style={{ fontSize: '0.95rem' }}>
+                    <div className={styles.itemDetails}>
+                      <span className={styles.itemName}>{item.name}</span>
+                      <div className={styles.itemQtyPrice}>
+                        <span className={styles.qtyBadge}>Qty: {item.quantity}</span>
+                        <span>×</span>
+                        <span>{formatPrice(item.price)}</span>
+                      </div>
+                    </div>
+                    <span className={styles.itemTotalPrice}>
                       {formatPrice(item.price * item.quantity)}
-                    </strong>
+                    </span>
                   </div>
                 ))}
               </div>
 
-              {/* Invoice Breakdown */}
-              <div style={{ borderTop: '1px solid var(--color-border)', marginTop: '1.5rem', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.88rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-                  <span>Subtotal</span>
-                  <span>{formatPrice(order.subtotal)}</span>
+              {/* Financial Invoice Breakdown */}
+              <div className={styles.invoiceBox}>
+                <div className={styles.invoiceRow}>
+                  <span>Items Subtotal</span>
+                  <span className={styles.invoiceValue}>{formatPrice(order.subtotal)}</span>
                 </div>
+
                 {order.discountAmount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
-                    <span>Discount Applied</span>
-                    <span>-{formatPrice(order.discountAmount)}</span>
+                  <div className={`${styles.invoiceRow} ${styles.discountRow}`}>
+                    <span>Coupon / Discount Applied</span>
+                    <span className={styles.discountValue}>-{formatPrice(order.discountAmount)}</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-                  <span>Delivery</span>
-                  <span style={{ color: '#16a34a', fontWeight: 600 }}>FREE</span>
+
+                <div className={styles.invoiceRow}>
+                  <span>Delivery Charge</span>
+                  <span className={styles.freeDeliveryBadge}>FREE DELIVERY</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
-                  <span>Total</span>
-                  <span>{formatPrice(order.total)}</span>
+
+                <div className={styles.totalRow}>
+                  <span className={styles.totalLabel}>Grand Total</span>
+                  <span className={styles.totalPriceAmount}>{formatPrice(order.total)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Delivery Address Card */}
-            <div className="card" style={{ padding: '1.75rem', height: 'fit-content' }}>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                Delivery Address
-              </h3>
-              <p style={{ color: '#334155', lineHeight: 1.7, fontSize: '0.92rem' }}>
-                <strong>{order.shippingAddress?.street}</strong><br />
-                {order.shippingAddress?.landmark && <span>Landmark: {order.shippingAddress.landmark}<br /></span>}
-                {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}
-              </p>
+            {/* Delivery Address & Customer Support Side Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Delivery Address Card */}
+              <div className={styles.glassCard}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.cardTitle}>
+                    <span className={styles.cardTitleIcon}>
+                      <MapPin size={18} />
+                    </span>
+                    Delivery Address
+                  </h3>
+                </div>
 
-              <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '0.82rem', color: '#64748b' }}>
-                💬 <strong>Need Help with this Order?</strong><br />
-                Reach out to our customer support team or reply directly on your WhatsApp order thread.
+                <div className={styles.addressDetails}>
+                  <span className={styles.addressStreet}>
+                    {order.shippingAddress?.street}
+                  </span>
+                  {order.shippingAddress?.landmark && (
+                    <div className={styles.landmarkPill}>
+                      📍 Landmark: {order.shippingAddress.landmark}
+                    </div>
+                  )}
+                  <div className={styles.cityStateZip}>
+                    {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}
+                  </div>
+                </div>
+              </div>
+
+              {/* WhatsApp & Support Helper Box */}
+              <div className={styles.supportCard}>
+                <div className={styles.supportIcon}>
+                  <MessageCircle size={22} />
+                </div>
+                <div className={styles.supportContent}>
+                  <h4 className={styles.supportTitle}>Need Help with this Order?</h4>
+                  <p className={styles.supportDesc}>
+                    Reach out directly to our dedicated support team or reply to your WhatsApp confirmation thread for instant live assistance.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

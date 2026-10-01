@@ -1,5 +1,6 @@
 import React from 'react';
 import { CreditCard, PackageCheck, Truck, MapPin, CheckCircle2, Check, XCircle } from 'lucide-react';
+import styles from '../OrderTracker/OrderTracker.module.css';
 
 const STEPS = [
   { id: 'confirmed', label: 'Order Placed & Paid', icon: CreditCard },
@@ -48,26 +49,28 @@ export default function TrackingStepper({ currentStatus }) {
   }
 
   return (
-    <div className="stepper-container" style={{ margin: '1.75rem 0' }}>
+    <div className={styles.stepperWrapper}>
       {/* Background track */}
-      <div className="stepper-track">
-        <div className="stepper-progress" style={{ width: getProgressWidth(), background: 'linear-gradient(90deg, #10b981, #7c3aed)' }} />
+      <div className={styles.animatedTrack}>
+        <div className={styles.animatedProgress} style={{ width: getProgressWidth() }} />
       </div>
 
       {/* 5 Step nodes */}
-      {STEPS.map((step, idx) => {
-        const state = getStepState(idx);
-        const IconComponent = step.icon;
+      <div className={styles.stepperSteps}>
+        {STEPS.map((step, idx) => {
+          const state = getStepState(idx);
+          const IconComponent = step.icon;
 
-        return (
-          <div key={step.id} className={`stepper-step ${state}`}>
-            <div className="stepper-circle">
-              {state === 'completed' ? <Check size={16} strokeWidth={3} /> : <IconComponent size={16} />}
+          return (
+            <div key={step.id} className={`${styles.stepNode} ${styles[state] || ''}`}>
+              <div className={styles.stepIconCircle}>
+                {state === 'completed' ? <Check size={18} strokeWidth={3} /> : <IconComponent size={18} />}
+              </div>
+              <span className={styles.stepTextLabel}>{step.label}</span>
             </div>
-            <span className="stepper-label">{step.label}</span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

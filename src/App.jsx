@@ -36,7 +36,6 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminSubCategories from './pages/admin/AdminSubCategories';
 import AdminInventory from './pages/admin/AdminInventory';
 import AdminCustomers from './pages/admin/AdminCustomers';
-import AdminReports from './pages/admin/AdminReports';
 import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminCustomization from './pages/admin/AdminCustomization';
 import AdminSettings from './pages/admin/AdminSettings';
@@ -96,7 +95,6 @@ export default function App() {
           <Route path={`${ADMIN}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/reports`} element={<AdminProtectedRoute><AdminReports /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
 

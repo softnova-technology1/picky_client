@@ -42,6 +42,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Weave', value: 'Traditional Handloom' },
       { key: 'Occasion', value: 'Festive & Daily Wear' },
     ],
+    variants: { type: 'free-size', label: 'Free Size', note: '6.2 Metres with Blouse Piece' },
   },
   {
     _id: 'prod_wf_2',
@@ -64,6 +65,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Sleeve Length', value: '3/4th Sleeve' },
       { key: 'Pattern', value: 'Floral Zari Embroidery' },
     ],
+    variants: { type: 'clothing-size', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], default: 'M' },
   },
   {
     _id: 'prod_wf_3',
@@ -85,6 +87,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: '100% Bio-Washed Combed Cotton' },
       { key: 'Fit', value: 'Oversized Drop-Shoulder Fit' },
     ],
+    variants: { type: 'clothing-size', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], default: 'M' },
   },
 
   // ── 2. Home & Kitchen
@@ -109,6 +112,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Blades', value: 'Food-Grade Stainless Steel' },
       { key: 'Operation', value: 'Manual Pull Cord Mechanism' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_hk_2',
@@ -130,6 +134,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Set Includes', value: '6 × 1200ml Containers' },
       { key: 'Safety', value: '100% BPA Free Food Grade' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_hk_3',
@@ -151,6 +156,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: 'Pure Heavy Cast Iron' },
       { key: 'Capacity', value: '2.5 Liters' },
     ],
+    variants: { type: 'none' },
   },
 
   // ── 3. Artificial Jewellery
@@ -174,6 +180,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Plating', value: 'Antique Matte Gold Polish' },
       { key: 'Stones', value: 'Semi-precious Ruby Kemp Stones' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_aj_2',
@@ -195,6 +202,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Closure', value: 'Comfortable Push Back Stud' },
       { key: 'Weight', value: 'Lightweight (18g pair)' },
     ],
+    variants: { type: 'none' },
   },
 
   // ── 4. Beauty & Personal Care
@@ -218,6 +226,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Ingredients', value: 'Rosemary, Bhringraj, Virgin Coconut Oil' },
       { key: 'Volume', value: '200 ml' },
     ],
+    variants: { type: 'volume', options: ['100ml', '200ml', '500ml'], default: '200ml' },
   },
   {
     _id: 'prod_bp_2',
@@ -239,6 +248,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Fabric', value: 'Grade 6A Mulberry Silk Satin' },
       { key: 'Quantity', value: 'Set of 5 Pastel Colors' },
     ],
+    variants: { type: 'none' },
   },
 
   // ── 5. Mobile Accessories
@@ -262,6 +272,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Playtime', value: '40 Hours Total with Case' },
       { key: 'Bluetooth', value: 'v5.3 Ultra-Low Latency' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_ma_2',
@@ -283,6 +294,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Power Output', value: 'Up to 65W Fast Charge' },
       { key: 'Length', value: '2.0 Meters (6.6ft)' },
     ],
+    variants: { type: 'cable-length', options: ['1 M', '1.5 M', '2 M'], default: '2 M' },
   },
   {
     _id: 'prod_ma_3',
@@ -304,6 +316,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: 'Anodized Aluminium Alloy' },
       { key: 'Compatibility', value: 'Smartphones & Tablets (4"-11")' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_ma_4',
@@ -325,6 +338,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: 'Liquid Silicone + Soft Microfiber' },
       { key: 'Magnet', value: 'Integrated MagSafe Ring' },
     ],
+    variants: { type: 'none' },
   },
 
   // ── 6. Traditional Tamil Products
@@ -348,6 +362,8 @@ export const MOCK_PRODUCTS = [
       { key: 'Metal', value: '100% Solid Heavy Brass' },
       { key: 'Height', value: '18 Inches (1.5 Feet)' },
     ],
+    variants: { type: 'none' },
+    artisanInfo: { region: 'Nachiarkoil, Kumbakonam', guild: 'Hereditary Brass Artisans', craft: 'Traditional Brass Lamp Making' },
   },
   {
     _id: 'prod_tp_2',
@@ -369,6 +385,8 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: '22K Micro Gold Plated Brass' },
       { key: 'Stone', value: 'Brilliant Cut Zircon Crystal' },
     ],
+    variants: { type: 'none' },
+    artisanInfo: { region: 'Tanjore Heritage Guild', guild: 'Swamimalai Artisans', craft: 'Tanjore Gold Craft' },
   },
 
   // ── 7. Snacks & Foods
@@ -391,7 +409,9 @@ export const MOCK_PRODUCTS = [
     characteristics: [
       { key: 'Shelf Life', value: '60 Days in Airtight Jar' },
       { key: 'Oil Used', value: '100% Pure Cold-Pressed Groundnut Oil' },
+      { key: 'Dietary', value: '100% Vegetarian · No Preservatives' },
     ],
+    variants: { type: 'weight', options: ['200g', '500g', '1 kg'], default: '500g' },
   },
   {
     _id: 'prod_sf_2',
@@ -412,7 +432,9 @@ export const MOCK_PRODUCTS = [
     characteristics: [
       { key: 'Spiciness', value: 'Medium-Hot' },
       { key: 'Ingredients', value: 'Urad Dal, Chana Dal, Garlic, Guntur Red Chillies' },
+      { key: 'Dietary', value: '100% Vegetarian · No Preservatives' },
     ],
+    variants: { type: 'weight', options: ['100g', '250g', '500g'], default: '250g' },
   },
 
   // ── 8. Home Décor
@@ -436,6 +458,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Light Color', value: '3000K Warm Golden Glow' },
       { key: 'Base Material', value: 'Solid Pine Wood' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_hd_2',
@@ -456,6 +479,7 @@ export const MOCK_PRODUCTS = [
     characteristics: [
       { key: 'Set Includes', value: '3 Ceramic Pots + 3 Jute Ropes' },
     ],
+    variants: { type: 'none' },
   },
 
   // ── 9. Kids Products
@@ -479,6 +503,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Age Group', value: '2 to 8 Years' },
       { key: 'Safety', value: 'EN71 Certified Non-Toxic Paint' },
     ],
+    variants: { type: 'none' },
   },
 
   // ── 10. Fitness Products
@@ -502,6 +527,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Thickness', value: '6 mm Cushioned' },
       { key: 'Dimensions', value: '183cm × 61cm' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_fp_2',
@@ -523,6 +549,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Capacity', value: '1000 ml (1 Liter)' },
       { key: 'Insulation', value: '24h Cold / 12h Hot' },
     ],
+    variants: { type: 'volume', options: ['500ml', '750ml', '1000ml'], default: '1000ml' },
   },
   {
     _id: 'prod_wf_4',
@@ -544,6 +571,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Fabric', value: 'Premium Art Soft Silk' },
       { key: 'Blouse', value: 'Matching 0.8m Brocade Blouse Piece' },
     ],
+    variants: { type: 'free-size', label: 'Free Size', note: '6.2 Metres with Blouse Piece' },
   },
   {
     _id: 'prod_aj_3',
@@ -565,6 +593,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Coating', value: '24K Micro Gold Tone' },
       { key: 'Design', value: 'Classic Lakshmi Kasu Motif' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_tt_3',
@@ -586,6 +615,8 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: '100% Solid Brass (2.4 kg)' },
       { key: 'Height', value: '15 Inches (Pair)' },
     ],
+    variants: { type: 'none' },
+    artisanInfo: { region: 'Nachiarkoil, Kumbakonam', guild: 'Hereditary Brass Artisans', craft: 'Traditional Brass Lamp Making' },
   },
   {
     _id: 'prod_sf_3',
@@ -606,7 +637,9 @@ export const MOCK_PRODUCTS = [
     characteristics: [
       { key: 'Net Weight', value: '500 Grams Vacuum Packed' },
       { key: 'Shelf Life', value: '30 Days Ambient' },
+      { key: 'Dietary', value: '100% Vegetarian · No Preservatives' },
     ],
+    variants: { type: 'weight', options: ['250g', '500g', '1 kg'], default: '500g' },
   },
   {
     _id: 'prod_hd_3',
@@ -628,6 +661,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Material', value: 'Premium Kiln-Fired Ceramic' },
       { key: 'Dimensions', value: '22cm Height × 12cm Diameter' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_kp_2',
@@ -646,9 +680,12 @@ export const MOCK_PRODUCTS = [
     tags: ['Flashcards', 'Speech Toy', 'Montessori', 'Rechargeable'],
     description: 'Pocket-sized speech therapy card reader with realistic animal sounds and clear phonetics pronunciation. Screen-free fun for toddlers.',
     characteristics: [
+      { key: 'Age Group', value: '2 to 5 Years' },
       { key: 'Cards Included', value: '112 Double-Sided Cards (224 Words)' },
       { key: 'Battery', value: 'USB Rechargeable Lithium Battery' },
+      { key: 'Safety', value: 'BIS Certified Non-Toxic Materials' },
     ],
+    variants: { type: 'none' },
   },
   {
     _id: 'prod_fp_3',
@@ -670,6 +707,7 @@ export const MOCK_PRODUCTS = [
       { key: 'Levels', value: 'Light (15lb), Medium (25lb), Heavy (35lb)' },
       { key: 'Material', value: 'Anti-Snap Cotton Elastic Blend' },
     ],
+    variants: { type: 'resistance', options: ['Light', 'Medium', 'Heavy', 'Set of 3'], default: 'Medium' },
   },
 ];
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
+import Modal from '../../components/ui/Modal/Modal';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
@@ -27,6 +28,8 @@ export default function Cart() {
   const { showToast } = useUiStore();
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const subtotal = items.reduce((sum, item) => {
     const price = item.discountPrice || item.price || 0;
@@ -74,7 +77,13 @@ export default function Cart() {
     }
   };
 
-  const handleRemoveItem = async (item) => {
+  const handleRemoveItem = (item) => {
+    setItemToRemove(item);
+  };
+
+  const confirmRemoveItem = async () => {
+    if (!itemToRemove) return;
+    const item = itemToRemove;
     const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
     removeItem(targetId || item);
     if (isLoggedIn && targetId) {
@@ -83,6 +92,7 @@ export default function Cart() {
       });
     }
     showToast(`Removed "${item.name || 'Item'}" from cart`, 'info');
+    setItemToRemove(null);
   };
 
   const handleUpdateQty = async (item, newQty) => {
@@ -253,7 +263,7 @@ export default function Cart() {
 
                 {/* Card Footer Row */}
                 <div className={styles['card-footer-row']}>
-                  <button type="button" onClick={clearCart} className={styles['clear-cart-btn']}>
+                  <button type="button" onClick={() => setShowClearConfirm(true)} className={styles['clear-cart-btn']}>
                     <Trash2 size={14} /> Clear Cart
                   </button>
                   <Link to="/products" className={styles['continue-shopping-btn']}>
@@ -394,6 +404,26 @@ export default function Cart() {
           </div>
         </div>
       </div>
+
+      <Modal isOpen={!!itemToRemove} onClose={() => setItemToRemove(null)} title="Remove Item">
+        <p style={{ margin: '0 0 1.5rem', color: '#475569' }}>
+          Are you sure you want to remove <strong>"{itemToRemove?.name || 'Item'}"</strong> from your cart?
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <button onClick={() => setItemToRemove(null)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={confirmRemoveItem} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Remove</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} title="Clear Cart">
+        <p style={{ margin: '0 0 1.5rem', color: '#475569' }}>
+          Are you sure you want to remove all items from your cart?
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          <button onClick={() => setShowClearConfirm(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={() => { clearCart(); setShowClearConfirm(false); showToast('Cart cleared', 'info'); }} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Clear All</button>
+        </div>
+      </Modal>
     </PageWrapper>
   );
 }

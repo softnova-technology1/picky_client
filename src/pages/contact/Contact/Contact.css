@@ -13,8 +13,8 @@
   --k-text-dark: #4b5563;
   --k-title-dark: #1f2937;
   --k-white: #ffffff;
-  --k-font-main: 'Plus Jakarta Sans', sans-serif;
-  --k-font-script: 'Caveat', cursive;
+  --k-font-main: var(--font-secondary);
+  --k-font-script: var(--font-primary);
 }
 
 .ketchen-contact-page {

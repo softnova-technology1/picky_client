@@ -51,7 +51,7 @@
   min-height: 100vh;
   background-color: var(--adm-bg);
   color: var(--adm-text-body);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-secondary);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -66,6 +66,7 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  max-height: 100vh;
   z-index: 50;
   box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -91,11 +92,12 @@
 }
 
 .admin-layout .admin-sidebar-header {
-  padding: 1.6rem 1.4rem 1.4rem;
+  padding: 0.85rem 1.2rem 0.7rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .admin-layout .admin-sidebar-brand-link {
@@ -167,43 +169,47 @@
 }
 
 .admin-layout .admin-sidebar-nav {
-  padding: 1.2rem 1.1rem;
+  padding: 0.55rem 0.8rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.22rem;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.25) transparent;
 }
 
 /* Custom scrollbar for sidebar */
 .admin-layout .admin-sidebar-nav::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 
 .admin-layout .admin-sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.25);
   border-radius: 4px;
 }
 
 .admin-layout .admin-nav-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
+  gap: 0.85rem;
+  padding: 0.42rem 0.8rem;
+  border-radius: 10px;
   color: #94a3b8;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   border: 1px solid transparent;
 }
 
 .admin-layout .admin-nav-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   color: #94a3b8;
@@ -211,42 +217,36 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .admin-layout .admin-nav-item:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.04);
   color: #e2e8f0;
-  border-color: rgba(255, 255, 255, 0.04);
-  transform: translateX(4px);
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .admin-layout .admin-nav-item:hover .admin-nav-icon-wrap {
-  background: rgba(168, 85, 247, 0.08);
+  background: rgba(168, 85, 247, 0.1);
   color: #c084fc;
   border-color: rgba(168, 85, 247, 0.3);
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
 }
 
-/* Elevated Glowing Active Tab */
+/* Elevated Glowing Active Tab - Perfectly aligned */
 .admin-layout .admin-nav-item.active {
-  background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.02) 100%);
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.18) 0%, rgba(139, 92, 246, 0.04) 100%);
   color: #ffffff;
   font-weight: 600;
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-left: 0;
-  border-right: 0;
-  border-radius: 0 12px 12px 0;
-  transform: translateX(0);
-  box-shadow: inset 3px 0 0 #a855f7;
-  padding-left: 1.3rem;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.15);
 }
 
 .admin-layout .admin-nav-item.active .admin-nav-icon-wrap {
   background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: #ffffff;
-  border: none;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 .admin-layout .admin-nav-label {
@@ -382,24 +382,25 @@
   box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
 }
 
-/* ─── Bottom View Customer Store Section (Glassmorphism Card) ─────────────── */
+/* ─── Bottom View Customer Store Section (Compact Luxury Card) ─────────────── */
 .admin-layout .admin-sidebar-bottom-section {
-  padding: 18px 16px;
+  padding: 8px 12px;
   margin-top: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
 }
 
 .admin-layout .admin-sidebar-pro-store-card {
   position: relative;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
-  padding: 20px 14px;
+  border-radius: 12px;
+  padding: 8px 10px;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
@@ -420,31 +421,31 @@
 }
 
 .admin-layout .admin-sidebar-pro-store-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(168, 85, 247, 0.15);
-  border-color: rgba(168, 85, 247, 0.3);
-  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 2px 10px rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.25);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Center Icon Box - Compact 3D Visual */
 .admin-layout .admin-pro-icon-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 5px;
 }
 
 .admin-layout .admin-pro-icon-box {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: #1e1136;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.1);
   overflow: hidden;
   border: 1px solid rgba(168, 85, 247, 0.2);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
 .admin-layout .admin-pro-3d-img {
@@ -452,14 +453,14 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  opacity: 0.9;
+  opacity: 0.92;
   mix-blend-mode: hard-light;
 }
 
 .admin-layout .admin-sidebar-pro-store-card:hover .admin-pro-icon-box {
-  transform: scale(1.1) translateY(-2px);
-  box-shadow: 0 12px 30px rgba(168, 85, 247, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.2);
-  border-color: rgba(168, 85, 247, 0.5);
+  transform: scale(1.06);
+  box-shadow: 0 6px 16px rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.4);
 }
 
 .admin-layout .admin-sidebar-pro-store-card:hover .admin-pro-3d-img {
@@ -471,17 +472,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 5px;
 }
 
 .admin-layout .admin-pro-card-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
 }
 
 .admin-layout .admin-pro-card-title {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
@@ -490,11 +491,11 @@
 }
 
 .admin-layout .admin-pro-card-sub {
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 500;
   color: #94a3b8;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 /* Pill Button */
@@ -502,16 +503,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   background: rgba(168, 85, 247, 0.15);
   color: #e9d5ff;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  font-size: 0.82rem;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  font-size: 0.74rem;
   font-weight: 600;
   text-decoration: none;
-  padding: 8px 24px;
+  padding: 4px 14px;
   border-radius: 9999px;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
   letter-spacing: 0.02em;
   width: fit-content;
 }
@@ -519,33 +520,55 @@
 .admin-layout .admin-pro-card-pill-btn:hover {
   background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
   border-color: transparent;
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 3px 12px rgba(168, 85, 247, 0.35);
   transform: translateY(-1px);
   color: #ffffff;
 }
 
+/* Collapsed Mode Sidebar Adjustments */
+.admin-layout .admin-sidebar.collapsed .admin-sidebar-header {
+  padding: 0.85rem 0.5rem 0.7rem;
+}
+
+.admin-layout .admin-sidebar.collapsed .admin-sidebar-nav {
+  padding: 0.55rem 0.5rem;
+  align-items: center;
+}
+
+.admin-layout .admin-sidebar.collapsed .admin-nav-item {
+  padding: 0.42rem;
+  justify-content: center;
+  width: 44px;
+}
+
+.admin-layout .admin-sidebar.collapsed .admin-sidebar-bottom-section {
+  padding: 8px 0;
+  display: flex;
+  justify-content: center;
+}
+
 /* Collapsed Mode Sidebar Store Button */
 .admin-layout .admin-sidebar-store-icon-btn {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   margin: 0 auto;
-  border-radius: 14px;
+  border-radius: 10px;
   background: #1e1136;
   color: #c084fc;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
   border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 .admin-layout .admin-sidebar-store-icon-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
   border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 12px 30px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
 }
 
 .admin-layout .admin-pro-3d-img-collapsed {
@@ -1646,7 +1669,8 @@
 }
 
 .admin-layout .admin-doodle-text {
-  font-family: 'Caveat', cursive, sans-serif;
+  font-family: var(--font-primary);
+  font-style: italic;
   font-size: 1.25rem;
   color: var(--adm-primary);
   line-height: 1.1;

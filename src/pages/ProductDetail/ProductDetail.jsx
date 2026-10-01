@@ -12,7 +12,7 @@ import { useUiStore } from '../../store/uiStore';
 import { getProductBySlug, getProducts, getProductReviews } from '../../data';
 import styles from './ProductDetail.module.css';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
-import DeliveryOptions from '../../components/product/DeliveryOptions';
+import ProductVariantSelector from '../../components/product/ProductVariantSelector/ProductVariantSelector';
 import {
   ArrowRight,
   ShoppingCart,
@@ -32,10 +32,15 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(() => getProductBySlug(slug));
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('M');
   const [activeDetailTab, setActiveDetailTab] = useState('description');
-
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // ── Category-aware variant state — derived from product.variants ──
+  const [selectedVariant, setSelectedVariant] = useState(() => {
+    const v = product?.variants;
+    if (!v || v.type === 'none') return null;
+    return v.default || (v.options && v.options[0]) || null;
+  });
 
   const productReviews = useMemo(() => getProductReviews(product), [product]);
 
@@ -44,7 +49,8 @@ export default function ProductDetail() {
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
 
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const categorySlug = product?.category?.slug;
+  const subCategorySlug = product?.subCategory?.slug;
 
   useEffect(() => {
     async function loadProduct() {
@@ -53,13 +59,32 @@ export default function ProductDetail() {
         const item = res?.data || res;
         if (item && item.name) {
           setProduct(item);
+          // Re-init variant when product loads
+          const v = item.variants;
+          if (v && v.type !== 'none') {
+            setSelectedVariant(v.default || (v.options && v.options[0]) || null);
+          } else {
+            setSelectedVariant(null);
+          }
         } else {
           const fallback = getProductBySlug(slug);
-          if (fallback) setProduct(fallback);
+          if (fallback) {
+            setProduct(fallback);
+            const v = fallback.variants;
+            if (v && v.type !== 'none') {
+              setSelectedVariant(v.default || (v.options && v.options[0]) || null);
+            }
+          }
         }
       } catch (err) {
         const fallback = getProductBySlug(slug);
-        if (fallback) setProduct(fallback);
+        if (fallback) {
+          setProduct(fallback);
+          const v = fallback.variants;
+          if (v && v.type !== 'none') {
+            setSelectedVariant(v.default || (v.options && v.options[0]) || null);
+          }
+        }
       }
     }
     loadProduct();
@@ -129,12 +154,13 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    addItem({ ...product, selectedSize }, quantity);
-    showToast(`Added ${quantity} × "${product.name}" (${selectedSize}) to your bag!`, 'success');
+    const variantLabel = selectedVariant ? ` (${selectedVariant})` : '';
+    addItem({ ...product, selectedVariant }, quantity);
+    showToast(`Added ${quantity} × "${product.name}"${variantLabel} to your bag!`, 'success');
   };
 
   const handleBuyNow = () => {
-    addItem({ ...product, selectedSize }, quantity);
+    addItem({ ...product, selectedVariant }, quantity);
     navigate('/checkout');
   };
 
@@ -277,27 +303,18 @@ export default function ProductDetail() {
 
                 <div className={styles['section-divider']} />
 
-                {/* Select Size Section */}
-                <div className={styles['size-section']}>
-                  <div className={styles['size-header-row']}>
-                    <span className={styles['section-label']}>SELECT SIZE</span>
+                {/* ── Dynamic Variant Selector — category-aware ── */}
+                {product.variants && product.variants.type !== 'none' && (
+                  <div className={styles['size-section']}>
+                    <ProductVariantSelector
+                      variants={product.variants}
+                      selected={selectedVariant}
+                      onChange={setSelectedVariant}
+                      categorySlug={categorySlug}
+                      product={product}
+                    />
                   </div>
-
-                  <div className={styles['size-grid']}>
-                    {sizes.map((sz) => (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => setSelectedSize(sz)}
-                        className={`${styles['size-btn']} ${
-                          selectedSize === sz ? styles['selected'] : ''
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
 
                 {/* Quantity Section */}
                 <div className={styles['quantity-section']}>
@@ -343,9 +360,6 @@ export default function ProductDetail() {
                   </button>
                 </div>
 
-                {/* Delivery Options & Pincode Checker (Matching Images 2 & 3) */}
-                <DeliveryOptions />
-
                 {/* Trust Features Strip */}
                 <div className={styles['trust-strip']}>
                   <div className={styles['trust-col']}>
@@ -357,7 +371,7 @@ export default function ProductDetail() {
                   <div className={styles['trust-col']}>
                     <RotateCcw size={22} className={styles['trust-icon']} />
                     <span className={styles['trust-title']}>Easy Returns</span>
-                    <span className={styles['trust-desc']}>7 days</span>
+                    <span className={styles['trust-desc']}>5-7 days</span>
                   </div>
 
                   <div className={styles['trust-col']}>

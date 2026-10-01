@@ -192,7 +192,7 @@
 
 /* Thank You Title */
 .success-title {
-  font-family: serif, 'Playfair Display', Georgia;
+  font-family: var(--font-primary);
   font-size: clamp(2.2rem, 5vw, 3.2rem);
   font-weight: 700;
   font-style: italic;
