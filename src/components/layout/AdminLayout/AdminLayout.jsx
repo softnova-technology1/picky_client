@@ -28,7 +28,6 @@ import {
   Share2,
   Copy,
   ExternalLink,
-  Zap,
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -56,8 +55,36 @@ export default function AdminLayout({ children, title }) {
   const searchContainerRef = useRef(null);
   const searchInputRef = useRef(null);
   const notifRef = useRef(null);
+  const notifTimerRef = useRef(null);
 
   const isDashboard = location.pathname === ADMIN || location.pathname === `${ADMIN}/`;
+
+  // Notification hover handlers with 350ms graceful delay
+  const handleNotifMouseEnter = () => {
+    if (notifTimerRef.current) {
+      clearTimeout(notifTimerRef.current);
+      notifTimerRef.current = null;
+    }
+    setNotifOpen(true);
+  };
+
+  const handleNotifMouseLeave = () => {
+    if (notifTimerRef.current) {
+      clearTimeout(notifTimerRef.current);
+    }
+    notifTimerRef.current = setTimeout(() => {
+      setNotifOpen(false);
+    }, 350);
+  };
+
+  const handleNotifToggle = (e) => {
+    e.stopPropagation();
+    if (notifTimerRef.current) {
+      clearTimeout(notifTimerRef.current);
+      notifTimerRef.current = null;
+    }
+    setNotifOpen((prev) => !prev);
+  };
 
   // Close dropdowns on click outside
   useEffect(() => {
@@ -72,12 +99,14 @@ export default function AdminLayout({ children, title }) {
         setSearchOpen(false);
       }
       if (notifRef.current && !notifRef.current.contains(e.target)) {
+        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
         setNotifOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
     };
   }, []);
 
@@ -90,6 +119,7 @@ export default function AdminLayout({ children, title }) {
         setSearchOpen(true);
       }
       if (e.key === 'Escape') {
+        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
         setSearchOpen(false);
         setUserMenuOpen(false);
         setQuickAddOpen(false);
@@ -111,20 +141,26 @@ export default function AdminLayout({ children, title }) {
   // Instant Search Results
   const trimmed = searchQuery.trim().toLowerCase();
   const searchResults = trimmed.length > 0 ? {
-    orders: (MOCK_ORDERS || []).filter(o =>
-      o.orderNumber?.toLowerCase().includes(trimmed) ||
-      o.customerName?.toLowerCase().includes(trimmed) ||
-      o.shippingCity?.toLowerCase().includes(trimmed)
-    ).slice(0, 3),
-    products: (MOCK_PRODUCTS || []).filter(p =>
-      p.name?.toLowerCase().includes(trimmed) ||
-      p.category?.toLowerCase().includes(trimmed)
-    ).slice(0, 3),
-    customers: (MOCK_CUSTOMERS || []).filter(c =>
-      c.name?.toLowerCase().includes(trimmed) ||
-      c.mobile?.includes(trimmed) ||
-      c.city?.toLowerCase().includes(trimmed)
-    ).slice(0, 3),
+    orders: (MOCK_ORDERS || []).filter((o) => {
+      const ordNum = (o.orderNumber || '').toLowerCase();
+      const custName = (o.customer?.name || o.customerName || o.shippingAddress?.fullName || '').toLowerCase();
+      const city = (o.shippingAddress?.city || o.shippingCity || '').toLowerCase();
+      const phone = (o.customer?.phone || '').toLowerCase();
+      return ordNum.includes(trimmed) || custName.includes(trimmed) || city.includes(trimmed) || phone.includes(trimmed);
+    }).slice(0, 3),
+    products: (MOCK_PRODUCTS || []).filter((p) => {
+      const pName = (p.name || '').toLowerCase();
+      const catName = (typeof p.category === 'object' ? (p.category?.name || '') : (p.category || '')).toLowerCase();
+      const subCatName = (typeof p.subCategory === 'object' ? (p.subCategory?.name || '') : (p.subCategory || '')).toLowerCase();
+      return pName.includes(trimmed) || catName.includes(trimmed) || subCatName.includes(trimmed);
+    }).slice(0, 3),
+    customers: (MOCK_CUSTOMERS || []).filter((c) => {
+      const cName = (c.name || '').toLowerCase();
+      const cEmail = (c.email || '').toLowerCase();
+      const cPhone = (c.phone || c.mobile || '').toLowerCase();
+      const cCity = (c.city || '').toLowerCase();
+      return cName.includes(trimmed) || cEmail.includes(trimmed) || cPhone.includes(trimmed) || cCity.includes(trimmed);
+    }).slice(0, 3),
   } : null;
 
   const totalResultsCount = searchResults
@@ -141,13 +177,13 @@ export default function AdminLayout({ children, title }) {
     e.preventDefault();
     if (!trimmed) return;
     if (searchResults?.orders.length > 0) {
-      navigate(`${ADMIN}/orders`);
+      navigate(`${ADMIN}/orders?q=${encodeURIComponent(trimmed)}`);
     } else if (searchResults?.products.length > 0) {
-      navigate(`${ADMIN}/products`);
+      navigate(`${ADMIN}/products?q=${encodeURIComponent(trimmed)}`);
     } else if (searchResults?.customers.length > 0) {
-      navigate(`${ADMIN}/customers`);
+      navigate(`${ADMIN}/customers?q=${encodeURIComponent(trimmed)}`);
     } else {
-      navigate(`${ADMIN}/orders`);
+      navigate(`${ADMIN}/orders?q=${encodeURIComponent(trimmed)}`);
     }
     setSearchOpen(false);
   };
@@ -295,6 +331,18 @@ export default function AdminLayout({ children, title }) {
             </div>
             {!collapsed && <span className="admin-nav-label">Customization</span>}
           </NavLink>
+
+          {/* 11. Settings */}
+          <NavLink
+            to={`${ADMIN}/settings`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Settings"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Settings size={19} />
+            </div>
+            {!collapsed && <span className="admin-nav-label">Settings</span>}
+          </NavLink>
         </nav>
 
         {/* ─── Bottom View Customer Store Section ─── */}
@@ -411,40 +459,46 @@ export default function AdminLayout({ children, title }) {
                     {searchResults?.orders.length > 0 && (
                       <div className="admin-search-group">
                         <span className="admin-search-group-title">Orders</span>
-                        {searchResults.orders.map((ord) => (
-                          <div
-                            key={ord._id || ord.orderNumber}
-                            className="admin-search-result-row"
-                            onClick={() => handleSearchSelect(`${ADMIN}/orders`)}
-                          >
-                            <ShoppingBag size={14} className="admin-search-row-icon" />
-                            <div className="admin-search-row-text">
-                              <span className="admin-search-row-main">{ord.orderNumber} — {ord.customerName}</span>
-                              <span className="admin-search-row-sub">₹{ord.totalAmount?.toLocaleString()} • {ord.status}</span>
+                        {searchResults.orders.map((ord) => {
+                          const orderCustomer = ord.customer?.name || ord.customerName || ord.shippingAddress?.fullName || 'Customer';
+                          return (
+                            <div
+                              key={ord._id || ord.orderNumber}
+                              className="admin-search-result-row"
+                              onClick={() => handleSearchSelect(`${ADMIN}/orders?q=${encodeURIComponent(ord.orderNumber)}`)}
+                            >
+                              <ShoppingBag size={14} className="admin-search-row-icon" />
+                              <div className="admin-search-row-text">
+                                <span className="admin-search-row-main">{ord.orderNumber} — {orderCustomer}</span>
+                                <span className="admin-search-row-sub">₹{ord.totalAmount?.toLocaleString()} • {ord.status}</span>
+                              </div>
+                              <span className="admin-search-badge badge-order">Order</span>
                             </div>
-                            <span className="admin-search-badge badge-order">Order</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 
                     {searchResults?.products.length > 0 && (
                       <div className="admin-search-group">
                         <span className="admin-search-group-title">Products</span>
-                        {searchResults.products.map((p) => (
-                          <div
-                            key={p._id || p.id}
-                            className="admin-search-result-row"
-                            onClick={() => handleSearchSelect(`${ADMIN}/products`)}
-                          >
-                            <Package size={14} className="admin-search-row-icon" />
-                            <div className="admin-search-row-text">
-                              <span className="admin-search-row-main">{p.name}</span>
-                              <span className="admin-search-row-sub">₹{p.price?.toLocaleString()} • {p.category}</span>
+                        {searchResults.products.map((p) => {
+                          const catName = typeof p.category === 'object' ? p.category?.name : (p.category || 'Product');
+                          return (
+                            <div
+                              key={p._id || p.id}
+                              className="admin-search-result-row"
+                              onClick={() => handleSearchSelect(`${ADMIN}/products`)}
+                            >
+                              <Package size={14} className="admin-search-row-icon" />
+                              <div className="admin-search-row-text">
+                                <span className="admin-search-row-main">{p.name}</span>
+                                <span className="admin-search-row-sub">₹{p.price?.toLocaleString()} • {catName}</span>
+                              </div>
+                              <span className="admin-search-badge badge-product">Product</span>
                             </div>
-                            <span className="admin-search-badge badge-product">Product</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 
@@ -455,12 +509,12 @@ export default function AdminLayout({ children, title }) {
                           <div
                             key={c._id || c.id}
                             className="admin-search-result-row"
-                            onClick={() => handleSearchSelect(`${ADMIN}/customers`)}
+                            onClick={() => handleSearchSelect(`${ADMIN}/customers?q=${encodeURIComponent(c.name)}`)}
                           >
                             <Users size={14} className="admin-search-row-icon" />
                             <div className="admin-search-row-text">
                               <span className="admin-search-row-main">{c.name}</span>
-                              <span className="admin-search-row-sub">{c.mobile || c.phone} • {c.city || 'Tamil Nadu'}</span>
+                              <span className="admin-search-row-sub">{c.phone || c.mobile || c.email} • {c.city || 'Tamil Nadu'}</span>
                             </div>
                             <span className="admin-search-badge badge-customer">Customer</span>
                           </div>
@@ -483,7 +537,7 @@ export default function AdminLayout({ children, title }) {
                 title="Quick Store Actions & Shortcuts"
                 aria-expanded={quickAddOpen}
               >
-                <Zap size={14} className="admin-quick-action-btn-icon" />
+                <Plus size={14} strokeWidth={2.5} className="admin-quick-action-btn-icon" />
                 <span>Quick Actions</span>
                 <ChevronDown size={13} className={`admin-quick-action-chevron ${quickAddOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -575,72 +629,123 @@ export default function AdminLayout({ children, title }) {
               )}
             </div>
 
-            {/* Notifications Button */}
-            <div className="admin-topbar-notif-wrap" ref={notifRef}>
+            {/* Notification Bell Dropdown (Hover & Click with Max 3 Notifications) */}
+            <div
+              className="admin-topbar-notif-wrap"
+              ref={notifRef}
+              onMouseEnter={handleNotifMouseEnter}
+              onMouseLeave={handleNotifMouseLeave}
+            >
               <button
+                type="button"
                 className="admin-topbar-notif-btn"
-                onClick={() => setNotifOpen(!notifOpen)}
-                title="Notifications & Tasks"
+                onClick={handleNotifToggle}
+                title="Notifications (Hover to preview, Click to open)"
+                aria-label="Notifications"
+                aria-expanded={notifOpen}
               >
-                <Bell size={17} />
+                <Bell size={18} />
                 <span className="admin-topbar-notif-dot" />
               </button>
 
               {notifOpen && (
-                <div className="admin-topbar-notif-dropdown">
+                <div
+                  className="admin-topbar-notif-dropdown"
+                  onMouseEnter={handleNotifMouseEnter}
+                  onMouseLeave={handleNotifMouseLeave}
+                >
                   <div className="admin-notif-header">
-                    <strong>Store Notifications</strong>
+                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e1b4b' }}>
+                      <Bell size={15} style={{ color: '#7025fb' }} /> Notifications
+                    </span>
                     <span className="admin-notif-badge">3 New</span>
                   </div>
+
                   <div className="admin-notif-list">
+                    {/* Notification 1: New Order */}
                     <div
                       className="admin-notif-item"
                       onClick={() => {
-                        navigate(`${ADMIN}/orders`);
+                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
                         setNotifOpen(false);
+                        navigate(`${ADMIN}/orders`);
                       }}
                     >
-                      <div className="admin-notif-dot-active" />
+                      <span className="admin-notif-dot-active" />
                       <div className="admin-notif-content">
-                        <p className="admin-notif-title">Dispatch AWB: ORD-2026-8802</p>
-                        <span className="admin-notif-time">Pending shipment assignment</span>
+                        <div className="admin-notif-title">New Order #ORD-2026-894</div>
+                        <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                          Priya Ramesh placed an order for ₹2,499
+                        </span>
+                        <span className="admin-notif-time">10 mins ago</span>
                       </div>
                     </div>
+
+                    {/* Notification 2: Low Stock */}
                     <div
                       className="admin-notif-item"
                       onClick={() => {
-                        navigate(`${ADMIN}/orders`);
+                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
                         setNotifOpen(false);
+                        navigate(`${ADMIN}/inventory`);
                       }}
                     >
-                      <div className="admin-notif-dot-active" />
+                      <span className="admin-notif-dot-active" style={{ background: '#f59e0b' }} />
                       <div className="admin-notif-content">
-                        <p className="admin-notif-title">Track DTDC-TN-9823412</p>
-                        <span className="admin-notif-time">ORD-2026-8801 in transit</span>
+                        <div className="admin-notif-title">Low Stock Alert: Kurti Set</div>
+                        <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                          Rayon Anarkali Kurti only 3 units left
+                        </span>
+                        <span className="admin-notif-time">45 mins ago</span>
                       </div>
                     </div>
+
+                    {/* Notification 3: Coupon usage */}
                     <div
                       className="admin-notif-item"
                       onClick={() => {
-                        navigate(`${ADMIN}/products`);
+                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
                         setNotifOpen(false);
+                        navigate(`${ADMIN}/coupons`);
                       }}
                     >
-                      <div className="admin-notif-dot-active" />
+                      <span className="admin-notif-dot-active" style={{ background: '#10b981' }} />
                       <div className="admin-notif-content">
-                        <p className="admin-notif-title">Low Stock Alert: 3 Left</p>
-                        <span className="admin-notif-time">Anarkali Kurti catalog inventory</span>
+                        <div className="admin-notif-title">Coupon Limit: FESTIVE25</div>
+                        <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                          Reached 85% of total redemption limit
+                        </span>
+                        <span className="admin-notif-time">2 hours ago</span>
                       </div>
                     </div>
                   </div>
+
                   <div className="admin-notif-footer">
-                    <Link
-                      to={`${ADMIN}/orders`}
-                      onClick={() => setNotifOpen(false)}
+                    <button
+                      type="button"
                       className="admin-notif-view-all"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+                        setNotifOpen(false);
+                        navigate(`${ADMIN}/settings?tab=notifications`);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        width: '100%',
+                        cursor: 'pointer',
+                        padding: '0.35rem 0.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        fontFamily: 'inherit',
+                      }}
                     >
-                      View all tasks & alerts →
-                    </Link>
+                      Show More Notifications & Settings →
+                    </button>
                   </div>
                 </div>
               )}

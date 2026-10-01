@@ -6,19 +6,21 @@ import {
   Trash2,
   Power,
   Tag,
-  Zap,
   Copy,
   Check,
   Search,
   Info,
   CheckCircle2,
-  Sparkles,
   Clock,
   TrendingUp,
   Gift,
-  Ticket,
-  AlertTriangle,
+  Users,
+  Layers,
+  BadgePercent,
   Percent,
+  FolderTree,
+  Package,
+  AlertTriangle,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -42,54 +44,35 @@ import {
 
 // Helper: Render Applicable On badge
 function renderApplicableBadge(applicableOn) {
-  if (!applicableOn || applicableOn === 'All Products' || (typeof applicableOn === 'object' && applicableOn.type === 'all')) {
+  const isAll = !applicableOn || applicableOn === 'All Products' || (typeof applicableOn === 'object' && applicableOn.type === 'all');
+
+  if (isAll) {
     return (
-      <span
-        style={{
-          fontSize: '0.76rem',
-          fontWeight: 600,
-          padding: '0.2rem 0.55rem',
-          borderRadius: '6px',
-          background: '#f1f5f9',
-          color: '#475569',
-          border: '1px solid #e2e8f0',
-          display: 'inline-flex',
-          alignItems: 'center',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        All Products
+      <span className="admin-coupon-target-chip all">
+        <Layers size={11} color="#64748b" />
+        <span>All Products</span>
       </span>
     );
   }
 
   let label = '';
+  let Icon = Tag;
   if (typeof applicableOn === 'string') {
     label = applicableOn;
   } else if (applicableOn.type === 'category') {
-    label = `Category: ${applicableOn.value}`;
+    label = applicableOn.value;
+    Icon = FolderTree;
   } else if (applicableOn.type === 'product') {
-    label = `Product: ${applicableOn.value}`;
+    label = applicableOn.value;
+    Icon = Package;
   } else {
     label = String(applicableOn.value || applicableOn);
   }
 
   return (
-    <span
-      style={{
-        fontSize: '0.76rem',
-        fontWeight: 600,
-        padding: '0.2rem 0.55rem',
-        borderRadius: '6px',
-        background: '#ede8f8',
-        color: '#5b21b6',
-        border: '1px solid #dfd5f5',
-        display: 'inline-flex',
-        alignItems: 'center',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {label}
+    <span className="admin-coupon-target-chip specific">
+      <Icon size={11} color="#7c3aed" />
+      <span>{label}</span>
     </span>
   );
 }
@@ -723,7 +706,7 @@ export default function AdminCoupons() {
         <AdminStatCard
           title="ACTIVE OFFERS"
           value={totalActivePromotions}
-          icon={<Ticket size={22} />}
+          icon={<BadgePercent size={22} />}
           variant="purple"
           footerLabel={`${activeCouponsCount} Coupons · ${activeDiscountsCount} Discounts`}
           footerValue={totalActivePromotions > 0 ? 'Live' : 'None'}
@@ -732,7 +715,7 @@ export default function AdminCoupons() {
         <AdminStatCard
           title="OFFERS USED"
           value={totalRedemptions.toLocaleString('en-IN')}
-          icon={<Sparkles size={22} />}
+          icon={<CheckCircle2 size={22} />}
           variant="blue"
           footerLabel={`Coupons ${couponRedemptions.toLocaleString('en-IN')} · Discounts ${discountRedemptions.toLocaleString('en-IN')}`}
           footerValue={totalRedemptions > 0 ? `+${redemptionsThisWeek} this week` : 'None'}
@@ -790,7 +773,7 @@ export default function AdminCoupons() {
               boxShadow: activeTab === 'discounts' ? '0 4px 14px rgba(124, 58, 237, 0.3)' : 'none',
             }}
           >
-            <Zap size={15} color={activeTab === 'discounts' ? '#ffffff' : '#f59e0b'} />
+            <Percent size={14} strokeWidth={2.5} color={activeTab === 'discounts' ? '#ffffff' : '#f59e0b'} />
             <span>Discounts</span>
             <span
               style={{
@@ -1022,7 +1005,7 @@ export default function AdminCoupons() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 320px))',
                 gap: '1.25rem',
               }}
             >
@@ -1037,81 +1020,43 @@ export default function AdminCoupons() {
                     : null);
                 const isHighlighted = highlightedRow === (c.code || '').toUpperCase();
 
+                const validityText = c.validFrom && c.validTill
+                  ? `${formatValidityDate(c.validFrom)} - ${formatValidityDate(c.validTill)}`
+                  : c.validTill
+                  ? `Till ${formatValidityDate(c.validTill)}`
+                  : 'Always Valid';
+
                 return (
                   <div
                     key={c._id}
                     id={`coupon-row-${(c.code || '').toUpperCase()}`}
-                    style={{
-                      background: isHighlighted ? '#fbf9ff' : '#ffffff',
-                      borderRadius: '16px',
-                      border: `1.5px solid ${isHighlighted ? '#7c3aed' : '#ede8f8'}`,
-                      boxShadow: isHighlighted
-                        ? '0 8px 30px rgba(124, 58, 237, 0.18)'
-                        : '0 3px 14px rgba(124, 58, 237, 0.04)',
-                      padding: '1.25rem 1.35rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.9rem',
-                      position: 'relative',
-                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
+                    className={`admin-coupon-card ${isHighlighted ? 'highlighted' : ''}`}
                   >
                     {/* Row 1: Primary Hero (Discount first!) + Coupon Code in d-flex */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3.87rem', flexWrap: 'wrap' }}>
+                    <div className="admin-coupon-card-header">
                       {/* 1. Primary Hero: Discount Value */}
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
-                        <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#1e1b4b', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                      <div className="admin-coupon-discount-hero">
+                        <span className="admin-coupon-discount-val">
                           {c.type === 'percentage' ? `${c.value}%` : formatPrice(c.value)}
                         </span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                        <span className="admin-coupon-discount-badge">
                           {c.type === 'percentage' ? 'OFF' : 'FLAT OFF'}
                         </span>
                       </div>
 
                       {/* 2. Coupon Code Badge + Copy Button */}
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <code
-                          style={{
-                            height: '30px',
-                            boxSizing: 'border-box',
-                            fontSize: '0.86rem',
-                            fontWeight: 800,
-                            letterSpacing: '0.04em',
-                            background: '#f5f0ff',
-                            color: '#6d28d9',
-                            padding: '0 0.65rem',
-                            borderRadius: '8px',
-                            border: '1.5px dashed #c084fc',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            boxShadow: 'inset 0 1px 2px rgba(124, 58, 237, 0.06)',
-                          }}
-                        >
-                          <Ticket size={13} style={{ opacity: 0.8 }} />
-                          {c.code}
-                        </code>
+                      <div className="admin-coupon-code-pill">
+                        <div className="admin-coupon-code-text">
+                          <Tag size={13} style={{ opacity: 0.85 }} />
+                          <span>{c.code}</span>
+                        </div>
+                        <div className="admin-coupon-code-divider" />
                         <button
                           type="button"
                           onClick={() => handleCopyCode(c.code)}
                           title={copiedCode === c.code ? 'Copied to Clipboard!' : 'Copy coupon code'}
                           aria-label={`Copy coupon code ${c.code}`}
-                          style={{
-                            width: '30px',
-                            height: '30px',
-                            boxSizing: 'border-box',
-                            background: copiedCode === c.code ? '#dcfce7' : '#ffffff',
-                            border: `1px solid ${copiedCode === c.code ? '#86efac' : '#ddd6fe'}`,
-                            borderRadius: '8px',
-                            padding: 0,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: copiedCode === c.code ? '#15803d' : '#7c3aed',
-                            transition: 'all 0.15s ease',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                          }}
+                          className={`admin-coupon-copy-btn ${copiedCode === c.code ? 'copied' : ''}`}
                         >
                           {copiedCode === c.code ? <Check size={13} /> : <Copy size={13} />}
                         </button>
@@ -1119,107 +1064,80 @@ export default function AdminCoupons() {
                     </div>
 
                     {/* Row 2: Target Badge (Left) + Status Pill (Right) */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <div className="admin-coupon-card-row2">
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         {renderApplicableBadge(c.applicableOn)}
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         {expiring && (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.2rem',
-                              fontSize: '0.68rem',
-                              fontWeight: 700,
-                              padding: '0.15rem 0.5rem',
-                              borderRadius: '9999px',
-                              background: '#fff7ed',
-                              color: '#c2410c',
-                              border: '1px solid #ffedd5',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            ⚠️ Expiring
+                          <span className="admin-coupon-status-pill expiring">
+                            <AlertTriangle size={11} color="#d97706" />
+                            <span>Expiring</span>
                           </span>
                         )}
                         {status === 'Expired' ? (
-                          <span
-                            className="adm-status-pill"
-                            style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', fontSize: '0.72rem', padding: '0.2rem 0.55rem' }}
-                          >
-                            Expired
+                          <span className="admin-coupon-status-pill expired">
+                            <span className="admin-coupon-status-dot" style={{ background: '#ef4444', boxShadow: 'none' }} />
+                            <span>Expired</span>
                           </span>
                         ) : status === 'Disabled' ? (
-                          <span className="adm-status-pill adm-status-cancelled" style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem' }}>
-                            Disabled
+                          <span className="admin-coupon-status-pill disabled">
+                            <span className="admin-coupon-status-dot" style={{ background: '#94a3b8', boxShadow: 'none' }} />
+                            <span>Disabled</span>
                           </span>
                         ) : (
-                          <span className="adm-status-pill adm-status-delivered" style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem' }}>
-                            Active
+                          <span className="admin-coupon-status-pill active">
+                            <span className="admin-coupon-status-dot" />
+                            <span>Active</span>
                           </span>
                         )}
                       </div>
                     </div>
 
                     {/* Details Box */}
-                    <div
-                      style={{
-                        background: '#faf8fe',
-                        borderRadius: '12px',
-                        padding: '0.85rem 1rem',
-                        border: '1px solid #f1ecf9',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.7rem',
-                      }}
-                    >
+                    <div className="admin-coupon-details-box">
                       {/* Row 1: Min Order & Max Cap */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                      <div className="admin-coupon-details-row">
                         <div>
-                          <span style={{ color: '#64748b', fontSize: '0.68rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: '0.18rem' }}>
+                          <span className="admin-coupon-details-label">
                             Min Order
                           </span>
-                          <strong style={{ color: '#1e1b4b', fontWeight: 800, fontSize: '0.86rem' }}>
+                          <strong className="admin-coupon-details-val">
                             {c.minOrderAmount ? formatPrice(c.minOrderAmount) : 'No Minimum'}
                           </strong>
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ color: '#64748b', fontSize: '0.68rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: '0.18rem' }}>
+                          <span className="admin-coupon-details-label" style={{ textAlign: 'right' }}>
                             Max Cap
                           </span>
-                          <strong style={{ color: '#1e1b4b', fontWeight: 800, fontSize: '0.86rem' }}>
+                          <strong className="admin-coupon-details-val">
                             {c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}
                           </strong>
                         </div>
                       </div>
 
                       {/* Subtle Row Divider */}
-                      <div style={{ height: '1px', background: '#ede8f8' }} />
+                      <div className="admin-coupon-details-divider" />
 
                       {/* Row 2: Validity & Usage Limit */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                      <div className="admin-coupon-details-row">
                         <div>
-                          <span style={{ color: '#64748b', fontSize: '0.68rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: '0.18rem' }}>
+                          <span className="admin-coupon-details-label">
                             Validity
                           </span>
-                          <span style={{ color: '#1e1b4b', fontWeight: 700, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
+                          <span style={{ color: '#1e1b4b', fontWeight: 800, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
                             <Clock size={12} color="#7c3aed" style={{ flexShrink: 0 }} />
-                            {c.validFrom && c.validTill
-                              ? `${formatValidityDate(c.validFrom)} - ${formatValidityDate(c.validTill)}`
-                              : c.validTill
-                              ? `Till ${formatValidityDate(c.validTill)}`
-                              : 'Always Valid'}
+                            <span>{validityText}</span>
                           </span>
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ color: '#64748b', fontSize: '0.68rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: '0.18rem' }}>
+                          <span className="admin-coupon-details-label" style={{ textAlign: 'right' }}>
                             Usage Limit
                           </span>
-                          <strong style={{ color: '#1e1b4b', fontWeight: 800, fontSize: '0.84rem' }}>
+                          <strong className="admin-coupon-details-val" style={{ fontSize: '0.84rem' }}>
                             {limit !== null ? `Max ${limit} / user` : 'No Limit'}
                           </strong>
                         </div>
@@ -1227,69 +1145,34 @@ export default function AdminCoupons() {
                     </div>
 
                     {/* Card Footer: Uses Counter & Actions */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingTop: '0.75rem',
-                        borderTop: '1px solid #f1f5f9',
-                        marginTop: 'auto',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#64748b' }}>
-                        <Sparkles size={13} color="#7c3aed" />
+                    <div className="admin-coupon-card-footer">
+                      <div className="admin-coupon-used-chip">
+                        <div className="admin-coupon-used-icon">
+                          <CheckCircle2 size={12} />
+                        </div>
                         <span>
-                          Used <strong style={{ color: '#1e1b4b' }}>{c.usageCount || 0}</strong> times
+                          Used <strong style={{ color: '#1e1b4b', fontWeight: 800 }}>{c.usageCount || 0}</strong> times
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                      <div className="admin-coupon-actions">
                         <button
                           type="button"
                           onClick={() => handleOpenEditCoupon(c)}
-                          className="admin-period-select-btn"
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            padding: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '8px',
-                            background: '#ffffff',
-                            borderColor: '#e2e8f0',
-                            color: '#7c3aed',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                          }}
+                          className="admin-coupon-btn-edit"
                           title="Edit coupon"
                           aria-label={`Edit coupon ${c.code}`}
                         >
-                          <Edit2 size={14} color="#7c3aed" />
+                          <Edit2 size={14} />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteCoupon(c)}
-                          className="admin-period-select-btn"
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            padding: 0,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '8px',
-                            background: '#ffffff',
-                            borderColor: '#fee2e2',
-                            color: '#dc2626',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                          }}
+                          className="admin-coupon-btn-delete"
                           title="Delete coupon"
                           aria-label={`Delete coupon ${c.code}`}
                         >
-                          <Trash2 size={14} color="#dc2626" />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -1363,7 +1246,7 @@ export default function AdminCoupons() {
                             color: '#7c3aed',
                           }}
                         >
-                          <Zap size={22} />
+                          <Percent size={22} />
                         </div>
                         <strong style={{ fontSize: '0.98rem', color: '#1e1b4b' }}>
                           No automatic offers created yet
@@ -1407,10 +1290,12 @@ export default function AdminCoupons() {
                                     whiteSpace: 'nowrap',
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    gap: '0.25rem',
                                   }}
                                   title="This offer can be stacked with other eligible promotions"
                                 >
-                                  ✨ Stackable
+                                  <Layers size={11} />
+                                  <span>Stackable</span>
                                 </span>
                               )}
                             </div>
@@ -1441,9 +1326,20 @@ export default function AdminCoupons() {
                               whiteSpace: 'nowrap',
                               display: 'inline-flex',
                               alignItems: 'center',
+                              gap: '0.35rem',
                             }}
                           >
-                            {d.appliesTo === 'first_order' ? '🎁 First Order' : '👥 Store Wide'}
+                            {d.appliesTo === 'first_order' ? (
+                              <>
+                                <Gift size={12} />
+                                <span>First Order</span>
+                              </>
+                            ) : (
+                              <>
+                                <Users size={12} />
+                                <span>Store Wide</span>
+                              </>
+                            )}
                           </span>
                         </td>
 
@@ -1506,7 +1402,7 @@ export default function AdminCoupons() {
                                   style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '0.2rem',
+                                    gap: '0.25rem',
                                     fontSize: '0.68rem',
                                     fontWeight: 700,
                                     padding: '0.15rem 0.5rem',
@@ -1517,7 +1413,8 @@ export default function AdminCoupons() {
                                     whiteSpace: 'nowrap',
                                   }}
                                 >
-                                  ⚠️ Expiring soon
+                                  <AlertTriangle size={11} />
+                                  <span>Expiring soon</span>
                                 </span>
                               )}
                             </div>

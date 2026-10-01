@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Search,
   Phone,
@@ -61,9 +62,17 @@ export default function AdminOrders() {
   const { orders: storeOrders, updateOrderStatus: storeUpdateStatus, updateOrder } = useOrderStore();
   const { showToast } = useUiStore();
 
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [expandedId, setExpandedId] = useState(null); // Accordion state
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null && q !== undefined) {
+      setSearchTerm(q);
+    }
+  }, [searchParams]);
 
   // Per-row status change state
   const [rowStatus, setRowStatus] = useState({});

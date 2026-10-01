@@ -861,8 +861,7 @@
 
 .admin-layout .admin-quick-action-btn-icon {
   flex-shrink: 0;
-  color: #fde047;
-  filter: drop-shadow(0 0 4px rgba(253, 224, 71, 0.5));
+  color: #ffffff;
 }
 
 .admin-layout .admin-quick-action-chevron {
@@ -1040,6 +1039,7 @@
 /* Notifications Button & Dropdown */
 .admin-layout .admin-topbar-notif-wrap {
   position: relative;
+  z-index: 1001;
 }
 
 .admin-layout .admin-topbar-notif-btn {
@@ -1076,22 +1076,35 @@
 
 .admin-layout .admin-topbar-notif-dropdown {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
-  width: 300px;
+  width: 320px;
   background: #ffffff;
   border: 1.5px solid #e9d5ff;
   border-radius: 16px;
   box-shadow: 0 16px 36px rgba(112, 37, 251, 0.14);
-  z-index: 120;
-  overflow: hidden;
+  z-index: 99999;
+  overflow: visible;
   animation: adminFadeDown 0.18s ease;
+}
+
+/* Invisible hover bridge to prevent mouseleave when moving from button to dropdown */
+.admin-layout .admin-topbar-notif-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 .admin-layout .admin-notif-header {
   padding: 0.85rem 1rem;
   background: #faf8fe;
   border-bottom: 1px solid #ede8f8;
+  border-radius: 15px 15px 0 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1155,17 +1168,30 @@
 }
 
 .admin-layout .admin-notif-footer {
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 1rem;
   background: #fbf9ff;
   border-top: 1px solid #ede8f8;
+  border-radius: 0 0 15px 15px;
   text-align: center;
 }
 
 .admin-layout .admin-notif-view-all {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #7025fb;
   text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.admin-layout .admin-notif-view-all:hover {
+  color: #4c1d95;
+  text-decoration: underline;
+  transform: translateX(2px);
 }
 
 /* Profile Chip in Top Navbar */
@@ -1581,10 +1607,10 @@
 
 /* ─── Admin Content Body (Header spacing 24px) ────────────────────────── */
 .admin-layout .admin-content {
-  padding: 24px 32px 48px;
-  max-width: 1480px;
+  padding: 24px 2.25rem 48px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
 }
 
 /* Hero Section */
@@ -3273,8 +3299,8 @@
 }
 
 .admin-layout .stat-progress-card-icon-wrap {
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   color: #ffffff;
   display: flex;
@@ -3314,4 +3340,341 @@
   height: 100%;
   border-radius: 9999px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Ultra-Luxury Promo Coupon Card ────────────────────────────── */
+.admin-layout .admin-coupon-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1.5px solid #ece6f8;
+  box-shadow: 0 4px 18px -2px rgba(112, 37, 251, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  padding: 1.1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  position: relative;
+  overflow: hidden;
+  max-width: 320px;
+  width: 100%;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-layout .admin-coupon-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #6366f1 100%);
+  opacity: 0.9;
+}
+
+.admin-layout .admin-coupon-card:hover {
+  transform: translateY(-4px);
+  border-color: #c4b5fd;
+  box-shadow: 0 16px 36px -4px rgba(112, 37, 251, 0.13), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+.admin-layout .admin-coupon-card.highlighted {
+  background: #fbf9ff;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18), 0 12px 32px rgba(124, 58, 237, 0.18);
+}
+
+/* Row 1: Header */
+.admin-layout .admin-coupon-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.admin-layout .admin-coupon-discount-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.admin-layout .admin-coupon-discount-val {
+  font-size: 1.48rem;
+  font-weight: 900;
+  color: #1e1b4b;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.admin-layout .admin-coupon-discount-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #7c3aed;
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  padding: 0.18rem 0.45rem;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+/* Unified Voucher Code Pill with integrated Copy Button */
+.admin-layout .admin-coupon-code-pill {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fbf8ff 0%, #f5effe 100%);
+  border: 1.5px dashed #c084fc;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.05);
+  overflow: hidden;
+  transition: all 0.18s ease;
+}
+
+.admin-layout .admin-coupon-code-pill:hover {
+  border-color: #7c3aed;
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.12);
+}
+
+.admin-layout .admin-coupon-code-text {
+  padding: 0.3rem 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #6d28d9;
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.admin-layout .admin-coupon-code-divider {
+  width: 1px;
+  background: #e9d5ff;
+}
+
+.admin-layout .admin-coupon-copy-btn {
+  padding: 0 0.6rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.admin-layout .admin-coupon-copy-btn:hover {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.admin-layout .admin-coupon-copy-btn.copied {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Row 2: Target & Status */
+.admin-layout .admin-coupon-card-row2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.admin-layout .admin-coupon-target-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.24rem 0.65rem;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.admin-layout .admin-coupon-target-chip.all {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-layout .admin-coupon-target-chip.specific {
+  background: #f5f0ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.admin-layout .admin-coupon-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.admin-layout .admin-coupon-status-pill.active {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.admin-layout .admin-coupon-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+
+.admin-layout .admin-coupon-status-pill.expiring {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+}
+
+.admin-layout .admin-coupon-status-pill.expired {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.admin-layout .admin-coupon-status-pill.disabled {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Row 3: Details Box */
+.admin-layout .admin-coupon-details-box {
+  background: linear-gradient(145deg, #fbfaff 0%, #f6f2fc 100%);
+  border-radius: 14px;
+  border: 1px solid #ece4f7;
+  padding: 0.95rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(124, 58, 237, 0.02);
+}
+
+.admin-layout .admin-coupon-details-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-layout .admin-coupon-details-label {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.22rem;
+  display: block;
+}
+
+.admin-layout .admin-coupon-details-val {
+  color: #0f172a;
+  font-weight: 900;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.admin-layout .admin-coupon-details-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(233, 226, 245, 0.3), #e2d9f3 50%, rgba(233, 226, 245, 0.3));
+}
+
+/* Row 4: Footer */
+.admin-layout .admin-coupon-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  border-top: 1px dashed #e9d5ff;
+  margin-top: auto;
+}
+
+.admin-layout .admin-coupon-used-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.admin-layout .admin-coupon-used-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f3e8ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.admin-layout .admin-coupon-actions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.admin-layout .admin-coupon-btn-edit {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  color: #7c3aed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.04);
+}
+
+.admin-layout .admin-coupon-btn-edit:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+  transform: scale(1.06);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
+}
+
+.admin-layout .admin-coupon-btn-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #e11d48;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(225, 29, 72, 0.04);
+}
+
+.admin-layout .admin-coupon-btn-delete:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  transform: scale(1.06);
+  box-shadow: 0 4px 10px rgba(225, 29, 72, 0.25);
 }
