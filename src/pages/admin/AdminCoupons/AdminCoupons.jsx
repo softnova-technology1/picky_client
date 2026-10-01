@@ -50,7 +50,7 @@ function renderApplicableBadge(applicableOn) {
     return (
       <span className="admin-coupon-target-chip all">
         <Layers size={11} color="#64748b" />
-        <span>All Products</span>
+        <span>All Product</span>
       </span>
     );
   }
