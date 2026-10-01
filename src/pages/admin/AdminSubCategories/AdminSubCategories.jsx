@@ -21,6 +21,18 @@ import {
   Copy,
   Command,
   RotateCcw,
+  Shirt,
+  Utensils,
+  Gem,
+  Smartphone,
+  Flame,
+  Cookie,
+  Home,
+  Baby,
+  Activity,
+  Folder,
+  Tag,
+  ChevronDown,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -29,6 +41,25 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useUiStore } from '../../../store/uiStore';
 import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data/categoryMockData';
+
+// ─── Department Lucide Icon Mapping ───────────────────────────────────────────
+const CATEGORY_LUCIDE_ICONS = {
+  'cat-1': Shirt,
+  'cat-2': Utensils,
+  'cat-3': Gem,
+  'cat-4': Sparkles,
+  'cat-5': Smartphone,
+  'cat-6': Flame,
+  'cat-7': Cookie,
+  'cat-8': Home,
+  'cat-9': Baby,
+  'cat-10': Activity,
+};
+
+function getCategoryLucideIcon(catId, size = 14, color) {
+  const IconComp = CATEGORY_LUCIDE_ICONS[catId] || Folder;
+  return <IconComp size={size} style={color ? { color } : undefined} />;
+}
 
 export default function AdminSubCategories() {
   const { showToast } = useUiStore();
@@ -43,6 +74,19 @@ export default function AdminSubCategories() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('all'); // 'all' or 'cat-1', 'cat-2', etc.
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
+  const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
+  const deptDropdownRef = useRef(null);
+
+  // Click outside listener for custom department dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (deptDropdownRef.current && !deptDropdownRef.current.contains(event.target)) {
+        setIsDeptDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Global Ctrl+K / Cmd+K shortcut to focus unique search bar
   useEffect(() => {
@@ -108,8 +152,22 @@ export default function AdminSubCategories() {
     const active = subcategories.filter((s) => s.status === 'active').length;
     const distinctCategories = new Set(subcategories.map((s) => s.categoryId)).size;
     const totalProducts = subcategories.reduce((acc, curr) => acc + (Number(curr.itemCount) || 0), 0);
-    return { total, active, distinctCategories, totalProducts };
-  }, [subcategories]);
+
+    // Subcategory counts mapped per parent department
+    const catCounts = categories.map((cat) => {
+      const count = subcategories.filter((s) => s.categoryId === cat._id).length;
+      return { ...cat, count };
+    });
+
+    const sortedDesc = [...catCounts].sort((a, b) => b.count - a.count);
+    const mostCategory = sortedDesc[0] || { name: "Women's Fashion", count: 5, _id: 'cat-1' };
+
+    const sortedAsc = [...catCounts].sort((a, b) => a.count - b.count);
+    const leastCategory = sortedAsc[0] || { name: "Beauty & Personal Care", count: 0, _id: 'cat-4' };
+    const newCount = 4;
+
+    return { total, active, distinctCategories, totalProducts, mostCategory, leastCategory, newCount };
+  }, [subcategories, categories]);
 
   // Active Category Object (when a specific tab is selected)
   const currentCategoryObj = useMemo(() => {
@@ -135,6 +193,22 @@ export default function AdminSubCategories() {
       return matchSearch && matchCategory && matchStatus;
     });
   }, [subcategories, searchTerm, selectedCategoryTab, selectedStatus]);
+
+  // Pagination State & Derived Slices (8 items per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Reset to page 1 whenever filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategoryTab, selectedStatus]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSubcategories.length / itemsPerPage));
+  const paginatedSubcategories = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredSubcategories.slice(start, start + itemsPerPage);
+  }, [filteredSubcategories, currentPage, itemsPerPage]);
+
 
   // Open Add Sub-Category modal
   const handleOpenAdd = () => {
@@ -432,34 +506,19 @@ export default function AdminSubCategories() {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <h2
-              style={{
-                fontSize: '1.45rem',
-                fontWeight: 800,
-                color: '#0f172a',
-                margin: 0,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Sub-Categories & Department Catalog
-            </h2>
-            <span
-              style={{
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                background: '#f3e8ff',
-                color: '#7c3aed',
-                padding: '0.2rem 0.6rem',
-                borderRadius: '9999px',
-                border: '1px solid #e9d5ff',
-              }}
-            >
-              {subcategories.length} Total Sub-Categories
-            </span>
-          </div>
-          <span style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
-            Manage dynamic sub-categories and specifications across all 10 fixed store departments
+          <h2
+            style={{
+              fontSize: '1.4rem',
+              fontWeight: 800,
+              color: '#0f172a',
+              margin: 0,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Sub-Categories Management
+          </h2>
+          <span style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.2rem', display: 'block' }}>
+            Manage catalog sub-categories and specifications across all 10 departments
           </span>
         </div>
 
@@ -514,267 +573,46 @@ export default function AdminSubCategories() {
         </div>
       </div>
 
-      {/* ─── Top 4 Metric KPI Progress Cards (Reference Design) ─────────────── */}
+      {/* ─── Top 4 Clean & Balanced KPI Cards ─────────────────────────────────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard
           title="TOTAL SUB-CATEGORIES"
           value={kpis.total}
           icon={<FolderTree size={22} />}
           variant="purple"
-          footerLabel="Master Catalog Registry"
+          footerLabel="All Store"
           footerValue="100%"
           progress={100}
         />
         <AdminStatCard
-          title="ACTIVE SUB-CATEGORIES"
-          value={kpis.active}
-          icon={<CheckCircle2 size={22} />}
+          title="NEW SUB-CATEGORIES"
+          value={kpis.newCount}
+          icon={<Sparkles size={22} />}
           variant="green"
-          footerLabel="Published Status"
-          footerValue={`${kpis.total ? Math.round((kpis.active / kpis.total) * 100) : 0}% Active`}
-          progress={kpis.total ? (kpis.active / kpis.total) * 100 : 0}
+          footerLabel="This Month"
+          footerValue={`+${kpis.newCount}`}
+          progress={Math.round((kpis.newCount / (kpis.total || 1)) * 100)}
         />
         <AdminStatCard
-          title="DEPARTMENTS COVERED"
-          value={`${kpis.distinctCategories} / ${categories.length}`}
-          icon={<Layers size={22} />}
+          title="MOST SUB-CATEGORIES"
+          value={kpis.mostCategory?.count ?? 5}
+          icon={getCategoryLucideIcon(kpis.mostCategory?._id || 'cat-1', 22, '#ffffff')}
           variant="blue"
-          footerLabel="Store Verticals"
-          footerValue={`${Math.round((kpis.distinctCategories / (categories.length || 1)) * 100)}% Coverage`}
-          progress={(kpis.distinctCategories / (categories.length || 1)) * 100}
+          footerLabel={kpis.mostCategory?.name || "Women's Fashion"}
+          footerValue="Highest"
+          progress={Math.round(((kpis.mostCategory?.count ?? 5) / (kpis.total || 1)) * 100)}
         />
         <AdminStatCard
-          title="TOTAL ITEMS CATALOGED"
-          value={kpis.totalProducts}
-          icon={<Package size={22} />}
+          title="LEAST SUB-CATEGORIES"
+          value={kpis.leastCategory?.count ?? 0}
+          icon={getCategoryLucideIcon(kpis.leastCategory?._id || 'cat-4', 22, '#ffffff')}
           variant="amber"
-          footerLabel="Live Inventory"
-          footerValue={`${kpis.totalProducts} Items`}
-          progress={100}
+          footerLabel={kpis.leastCategory?.name || "Beauty & Personal Care"}
+          footerValue="Lowest"
+          progress={0}
         />
       </div>
 
-      {/* ─── 10 Fixed Categories Horizontal Tab Strip ─────────────────────── */}
-      <div
-        style={{
-          marginBottom: '1.25rem',
-          padding: '0.55rem 0.75rem',
-          borderRadius: '14px',
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-        }}
-      >
-        <div
-          className="subcat-tab-scroll"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            overflowX: 'auto',
-            paddingBottom: '0.1rem',
-            scrollbarWidth: 'none',
-          }}
-        >
-          {/* 'All' Tab */}
-          <button
-            onClick={() => setSelectedCategoryTab('all')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.5rem 0.95rem',
-              borderRadius: '10px',
-              border: '1.5px solid',
-              borderColor: selectedCategoryTab === 'all' ? '#7c3aed' : '#e2e8f0',
-              background: selectedCategoryTab === 'all' ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : '#f8fafc',
-              color: selectedCategoryTab === 'all' ? '#ffffff' : '#334155',
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              boxShadow:
-                selectedCategoryTab === 'all'
-                  ? '0 4px 12px rgba(124, 58, 237, 0.28)'
-                  : 'none',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span>📁 All Departments</span>
-            <span
-              style={{
-                fontSize: '0.7rem',
-                padding: '0.1rem 0.45rem',
-                borderRadius: '999px',
-                background: selectedCategoryTab === 'all' ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
-                color: selectedCategoryTab === 'all' ? '#ffffff' : '#64748b',
-                fontWeight: 700,
-              }}
-            >
-              {subcategories.length}
-            </span>
-          </button>
-
-          {/* 10 Fixed Category Tabs */}
-          {categories.map((cat) => {
-            const isSelected = selectedCategoryTab === cat._id;
-            const subsInCat = subcategories.filter((s) => s.categoryId === cat._id).length;
-
-            return (
-              <button
-                key={cat._id}
-                onClick={() => setSelectedCategoryTab(cat._id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.5rem 0.9rem',
-                  borderRadius: '10px',
-                  border: '1.5px solid',
-                  borderColor: isSelected ? '#7c3aed' : '#e2e8f0',
-                  background: isSelected ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : '#f8fafc',
-                  color: isSelected ? '#ffffff' : '#334155',
-                  fontWeight: 700,
-                  fontSize: '0.82rem',
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                  boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.28)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>{cat.icon || '🏷️'}</span>
-                <span>{cat.name}</span>
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    padding: '0.1rem 0.45rem',
-                    borderRadius: '999px',
-                    background: isSelected ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
-                    color: isSelected ? '#ffffff' : '#64748b',
-                    fontWeight: 700,
-                  }}
-                >
-                  {subsInCat}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ─── Active Category Info Banner (When a category is selected) ───── */}
-      {currentCategoryObj && (
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-            border: '1.5px solid #e9d5ff',
-            borderRadius: '14px',
-            padding: '1rem 1.25rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            boxShadow: '0 2px 10px rgba(124, 58, 237, 0.04)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-            <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                color: '#fff',
-                fontSize: '1.4rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
-              }}
-            >
-              {currentCategoryObj.icon || '🏷️'}
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                <strong style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: 800 }}>
-                  {currentCategoryObj.name}
-                </strong>
-                <span
-                  style={{
-                    fontSize: '0.72rem',
-                    padding: '0.15rem 0.55rem',
-                    borderRadius: '999px',
-                    background: '#dcfce7',
-                    color: '#15803d',
-                    fontWeight: 700,
-                    border: '1px solid #bbf7d0',
-                  }}
-                >
-                  Fixed Department
-                </span>
-                <span style={{ fontSize: '0.78rem', color: '#6d28d9', fontWeight: 600 }}>
-                  Path: <code style={{ background: 'rgba(255,255,255,0.7)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>/{currentCategoryObj.slug}</code>
-                </span>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.2rem' }}>
-                {currentCategoryObj.subtext || 'Department catalog groupings & product attributes'}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            {/* Manage Specs Button */}
-            <button
-              onClick={() => handleOpenSpecs(currentCategoryObj)}
-              className="subcat-action-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.85rem',
-                borderRadius: '8px',
-                background: '#ffffff',
-                border: '1.5px solid #7c3aed',
-                color: '#6d28d9',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)',
-              }}
-            >
-              <Sliders size={14} color="#7c3aed" />
-              <span>
-                Manage Specs ({currentCategoryObj.characteristics?.length || 0})
-              </span>
-            </button>
-
-            {/* Quick Add Sub-Category for this Department */}
-            <button
-              onClick={handleOpenAdd}
-              className="subcat-action-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.85rem',
-                borderRadius: '8px',
-                background: '#7c3aed',
-                border: '1px solid #7c3aed',
-                color: '#ffffff',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
-              }}
-            >
-              <Plus size={14} />
-              <span>Add Sub to {currentCategoryObj.name}</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ─── Controls & Unique Search Bar ─────────────────────────────────── */}
       <div
@@ -904,36 +742,185 @@ export default function AdminSubCategories() {
             )}
           </div>
 
-          {/* Department Filter Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Department:
-            </label>
-            <select
-              value={selectedCategoryTab}
-              onChange={(e) => setSelectedCategoryTab(e.target.value)}
-              style={{
-                padding: '0.52rem 0.85rem',
-                borderRadius: '10px',
-                border: '1.5px solid #e2e8f0',
-                background: '#ffffff',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                color: '#0f172a',
-                outline: 'none',
-                cursor: 'pointer',
-                transition: 'border-color 0.15s ease',
-              }}
-              onFocus={(e) => (e.target.style.borderColor = '#7c3aed')}
-              onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
-            >
-              <option value="all">All 10 Departments</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.icon} {cat.name}
-                </option>
-              ))}
-            </select>
+          {/* Custom Department Filter with Lucide Icons */}
+          <div ref={deptDropdownRef} style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Department:
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsDeptDropdownOpen((prev) => !prev)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.52rem 0.85rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid',
+                  borderColor: isDeptDropdownOpen ? '#7c3aed' : selectedCategoryTab !== 'all' ? '#7c3aed' : '#e2e8f0',
+                  background: selectedCategoryTab !== 'all' ? '#faf5ff' : '#ffffff',
+                  color: selectedCategoryTab !== 'all' ? '#6d28d9' : '#0f172a',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxShadow: isDeptDropdownOpen ? '0 0 0 3px rgba(124, 58, 237, 0.1)' : 'none',
+                  transition: 'all 0.18s ease',
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {selectedCategoryTab === 'all'
+                    ? <FolderTree size={14} color="#7c3aed" />
+                    : getCategoryLucideIcon(selectedCategoryTab, 14, '#7c3aed')}
+                  <span>
+                    {selectedCategoryTab === 'all'
+                      ? 'All 10 Departments'
+                      : categories.find((c) => c._id === selectedCategoryTab)?.name || 'Selected Department'}
+                  </span>
+                </span>
+                <ChevronDown
+                  size={14}
+                  color="#64748b"
+                  style={{
+                    transform: isDeptDropdownOpen ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s ease',
+                  }}
+                />
+              </button>
+            </div>
+
+            {/* Floating Dropdown Popover */}
+            {isDeptDropdownOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  minWidth: '240px',
+                  background: '#ffffff',
+                  borderRadius: '14px',
+                  border: '1.5px solid #ede9fe',
+                  boxShadow: '0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(124, 58, 237, 0.04)',
+                  padding: '0.45rem',
+                  zIndex: 50,
+                  maxHeight: '340px',
+                  overflowY: 'auto',
+                }}
+              >
+                {/* Option: All 10 Departments */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryTab('all');
+                    setIsDeptDropdownOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: selectedCategoryTab === 'all' ? '#f5f3ff' : 'transparent',
+                    color: selectedCategoryTab === 'all' ? '#6d28d9' : '#1e293b',
+                    fontSize: '0.82rem',
+                    fontWeight: selectedCategoryTab === 'all' ? 700 : 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedCategoryTab !== 'all') e.currentTarget.style.background = '#f8fafc';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedCategoryTab !== 'all') e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <FolderTree size={15} color={selectedCategoryTab === 'all' ? '#7c3aed' : '#64748b'} />
+                    <span>All 10 Departments</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        background: selectedCategoryTab === 'all' ? '#ede9fe' : '#f1f5f9',
+                        color: selectedCategoryTab === 'all' ? '#7c3aed' : '#64748b',
+                        padding: '0.1rem 0.45rem',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      {subcategories.length}
+                    </span>
+                    {selectedCategoryTab === 'all' && <Check size={14} color="#7c3aed" />}
+                  </div>
+                </button>
+
+                <div style={{ height: '1px', background: '#f1f5f9', margin: '0.35rem 0' }} />
+
+                {/* 10 Departments with Lucide Icons */}
+                {categories.map((cat) => {
+                  const isSelected = selectedCategoryTab === cat._id;
+                  const subsInCat = subcategories.filter((s) => s.categoryId === cat._id).length;
+
+                  return (
+                    <button
+                      key={cat._id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategoryTab(cat._id);
+                        setIsDeptDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: isSelected ? '#f5f3ff' : 'transparent',
+                        color: isSelected ? '#6d28d9' : '#1e293b',
+                        fontSize: '0.82rem',
+                        fontWeight: isSelected ? 700 : 600,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) e.currentTarget.style.background = '#f8fafc';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        {getCategoryLucideIcon(cat._id, 15, isSelected ? '#7c3aed' : '#64748b')}
+                        <span>{cat.name}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            background: isSelected ? '#ede9fe' : '#f1f5f9',
+                            color: isSelected ? '#7c3aed' : '#64748b',
+                            padding: '0.1rem 0.45rem',
+                            borderRadius: '999px',
+                          }}
+                        >
+                          {subsInCat}
+                        </span>
+                        {isSelected && <Check size={14} color="#7c3aed" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Status Filter Selector */}
@@ -1022,13 +1009,13 @@ export default function AdminSubCategories() {
                   SUB-CATEGORY
                 </th>
                 <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  PARENT DEPARTMENT
+                  PARENT CATEGORY
                 </th>
                 <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   SLUG / PATH
                 </th>
                 <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
-                  ITEM COUNT
+                  PRODUCTS
                 </th>
                 <th style={{ padding: '0.85rem 1rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
                   DISPLAY ORDER
@@ -1042,7 +1029,7 @@ export default function AdminSubCategories() {
               </tr>
             </thead>
             <tbody>
-              {filteredSubcategories.length === 0 ? (
+              {paginatedSubcategories.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -1056,7 +1043,7 @@ export default function AdminSubCategories() {
                   </td>
                 </tr>
               ) : (
-                filteredSubcategories.map((sub, index) => {
+                paginatedSubcategories.map((sub, index) => {
                   const parent = categories.find((c) => c._id === sub.categoryId);
                   const parentSlug = parent?.slug || 'womens-fashion';
                   const fullSlug = `/${parentSlug}/${sub.slug}`;
@@ -1066,7 +1053,7 @@ export default function AdminSubCategories() {
                       key={sub._id}
                       className={index % 2 === 0 ? 'subcat-table-row-even' : 'subcat-table-row-odd'}
                       style={{
-                        borderBottom: index !== filteredSubcategories.length - 1 ? '1px solid #f1f5f9' : 'none',
+                        borderBottom: index !== paginatedSubcategories.length - 1 ? '1px solid #f1f5f9' : 'none',
                       }}
                     >
                       {/* 1. Sub-Category Name & Image */}
@@ -1132,7 +1119,7 @@ export default function AdminSubCategories() {
                         </div>
                       </td>
 
-                      {/* 2. Parent Department */}
+                      {/* 2. Parent Category */}
                       <td style={{ padding: '0.9rem 1rem' }}>
                         <span
                           style={{
@@ -1148,7 +1135,8 @@ export default function AdminSubCategories() {
                             border: '1px solid #e9d5ff',
                           }}
                         >
-                          {parent?.icon || '📁'} {parent?.name || sub.categoryName}
+                          {getCategoryLucideIcon(parent?._id || sub.categoryId, 13, '#6d28d9')}
+                          <span>{parent?.name || sub.categoryName}</span>
                         </span>
                       </td>
 
@@ -1191,7 +1179,7 @@ export default function AdminSubCategories() {
                         </div>
                       </td>
 
-                      {/* 4. Item Count */}
+                      {/* 4. Products */}
                       <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
                         <span
                           style={{
@@ -1208,7 +1196,7 @@ export default function AdminSubCategories() {
                           }}
                         >
                           <Package size={13} color="#7c3aed" />
-                          {sub.itemCount || 0} items
+                          {sub.itemCount || 0} Products
                         </span>
                       </td>
 
@@ -1273,7 +1261,7 @@ export default function AdminSubCategories() {
                         </button>
                       </td>
 
-                      {/* 7. Actions Group */}
+                      {/* 7. Actions (View / Edit) */}
                       <td style={{ padding: '0.9rem 1.25rem', textAlign: 'right' }}>
                         <div
                           style={{
@@ -1330,29 +1318,6 @@ export default function AdminSubCategories() {
                             <Edit2 size={12} color="#6d28d9" />
                             <span>Edit</span>
                           </button>
-
-                          {/* Delete Button */}
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(sub._id, sub.name)}
-                            className="subcat-action-btn"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '0.32rem 0.55rem',
-                              borderRadius: '8px',
-                              border: '1px solid #fecaca',
-                              background: '#fff1f2',
-                              color: '#be123c',
-                              fontSize: '0.76rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                            title="Delete Sub-Category"
-                          >
-                            <Trash2 size={12} color="#be123c" />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1362,6 +1327,92 @@ export default function AdminSubCategories() {
             </tbody>
           </table>
         </div>
+
+        {/* Centered Pagination (Matching Reference Image: Previous 1 2 3 Next) */}
+        {filteredSubcategories.length > 0 && (
+          <div
+            style={{
+              padding: '1.25rem 1.5rem',
+              borderTop: '1px solid #f1f5f9',
+              background: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+            }}
+          >
+            {/* Previous Button */}
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              style={{
+                padding: '0.48rem 0.95rem',
+                borderRadius: '8px',
+                border: '1.5px solid #e2e8f0',
+                background: currentPage === 1 ? '#f8fafc' : '#ffffff',
+                color: currentPage === 1 ? '#94a3b8' : '#334155',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Previous
+            </button>
+
+            {/* Page Number Buttons */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+              const isActive = pageNum === currentPage;
+              return (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  style={{
+                    minWidth: '34px',
+                    height: '34px',
+                    padding: '0 0.4rem',
+                    borderRadius: '8px',
+                    border: isActive ? 'none' : '1.5px solid #e2e8f0',
+                    background: isActive ? '#7c3aed' : '#ffffff',
+                    color: isActive ? '#ffffff' : '#334155',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: isActive ? '0 2px 8px rgba(124, 58, 237, 0.28)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            {/* Next Button */}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              style={{
+                padding: '0.48rem 0.95rem',
+                borderRadius: '8px',
+                border: '1.5px solid #e2e8f0',
+                background: currentPage === totalPages ? '#f8fafc' : '#ffffff',
+                color: currentPage === totalPages ? '#94a3b8' : '#334155',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ─── 1. Add / Edit Sub-Category Modal ──────────────────────────────── */}
@@ -1408,7 +1459,7 @@ export default function AdminSubCategories() {
             >
               {categories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
-                  {cat.icon} {cat.name}
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -1616,9 +1667,12 @@ export default function AdminSubCategories() {
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
                         zIndex: 2,
                         letterSpacing: '0.02em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
                       }}
                     >
-                      ⭐ COVER
+                      <Sparkles size={10} /> COVER
                     </div>
 
                     {/* Hover Overlay with Change & Remove options */}
@@ -1658,9 +1712,12 @@ export default function AdminSubCategories() {
                           fontWeight: 700,
                           cursor: 'pointer',
                           boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
                         }}
                       >
-                        🗑️ Remove
+                        <Trash2 size={12} /> Remove
                       </button>
                     </div>
                   </div>
@@ -2140,7 +2197,7 @@ export default function AdminSubCategories() {
                 marginBottom: '0.9rem',
               }}
             >
-              <span style={{ fontSize: '1.1rem' }}>👁️</span>
+              <Eye size={18} color="#7c3aed" />
               <strong style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: 800 }}>
                 Live Product Form Preview
               </strong>
@@ -2464,7 +2521,8 @@ export default function AdminSubCategories() {
                         gap: '0.3rem',
                       }}
                     >
-                      {parent?.icon || '🏷️'} {parent?.name || viewingItem.categoryName}
+                      {getCategoryLucideIcon(parent?._id || viewingItem.categoryId, 13, '#6d28d9')}
+                      <span>{parent?.name || viewingItem.categoryName}</span>
                     </span>
 
                     <span
@@ -2546,8 +2604,9 @@ export default function AdminSubCategories() {
                   <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
                     PARENT DEPARTMENT
                   </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a' }}>
-                    {parent?.icon} {parent?.name || viewingItem.categoryName}
+                  <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    {getCategoryLucideIcon(parent?._id || viewingItem.categoryId, 16, '#7c3aed')}
+                    <span>{parent?.name || viewingItem.categoryName}</span>
                   </div>
                 </div>
 

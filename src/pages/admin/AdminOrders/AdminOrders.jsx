@@ -34,6 +34,10 @@ import {
   ArrowUpRight,
   Save,
   ShieldCheck,
+  Printer,
+  FileText,
+  X,
+  RotateCcw,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -43,42 +47,17 @@ import { formatDate } from '../../../utils/formatDate';
 import { useOrderStore } from '../../../store/orderStore';
 import { useUiStore } from '../../../store/uiStore';
 
-// ─── Status Tabs Configuration ──────────────────────────────────────────────
-const STATUS_TABS = [
-  { key: 'all',       label: 'All Orders',      icon: ShoppingBag, color: '#7c3aed' },
-  { key: 'confirmed', label: 'Order Confirmed', icon: Clock,       color: '#d97706' },
-  { key: 'packing',   label: 'Order Packing',   icon: Package,     color: '#8b5cf6' },
-  { key: 'shipped',   label: 'Order Shipping',  icon: Truck,       color: '#2563eb' },
-  { key: 'delivered', label: 'Order Delivered', icon: BadgeCheck,  color: '#16a34a' },
-  { key: 'cancelled', label: 'Cancelled Order', icon: XCircle,     color: '#dc2626' },
-];
-
-// ─── Status Visual Config ───────────────────────────────────────────────────
-const STATUS_CFG = {
-  confirmed: { cls: 'adm-status-processing', label: 'Order Confirmed', icon: Clock,      bg: '#fffbeb', color: '#b45309' },
-  packing:   { cls: 'adm-status-processing', label: 'Order Packing',   icon: Package,    bg: '#f3e8ff', color: '#7c3aed' },
-  shipped:   { cls: 'adm-status-shipped',    label: 'Order Shipping',  icon: Truck,      bg: '#eff6ff', color: '#1d4ed8' },
-  delivered: { cls: 'adm-status-delivered',  label: 'Order Delivered', icon: BadgeCheck, bg: '#f0fdf4', color: '#15803d' },
-  cancelled: { cls: 'adm-status-cancelled',  label: 'Cancelled Order', icon: XCircle,    bg: '#fef2f2', color: '#b91c1c' },
-};
-
-const CANCEL_REASONS = [
-  'Out of Stock',
-  'Customer Requested Cancellation',
-  'Payment Failure / Not Received',
-  'Incorrect Order Details',
-  'Courier / Logistics Issue',
-  'Other',
-];
-
-// ─── Status Dropdown Options (with Lucide icons) ─────────────────────────────
-const STATUS_OPTIONS = [
-  { value: 'confirmed', label: 'Order Confirmed', icon: Clock,      color: '#b45309', bg: '#fffbeb' },
-  { value: 'packing',   label: 'Order Packing',   icon: Package,    color: '#7c3aed', bg: '#f3e8ff' },
-  { value: 'shipped',   label: 'Order Shipping',  icon: Truck,      color: '#1d4ed8', bg: '#eff6ff' },
-  { value: 'delivered', label: 'Order Delivered', icon: BadgeCheck, color: '#15803d', bg: '#f0fdf4' },
-  { value: 'cancelled', label: 'Cancelled Order', icon: XCircle,    color: '#b91c1c', bg: '#fef2f2' },
-];
+import {
+  STATUS_TABS,
+  STATUS_CFG,
+  CANCEL_REASONS,
+  STATUS_OPTIONS,
+  ORDER_PROGRESS_STEPS,
+  DATE_FILTER_OPTIONS,
+  PRICE_FILTER_OPTIONS,
+  QUANTITY_FILTER_OPTIONS,
+  SORT_OPTIONS,
+} from '../../../data/ordersMockData';
 
 // ─── Custom Status Select Dropdown (icon-rich, SaaS-style) ───────────────────
 function StatusSelect({ value, onChange }) {
@@ -187,9 +166,28 @@ export default function AdminOrders() {
   const { orders: storeOrders, updateOrderStatus: storeUpdateStatus, updateOrder } = useOrderStore();
   const { showToast } = useUiStore();
 
+  // ─── Filter & Search State ────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [priceFilter, setPriceFilter] = useState('all');
+  const [quantityFilter, setQuantityFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
   const [expandedId, setExpandedId] = useState(null); // Accordion state
+
+  // Filter Popover Dropdown state
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+  const filterRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setFilterPopoverOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Per-row status change state
   const [rowStatus, setRowStatus] = useState({});
@@ -197,17 +195,14 @@ export default function AdminOrders() {
   const [rowCancelReason, setRowCancelReason] = useState({});
   const [rowLoading, setRowLoading] = useState({});
 
-  // ─── Selection & Pagination State ──────────────────────────────────────────
-  const [selectedOrders, setSelectedOrders] = useState([]);
+  // ─── Pagination State ────────────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
-  // Reset pagination and selection on filter change
+  // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-    setSelectedOrders([]);
-  }, [activeTab, searchTerm]);
+  }, [activeTab, searchTerm, dateFilter, priceFilter, quantityFilter, sortBy]);
 
   // ─── Dashboard Stats Calculations ────────────────────────────────────────
   const totalOrders = storeOrders.length;
@@ -216,22 +211,105 @@ export default function AdminOrders() {
   const readyToDispatchCount = storeOrders.filter((o) => o.status === 'confirmed' || o.status === 'packing').length;
   const shippedCount = storeOrders.filter((o) => o.status === 'shipped' || o.status === 'out_for_delivery').length;
   const deliveredCount = storeOrders.filter((o) => o.status === 'delivered').length;
-  const totalRevenue = storeOrders.reduce((acc, o) => {
-    if (o.status !== 'cancelled') {
-      return acc + Number(o.totalAmount || o.total || o.grandTotal || 0);
-    }
-    return acc;
-  }, 0);
 
-  // ─── Filter Logic ────────────────────────────────────────────────────────
-  const filteredOrders = storeOrders.filter((o) => {
-    const matchesTab = activeTab === 'all' || o.status === activeTab;
-    const term = searchTerm.toLowerCase().trim();
-    const num = (o.orderNumber || '').toLowerCase();
-    const cust = (o.customer?.name || o.user?.name || o.shippingAddress?.fullName || '').toLowerCase();
-    const phone = (o.customer?.phone || o.user?.phone || '').toLowerCase();
-    return matchesTab && (!term || num.includes(term) || cust.includes(term) || phone.includes(term));
-  });
+  // ─── Filter Helper Matchers ──────────────────────────────────────────────
+  const matchesDate = (orderDateStr) => {
+    if (dateFilter === 'all') return true;
+    const orderDate = new Date(orderDateStr);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(startOfToday.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    if (dateFilter === 'today') return orderDate >= startOfToday;
+    if (dateFilter === 'yesterday') return orderDate >= startOfYesterday && orderDate < startOfToday;
+    if (dateFilter === '7days') return orderDate >= sevenDaysAgo;
+    if (dateFilter === '30days') return orderDate >= thirtyDaysAgo;
+    if (dateFilter === 'this_month') return orderDate >= startOfMonth;
+    return true;
+  };
+
+  const matchesPrice = (amount) => {
+    const num = Number(amount || 0);
+    if (priceFilter === 'all') return true;
+    if (priceFilter === 'under1000') return num < 1000;
+    if (priceFilter === '1000to2500') return num >= 1000 && num <= 2500;
+    if (priceFilter === '2500to5000') return num > 2500 && num <= 5000;
+    if (priceFilter === 'above5000') return num > 5000;
+    return true;
+  };
+
+  const matchesQuantity = (order) => {
+    const totalQty = order.items?.reduce((acc, it) => acc + (Number(it.quantity) || 1), 0) || order.itemsCount || 1;
+    if (quantityFilter === 'all') return true;
+    if (quantityFilter === '1') return totalQty === 1;
+    if (quantityFilter === '2to3') return totalQty >= 2 && totalQty <= 3;
+    if (quantityFilter === '4plus') return totalQty >= 4;
+    return true;
+  };
+
+  // ─── Filter & Sort Logic ──────────────────────────────────────────────────
+  const filteredOrders = storeOrders
+    .filter((o) => {
+      const matchesTab = activeTab === 'all' || o.status === activeTab;
+      const term = searchTerm.toLowerCase().trim();
+      const num = (o.orderNumber || '').toLowerCase();
+      const cust = (o.customer?.name || o.user?.name || o.shippingAddress?.fullName || '').toLowerCase();
+      const phone = (o.customer?.phone || o.user?.phone || '').toLowerCase();
+      const city = (o.shippingAddress?.city || '').toLowerCase();
+      const matchesSearch = !term || num.includes(term) || cust.includes(term) || phone.includes(term) || city.includes(term);
+
+      return (
+        matchesTab &&
+        matchesSearch &&
+        matchesDate(o.createdAt) &&
+        matchesPrice(o.totalAmount || o.total || o.grandTotal || 0) &&
+        matchesQuantity(o)
+      );
+    })
+    .sort((a, b) => {
+      const priceA = Number(a.totalAmount || a.total || a.grandTotal || 0);
+      const priceB = Number(b.totalAmount || b.total || b.grandTotal || 0);
+      if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      if (sortBy === 'oldest') return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      if (sortBy === 'amount_high') return priceB - priceA;
+      if (sortBy === 'amount_low') return priceA - priceB;
+      return 0;
+    });
+
+  const hasActiveFilters =
+    dateFilter !== 'all' ||
+    priceFilter !== 'all' ||
+    quantityFilter !== 'all' ||
+    activeTab !== 'all' ||
+    searchTerm !== '' ||
+    sortBy !== 'newest';
+
+  const activeFiltersCount =
+    (dateFilter !== 'all' ? 1 : 0) +
+    (priceFilter !== 'all' ? 1 : 0) +
+    (quantityFilter !== 'all' ? 1 : 0) +
+    (activeTab !== 'all' ? 1 : 0) +
+    (searchTerm ? 1 : 0) +
+    (sortBy !== 'newest' ? 1 : 0);
+
+  const activeSecondaryFiltersCount =
+    (dateFilter !== 'all' ? 1 : 0) +
+    (priceFilter !== 'all' ? 1 : 0) +
+    (quantityFilter !== 'all' ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setActiveTab('all');
+    setSearchTerm('');
+    setDateFilter('all');
+    setPriceFilter('all');
+    setQuantityFilter('all');
+    setSortBy('newest');
+    setCurrentPage(1);
+    showToast('Filters reset to default', 'info');
+  };
 
   // ─── Pagination Calculations ──────────────────────────────────────────────
   const totalOrdersCount = filteredOrders.length;
@@ -241,93 +319,161 @@ export default function AdminOrders() {
   const endIndex = Math.min(startIndex + rowsPerPage, totalOrdersCount);
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
 
-  // ─── Checkbox Selection Helpers ───────────────────────────────────────────
-  const isAllPageSelected = paginatedOrders.length > 0 && paginatedOrders.every((o) => selectedOrders.includes(o._id));
-  const isSomePageSelected = paginatedOrders.some((o) => selectedOrders.includes(o._id)) && !isAllPageSelected;
-
-  const handleToggleSelectAll = () => {
-    if (isAllPageSelected) {
-      const pageIds = paginatedOrders.map((o) => o._id);
-      setSelectedOrders((prev) => prev.filter((id) => !pageIds.includes(id)));
-    } else {
-      const pageIds = paginatedOrders.map((o) => o._id);
-      setSelectedOrders((prev) => Array.from(new Set([...prev, ...pageIds])));
-    }
-  };
-
-  const handleToggleSelectRow = (id, e) => {
-    if (e) e.stopPropagation();
-    setSelectedOrders((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleClearSelection = () => {
-    setSelectedOrders([]);
-  };
-
-  // ─── Bulk Status Update ───────────────────────────────────────────────────
-  const handleBulkStatusChange = async (newStatus) => {
-    if (selectedOrders.length === 0) return;
-    setIsBulkUpdating(true);
-    try {
-      const updatePromises = selectedOrders.map((id) =>
-        adminService.updateOrderStatus(id, {
-          status: newStatus,
-          note: `Bulk status update to ${newStatus}`,
-        }).catch(() => null)
-      );
-      await Promise.all(updatePromises);
-
-      selectedOrders.forEach((id) => {
-        storeUpdateStatus(id, newStatus);
-        const existing = storeOrders.find((o) => o._id === id);
-        if (existing) {
-          updateOrder(id, {
-            status: newStatus,
-            statusHistory: [
-              ...(existing.statusHistory || []),
-              { status: newStatus, timestamp: new Date().toISOString(), note: `Bulk status update to ${newStatus}` },
-            ],
-          });
-        }
-      });
-
-      showToast(`✅ Successfully updated ${selectedOrders.length} orders to "${STATUS_CFG[newStatus]?.label || newStatus}"`, 'success');
-      setSelectedOrders([]);
-    } catch {
-      showToast('Bulk update encountered an issue', 'error');
-    } finally {
-      setIsBulkUpdating(false);
-    }
-  };
-
-  // ─── Export CSV ──────────────────────────────────────────────────────────
+  // ─── Export Filtered Orders to CSV ────────────────────────────────────────
   const handleExportCSV = () => {
-    const targetOrders = selectedOrders.length > 0
-      ? storeOrders.filter((o) => selectedOrders.includes(o._id))
-      : filteredOrders;
+    const targetOrders = filteredOrders;
+    if (targetOrders.length === 0) {
+      showToast('No orders found to export', 'error');
+      return;
+    }
 
-    const headers = ['Order Number', 'Date', 'Customer Name', 'Phone', 'Items Count', 'Total Amount', 'Status'];
+    const headers = [
+      'Order Number',
+      'Date',
+      'Customer Name',
+      'Phone',
+      'Email',
+      'Shipping Address',
+      'City',
+      'State',
+      'Pincode',
+      'Items Count',
+      'Total Amount (INR)',
+      'Status',
+      'Courier',
+      'Tracking AWB',
+    ];
+
     const rows = targetOrders.map((o) => [
-      o.orderNumber,
+      `"${o.orderNumber}"`,
       new Date(o.createdAt).toLocaleDateString(),
-      `"${(o.customer?.name || o.user?.name || '').replace(/"/g, '""')}"`,
-      o.customer?.phone || o.user?.phone || '',
-      o.items?.length || 1,
-      o.totalAmount || o.total || 0,
-      o.status,
+      `"${(o.customer?.name || o.user?.name || o.shippingAddress?.fullName || '').replace(/"/g, '""')}"`,
+      `"${o.customer?.phone || o.user?.phone || ''}"`,
+      `"${o.customer?.email || o.user?.email || ''}"`,
+      `"${(o.shippingAddress?.street || '').replace(/"/g, '""')}"`,
+      `"${o.shippingAddress?.city || ''}"`,
+      `"${o.shippingAddress?.state || ''}"`,
+      `"${o.shippingAddress?.pincode || ''}"`,
+      o.items?.length || o.itemsCount || 1,
+      o.totalAmount || o.total || o.grandTotal || 0,
+      `"${STATUS_CFG[o.status]?.label || o.status}"`,
+      `"${o.courier || ''}"`,
+      `"${o.trackingId || ''}"`,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `orders_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `picky_orders_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     showToast(`📥 Exported ${targetOrders.length} orders to CSV`, 'success');
+  };
+
+  // ─── Print / Export Single Order Dispatch Slip ────────────────────────────
+  const handlePrintOrderSlip = (order, e) => {
+    if (e) e.stopPropagation();
+    const custName = order.customer?.name || order.user?.name || order.shippingAddress?.fullName || 'Customer';
+    const custPhone = order.customer?.phone || order.user?.phone || '';
+    const custEmail = order.customer?.email || order.user?.email || '';
+    const addr = order.shippingAddress || {};
+    const itemsHtml = (order.items || []).map((it, idx) => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${idx + 1}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">
+          <strong style="color: #0f172a;">${it.name}</strong>
+        </td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 13px; font-weight: 600;">${it.quantity || 1}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 13px;">₹${(it.price || 0).toLocaleString()}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 13px; font-weight: 700; color: #7c3aed;">₹${((it.price || 0) * (it.quantity || 1)).toLocaleString()}</td>
+      </tr>
+    `).join('');
+
+    const slipHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Order Dispatch Slip #${order.orderNumber}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; margin: 0; background: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #7c3aed; padding-bottom: 16px; margin-bottom: 24px; }
+          .brand { font-size: 22px; font-weight: 900; color: #7c3aed; letter-spacing: -0.02em; }
+          .order-meta { font-size: 13px; color: #64748b; margin-top: 4px; }
+          .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; background: #f3e8ff; color: #6d28d9; font-weight: 700; font-size: 12px; text-transform: uppercase; border: 1px solid #ddd6fe; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+          .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.5; }
+          .card-title { font-size: 11px; font-weight: 800; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th { background: #f1f5f9; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; border-bottom: 2px solid #cbd5e1; }
+          .total-box { margin-top: 24px; padding: 16px; background: #faf5ff; border: 1px solid #e9d8fd; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+          .total-label { font-size: 14px; font-weight: 700; color: #4c1d95; }
+          .total-val { font-size: 20px; font-weight: 900; color: #6d28d9; }
+          .footer { margin-top: 36px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+          .print-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 20px; }
+          @media print { .no-print { display: none !important; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="brand">PICKY — ORDER DISPATCH SLIP</div>
+            <div class="order-meta">Order #${order.orderNumber} • Placed on ${new Date(order.createdAt).toLocaleString()}</div>
+          </div>
+          <div>
+            <span class="badge">${STATUS_CFG[order.status]?.label || order.status}</span>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <div class="card-title">Customer Information</div>
+            <strong style="font-size: 14px; color: #0f172a;">${custName}</strong><br/>
+            ${custPhone ? 'Phone: ' + custPhone + '<br/>' : ''}
+            ${custEmail ? 'Email: ' + custEmail + '<br/>' : ''}
+          </div>
+          <div class="card">
+            <div class="card-title">Shipping Address</div>
+            ${addr.street || 'Standard Address'}<br/>
+            ${addr.landmark ? 'Landmark: ' + addr.landmark + '<br/>' : ''}
+            ${addr.city || 'Chennai'}, ${addr.state || 'Tamil Nadu'} — ${addr.pincode || '600001'}
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30px;">#</th>
+              <th>Item Details</th>
+              <th style="text-align: center; width: 60px;">Qty</th>
+              <th style="text-align: right; width: 100px;">Price</th>
+              <th style="text-align: right; width: 110px;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+        <div class="total-box">
+          <span class="total-label">Grand Total Paid</span>
+          <span class="total-val">₹${(order.totalAmount || order.total || order.grandTotal || 0).toLocaleString()} <span style="font-size: 12px; color: #16a34a; background: #dcfce7; padding: 2px 8px; border-radius: 9999px;">✓ PAID</span></span>
+        </div>
+        <div class="footer">
+          Thank you for ordering with Picky Store! For support queries, reach out at care@pickystore.com
+        </div>
+        <div class="no-print" style="text-align: center;">
+          <button class="print-btn" onclick="window.print()">🖨️ Print Dispatch Slip</button>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWin = window.open('', '_blank', 'width=800,height=800');
+    if (printWin) {
+      printWin.document.write(slipHtml);
+      printWin.document.close();
+      showToast(`🖨️ Opened Order Slip for #${order.orderNumber}`, 'success');
+    }
   };
 
   // ─── Toggle accordion row ─────────────────────────────────────────────────
@@ -418,11 +564,33 @@ export default function AdminOrders() {
       </div>
 
       {/* ── 2. FILTER & SEARCH CONTROL BAR ────────────────────────────── */}
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.1rem 1.25rem', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-
-          {/* Status Filter Tabs */}
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div
+        className="card"
+        style={{
+          marginBottom: '1.5rem',
+          padding: '1rem 1.25rem',
+          borderRadius: '16px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.85rem',
+        }}
+      >
+        {/* Row 1: Status Filter Tabs (Left) + Action Buttons (Right) */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            paddingBottom: '0.2rem',
+          }}
+        >
+          {/* Status Tabs */}
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {STATUS_TABS.map(({ key, label, icon: Icon }) => {
               const isActive = activeTab === key;
               const count = key === 'all'
@@ -431,34 +599,50 @@ export default function AdminOrders() {
               return (
                 <button
                   key={key}
-                  onClick={() => setActiveTab(key)}
+                  onClick={() => {
+                    setActiveTab(key);
+                    setCurrentPage(1);
+                  }}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    padding: '0.45rem 0.9rem',
+                    padding: '0.45rem 0.85rem',
                     borderRadius: '9999px',
                     fontSize: '0.8rem',
-                    fontWeight: isActive ? 600 : 500,
+                    fontWeight: isActive ? 700 : 500,
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    border: '1px solid',
+                    transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+                    border: isActive ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
                     background: isActive ? '#7c3aed' : '#ffffff',
                     color: isActive ? '#ffffff' : '#64748b',
-                    borderColor: isActive ? '#7c3aed' : '#e2e8f0',
-                    boxShadow: isActive ? '0 3px 12px rgba(124, 58, 237, 0.2)' : 'none',
+                    boxShadow: isActive ? '0 3px 10px rgba(124, 58, 237, 0.25)' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                      e.currentTarget.style.background = '#f8fafc';
+                      e.currentTarget.style.color = '#0f172a';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                      e.currentTarget.style.background = '#ffffff';
+                      e.currentTarget.style.color = '#64748b';
+                    }
                   }}
                 >
                   <Icon size={14} style={{ color: isActive ? '#ffffff' : '#7c3aed' }} />
-                  {label}
+                  <span>{label}</span>
                   <span
                     style={{
                       background: isActive ? 'rgba(255,255,255,0.22)' : '#f1f5f9',
-                      color: isActive ? '#ffffff' : '#475569',
+                      color: isActive ? '#ffffff' : '#64748b',
                       borderRadius: '9999px',
-                      padding: '0.05rem 0.45rem',
+                      padding: '0.08rem 0.45rem',
                       fontSize: '0.72rem',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       minWidth: '18px',
                       textAlign: 'center',
                     }}
@@ -470,215 +654,403 @@ export default function AdminOrders() {
             })}
           </div>
 
-          {/* Search Box */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={15} style={{ position: 'absolute', left: '0.9rem', color: '#64748b', pointerEvents: 'none' }} />
-            <input
-              type="text"
-              placeholder="Search order #, customer, phone…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '280px',
-                padding: '0.5rem 1rem 0.5rem 2.45rem',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '9999px',
-                fontSize: '0.82rem',
-                color: '#0f172a',
-                outline: 'none',
-                transition: 'border 0.2s, box-shadow 0.2s',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#7c3aed';
-                e.target.style.background = '#ffffff';
-                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.background = '#f8fafc';
-                e.target.style.boxShadow = 'none';
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3. BULK ACTIONS FLOATING TOOLBAR (WHEN ORDERS SELECTED) ───────────── */}
-      {selectedOrders.length > 0 && (
-        <div
-          style={{
-            marginBottom: '1rem',
-            padding: '0.85rem 1.25rem',
-            background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-            borderRadius: '14px',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.85rem',
-            boxShadow: '0 8px 24px rgba(124, 58, 237, 0.28)',
-            animation: 'fadeIn 0.2s ease',
-          }}
-        >
-          {/* Left: Selected count & Clear */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                background: 'rgba(255, 255, 255, 0.2)',
-                padding: '0.3rem 0.75rem',
-                borderRadius: '9999px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                backdropFilter: 'blur(4px)',
-              }}
-            >
-              <CheckCircle2 size={15} />
-              {selectedOrders.length} {selectedOrders.length === 1 ? 'Order' : 'Orders'} Selected
-            </span>
-            <button
-              onClick={handleClearSelection}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'rgba(255, 255, 255, 0.8)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                padding: 0,
-              }}
-            >
-              Clear Selection
-            </button>
-          </div>
-
-          {/* Right: Bulk status update actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Bulk Update:
-            </span>
-            <button
-              disabled={isBulkUpdating}
-              onClick={() => handleBulkStatusChange('packing')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.25)',
-                background: 'rgba(255,255,255,0.12)',
-                color: '#ffffff',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: isBulkUpdating ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
-            >
-              <Package size={13} /> Mark Packing
-            </button>
-
-            <button
-              disabled={isBulkUpdating}
-              onClick={() => handleBulkStatusChange('shipped')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.25)',
-                background: 'rgba(255,255,255,0.12)',
-                color: '#ffffff',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: isBulkUpdating ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
-            >
-              <Truck size={13} /> Mark Shipping
-            </button>
-
-            <button
-              disabled={isBulkUpdating}
-              onClick={() => handleBulkStatusChange('delivered')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.25)',
-                background: 'rgba(255,255,255,0.12)',
-                color: '#ffffff',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: isBulkUpdating ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
-            >
-              <BadgeCheck size={13} /> Mark Delivered
-            </button>
-
-            <button
-              disabled={isBulkUpdating}
-              onClick={() => handleBulkStatusChange('cancelled')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
-                background: 'rgba(239, 68, 68, 0.25)',
-                color: '#fee2e2',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: isBulkUpdating ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'; }}
-            >
-              <XCircle size={13} /> Cancel
-            </button>
-
-            {/* Export CSV button */}
+          {/* Right Action: Export CSV Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
               onClick={handleExportCSV}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: '#ffffff',
+                gap: '0.45rem',
+                padding: '0.48rem 1rem',
+                borderRadius: '10px',
+                border: '1.5px solid #ddd6fe',
+                background: '#fbf9ff',
                 color: '#6d28d9',
-                fontSize: '0.78rem',
+                fontSize: '0.8rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                transition: 'all 0.18s ease',
+                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#7c3aed';
+                e.currentTarget.style.background = '#7c3aed';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#ddd6fe';
+                e.currentTarget.style.background = '#fbf9ff';
+                e.currentTarget.style.color = '#6d28d9';
               }}
             >
-              <Download size={13} /> Export CSV
+              <Download size={14} />
+              <span>Export CSV</span>
             </button>
           </div>
         </div>
-      )}
 
-      {/* ── 4. ORDERS TABLE WITH CHECKBOXES & PERFECT ALIGNMENTS ──────────────────────── */}
+        {/* Row 2: Dedicated Modern Filter & Search Toolbar Strip */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            padding: '0.6rem 0.85rem',
+            background: '#f8fafc',
+            borderRadius: '12px',
+            border: '1px solid #edf2f7',
+          }}
+        >
+          {/* Left: Search Box + Single Consolidated Filter Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap' }}>
+            {/* Search Box */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Search size={14} style={{ position: 'absolute', left: '0.75rem', color: '#64748b', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Search order #, customer, city…"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  width: '240px',
+                  height: '36px',
+                  padding: '0 0.75rem 0 2.2rem',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '0.79rem',
+                  color: '#0f172a',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border 0.2s, box-shadow 0.2s',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#7c3aed';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  style={{
+                    position: 'absolute',
+                    right: '0.5rem',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#94a3b8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '2px',
+                  }}
+                  title="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            <div style={{ width: '1px', height: '22px', background: '#e2e8f0', margin: '0 0.15rem' }} />
+
+            {/* Single Consolidated Filter Dropdown Button */}
+            <div ref={filterRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setFilterPopoverOpen((p) => !p)}
+                style={{
+                  height: '36px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0 0.85rem',
+                  borderRadius: '8px',
+                  border: activeSecondaryFiltersCount > 0 || filterPopoverOpen ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                  background: activeSecondaryFiltersCount > 0 || filterPopoverOpen ? '#faf5ff' : '#ffffff',
+                  color: activeSecondaryFiltersCount > 0 || filterPopoverOpen ? '#6d28d9' : '#334155',
+                  fontSize: '0.79rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.18s ease',
+                }}
+              >
+                <SlidersHorizontal size={14} color={activeSecondaryFiltersCount > 0 || filterPopoverOpen ? '#7c3aed' : '#64748b'} />
+                <span>Filters</span>
+                {activeSecondaryFiltersCount > 0 && (
+                  <span
+                    style={{
+                      background: '#7c3aed',
+                      color: '#ffffff',
+                      borderRadius: '9999px',
+                      padding: '0.05rem 0.45rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {activeSecondaryFiltersCount}
+                  </span>
+                )}
+                <ChevronDown
+                  size={13}
+                  color={activeSecondaryFiltersCount > 0 || filterPopoverOpen ? '#7c3aed' : '#94a3b8'}
+                  style={{
+                    transform: filterPopoverOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
+                />
+              </button>
+
+              {/* Filter Popover Floating Panel */}
+              {filterPopoverOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: 0,
+                    width: '320px',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '14px',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                    zIndex: 200,
+                    padding: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.85rem',
+                    animation: 'fadeIn 0.15s ease',
+                  }}
+                >
+                  {/* Popover Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>
+                      <SlidersHorizontal size={13} color="#7c3aed" />
+                      Filter Options
+                    </div>
+                    {activeSecondaryFiltersCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDateFilter('all');
+                          setPriceFilter('all');
+                          setQuantityFilter('all');
+                          setCurrentPage(1);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#dc2626',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '2px 4px',
+                        }}
+                      >
+                        Reset All
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 1. Date Filter */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                      <Calendar size={13} color="#7c3aed" />
+                      <span>Date Range</span>
+                    </label>
+                    <select
+                      value={dateFilter}
+                      onChange={(e) => {
+                        setDateFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '35px',
+                        padding: '0 0.65rem',
+                        borderRadius: '8px',
+                        border: dateFilter !== 'all' ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                        background: dateFilter !== 'all' ? '#faf5ff' : '#f8fafc',
+                        color: dateFilter !== 'all' ? '#6d28d9' : '#0f172a',
+                        fontSize: '0.78rem',
+                        fontWeight: dateFilter !== 'all' ? 700 : 500,
+                        outline: 'none',
+                        cursor: 'pointer',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {DATE_FILTER_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 2. Price Filter */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                      <IndianRupee size={13} color="#7c3aed" />
+                      <span>Order Value / Price</span>
+                    </label>
+                    <select
+                      value={priceFilter}
+                      onChange={(e) => {
+                        setPriceFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '35px',
+                        padding: '0 0.65rem',
+                        borderRadius: '8px',
+                        border: priceFilter !== 'all' ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                        background: priceFilter !== 'all' ? '#faf5ff' : '#f8fafc',
+                        color: priceFilter !== 'all' ? '#6d28d9' : '#0f172a',
+                        fontSize: '0.78rem',
+                        fontWeight: priceFilter !== 'all' ? 700 : 500,
+                        outline: 'none',
+                        cursor: 'pointer',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {PRICE_FILTER_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 3. Quantity Filter */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                      <Package size={13} color="#7c3aed" />
+                      <span>Item Quantity</span>
+                    </label>
+                    <select
+                      value={quantityFilter}
+                      onChange={(e) => {
+                        setQuantityFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '35px',
+                        padding: '0 0.65rem',
+                        borderRadius: '8px',
+                        border: quantityFilter !== 'all' ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                        background: quantityFilter !== 'all' ? '#faf5ff' : '#f8fafc',
+                        color: quantityFilter !== 'all' ? '#6d28d9' : '#0f172a',
+                        fontSize: '0.78rem',
+                        fontWeight: quantityFilter !== 'all' ? 700 : 500,
+                        outline: 'none',
+                        cursor: 'pointer',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {QUANTITY_FILTER_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Popover Footer Action */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setFilterPopoverOpen(false)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.8rem',
+                        borderRadius: '8px',
+                        background: '#7c3aed',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        boxShadow: '0 2px 6px rgba(124, 58, 237, 0.2)',
+                      }}
+                    >
+                      Apply & Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Reset Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                style={{
+                  height: '36px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0 0.75rem',
+                  borderRadius: '8px',
+                  border: '1px solid #fca5a5',
+                  background: '#fef2f2',
+                  color: '#dc2626',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxSizing: 'border-box',
+                }}
+                title="Reset all filters to default"
+              >
+                <RotateCcw size={12} />
+                <span>Reset ({activeFiltersCount})</span>
+              </button>
+            )}
+          </div>
+
+          {/* Right: Sort By */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                height: '36px',
+                padding: '0 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                background: '#ffffff',
+                color: '#0f172a',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+              }}
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. ORDERS TABLE WITH PERFECT ALIGNMENTS (8 COLUMNS) ──────────────────────── */}
       <div
         className="table-container"
         style={{
@@ -692,43 +1064,22 @@ export default function AdminOrders() {
         <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              {/* Checkbox Column Header */}
-              <th style={{ width: '46px', padding: '0.85rem 0.6rem 0.85rem 1rem', textAlign: 'center' }}>
-                <div
-                  onClick={handleToggleSelectAll}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '5px',
-                    border: isAllPageSelected || isSomePageSelected ? '2px solid #7c3aed' : '2px solid #cbd5e1',
-                    background: isAllPageSelected || isSomePageSelected ? '#7c3aed' : '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    margin: '0 auto',
-                    transition: 'all 0.15s ease',
-                  }}
-                  title={isAllPageSelected ? 'Deselect all on this page' : 'Select all on this page'}
-                >
-                  {isAllPageSelected && <Check size={12} color="#ffffff" strokeWidth={3} />}
-                  {isSomePageSelected && <Minus size={12} color="#ffffff" strokeWidth={3} />}
-                </div>
-              </th>
-              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID</th>
-              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Customer</th>
-              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Items</th>
-              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Paid</th>
-              <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
-              <th style={{ padding: '0.85rem 1.5rem 0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manage Action</th>
+              <th style={{ padding: '0.9rem 0.6rem 0.9rem 1.25rem', textAlign: 'center', width: '50px', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>S.No</th>
+              <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID</th>
+              <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Customer</th>
+              <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Shipping Address</th>
+              <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Items</th>
+              <th style={{ padding: '0.9rem 1rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Paid</th>
+              <th style={{ padding: '0.9rem 1rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+              <th style={{ padding: '0.9rem 1.25rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manage Action</th>
             </tr>
           </thead>
           <tbody>
             {paginatedOrders.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
                   <ShoppingBag size={42} style={{ opacity: 0.3, marginBottom: '0.75rem', display: 'block', margin: '0 auto 0.75rem' }} />
-                  No orders found matching your search.
+                  No orders found matching your search or filters.
                 </td>
               </tr>
             ) : (
@@ -740,7 +1091,6 @@ export default function AdminOrders() {
                 const cfg       = STATUS_CFG[st] || STATUS_CFG.confirmed;
                 const StatusIcon = cfg.icon;
                 const isOpen    = expandedId === order._id;
-                const isSelected = selectedOrders.includes(order._id);
 
                 // Auto-advance to next logical status (so admin doesn't need to manually change)
                 const STATUS_FLOW = ['confirmed', 'packing', 'shipped', 'delivered'];
@@ -755,45 +1105,24 @@ export default function AdminOrders() {
 
                 return (
                   <React.Fragment key={order._id}>
-                    {/* ── Main Table Row (Neat Spacing & Elegant Typography) ─────────────────────── */}
+                    {/* ── Main Table Row (Neat Spacing & Clean SaaS Colors) ─────────────────────── */}
                     <tr
                       style={{
                         cursor: 'pointer',
-                        background: isOpen ? '#faf5ff' : isSelected ? '#f5f0ff' : index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                        background: isOpen ? '#faf5ff' : index % 2 === 0 ? '#ffffff' : '#faf7ff',
                         borderBottom: isOpen ? 'none' : '1px solid #f1f5f9',
-                        borderLeft: isOpen ? '3px solid #7c3aed' : isSelected ? '3px solid #8b5cf6' : '3px solid transparent',
+                        borderLeft: isOpen ? '3px solid #7c3aed' : '3px solid transparent',
                         transition: 'background 0.15s ease',
                       }}
                       onClick={() => toggleRow(order._id)}
                     >
-                      {/* Individual Checkbox */}
-                      <td
-                        style={{ padding: '1rem 0.6rem 1rem 1rem', textAlign: 'center', width: '46px' }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div
-                          onClick={(e) => handleToggleSelectRow(order._id, e)}
-                          style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '5px',
-                            border: isSelected ? '2px solid #7c3aed' : '2px solid #cbd5e1',
-                            background: isSelected ? '#7c3aed' : '#ffffff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            margin: '0 auto',
-                            transition: 'all 0.15s ease',
-                            boxShadow: isSelected ? '0 2px 6px rgba(124,58,237,0.25)' : 'none',
-                          }}
-                        >
-                          {isSelected && <Check size={12} color="#ffffff" strokeWidth={3} />}
-                        </div>
+                      {/* S.No */}
+                      <td style={{ padding: '1rem 0.6rem 1rem 1.25rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>
+                        {startIndex + index + 1}
                       </td>
 
                       {/* Order ID & Date */}
-                      <td style={{ padding: '1rem 0.85rem', textAlign: 'left' }}>
+                      <td style={{ padding: '1rem 1rem', textAlign: 'left' }}>
                         <strong style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, letterSpacing: '0.01em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           #{order.orderNumber}
                         </strong>
@@ -804,7 +1133,7 @@ export default function AdminOrders() {
                       </td>
 
                       {/* Customer */}
-                      <td style={{ padding: '1rem 0.85rem', textAlign: 'left' }}>
+                      <td style={{ padding: '1rem 1rem', textAlign: 'left' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                           <div
                             className="admin-customer-avatar"
@@ -852,8 +1181,34 @@ export default function AdminOrders() {
                         </div>
                       </td>
 
+                      {/* Shipping Address */}
+                      <td style={{ padding: '1rem 1rem', textAlign: 'left', maxWidth: '230px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem' }}>
+                          <MapPin size={13} color="#7c3aed" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <div
+                              style={{
+                                fontSize: '0.82rem',
+                                color: '#1e293b',
+                                fontWeight: 500,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '200px',
+                              }}
+                              title={order.shippingAddress?.street || 'Standard Address'}
+                            >
+                              {order.shippingAddress?.street || 'Standard Address'}
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '0.15rem' }}>
+                              {order.shippingAddress?.city || 'Chennai'}, {order.shippingAddress?.state || 'TN'} — {order.shippingAddress?.pincode || '600001'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
                       {/* Items count */}
-                      <td style={{ padding: '1rem 0.85rem', textAlign: 'left' }}>
+                      <td style={{ padding: '1rem 1rem', textAlign: 'left' }}>
                         <span style={{ fontWeight: 500, color: '#475569', fontSize: '0.83rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                           <ShoppingBag size={13} color="#7c3aed" />
                           {order.items?.length || order.itemsCount || 1} item{(order.items?.length || 1) !== 1 ? 's' : ''}
@@ -861,14 +1216,14 @@ export default function AdminOrders() {
                       </td>
 
                       {/* Total Paid (Right-aligned to match header) */}
-                      <td style={{ padding: '1rem 0.85rem', textAlign: 'right' }}>
+                      <td style={{ padding: '1rem 1rem', textAlign: 'right' }}>
                         <strong style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: 700 }}>
                           {formatPrice(order.totalAmount || order.total || order.grandTotal || 0)}
                         </strong>
                       </td>
 
                       {/* Status Pill (Center-aligned with refined SaaS colors) */}
-                      <td style={{ padding: '1rem 0.85rem', textAlign: 'center' }}>
+                      <td style={{ padding: '1rem 1rem', textAlign: 'center' }}>
                         <span
                           className={`adm-status-pill ${cfg.cls}`}
                           style={{
@@ -887,45 +1242,48 @@ export default function AdminOrders() {
                         </span>
                       </td>
 
-                      {/* Action Button — vibrant purple by default, muted when open */}
-                      <td style={{ padding: '1rem 1.5rem 1rem 0.85rem', textAlign: 'right' }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleRow(order._id);
-                          }}
-                          style={{
-                            minWidth: '138px',
-                            height: '34px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.4rem',
-                            padding: '0.4rem 1rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.79rem',
-                            fontWeight: 600,
-                            border: isOpen ? '1px solid #ddd6fe' : '1.5px solid #7c3aed',
-                            cursor: 'pointer',
-                            transition: 'all 0.22s ease',
-                            background: isOpen
-                              ? 'rgba(124,58,237,0.07)'
-                              : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                            color: isOpen ? '#7c3aed' : '#ffffff',
-                            boxShadow: isOpen ? 'none' : '0 3px 12px rgba(124,58,237,0.28)',
-                            boxSizing: 'border-box',
-                          }}
-                        >
-                          {isOpen ? <ChevronUp size={13} /> : <ChevronsUpDown size={13} />}
-                          {isOpen ? 'Close Panel' : 'Manage Order'}
-                        </button>
+                      {/* Action Cell: Manage Accordion Toggle */}
+                      <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          {/* Manage Order Accordion Toggle Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRow(order._id);
+                            }}
+                            style={{
+                              minWidth: '130px',
+                              height: '34px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.4rem',
+                              padding: '0.4rem 0.95rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.79rem',
+                              fontWeight: 600,
+                              border: isOpen ? '1px solid #ddd6fe' : '1.5px solid #7c3aed',
+                              cursor: 'pointer',
+                              transition: 'all 0.22s ease',
+                              background: isOpen
+                                ? 'rgba(124,58,237,0.07)'
+                                : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                              color: isOpen ? '#7c3aed' : '#ffffff',
+                              boxShadow: isOpen ? 'none' : '0 3px 12px rgba(124,58,237,0.28)',
+                              boxSizing: 'border-box',
+                            }}
+                          >
+                            {isOpen ? <ChevronUp size={13} /> : <ChevronsUpDown size={13} />}
+                            {isOpen ? 'Close Panel' : 'Manage Order'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
 
-                    {/* ── 5. EXPANDED DETAIL VIEW WITH EQUAL HEIGHT SECTIONS ──── */}
+                    {/* ── 4. EXPANDED DETAIL VIEW WITH EQUAL HEIGHT SECTIONS ──── */}
                     {isOpen && (
                       <tr style={{ background: '#faf5ff' }}>
-                        <td colSpan={7} style={{ padding: 0, borderBottom: '1px solid #e2e8f0' }}>
+                        <td colSpan={8} style={{ padding: 0, borderBottom: '1px solid #e2e8f0' }}>
                           <div
                             style={{
                               padding: '1.5rem 1.75rem',
@@ -1405,12 +1763,7 @@ export default function AdminOrders() {
                                     <div style={{ padding: '0.9rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
                                       <div style={{ fontSize: '0.67rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.7rem' }}>Order Progress</div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                                        {[
-                                          { key: 'confirmed', label: 'Confirmed', icon: Clock,      color: '#b45309', bg: '#fffbeb' },
-                                          { key: 'packing',   label: 'Packing',   icon: Package,    color: '#7c3aed', bg: '#f3e8ff' },
-                                          { key: 'shipped',   label: 'Shipping',  icon: Truck,      color: '#1d4ed8', bg: '#eff6ff' },
-                                          { key: 'delivered', label: 'Delivered', icon: BadgeCheck, color: '#15803d', bg: '#f0fdf4' },
-                                        ].map((step, i, arr) => {
+                                        {ORDER_PROGRESS_STEPS.map((step, i, arr) => {
                                           const stepOrder = ['confirmed', 'packing', 'shipped', 'delivered'];
                                           const currentIdx = stepOrder.indexOf(order.status);
                                           const stepIdx = stepOrder.indexOf(step.key);
@@ -1447,13 +1800,49 @@ export default function AdminOrders() {
                                     </div>
                                   </div>
 
-                                  {/* Update CTA Button anchored to bottom */}
-                                  <div style={{ paddingTop: '0.85rem', marginTop: 'auto' }}>
+                                  {/* Update CTA & Print Slip Action Buttons */}
+                                  <div style={{ paddingTop: '0.85rem', marginTop: 'auto', display: 'flex', gap: '0.65rem' }}>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handlePrintOrderSlip(order, e)}
+                                      style={{
+                                        height: '42px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.4rem',
+                                        padding: '0.65rem 1rem',
+                                        borderRadius: '10px',
+                                        border: '1.5px solid #e2e8f0',
+                                        fontWeight: 600,
+                                        fontSize: '0.82rem',
+                                        cursor: 'pointer',
+                                        background: '#ffffff',
+                                        color: '#475569',
+                                        transition: 'all 0.2s ease',
+                                        flexShrink: 0,
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = '#7c3aed';
+                                        e.currentTarget.style.color = '#7c3aed';
+                                        e.currentTarget.style.background = '#faf5ff';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = '#e2e8f0';
+                                        e.currentTarget.style.color = '#475569';
+                                        e.currentTarget.style.background = '#ffffff';
+                                      }}
+                                      title="Print or Export Order Dispatch Slip"
+                                    >
+                                      <Printer size={15} />
+                                      Print Slip
+                                    </button>
+
                                     <button
                                       onClick={() => handleStatusUpdate(order)}
                                       disabled={isUpdating || currentRowStatus === order.status}
                                       style={{
-                                        width: '100%',
+                                        flex: 1,
                                         height: '42px',
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -1496,28 +1885,18 @@ export default function AdminOrders() {
           </tbody>
         </table>
 
-        {/* ── 5. CENTERED SIMPLE PAGINATION & FOOTER ────────────────────────────── */}
+        {/* ── 5. CLEAN CENTERED PAGINATION (Prev 1 2 Next) ────────────────────────── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.9rem 1.5rem',
+            justifyContent: 'center',
+            padding: '1.1rem 1.5rem',
             background: '#ffffff',
             borderTop: '1px solid #f1f5f9',
-            flexWrap: 'wrap',
-            gap: '1rem',
           }}
         >
-          {/* Left: Summary Count */}
-          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500, minWidth: '180px' }}>
-            Showing <strong style={{ color: '#0f172a' }}>{totalOrdersCount === 0 ? 0 : startIndex + 1}</strong> to{' '}
-            <strong style={{ color: '#0f172a' }}>{endIndex}</strong> of{' '}
-            <strong style={{ color: '#0f172a' }}>{totalOrdersCount}</strong> orders
-          </div>
-
-          {/* Center: Simple Centered Pagination Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
@@ -1525,11 +1904,11 @@ export default function AdminOrders() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.25rem',
-                padding: '0.4rem 0.75rem',
+                padding: '0.45rem 0.9rem',
                 borderRadius: '8px',
                 border: '1px solid #e2e8f0',
                 background: '#ffffff',
-                fontSize: '0.79rem',
+                fontSize: '0.81rem',
                 fontWeight: 600,
                 color: safePage <= 1 ? '#cbd5e1' : '#475569',
                 cursor: safePage <= 1 ? 'not-allowed' : 'pointer',
@@ -1555,13 +1934,13 @@ export default function AdminOrders() {
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
                   style={{
-                    width: '32px',
-                    height: '32px',
+                    width: '36px',
+                    height: '36px',
                     borderRadius: '8px',
                     border: isCurrent ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
                     background: isCurrent ? 'linear-gradient(135deg, #7c3aed, #6d28d9)' : '#ffffff',
                     color: isCurrent ? '#ffffff' : '#475569',
-                    fontSize: '0.81rem',
+                    fontSize: '0.83rem',
                     fontWeight: isCurrent ? 700 : 500,
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -1583,11 +1962,11 @@ export default function AdminOrders() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.25rem',
-                padding: '0.4rem 0.75rem',
+                padding: '0.45rem 0.9rem',
                 borderRadius: '8px',
                 border: '1px solid #e2e8f0',
                 background: '#ffffff',
-                fontSize: '0.79rem',
+                fontSize: '0.81rem',
                 fontWeight: 600,
                 color: safePage >= totalPages ? '#cbd5e1' : '#475569',
                 cursor: safePage >= totalPages ? 'not-allowed' : 'pointer',
@@ -1596,33 +1975,6 @@ export default function AdminOrders() {
             >
               Next <ChevronRight size={14} />
             </button>
-          </div>
-
-          {/* Right: Rows per page selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: '180px', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>Per page:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: '0.35rem 0.65rem',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                background: '#ffffff',
-                fontSize: '0.79rem',
-                fontWeight: 600,
-                color: '#0f172a',
-                outline: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
           </div>
         </div>
       </div>

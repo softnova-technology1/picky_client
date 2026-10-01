@@ -272,17 +272,7 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Discount & Coupons</span>}
           </NavLink>
 
-          {/* 9. Reports */}
-          <NavLink
-            to={`${ADMIN}/reports`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Reports"
-          >
-            <div className="admin-nav-icon-wrap">
-              <BarChart3 size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Reports</span>}
-          </NavLink>
+
 
           {/* 10. Customization */}
           <NavLink
@@ -734,18 +724,7 @@ export default function AdminLayout({ children, title }) {
                     </div>
                   </Link>
 
-                  <Link
-                    to={`${ADMIN}/reports`}
-                    className="admin-dropdown-item"
-                    onClick={() => setUserMenuOpen(false)}
-                  >
-                    <div className="admin-dropdown-item-icon">
-                      <BarChart3 size={15} />
-                    </div>
-                    <div className="admin-dropdown-item-text">
-                      <span>Store Analytics & Reports</span>
-                    </div>
-                  </Link>
+
 
                   <div className="admin-dropdown-divider" />
 

@@ -1,20 +1,61 @@
 // ─── Picky Centralized Store Customization Mock Data ────────────────────────
-// Structured configuration for Admin Store Customization panel.
+// Structured multi-page configuration for Admin Store Customization panel.
 
-export const MOCK_STORE_CUSTOMIZATION = {
-  // Global site identity
-  storeInfo: {
-    name: 'Picky Store',
-    tagline: 'Curated South Indian Heritage & Modern Lifestyle Essentials',
-    primaryColor: '#7025fb',
-    secondaryColor: '#5b13df',
-    supportPhone: '+91 98401 23456',
-    supportEmail: 'support@pickystore.in',
-    whatsappNumber: '+91 98401 23456',
+export const MOCK_CUSTOMIZATION_PAGES = [
+  {
+    id: 'global_header',
+    name: 'Header & Sticky Bar',
+    group: 'GLOBAL',
+    icon: 'PanelTop',
+    description: 'Storefront announcement bar, sticky header navigation, and quick action bar.',
   },
+  {
+    id: 'home',
+    name: 'Home Page',
+    group: 'STOREFRONT',
+    icon: 'Home',
+    description: 'Landing billboard hero banner, category showcase, product grids, and trust badges.',
+  },
+  {
+    id: 'shop',
+    name: 'Shop & Categories',
+    group: 'STOREFRONT',
+    icon: 'ShoppingBag',
+    description: 'Catalog listing layout, filter sidebar, sorting defaults, and product card styling.',
+  },
+  {
+    id: 'pdp',
+    name: 'Product Details (PDP)',
+    group: 'STOREFRONT',
+    icon: 'Package',
+    description: 'Image gallery layout, delivery estimators, stock warning pills, and trust guarantee.',
+  },
+  {
+    id: 'cart',
+    name: 'Cart & Checkout',
+    group: 'STOREFRONT',
+    icon: 'ShoppingCart',
+    description: 'Free shipping progress bar, promo coupon strips, trust badges, and cart upsells.',
+  },
+  {
+    id: 'global_footer',
+    name: 'Storefront Footer',
+    group: 'GLOBAL',
+    icon: 'Footprints',
+    description: 'Brand blurb, newsletter subscription, WhatsApp/social links, and copyright text.',
+  },
+  {
+    id: 'content_pages',
+    name: 'Content & Policies',
+    group: 'PAGES',
+    icon: 'FileText',
+    description: 'About us artisan story, contact & WhatsApp support hotline, and store policies.',
+  },
+];
 
-  // Homepage Ordered Sections
-  sections: [
+export const MOCK_PAGE_SECTIONS = {
+  // ── 1. GLOBAL HEADER ─────────────────────────────────────────────────────────
+  global_header: [
     {
       id: 'announcement_bar',
       key: 'announcement_bar',
@@ -33,11 +74,46 @@ export const MOCK_STORE_CUSTOMIZATION = {
       },
     },
     {
+      id: 'main_header_nav',
+      key: 'main_header_nav',
+      name: 'Navigation & Search Header',
+      enabled: true,
+      order: 2,
+      type: 'header_nav',
+      description: 'Main logo placement, search bar search suggestions, and primary menu navigation.',
+      settings: {
+        logoText: 'PICKY',
+        searchPlaceholder: 'Search handloom sarees, brass vilakku, native snacks...',
+        isSticky: true,
+        showAccountLink: true,
+        showWishlistLink: true,
+      },
+    },
+    {
+      id: 'sticky_action_bar',
+      key: 'sticky_action_bar',
+      name: 'Sticky Quick Bar',
+      enabled: true,
+      order: 3,
+      type: 'sticky_bar',
+      description: 'Floating bottom mobile navigation bar for quick cart and catalog access.',
+      settings: {
+        showMobileBottomNav: true,
+        enableDirectWhatsAppChat: true,
+        whatsappNumber: '+91 98401 23456',
+        supportCallout: 'Need help ordering? WhatsApp Us',
+      },
+    },
+  ],
+
+  // ── 2. HOMEPAGE ─────────────────────────────────────────────────────────────
+  home: [
+    {
       id: 'hero_banner',
       key: 'hero_banner',
       name: 'Hero Banner',
       enabled: true,
-      order: 2,
+      order: 1,
       type: 'hero',
       description: 'Main landing hero billboard with headline, CTA buttons, and background imagery.',
       settings: {
@@ -50,6 +126,24 @@ export const MOCK_STORE_CUSTOMIZATION = {
         badge: '✨ DIWALI & FESTIVE CURATION',
         imageUrl: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1600&auto=format&fit=crop&q=80',
         overlayOpacity: 40,
+      },
+    },
+    {
+      id: 'flash_deals',
+      key: 'flash_deals',
+      name: 'Flash Deals & Timer',
+      enabled: true,
+      order: 2,
+      type: 'flash_deals',
+      description: 'Limited-time deal billboard with live countdown timer and spotlight discount card.',
+      settings: {
+        headline: 'Flash Deals of the Day',
+        badgeText: 'LIMITED QUANTITY',
+        timerDurationHours: 12,
+        spotlightTag: 'DEAL OF THE DAY • 32% OFF',
+        spotlightTitle: 'Madurai Traditional Sungudi Saree',
+        discountPercent: 32,
+        savingsText: 'Save ₹600 on today’s drop',
       },
     },
     {
@@ -73,7 +167,7 @@ export const MOCK_STORE_CUSTOMIZATION = {
       key: 'new_arrivals',
       name: 'New Arrivals',
       enabled: true,
-      order: 4,
+      order: 3,
       type: 'product_carousel',
       description: 'Showcases newly added seasonal catalog arrivals with instant add-to-cart.',
       settings: {
@@ -89,7 +183,7 @@ export const MOCK_STORE_CUSTOMIZATION = {
       key: 'best_sellers',
       name: 'Best Sellers',
       enabled: true,
-      order: 5,
+      order: 4,
       type: 'product_grid',
       description: 'Highlights highest converting and customer-favorite items.',
       settings: {
@@ -105,7 +199,7 @@ export const MOCK_STORE_CUSTOMIZATION = {
       key: 'special_offers',
       name: 'Special Offers & Combos',
       enabled: true,
-      order: 6,
+      order: 5,
       type: 'promotional_card',
       description: 'Eye-catching promotional banner with discount voucher code.',
       settings: {
@@ -122,7 +216,7 @@ export const MOCK_STORE_CUSTOMIZATION = {
       key: 'featured_products',
       name: 'Featured Products',
       enabled: true,
-      order: 7,
+      order: 6,
       type: 'product_grid',
       description: 'Hand-selected editorial picks promoted by the Picky styling team.',
       settings: {
@@ -137,7 +231,7 @@ export const MOCK_STORE_CUSTOMIZATION = {
       key: 'why_picky',
       name: 'Why Picky (Trust Badges)',
       enabled: true,
-      order: 8,
+      order: 7,
       type: 'trust_grid',
       description: 'Four-column value propositions building consumer confidence.',
       settings: {
@@ -167,12 +261,205 @@ export const MOCK_STORE_CUSTOMIZATION = {
         ],
       },
     },
+  ],
+
+  // ── 3. SHOP & CATEGORIES ───────────────────────────────────────────────────
+  shop: [
+    {
+      id: 'catalog_header_banner',
+      key: 'catalog_header_banner',
+      name: 'Catalog Banner & Breadcrumbs',
+      enabled: true,
+      order: 1,
+      type: 'shop_banner',
+      description: 'Top cover billboard displayed above catalog product listings.',
+      settings: {
+        headline: 'Explore All Heritage & Modern Collections',
+        subtitle: 'Filter across 1,000+ handpicked products across Tamil Nadu',
+        showBreadcrumbs: true,
+        bannerBgColor: '#f5f3ff',
+      },
+    },
+    {
+      id: 'shop_filters_sort',
+      key: 'shop_filters_sort',
+      name: 'Filter Sidebar & Sorting Bar',
+      enabled: true,
+      order: 2,
+      type: 'filter_settings',
+      description: 'Control sidebar filter facets and default sort options.',
+      settings: {
+        enablePriceSlider: true,
+        enableDepartmentFilter: true,
+        enableStockFilter: true,
+        defaultSort: 'featured',
+        desktopGridColumns: 4,
+      },
+    },
+    {
+      id: 'product_card_appearance',
+      key: 'product_card_appearance',
+      name: 'Product Card Appearance',
+      enabled: true,
+      order: 3,
+      type: 'product_card',
+      description: 'Configure interactive badges, quick view button, and discount pill styling.',
+      settings: {
+        showWishlistHeart: true,
+        showQuickAddToCart: true,
+        showDiscountPercentage: true,
+        enableImageHoverZoom: true,
+        badgeStyle: 'filled',
+      },
+    },
+    {
+      id: 'subcategory_pills_bar',
+      key: 'subcategory_pills_bar',
+      name: 'Sub-Category Quick Pills',
+      enabled: true,
+      order: 4,
+      type: 'subcat_pills',
+      description: 'Horizontal pill strip displaying subcategories for instant filtering.',
+      settings: {
+        showSubcategoryIcons: true,
+        showProductCountInPill: true,
+        pillLayout: 'scrollable',
+      },
+    },
+  ],
+
+  // ── 4. PRODUCT DETAILS (PDP) ────────────────────────────────────────────────
+  pdp: [
+    {
+      id: 'pdp_gallery_settings',
+      key: 'pdp_gallery_settings',
+      name: 'Image Gallery & Zoom',
+      enabled: true,
+      order: 1,
+      type: 'pdp_gallery',
+      description: 'Configure product imagery display format and hover zoom magnifier.',
+      settings: {
+        thumbnailPosition: 'left',
+        enableMagnifierZoom: true,
+        aspectRatio: '1:1',
+        showImageBadge: true,
+      },
+    },
+    {
+      id: 'pdp_stock_delivery_pill',
+      key: 'pdp_stock_delivery_pill',
+      name: 'Stock & Delivery Estimator',
+      enabled: true,
+      order: 2,
+      type: 'pdp_delivery',
+      description: 'Pincode delivery checker, dispatch timeframe, and low-stock urgency pills.',
+      settings: {
+        showPincodeChecker: true,
+        lowStockThreshold: 5,
+        estimatedDeliveryText: '⚡ Usually delivered in 2 - 4 business days across Tamil Nadu',
+        freeDeliveryCallout: 'Free delivery on prepaid orders above ₹999',
+      },
+    },
+    {
+      id: 'pdp_trust_guarantee',
+      key: 'pdp_trust_guarantee',
+      name: 'Trust & Artisan Guarantee',
+      enabled: true,
+      order: 3,
+      type: 'pdp_trust',
+      description: 'Artisan authenticity guarantee and safe return policy accordion.',
+      settings: {
+        returnPolicyDays: 7,
+        returnPolicyBlurb: 'Hassle-free 7-day replacement for defective or damaged items.',
+        authenticityBlurb: '100% genuine handcrafted quality verified before dispatch.',
+        cashOnDeliveryAvailable: true,
+      },
+    },
+    {
+      id: 'pdp_related_products',
+      key: 'pdp_related_products',
+      name: 'Related & Recommended Items',
+      enabled: true,
+      order: 4,
+      type: 'pdp_related',
+      description: 'Curated products displayed at the bottom of the product page.',
+      settings: {
+        sectionTitle: 'You May Also Love',
+        displayLimit: 4,
+        matchType: 'same_subcategory',
+      },
+    },
+  ],
+
+  // ── 5. CART & CHECKOUT ──────────────────────────────────────────────────────
+  cart: [
+    {
+      id: 'free_shipping_goal_bar',
+      key: 'free_shipping_goal_bar',
+      name: 'Free Shipping Goal Bar',
+      enabled: true,
+      order: 1,
+      type: 'shipping_progress',
+      description: 'Dynamic progress bar motivating customers to unlock free shipping.',
+      settings: {
+        thresholdAmount: 999,
+        progressText: 'Add ₹{remaining} more to unlock FREE Shipping! 🚚',
+        completedText: '🎉 Congratulations! You have unlocked Free Shipping!',
+      },
+    },
+    {
+      id: 'cart_coupon_strip',
+      key: 'cart_coupon_strip',
+      name: 'Promo Coupon Strip & Drawer',
+      enabled: true,
+      order: 2,
+      type: 'coupon_strip',
+      description: 'One-click apply coupon pill strip inside cart drawer.',
+      settings: {
+        enableInstantApply: true,
+        featuredCouponCode: 'PICKY15',
+        couponHighlightText: 'Use code PICKY15 for flat 15% instant discount!',
+      },
+    },
+    {
+      id: 'cart_trust_security',
+      key: 'cart_trust_security',
+      name: 'Checkout Trust & Security Badges',
+      enabled: true,
+      order: 3,
+      type: 'cart_trust',
+      description: 'Security locks, 256-bit SSL encryption, and UPI payment trust badges.',
+      settings: {
+        trustTitle: '100% Safe & Secure Checkout',
+        subtitle: 'Processed via encrypted Razorpay & PhonePe gateways',
+        showUpiBadges: true,
+        showCodBadge: true,
+      },
+    },
+    {
+      id: 'cart_upsell_carousel',
+      key: 'cart_upsell_carousel',
+      name: 'Cart Upsell & Add-ons',
+      enabled: true,
+      order: 4,
+      type: 'cart_upsell',
+      description: 'Quick one-click add-on items displayed before checkout button.',
+      settings: {
+        title: 'Frequently Added Together',
+        maxItems: 3,
+        itemTag: 'bestseller',
+      },
+    },
+  ],
+
+  // ── 6. STOREFRONT FOOTER ───────────────────────────────────────────────────
+  global_footer: [
     {
       id: 'footer_config',
       key: 'footer_config',
-      name: 'Storefront Footer',
+      name: 'Storefront Footer & Newsletter',
       enabled: true,
-      order: 9,
+      order: 1,
       type: 'footer',
       description: 'Bottom navigation links, social handles, newsletter and legal copyright.',
       settings: {
@@ -185,5 +472,75 @@ export const MOCK_STORE_CUSTOMIZATION = {
         supportEmail: 'care@pickystore.in',
       },
     },
+  ],
+
+  // ── 7. CONTENT & POLICY PAGES ───────────────────────────────────────────────
+  content_pages: [
+    {
+      id: 'about_us_content',
+      key: 'about_us_content',
+      name: 'About Us Artisan Story',
+      enabled: true,
+      order: 1,
+      type: 'about_page',
+      description: 'Brand origin story, artisan partnerships, and mission statement.',
+      settings: {
+        storyTitle: 'Crafted with Passion in South India',
+        storyBody: 'At Picky, we celebrate traditional weavers, brass sculptors, and native artisans, bringing authentic regional crafts directly to contemporary homes across India.',
+        artisanCount: '500+ Weavers & Guilds',
+        districtsCovered: '14 Tamil Nadu Districts',
+      },
+    },
+    {
+      id: 'contact_support_content',
+      key: 'contact_support_content',
+      name: 'Contact Us & Help Center',
+      enabled: true,
+      order: 2,
+      type: 'contact_page',
+      description: 'Customer hotline, WhatsApp support hours, and headquarters address.',
+      settings: {
+        supportPhone: '+91 98401 23456',
+        supportEmail: 'support@pickystore.in',
+        workingHours: 'Mon - Sat: 9:30 AM to 7:00 PM IST',
+        officeAddress: '128, West Masi Street, Madurai, Tamil Nadu 625001',
+      },
+    },
+    {
+      id: 'policies_terms_content',
+      key: 'policies_terms_content',
+      name: 'Privacy Policy & Terms',
+      enabled: true,
+      order: 3,
+      type: 'policy_page',
+      description: 'Legal disclaimers, data privacy compliance, and shipping policy overview.',
+      settings: {
+        policyUpdateDate: 'Updated October 2026',
+        shippingTimeline: 'Dispatch within 24-48 hours. Delivery in 2-4 business days.',
+        returnWindowDays: 7,
+      },
+    },
+  ],
+};
+
+// Flattened initial array for backwards compatibility
+export const MOCK_STORE_CUSTOMIZATION = {
+  storeInfo: {
+    name: 'Picky Store',
+    tagline: 'Curated South Indian Heritage & Modern Lifestyle Essentials',
+    primaryColor: '#7025fb',
+    secondaryColor: '#5b13df',
+    supportPhone: '+91 98401 23456',
+    supportEmail: 'support@pickystore.in',
+    whatsappNumber: '+91 98401 23456',
+  },
+  sections: [
+    ...MOCK_PAGE_SECTIONS.global_header,
+    ...MOCK_PAGE_SECTIONS.home,
+    ...MOCK_PAGE_SECTIONS.shop,
+    ...MOCK_PAGE_SECTIONS.pdp,
+    ...MOCK_PAGE_SECTIONS.cart,
+    ...MOCK_PAGE_SECTIONS.global_footer,
+    ...MOCK_PAGE_SECTIONS.content_pages,
   ],
 };

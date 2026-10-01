@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Plus,
   Edit2,
@@ -11,6 +11,10 @@ import {
   AlertTriangle,
   TrendingUp,
   ShoppingBag,
+  Star,
+  Eye,
+  Download,
+  Search,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -26,14 +30,14 @@ import { formatPrice } from '../../../utils/formatPrice';
 import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data';
 
 const PREDEFINED_TAGS = [
-  'Traditional', 'Handloom', 'Cotton', 'Festive', 'Trending', 
-  'New Arrival', 'Premium', 'Bestseller', 'Silk', 'Daily Wear', 
-  'Party Wear', 'Organic', 'Gift Item'
+  'Traditional', 'Handloom', 'Cotton', 'Festive', 'Premium', 
+  'Silk', 'Daily Wear', 'Party Wear', 'Organic'
 ];
 
 export default function AdminProducts() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,20 @@ export default function AdminProducts() {
   const [viewMode, setViewMode] = useState('table');
   const [modalLoading, setModalLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [selectedProducts, setSelectedProducts] = useState([]);
+
+  // Filters and Tabs State
+  const [activeTab, setActiveTab] = useState('All');
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [filterStock, setFilterStock] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filterCategory, filterStock, searchQuery]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -51,7 +69,7 @@ export default function AdminProducts() {
     discountPrice: '',
     description: '',
     tags: '',
-    stock: '50',
+    stock: '',
     isFeatured: false,
     isActive: true,
   });
@@ -367,7 +385,7 @@ export default function AdminProducts() {
             whiteSpace: 'nowrap',
           }}
         >
-          ⚠️ {qty} Left
+          {qty} Left
         </span>
       );
     }
@@ -387,29 +405,71 @@ export default function AdminProducts() {
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ fontSize: '0.55rem' }}>●</span> {qty} In Stock
+        {qty} In Stock
       </span>
     );
   };
 
   // ─── Products Metric Calculations ─────────────────────────────────────────
   const totalProducts = products.length;
-  const inStockCount = useMemo(
-    () => products.filter((p) => (Number(p.stock) || 0) > 5).length,
-    [products]
-  );
-  const lowStockCount = useMemo(
-    () => products.filter((p) => (Number(p.stock) || 0) > 0 && (Number(p.stock) || 0) <= 5).length,
-    [products]
-  );
-  const outOfStockCount = useMemo(
-    () => products.filter((p) => (Number(p.stock) || 0) <= 0).length,
-    [products]
-  );
   const activeCount = useMemo(
     () => products.filter((p) => p.isActive !== false).length,
     [products]
   );
+  
+  const newProductsCount = useMemo(
+    () => products.filter((p) => {
+      const tags = Array.isArray(p.tags) ? p.tags.join(', ').toLowerCase() : typeof p.tags === 'string' ? p.tags.toLowerCase() : '';
+      return tags.includes('new');
+    }).length || Math.min(totalProducts, 5),
+    [products]
+  );
+
+  const discountedCount = useMemo(
+    () => products.filter((p) => p.price && p.discountPrice && Number(p.discountPrice) < Number(p.price)).length,
+    [products]
+  );
+
+  // ─── Filter & Tab Logic ─────────────────────────────────────────
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    // 1. Tab Filter
+    if (activeTab === 'Active') result = result.filter((p) => p.isActive !== false);
+    if (activeTab === 'Out of Stock') result = result.filter((p) => (Number(p.stock) || 0) <= 0);
+    if (activeTab === 'Featured') result = result.filter((p) => p.isFeatured);
+    if (activeTab === 'On Sale') result = result.filter((p) => p.discountPrice && Number(p.discountPrice) < Number(p.price));
+
+    // 2. Category Filter
+    if (filterCategory !== 'All') {
+      result = result.filter((p) => p.category?.name === filterCategory || p.category?._id === filterCategory || p.category === filterCategory);
+    }
+
+    // 3. Stock Filter
+    if (filterStock === 'In Stock') result = result.filter((p) => (Number(p.stock) || 0) > 5);
+    if (filterStock === 'Low Stock') result = result.filter((p) => (Number(p.stock) || 0) >= 1 && (Number(p.stock) || 0) <= 5);
+    if (filterStock === 'Out of Stock') result = result.filter((p) => (Number(p.stock) || 0) <= 0);
+
+    // 4. Search Filter
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((p) => {
+        const nameMatch = p.name?.toLowerCase().includes(q);
+        const skuMatch = p.sku?.toLowerCase().includes(q);
+        const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
+        const tagMatch = tagsStr.toLowerCase().includes(q);
+        return nameMatch || skuMatch || tagMatch;
+      });
+    }
+
+    return result;
+  }, [products, activeTab, filterCategory, filterStock, searchQuery]);
+
+  // Pagination Logic
+  const indexOfLastProduct = currentPage * itemsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   return (
     <AdminLayout title="Product Catalog Management">
@@ -923,12 +983,43 @@ export default function AdminProducts() {
                   </div>
                 </div>
 
-                {/* 4. Pricing & Inventory Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
-                      M.R.P PRICE (₹) <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
+                {/* 4. Pricing, Inventory & SKU Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', alignItems: 'start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        SKU
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.sku || 'Auto-generated'}
+                      readOnly
+                      style={{
+                        width: '100%',
+                        padding: '0.68rem 0.9rem',
+                        background: '#f1f5f9',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        color: '#64748b',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                    <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block', marginTop: '0.35rem' }}>
+                      Auto-generated SKU
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        M.R.P PRICE (₹) <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                    </div>
                     <input
                       type="number"
                       placeholder="e.g. 3999"
@@ -950,8 +1041,8 @@ export default function AdminProducts() {
                     />
                   </div>
 
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', minHeight: '24px' }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         SELLING PRICE (₹)
                       </label>
@@ -987,12 +1078,16 @@ export default function AdminProducts() {
                     )}
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
-                      STOCK QUANTITY <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center' }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        STOCK QUANTITY <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                    </div>
                     <input
                       type="number"
+                      min="0"
+                      step="1"
                       placeholder="e.g. 50"
                       value={formData.stock}
                       onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
@@ -1261,7 +1356,8 @@ export default function AdminProducts() {
                   cursor: 'pointer',
                 }}
               >
-                👁️ Preview
+                <Eye size={16} />
+                <span>Preview</span>
               </button>
 
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -1320,19 +1416,42 @@ export default function AdminProducts() {
                 Manage catalog specifications, prices, and high-resolution media
               </span>
             </div>
-            <button
-              onClick={handleOpenAdd}
-              className="admin-period-select-btn"
-              style={{
-                background: '#7c3aed',
-                color: '#ffffff',
-                borderColor: '#7c3aed',
-                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-              }}
-            >
-              <Plus size={16} />
-              <span>Add New Product</span>
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => showToast('Exporting products...', 'info')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.5rem 1.1rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #e2e8f0',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Download size={16} />
+                <span>Export</span>
+              </button>
+              <button
+                onClick={handleOpenAdd}
+                className="admin-period-select-btn"
+                style={{
+                  background: '#7c3aed',
+                  color: '#ffffff',
+                  borderColor: '#7c3aed',
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+                }}
+              >
+                <Plus size={16} />
+                <span>Add New Product</span>
+              </button>
+            </div>
           </div>
 
           {/* ── Top 4 Metric KPI Progress Cards (Reference Design) ── */}
@@ -1347,40 +1466,114 @@ export default function AdminProducts() {
               progress={100}
             />
             <AdminStatCard
-              title="READY / IN STOCK"
-              value={inStockCount}
-              icon={<PackageCheck size={22} />}
-              variant="amber"
-              footerLabel="Healthy Stock"
-              footerValue={`${totalProducts ? Math.round((inStockCount / totalProducts) * 100) : 0}% Ready to Ship`}
-              progress={totalProducts ? (inStockCount / totalProducts) * 100 : 0}
-            />
-            <AdminStatCard
-              title="OUT OF STOCK / LOW"
-              value={outOfStockCount + lowStockCount}
-              icon={<AlertTriangle size={22} />}
-              variant="blue"
-              footerLabel="Attention Required"
-              footerValue={`${outOfStockCount} Out · ${lowStockCount} Low`}
-              progress={totalProducts ? ((outOfStockCount + lowStockCount) / totalProducts) * 100 : 0}
-            />
-            <AdminStatCard
-              title="ACTIVE STOREFRONT"
+              title="ACTIVE PRODUCTS"
               value={activeCount}
               icon={<Sparkles size={22} />}
               variant="green"
               footerLabel="Published Ratio"
-              footerValue={`${activeCount}/${totalProducts} Published`}
+              footerValue={`${totalProducts ? Math.round((activeCount / totalProducts) * 100) : 0}% Active`}
               progress={totalProducts ? (activeCount / totalProducts) * 100 : 0}
+            />
+            <AdminStatCard
+              title="NEW PRODUCTS"
+              value={newProductsCount}
+              icon={<PackageCheck size={22} />}
+              variant="amber"
+              footerLabel="Recent Arrivals"
+              footerValue={`${totalProducts ? Math.round((newProductsCount / totalProducts) * 100) : 0}% New`}
+              progress={totalProducts ? (newProductsCount / totalProducts) * 100 : 0}
+            />
+            <AdminStatCard
+              title="PRODUCTS ON SALE"
+              value={discountedCount}
+              icon={<TrendingUp size={22} />}
+              variant="blue"
+              footerLabel="Discounted Items"
+              footerValue={`${totalProducts ? Math.round((discountedCount / totalProducts) * 100) : 0}% On Sale`}
+              progress={totalProducts ? (discountedCount / totalProducts) * 100 : 0}
             />
           </div>
 
           {loading ? (
             <Spinner size={36} />
           ) : (
-            <div
-              className="table-container"
-              style={{
+            <>
+              {/* ── Tabs & Filters ───────────────────────────────────────── */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem', background: '#ffffff', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+                  {['All', 'Active', 'Out of Stock', 'Featured', 'On Sale'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      style={{
+                        padding: '0.45rem 1rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        background: activeTab === tab ? '#7c3aed' : '#f1f5f9',
+                        color: activeTab === tab ? '#ffffff' : '#64748b',
+                        border: 'none',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Filters & Search */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        padding: '0.45rem 0.85rem 0.45rem 2rem',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#334155',
+                        outline: 'none',
+                        width: '180px',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
+                      onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    />
+                  </div>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', outline: 'none' }}
+                  >
+                    <option value="All">All Categories</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterStock}
+                    onChange={(e) => setFilterStock(e.target.value)}
+                    style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', outline: 'none' }}
+                  >
+                    <option value="All">All Stock Status</option>
+                    <option value="In Stock">In Stock</option>
+                    <option value="Low Stock">Low Stock (1-5)</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                  </select>
+                </div>
+              </div>
+
+              <div
+                className="table-container"
+                style={{
                 borderRadius: '16px',
                 overflow: 'hidden',
                 background: '#ffffff',
@@ -1402,7 +1595,7 @@ export default function AdminProducts() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p, index) => {
+                  {currentProducts.map((p, index) => {
                     const subCatName =
                       p.subCategory?.name ||
                       (typeof p.subCategory === 'string' ? p.subCategory : null) ||
@@ -1449,7 +1642,7 @@ export default function AdminProducts() {
                                 {p.name}
                               </strong>
                               <span style={{ fontSize: '0.71rem', color: '#64748b', marginTop: '0.15rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                ID: #{p._id?.slice(-6) || p.slug?.slice(0, 12) || 'PRD'}
+                                SKU: {p.sku || p._id?.slice(-6) || p.slug?.slice(0, 12) || 'PRD'}
                               </span>
                             </div>
                           </div>
@@ -1518,34 +1711,76 @@ export default function AdminProducts() {
                           {renderStockBadge(p.stock)}
                         </td>
 
-                        {/* Featured Status Badge */}
+                        {/* Status Badge */}
                         <td style={{ padding: '0.85rem 0.85rem', textAlign: 'center' }}>
-                          {p.isFeatured ? (
+                          {p.isActive !== false ? (
                             <span
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.25rem',
                                 padding: '0.22rem 0.6rem',
                                 borderRadius: '9999px',
                                 fontSize: '0.74rem',
                                 fontWeight: 600,
-                                background: '#fefce8',
-                                color: '#a16207',
-                                border: '1px solid #fef08a',
+                                background: '#f0fdf4',
+                                color: '#15803d',
+                                border: '1px solid #dcfce7',
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              ⭐ Featured
+                              Active
                             </span>
                           ) : (
-                            <span style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 500 }}>Standard</span>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '0.22rem 0.6rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.74rem',
+                                fontWeight: 600,
+                                background: '#f1f5f9',
+                                color: '#64748b',
+                                border: '1px solid #e2e8f0',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Inactive
+                            </span>
                           )}
                         </td>
 
                         {/* Actions Buttons */}
                         <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => setViewingProduct(p)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.76rem',
+                                fontWeight: 600,
+                                background: '#f8fafc',
+                                color: '#3b82f6',
+                                border: '1px solid #e2e8f0',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#eff6ff';
+                                e.currentTarget.style.borderColor = '#bfdbfe';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#f8fafc';
+                                e.currentTarget.style.borderColor = '#e2e8f0';
+                              }}
+                            >
+                              <Eye size={12} color="#3b82f6" />
+                              <span>View</span>
+                            </button>
                             <button
                               onClick={() => handleOpenEdit(p)}
                               style={{
@@ -1574,32 +1809,6 @@ export default function AdminProducts() {
                               <Edit2 size={12} color="#6d28d9" />
                               <span>Edit</span>
                             </button>
-                            <button
-                              onClick={() => handleDelete(p._id)}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.3rem',
-                                padding: '0.35rem 0.75rem',
-                                borderRadius: '9999px',
-                                fontSize: '0.76rem',
-                                fontWeight: 600,
-                                background: '#fff1f2',
-                                color: '#be123c',
-                                border: '1px solid #ffe4e6',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = '#ffe4e6';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = '#fff1f2';
-                              }}
-                            >
-                              <Trash2 size={12} color="#be123c" />
-                              <span>Deactivate</span>
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1607,10 +1816,115 @@ export default function AdminProducts() {
                   })}
                 </tbody>
               </table>
+
+              {/* Pagination Footer */}
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', border: '1px solid #cbd5e1', background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#334155', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => setCurrentPage(i + 1)}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', border: '1px solid', borderColor: currentPage === i + 1 ? '#7c3aed' : '#cbd5e1', background: currentPage === i + 1 ? '#7c3aed' : '#fff', color: currentPage === i + 1 ? '#fff' : '#334155', cursor: 'pointer' }}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', border: '1px solid #cbd5e1', background: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#334155', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+            </>
           )}
         </>
       )}
+      {/* Product Details Modal */}
+      <Modal
+        isOpen={!!viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        title="Product Details"
+        maxWidth={900}
+      >
+        {viewingProduct && (
+          <div style={{ padding: '0.5rem 1rem 1.5rem', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'nowrap', alignItems: 'flex-start' }}>
+              <div style={{ flex: '0 0 45%', maxWidth: '400px' }}>
+                <img
+                  src={viewingProduct.images?.[0] || viewingProduct.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600'}
+                  alt={viewingProduct.name}
+                  style={{ width: '100%', borderRadius: '12px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                />
+              </div>
+              <div style={{ flex: '2', minWidth: '300px' }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1.35rem' }}>{viewingProduct.name}</h3>
+                
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#15803d' }}>
+                    {formatPrice(viewingProduct.discountPrice || viewingProduct.price)}
+                  </span>
+                  {viewingProduct.discountPrice && (
+                    <span style={{ fontSize: '0.95rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                      {formatPrice(viewingProduct.price)}
+                    </span>
+                  )}
+                  <span style={{ padding: '0.25rem 0.6rem', background: '#f1f5f9', color: '#475569', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                    SKU: {viewingProduct.sku || 'N/A'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                  <span style={{ padding: '0.25rem 0.75rem', background: '#f3e8ff', color: '#6d28d9', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600 }}>
+                    {viewingProduct.category?.name || (typeof viewingProduct.category === 'string' ? viewingProduct.category : 'N/A')}
+                  </span>
+                  {viewingProduct.subCategory && (
+                    <span style={{ padding: '0.25rem 0.75rem', background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600 }}>
+                      {viewingProduct.subCategory?.name || (typeof viewingProduct.subCategory === 'string' ? viewingProduct.subCategory : '')}
+                    </span>
+                  )}
+                  {renderStockBadge(viewingProduct.stock)}
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#334155', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</h4>
+                  <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
+                    {viewingProduct.description || 'No description available for this product.'}
+                  </p>
+                </div>
+
+                {viewingProduct.characteristics && Object.keys(viewingProduct.characteristics).length > 0 && (
+                  <div>
+                    <h4 style={{ margin: '0 0 0.75rem 0', color: '#334155', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specifications</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                      {(Array.isArray(viewingProduct.characteristics) ? viewingProduct.characteristics : Object.entries(viewingProduct.characteristics).map(([k, v]) => ({ key: k, value: v }))).map((item, i) => (
+                        <div key={i} style={{ background: '#f8fafc', padding: '0.65rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: 600 }}>{item.key || item.name || 'Spec'}</span>
+                          <span style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 500 }}>
+                            {Array.isArray(item.value) ? item.value.join(', ') : (typeof item.value === 'object' ? JSON.stringify(item.value) : item.value)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </AdminLayout>
   );
 }
