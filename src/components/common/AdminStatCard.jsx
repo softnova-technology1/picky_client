@@ -78,6 +78,7 @@ export default function AdminStatCard({
   footerLabel,
   footerValue,
   progress = 100,
+  showProgress = true,
   isActive = false,
   onClick,
   style = {},
@@ -88,6 +89,8 @@ export default function AdminStatCard({
   const theme = COLOR_MAP[variant] || COLOR_MAP.purple;
   const clampedProgress = Math.min(100, Math.max(0, Number(progress) || 0));
   const isClickable = typeof onClick === 'function';
+  const hasProgress = showProgress && progress !== false && progress !== null;
+  const hasBottom = Boolean((footerLabel || footerValue !== undefined) || hasProgress);
 
   return (
     <div
@@ -106,8 +109,11 @@ export default function AdminStatCard({
       }
       className={`stat-progress-card variant-${variant} ${isActive ? 'is-active' : ''} ${
         isClickable ? 'is-clickable' : ''
-      } ${className}`}
-      style={style}
+      } ${!hasBottom ? 'no-bottom' : ''} ${className}`}
+      style={{
+        ...style,
+        justifyContent: hasBottom ? 'space-between' : 'center',
+      }}
     >
       <div className="stat-progress-card-top">
         <div>
@@ -136,29 +142,40 @@ export default function AdminStatCard({
         </div>
       </div>
 
-      <div className="stat-progress-card-bottom">
-        {(footerLabel || footerValue !== undefined) && (
-          <div className="stat-progress-card-footer-info">
-            <span>{footerLabel}</span>
-            <span style={{ color: theme.footerVal, fontWeight: 700 }}>
-              {footerValue}
-            </span>
-          </div>
-        )}
+      {hasBottom && (
+        <div className="stat-progress-card-bottom">
+          {(footerLabel || footerValue !== undefined) && (
+            <div
+              className="stat-progress-card-footer-info"
+              style={{
+                marginBottom: hasProgress ? '0.4rem' : 0,
+              }}
+            >
+              {footerLabel && <span>{footerLabel}</span>}
+              {footerValue !== undefined && (
+                <span style={{ color: theme.footerVal, fontWeight: 700 }}>
+                  {footerValue}
+                </span>
+              )}
+            </div>
+          )}
 
-        <div
-          className="stat-progress-card-track"
-          style={{ background: theme.trackBg }}
-        >
-          <div
-            className="stat-progress-card-bar"
-            style={{
-              width: `${clampedProgress}%`,
-              background: theme.barBg,
-            }}
-          />
+          {hasProgress && (
+            <div
+              className="stat-progress-card-track"
+              style={{ background: theme.trackBg }}
+            >
+              <div
+                className="stat-progress-card-bar"
+                style={{
+                  width: `${clampedProgress}%`,
+                  background: theme.barBg,
+                }}
+              />
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

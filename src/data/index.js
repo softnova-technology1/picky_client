@@ -2,6 +2,7 @@ export * from './data';
 export * from './categoryMockData';
 export * from './inventoryMockData';
 export * from './customizationMockData';
+export * from './ordersMockData';
 export {
   MOCK_PRODUCTS,
   MOCK_TOP_PRODUCTS,

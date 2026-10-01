@@ -156,6 +156,15 @@ export const useCouponStore = create(
         coupons: state.coupons,
         discounts: state.discounts,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        if (!state.coupons || state.coupons.length === 0) {
+          state.coupons = [...MOCK_COUPONS];
+        }
+        if (!state.discounts || state.discounts.length === 0) {
+          state.discounts = [...MOCK_DISCOUNTS];
+        }
+      },
     }
   )
 );

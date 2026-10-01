@@ -135,6 +135,10 @@ export default function AdminCustomers() {
   const urlQ = searchParams.get('q') || '';
   const urlCity = searchParams.get('city') || 'all';
   const urlOrders = searchParams.get('orders') || 'all';
+  const urlDate = searchParams.get('date') || 'all';
+  const urlStartDate = searchParams.get('startDate') || '';
+  const urlEndDate = searchParams.get('endDate') || '';
+  const urlCard = searchParams.get('card') || 'all';
   const urlSort = searchParams.get('sort') || null;
   const urlOrder = searchParams.get('order') || null;
   const urlCustomer = searchParams.get('customer') || null;
@@ -144,6 +148,10 @@ export default function AdminCustomers() {
   const [debouncedSearch, setDebouncedSearch] = useState(urlQ);
   const [selectedCity, setSelectedCity] = useState(urlCity);
   const [selectedOrders, setSelectedOrders] = useState(urlOrders);
+  const [selectedDate, setSelectedDate] = useState(urlDate);
+  const [startDate, setStartDate] = useState(urlStartDate);
+  const [endDate, setEndDate] = useState(urlEndDate);
+  const [activeCardFilter, setActiveCardFilter] = useState(urlCard);
 
   // Sort State
   const [sortConfig, setSortConfig] = useState({
@@ -196,7 +204,7 @@ export default function AdminCustomers() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, selectedCity, selectedOrders]);
+  }, [debouncedSearch, selectedCity, selectedOrders, selectedDate, startDate, endDate, activeCardFilter]);
 
   // Sync state to URL Query Params
   useEffect(() => {
@@ -206,6 +214,14 @@ export default function AdminCustomers() {
     if (debouncedSearch.trim()) params.q = debouncedSearch.trim();
     if (selectedCity !== 'all') params.city = selectedCity;
     if (selectedOrders !== 'all') params.orders = selectedOrders;
+    if (selectedDate !== 'all') params.date = selectedDate;
+    if (selectedDate === 'custom') {
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+    }
+    if (activeCardFilter !== 'all') {
+      params.card = activeCardFilter;
+    }
     if (sortConfig.key && sortConfig.direction) {
       params.sort = sortConfig.key;
       params.order = sortConfig.direction;
@@ -220,6 +236,10 @@ export default function AdminCustomers() {
     debouncedSearch,
     selectedCity,
     selectedOrders,
+    selectedDate,
+    startDate,
+    endDate,
+    activeCardFilter,
     sortConfig,
     selectedCustomerId,
     setSearchParams,
@@ -269,6 +289,21 @@ export default function AdminCustomers() {
     return totalOrd > 0 ? Math.round(totalRev / totalOrd) : 0;
   }, [customers]);
 
+  // Dynamic Real-time Counts Calculated Directly from Active Customer Records
+  const totalUsersCount = customers.length;
+  const totalBuyersCount = useMemo(
+    () => customers.filter((c) => (Number(c.totalOrders || c.ordersCount) || 0) >= 1).length,
+    [customers]
+  );
+  const repeatBuyersCount = useMemo(
+    () => customers.filter((c) => (Number(c.totalOrders || c.ordersCount) || 0) >= 2).length,
+    [customers]
+  );
+  const onceBuyersCount = useMemo(
+    () => customers.filter((c) => (Number(c.totalOrders || c.ordersCount) || 0) === 1).length,
+    [customers]
+  );
+
   // Dynamic Unique City Options
   const cityOptions = useMemo(() => {
     const cities = Array.from(new Set(customers.map((c) => c.city).filter(Boolean))).sort();
@@ -280,6 +315,18 @@ export default function AdminCustomers() {
     { value: '1', label: '1 Order' },
     { value: '2-5', label: '2 to 5 Orders' },
     { value: '5+', label: '5+ Orders' },
+  ];
+
+  // Date Filter Preset Options
+  const dateRangeOptions = [
+    { value: 'all', label: 'All Dates' },
+    { value: 'today', label: 'Today' },
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+    { value: 'this_month', label: 'This Month' },
+    { value: 'last_month', label: 'Last Month' },
+    { value: 'this_year', label: 'This Year' },
+    { value: 'custom', label: 'Custom Range...' },
   ];
 
   // Filter Customers
@@ -306,9 +353,78 @@ export default function AdminCustomers() {
         matchOrders = orderCount > 5;
       }
 
-      return matchSearch && matchCity && matchOrders;
+      // Date Matching (Joined Date or Created Date)
+      let matchDate = true;
+      if (selectedDate !== 'all') {
+        const rawDate = c.joinedDate || c.createdAt;
+        if (!rawDate) {
+          matchDate = false;
+        } else {
+          let itemDate = null;
+          if (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawDate.trim())) {
+            const [y, m, d] = rawDate.trim().split('-').map(Number);
+            itemDate = new Date(y, m - 1, d);
+          } else {
+            const parsed = new Date(rawDate);
+            if (!isNaN(parsed.getTime())) itemDate = parsed;
+          }
+
+          if (!itemDate) {
+            matchDate = false;
+          } else {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+            if (selectedDate === 'today') {
+              matchDate = itemDate >= todayStart && itemDate <= todayEnd;
+            } else if (selectedDate === '7d') {
+              const sevenDaysAgo = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+              matchDate = itemDate >= sevenDaysAgo && itemDate <= todayEnd;
+            } else if (selectedDate === '30d') {
+              const thirtyDaysAgo = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
+              matchDate = itemDate >= thirtyDaysAgo && itemDate <= todayEnd;
+            } else if (selectedDate === 'this_month') {
+              const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+              const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+              matchDate = itemDate >= startOfMonth && itemDate <= endOfMonth;
+            } else if (selectedDate === 'last_month') {
+              const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+              const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+              matchDate = itemDate >= startOfLastMonth && itemDate <= endOfLastMonth;
+            } else if (selectedDate === 'this_year') {
+              const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+              const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+              matchDate = itemDate >= startOfYear && itemDate <= endOfYear;
+            } else if (selectedDate === 'custom') {
+              if (startDate) {
+                const [sy, sm, sd] = startDate.split('-').map(Number);
+                const sDate = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+                if (itemDate < sDate) matchDate = false;
+              }
+              if (endDate) {
+                const [ey, em, ed] = endDate.split('-').map(Number);
+                const eDate = new Date(ey, em - 1, ed, 23, 59, 59, 999);
+                if (itemDate > eDate) matchDate = false;
+              }
+            }
+          }
+        }
+      }
+
+      // Card KPI Filter Matching
+      let matchCard = true;
+      if (activeCardFilter === 'buyers') {
+        matchCard = orderCount >= 1;
+      } else if (activeCardFilter === 'repeat') {
+        matchCard = orderCount >= 2;
+      } else if (activeCardFilter === 'once') {
+        matchCard = orderCount === 1;
+      }
+
+      return matchSearch && matchCity && matchOrders && matchDate && matchCard;
     });
-  }, [customers, debouncedSearch, selectedCity, selectedOrders]);
+  }, [customers, debouncedSearch, selectedCity, selectedOrders, selectedDate, startDate, endDate, activeCardFilter]);
 
   // Sort Customers
   const sortedCustomers = useMemo(() => {
@@ -374,8 +490,31 @@ export default function AdminCustomers() {
     setDebouncedSearch('');
     setSelectedCity('all');
     setSelectedOrders('all');
+    setSelectedDate('all');
+    setStartDate('');
+    setEndDate('');
+    setActiveCardFilter('all');
     setSortConfig({ key: null, direction: null });
     setCurrentPage(1);
+  };
+
+  // Card KPI Click Handler: Filters and sorts the table dynamically
+  const handleCardClick = (cardType) => {
+    setActiveCardFilter((prev) => {
+      const nextFilter = prev === cardType ? 'all' : cardType;
+      // Auto-sort to give relevant view
+      if (nextFilter === 'buyers' || nextFilter === 'repeat') {
+        setSortConfig({ key: 'orders', direction: 'desc' });
+      } else if (nextFilter === 'once') {
+        setSortConfig({ key: 'joined', direction: 'desc' });
+      } else {
+        setSortConfig({ key: null, direction: null });
+      }
+      return nextFilter;
+    });
+    setSelectedOrders('all');
+    setCurrentPage(1);
+    tableTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // Export Filtered & Sorted Customers to CSV
@@ -468,43 +607,51 @@ export default function AdminCustomers() {
         }
       `}</style>
 
-      {/* ─── 4 Metric KPI Progress Cards (Reference Design) ────────── */}
+      {/* ─── 4 Metric KPI Progress Cards (Clickable Interactive Filters) ────────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard
-          title="REGISTERED ACCOUNTS"
-          value={(summary?.totalCustomers || customers.length || 1024).toLocaleString()}
+          title="TOTAL USERS"
+          value={totalUsersCount.toLocaleString()}
           icon={<Users size={22} />}
           variant="purple"
           footerLabel="Active CRM Directory"
-          footerValue="100%"
-          progress={100}
+          showProgress={false}
+          progress={false}
+          isActive={activeCardFilter === 'all'}
+          onClick={() => handleCardClick('all')}
         />
         <AdminStatCard
-          title="AVERAGE ORDER VALUE"
-          value={formatPrice(averageOrderValue)}
+          title="TOTAL BUYERS"
+          value={totalBuyersCount.toLocaleString()}
           icon={<TrendingUp size={22} />}
           variant="green"
-          footerLabel="Average Basket Size"
-          footerValue="Healthy AOV"
-          progress={100}
+          footerLabel="Purchasing Accounts"
+          showProgress={false}
+          progress={false}
+          isActive={activeCardFilter === 'buyers'}
+          onClick={() => handleCardClick('buyers')}
         />
         <AdminStatCard
           title="REPEAT BUYERS"
-          value="842"
+          value={repeatBuyersCount.toLocaleString()}
           icon={<ShoppingBag size={22} />}
           variant="blue"
           footerLabel="Customer Retention"
-          footerValue="82% Retention"
-          progress={82}
+          showProgress={false}
+          progress={false}
+          isActive={activeCardFilter === 'repeat'}
+          onClick={() => handleCardClick('repeat')}
         />
         <AdminStatCard
-          title="VIP CLIENTS"
-          value="245"
+          title="ONCE BUYERS"
+          value={onceBuyersCount.toLocaleString()}
           icon={<CreditCard size={22} />}
           variant="amber"
-          footerLabel="Top Tier Spenders"
-          footerValue="24% VIP Share"
-          progress={24}
+          footerLabel="Single Order Only"
+          showProgress={false}
+          progress={false}
+          isActive={activeCardFilter === 'once'}
+          onClick={() => handleCardClick('once')}
         />
       </div>
 
@@ -522,9 +669,65 @@ export default function AdminCustomers() {
           }}
         >
           <div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-              Customer Profiles & Order History
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+                Customer Profiles & Order History
+              </h3>
+              {activeCardFilter !== 'all' && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    background:
+                      activeCardFilter === 'buyers'
+                        ? '#dcfce7'
+                        : activeCardFilter === 'repeat'
+                        ? '#e0f2fe'
+                        : '#fef3c7',
+                    color:
+                      activeCardFilter === 'buyers'
+                        ? '#15803d'
+                        : activeCardFilter === 'repeat'
+                        ? '#0369a1'
+                        : '#b45309',
+                    border: `1px solid ${
+                      activeCardFilter === 'buyers'
+                        ? '#86efac'
+                        : activeCardFilter === 'repeat'
+                        ? '#bae6fd'
+                        : '#fde68a'
+                    }`,
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {activeCardFilter === 'buyers'
+                    ? 'Card Filter: Total Buyers (≥1 orders)'
+                    : activeCardFilter === 'repeat'
+                    ? 'Card Filter: Repeat Buyers (≥2 orders)'
+                    : 'Card Filter: Once Buyers (1 order)'}
+                  <button
+                    type="button"
+                    onClick={() => handleCardClick('all')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'inline-flex',
+                      color: 'inherit',
+                      marginLeft: '2px',
+                    }}
+                    title="Reset to all users"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+            </div>
             <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
               Direct verified WhatsApp contacts for delivery & transactional coordination
             </span>
@@ -608,7 +811,7 @@ export default function AdminCustomers() {
             />
           </div>
 
-          {/* Filters Group (City + Orders Range + Clear) */}
+          {/* Filters Group (City + Orders Range + Date Filter + Clear) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             {/* City Dropdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -631,15 +834,82 @@ export default function AdminCustomers() {
               </label>
               <Select
                 value={selectedOrders}
-                onChange={(val) => setSelectedOrders(val)}
+                onChange={(val) => {
+                  setSelectedOrders(val);
+                  setActiveCardFilter('all');
+                }}
                 options={ordersRangeOptions}
                 minWidth="140px"
                 ariaLabel="Filter customers by orders count"
               />
             </div>
 
+            {/* Date Filter Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Calendar size={13} style={{ color: '#7c3aed' }} />
+                <span>Date:</span>
+              </label>
+              <Select
+                value={selectedDate}
+                onChange={(val) => setSelectedDate(val)}
+                options={dateRangeOptions}
+                minWidth="145px"
+                ariaLabel="Filter customers by date"
+              />
+            </div>
+
+            {/* Custom Date Range Pickers (shown when selectedDate === 'custom') */}
+            {selectedDate === 'custom' && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#f8fafc',
+                  padding: '3px 8px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #e2e8f0',
+                }}
+              >
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '3px 6px',
+                    fontSize: '0.78rem',
+                    color: '#1e1b4b',
+                    outline: 'none',
+                    background: '#ffffff',
+                    fontFamily: 'inherit',
+                  }}
+                  title="Start Date"
+                />
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '3px 6px',
+                    fontSize: '0.78rem',
+                    color: '#1e1b4b',
+                    outline: 'none',
+                    background: '#ffffff',
+                    fontFamily: 'inherit',
+                  }}
+                  title="End Date"
+                />
+              </div>
+            )}
+
             {/* Clear Filters Button */}
-            {(debouncedSearch || selectedCity !== 'all' || selectedOrders !== 'all' || sortConfig.key) && (
+            {(debouncedSearch || selectedCity !== 'all' || selectedOrders !== 'all' || selectedDate !== 'all' || startDate || endDate || activeCardFilter !== 'all' || sortConfig.key) && (
               <button
                 type="button"
                 onClick={handleClearFilters}
@@ -1100,7 +1370,7 @@ export default function AdminCustomers() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 padding: '0.9rem 1.4rem',
                 borderTop: '1px solid #f1eafa',
                 background: '#fcfbfe',
@@ -1108,14 +1378,7 @@ export default function AdminCustomers() {
                 gap: '1rem',
               }}
             >
-              {/* Left: Count */}
-              <div style={{ fontSize: '0.82rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-                Showing <strong style={{ color: '#1e1b4b' }}>{startIndex + 1}</strong> to{' '}
-                <strong style={{ color: '#1e1b4b' }}>{endIndex}</strong> of{' '}
-                <strong style={{ color: '#1e1b4b' }}>{sortedCustomers.length}</strong> customers
-              </div>
-
-              {/* Center: Pagination Buttons (Hide First/Last if totalPages === 1) */}
+              {/* Pagination Controls (First, Prev, 1 2 3 ... N, Next, Last) */}
               <div
                 style={{
                   display: 'flex',
@@ -1286,26 +1549,6 @@ export default function AdminCustomers() {
                     <ChevronsRight size={14} />
                   </button>
                 )}
-              </div>
-
-              {/* Right: Rows per page Dropdown */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <label
-                  htmlFor="cust-rows-per-page"
-                  style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', whiteSpace: 'nowrap' }}
-                >
-                  Rows per page:
-                </label>
-                <Select
-                  id="cust-rows-per-page"
-                  ariaLabel="Rows per page"
-                  value={String(itemsPerPage)}
-                  onChange={handleRowsPerPageChange}
-                  options={rowsPerPageOptions}
-                  minWidth="125px"
-                  align="right"
-                  direction="up"
-                />
               </div>
             </div>
           )}
