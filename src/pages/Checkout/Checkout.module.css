@@ -1097,3 +1097,37 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ── Checkout Read-only Selected Variant Display ── */
+.checkout-variant-info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+  margin-bottom: 0.35rem;
+}
+
+.checkout-variant-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.checkout-variant-tag strong {
+  color: #7c3aed;
+}
+
+.checkout-variant-sep {
+  color: #cbd5e1;
+}
+
+.checkout-color-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  display: inline-block;
+}
+

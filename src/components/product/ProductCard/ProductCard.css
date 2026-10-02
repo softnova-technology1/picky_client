@@ -10,7 +10,7 @@
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    border: 1px solid #ede9fe;
+    border: 1px solid rgba(139, 92, 246, 0.4);
     font-family: var(--font-secondary);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -18,7 +18,7 @@
 .ref-product-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 16px 36px -12px rgba(109, 40, 217, 0.28);
-    border-color: #d8b4fe;
+    border-color: rgba(139, 92, 246, 0.7);
 }
 
 /* Top Section */
@@ -152,6 +152,7 @@
 }
 
 .ref-wishlist-btn {
+    margin-left: auto;
     background: white;
     border: none;
     width: 32px;

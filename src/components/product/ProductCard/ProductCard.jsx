@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck } from 'lucide-react';
+import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck, Sparkles } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
 import { useAuthStore } from '../../../store/authStore';
@@ -9,7 +9,7 @@ import { wishlistService } from '../../../services/wishlist.service';
 
 import './ProductCard.css';
 
-export default function ProductCard({ product, actionText = 'Add to Cart', onAction, onRemoveWishlist }) {
+export default function ProductCard({ product, actionText = 'Add to Cart', onAction, onRemoveWishlist, badgeText, hideBadge = false }) {
   const navigate = useNavigate();
   const { addItem } = useCartStore();
   const { isInWishlist, toggleItem } = useWishlistStore();
@@ -87,6 +87,25 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
+  const getBadgeInfo = () => {
+    const customBadge = badgeText || product.badge;
+    if (customBadge) {
+      const upper = customBadge.toUpperCase();
+      if (upper.includes('NEW') || upper.includes('DROP') || upper.includes('JUST')) {
+        return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+      }
+      if (upper.includes('TREND')) {
+        return { text: upper, icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+      }
+      return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+    }
+    if (discountPercent >= 50) return { text: 'MEGA DEAL', icon: Zap, color: '#6d28d9', bg: '#f3e8ff', border: '#d8b4fe' };
+    if (discountPercent >= 30) return { text: 'TRENDING', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+    return { text: 'SELLING FAST', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
+  };
+  const badgeInfo = getBadgeInfo();
+  const BadgeIcon = badgeInfo.icon;
+
   return (
     <div className="ref-product-card">
       {/* Top Section */}
@@ -103,10 +122,12 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         <div className="ref-sparkle ref-sparkle-4">✦</div>
 
         <div className="ref-top-bar">
-          <div className="ref-mega-deal">
-            <span className="ref-deal-icon"><Zap size={12} fill="#6d28d9" color="#6d28d9" /></span>
-            <span className="ref-deal-text">MEGA DEAL</span>
-          </div>
+          {!hideBadge && badgeInfo && (
+            <div className="ref-mega-deal" style={{ color: badgeInfo.color, background: badgeInfo.bg, border: `1px solid ${badgeInfo.border}` }}>
+              <span className="ref-deal-icon"><BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} /></span>
+              <span className="ref-deal-text" style={{ color: badgeInfo.color }}>{badgeInfo.text}</span>
+            </div>
+          )}
           <button
             className={`ref-wishlist-btn ${inWishlist ? 'active' : ''}`}
             onClick={handleToggleWishlist}
@@ -131,7 +152,7 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         <div className="ref-title-rating">
           <div className="ref-title-section">
             <Link to={`/products/${product.slug}`} className="ref-title-link">
-              <h3 className="ref-product-title">{product.name}</h3>
+              <h3 className="ref-product-title" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
             </Link>
           </div>
         </div>

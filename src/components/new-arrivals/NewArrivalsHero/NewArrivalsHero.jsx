@@ -27,23 +27,6 @@ export default function NewArrivalsHero({ onExploreClick }) {
 
   return (
     <section className="new-arrivals-hero-wrapper">
-      {/* ── Top Typography: Define Your STYLE / Own Your WORLD ✦ ── */}
-      <div className="new-arrivals-top-row">
-        <div className="top-headline-left">
-          <span className="top-sub">Shop All</span>
-          <span className="top-main-word">CATEGORIES</span>
-        </div>
-
-        {/* Center Clearance Gap for Model's Beanie */}
-        <div className="top-headline-center-spacer" />
-
-        <div className="top-headline-right">
-          <span className="top-sub">For Every</span>
-          <span className="top-main-word">LIFESTYLE</span>
-          <span className="top-sparkle-star">✦</span>
-        </div>
-      </div>
-
       {/* ── Main Rounded Purple Card (Full Width Picky Theme) ── */}
       <div className="new-arrivals-purple-card">
         {/* Soft Organic Curved Ribbon Waves in Background */}
@@ -78,12 +61,12 @@ export default function NewArrivalsHero({ onExploreClick }) {
             </div>
 
             <h1 className="hero-heading">
-              Everything You <br />
-              Need, All Here
+              Fresh Drops & <br />
+              New Arrivals
             </h1>
 
             <p className="hero-subtext">
-              Explore our vast selection of premium electronics, home essentials, fashion, and more. Handpicked for quality and everyday value.
+              Discover this week's handpicked styles, fresh gadgets, and latest arrivals before they sell out.
             </p>
 
             <button
@@ -91,7 +74,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
               className="explore-now-btn"
               type="button"
             >
-              <span>Explore Now</span>
+              <span>Explore New Arrivals</span>
               <div className="arrow-circle">
                 <ArrowRight size={14} />
               </div>
@@ -120,30 +103,30 @@ export default function NewArrivalsHero({ onExploreClick }) {
             <div className="right-feature-badges">
               <div className="mini-badge-item">
                 <div className="badge-icon-wrap">
-                  <Star size={20} strokeWidth={1.8} />
+                  <Sparkles size={20} strokeWidth={1.8} />
                 </div>
-                <span>Top Rated</span>
+                <span>Just In</span>
               </div>
 
               <div className="mini-badge-item">
                 <div className="badge-icon-wrap">
                   <ShieldCheck size={20} strokeWidth={1.8} />
                 </div>
-                <span>Trusted Quality</span>
+                <span>100% Authentic</span>
               </div>
 
               <div className="mini-badge-item">
                 <div className="badge-icon-wrap">
                   <Grid size={20} strokeWidth={1.8} />
                 </div>
-                <span>Vast Selection</span>
+                <span>Fresh Styles</span>
               </div>
             </div>
 
             {/* Featured Look Label & Card */}
             <div className="featured-look-wrapper">
               <div className="featured-look-title-label">
-                <span>Trending Now</span>
+                <span>Featured Drop</span>
               </div>
 
               <div className="featured-look-card-box">
@@ -183,66 +166,6 @@ export default function NewArrivalsHero({ onExploreClick }) {
           position: relative;
         }
 
-        /* ── Top Typography Row ── */
-        .new-arrivals-top-row {
-          display: grid;
-          grid-template-columns: 1fr 340px 1fr;
-          align-items: flex-end;
-          margin-bottom: 0.65rem;
-          padding: 0 1rem;
-        }
-
-        .top-headline-left {
-          display: flex;
-          align-items: baseline;
-          gap: 0.55rem;
-          justify-content: flex-start;
-        }
-
-        .top-headline-center-spacer {
-          height: 1px;
-        }
-
-        .top-headline-right {
-          display: flex;
-          align-items: baseline;
-          gap: 0.55rem;
-          justify-content: flex-end;
-        }
-
-        .top-sub {
-          font-size: clamp(1.4rem, 2.2vw, 2.4rem);
-          font-weight: 900;
-          color: #0f172a;
-          letter-spacing: -0.02em;
-          white-space: nowrap;
-        }
-
-        .top-main-word {
-          font-size: clamp(2.4rem, 4vw, 4.2rem);
-          font-weight: 900;
-          background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #6d28d9 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          text-transform: uppercase;
-          letter-spacing: -0.01em;
-          line-height: 1;
-          font-family: var(--font-primary);
-        }
-
-        .top-sparkle-star {
-          color: #a855f7;
-          font-size: clamp(1.8rem, 2.8vw, 2.8rem);
-          line-height: 1;
-          margin-left: 0.2rem;
-          animation: sparklePulse 2.5s infinite ease-in-out;
-        }
-
-        @keyframes sparklePulse {
-          0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
-          50% { transform: scale(1.15) rotate(12deg); opacity: 1; }
-        }
-
         /* ── Luminous Light Purple & Lavender Luxury Gradient Card ── */
         .new-arrivals-purple-card {
           position: relative;
@@ -251,11 +174,11 @@ export default function NewArrivalsHero({ onExploreClick }) {
             radial-gradient(circle at 86% 82%, rgba(233, 213, 255, 0.5) 0%, transparent 45%),
             radial-gradient(circle at 50% 50%, rgba(192, 132, 252, 0.25) 0%, transparent 60%),
             linear-gradient(135deg, #c084fc 0%, #a855f7 35%, #8b5cf6 70%, #7c3aed 100%);
-          border-radius: 40px;
-          min-height: 500px;
-          padding: clamp(2rem, 3.5vw, 3.25rem);
+          border-radius: 36px;
+          min-height: 480px;
+          padding: clamp(2rem, 3.5vw, 3rem);
           box-shadow: 0 25px 60px -15px rgba(168, 85, 247, 0.35), 0 8px 24px rgba(124, 58, 237, 0.15);
-          overflow: visible; /* Allows model head to overlap top border */
+          overflow: hidden;
           border: 2px solid rgba(255, 255, 255, 0.65);
         }
 
@@ -266,7 +189,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
           height: 100%;
           pointer-events: none;
           z-index: 1;
-          border-radius: 40px;
+          border-radius: 36px;
           overflow: hidden;
         }
 
@@ -278,7 +201,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
           grid-template-columns: 1.15fr 1fr 1fr;
           align-items: center;
           gap: 1.5rem;
-          min-height: 440px;
+          min-height: 420px;
         }
 
         /* ── Column 1: Left Editorial ── */
@@ -286,6 +209,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
+          justify-content: center;
           gap: 1.15rem;
           z-index: 3;
         }
@@ -368,6 +292,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
         .col-center {
           position: relative;
           height: 100%;
+          min-height: 420px;
           display: flex;
           align-items: flex-end;
           justify-content: center;
@@ -377,11 +302,11 @@ export default function NewArrivalsHero({ onExploreClick }) {
         /* Wireframe Rings behind head */
         .beanie-wireframe-rings {
           position: absolute;
-          top: -85px;
+          top: 15px;
           left: 50%;
           transform: translateX(-50%);
-          width: 260px;
-          height: 160px;
+          width: 240px;
+          height: 150px;
           pointer-events: none;
           z-index: 1;
         }
@@ -405,13 +330,13 @@ export default function NewArrivalsHero({ onExploreClick }) {
 
         .center-girl-cutout {
           position: absolute;
-          bottom: -2.5rem; /* Aligns flush with bottom of purple card */
+          bottom: 0;
           left: 50%;
           transform: translateX(-50%);
-          width: clamp(340px, 32vw, 440px);
+          width: clamp(280px, 28vw, 390px);
           max-width: none;
-          height: auto;
-          max-height: 600px; /* Pops ~85px above the card */
+          height: 100%;
+          max-height: 430px;
           object-fit: contain;
           object-position: bottom center;
           filter: drop-shadow(0 20px 30px rgba(24, 15, 60, 0.35));
@@ -429,7 +354,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          justify-content: space-between;
+          justify-content: center;
           height: 100%;
           gap: 1.5rem;
           z-index: 3;
@@ -586,12 +511,6 @@ export default function NewArrivalsHero({ onExploreClick }) {
 
         /* ── Responsive Breakpoints ── */
         @media (max-width: 1100px) {
-          .new-arrivals-top-row {
-            grid-template-columns: 1fr 1fr;
-          }
-          .top-headline-center-spacer {
-            display: none;
-          }
           .card-columns-grid {
             grid-template-columns: 1fr 1fr;
             gap: 2rem;
@@ -602,12 +521,6 @@ export default function NewArrivalsHero({ onExploreClick }) {
         }
 
         @media (max-width: 768px) {
-          .new-arrivals-top-row {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
-          }
           .card-columns-grid {
             grid-template-columns: 1fr;
           }

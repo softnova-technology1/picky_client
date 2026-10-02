@@ -714,7 +714,26 @@ export default function Checkout() {
 
                           <div className={styles['cart-item-details']}>
                             <span className={styles['cart-item-name']}>{item.name}</span>
-                            
+
+                            {/* Display final selected variant values (Read-only, no re-prompting) */}
+                            {(item.selectedSize || item.selectedColor) && (
+                              <div className={styles['checkout-variant-info']}>
+                                {item.selectedSize && (
+                                  <span className={styles['checkout-variant-tag']}>
+                                    Size: <strong>{item.selectedSize}</strong>
+                                  </span>
+                                )}
+                                {item.selectedSize && item.selectedColor && (
+                                  <span className={styles['checkout-variant-sep']}>•</span>
+                                )}
+                                {item.selectedColor && (
+                                  <span className={styles['checkout-variant-tag']}>
+                                    Color: <span className={styles['checkout-color-circle']} style={{ backgroundColor: item.selectedColor }} />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
                             {/* Quantity Counter (- 1 +) */}
                             <div className={styles['qty-counter-row']}>
                               <span className={styles['qty-label']}>Qty:</span>

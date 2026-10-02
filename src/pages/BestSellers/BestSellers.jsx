@@ -23,7 +23,8 @@ import {
   Tag,
   Percent,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Search
 } from 'lucide-react';
 
 export default function BestSellers() {
@@ -31,8 +32,7 @@ export default function BestSellers() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
-  const [highDiscountFilter, setHighDiscountFilter] = useState(false);
-  const [fastDispatchFilter, setFastDispatchFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const catalogRef = useRef(null);
 
   // Load products (API first, fallback to mock data)
@@ -71,11 +71,11 @@ export default function BestSellers() {
   const filterTabs = [
     { id: 'all', label: 'All Best Sellers', icon: Sparkles },
     { id: 'womens-fashion', label: "Women's Fashion", icon: Tag },
-    { id: 'artificial-jewellery', label: 'Jewellery & Sets', icon: Gem },
     { id: 'home-kitchen', label: 'Home & Kitchen', icon: UtensilsCrossed },
-    { id: 'traditional-tamil-products', label: 'Tamil Heritage', icon: Crown },
-    { id: 'mobile-accessories', label: 'Tech & Lifestyle', icon: Smartphone },
-    { id: 'beauty-personal-care', label: 'Beauty & Care', icon: Heart },
+    { id: 'artificial-jewellery', label: 'Artificial Jewellery', icon: Gem },
+    { id: 'beauty-personal-care', label: 'Beauty & Personal Care', icon: Heart },
+    { id: 'mobile-accessories', label: 'Mobile Accessories', icon: Smartphone },
+    { id: 'traditional-tamil-products', label: 'Traditional Tamil Products', icon: Crown },
   ];
 
   // Dynamic counts for each tab
@@ -102,23 +102,20 @@ export default function BestSellers() {
       });
     }
 
-
-    // 30%+ discount
-    if (highDiscountFilter) {
-      list = list.filter((p) => {
-        const disc = p.discount || (p.originalPrice && p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0);
-        return disc >= 30;
-      });
+    // Search filter
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((p) => 
+        p.name?.toLowerCase().includes(q) || 
+        p.description?.toLowerCase().includes(q)
+      );
     }
 
-    // Fast dispatch
-    if (fastDispatchFilter) {
-      list = list.filter((p) => p.inStock !== false);
-    }
-
-    // Sorting
     // Sorting
     list.sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
       if (sortBy === 'popular') {
         return (b.soldCount || b.orderCount || b.price || 0) - (a.soldCount || a.orderCount || a.price || 0);
       }
@@ -132,16 +129,14 @@ export default function BestSellers() {
     });
 
     return list;
-  }, [allProducts, activeCategory, highDiscountFilter, fastDispatchFilter, sortBy]);
+  }, [allProducts, activeCategory, sortBy, searchQuery]);
 
-  const hasActiveFilters = highDiscountFilter || fastDispatchFilter || activeCategory !== 'all';
+  const hasActiveFilters = activeCategory !== 'all' || searchQuery.trim() !== '';
 
   const handleResetFilters = () => {
     setActiveCategory('all');
-    setMinRatingFilter(false);
-    setHighDiscountFilter(false);
-    setFastDispatchFilter(false);
-    setSortBy('rating');
+    setSearchQuery('');
+    setSortBy('popular');
   };
 
   return (
@@ -151,57 +146,84 @@ export default function BestSellers() {
         <BestSellersHeroSection />
 
         {/* ── 3. Catalog & Interactive Filter Grid Anchor ── */}
-        <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px' }}>
-          {/* Header Row */}
+        <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px', paddingTop: '1.5rem' }}>
+          {/* Header Title Row */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <h2
+              style={{
+                fontFamily: 'var(--font-primary, system-ui, sans-serif)',
+                fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)',
+                fontWeight: 900,
+                color: '#1e1b4b',
+                margin: 0,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Customer Favorites & Top Ranked
+            </h2>
+          </div>
+
+          {/* Full Width Controls Bar (Search, Category, Sort, Reset) */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              width: '100%',
+              gap: '1rem',
               flexWrap: 'wrap',
-              gap: '1.25rem',
-              marginBottom: '1.75rem',
+              marginBottom: '2rem',
             }}
           >
-            <div>
-              <div
+            {/* Search Bar (flex 1 on left) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '0.55rem 1rem',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+                flex: '1 1 280px',
+                maxWidth: '420px',
+              }}
+            >
+              <Search size={16} color="#64748b" style={{ marginRight: '0.5rem', flexShrink: 0 }} />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  color: '#7c3aed',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  marginBottom: '0.35rem',
+                  border: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  fontSize: '0.86rem',
+                  color: '#1e293b',
+                  background: 'transparent',
                 }}
-              >
-                <Award size={16} />
-                <span>Picky Verified Bestsellers</span>
-              </div>
-              <h2
-                style={{
-                  fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)',
-                  fontWeight: 900,
-                  color: '#1e1b4b',
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Customer Favorites & Top Ranked ({filteredProducts.length})
-              </h2>
+              />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              {/* Sort Selector */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>SORT:</span>
+            {/* Right Controls Group */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                flexWrap: 'wrap',
+                marginLeft: 'auto',
+              }}
+            >
+              {/* Category Dropdown */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>CATEGORY:</span>
                 <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  value={activeCategory}
+                  onChange={(e) => setActiveCategory(e.target.value)}
                   style={{
-                    padding: '0.55rem 1.1rem',
+                    padding: '0.55rem 1rem',
                     borderRadius: '12px',
                     border: '1.5px solid #e2e8f0',
                     background: '#ffffff',
@@ -213,168 +235,65 @@ export default function BestSellers() {
                     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
                   }}
                 >
-                  <option value="popular">Most Popular & Sales</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
+                  {filterTabs.map((tab) => (
+                    <option key={tab.id} value={tab.id}>
+                      {tab.label} ({tabCounts[tab.id] || 0})
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* View Full Catalog Link */}
-              <Link
-                to="/shop"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.6rem 1.3rem',
-                  borderRadius: '9999px',
-                  background: '#ffffff',
-                  color: '#7c3aed',
-                  fontWeight: 800,
-                  fontSize: '0.84rem',
-                  textDecoration: 'none',
-                  border: '1.5px solid #ede9fe',
-                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <span>Shop All</span>
-                <ArrowRight size={15} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Department Filter Tabs */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.65rem',
-              overflowX: 'auto',
-              paddingBottom: '0.75rem',
-              marginBottom: '1.5rem',
-              scrollbarWidth: 'none',
-            }}
-          >
-            {filterTabs.map((tab) => {
-              const isActive = activeCategory === tab.id;
-              const count = tabCounts[tab.id] || 0;
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveCategory(tab.id)}
+              {/* Sort Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>SORT:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
                   style={{
-                    background: isActive ? 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' : '#ffffff',
-                    color: isActive ? '#ffffff' : '#475569',
-                    border: isActive ? 'none' : '1px solid #e2e8f0',
-                    padding: '0.6rem 1.25rem',
-                    borderRadius: '9999px',
+                    padding: '0.55rem 1rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid #e2e8f0',
+                    background: '#ffffff',
+                    color: '#1e293b',
                     fontSize: '0.86rem',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: isActive ? '0 6px 18px rgba(124, 58, 237, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.04)',
-                    transition: 'all 0.2s ease',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
+                    outline: 'none',
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
                   }}
                 >
-                  <IconComponent size={15} />
-                  <span>{tab.label}</span>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '0.12rem 0.48rem',
-                      borderRadius: '9999px',
-                      background: isActive ? 'rgba(255, 255, 255, 0.28)' : '#f3e8ff',
-                      color: isActive ? '#ffffff' : '#7c3aed',
-                    }}
-                  >
-                    {count}
-                  </span>
+                  <option value="popular">Best Selling</option>
+                  <option value="newest">Newest</option>
+                  <option value="price-low">Price Low → High</option>
+                  <option value="price-high">Price High → Low</option>
+                </select>
+              </div>
+
+              {/* Reset Filters */}
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.55rem 1rem',
+                    borderRadius: '12px',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: '1.5px solid #fee2e2',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    transition: 'all 0.15s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  <RotateCcw size={14} />
+                  <span>Reset</span>
                 </button>
-              );
-            })}
-          </div>
-
-          {/* Quick Filter Badges Bar */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.6rem',
-              flexWrap: 'wrap',
-              marginBottom: '2.5rem',
-            }}
-          >
-
-            <button
-              onClick={() => setHighDiscountFilter(!highDiscountFilter)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.95rem',
-                borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: highDiscountFilter ? '1.5px solid #7c3aed' : '1.5px solid #e2e8f0',
-                background: highDiscountFilter ? '#f3e8ff' : '#ffffff',
-                color: highDiscountFilter ? '#7c3aed' : '#64748b',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Percent size={14} />
-              <span>30%+ OFF Only</span>
-            </button>
-
-            <button
-              onClick={() => setFastDispatchFilter(!fastDispatchFilter)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.95rem',
-                borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: fastDispatchFilter ? '1.5px solid #7c3aed' : '1.5px solid #e2e8f0',
-                background: fastDispatchFilter ? '#f3e8ff' : '#ffffff',
-                color: fastDispatchFilter ? '#7c3aed' : '#64748b',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Zap size={14} />
-              <span>Ready in 24h</span>
-            </button>
-
-            {hasActiveFilters && (
-              <button
-                onClick={handleResetFilters}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.95rem',
-                  borderRadius: '9999px',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  border: '1.5px solid #fee2e2',
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  marginLeft: '0.5rem',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <RotateCcw size={13} />
-                <span>Clear All Filters</span>
-              </button>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Products Grid */}

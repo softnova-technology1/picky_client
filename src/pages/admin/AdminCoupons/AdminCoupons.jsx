@@ -21,6 +21,8 @@ import {
   FolderTree,
   Package,
   AlertTriangle,
+  X,
+  Eye,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -164,6 +166,7 @@ export default function AdminCoupons() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [typeFilter, setTypeFilter] = useState('ALL');
   const [copiedCode, setCopiedCode] = useState(null);
 
   // 300ms debounce on search
@@ -178,6 +181,7 @@ export default function AdminCoupons() {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [couponModalLoading, setCouponModalLoading] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
+  const [viewingCoupon, setViewingCoupon] = useState(null);
   const [couponForm, setCouponForm] = useState({
     code: '',
     type: 'percentage',
@@ -435,7 +439,7 @@ export default function AdminCoupons() {
     showToast(`Coupon "${c.code}" deleted`, 'success');
   };
 
-  // Filtered coupons based on search and status
+  // Filtered coupons based on search, status, and discount type
   const filteredCoupons = effectiveCoupons.filter((c) => {
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.trim().toLowerCase();
@@ -446,6 +450,11 @@ export default function AdminCoupons() {
     if (statusFilter !== 'ALL') {
       const status = getCouponStatus(c);
       if (status.toLowerCase() !== statusFilter.toLowerCase()) {
+        return false;
+      }
+    }
+    if (typeFilter !== 'ALL') {
+      if (c.type !== typeFilter) {
         return false;
       }
     }
@@ -880,33 +889,33 @@ export default function AdminCoupons() {
       ) : activeTab === 'coupons' ? (
         /* ── COUPONS TABLE ─────────────────────────────────────────────────── */
         <div>
-          {/* Header Controls Row: Search + Filter */}
+          {/* Header Controls Row: Search + Filters + Counter */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1rem',
+              marginBottom: '1.25rem',
               flexWrap: 'wrap',
               gap: '0.85rem',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flex: 1 }}>
               {/* Search by coupon code */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: '260px' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: '270px', flex: '1 1 270px', maxWidth: '380px' }}>
                 <Search
                   size={16}
                   style={{ position: 'absolute', left: '1rem', color: '#7c3aed', pointerEvents: 'none' }}
                 />
                 <input
                   type="text"
-                  placeholder="Search by coupon code (e.g. WELCOME100)..."
+                  placeholder="Search coupon code (e.g. WELCOME100)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
                     width: '100%',
                     height: '42px',
-                    padding: '0 1rem 0 2.6rem',
+                    padding: searchTerm ? '0 2.2rem 0 2.6rem' : '0 1rem 0 2.6rem',
                     background: '#ffffff',
                     border: '1.5px solid #e2e8f0',
                     borderRadius: '12px',
@@ -926,6 +935,29 @@ export default function AdminCoupons() {
                     e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.03)';
                   }}
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setDebouncedSearch('');
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: 0,
+                    }}
+                    title="Clear search"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
               </div>
 
               {/* Status Filter Dropdown */}
@@ -940,6 +972,64 @@ export default function AdminCoupons() {
                 ]}
                 minWidth="155px"
               />
+
+              {/* Discount Type Filter Dropdown */}
+              <Select
+                value={typeFilter}
+                onChange={(val) => setTypeFilter(val)}
+                options={[
+                  { value: 'ALL', label: 'All Discount Types' },
+                  { value: 'percentage', label: 'Percentage (%)' },
+                  { value: 'flat', label: 'Flat Off (₹)' },
+                ]}
+                minWidth="175px"
+              />
+            </div>
+
+            {/* Right Side: Results Count & Filter Reset */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <span
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#64748b',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '10px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Showing <strong style={{ color: '#1e1b4b' }}>{filteredCoupons.length}</strong> of {effectiveCoupons.length} coupons
+              </span>
+
+              {(searchTerm || statusFilter !== 'ALL' || typeFilter !== 'ALL') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setDebouncedSearch('');
+                    setStatusFilter('ALL');
+                    setTypeFilter('ALL');
+                  }}
+                  className="admin-period-select-btn"
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.8rem',
+                    color: '#e11d48',
+                    borderColor: '#fecdd3',
+                    background: '#fff1f2',
+                    borderRadius: '10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X size={13} />
+                  <span>Reset</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -985,6 +1075,7 @@ export default function AdminCoupons() {
                       setSearchTerm('');
                       setDebouncedSearch('');
                       setStatusFilter('ALL');
+                      setTypeFilter('ALL');
                     }}
                     className="admin-period-select-btn"
                     style={{
@@ -1002,13 +1093,7 @@ export default function AdminCoupons() {
               </div>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 320px))',
-                gap: '1.25rem',
-              }}
-            >
+            <div className="admin-coupons-grid">
               {filteredCoupons.map((c) => {
                 const status = getCouponStatus(c);
                 const expiring = isExpiringSoon(c, status);
@@ -1032,130 +1117,89 @@ export default function AdminCoupons() {
                     id={`coupon-row-${(c.code || '').toUpperCase()}`}
                     className={`admin-coupon-card ${isHighlighted ? 'highlighted' : ''}`}
                   >
-                    {/* Row 1: Primary Hero (Discount first!) + Coupon Code in d-flex */}
-                    <div className="admin-coupon-card-header">
-                      {/* 1. Primary Hero: Discount Value */}
-                      <div className="admin-coupon-discount-hero">
-                        <span className="admin-coupon-discount-val">
+                    {/* Top Row: Counting (Discount) on Left + Status Dot & Copy Code on Right */}
+                    <div className="admin-coupon-card-top">
+                      {/* Left: Counting (Discount Metric) */}
+                      <div className="admin-coupon-hero-metric">
+                        <span className="admin-coupon-hero-val">
                           {c.type === 'percentage' ? `${c.value}%` : formatPrice(c.value)}
                         </span>
-                        <span className="admin-coupon-discount-badge">
+                        <span className="admin-coupon-hero-badge">
                           {c.type === 'percentage' ? 'OFF' : 'FLAT OFF'}
                         </span>
                       </div>
 
-                      {/* 2. Coupon Code Badge + Copy Button */}
-                      <div className="admin-coupon-code-pill">
-                        <div className="admin-coupon-code-text">
-                          <Tag size={13} style={{ opacity: 0.85 }} />
-                          <span>{c.code}</span>
-                        </div>
-                        <div className="admin-coupon-code-divider" />
-                        <button
-                          type="button"
-                          onClick={() => handleCopyCode(c.code)}
-                          title={copiedCode === c.code ? 'Copied to Clipboard!' : 'Copy coupon code'}
-                          aria-label={`Copy coupon code ${c.code}`}
-                          className={`admin-coupon-copy-btn ${copiedCode === c.code ? 'copied' : ''}`}
-                        >
-                          {copiedCode === c.code ? <Check size={13} /> : <Copy size={13} />}
-                        </button>
-                      </div>
-                    </div>
+                      {/* Right: Status Dot + Copy Code Badge */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        <span
+                          className={`admin-coupon-status-dot-only ${status === 'Active' ? 'active' : 'inactive'}`}
+                          title={status === 'Active' ? 'Active' : (status === 'Expired' ? 'Expired' : 'Disabled')}
+                        />
 
-                    {/* Row 2: Target Badge (Left) + Status Pill (Right) */}
-                    <div className="admin-coupon-card-row2">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        {renderApplicableBadge(c.applicableOn)}
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        {expiring && (
-                          <span className="admin-coupon-status-pill expiring">
-                            <AlertTriangle size={11} color="#d97706" />
-                            <span>Expiring</span>
-                          </span>
-                        )}
-                        {status === 'Expired' ? (
-                          <span className="admin-coupon-status-pill expired">
-                            <span className="admin-coupon-status-dot" style={{ background: '#ef4444', boxShadow: 'none' }} />
-                            <span>Expired</span>
-                          </span>
-                        ) : status === 'Disabled' ? (
-                          <span className="admin-coupon-status-pill disabled">
-                            <span className="admin-coupon-status-dot" style={{ background: '#94a3b8', boxShadow: 'none' }} />
-                            <span>Disabled</span>
-                          </span>
-                        ) : (
-                          <span className="admin-coupon-status-pill active">
-                            <span className="admin-coupon-status-dot" />
-                            <span>Active</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Details Box */}
-                    <div className="admin-coupon-details-box">
-                      {/* Row 1: Min Order & Max Cap */}
-                      <div className="admin-coupon-details-row">
-                        <div>
-                          <span className="admin-coupon-details-label">
-                            Min Order
-                          </span>
-                          <strong className="admin-coupon-details-val">
-                            {c.minOrderAmount ? formatPrice(c.minOrderAmount) : 'No Minimum'}
-                          </strong>
-                        </div>
-
-                        <div style={{ textAlign: 'right' }}>
-                          <span className="admin-coupon-details-label" style={{ textAlign: 'right' }}>
-                            Max Cap
-                          </span>
-                          <strong className="admin-coupon-details-val">
-                            {c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}
-                          </strong>
-                        </div>
-                      </div>
-
-                      {/* Subtle Row Divider */}
-                      <div className="admin-coupon-details-divider" />
-
-                      {/* Row 2: Validity & Usage Limit */}
-                      <div className="admin-coupon-details-row">
-                        <div>
-                          <span className="admin-coupon-details-label">
-                            Validity
-                          </span>
-                          <span style={{ color: '#1e1b4b', fontWeight: 800, fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
-                            <Clock size={12} color="#7c3aed" style={{ flexShrink: 0 }} />
-                            <span>{validityText}</span>
-                          </span>
-                        </div>
-
-                        <div style={{ textAlign: 'right' }}>
-                          <span className="admin-coupon-details-label" style={{ textAlign: 'right' }}>
-                            Usage Limit
-                          </span>
-                          <strong className="admin-coupon-details-val" style={{ fontSize: '0.84rem' }}>
-                            {limit !== null ? `Max ${limit} / user` : 'No Limit'}
-                          </strong>
+                        <div className="admin-coupon-code-badge" title="Coupon Code">
+                          <span className="admin-coupon-code-text">{c.code}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyCode(c.code)}
+                            title={copiedCode === c.code ? 'Copied to clipboard!' : 'Copy coupon code'}
+                            aria-label={`Copy coupon code ${c.code}`}
+                            className={`admin-coupon-copy-btn ${copiedCode === c.code ? 'copied' : ''}`}
+                          >
+                            {copiedCode === c.code ? <Check size={13} /> : <Copy size={13} />}
+                          </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* Card Footer: Uses Counter & Actions */}
-                    <div className="admin-coupon-card-footer">
-                      <div className="admin-coupon-used-chip">
-                        <div className="admin-coupon-used-icon">
-                          <CheckCircle2 size={12} />
-                        </div>
-                        <span>
-                          Used <strong style={{ color: '#1e1b4b', fontWeight: 800 }}>{c.usageCount || 0}</strong> times
+                    {/* Tabular Details Section: Exactly 4 rows, NO icons */}
+                    <div className="admin-coupon-table-section">
+                      <div className="admin-coupon-table-row">
+                        <span className="admin-coupon-row-label">Min Order</span>
+                        <span className="admin-coupon-row-value">
+                          {c.minOrderAmount ? formatPrice(c.minOrderAmount) : 'No Minimum'}
                         </span>
                       </div>
 
+                      <div className="admin-coupon-table-row">
+                        <span className="admin-coupon-row-label">Max Cap</span>
+                        <span className="admin-coupon-row-value">
+                          {c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}
+                        </span>
+                      </div>
+
+                      <div className="admin-coupon-table-row">
+                        <span className="admin-coupon-row-label">Validity</span>
+                        <span className="admin-coupon-row-value" title={validityText}>
+                          {validityText}
+                        </span>
+                      </div>
+
+                      <div className="admin-coupon-table-row">
+                        <span className="admin-coupon-row-label">Applies To</span>
+                        <span className="admin-coupon-row-value">
+                          {typeof c.applicableOn === 'string'
+                            ? c.applicableOn
+                            : c.applicableOn?.value || 'All Products'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Footer: Usage Count (Left) & View + Edit (Right) */}
+                    <div className="admin-coupon-card-footer">
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                        Used <strong style={{ color: '#1e1b4b' }}>{c.usageCount || 0}</strong> times
+                      </span>
+
                       <div className="admin-coupon-actions">
+                        <button
+                          type="button"
+                          onClick={() => setViewingCoupon(c)}
+                          className="admin-coupon-btn-view"
+                          title="View coupon details"
+                          aria-label={`View details for coupon ${c.code}`}
+                        >
+                          <Eye size={14} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleOpenEditCoupon(c)}
@@ -1163,16 +1207,7 @@ export default function AdminCoupons() {
                           title="Edit coupon"
                           aria-label={`Edit coupon ${c.code}`}
                         >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCoupon(c)}
-                          className="admin-coupon-btn-delete"
-                          title="Delete coupon"
-                          aria-label={`Delete coupon ${c.code}`}
-                        >
-                          <Trash2 size={14} />
+                          <Edit2 size={13} />
                         </button>
                       </div>
                     </div>
@@ -1729,15 +1764,248 @@ export default function AdminCoupons() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-            <button type="button" onClick={() => setIsCouponModalOpen(false)} className="btn btn-secondary">
-              Cancel
-            </button>
-            <Button type="submit" variant="primary" loading={couponModalLoading}>
-              {editingCoupon ? 'Save Changes' : 'Create Coupon'}
-            </Button>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: editingCoupon ? 'space-between' : 'flex-end',
+              alignItems: 'center',
+              gap: '0.75rem',
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid #f1f5f9',
+            }}
+          >
+            {editingCoupon && (
+              <button
+                type="button"
+                onClick={() => {
+                  const toDelete = editingCoupon;
+                  setIsCouponModalOpen(false);
+                  handleDeleteCoupon(toDelete);
+                }}
+                className="btn btn-outline-danger"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  color: '#dc2626',
+                  borderColor: '#fca5a5',
+                  background: '#fef2f2',
+                  padding: '0.5rem 0.9rem',
+                  fontSize: '0.84rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Trash2 size={14} />
+                <span>Delete Coupon</span>
+              </button>
+            )}
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button type="button" onClick={() => setIsCouponModalOpen(false)} className="btn btn-secondary">
+                Cancel
+              </button>
+              <Button type="submit" variant="primary" loading={couponModalLoading}>
+                {editingCoupon ? 'Save Changes' : 'Create Coupon'}
+              </Button>
+            </div>
           </div>
         </form>
+      </Modal>
+
+      {/* ── VIEW COUPON DETAILS MODAL ─────────────────────────────────────── */}
+      <Modal
+        isOpen={Boolean(viewingCoupon)}
+        onClose={() => setViewingCoupon(null)}
+        title={viewingCoupon ? `Coupon Details: ${viewingCoupon.code}` : 'Coupon Details'}
+        maxWidth={520}
+      >
+        {viewingCoupon && (() => {
+          const status = getCouponStatus(viewingCoupon);
+          const validityText = viewingCoupon.validFrom && viewingCoupon.validTill
+            ? `${formatValidityDate(viewingCoupon.validFrom)} - ${formatValidityDate(viewingCoupon.validTill)}`
+            : viewingCoupon.validTill
+            ? `Till ${formatValidityDate(viewingCoupon.validTill)}`
+            : 'Always Valid';
+
+          const limit =
+            viewingCoupon.usageLimitPerCustomer !== undefined && viewingCoupon.usageLimitPerCustomer !== null
+              ? viewingCoupon.usageLimitPerCustomer
+              : (viewingCoupon.maxUsagePerUser !== undefined && viewingCoupon.maxUsagePerUser !== null
+              ? viewingCoupon.maxUsagePerUser
+              : null);
+
+          const appliesToText = typeof viewingCoupon.applicableOn === 'string'
+            ? viewingCoupon.applicableOn
+            : viewingCoupon.applicableOn?.value || 'All Products';
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Highlight Header */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #f8f6ff 0%, #f1ecfc 100%)',
+                  border: '1px solid #e5dcf7',
+                  borderRadius: '12px',
+                  padding: '1.15rem 1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#6d28d9', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                    {viewingCoupon.type === 'percentage' ? `${viewingCoupon.value}% OFF` : `${formatPrice(viewingCoupon.value)} FLAT OFF`}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
+                    Promotional Discount Code
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div className="admin-coupon-code-badge" style={{ background: '#ffffff', border: '1px solid #dcd1f6', padding: '0.35rem 0.75rem' }}>
+                    <span className="admin-coupon-code-text" style={{ fontSize: '0.88rem' }}>{viewingCoupon.code}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCode(viewingCoupon.code)}
+                      className={`admin-coupon-copy-btn ${copiedCode === viewingCoupon.code ? 'copied' : ''}`}
+                      title="Copy coupon code"
+                    >
+                      {copiedCode === viewingCoupon.code ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Quick Stats */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Status</div>
+                  <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.88rem', color: status === 'Active' ? '#16a34a' : status === 'Expired' ? '#64748b' : '#dc2626' }}>
+                    <span className={`admin-coupon-status-dot-only ${status === 'Active' ? 'active' : 'inactive'}`} />
+                    <span>{status}</span>
+                  </div>
+                </div>
+
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Total Uses</div>
+                  <div style={{ marginTop: '0.25rem', fontWeight: 700, fontSize: '0.88rem', color: '#1e1b4b' }}>
+                    {viewingCoupon.usageCount || 0} times
+                  </div>
+                </div>
+
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>User Limit</div>
+                  <div style={{ marginTop: '0.25rem', fontWeight: 700, fontSize: '0.88rem', color: '#1e1b4b' }}>
+                    {limit ? `Max ${limit}/user` : 'Unlimited'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabular Details Grid */}
+              <div
+                style={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  background: '#ffffff',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.7rem 1rem',
+                    borderBottom: '1px solid #f1f5f9',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>Min Order Amount</span>
+                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{viewingCoupon.minOrderAmount ? formatPrice(viewingCoupon.minOrderAmount) : 'No Minimum'}</span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.7rem 1rem',
+                    borderBottom: '1px solid #f1f5f9',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>Max Cap (Discount Limit)</span>
+                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{viewingCoupon.maxDiscountAmount ? formatPrice(viewingCoupon.maxDiscountAmount) : 'Unlimited'}</span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.7rem 1rem',
+                    borderBottom: '1px solid #f1f5f9',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>Validity Period</span>
+                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{validityText}</span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.7rem 1rem',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <span style={{ color: '#64748b', fontWeight: 500 }}>Applies To</span>
+                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{appliesToText}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  marginTop: '0.5rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid #f1f5f9',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setViewingCoupon(null)}
+                  className="btn btn-secondary"
+                >
+                  Close
+                </button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => {
+                    const c = viewingCoupon;
+                    setViewingCoupon(null);
+                    handleOpenEditCoupon(c);
+                  }}
+                >
+                  <Edit2 size={13} style={{ marginRight: '0.35rem' }} />
+                  Edit Coupon
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* ── CREATE / EDIT DISCOUNT MODAL ─────────────────────────────────────── */}

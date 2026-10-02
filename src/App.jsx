@@ -75,7 +75,7 @@ export default function App() {
           {/* ── Customer Account Hub & Orders ────────── */}
           <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
           <Route path="/account/*" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-          <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route path="/orders" element={<Navigate to="/account?tab=orders" replace />} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
 
           {/* ── Support & Legal ──────────────────────── */}

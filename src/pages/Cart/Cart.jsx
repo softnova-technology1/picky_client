@@ -3,27 +3,78 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
 import Modal from '../../components/ui/Modal/Modal';
 import { useCartStore } from '../../store/cartStore';
+import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { cartService } from '../../services/cart.service';
 import { formatPrice } from '../../utils/formatPrice';
+import { MOCK_PRODUCTS } from '../../data/adminMockData';
+import { DEFAULT_WISHLIST_ITEMS } from '../Wishlist/Wishlist';
 import {
   ShoppingCart,
   Trash2,
   Plus,
   Minus,
   ArrowRight,
+  ArrowLeft,
   Lock,
   Truck,
   RotateCcw,
   ShieldCheck,
+  AlertTriangle,
+  Heart,
   Tag,
+  Ticket,
 } from 'lucide-react';
 import styles from './Cart.module.css';
 
+// Helper to reliably extract available sizes for a cart item
+const getItemSizes = (item) => {
+  if (Array.isArray(item.availableSizes) && item.availableSizes.length > 0) return item.availableSizes;
+  if (Array.isArray(item.sizes) && item.sizes.length > 0) return item.sizes;
+  if (Array.isArray(item.variants?.options) && item.variants.options.length > 0) return item.variants.options;
+  const found = MOCK_PRODUCTS.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
+  if (found) {
+    if (Array.isArray(found.variants?.options) && found.variants.options.length > 0) return found.variants.options;
+    if (Array.isArray(found.sizes) && found.sizes.length > 0) return found.sizes;
+  }
+  const foundMock = DEFAULT_WISHLIST_ITEMS?.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
+  if (foundMock && Array.isArray(foundMock.sizes) && foundMock.sizes.length > 0) {
+    return foundMock.sizes;
+  }
+  return [];
+};
+
+// Helper to reliably extract available colors for a cart item
+const getItemColors = (item) => {
+  if (Array.isArray(item.availableColors) && item.availableColors.length > 0) return item.availableColors;
+  if (Array.isArray(item.colors) && item.colors.length > 0) return item.colors;
+  if (Array.isArray(item.variants?.colors) && item.variants.colors.length > 0) return item.variants.colors;
+  const found = MOCK_PRODUCTS.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
+  if (found) {
+    if (Array.isArray(found.variants?.colors) && found.variants.colors.length > 0) return found.variants.colors;
+    if (Array.isArray(found.colors) && found.colors.length > 0) return found.colors;
+  }
+  const foundMock = DEFAULT_WISHLIST_ITEMS?.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
+  if (foundMock && Array.isArray(foundMock.colors) && foundMock.colors.length > 0) {
+    return foundMock.colors;
+  }
+  return [];
+};
+
 export default function Cart() {
   const navigate = useNavigate();
-  const { items, updateQty, removeItem, clearCart, coupon, setCoupon, couponDiscount } = useCartStore();
+  const {
+    items,
+    updateQty,
+    updateVariant,
+    removeItem,
+    clearCart,
+    coupon,
+    setCoupon,
+    couponDiscount,
+  } = useCartStore();
+  const { toggleItem, isInWishlist } = useWishlistStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
   const [couponCode, setCouponCode] = useState('');
@@ -31,12 +82,71 @@ export default function Cart() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  // Subtotal (Current Selling Price Total)
   const subtotal = items.reduce((sum, item) => {
     const price = item.discountPrice || item.price || 0;
     return sum + price * (item.quantity || 1);
   }, 0);
 
+  // Original Total (MRP Total before discounts)
+  const totalOriginal = items.reduce((sum, item) => {
+    const itemPrice = item.discountPrice || item.price || 0;
+    const orig =
+      item.originalPrice ||
+      (item.price && item.price > itemPrice ? item.price : Math.round(itemPrice * 1.35));
+    return sum + orig * (item.quantity || 1);
+  }, 0);
+
+  const productSavings = Math.max(0, totalOriginal - subtotal);
+
   const total = Math.max(0, subtotal - (couponDiscount || 0));
+
+  // Determine items that require variant selection
+  const missingVariantItems = items.filter((item) => {
+    const sizes = getItemSizes(item);
+    const colors = getItemColors(item);
+    const needsSize = sizes.length > 0 && !item.selectedSize;
+    const needsColor = colors.length > 0 && !item.selectedColor;
+    return needsSize || needsColor;
+  });
+
+  const handleProceedToCheckout = () => {
+    if (missingVariantItems.length > 0) {
+      const firstMissing = missingVariantItems[0];
+      const sizes = getItemSizes(firstMissing);
+      const missingType = sizes.length > 0 && !firstMissing.selectedSize ? 'Size' : 'Color';
+      showToast(`⚠️ Please select ${missingType} for "${firstMissing.name}" before proceeding.`, 'error');
+      return;
+    }
+    navigate('/checkout');
+  };
+
+  const handleMoveToWishlist = (item) => {
+    const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
+
+    // Add to wishlist store if not already present
+    if (!isInWishlist(targetId)) {
+      toggleItem({
+        _id: targetId,
+        id: targetId,
+        name: item.name,
+        image: item.image || item.images?.[0],
+        price: item.price,
+        discountPrice: item.discountPrice,
+        originalPrice: item.originalPrice || item.price,
+        slug: item.slug,
+        sizes: getItemSizes(item),
+        colors: getItemColors(item),
+      });
+    }
+
+    // Remove from cart
+    removeItem(targetId || item);
+    if (isLoggedIn && targetId) {
+      cartService.removeItem(targetId).catch(() => null);
+    }
+    showToast(`Moved "${item.name}" to your Wishlist! 💖`, 'success');
+  };
 
   const handleApplyCouponCode = async (codeToApply) => {
     const targetCode = (codeToApply || couponCode).trim();
@@ -177,14 +287,27 @@ export default function Cart() {
                 {/* Items List */}
                 {items.map((item) => {
                   const itemPrice = item.discountPrice || item.price || 0;
-                  const originalPrice = item.price && item.price > itemPrice ? item.price : null;
+                  const originalPrice =
+                    item.originalPrice ||
+                    (item.price && item.price > itemPrice ? item.price : Math.round(itemPrice * 1.35));
+                  const hasDiscount = originalPrice > itemPrice;
+                  const discountPercent = hasDiscount
+                    ? Math.round(((originalPrice - itemPrice) / originalPrice) * 100)
+                    : 0;
+
                   const itemId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
                   const itemSlug = item.slug || item.product?.slug;
+
+                  const sizes = getItemSizes(item);
+                  const colors = getItemColors(item);
+                  const needsSize = sizes.length > 0 && !item.selectedSize;
+                  const needsColor = colors.length > 0 && !item.selectedColor;
+                  const isMissing = needsSize || needsColor;
 
                   return (
                     <div key={itemId || Math.random()} className={styles['cart-item-row']}>
                       {/* Image Box */}
-                      <div className={styles['item-img-box']}>
+                      <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-img-box']}>
                         <img
                           src={
                             item.images?.[0] ||
@@ -193,69 +316,146 @@ export default function Cart() {
                           }
                           alt={item.name}
                           className={styles['item-img']}
+                          loading="lazy"
                         />
-                      </div>
+                      </Link>
 
                       {/* Info & Quantity Controls */}
                       <div className={styles['item-info']}>
-                        <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-title']}>
-                          {item.name}
-                        </Link>
+                        {/* Top Header Row: Title on Left, Price on Right */}
+                        <div className={styles['item-header-row']}>
+                          <div className={styles['item-title-col']}>
+                            <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-title']}>
+                              {item.name}
+                            </Link>
+                          </div>
 
-                        <div className={styles['item-meta-row']}>
-                          <span className={styles['stock-indicator']}>
-                            <span className={styles['green-dot']} /> In stock
-                          </span>
-                          {item.selectedSize && (
-                            <>
-                              <span className={styles['meta-divider']}>•</span>
-                              <span>Size: {item.selectedSize}</span>
-                            </>
-                          )}
+                          {/* Right Price Column (Top-aligned with title) */}
+                          <div className={styles['item-price-col']}>
+                            <div className={styles['price-main']}>
+                              {formatPrice(itemPrice * (item.quantity || 1))}
+                            </div>
+                            {hasDiscount && (
+                              <div className={styles['price-sub-wrap']}>
+                                <span className={styles['price-old']}>
+                                  {formatPrice(originalPrice * (item.quantity || 1))}
+                                </span>
+                                <span className={styles['discount-badge']}>
+                                  {discountPercent}% OFF
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Actions Row */}
+                        {/* Interactive Variant Selectors inside Cart (Horizontal Flow) */}
+                        {(sizes.length > 0 || colors.length > 0) && (
+                          <div className={`${styles['cart-variants-box']} ${isMissing ? styles['missing-variant-alert'] : ''}`}>
+                            {/* Size Selector */}
+                            {sizes.length > 0 && (
+                              <div className={styles['cart-variant-group']}>
+                                <span className={styles['variant-label']}>Size:</span>
+                                <div className={styles['variant-chips-wrap']}>
+                                  {sizes.map((s) => (
+                                    <button
+                                      key={s}
+                                      type="button"
+                                      className={`${styles['cart-chip']} ${item.selectedSize === s ? styles['cart-chip-active'] : ''}`}
+                                      onClick={() => {
+                                        updateVariant(item, { selectedSize: s });
+                                        showToast(`Selected size "${s}" for ${item.name}`, 'info');
+                                      }}
+                                    >
+                                      {s}
+                                    </button>
+                                  ))}
+                                </div>
+                                {!item.selectedSize && (
+                                  <span className={styles['variant-required-pill']}>Select Size *</span>
+                                )}
+                              </div>
+                            )}
+
+                            {sizes.length > 0 && colors.length > 0 && (
+                              <span className={styles['variant-inline-divider']} />
+                            )}
+
+                            {/* Color Selector */}
+                            {colors.length > 0 && (
+                              <div className={styles['cart-variant-group']}>
+                                <span className={styles['variant-label']}>Color:</span>
+                                <div className={styles['color-chips-wrap']}>
+                                  {colors.map((c, i) => (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      className={`${styles['cart-color-chip']} ${item.selectedColor === c ? styles['cart-color-active'] : ''}`}
+                                      style={{ backgroundColor: c }}
+                                      onClick={() => {
+                                        updateVariant(item, { selectedColor: c });
+                                        showToast(`Selected color for ${item.name}`, 'info');
+                                      }}
+                                      title={c}
+                                      aria-label={`Color ${c}`}
+                                    />
+                                  ))}
+                                </div>
+                                {!item.selectedColor && (
+                                  <span className={styles['variant-required-pill']}>Select Color *</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Actions Row: Left Secondary Actions, Right Quantity Stepper */}
                         <div className={styles['item-actions-row']}>
-                          <div className={styles['qty-stepper']}>
+                          <div className={styles['secondary-actions-group']}>
+                            {/* Save to Wishlist Button */}
                             <button
                               type="button"
-                              onClick={() => handleUpdateQty(item, (item.quantity || 1) - 1)}
-                              className={styles['qty-btn']}
-                              aria-label="Decrease quantity"
+                              onClick={() => handleMoveToWishlist(item)}
+                              className={styles['wishlist-action-btn']}
+                              title="Move to Wishlist"
                             >
-                              <Minus size={13} strokeWidth={2.3} />
+                              <Heart size={14} className={styles['heart-icon']} /> Save to Wishlist
                             </button>
-                            <span className={styles['qty-val']}>{item.quantity || 1}</span>
+
+                            {/* Remove from Cart */}
                             <button
                               type="button"
-                              onClick={() => handleUpdateQty(item, (item.quantity || 1) + 1)}
-                              className={styles['qty-btn']}
-                              aria-label="Increase quantity"
+                              onClick={() => handleRemoveItem(item)}
+                              className={styles['remove-btn']}
+                              title="Remove from Cart"
                             >
-                              <Plus size={13} strokeWidth={2.3} />
+                              <Trash2 size={13} /> Remove
                             </button>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item)}
-                            className={styles['remove-btn']}
-                          >
-                            <Trash2 size={13} /> Remove
-                          </button>
+                          {/* Right Aligned Quantity Stepper */}
+                          <div className={styles['qty-stepper-wrap']}>
+                            <span className={styles['qty-label']}>Qty:</span>
+                            <div className={styles['qty-stepper']}>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateQty(item, (item.quantity || 1) - 1)}
+                                className={styles['qty-btn']}
+                                aria-label="Decrease quantity"
+                              >
+                                <Minus size={13} strokeWidth={2.3} />
+                              </button>
+                              <span className={styles['qty-val']}>{item.quantity || 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateQty(item, (item.quantity || 1) + 1)}
+                                className={styles['qty-btn']}
+                                aria-label="Increase quantity"
+                              >
+                                <Plus size={13} strokeWidth={2.3} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Right Price */}
-                      <div className={styles['item-price-col']}>
-                        <div className={styles['price-main']}>
-                          {formatPrice(itemPrice * (item.quantity || 1))}
-                        </div>
-                        {originalPrice && (
-                          <span className={styles['price-old']}>
-                            {formatPrice(originalPrice * (item.quantity || 1))}
-                          </span>
-                        )}
                       </div>
                     </div>
                   );
@@ -267,12 +467,12 @@ export default function Cart() {
                     <Trash2 size={14} /> Clear Cart
                   </button>
                   <Link to="/products" className={styles['continue-shopping-btn']}>
-                    <span>+ Continue Shopping</span>
+                    <ArrowLeft size={15} /> Continue Shopping
                   </Link>
                 </div>
               </div>
 
-              {/* 3 Serene Trust Badges Below Card */}
+              {/* 3 Trust Badges Below Card */}
               <div className={styles['trust-badges-grid']}>
                 <div className={styles['trust-card']}>
                   <div className={styles['trust-icon-box']}>
@@ -349,20 +549,35 @@ export default function Cart() {
                     </form>
 
                     <div className={styles['promo-hint']}>
-                      <span>Have a coupon?</span>
                       <span
                         className={styles['promo-chip']}
                         onClick={() => handleApplyCouponCode('FESTIVAL50')}
                       >
-                        Use 'FESTIVAL50' for ₹350 off
+                        <Tag size={13} className={styles['promo-tag-icon']} /> Apply 'FESTIVAL50' for ₹350 off
                       </span>
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Price Breakdown */}
+              {/* Price Breakdown with MRP & Discounts */}
               <div className={styles['price-breakdown']}>
+                <div className={styles['breakdown-row']}>
+                  <span className={styles['row-label']}>Total MRP</span>
+                  <span className={styles['row-value']} style={{ textDecoration: 'line-through', color: '#94a3b8' }}>
+                    {formatPrice(totalOriginal)}
+                  </span>
+                </div>
+
+                {productSavings > 0 && (
+                  <div className={styles['breakdown-row']} style={{ color: '#16a34a' }}>
+                    <span className={styles['row-label']} style={{ color: '#16a34a' }}>Discount on MRP</span>
+                    <span className={styles['row-value']} style={{ color: '#16a34a', fontWeight: 700 }}>
+                      -{formatPrice(productSavings)}
+                    </span>
+                  </div>
+                )}
+
                 <div className={styles['breakdown-row']}>
                   <span className={styles['row-label']}>Subtotal</span>
                   <span className={styles['row-value']}>{formatPrice(subtotal)}</span>
@@ -371,13 +586,15 @@ export default function Cart() {
                 {couponDiscount > 0 && (
                   <div className={styles['breakdown-row']} style={{ color: '#16a34a' }}>
                     <span className={styles['row-label']} style={{ color: '#16a34a' }}>Coupon Discount</span>
-                    <span className={styles['row-value']} style={{ color: '#16a34a' }}>-{formatPrice(couponDiscount)}</span>
+                    <span className={styles['row-value']} style={{ color: '#16a34a', fontWeight: 700 }}>
+                      -{formatPrice(couponDiscount)}
+                    </span>
                   </div>
                 )}
 
                 <div className={styles['breakdown-row']}>
-                  <span className={styles['row-label']}>Delivery</span>
-                  <span className={styles['row-value']} style={{ color: '#16a34a' }}>
+                  <span className={styles['row-label']}>Delivery Fee</span>
+                  <span className={styles['row-value']} style={{ color: '#16a34a', fontWeight: 700 }}>
                     FREE
                   </span>
                 </div>
@@ -390,12 +607,19 @@ export default function Cart() {
 
               <button
                 type="button"
-                onClick={() => navigate('/checkout')}
-                className={styles['checkout-btn']}
+                onClick={handleProceedToCheckout}
+                className={`${styles['checkout-btn']} ${missingVariantItems.length > 0 ? styles['checkout-btn-blocked'] : ''}`}
               >
                 <span>Proceed to Checkout</span>
                 <ArrowRight size={18} strokeWidth={2.2} />
               </button>
+
+              {missingVariantItems.length > 0 && (
+                <div className={styles['missing-warning-note']}>
+                  <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                  <span>Please select required variants ({missingVariantItems.length} {missingVariantItems.length === 1 ? 'item' : 'items'} pending)</span>
+                </div>
+              )}
 
               <div className={styles['security-subtext']}>
                 <Lock size={13} color="#64748b" /> Safe & Secure Checkout
