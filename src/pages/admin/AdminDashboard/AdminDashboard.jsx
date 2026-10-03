@@ -36,13 +36,13 @@ const TIMEFRAME_OPTIONS = [
 const TIMEFRAME_CONFIG = {
   Week: {
     kpis: {
-      totalRevenue: '$28,450.00',
+      totalRevenue: '₹28,450.00',
       totalOrders: '2,880',
       customers: '142',
       totalProducts: '72',
     },
     revenueCard: {
-      headlineAmount: '$ 28,450.00',
+      headlineAmount: '₹28,450.00',
       growthPct: '+12.4%',
       growthSub: 'Than Last week',
       maxValue: 50000,
@@ -69,13 +69,13 @@ const TIMEFRAME_CONFIG = {
   },
   'This Month': {
     kpis: {
-      totalRevenue: '$118,400.00',
+      totalRevenue: '₹1,18,400.00',
       totalOrders: '7,900',
       customers: '580',
       totalProducts: '72',
     },
     revenueCard: {
-      headlineAmount: '$ 118,400.00',
+      headlineAmount: '₹1,18,400.00',
       growthPct: '+18.2%',
       growthSub: 'Than Last month',
       maxValue: 200000,
@@ -99,13 +99,13 @@ const TIMEFRAME_CONFIG = {
   },
   Year: {
     kpis: {
-      totalRevenue: '$459,234.08',
+      totalRevenue: '₹4,59,234.08',
       totalOrders: '56,700',
       customers: '3,420',
       totalProducts: '72',
     },
     revenueCard: {
-      headlineAmount: '$ 459,234.08',
+      headlineAmount: '₹4,59,234.08',
       growthPct: '+24.6%',
       growthSub: 'Than Last year',
       maxValue: 1000000,

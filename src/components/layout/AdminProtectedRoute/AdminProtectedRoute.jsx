@@ -150,35 +150,10 @@ export function AdminProtectedRoute({ children }) {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div>
             <Button type="submit" variant="primary" block size="lg" loading={loading} style={{ background: '#7c3aed', borderColor: '#7c3aed' }}>
               Sign In to Dashboard ➔
             </Button>
-
-            <button
-              type="button"
-              onClick={handleDemoBypass}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(124, 58, 237, 0.15)',
-                border: '1px dashed #a855f7',
-                borderRadius: '8px',
-                color: '#d8b4fe',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.25)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.15)'}
-            >
-              ⚡ Instant UI Demo Access (No Backend Needed)
-            </button>
           </div>
         </form>
 
