@@ -27,7 +27,7 @@ export const PICKY_CATEGORIES = [
     subtext: 'Earrings, Chains, Bangles, Necklace sets',
     icon: '💍',
     badge: 'Trending',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80',
     itemCount: 120,
   },
   {

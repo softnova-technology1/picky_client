@@ -91,16 +91,21 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     const customBadge = badgeText || product.badge;
     if (customBadge) {
       const upper = customBadge.toUpperCase();
-      if (upper.includes('NEW') || upper.includes('DROP') || upper.includes('JUST')) {
-        return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
-      }
-      if (upper.includes('TREND')) {
+      if (upper.includes('HOT') || upper.includes('TREND')) {
         return { text: upper, icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+      }
+      if (upper.includes('POPULAR') || upper.includes('BEST')) {
+        return { text: upper, icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
+      }
+      if (upper.includes('SPECIAL') || upper.includes('EDITION')) {
+        return { text: upper, icon: Zap, color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' };
       }
       return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
     }
+    if (product.isTrending) return { text: 'TRENDING', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
     if (discountPercent >= 50) return { text: 'MEGA DEAL', icon: Zap, color: '#6d28d9', bg: '#f3e8ff', border: '#d8b4fe' };
-    if (discountPercent >= 30) return { text: 'TRENDING', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+    if (discountPercent >= 40) return { text: 'POPULAR', icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
+    if (discountPercent >= 25) return { text: 'HOT PICK', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
     return { text: 'SELLING FAST', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
   };
   const badgeInfo = getBadgeInfo();

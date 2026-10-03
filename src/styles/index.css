@@ -149,6 +149,75 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
 .btn-lg { padding: 0.85rem 1.75rem; font-size: 1.05rem; }
 .btn-block { width: 100%; }
 
+/* ─── Jelly Button Style & Physics Animation ───────────────────────────── */
+@keyframes globalJellyHover {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(1.16, 0.84); }
+  50% { transform: scale(0.92, 1.08); }
+  75% { transform: scale(1.05, 0.96); }
+  90% { transform: scale(0.98, 1.02); }
+  100% { transform: scale(1.04, 1.02); }
+}
+
+@keyframes globalJellyClick {
+  0% { transform: scale(1, 1); }
+  30% { transform: scale(1.28, 0.72); }
+  60% { transform: scale(0.84, 1.16); }
+  80% { transform: scale(1.08, 0.92); }
+  100% { transform: scale(0.96, 0.96); }
+}
+
+.btn-jelly {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 999px !important;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #aa60f7 0%, #8b5cf6 45%, #7c3aed 75%, #6d28d9 100%) !important;
+  border: 2.5px solid #1e1b4b !important;
+  box-shadow: 
+    0 8px 20px -2px rgba(124, 58, 237, 0.5), 
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    inset 0 3px 6px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.35) !important;
+  cursor: pointer;
+  outline: none;
+  overflow: hidden;
+  user-select: none;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-jelly::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 14px;
+  right: 14px;
+  height: 3.5px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  filter: blur(0.4px);
+  pointer-events: none;
+}
+
+.btn-jelly:hover {
+  animation: globalJellyHover 0.6s ease;
+  box-shadow: 
+    0 12px 28px -2px rgba(124, 58, 237, 0.65), 
+    0 0 0 2px rgba(255, 255, 255, 1),
+    inset 0 3px 8px rgba(255, 255, 255, 0.85),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.35) !important;
+}
+
+.btn-jelly:active {
+  animation: globalJellyClick 0.4s ease;
+}
+
 /* Form Controls */
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
 .form-label { font-size: 0.88rem; font-weight: 600; color: #3b185f; }

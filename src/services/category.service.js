@@ -18,8 +18,9 @@ export const categoryService = {
   getBySlug: async (slug) => {
     try {
       const res = await api.get(`/categories/${slug}`);
-      if (res?.data) {
-        return res;
+      const item = res?.data?.data || res?.data;
+      if (item && item.name) {
+        return { data: item };
       }
     } catch (err) {
       console.warn('Backend category getBySlug unavailable, using local Data:', err?.message || err);

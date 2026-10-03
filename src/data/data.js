@@ -91,6 +91,19 @@ export const storeInfo = {
   address: 'Softnova Hub, Anna Salai, Chennai, Tamil Nadu - 600002',
 };
 
+// Slug alias map: URL slug → canonical data slug
+export const SLUG_ALIAS_MAP = {
+  'women-fashion': 'womens-fashion',
+  'womens-fashion': 'womens-fashion',
+  'home-kitchen': 'home-kitchen',
+  'artificial-jewellery': 'artificial-jewellery',
+  'beauty-personal-care': 'beauty-personal-care',
+  'beauty-and-personal-care': 'beauty-personal-care',
+  'mobile-accessories': 'mobile-accessories',
+  'traditional-tamil-products': 'traditional-tamil-products',
+  'traditional-tamil': 'traditional-tamil-products',
+};
+
 // ── Helper Lookup Functions ───────────────────────────────────────────────────
 
 export function getProducts(options = {}) {
@@ -98,12 +111,14 @@ export function getProducts(options = {}) {
   let result = [...products];
 
   if (category) {
-    const catLower = category.toLowerCase();
+    const catLower = category.toLowerCase().trim().replace(/[\s_]+/g, '-');
+    const resolvedCat = SLUG_ALIAS_MAP[catLower] || catLower;
     result = result.filter(
       (p) =>
         p.category?._id === category ||
         p.category?.slug === category ||
         p.category?.slug?.toLowerCase() === catLower ||
+        p.category?.slug?.toLowerCase() === resolvedCat ||
         p.category === category
     );
   }
@@ -175,7 +190,10 @@ export function getCategoryBySlug(slug) {
   if (!slug) return null;
   const decoded = decodeURIComponent(slug).toLowerCase().trim();
   const normalized = decoded.replace(/[\s_]+/g, '-');
+  // Resolve alias first
+  const aliasResolved = SLUG_ALIAS_MAP[normalized] || SLUG_ALIAS_MAP[decoded] || normalized;
   return (
+    categories.find((c) => c.slug?.toLowerCase() === aliasResolved) ||
     categories.find((c) => c.slug?.toLowerCase() === normalized) ||
     categories.find((c) => c.slug?.toLowerCase() === decoded) ||
     categories.find((c) => c._id === slug) ||

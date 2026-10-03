@@ -46,7 +46,7 @@ export default function OrderDetail() {
       <PageWrapper>
         <div className="section container" style={{ textAlign: 'center', padding: '4rem 0' }}>
           <h2>Order Not Found</h2>
-          <Link to="/account?tab=orders" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+          <Link to="/profile?tab=orders" className="btn btn-primary" style={{ marginTop: '1rem' }}>
             Back to My Orders
           </Link>
         </div>
@@ -60,7 +60,7 @@ export default function OrderDetail() {
         <div className={styles.pageContainer}>
           {/* Animated Breadcrumb Nav */}
           <div className={styles.breadcrumbNav}>
-            <Link to="/account?tab=orders" className={styles.breadcrumbLink}>
+            <Link to="/profile?tab=orders" className={styles.breadcrumbLink}>
               <ArrowLeft size={16} /> My Orders
             </Link>
             <ChevronRight size={14} />

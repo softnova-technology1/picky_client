@@ -113,6 +113,11 @@ const FadeUp = ({ children, delay = 0, className = '' }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -120,10 +125,19 @@ const FadeUp = ({ children, delay = 0, className = '' }) => {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.01, rootMargin: '250px 0px' }
     );
     if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+
+    // Guaranteed visibility safety timer (prevents blank/stuck sections on full screenshots or scroll anomalies)
+    const fallbackTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, 800);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   return (
@@ -172,9 +186,9 @@ const MagneticButton = ({ children, className = '', onClick }) => {
 // ─── Home Page Component ─────────────────────────────────────────
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [trendingProducts, setTrendingProducts] = useState([]);
-  const [newArrivals, setNewArrivals] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState(() => (fallbackProducts || []).slice(0, 8));
+  const [trendingProducts, setTrendingProducts] = useState(() => (fallbackProducts || []).slice(0, 10));
+  const [newArrivals, setNewArrivals] = useState(() => fallbackProducts || []);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -259,11 +273,15 @@ export default function Home() {
           setTrendingProducts(pItems.slice(0, 10)); // Trending horizontal
           setNewArrivals(pItems); // New arrivals
         } else {
-          setNewArrivals(fallbackProducts);
+          setFeaturedProducts((fallbackProducts || []).slice(0, 8));
+          setTrendingProducts((fallbackProducts || []).slice(0, 10));
+          setNewArrivals(fallbackProducts || []);
         }
       } catch (err) {
         console.error('Home load error:', err);
-        setNewArrivals(fallbackProducts);
+        setFeaturedProducts((fallbackProducts || []).slice(0, 8));
+        setTrendingProducts((fallbackProducts || []).slice(0, 10));
+        setNewArrivals(fallbackProducts || []);
       } finally {
         setLoading(false);
       }
@@ -281,13 +299,13 @@ export default function Home() {
     );
   }, [newArrivals, activeCategoryFilter]);
 
-  const spotlightProduct = fallbackProducts[0]; // Pure Cotton Handloom Madurai Sungudi Saree
+  const spotlightProduct = fallbackProducts.find((p) => p.slug === 'pure-cotton-handloom-madurai-sungudi-saree') || fallbackProducts[0];
   const flashDealProducts = [
-    fallbackProducts[6],  // Antique Matte Gold Temple Choker Necklace Set
-    fallbackProducts[10], // Studio Pro Hi-Fi Wireless Over-Ear Headphones (ANC)
-    fallbackProducts[16], // BoomPulse 360 Portable Wireless Bluetooth Speaker
-    fallbackProducts[8],  // UV400 Polarized Retro Square Acetate Sunglasses
-  ];
+    fallbackProducts.find((p) => p.slug === 'antique-matte-gold-temple-choker-necklace-set') || fallbackProducts[7],
+    fallbackProducts.find((p) => p.slug === 'multi-blade-stainless-steel-quick-vegetable-chopper') || fallbackProducts[4],
+    fallbackProducts.find((p) => p.slug === 'traditional-kemp-pearl-bell-jhumka-earrings') || fallbackProducts[8],
+    fallbackProducts.find((p) => p.slug === 'pre-seasoned-heavy-cast-iron-deep-kadai') || fallbackProducts[5],
+  ].filter(Boolean);
 
   const isSpotlightInWishlist = spotlightProduct
     ? isInWishlist(spotlightProduct._id || spotlightProduct.id || spotlightProduct.slug)
@@ -577,7 +595,10 @@ export default function Home() {
           <div className="hp-new-arrivals-grid">
             {(filteredArrivals.length > 0 ? filteredArrivals : newArrivals).slice(0, 5).map((product, i) => (
               <FadeUp key={product._id || product.id || i} delay={i * 60}>
-                <ProductCard product={product} />
+                <ProductCard
+                  product={product}
+                  badgeText={['HOT DROP', 'NEW ARRIVAL', 'TRENDING', 'SPECIAL EDITION', 'POPULAR'][i % 5]}
+                />
               </FadeUp>
             ))}
           </div>
@@ -600,7 +621,7 @@ export default function Home() {
             </FadeUp>
           </div>
           <div style={{ marginTop: '2.5rem' }}>
-            <ProductGrid products={featuredProducts.slice(0, 5)} loading={loading} />
+            <ProductGrid products={(featuredProducts.length > 0 ? featuredProducts : fallbackProducts).slice(0, 5)} loading={loading} />
           </div>
         </div>
       </section>
