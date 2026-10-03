@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import {
-  ArrowUpRight,
-  Play,
-  Sparkles,
-  Clock,
   ShieldCheck,
   Zap,
   BookOpen,
@@ -12,7 +8,9 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
-  Video,
+  Search,
+  ShoppingBag,
+  User,
 } from 'lucide-react';
 import '../../styles/blog.css';
 
@@ -48,27 +46,6 @@ export default function Blog() {
     },
   ];
 
-  const videoClips = [
-    {
-      id: 'v-1',
-      title: 'Inside Picky Fulfillment: How 100% Items Are Physically Tested',
-      duration: '3:45',
-      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80',
-    },
-    {
-      id: 'v-2',
-      title: 'Unboxing Q3 New Arrivals: Premium Audio & Desk Gear',
-      duration: '4:20',
-      image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&auto=format&fit=crop&q=80',
-    },
-    {
-      id: 'v-3',
-      title: 'Why We Don\'t Allow Third-Party Sellers on Picky',
-      duration: '2:15',
-      image: 'https://images.unsplash.com/photo-1556742049-0a67daf4005a?w=600&auto=format&fit=crop&q=80',
-    },
-  ];
-
   const faqs = [
     {
       q: 'Why does Picky operate as a single-vendor store instead of a multi-vendor marketplace?',
@@ -98,111 +75,152 @@ export default function Blog() {
 
   return (
     <PageWrapper>
-      {/* ── 1. Midnight Purple Hero Section ──────────────────────────── */}
-      <section className="blog-hero-wrapper">
-        <div className="blog-hero-glow-1" />
-        <div className="blog-hero-glow-2" />
+      {/* ── 1. Editorial Fashion Hero Section (Matching Reference Design) ── */}
+      <section className="editorial-hero-wrapper">
+        <div className="editorial-hero-card">
+          {/* Top In-Hero Minimal Header Bar */}
+          <div className="editorial-top-bar">
+            <div className="editorial-logo">
+              <span className="editorial-logo-bag">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#eb4d2e">
+                  <path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm7 17H5V8h14v12z" />
+                </svg>
+              </span>
+              <span className="editorial-logo-text">shops</span>
+            </div>
 
-        {/* Floating Accents */}
-        <span className="blog-accent-chevron">&gt;</span>
-        <span className="blog-accent-star">✦</span>
-        <div className="blog-accent-lightning">⚡</div>
+            <nav className="editorial-nav-links">
+              <a href="#topics" className="editorial-nav-link active">Home</a>
+              <a href="#topics" className="editorial-nav-link">Collection</a>
+              <a href="#topics" className="editorial-nav-link">Brands</a>
+              <a href="#faqs" className="editorial-nav-link">Our Areas</a>
+              <a href="#newsletter" className="editorial-nav-link">Contact</a>
+            </nav>
 
-        <div className="blog-hero-content">
-          <div className="blog-hero-top-badge">
-            <Sparkles size={14} style={{ color: '#c084fc' }} />
-            <span>Picky Insights & Keynotes</span>
+            <div className="editorial-header-actions">
+              <button type="button" className="editorial-icon-btn" aria-label="Search"><Search size={19} /></button>
+              <button type="button" className="editorial-icon-btn" aria-label="Shopping Bag"><ShoppingBag size={19} /></button>
+              <button type="button" className="editorial-icon-btn" aria-label="User Account"><User size={19} /></button>
+            </div>
           </div>
 
-          <h1 className="blog-hero-title">
-            Innovating Your Digital <br />
-            World With Us
-          </h1>
+          {/* Main 2-Column Hero Body */}
+          <div className="editorial-hero-body">
+            {/* Left Content Column */}
+            <div className="editorial-left-col">
+              <h1 className="editorial-main-title">
+                Fashion Gives<br />
+                Impression
+              </h1>
 
-          <p className="blog-hero-subtitle">
-            Discover curated shopping guides, product quality teardowns, and single-vendor logistics stories from the Picky team. Built for shoppers who refuse to settle for clutter.
-          </p>
+              {/* Connecting Divider Line and Arch Framing Box */}
+              <div className="editorial-content-frame">
+                <div className="editorial-sub-grid">
+                  <div className="editorial-desc-col">
+                    <div className="editorial-divider-line" />
+                    <p className="editorial-desc-text">
+                      Provide construction and consulting services to clients who value the highest levels of quality and service for their commercial, residential.
+                    </p>
+                  </div>
 
-          <button
-            type="button"
-            className="blog-hero-cta-btn"
-            onClick={() => {
-              const el = document.getElementById('spotlight-story');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            <span>Explore Keynotes</span>
-            <ArrowUpRight size={18} />
-          </button>
+                  {/* Architectural Arch Frame with enclosing black bounding box */}
+                  <div className="editorial-arch-box">
+                    <div className="editorial-arch-outer">
+                      <div className="editorial-arch-frame">
+                        <img
+                          src="/images/blog/arch_pink_model.jpg"
+                          alt="Fashion Impression Style Model"
+                          className="editorial-arch-img"
+                        />
+                      </div>
+                    </div>
+                    <div className="editorial-arch-base-line" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons & Hand-drawn Arrow */}
+              <div className="editorial-actions-row">
+                <button
+                  type="button"
+                  className="editorial-btn-solid"
+                  onClick={() => {
+                    const el = document.getElementById('topics');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  SHOP NOW
+                </button>
+
+                <button
+                  type="button"
+                  className="editorial-btn-outline"
+                  onClick={() => {
+                    const el = document.getElementById('faqs');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  EXPLORE OUR SHOP
+                </button>
+
+                {/* Hand Drawn Organic Curved Arrow pointing to the left */}
+                <div className="editorial-arrow-wrapper">
+                  <svg
+                    className="editorial-curved-arrow"
+                    viewBox="0 0 100 55"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M88 6C82 36 52 46 16 46"
+                      stroke="#424242"
+                      strokeWidth="2.8"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M26 36L14 46L26 56"
+                      stroke="#424242"
+                      strokeWidth="2.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Collage Column */}
+            <div className="editorial-right-col">
+              <div className="editorial-collage-container">
+                {/* Yellow Geometric Background Block with Black Border */}
+                <div className="editorial-yellow-block" />
+
+                {/* Oval/Circle Framed Photo with Clothes Rack & Thick White Border */}
+                <div className="editorial-oval-frame">
+                  <img
+                    src="/images/blog/clothing_rack_model.jpg"
+                    alt="Boutique Fashion Studio"
+                    className="editorial-oval-img"
+                  />
+                </div>
+
+                {/* Overlapping Transparent Cutout Model */}
+                <div className="editorial-model-container">
+                  <img
+                    src="/images/blog/fashion_hero_model.png"
+                    alt="Fashion Gives Impression Featured Model"
+                    className="editorial-model-cutout"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── 2. Featured Video / Interactive Presentation Frame ───────── */}
-      <div className="blog-showcase-wrapper">
-        <div className="blog-showcase-frame">
-          <img
-            src="/images/blog_featured_presentation.jpg"
-            alt="Picky Live Keynote Presentation"
-            className="blog-showcase-img"
-          />
-
-          <div className="blog-showcase-overlay">
-            <div className="blog-showcase-play-btn" title="Watch Keynote Presentation">
-              <Play size={28} style={{ marginLeft: '4px' }} />
-            </div>
-            <div className="blog-showcase-badge">
-              <span className="blog-live-dot" />
-              <span>Picky Product Keynote & Quality Verification Showcase</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 3D Stacked Platform Base Effect Underneath */}
-        <div className="blog-showcase-3d-base-1" />
-        <div className="blog-showcase-3d-base-2" />
-      </div>
-
-      <div className="container" id="spotlight-story">
-        {/* ── 3. Editor's Choice Spotlight Story ───────────────────── */}
+      <div className="container" id="topics" style={{ paddingTop: '3rem' }}>
+        {/* ── Topic Clusters Grid ────────────────────────────────── */}
         <div className="blog-section-header">
-          <span className="blog-section-tag">✦ Spotlight Story ✦</span>
-          <h2 className="blog-section-heading">Featured Story of the Month</h2>
-        </div>
-
-        <div className="blog-spotlight-card">
-          <div className="blog-spotlight-img-box">
-            <img
-              src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80"
-              alt="Quality Inspection Warehouse"
-            />
-          </div>
-
-          <div className="blog-spotlight-content">
-            <span className="blog-spotlight-badge">Editor's Choice</span>
-            <h3 className="blog-spotlight-title">
-              Behind the Scenes: How Picky Physically Inspects Every Single Product
-            </h3>
-            <p className="blog-spotlight-excerpt">
-              Unlike open multi-vendor marketplaces where unvetted sellers list products online, Picky operates as a single-vendor store. Every item is unboxed, stress-tested, and verified in our hub before shipment.
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#64748b' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#7c3aed', fontWeight: 700 }}>
-                <Clock size={15} /> 6 Min Read
-              </span>
-              <span>•</span>
-              <span>Published by Picky QC Team</span>
-            </div>
-
-            <button type="button" className="blog-hero-cta-btn" style={{ padding: '0.7rem 1.6rem', fontSize: '0.9rem' }}>
-              <span>Read Full Story</span>
-              <ArrowUpRight size={16} />
-            </button>
-          </div>
-        </div>
-
-        {/* ── 4. Topic Clusters Grid ────────────────────────────────── */}
-        <div className="blog-section-header" style={{ marginTop: '4rem' }}>
           <span className="blog-section-tag">✦ Explore Categories ✦</span>
           <h2 className="blog-section-heading">Browse Insights by Topic</h2>
         </div>
@@ -217,33 +235,8 @@ export default function Blog() {
           ))}
         </div>
 
-        {/* ── 5. Video Keynote Micro-Clips Grid ──────────────────────── */}
-        <div className="blog-section-header" style={{ marginTop: '4rem' }}>
-          <span className="blog-section-tag">✦ Video Highlights ✦</span>
-          <h2 className="blog-section-heading">Watch Keynote Demos & Teardowns</h2>
-        </div>
-
-        <div className="blog-video-grid">
-          {videoClips.map((clip) => (
-            <div className="blog-video-card" key={clip.id}>
-              <div className="blog-video-thumb-box">
-                <img src={clip.image} alt={clip.title} />
-                <div className="blog-video-play-overlay">
-                  <div className="blog-mini-play-btn">
-                    <Play size={20} style={{ marginLeft: '2px' }} />
-                  </div>
-                </div>
-                <span className="blog-video-duration">{clip.duration}</span>
-              </div>
-              <div className="blog-video-card-body">
-                <h4 className="blog-video-card-title">{clip.title}</h4>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── 6. Shopper FAQ Accordion Section ─────────────────────── */}
-        <div className="blog-faq-section-wrapper">
+        {/* ── Shopper FAQ Accordion Section ─────────────────────── */}
+        <div className="blog-faq-section-wrapper" id="faqs" style={{ marginTop: '4rem' }}>
           <div className="blog-section-header" style={{ marginBottom: '2rem' }}>
             <span className="blog-section-tag">✦ Shopper Guide ✦</span>
             <h2 className="blog-section-heading">Frequently Asked Questions</h2>
@@ -270,8 +263,8 @@ export default function Blog() {
           </div>
         </div>
 
-        {/* ── 7. Newsletter Subscription Banner ─────────────────────── */}
-        <div className="blog-newsletter-card">
+        {/* ── Newsletter Subscription Banner ─────────────────────── */}
+        <div className="blog-newsletter-card" id="newsletter">
           <div className="blog-newsletter-content">
             <h2 className="blog-newsletter-title">Stay Ahead of Picky Drops & Keynotes</h2>
             <p className="blog-newsletter-sub">

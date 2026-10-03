@@ -51,10 +51,10 @@ export default function Contact() {
                 <div className="k-eyebrow-line"></div>
               </div>
               <h1 className="k-hero-title">
-                We're Here to Help Your <span>Picky Experience</span>
+                We’re Here to Help With Your <span>Picky Experience</span>
               </h1>
               <p className="k-hero-desc">
-                Have a query about your order, product recommendations, or custom requests? Our customer care specialists are standing by to assist you 24/7 with dedicated support.
+                Have a question about your order, product, delivery, or anything else? Our customer support team is here to help you with your Picky shopping experience.
               </p>
 
               {/* CTA Action Buttons */}
@@ -96,49 +96,118 @@ export default function Contact() {
                 Reach out to us directly through any of the channels below. We're always here to assist you.
               </p>
             </div>
-
-            <div className="k-info-cards">
-              <div className="k-info-card">
-                <div className="k-card-icon-box">
-                  <Phone size={26} />
-                </div>
-                <div className="k-card-text">
-                  <h3>+91 83002 95721</h3>
-                  <p>+91 6385118083<br/>Mon - Sat, 9AM - 8PM</p>
-                </div>
-              </div>
-
-              <div className="k-info-card">
-                <div className="k-card-icon-box">
-                  <Mail size={26} />
-                </div>
-                <div className="k-card-text">
-                  <h3>pickysn2026@gmail.com</h3>
-                  <p>Drop us an email<br/>We reply within 24hrs</p>
-                </div>
-              </div>
-
-              <div className="k-info-card">
-                <div className="k-card-icon-box">
-                  <MapPin size={26} />
-                </div>
-                <div className="k-card-text">
-                  <h3>Peravurani, TN</h3>
-                  <p>1st Floor, Softnova Apartment<br/>SNV Mahal back side, near SBI bank</p>
+            <div className="k-infographic-flow">
+              {/* Step 01: Phone (Royal Purple) */}
+              <div className="k-flow-item step-purple">
+                <svg viewBox="0 0 270 270" className="k-flow-svg" preserveAspectRatio="none">
+                  <path
+                    d="M 228.5,56.6 A 122 122 0 1 0 135,257 C 195,257 245,210 270,135"
+                    fill="none"
+                    stroke="#7c3aed"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="228.5" cy="56.6" r="6" fill="#7c3aed" />
+                </svg>
+                <div className="k-flow-circle">
+                  <div className="k-flow-icon">
+                    <Phone size={20} strokeWidth={2.5} />
+                  </div>
+                  <h3 className="k-flow-title">+91 83002 95721</h3>
+                  <p className="k-flow-desc">
+                    +91 6385118083<br />
+                    Mon - Sat, 9AM - 8PM
+                  </p>
                 </div>
               </div>
 
-              <div className="k-info-card">
-                <div className="k-card-icon-box">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                  </svg>
+              {/* Step 02: Email (Azure Sky Blue) */}
+              <div className="k-flow-item step-blue">
+                <svg viewBox="0 0 270 270" className="k-flow-svg" preserveAspectRatio="none">
+                  <path
+                    d="M 0,135 C 25,60 75,13 135,13 A 122 122 0 0 1 135,257 A 122 122 0 0 1 29.35,196"
+                    fill="none"
+                    stroke="#0ea5e9"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 135,257 C 195,257 245,210 270,135"
+                    fill="none"
+                    stroke="#0ea5e9"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="29.35" cy="196" r="6" fill="#0ea5e9" />
+                </svg>
+                <div className="k-flow-circle">
+                  <div className="k-flow-icon">
+                    <Mail size={20} strokeWidth={2.5} />
+                  </div>
+                  <h3 className="k-flow-title k-email-title">pickysn2026@gmail.com</h3>
+                  <p className="k-flow-desc">
+                    Drop us an email<br />
+                    We reply within 24hrs
+                  </p>
                 </div>
-                <div className="k-card-text">
-                  <h3>@picky.co.in</h3>
-                  <p>Follow us on Instagram<br/>For daily updates</p>
+              </div>
+
+              {/* Step 03: Location (Coral Rose) */}
+              <div className="k-flow-item step-coral">
+                <svg viewBox="0 0 270 270" className="k-flow-svg" preserveAspectRatio="none">
+                  <path
+                    d="M 0,135 C 25,60 75,13 135,13 A 122 122 0 0 1 135,257 A 122 122 0 0 1 29.35,196"
+                    fill="none"
+                    stroke="#f43f5e"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 135,257 C 195,257 245,210 270,135"
+                    fill="none"
+                    stroke="#f43f5e"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="29.35" cy="196" r="6" fill="#f43f5e" />
+                </svg>
+                <div className="k-flow-circle">
+                  <div className="k-flow-icon">
+                    <MapPin size={20} strokeWidth={2.5} />
+                  </div>
+                  <h3 className="k-flow-title">Peravurani, TN</h3>
+                  <p className="k-flow-desc">
+                    1st Floor, Softnova Apt<br />
+                    SNV Mahal back side
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 04: Instagram (Radiant Magenta) */}
+              <div className="k-flow-item step-magenta">
+                <svg viewBox="0 0 270 270" className="k-flow-svg" preserveAspectRatio="none">
+                  <path
+                    d="M 0,135 C 25,60 75,13 135,13 A 122 122 0 0 1 135,257 A 122 122 0 0 1 29.35,196"
+                    fill="none"
+                    stroke="#d946ef"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="29.35" cy="196" r="6" fill="#d946ef" />
+                </svg>
+                <div className="k-flow-circle">
+                  <div className="k-flow-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                  </div>
+                  <h3 className="k-flow-title">@picky.co.in</h3>
+                  <p className="k-flow-desc">
+                    Follow on Instagram<br />
+                    For daily updates
+                  </p>
                 </div>
               </div>
             </div>

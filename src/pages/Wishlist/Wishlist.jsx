@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   Trash2,
   Check,
-  Flame
+  Flame,
+  Zap
 } from 'lucide-react';
 
 // Sample Kurta Collection items for manual Demo testing
@@ -406,95 +407,102 @@ export default function Wishlist() {
                   ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
                   : 0;
 
+                const badgeInfo = isOutOfStock
+                  ? { text: 'OUT OF STOCK', icon: Zap, color: '#dc2626', bg: '#fef2f2', border: '#fecaca' }
+                  : isLowStock
+                  ? { text: `ONLY ${stock} LEFT`, icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' }
+                  : discountPercent >= 50
+                  ? { text: 'MEGA DEAL', icon: Zap, color: '#6d28d9', bg: '#f3e8ff', border: '#d8b4fe' }
+                  : discountPercent >= 25
+                  ? { text: 'TRENDING', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' }
+                  : { text: 'SELLING FAST', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
+
+                const BadgeIcon = badgeInfo.icon;
+
                 return (
                   <div
                     key={pId}
                     className={`${styles['wishlist-card']} ${isOutOfStock ? styles['card-out-of-stock'] : ''}`}
                   >
-                    {/* Top Image Section */}
-                    <div className={styles['card-image-wrapper']}>
-                      {/* Stock Status Badge */}
-                      <div
-                        className={`${styles['stock-pill']} ${
-                          isOutOfStock
-                            ? styles['stock-out']
-                            : isLowStock
-                            ? styles['stock-low']
-                            : styles['stock-in']
-                        }`}
-                      >
-                        {isOutOfStock ? (
-                          <>
-                            <span className={styles['stock-dot-red']} />
-                            <span>Out of Stock</span>
-                          </>
-                        ) : isLowStock ? (
-                          <>
-                            <Flame size={12} className={styles['flame-icon']} />
-                            <span>Only {stock} Left!</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className={styles['stock-dot-green']} />
-                            <span>In Stock</span>
-                          </>
-                        )}
+                    {/* Top Image Section with Shop styling */}
+                    <div className={styles['card-top']}>
+                      {/* Background decorative circles */}
+                      <div className={`${styles['ref-bg-circle']} ${styles['ref-circle-1']}`}></div>
+                      <div className={`${styles['ref-bg-circle']} ${styles['ref-circle-2']}`}></div>
+                      <div className={`${styles['ref-bg-circle']} ${styles['ref-circle-3']}`}></div>
+
+                      {/* Sparkles */}
+                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-1']}`}>✦</div>
+                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-2']}`}>✦</div>
+                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-3']}`}>✦</div>
+                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-4']}`}>✦</div>
+
+                      {/* Top Bar with Badge & Wishlist Heart */}
+                      <div className={styles['ref-top-bar']}>
+                        <div
+                          className={styles['ref-mega-deal']}
+                          style={{
+                            color: badgeInfo.color,
+                            background: badgeInfo.bg,
+                            border: `1px solid ${badgeInfo.border}`,
+                          }}
+                        >
+                          <span className={styles['ref-deal-icon']}>
+                            <BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} />
+                          </span>
+                          <span className={styles['ref-deal-text']} style={{ color: badgeInfo.color }}>
+                            {badgeInfo.text}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={styles['ref-wishlist-btn']}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveItem(product);
+                          }}
+                          title="Remove from wishlist"
+                          aria-label="Remove from wishlist"
+                        >
+                          <Heart size={16} color="#6d28d9" fill="#e11d48" strokeWidth={0} />
+                        </button>
                       </div>
 
-                      {/* Remove Button (Heart) on Image */}
-                      <button
-                        type="button"
-                        className={styles['card-heart-badge']}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleRemoveItem(product);
-                        }}
-                        title="Remove from wishlist"
-                        aria-label="Remove from wishlist"
-                      >
-                        <Heart size={16} fill="#e11d48" color="#e11d48" />
-                      </button>
-
-                      <Link to={`/products/${product.slug || pId}`} className={styles['card-img-link']}>
+                      {/* Product Image */}
+                      <Link to={`/products/${product.slug || pId}`} className={styles['ref-img-wrapper']}>
                         <img
                           src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=700'}
                           alt={product.name}
-                          className={styles['card-img']}
+                          className={styles['ref-product-img']}
                           loading="lazy"
                         />
                       </Link>
                     </div>
 
-                    {/* Card Body */}
-                    <div className={styles['card-body']}>
-                      {/* Category Tag */}
-                      {product.category?.name && (
-                        <span className={styles['card-category-tag']}>
-                          {product.category.name}
-                        </span>
-                      )}
+                    {/* Bottom Info Section */}
+                    <div className={styles['ref-card-bottom']}>
+                      <div className={styles['ref-title-rating']}>
+                        <div className={styles['ref-title-section']}>
+                          <Link to={`/products/${product.slug || pId}`} className={styles['ref-title-link']}>
+                            <h3 className={styles['ref-product-title']} title={product.name}>
+                              {product.name}
+                            </h3>
+                          </Link>
+                        </div>
+                      </div>
 
-                      {/* Title */}
-                      <Link
-                        to={`/products/${product.slug || pId}`}
-                        className={styles['card-title']}
-                        title={product.name}
-                      >
-                        {product.name}
-                      </Link>
-
-                      {/* Price Row */}
-                      <div className={styles['price-row']}>
-                        <span className={styles['current-price']}>
+                      <div className={styles['ref-price-row']}>
+                        <span className={styles['ref-current-price']}>
                           ₹{currentPrice.toLocaleString('en-IN')}
                         </span>
                         {hasDiscount && (
                           <>
-                            <span className={styles['original-price']}>
+                            <span className={styles['ref-original-price']}>
                               ₹{originalPrice.toLocaleString('en-IN')}
                             </span>
-                            <span className={styles['discount-tag']}>
+                            <span className={styles['ref-discount-pill']}>
                               {discountPercent}% OFF
                             </span>
                           </>
@@ -502,10 +510,10 @@ export default function Wishlist() {
                       </div>
 
                       {/* Action Buttons Row */}
-                      <div className={styles['card-actions-row']}>
+                      <div className={styles['ref-actions-row']}>
                         <button
                           type="button"
-                          className={styles['btn-card-move']}
+                          className={styles['ref-add-cart-btn']}
                           onClick={() => handleMoveToCart(product)}
                           disabled={isOutOfStock}
                         >
@@ -514,7 +522,7 @@ export default function Wishlist() {
                           ) : isAdded ? (
                             <>
                               <Check size={15} />
-                              <span>Added!</span>
+                              <span>Added</span>
                             </>
                           ) : (
                             <>
@@ -526,7 +534,7 @@ export default function Wishlist() {
 
                         <button
                           type="button"
-                          className={styles['btn-card-delete']}
+                          className={styles['ref-delete-btn']}
                           onClick={() => handleRemoveItem(product)}
                           title="Remove item"
                           aria-label="Remove item"

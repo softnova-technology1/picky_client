@@ -42,18 +42,34 @@ export default function Footer() {
 
   return (
     <footer className="picky-footer-root" role="contentinfo">
-      {/* ── 1. Footer Skyline Banner (foo.png repeated in 2-column flex layout) ─────────────── */}
+      {/* ── 1. Footer Skyline Banner (Infinite Running Animation) ─────────────── */}
       <div className="footer-skyline-canvas-wrap" aria-hidden="true">
-        <img
-          src="/images/footer-final.png"
-          alt="Footer Skyline Banner 1"
-          className="footer-skyline-img"
-        />
-        <img
-          src="/images/footer-final.png"
-          alt="Footer Skyline Banner 2"
-          className="footer-skyline-img"
-        />
+        <div className="footer-skyline-track">
+          <div className="footer-skyline-group">
+            <img
+              src="/images/footer-skyline-transparent.png?v=3"
+              alt="Footer Skyline Banner 1"
+              className="footer-skyline-img"
+            />
+            <img
+              src="/images/footer-skyline-transparent.png?v=3"
+              alt="Footer Skyline Banner 2"
+              className="footer-skyline-img"
+            />
+          </div>
+          <div className="footer-skyline-group" aria-hidden="true">
+            <img
+              src="/images/footer-skyline-transparent.png?v=3"
+              alt="Footer Skyline Banner 3"
+              className="footer-skyline-img"
+            />
+            <img
+              src="/images/footer-skyline-transparent.png?v=3"
+              alt="Footer Skyline Banner 4"
+              className="footer-skyline-img"
+            />
+          </div>
+        </div>
       </div>
 
       {/* ── 2. Main Footer Body (Color Matched Royal Purple Theme) ─────────── */}
