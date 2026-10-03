@@ -356,11 +356,11 @@ export default function Account() {
                   {!loadingOrders && orders.length > 0 && (() => {
                     const filterOptions = [
                       { key: 'all', label: 'All Orders', color: '#7c3aed', bg: '#ede9fe', activeBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', activeColor: '#fff' },
-                      { key: 'pending', label: 'Pending', color: '#d97706', bg: '#fef3c7', activeBg: 'linear-gradient(135deg, #d97706, #b45309)', activeColor: '#fff' },
-                      { key: 'processing', label: 'Processing', color: '#2563eb', bg: '#dbeafe', activeBg: 'linear-gradient(135deg, #2563eb, #1d4ed8)', activeColor: '#fff' },
-                      { key: 'shipped', label: 'Shipped', color: '#7c3aed', bg: '#f3e8ff', activeBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', activeColor: '#fff' },
-                      { key: 'delivered', label: 'Delivered', color: '#059669', bg: '#d1fae5', activeBg: 'linear-gradient(135deg, #059669, #047857)', activeColor: '#fff' },
-                      { key: 'cancelled', label: 'Cancelled', color: '#dc2626', bg: '#fee2e2', activeBg: 'linear-gradient(135deg, #dc2626, #b91c1c)', activeColor: '#fff' },
+                      { key: 'confirmed', label: 'Confirmed', color: '#0369a1', bg: '#e0f2fe', activeBg: 'linear-gradient(135deg, #0284c7, #0369a1)', activeColor: '#fff' },
+                      { key: 'packing', label: 'Packing', color: '#7c3aed', bg: '#f3e8ff', activeBg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', activeColor: '#fff' },
+                      { key: 'shipped', label: 'Shipping', color: '#b45309', bg: '#fef3c7', activeBg: 'linear-gradient(135deg, #d97706, #b45309)', activeColor: '#fff' },
+                      { key: 'delivered', label: 'Delivered', color: '#15803d', bg: '#dcfce7', activeBg: 'linear-gradient(135deg, #16a34a, #15803d)', activeColor: '#fff' },
+                      { key: 'cancelled', label: 'Cancelled', color: '#b91c1c', bg: '#fee2e2', activeBg: 'linear-gradient(135deg, #dc2626, #b91c1c)', activeColor: '#fff' },
                     ];
                     return (
                       <div
@@ -381,7 +381,11 @@ export default function Account() {
                           const isActive = orderFilter === opt.key;
                           const statusCount = opt.key === 'all'
                             ? orders.length
-                            : orders.filter((o) => (o.status || '').toLowerCase() === opt.key).length;
+                            : orders.filter((o) => {
+                                const st = (o.status || '').toLowerCase();
+                                if (opt.key === 'shipped') return st === 'shipped' || st === 'out_for_delivery';
+                                return st === opt.key;
+                              }).length;
                           if (opt.key !== 'all' && statusCount === 0) return null;
                           return (
                             <button
@@ -439,7 +443,11 @@ export default function Account() {
                   ) : (() => {
                     const filteredOrders = orderFilter === 'all'
                       ? orders
-                      : orders.filter((o) => (o.status || '').toLowerCase() === orderFilter);
+                      : orders.filter((o) => {
+                          const st = (o.status || '').toLowerCase();
+                          if (orderFilter === 'shipped') return st === 'shipped' || st === 'out_for_delivery';
+                          return st === orderFilter;
+                        });
                     return filteredOrders.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '2.5rem 1.5rem', background: '#f8fafc', borderRadius: '16px' }}>
                         <Package size={32} color="#94a3b8" style={{ marginBottom: '0.75rem' }} />

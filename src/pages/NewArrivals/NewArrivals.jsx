@@ -5,27 +5,24 @@ import ProductCard from '../../components/product/ProductCard';
 import { MOCK_PRODUCTS } from '../../data/adminMockData';
 import {
   Sparkles,
-  ShieldCheck,
   ArrowRight,
-  Zap,
   SlidersHorizontal,
   ChevronDown,
   RotateCcw,
   Flame,
-  Truck,
   CheckCircle2,
-  Palette,
   ArrowDownNarrowWide,
   ArrowUpNarrowWide,
   Coins,
   IndianRupee,
   Crown,
   Layers,
+  Tag,
   Percent,
   BadgePercent,
   X,
   Check,
-  ShoppingCart,
+  Search,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
@@ -34,75 +31,87 @@ import { useUiStore } from '../../store/uiStore';
 export default function NewArrivals() {
   const { addItem } = useCartStore();
   const { showToast } = useUiStore();
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [activeSort, setActiveSort] = useState('fresh'); // 'fresh' | 'trending' | 'price-low' | 'price-high'
+  const [activeSubcategory, setActiveSubcategory] = useState('all');
+  const [activeSort, setActiveSort] = useState('newest'); // 'newest' | 'price-low' | 'price-high'
   const [priceRange, setPriceRange] = useState('all'); // 'all' | 'under500' | '500-1500' | '1500-3000' | 'above3000'
+  const [availabilityFilter, setAvailabilityFilter] = useState('all'); // 'all' | 'inStock' | 'outOfStock'
   const [discountFilter, setDiscountFilter] = useState('all'); // 'all' | '10' | '20' | '30' | '50'
-  const [expressOnly, setExpressOnly] = useState(false);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [freeDeliveryOnly, setFreeDeliveryOnly] = useState(false);
-  const [artisanOnly, setArtisanOnly] = useState(false);
   const [isFilterFolderOpen, setIsFilterFolderOpen] = useState(false);
   const catalogRef = useRef(null);
 
-  // 10 Core Store Categories + All Drops as Circular Story Avatars (100% Radius)
+  // 10 Core Store Categories + All New Arrivals as Circular Story Avatars (100% Radius)
   const categoryStories = [
     {
       id: 'all',
-      label: 'All Drops',
+      label: 'All New Arrivals',
       icon: 'sparkles',
     },
     {
       id: 'womens-fashion',
-      label: "Women's",
+      label: "Women's Fashion",
       image: '/images/products/saree.png',
     },
     {
       id: 'home-kitchen',
-      label: 'Kitchen',
+      label: 'Home & Kitchen',
       image: '/images/products/chopper.png',
     },
     {
       id: 'artificial-jewellery',
-      label: 'Jewellery',
+      label: 'Artificial Jewellery',
       image: '/images/products/necklace.png',
     },
     {
       id: 'beauty-personal-care',
-      label: 'Beauty',
+      label: 'Beauty & Personal Care',
       image: '/images/products/sunglasses.png',
     },
     {
       id: 'mobile-accessories',
-      label: 'Mobiles',
+      label: 'Mobile Accessories',
       image: '/images/products/headphones.png',
     },
     {
       id: 'traditional-tamil-products',
-      label: 'Heritage',
+      label: 'Traditional Tamil Products',
       image: '/images/products/gold_ring.png',
     },
     {
       id: 'snacks-foods',
-      label: 'Snacks',
+      label: 'Snacks & Foods',
       image: '/images/products/murukku.png',
     },
     {
       id: 'home-decor',
-      label: 'Décor',
+      label: 'Home Décor',
       image: '/images/products/speaker.png',
     },
     {
       id: 'kids-products',
-      label: 'Kids',
+      label: 'Kids Products',
       image: '/images/products/camera.png',
     },
     {
       id: 'fitness-products',
-      label: 'Fitness',
+      label: 'Fitness Products',
       image: '/images/products/yogamat.png',
     },
   ];
+
+  // Dynamic subcategories derived from mock data based on activeCategory
+  const availableSubcategories = useMemo(() => {
+    const map = new Map();
+    MOCK_PRODUCTS.forEach((p) => {
+      if (activeCategory === 'all' || p.category?.slug === activeCategory) {
+        if (p.subCategory?.slug && p.subCategory?.name) {
+          map.set(p.subCategory.slug, p.subCategory.name);
+        }
+      }
+    });
+    return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
+  }, [activeCategory]);
 
   // Compute counts for each category tab
   const tabCounts = useMemo(() => {
@@ -120,12 +129,31 @@ export default function NewArrivals() {
   const processedProducts = useMemo(() => {
     let list = [...MOCK_PRODUCTS];
 
-    // 1. Category Filter (synced with 10 circular bubbles)
+    // 1. Search Filter: Search by Product Name or SKU
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((p) => {
+        const nameMatch = (p.name || '').toLowerCase().includes(q);
+        const skuMatch = (p.sku || '').toLowerCase().includes(q);
+        const idMatch =
+          (p._id || '').toLowerCase().includes(q) ||
+          String(p.id || '').toLowerCase() === q;
+        const slugMatch = (p.slug || '').toLowerCase().includes(q);
+        return nameMatch || skuMatch || idMatch || slugMatch;
+      });
+    }
+
+    // 2. Category Filter
     if (activeCategory !== 'all') {
       list = list.filter((p) => p.category?.slug === activeCategory);
     }
 
-    // 2. Price Range Filter
+    // 3. Subcategory Filter
+    if (activeSubcategory !== 'all') {
+      list = list.filter((p) => p.subCategory?.slug === activeSubcategory);
+    }
+
+    // 4. Price Range Filter
     if (priceRange === 'under500') {
       list = list.filter((p) => (p.discountPrice || p.price) < 500);
     } else if (priceRange === '500-1500') {
@@ -142,7 +170,14 @@ export default function NewArrivals() {
       list = list.filter((p) => (p.discountPrice || p.price) > 3000);
     }
 
-    // 3. Discount Tier Filter
+    // 5. Availability Filter
+    if (availabilityFilter === 'inStock') {
+      list = list.filter((p) => p.stock === undefined || p.stock > 0);
+    } else if (availabilityFilter === 'outOfStock') {
+      list = list.filter((p) => p.stock !== undefined && p.stock === 0);
+    }
+
+    // 6. Discount Tier Filter
     if (discountFilter !== 'all') {
       const minDisc = parseInt(discountFilter, 10);
       list = list.filter((p) => {
@@ -152,88 +187,73 @@ export default function NewArrivals() {
       });
     }
 
-    // 4. Express Dispatch Filter
-    if (expressOnly) {
-      list = list.filter(
-        (p) =>
-          p.isExpress ||
-          p.tags?.includes('Express') ||
-          p.category?.slug === 'womens-fashion' ||
-          p.category?.slug === 'mobile-accessories'
-      );
-    }
-
-    // 5. In-Stock Only
-    if (inStockOnly) {
-      list = list.filter((p) => (p.stock || 0) > 0);
-    }
-
-    // 6. Free Delivery Filter
-    if (freeDeliveryOnly) {
-      list = list.filter((p) => {
-        const pr = p.discountPrice || p.price;
-        return pr >= 699 || p.tags?.includes('Free Delivery') || p.isFreeDelivery;
-      });
-    }
-
-    // 7. Artisan / Handcrafted & Heritage Only
-    if (artisanOnly) {
-      list = list.filter((p) => {
-        const cat = p.category?.slug;
-        const tags = (p.tags || []).join(' ').toLowerCase();
-        const desc = (p.description || '').toLowerCase();
-        return (
-          cat === 'traditional-tamil-products' ||
-          cat === 'artificial-jewellery' ||
-          tags.includes('handloom') ||
-          tags.includes('artisan') ||
-          tags.includes('zari') ||
-          tags.includes('traditional') ||
-          desc.includes('handloom') ||
-          desc.includes('handcrafted')
-        );
-      });
-    }
-
-    // 8. Sort Order
-    if (activeSort === 'trending') {
-      list.sort(
-        (a, b) =>
-          (b.discountPrice ? b.price - b.discountPrice : 0) -
-          (a.discountPrice ? a.price - a.discountPrice : 0)
-      );
-    } else if (activeSort === 'price-low') {
+    // 7. Sort Order
+    if (activeSort === 'price-low') {
       list.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
     } else if (activeSort === 'price-high') {
       list.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
     }
+    // Default 'newest' preserves fresh catalog order
 
     return list;
   }, [
+    searchQuery,
     activeCategory,
-    activeSort,
+    activeSubcategory,
     priceRange,
+    availabilityFilter,
     discountFilter,
-    expressOnly,
-    inStockOnly,
-    freeDeliveryOnly,
-    artisanOnly,
+    activeSort,
   ]);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
+    if (searchQuery.trim()) count++;
+    if (activeCategory !== 'all') count++;
+    if (activeSubcategory !== 'all') count++;
     if (priceRange !== 'all') count++;
+    if (availabilityFilter !== 'all') count++;
     if (discountFilter !== 'all') count++;
-    if (expressOnly) count++;
-    if (inStockOnly) count++;
-    if (freeDeliveryOnly) count++;
-    if (artisanOnly) count++;
-    if (activeSort !== 'fresh') count++;
+    if (activeSort !== 'newest') count++;
     return count;
-  }, [priceRange, discountFilter, expressOnly, inStockOnly, freeDeliveryOnly, artisanOnly, activeSort]);
+  }, [
+    searchQuery,
+    activeCategory,
+    activeSubcategory,
+    priceRange,
+    availabilityFilter,
+    discountFilter,
+    activeSort,
+  ]);
 
   const activeFilterTags = useMemo(() => {
     const tags = [];
+    if (searchQuery.trim()) {
+      tags.push({
+        key: 'search',
+        label: `Search: "${searchQuery.trim()}"`,
+        onRemove: () => setSearchQuery(''),
+      });
+    }
+    if (activeCategory !== 'all') {
+      const cat = categoryStories.find((c) => c.id === activeCategory);
+      tags.push({
+        key: 'category',
+        label: `Category: ${cat ? cat.label : activeCategory}`,
+        onRemove: () => {
+          setActiveCategory('all');
+          setActiveSubcategory('all');
+        },
+      });
+    }
+    if (activeSubcategory !== 'all') {
+      const sub = availableSubcategories.find((s) => s.slug === activeSubcategory);
+      tags.push({
+        key: 'subcategory',
+        label: `Subcategory: ${sub ? sub.name : activeSubcategory}`,
+        onRemove: () => setActiveSubcategory('all'),
+      });
+    }
     if (priceRange !== 'all') {
       const priceLabels = {
         under500: 'Under ₹500',
@@ -241,43 +261,57 @@ export default function NewArrivals() {
         '1500-3000': '₹1,500 - ₹3,000',
         above3000: 'Above ₹3,000',
       };
-      tags.push({ key: 'price', label: priceLabels[priceRange] || priceRange, onRemove: () => setPriceRange('all') });
+      tags.push({
+        key: 'price',
+        label: priceLabels[priceRange] || priceRange,
+        onRemove: () => setPriceRange('all'),
+      });
+    }
+    if (availabilityFilter !== 'all') {
+      tags.push({
+        key: 'availability',
+        label: availabilityFilter === 'inStock' ? 'In Stock' : 'Out of Stock',
+        onRemove: () => setAvailabilityFilter('all'),
+      });
     }
     if (discountFilter !== 'all') {
-      tags.push({ key: 'discount', label: `${discountFilter}% OFF+`, onRemove: () => setDiscountFilter('all') });
+      tags.push({
+        key: 'discount',
+        label: `${discountFilter}% OFF+`,
+        onRemove: () => setDiscountFilter('all'),
+      });
     }
-    if (expressOnly) {
-      tags.push({ key: 'express', label: '24h Express', onRemove: () => setExpressOnly(false) });
-    }
-    if (freeDeliveryOnly) {
-      tags.push({ key: 'freeDelivery', label: 'Free Shipping', onRemove: () => setFreeDeliveryOnly(false) });
-    }
-    if (inStockOnly) {
-      tags.push({ key: 'inStock', label: 'In Stock', onRemove: () => setInStockOnly(false) });
-    }
-    if (artisanOnly) {
-      tags.push({ key: 'artisan', label: 'Handloom & Artisan', onRemove: () => setArtisanOnly(false) });
-    }
-    if (activeSort !== 'fresh') {
+    if (activeSort !== 'newest') {
       const sortLabels = {
-        trending: 'Fast Moving',
         'price-low': 'Price: Low to High',
         'price-high': 'Price: High to Low',
       };
-      tags.push({ key: 'sort', label: sortLabels[activeSort] || activeSort, onRemove: () => setActiveSort('fresh') });
+      tags.push({
+        key: 'sort',
+        label: sortLabels[activeSort] || activeSort,
+        onRemove: () => setActiveSort('newest'),
+      });
     }
     return tags;
-  }, [priceRange, discountFilter, expressOnly, freeDeliveryOnly, inStockOnly, artisanOnly, activeSort]);
+  }, [
+    searchQuery,
+    activeCategory,
+    activeSubcategory,
+    priceRange,
+    availabilityFilter,
+    discountFilter,
+    activeSort,
+    availableSubcategories,
+  ]);
 
   const handleResetAllFilters = () => {
+    setSearchQuery('');
     setActiveCategory('all');
-    setActiveSort('fresh');
+    setActiveSubcategory('all');
+    setActiveSort('newest');
     setPriceRange('all');
+    setAvailabilityFilter('all');
     setDiscountFilter('all');
-    setExpressOnly(false);
-    setInStockOnly(false);
-    setFreeDeliveryOnly(false);
-    setArtisanOnly(false);
   };
 
   const handleScrollToCatalog = () => {
@@ -286,40 +320,11 @@ export default function NewArrivals() {
     }
   };
 
-  // ── Curated Drop Spotlight derived directly from Store MOCK_PRODUCTS ──
-  const featuredCuratedDrop = useMemo(() => {
-    if (activeCategory !== 'all') {
-      const match = MOCK_PRODUCTS.find((p) => p.category?.slug === activeCategory && p.isFeatured);
-      if (match) return match;
-      const anyMatch = MOCK_PRODUCTS.find((p) => p.category?.slug === activeCategory);
-      if (anyMatch) return anyMatch;
-    }
-    // Default flagship drop of the week (Pure Handloom Sungudi Saree)
-    return MOCK_PRODUCTS.find((p) => p._id === 'prod_wf_1') || MOCK_PRODUCTS[0];
-  }, [activeCategory]);
-
-  const curatedVisualImage = useMemo(() => {
-    if (!featuredCuratedDrop) return '/images/pill_model_saree.jpg';
-    if (featuredCuratedDrop._id === 'prod_wf_1') return '/images/pill_model_saree.jpg';
-    if (featuredCuratedDrop._id === 'prod_aj_1') return '/images/pill_model_jewellery.jpg';
-    if (featuredCuratedDrop._id === 'prod_wf_2') return '/images/pill_model_kurti.jpg';
-    if (featuredCuratedDrop._id === 'prod_hk_1') return '/images/pill_model_kitchen.jpg';
-    if (featuredCuratedDrop._id === 'prod_ma_1') return '/images/pill_model_tech.jpg';
-    return featuredCuratedDrop.image || featuredCuratedDrop.images?.[0] || '/images/pill_model_saree.jpg';
-  }, [featuredCuratedDrop]);
-
-  const handleAddCuratedDrop = (e) => {
-    e.preventDefault();
-    if (!featuredCuratedDrop) return;
-    addItem(featuredCuratedDrop, 1);
-    showToast(`Added "${featuredCuratedDrop.name}" to cart! ✨`, 'success');
-  };
-
   return (
     <PageWrapper>
       <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Streetwear Hero Showcase ── */}
-        <div style={{ paddingTop: '1.75rem', position: 'relative' }}>
+        <div style={{ paddingTop: '2.5rem', position: 'relative' }}>
           <NewArrivalsHero onExploreClick={handleScrollToCatalog} />
         </div>
 
@@ -374,23 +379,25 @@ export default function NewArrivals() {
             </Link>
           </div>
 
-          {/* ── 10 Circular Category Stories with Top-Right Notification Count Badges (Radius 100%) ── */}
+          {/* ── 7 Circular Category Stories (All New Arrivals + 6 Categories) ── */}
           <div className="circular-categories-wrapper">
             <div className="circular-categories-track">
               {categoryStories.map((item) => {
                 const isActive = activeCategory === item.id;
                 const count = tabCounts[item.id] || 0;
-                const hasNew = count > 0;
 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActiveCategory(item.id)}
+                    onClick={() => {
+                      setActiveCategory(item.id);
+                      setActiveSubcategory('all');
+                    }}
                     className={`category-story-item ${isActive ? 'active' : ''}`}
-                    title={`${item.label} (${count} fresh drops)`}
+                    title={`${item.label} (${count} new arrivals)`}
                   >
                     {/* 100% Circular Avatar Container */}
-                    <div className={`story-circle-pod ${hasNew ? 'has-new-border' : ''}`}>
+                    <div className="story-circle-pod">
                       {/* Notification Count Badge (Top-Right) */}
                       {count > 0 && (
                         <span className="story-notification-badge">
@@ -402,7 +409,7 @@ export default function NewArrivals() {
                       <div className="story-circle-inner">
                         {item.icon === 'sparkles' ? (
                           <div className="story-all-drops-icon">
-                            <Sparkles size={28} strokeWidth={2.5} />
+                            <Sparkles size={24} strokeWidth={1.75} />
                           </div>
                         ) : (
                           <img
@@ -425,11 +432,10 @@ export default function NewArrivals() {
             </div>
           </div>
 
-          {/* ── Feature 2: Highly Intuitive Quick Filter & Sort Bar ── */}
+          {/* ── Filter Bar & Product Search ── */}
           <div className="sort-filter-bar">
-            {/* Left Group: Folder Toggle & Quick Filters */}
+            {/* Left Group: Folder Toggle Button & Product Search Field */}
             <div className="bar-left-group">
-              {/* 📁 Filter Folder Toggle Button */}
               <button
                 onClick={() => setIsFilterFolderOpen((prev) => !prev)}
                 className={`sort-pill folder-toggle-btn ${isFilterFolderOpen ? 'open' : ''} ${
@@ -451,71 +457,44 @@ export default function NewArrivals() {
                 />
               </button>
 
-              <div className="bar-divider" />
-
-              {/* Quick Sort Options directly accessible on bar */}
-              <div className="quick-pill-cluster">
-                <button
-                  onClick={() => setActiveSort('fresh')}
-                  className={`sort-pill quick-pill ${activeSort === 'fresh' ? 'active' : ''}`}
-                >
-                  <Sparkles size={13} />
-                  <span>Freshest</span>
-                </button>
-                <button
-                  onClick={() => setActiveSort('trending')}
-                  className={`sort-pill quick-pill ${activeSort === 'trending' ? 'active' : ''}`}
-                >
-                  <Flame size={13} />
-                  <span>Trending</span>
-                </button>
-                <button
-                  onClick={() => setActiveSort(activeSort === 'price-low' ? 'price-high' : 'price-low')}
-                  className={`sort-pill quick-pill ${activeSort.startsWith('price-') ? 'active' : ''}`}
-                  title="Toggle Price Sort"
-                >
-                  {activeSort === 'price-high' ? (
-                    <ArrowUpNarrowWide size={13} />
-                  ) : (
-                    <ArrowDownNarrowWide size={13} />
-                  )}
-                  <span>{activeSort === 'price-high' ? 'Price: High to Low' : 'Price: Low to High'}</span>
-                </button>
-              </div>
-
-              <div className="bar-divider desktop-only" />
-
-              {/* Quick Perks / Delivery Toggles directly on bar */}
-              <div className="quick-pill-cluster desktop-only">
-                <button
-                  onClick={() => setExpressOnly((prev) => !prev)}
-                  className={`sort-pill quick-pill ${expressOnly ? 'active' : ''}`}
-                >
-                  <Zap size={13} />
-                  <span>24h Express</span>
-                </button>
-                <button
-                  onClick={() => setFreeDeliveryOnly((prev) => !prev)}
-                  className={`sort-pill quick-pill ${freeDeliveryOnly ? 'active' : ''}`}
-                >
-                  <Truck size={13} />
-                  <span>Free Shipping</span>
-                </button>
-                <button
-                  onClick={() => setInStockOnly((prev) => !prev)}
-                  className={`sort-pill quick-pill ${inStockOnly ? 'active' : ''}`}
-                >
-                  <CheckCircle2 size={13} />
-                  <span>In Stock</span>
-                </button>
+              {/* Product Search Field by Name or SKU */}
+              <div className="new-arrivals-search-box">
+                <Search size={16} className="search-box-icon" />
+                <input
+                  type="text"
+                  placeholder="Search by Product Name or SKU..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="new-arrivals-search-input"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="search-clear-btn"
+                    title="Clear search"
+                    type="button"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Right Group: Product Count & Clear All */}
+            {/* Right Group: Sort Selector & Clear All */}
             <div className="bar-right-group">
-              <span className="sort-active-count">
-                <strong>{processedProducts.length}</strong> Drops
-              </span>
+              <div className="bar-sort-selector">
+                <ArrowDownNarrowWide size={14} color="#7c3aed" />
+                <span className="bar-sort-label">Sort:</span>
+                <select
+                  value={activeSort}
+                  onChange={(e) => setActiveSort(e.target.value)}
+                  className="bar-sort-select"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
+              </div>
 
               {activeFiltersCount > 0 && (
                 <button
@@ -577,7 +556,7 @@ export default function NewArrivals() {
                       )}
                     </div>
                     <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-                      Filter drops by price range, perks, discounts & sorting priority
+                      Filter new arrivals by category, subcategory, price, availability, discount & sorting
                     </p>
                   </div>
                 </div>
@@ -599,9 +578,81 @@ export default function NewArrivals() {
                 </div>
               </div>
 
-              {/* Symmetrical 4-Card Grid */}
+              {/* Symmetrical 6-Card Grid (3 columns on desktop) */}
               <div className="folder-cards-grid">
-                {/* 1. Price Range Card */}
+                {/* 1. Category Filter Card */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <Layers size={15} color="#7c3aed" />
+                      <span className="col-label">Category</span>
+                    </div>
+                    {activeCategory !== 'all' && (
+                      <span className="group-active-indicator">Active</span>
+                    )}
+                  </div>
+                  <div className="group-chips-stack" style={{ maxHeight: '230px', overflowY: 'auto', paddingRight: '2px' }}>
+                    {categoryStories.map((cat) => {
+                      const isSelected = activeCategory === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setActiveCategory(cat.id);
+                            setActiveSubcategory('all');
+                          }}
+                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span>{cat.label}</span>
+                          </div>
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Subcategory Filter Card */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <Tag size={15} color="#7c3aed" />
+                      <span className="col-label">Subcategory</span>
+                    </div>
+                    {activeSubcategory !== 'all' && (
+                      <span className="group-active-indicator">Active</span>
+                    )}
+                  </div>
+                  <div className="group-chips-stack" style={{ maxHeight: '230px', overflowY: 'auto', paddingRight: '2px' }}>
+                    <button
+                      onClick={() => setActiveSubcategory('all')}
+                      className={`folder-chip ${activeSubcategory === 'all' ? 'active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span>All Subcategories</span>
+                      </div>
+                      {activeSubcategory === 'all' && <Check size={13} strokeWidth={3} />}
+                    </button>
+                    {availableSubcategories.map((sub) => {
+                      const isSelected = activeSubcategory === sub.slug;
+                      return (
+                        <button
+                          key={sub.slug}
+                          onClick={() => setActiveSubcategory(sub.slug)}
+                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span>{sub.name}</span>
+                          </div>
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Price Range Card */}
                 <div className="folder-group-card">
                   <div className="group-card-header">
                     <div className="group-header-left">
@@ -639,12 +690,47 @@ export default function NewArrivals() {
                   </div>
                 </div>
 
-                {/* 2. Discount Tiers Card */}
+                {/* 4. Availability Card */}
+                <div className="folder-group-card">
+                  <div className="group-card-header">
+                    <div className="group-header-left">
+                      <CheckCircle2 size={15} color="#7c3aed" />
+                      <span className="col-label">Availability</span>
+                    </div>
+                    {availabilityFilter !== 'all' && (
+                      <span className="group-active-indicator">Active</span>
+                    )}
+                  </div>
+                  <div className="group-chips-stack">
+                    {[
+                      { id: 'all', label: 'All Items' },
+                      { id: 'inStock', label: 'In Stock' },
+                      { id: 'outOfStock', label: 'Out of Stock' },
+                    ].map((item) => {
+                      const isSelected = availabilityFilter === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setAvailabilityFilter(item.id)}
+                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <CheckCircle2 size={13} strokeWidth={2.2} />
+                            <span>{item.label}</span>
+                          </div>
+                          {isSelected && <Check size={13} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 5. Discount Tiers Card */}
                 <div className="folder-group-card">
                   <div className="group-card-header">
                     <div className="group-header-left">
                       <Percent size={15} color="#7c3aed" />
-                      <span className="col-label">Discount Tiers</span>
+                      <span className="col-label">Discount</span>
                     </div>
                     {discountFilter !== 'all' && (
                       <span className="group-active-indicator">Active</span>
@@ -652,7 +738,7 @@ export default function NewArrivals() {
                   </div>
                   <div className="group-chips-stack">
                     {[
-                      { id: 'all', label: 'All Items', icon: Layers },
+                      { id: 'all', label: 'All Discounts', icon: Layers },
                       { id: '10', label: '10% OFF+', icon: Percent },
                       { id: '20', label: '20% OFF+', icon: Percent },
                       { id: '30', label: '30% OFF+', icon: BadgePercent },
@@ -677,76 +763,20 @@ export default function NewArrivals() {
                   </div>
                 </div>
 
-                {/* 3. Perks & Delivery Card (Combined & Balanced!) */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <Zap size={15} color="#7c3aed" />
-                      <span className="col-label">Perks & Delivery</span>
-                    </div>
-                    {(expressOnly || freeDeliveryOnly || artisanOnly || inStockOnly) && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
-                  </div>
-                  <div className="group-chips-stack">
-                    <button
-                      onClick={() => setExpressOnly((prev) => !prev)}
-                      className={`folder-chip ${expressOnly ? 'active' : ''}`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <Zap size={13} strokeWidth={2.2} />
-                        <span>24h Express Only</span>
-                      </div>
-                      {expressOnly && <Check size={13} strokeWidth={3} />}
-                    </button>
-                    <button
-                      onClick={() => setFreeDeliveryOnly((prev) => !prev)}
-                      className={`folder-chip ${freeDeliveryOnly ? 'active' : ''}`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <Truck size={13} strokeWidth={2.2} />
-                        <span>Free Shipping</span>
-                      </div>
-                      {freeDeliveryOnly && <Check size={13} strokeWidth={3} />}
-                    </button>
-                    <button
-                      onClick={() => setArtisanOnly((prev) => !prev)}
-                      className={`folder-chip ${artisanOnly ? 'active' : ''}`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <Palette size={13} strokeWidth={2.2} />
-                        <span>Handloom & Artisan</span>
-                      </div>
-                      {artisanOnly && <Check size={13} strokeWidth={3} />}
-                    </button>
-                    <button
-                      onClick={() => setInStockOnly((prev) => !prev)}
-                      className={`folder-chip ${inStockOnly ? 'active' : ''}`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <CheckCircle2 size={13} strokeWidth={2.2} />
-                        <span>In Stock Only</span>
-                      </div>
-                      {inStockOnly && <Check size={13} strokeWidth={3} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* 4. Sort Priority Card */}
+                {/* 6. Sorting Card */}
                 <div className="folder-group-card">
                   <div className="group-card-header">
                     <div className="group-header-left">
                       <ArrowDownNarrowWide size={15} color="#7c3aed" />
-                      <span className="col-label">Sort Priority</span>
+                      <span className="col-label">Sorting</span>
                     </div>
-                    {activeSort !== 'fresh' && (
-                      <span className="group-active-indicator">Custom</span>
+                    {activeSort !== 'newest' && (
+                      <span className="group-active-indicator">Active</span>
                     )}
                   </div>
                   <div className="group-chips-stack">
                     {[
-                      { id: 'fresh', label: 'Freshest Drop', icon: Sparkles },
-                      { id: 'trending', label: 'Fast Moving', icon: Flame },
+                      { id: 'newest', label: 'Newest (default)', icon: Sparkles },
                       { id: 'price-low', label: 'Price: Low to High', icon: ArrowDownNarrowWide },
                       { id: 'price-high', label: 'Price: High to Low', icon: ArrowUpNarrowWide },
                     ].map((item) => {
@@ -773,7 +803,7 @@ export default function NewArrivals() {
               {/* Folder Bottom Action Bar */}
               <div className="folder-footer-bar">
                 <div className="folder-footer-counter">
-                  Showing <strong>{processedProducts.length}</strong> matching drops
+                  Showing <strong>{processedProducts.length}</strong> matching new arrivals
                 </div>
                 <div className="folder-footer-actions">
                   {activeFiltersCount > 0 && (
@@ -791,7 +821,7 @@ export default function NewArrivals() {
                     }}
                     className="folder-apply-btn"
                   >
-                    <span>Apply & View Drops ({processedProducts.length})</span>
+                    <span>Apply & View New Arrivals ({processedProducts.length})</span>
                     <ArrowRight size={15} />
                   </button>
                 </div>
@@ -799,7 +829,7 @@ export default function NewArrivals() {
             </div>
           )}
 
-          {/* Products Grid with Generous Spacing & Spotlight Banner */}
+          {/* Products Grid with Generous Spacing */}
           {processedProducts.length === 0 ? (
             <div
               style={{
@@ -815,13 +845,10 @@ export default function NewArrivals() {
                 No products match this filter
               </h3>
               <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Try selecting "All Drops" or reset your sort criteria.
+                Try selecting "All New Arrivals" or reset your search & filter criteria.
               </p>
               <button
-                onClick={() => {
-                  setActiveCategory('all');
-                  setActiveSort('fresh');
-                }}
+                onClick={handleResetAllFilters}
                 style={{
                   background: '#7c3aed',
                   color: '#ffffff',
@@ -836,142 +863,11 @@ export default function NewArrivals() {
               </button>
             </div>
           ) : (
-            <>
-              {/* First 5 Products Grid */}
-              <div className="new-arrivals-product-grid">
-                {processedProducts.slice(0, 5).map((prod, idx) => (
-                  <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
-                ))}
-              </div>
-
-              {/* ── Feature 4: Curated Drop of the Week Editorial Spotlight Banner ── */}
-              {featuredCuratedDrop && (
-                <div className="curated-drop-banner">
-                  <div className="curated-drop-content">
-                    <div className="curated-drop-badge">
-                      <Sparkles size={14} />
-                      <span>
-                        Curated Drop of the Week • {featuredCuratedDrop.category?.name || "Women's Collection"}
-                      </span>
-                    </div>
-                    <h3 className="curated-drop-title">
-                      {featuredCuratedDrop.name}
-                    </h3>
-                    <p className="curated-drop-desc">
-                      {featuredCuratedDrop.description ||
-                        'Handcrafted certified authentic collection from premier artisan weavers. Freshly dropped & ready to ship.'}
-                    </p>
-
-                    <div className="curated-drop-perks">
-                      <div className="perk-item">
-                        <Zap size={15} color="#c084fc" />
-                        <span>Ready for 24h Express Dispatch</span>
-                      </div>
-                      <div className="perk-item">
-                        <ShieldCheck size={15} color="#c084fc" />
-                        <span>
-                          {featuredCuratedDrop.characteristics?.[0]
-                            ? `${featuredCuratedDrop.characteristics[0].key}: ${featuredCuratedDrop.characteristics[0].value}`
-                            : '100% Certified Authentic Picky Quality'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="curated-drop-cta-row">
-                      <button
-                        onClick={handleAddCuratedDrop}
-                        className="curated-drop-btn"
-                        type="button"
-                        title="Add this drop to your cart"
-                      >
-                        <ShoppingCart size={16} />
-                        <span>
-                          Add to Bag • ₹{featuredCuratedDrop.discountPrice || featuredCuratedDrop.price}
-                        </span>
-                      </button>
-                      <Link
-                        to={`/product/${featuredCuratedDrop.slug || featuredCuratedDrop._id}`}
-                        className="curated-drop-link-btn"
-                      >
-                        <span>View Details</span>
-                        <ArrowRight size={14} />
-                      </Link>
-                      <span className="curated-drop-counter-tag">
-                        <Zap
-                          size={13}
-                          style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }}
-                        />
-                        <span>Only {featuredCuratedDrop.stock || 15} Sets Remaining</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="curated-drop-visual">
-                    <div className="curated-visual-card">
-                      <img
-                        src={curatedVisualImage}
-                        alt={featuredCuratedDrop.name}
-                        className="curated-visual-img"
-                        loading="lazy"
-                      />
-                      <div className="curated-visual-glass-pill">
-                        <div style={{ maxWidth: '65%' }}>
-                          <strong
-                            style={{
-                              display: 'block',
-                              fontSize: '0.92rem',
-                              color: '#ffffff',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {featuredCuratedDrop.name}
-                          </strong>
-                          <span style={{ fontSize: '0.78rem', color: '#e9d5ff' }}>
-                            {featuredCuratedDrop.subCategory?.name ||
-                              featuredCuratedDrop.category?.name ||
-                              "Women's Fashion"}
-                          </span>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <span
-                            style={{
-                              display: 'block',
-                              fontSize: '1.18rem',
-                              fontWeight: 900,
-                              color: '#facc15',
-                            }}
-                          >
-                            ₹{featuredCuratedDrop.discountPrice || featuredCuratedDrop.price}
-                          </span>
-                          {featuredCuratedDrop.discountPrice && (
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                color: '#cbd5e1',
-                                textDecoration: 'line-through',
-                              }}
-                            >
-                              ₹{featuredCuratedDrop.price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Remaining Products Grid */}
-              {processedProducts.length > 5 && (
-                <div className="new-arrivals-product-grid">
-                  {processedProducts.slice(5).map((prod, idx) => (
-                    <ProductCard key={prod._id || prod.id} product={prod} index={idx + 5} />
-                  ))}
-                </div>
-              )}
-            </>
+            <div className="new-arrivals-product-grid">
+              {processedProducts.map((prod, idx) => (
+                <ProductCard key={prod._id || prod.id} product={prod} index={idx} hideBadge={true} />
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -1004,7 +900,7 @@ export default function NewArrivals() {
           box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3) !important;
         }
 
-        /* ── 10 Circular Category Stories Bar ── */
+        /* ── 7 Circular Category Stories Bar ── */
         .circular-categories-wrapper {
           margin: 0.5rem 0 2.5rem 0;
           width: 100%;
@@ -1027,7 +923,7 @@ export default function NewArrivals() {
           display: none;
         }
 
-        /* Individual Story Avatar Item - Distributed Full Width */
+        /* Individual Story Avatar Item - Distributed Cleanly */
         .category-story-item {
           display: flex;
           flex-direction: column;
@@ -1039,49 +935,42 @@ export default function NewArrivals() {
           padding: 0;
           outline: none;
           flex: 1 1 0px;
-          min-width: 66px;
-          max-width: 105px;
+          min-width: 68px;
+          max-width: 108px;
           transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           user-select: none;
         }
 
         .category-story-item:hover {
-          transform: translateY(-4px);
+          transform: translateY(-2px);
         }
 
-        /* 100% Round Circular Pod (Avatar) */
+        /* 100% Round Circular Pod (Avatar) with Single Clean 0.5px Border */
         .story-circle-pod {
-          width: 76px;
-          height: 76px;
+          width: 74px;
+          height: 74px;
           border-radius: 50%;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
           background: #ffffff;
-          border: 2.5px solid #ede9fe;
-          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 0.5px solid #cbd5e1;
+          box-shadow: none;
+          transition: all 0.2s ease;
           overflow: visible;
         }
 
-        /* 🌟 Theme Matched Border Color for Categories with New Products / Notifications */
-        .story-circle-pod.has-new-border {
-          border: 2.5px solid #a855f7;
-          box-shadow: 0 0 0 2px #ffffff, 0 0 0 4.5px rgba(168, 85, 247, 0.35), 0 6px 18px rgba(124, 58, 237, 0.18);
+        .category-story-item:hover .story-circle-pod {
+          border-color: #a855f7;
+          box-shadow: none;
         }
 
-        .category-story-item:hover .story-circle-pod.has-new-border {
-          border-color: #7c3aed;
-          box-shadow: 0 0 0 2px #ffffff, 0 0 0 5.5px rgba(124, 58, 237, 0.5), 0 8px 22px rgba(124, 58, 237, 0.28);
-        }
-
-        /* Active Selected Story Ring (Dual Luxury Ring) */
+        /* Active Selected Story Circle - Single Clean Border */
         .category-story-item.active .story-circle-pod {
-          border-color: #7c3aed !important;
-          background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%) !important;
-          box-shadow: 0 0 0 2.5px #ffffff, 0 0 0 5.5px #7c3aed, 0 8px 24px rgba(124, 58, 237, 0.35) !important;
-          transform: scale(1.06);
+          border: 1.5px solid #7c3aed !important;
+          box-shadow: none !important;
+          background: #ffffff !important;
         }
 
         /* Inner 100% Round Mask for High-Detail Zoomed Image */
@@ -1099,44 +988,52 @@ export default function NewArrivals() {
         /* Top-Right Notification Count Badge */
         .story-notification-badge {
           position: absolute;
-          top: -4px;
-          right: -4px;
-          background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+          top: -3px;
+          right: -3px;
+          background: #7c3aed;
           color: #ffffff;
-          font-size: 0.74rem;
-          font-weight: 900;
-          min-width: 23px;
-          height: 23px;
+          font-size: 0.72rem;
+          font-weight: 800;
+          min-width: 21px;
+          height: 21px;
           padding: 0 5px;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: 9999px;
           border: 2px solid #ffffff;
-          box-shadow: 0 2px 8px rgba(124, 58, 237, 0.5);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
           z-index: 5;
           letter-spacing: -0.01em;
           line-height: 1;
-          transition: transform 0.2s ease, background 0.2s ease;
         }
 
         .category-story-item.active .story-notification-badge {
-          background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
-          box-shadow: 0 3px 10px rgba(109, 40, 217, 0.65);
-          transform: scale(1.1);
+          background: #6d28d9;
+          box-shadow: none;
         }
 
-        /* All Drops Sparkles Circle */
+        /* All New Arrivals Simple Clean Icon Circle */
         .story-all-drops-icon {
           width: 100%;
           height: 100%;
           border-radius: 50%;
-          background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+          background: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffffff;
-          box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.3);
+          color: #7c3aed;
+          transition: all 0.2s ease;
+        }
+
+        .category-story-item:hover .story-all-drops-icon {
+          background: #faf5ff;
+          color: #6d28d9;
+        }
+
+        .category-story-item.active .story-all-drops-icon {
+          background: #f5edff;
+          color: #7c3aed;
         }
 
         /* 100% Round Category Small Image - Zoomed & High Detail */
@@ -1166,6 +1063,18 @@ export default function NewArrivals() {
         .story-circle-img.img-womens-fashion {
           transform: scale(1.36);
         }
+        .story-circle-img.img-snacks-foods {
+          transform: scale(1.42);
+        }
+        .story-circle-img.img-home-decor {
+          transform: scale(1.44);
+        }
+        .story-circle-img.img-kids-products {
+          transform: scale(1.45);
+        }
+        .story-circle-img.img-fitness-products {
+          transform: scale(1.42);
+        }
 
         .category-story-item:hover .story-circle-img {
           transform: scale(1.52);
@@ -1178,13 +1087,12 @@ export default function NewArrivals() {
 
         /* Category Label Text Below Circle */
         .story-label-text {
-          font-size: 0.82rem;
+          font-size: 0.78rem;
           font-weight: 700;
           text-align: center;
-          white-space: nowrap;
-          max-width: 88px;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          white-space: normal;
+          line-height: 1.2;
+          max-width: 95px;
           color: #475569;
           letter-spacing: -0.01em;
           transition: color 0.2s ease;
@@ -1199,7 +1107,7 @@ export default function NewArrivals() {
           font-weight: 800;
         }
 
-        /* ── Feature 2: Highly Intuitive Quick Sort & Filter System ── */
+        /* ── Filter Bar & Search Field ── */
         .sort-filter-bar {
           display: flex;
           align-items: center;
@@ -1213,22 +1121,9 @@ export default function NewArrivals() {
         .bar-left-group {
           display: flex;
           align-items: center;
-          gap: 0.65rem;
+          gap: 0.75rem;
           flex-wrap: wrap;
-        }
-
-        .bar-divider {
-          width: 1px;
-          height: 24px;
-          background: #e2e8f0;
-          margin: 0 0.15rem;
-        }
-
-        .quick-pill-cluster {
-          display: flex;
-          align-items: center;
-          gap: 0.45rem;
-          flex-wrap: wrap;
+          flex: 1 1 auto;
         }
 
         .bar-right-group {
@@ -1306,6 +1201,100 @@ export default function NewArrivals() {
           color: #ffffff;
         }
 
+        /* 🔎 Product Search Input (Picky Style) */
+        .new-arrivals-search-box {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: #ffffff;
+          border: 1.5px solid #ede9fe;
+          border-radius: 9999px;
+          padding: 0.45rem 0.95rem;
+          min-width: 280px;
+          max-width: 360px;
+          flex: 1 1 280px;
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 6px rgba(124, 58, 237, 0.04);
+        }
+
+        .new-arrivals-search-box:focus-within {
+          border-color: #a855f7;
+          box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .new-arrivals-search-box .search-box-icon {
+          color: #7c3aed;
+          flex-shrink: 0;
+        }
+
+        .new-arrivals-search-input {
+          border: none;
+          background: transparent;
+          outline: none;
+          font-size: 0.82rem;
+          color: #1e1b4b;
+          font-weight: 600;
+          width: 100%;
+        }
+
+        .new-arrivals-search-input::placeholder {
+          color: #94a3b8;
+          font-weight: 500;
+        }
+
+        .search-clear-btn {
+          border: none;
+          background: #f1f5f9;
+          color: #64748b;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          padding: 0;
+          flex-shrink: 0;
+          transition: all 0.15s ease;
+        }
+
+        .search-clear-btn:hover {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+
+        /* Sort Selector in Bar */
+        .bar-sort-selector {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: #ffffff;
+          border: 1.5px solid #ede9fe;
+          border-radius: 9999px;
+          padding: 0.38rem 0.85rem;
+          transition: all 0.2s ease;
+        }
+
+        .bar-sort-selector:hover {
+          border-color: #c084fc;
+        }
+
+        .bar-sort-label {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: #64748b;
+        }
+
+        .bar-sort-select {
+          border: none;
+          background: transparent;
+          outline: none;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #1e1b4b;
+          cursor: pointer;
+        }
+
         .clear-all-pill-btn {
           display: inline-flex;
           align-items: center;
@@ -1326,17 +1315,6 @@ export default function NewArrivals() {
           border-color: #f87171;
           color: #b91c1c;
           transform: translateY(-1px);
-        }
-
-        .sort-active-count {
-          font-size: 0.82rem;
-          font-weight: 700;
-          color: #7c3aed;
-          background: #f5edff;
-          padding: 0.4rem 0.9rem;
-          border-radius: 9999px;
-          border: 1px solid #ede9fe;
-          white-space: nowrap;
         }
 
         /* ── Active Filter Tags Row (1-click dismissable chips) ── */
@@ -1502,10 +1480,10 @@ export default function NewArrivals() {
           transform: rotate(90deg);
         }
 
-        /* Symmetrical 4-Card Folder Grid */
+        /* Symmetrical 6-Card Folder Grid (3 columns on desktop) */
         .folder-cards-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 1.25rem;
           margin-bottom: 1.5rem;
         }
@@ -1665,204 +1643,20 @@ export default function NewArrivals() {
           background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
         }
 
-        /* ── Feature 4: Curated Drop of the Week Editorial Spotlight ── */
-        .curated-drop-banner {
-          display: grid;
-          grid-template-columns: 1.15fr 0.85fr;
-          gap: 2.5rem;
-          align-items: center;
-          background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #4c1d95 100%);
-          border-radius: 32px;
-          padding: 3rem 2.8rem;
-          margin: 3.5rem 0;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 20px 45px rgba(30, 27, 75, 0.18);
-          border: 1.5px solid rgba(168, 85, 247, 0.3);
-        }
-
-        .curated-drop-banner::before {
-          content: '';
-          position: absolute;
-          top: -80px;
-          right: -80px;
-          width: 320px;
-          height: 320px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
-          pointer-events: none;
-        }
-
-        .curated-drop-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          background: rgba(168, 85, 247, 0.25);
-          color: #e9d5ff;
-          border: 1px solid rgba(192, 132, 252, 0.4);
-          font-size: 0.76rem;
-          font-weight: 800;
-          padding: 0.3rem 0.85rem;
-          border-radius: 9999px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          margin-bottom: 0.75rem;
-        }
-
-        .curated-drop-title {
-          color: #ffffff;
-          font-size: clamp(1.6rem, 2.5vw, 2.3rem);
-          font-weight: 900;
-          margin: 0 0 0.85rem 0;
-          line-height: 1.2;
-          letter-spacing: -0.02em;
-        }
-
-        .curated-drop-desc {
-          color: #cbd5e1;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          margin: 0 0 1.5rem 0;
-          max-width: 520px;
-        }
-
-        .curated-drop-perks {
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-          margin-bottom: 1.75rem;
-        }
-
-        .perk-item {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          color: #e2e8f0;
-          font-size: 0.88rem;
-          font-weight: 600;
-        }
-
-        .curated-drop-cta-row {
-          display: flex;
-          align-items: center;
-          gap: 1.25rem;
-          flex-wrap: wrap;
-        }
-
-        .curated-drop-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.55rem;
-          background: #ffffff;
-          color: #1e1b4b;
-          border: none;
-          padding: 0.85rem 1.75rem;
-          border-radius: 9999px;
-          font-size: 0.92rem;
-          font-weight: 800;
-          cursor: pointer;
-          transition: all 0.25s ease;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .curated-drop-btn:hover {
-          background: #f5edff;
-          color: #7c3aed;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
-        }
-
-        .curated-drop-link-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          color: #e9d5ff;
-          font-size: 0.88rem;
-          font-weight: 700;
-          text-decoration: none;
-          padding: 0.8rem 1.35rem;
-          border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.22);
-          backdrop-filter: blur(8px);
-          transition: all 0.2s ease;
-        }
-
-        .curated-drop-link-btn:hover {
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.22);
-          border-color: rgba(255, 255, 255, 0.45);
-          transform: translateY(-2px);
-        }
-
-        .curated-drop-counter-tag {
-          color: #facc15;
-          font-size: 0.82rem;
-          font-weight: 800;
-          letter-spacing: 0.02em;
-        }
-
-        .curated-visual-card {
-          position: relative;
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-          border: 2px solid rgba(255, 255, 255, 0.15);
-          aspect-ratio: 1 / 1;
-        }
-
-        .curated-visual-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          transition: transform 0.5s ease;
-        }
-
-        .curated-visual-card:hover .curated-visual-img {
-          transform: scale(1.05);
-        }
-
-        .curated-visual-glass-pill {
-          position: absolute;
-          bottom: 14px;
-          left: 14px;
-          right: 14px;
-          background: rgba(15, 23, 42, 0.82);
-          backdrop-filter: blur(12px);
-          border-radius: 18px;
-          padding: 0.85rem 1.1rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        @media (max-width: 1100px) {
+        @media (max-width: 1024px) {
           .folder-cards-grid {
             grid-template-columns: repeat(2, 1fr);
           }
         }
 
         @media (max-width: 990px) {
-          .desktop-only {
-            display: none !important;
-          }
-          .folder-cards-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-          .curated-drop-banner {
-            grid-template-columns: 1fr;
-            padding: 2rem 1.5rem;
-            gap: 2rem;
-          }
           .circular-categories-track {
             justify-content: flex-start;
             gap: 1.15rem;
           }
           .category-story-item {
             flex: 0 0 auto;
-            min-width: 66px;
+            min-width: 76px;
           }
           .story-circle-pod {
             width: 64px;
@@ -1877,11 +1671,30 @@ export default function NewArrivals() {
           }
           .story-label-text {
             font-size: 0.74rem;
-            max-width: 70px;
+            max-width: 85px;
           }
         }
 
         @media (max-width: 640px) {
+          .sort-filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+          }
+          .bar-left-group {
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+          }
+          .new-arrivals-search-box {
+            min-width: 100%;
+            max-width: 100%;
+          }
+          .bar-right-group {
+            justify-content: space-between;
+            width: 100%;
+            margin-left: 0;
+          }
           .folder-cards-grid {
             grid-template-columns: 1fr;
           }
@@ -1900,3 +1713,4 @@ export default function NewArrivals() {
     </PageWrapper>
   );
 }
+

@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
-import ProductCard from '../../components/product/ProductCard';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
+import { useMockStockStore } from '../../store/mockStockStore';
 import { wishlistService } from '../../services/wishlist.service';
 import styles from './Wishlist.module.css';
 import {
@@ -15,58 +15,69 @@ import {
   Sparkles,
   Bell,
   Tag,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  Check,
+  Flame
 } from 'lucide-react';
 
-// Default Kurta Collection items matching User Screenshot exactly
-const DEFAULT_WISHLIST_ITEMS = [
+// Sample Kurta Collection items for manual Demo testing
+export const DEFAULT_WISHLIST_ITEMS = [
   {
     _id: 'w_item_1',
     id: 'w_item_1',
     name: 'Embroidered Kurta',
-    price: 2499,
+    slug: 'embroidered-kurta',
+    price: 3499,
     discountPrice: 2499,
     originalPrice: 3499,
     image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=700&auto=format&fit=crop&q=80',
     colors: ['#eab308', '#fef08a', '#78350f', '#991b1b'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Kurtas', slug: 'womens-fashion' }
+    category: { name: 'Kurtas', slug: 'womens-fashion' },
+    stock: 12,
   },
   {
     _id: 'w_item_2',
     id: 'w_item_2',
     name: 'Printed Anarkali',
-    price: 1899,
+    slug: 'printed-anarkali',
+    price: 2699,
     discountPrice: 1899,
     originalPrice: 2699,
     image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=700&auto=format&fit=crop&q=80',
     colors: ['#f472b6', '#d97706', '#a16207', '#18181b'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Anarkalis', slug: 'womens-fashion' }
+    category: { name: 'Anarkalis', slug: 'womens-fashion' },
+    stock: 3, // Low stock demo!
   },
   {
     _id: 'w_item_3',
     id: 'w_item_3',
     name: 'Chikankari Kurta',
-    price: 2999,
+    slug: 'chikankari-kurta',
+    price: 3999,
     discountPrice: 2999,
     originalPrice: 3999,
     image: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?w=700&auto=format&fit=crop&q=80',
     colors: ['#fef08a', '#f472b6', '#fb7185', '#0284c7'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Kurtas', slug: 'womens-fashion' }
+    category: { name: 'Kurtas', slug: 'womens-fashion' },
+    stock: 0, // Out of Stock demo!
   },
   {
     _id: 'w_item_4',
     id: 'w_item_4',
     name: 'A-Line Kurta',
-    price: 1799,
+    slug: 'a-line-kurta',
+    price: 2499,
     discountPrice: 1799,
     originalPrice: 2499,
     image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=700&auto=format&fit=crop&q=80',
     colors: ['#15803d', '#86198f', '#1e1b4b', '#000000'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    category: { name: 'Kurtas', slug: 'womens-fashion' }
+    category: { name: 'Kurtas', slug: 'womens-fashion' },
+    stock: 18,
   }
 ];
 
@@ -75,17 +86,13 @@ export default function Wishlist() {
   const { addItem } = useCartStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
+  const { stockMap } = useMockStockStore();
 
   const [sortBy, setSortBy] = useState('recent');
   const [productToRemove, setProductToRemove] = useState(null);
+  const [addedFeedback, setAddedFeedback] = useState({});
 
-  // Populate default items if store items array is empty on initial render
-  useEffect(() => {
-    if (!items || items.length === 0) {
-      setWishlist(DEFAULT_WISHLIST_ITEMS);
-    }
-  }, []);
-
+  // Real store logic: If logged in, load server wishlist. Do NOT auto-inject mock items!
   useEffect(() => {
     async function loadServerWishlist() {
       if (isLoggedIn) {
@@ -102,6 +109,38 @@ export default function Wishlist() {
     }
     loadServerWishlist();
   }, [isLoggedIn, setWishlist]);
+
+  // Stock resolution helper
+  const getProductStock = (product) => {
+    const pId = product._id || product.id;
+    if (stockMap && stockMap[pId] !== undefined) return stockMap[pId];
+    if (typeof product.stock === 'number') return product.stock;
+    if (product.isOutOfStock) return 0;
+    return 10;
+  };
+
+  // Size helper
+  const getProductSizes = (product) => {
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) return product.sizes;
+    if (Array.isArray(product.variants?.options) && product.variants.options.length > 0) return product.variants.options;
+    return ['XS', 'S', 'M', 'L', 'XL'];
+  };
+
+  // Default size helper
+  const getDefaultSize = (product) => {
+    const sizes = getProductSizes(product);
+    if (product.variants?.default && sizes.includes(product.variants.default)) {
+      return product.variants.default;
+    }
+    return sizes.includes('M') ? 'M' : sizes[0] || 'Free Size';
+  };
+
+  // Color helper
+  const getProductColors = (product) => {
+    if (Array.isArray(product.colors) && product.colors.length > 0) return product.colors;
+    if (Array.isArray(product.variants?.colors) && product.variants.colors.length > 0) return product.variants.colors;
+    return [];
+  };
 
   const displayItems = useMemo(() => {
     let list = Array.isArray(items) ? [...items] : [];
@@ -122,6 +161,7 @@ export default function Wishlist() {
     return sum + Math.max(0, orig - curr);
   }, 0);
   const priceDrops = displayItems.filter((p) => p.discountPrice && p.discountPrice < p.price).length;
+
 
   const handleRemoveItem = (product) => {
     if (!product) return;
@@ -149,11 +189,46 @@ export default function Wishlist() {
     setProductToRemove(null);
   };
 
+  const handleMoveToCart = (product) => {
+    const pId = product._id || product.id || product.slug;
+    const stock = getProductStock(product);
+
+    if (stock <= 0) {
+      showToast(`"${product.name}" is currently out of stock.`, 'error');
+      return;
+    }
+
+    addItem({
+      ...product,
+      selectedSize: null,
+      selectedColor: null,
+    }, 1);
+
+    setAddedFeedback((prev) => ({ ...prev, [pId]: true }));
+    setTimeout(() => {
+      setAddedFeedback((prev) => ({ ...prev, [pId]: false }));
+    }, 1600);
+
+    showToast(`Added "${product.name}" to cart! Select size in bag.`, 'success');
+  };
+
   const handleMoveAllToCart = async () => {
     if (items.length === 0) return;
 
-    items.forEach((prod) => {
-      addItem(prod, 1);
+    const inStockItems = items.filter((prod) => getProductStock(prod) > 0);
+    const outOfStockCount = items.length - inStockItems.length;
+
+    if (inStockItems.length === 0) {
+      showToast('All items in your wishlist are currently out of stock.', 'error');
+      return;
+    }
+
+    inStockItems.forEach((prod) => {
+      addItem({
+        ...prod,
+        selectedSize: null,
+        selectedColor: null,
+      }, 1);
     });
 
     if (isLoggedIn) {
@@ -163,7 +238,17 @@ export default function Wishlist() {
     }
 
     clearWishlist();
-    showToast(`Moved all ${items.length} items to your cart!`, 'success');
+
+    if (outOfStockCount > 0) {
+      showToast(`Moved ${inStockItems.length} items to bag! (${outOfStockCount} out-of-stock item kept in wishlist)`, 'info');
+    } else {
+      showToast(`Moved all ${items.length} items to your bag! Select size in bag.`, 'success');
+    }
+  };
+
+  const handleLoadSampleItems = () => {
+    setWishlist(DEFAULT_WISHLIST_ITEMS);
+    showToast('Loaded sample festive Kurtas to your Wishlist!', 'info');
   };
 
   return (
@@ -171,81 +256,83 @@ export default function Wishlist() {
       <div className={styles['wishlist-wrapper']}>
         <div className={styles['container']}>
           {/* ── Luxury Stats Strip (Page Header) ── */}
-          <div className={styles['stats-strip']}>
-            <div className={styles['stats-cards-row']}>
-              {/* Stat 1 – Total Items */}
-              <div className={styles['stat-card']}>
-                <div className={styles['stat-icon-wrap']}>
-                  <Heart size={22} strokeWidth={1.8} />
+          {displayItems.length > 0 && (
+            <div className={styles['stats-strip']}>
+              <div className={styles['stats-cards-row']}>
+                {/* Stat 1 – Total Items */}
+                <div className={styles['stat-card']}>
+                  <div className={styles['stat-icon-wrap']}>
+                    <Heart size={22} strokeWidth={1.8} />
+                  </div>
+                  <div className={styles['stat-value']}>
+                    {String(displayItems.length).padStart(2, '0')}
+                  </div>
+                  <div className={styles['stat-label']}>TOTAL ITEMS</div>
+                  <div className={styles['stat-underline']} />
                 </div>
-                <div className={styles['stat-value']}>
-                  {String(displayItems.length).padStart(2, '0')}
-                </div>
-                <div className={styles['stat-label']}>TOTAL ITEMS</div>
-                <div className={styles['stat-underline']} />
-              </div>
 
-              <div className={styles['stat-connector']}>
-                <span className={styles['connector-dot']} />
-                <div className={styles['connector-line']} />
-                <span className={styles['connector-dot']} />
-              </div>
+                <div className={styles['stat-connector']}>
+                  <span className={styles['connector-dot']} />
+                  <div className={styles['connector-line']} />
+                  <span className={styles['connector-dot']} />
+                </div>
 
-              {/* Stat 2 – Wishlist Value */}
-              <div className={styles['stat-card']}>
-                <div className={styles['stat-icon-wrap']}>
-                  <ShoppingCart size={22} strokeWidth={1.8} />
+                {/* Stat 2 – Wishlist Value */}
+                <div className={styles['stat-card']}>
+                  <div className={styles['stat-icon-wrap']}>
+                    <ShoppingCart size={22} strokeWidth={1.8} />
+                  </div>
+                  <div className={styles['stat-value']}>
+                    ₹{wishlistValue.toLocaleString('en-IN')}
+                  </div>
+                  <div className={styles['stat-label']}>WISHLIST VALUE</div>
+                  <div className={styles['stat-underline']} />
                 </div>
-                <div className={styles['stat-value']}>
-                  ₹{wishlistValue.toLocaleString('en-IN')}
-                </div>
-                <div className={styles['stat-label']}>WISHLIST VALUE</div>
-                <div className={styles['stat-underline']} />
-              </div>
 
-              <div className={styles['stat-connector']}>
-                <span className={styles['connector-dot']} />
-                <div className={styles['connector-line']} />
-                <span className={styles['connector-dot']} />
-              </div>
+                <div className={styles['stat-connector']}>
+                  <span className={styles['connector-dot']} />
+                  <div className={styles['connector-line']} />
+                  <span className={styles['connector-dot']} />
+                </div>
 
-              {/* Stat 3 – Potential Savings */}
-              <div className={styles['stat-card']}>
-                <div className={styles['stat-icon-wrap']}>
-                  <Tag size={22} strokeWidth={1.8} />
+                {/* Stat 3 – Potential Savings */}
+                <div className={styles['stat-card']}>
+                  <div className={styles['stat-icon-wrap']}>
+                    <Tag size={22} strokeWidth={1.8} />
+                  </div>
+                  <div className={styles['stat-value']}>
+                    ₹{potentialSavings.toLocaleString('en-IN')}
+                  </div>
+                  <div className={styles['stat-label']}>POTENTIAL SAVINGS</div>
+                  <div className={styles['stat-underline']} />
                 </div>
-                <div className={styles['stat-value']}>
-                  ₹{potentialSavings.toLocaleString('en-IN')}
-                </div>
-                <div className={styles['stat-label']}>POTENTIAL SAVINGS</div>
-                <div className={styles['stat-underline']} />
-              </div>
 
-              <div className={styles['stat-connector']}>
-                <span className={styles['connector-dot']} />
-                <div className={styles['connector-line']} />
-                <span className={styles['connector-dot']} />
-              </div>
+                <div className={styles['stat-connector']}>
+                  <span className={styles['connector-dot']} />
+                  <div className={styles['connector-line']} />
+                  <span className={styles['connector-dot']} />
+                </div>
 
-              {/* Stat 4 – Price Drops */}
-              <div className={styles['stat-card']}>
-                <div className={styles['stat-icon-wrap']}>
-                  <Bell size={22} strokeWidth={1.8} />
+                {/* Stat 4 – Price Drops */}
+                <div className={styles['stat-card']}>
+                  <div className={styles['stat-icon-wrap']}>
+                    <Bell size={22} strokeWidth={1.8} />
+                  </div>
+                  <div className={styles['stat-value']}>
+                    {String(priceDrops).padStart(2, '0')}
+                  </div>
+                  <div className={styles['stat-label']}>PRICE DROPS</div>
+                  <div className={styles['stat-underline']} />
                 </div>
-                <div className={styles['stat-value']}>
-                  {String(priceDrops).padStart(2, '0')}
-                </div>
-                <div className={styles['stat-label']}>PRICE DROPS</div>
-                <div className={styles['stat-underline']} />
               </div>
             </div>
-          </div>
+          )}
 
           {/* ── Controls Bar ── */}
           {displayItems.length > 0 && (
             <div className={styles['controls-bar']}>
               <div className={styles['item-count-label']}>
-                MY WISHLIST ({displayItems.length} ITEMS)
+                MY WISHLIST ({displayItems.length} {displayItems.length === 1 ? 'ITEM' : 'ITEMS'})
               </div>
 
               <div className={styles['controls-right-group']}>
@@ -275,7 +362,7 @@ export default function Wishlist() {
             </div>
           )}
 
-          {/* Wishlist Product Items Grid using Standard ProductCard */}
+          {/* ── Product Grid or Empty State ── */}
           {displayItems.length === 0 ? (
             <div className={styles['empty-card']}>
               <div className={styles['empty-icon-bubble']}>
@@ -292,17 +379,163 @@ export default function Wishlist() {
               >
                 Explore Store <ArrowRight size={18} />
               </Link>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={handleLoadSampleItems}
+                  className={styles['empty-demo-btn']}
+                >
+                  Load Sample Kurtas (Demo Preview)
+                </button>
+              </div>
             </div>
           ) : (
             <div className={styles['wishlist-grid']}>
               {displayItems.map((product) => {
                 const pId = product._id || product.id || product.slug;
+                const stock = getProductStock(product);
+                const isOutOfStock = stock <= 0;
+                const isLowStock = stock > 0 && stock <= 5;
+                const isAdded = !!addedFeedback[pId];
+
+                const currentPrice = product.discountPrice || product.price || 0;
+                const originalPrice = product.originalPrice || product.price || 0;
+                const hasDiscount = originalPrice > currentPrice;
+                const discountPercent = hasDiscount
+                  ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+                  : 0;
+
                 return (
-                  <ProductCard
+                  <div
                     key={pId}
-                    product={product}
-                    onRemoveWishlist={handleRemoveItem}
-                  />
+                    className={`${styles['wishlist-card']} ${isOutOfStock ? styles['card-out-of-stock'] : ''}`}
+                  >
+                    {/* Top Image Section */}
+                    <div className={styles['card-image-wrapper']}>
+                      {/* Stock Status Badge */}
+                      <div
+                        className={`${styles['stock-pill']} ${
+                          isOutOfStock
+                            ? styles['stock-out']
+                            : isLowStock
+                            ? styles['stock-low']
+                            : styles['stock-in']
+                        }`}
+                      >
+                        {isOutOfStock ? (
+                          <>
+                            <span className={styles['stock-dot-red']} />
+                            <span>Out of Stock</span>
+                          </>
+                        ) : isLowStock ? (
+                          <>
+                            <Flame size={12} className={styles['flame-icon']} />
+                            <span>Only {stock} Left!</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className={styles['stock-dot-green']} />
+                            <span>In Stock</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Remove Button (Heart) on Image */}
+                      <button
+                        type="button"
+                        className={styles['card-heart-badge']}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRemoveItem(product);
+                        }}
+                        title="Remove from wishlist"
+                        aria-label="Remove from wishlist"
+                      >
+                        <Heart size={16} fill="#e11d48" color="#e11d48" />
+                      </button>
+
+                      <Link to={`/products/${product.slug || pId}`} className={styles['card-img-link']}>
+                        <img
+                          src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=700'}
+                          alt={product.name}
+                          className={styles['card-img']}
+                          loading="lazy"
+                        />
+                      </Link>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className={styles['card-body']}>
+                      {/* Category Tag */}
+                      {product.category?.name && (
+                        <span className={styles['card-category-tag']}>
+                          {product.category.name}
+                        </span>
+                      )}
+
+                      {/* Title */}
+                      <Link
+                        to={`/products/${product.slug || pId}`}
+                        className={styles['card-title']}
+                        title={product.name}
+                      >
+                        {product.name}
+                      </Link>
+
+                      {/* Price Row */}
+                      <div className={styles['price-row']}>
+                        <span className={styles['current-price']}>
+                          ₹{currentPrice.toLocaleString('en-IN')}
+                        </span>
+                        {hasDiscount && (
+                          <>
+                            <span className={styles['original-price']}>
+                              ₹{originalPrice.toLocaleString('en-IN')}
+                            </span>
+                            <span className={styles['discount-tag']}>
+                              {discountPercent}% OFF
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Action Buttons Row */}
+                      <div className={styles['card-actions-row']}>
+                        <button
+                          type="button"
+                          className={styles['btn-card-move']}
+                          onClick={() => handleMoveToCart(product)}
+                          disabled={isOutOfStock}
+                        >
+                          {isOutOfStock ? (
+                            <span>Out of Stock</span>
+                          ) : isAdded ? (
+                            <>
+                              <Check size={15} />
+                              <span>Added!</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart size={15} />
+                              <span>Move to Bag</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={styles['btn-card-delete']}
+                          onClick={() => handleRemoveItem(product)}
+                          title="Remove item"
+                          aria-label="Remove item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>

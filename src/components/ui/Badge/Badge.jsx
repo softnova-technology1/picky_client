@@ -6,7 +6,7 @@ export default function Badge({ status, text, variant, showIcon = true, pulse = 
 
   const statusConfigs = {
     confirmed: {
-      label: 'Confirmed',
+      label: 'Order Confirmed',
       icon: CheckCircle2,
       bg: 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)',
       color: '#0369a1',
@@ -14,8 +14,17 @@ export default function Badge({ status, text, variant, showIcon = true, pulse = 
       dotColor: '#0284c7',
       glow: 'rgba(2, 132, 199, 0.2)',
     },
+    packing: {
+      label: 'Order Packing',
+      icon: Package,
+      bg: 'linear-gradient(135deg, #f3e8ff 0%, #faf5ff 100%)',
+      color: '#7c3aed',
+      border: '#c4b5fd',
+      dotColor: '#8b5cf6',
+      glow: 'rgba(139, 92, 246, 0.2)',
+    },
     shipped: {
-      label: 'Shipped',
+      label: 'Order Shipping',
       icon: Truck,
       bg: 'linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%)',
       color: '#b45309',
@@ -24,7 +33,7 @@ export default function Badge({ status, text, variant, showIcon = true, pulse = 
       glow: 'rgba(245, 158, 11, 0.2)',
     },
     out_for_delivery: {
-      label: 'Out for Delivery',
+      label: 'Order Shipping',
       icon: Truck,
       bg: 'linear-gradient(135deg, #ede9fe 0%, #faf5ff 100%)',
       color: '#6d28d9',
@@ -33,7 +42,7 @@ export default function Badge({ status, text, variant, showIcon = true, pulse = 
       glow: 'rgba(139, 92, 246, 0.2)',
     },
     delivered: {
-      label: 'Delivered',
+      label: 'Order Delivered',
       icon: Sparkles,
       bg: 'linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%)',
       color: '#15803d',
@@ -42,7 +51,7 @@ export default function Badge({ status, text, variant, showIcon = true, pulse = 
       glow: 'rgba(34, 197, 94, 0.2)',
     },
     cancelled: {
-      label: 'Cancelled',
+      label: 'Cancelled Order',
       icon: XCircle,
       bg: 'linear-gradient(135deg, #fee2e2 0%, #fff1f2 100%)',
       color: '#b91c1c',

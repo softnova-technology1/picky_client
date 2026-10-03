@@ -22,6 +22,18 @@ export const useCartStore = create(
         const prodId = getItemId(product);
         if (!prodId) return;
 
+        const availableSizes = Array.isArray(product.variants?.options) && product.variants.options.length > 0
+          ? product.variants.options
+          : Array.isArray(product.sizes) && product.sizes.length > 0
+            ? product.sizes
+            : [];
+
+        const availableColors = Array.isArray(product.variants?.colors) && product.variants.colors.length > 0
+          ? product.variants.colors
+          : Array.isArray(product.colors) && product.colors.length > 0
+            ? product.colors
+            : [];
+
         const idx = items.findIndex((i) => getItemId(i) === prodId);
         let newItems;
         if (idx > -1) {
@@ -35,17 +47,41 @@ export const useCartStore = create(
               _id: prodId,
               id: prodId,
               productId: prodId,
+              slug: product.slug,
               name: product.name,
               image: product.images?.[0] || product.image || null,
               images: product.images || (product.image ? [product.image] : []),
               price: product.discountPrice || product.price || 0,
               discountPrice: product.discountPrice || product.price || 0,
+              originalPrice: product.originalPrice || product.price || 0,
               selectedSize: product.selectedSize || null,
+              selectedColor: product.selectedColor || null,
+              availableSizes,
+              availableColors,
+              hasVariants: availableSizes.length > 0 || availableColors.length > 0,
               quantity,
             },
           ];
         }
         set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
+      },
+
+      updateVariant: (target, { selectedSize, selectedColor }) => {
+        const targetId = String(getItemId(target));
+        if (!targetId) return;
+
+        const currentItems = get().items;
+        const newItems = currentItems.map((i) => {
+          if (String(getItemId(i)) === targetId) {
+            return {
+              ...i,
+              ...(selectedSize !== undefined ? { selectedSize } : {}),
+              ...(selectedColor !== undefined ? { selectedColor } : {}),
+            };
+          }
+          return i;
+        });
+        set({ items: newItems });
       },
 
       updateQty: (target, quantity) => {
