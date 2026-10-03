@@ -1,1 +1,261 @@
-/* TrackingStepper CSS Module */
+/* ═══════════════════════════════════════════════════════
+   Premium E-Commerce Shipment Tracker
+   ─ Horizontal • Glassmorphism • Micro-animations
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Keyframes ──────────────────────────────────────────── */
+@keyframes shimmerBeam {
+  0%   { background-position: -300% 0; }
+  100% { background-position: 300% 0; }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.9); opacity: 0.7; }
+  80%  { transform: scale(2.4); opacity: 0; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+
+@keyframes badgePop {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  65%  { transform: scale(1.25) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes floatActive {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4), 0 4px 16px rgba(124, 58, 237, 0.25); }
+  50%       { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0), 0 4px 22px rgba(124, 58, 237, 0.4); }
+}
+
+/* ── Root container ─────────────────────────────────────── */
+.root {
+  position: relative;
+  padding: 2.25rem 0 1.5rem;
+  user-select: none;
+}
+
+/* ── Progress Rail ──────────────────────────────────────── */
+.rail {
+  position: absolute;
+  top: calc(2.25rem + 28px);   /* centre of 56px circle */
+  left: calc(10% + 28px);
+  right: calc(10% + 28px);
+  height: 5px;
+  border-radius: 99px;
+  background: #ede9fe;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.railFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(
+    90deg,
+    #10b981 0%,
+    #06b6d4 30%,
+    #6d28d9 70%,
+    #a855f7 100%
+  );
+  position: relative;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.railFill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmerBeam 2.4s linear infinite;
+}
+
+/* ── Steps Row ──────────────────────────────────────────── */
+.steps {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* ── Single Step ────────────────────────────────────────── */
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  width: 20%;
+}
+
+/* ── Circle Wrap ────────────────────────────────────────── */
+.circleWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Active ripple ring */
+.activeRing {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.22);
+  animation: ripple 1.8s ease-out infinite;
+  z-index: 0;
+}
+
+/* ── The main circle ────────────────────────────────────── */
+.circle {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Pending default ── */
+  background: #f5f3ff;
+  border: 2px solid #ddd6fe;
+  color: #c4b5fd;
+  box-shadow: none;
+}
+
+/* ── COMPLETED circle ───────────────────────── */
+.completed .circle {
+  background: linear-gradient(145deg, #34d399 0%, #10b981 55%, #059669 100%);
+  border-color: #a7f3d0;
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+}
+
+/* ── ACTIVE circle ─────────────────────────── */
+.active .circle {
+  background: linear-gradient(145deg, #a78bfa 0%, #7c3aed 50%, #5b21b6 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  animation: floatActive 3s ease-in-out infinite, pulseGlow 2.4s ease-in-out infinite;
+  box-shadow:
+    0 4px 20px rgba(124, 58, 237, 0.45),
+    inset 0 2px 6px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* ── PENDING circle ────────────────────────── */
+.pending .circle {
+  background: #f5f3ff;
+  border: 2px solid #e8e4f9;
+  color: #c4b5fd;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+/* ── Green check badge ─────────────────────────────────── */
+.checkBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  border: 2.5px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+  animation: badgePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Labels ─────────────────────────────────────────────── */
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.labelMain {
+  font-size: 0.825rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: #94a3b8;
+  transition: color 0.25s;
+}
+
+.labelSub {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #c1c9d8;
+  transition: color 0.25s;
+}
+
+.completed .labelMain { color: #059669; }
+.completed .labelSub  { color: #6ee7b7; }
+
+.active .labelMain {
+  color: #6d28d9;
+  font-size: 0.87rem;
+  font-weight: 800;
+}
+.active .labelSub {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+/* ── Cancelled banner ───────────────────────────────────── */
+.cancelledBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.1rem 1.5rem;
+  background: #fff1f2;
+  border: 1.5px solid #fecaca;
+  border-radius: 14px;
+  color: #be123c;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .circle {
+    width: 44px;
+    height: 44px;
+  }
+  .activeRing {
+    width: 44px;
+    height: 44px;
+  }
+  .rail {
+    top: calc(2.25rem + 22px);
+  }
+  .labelMain { font-size: 0.72rem; }
+  .labelSub  { display: none; }
+  .checkBadge {
+    width: 17px;
+    height: 17px;
+    top: -2px;
+    right: -2px;
+  }
+}

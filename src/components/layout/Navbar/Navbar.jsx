@@ -316,7 +316,7 @@ export default function Navbar() {
                   className="nav-user-chip"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    navigate('/account?tab=profile');
+                    navigate('/profile?tab=profile');
                   }}
                   aria-expanded={isUserMenuOpen}
                 >
@@ -347,7 +347,7 @@ export default function Navbar() {
                     </div>
                     <div className="nav-user-menu-divider" />
                     <Link
-                      to="/account?tab=profile"
+                      to="/profile?tab=profile"
                       className="nav-user-menu-link"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
@@ -355,7 +355,7 @@ export default function Navbar() {
                       <span>My Profile</span>
                     </Link>
                     <Link
-                      to="/account?tab=orders"
+                      to="/profile?tab=orders"
                       className="nav-user-menu-link"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
@@ -669,7 +669,7 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <Link
-                    to="/account"
+                    to="/profile"
                     className="nav-cta-btn"
                     style={{ width: '100%', textAlign: 'center', justifyContent: 'center' }}
                     onClick={() => setIsMobileMenuOpen(false)}

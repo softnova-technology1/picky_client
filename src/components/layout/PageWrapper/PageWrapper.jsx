@@ -12,7 +12,7 @@ export default function PageWrapper({ children, hideFooter = false }) {
   return (
     <div className={styles['page-wrapper-root']}>
       <Navbar />
-      <main key={location.pathname} className={styles['page-wrapper-main']}>
+      <main key={location.key || (location.pathname + location.search)} className={styles['page-wrapper-main']}>
         {children}
       </main>
       {!hideFooter && <Footer />}

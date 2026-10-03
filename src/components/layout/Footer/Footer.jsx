@@ -182,7 +182,7 @@ export default function Footer() {
               <h4 className="footer-heading">Customer Care</h4>
               <ul className="footer-links-list">
                 <li>
-                  <Link to="/account?tab=orders" className="footer-link">
+                  <Link to="/profile?tab=orders" className="footer-link">
                     <Truck size={15} className="footer-icon-accent" />
                     <span>Track Order (AWB)</span>
                   </Link>
