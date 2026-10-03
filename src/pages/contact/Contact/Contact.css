@@ -50,9 +50,9 @@
 }
 
 .k-eyebrow {
-  color: #7c3aed;
-  font-size: 12px;
-  font-weight: 700;
+  color: #4c1d95;
+  font-size: 13px;
+  font-weight: 800;
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -66,9 +66,10 @@
 }
 
 .k-eyebrow-line {
-  height: 2px;
+  height: 2.5px;
   width: 40px;
-  background-color: var(--k-primary);
+  background-color: #4c1d95;
+  border-radius: 2px;
 }
 
 .k-eyebrow-line-dark {
@@ -95,7 +96,7 @@
    1. HERO SECTION
    ========================================================================== */
 .k-hero-section {
-  background: url('/images/contact_hero_bg.png') center center / cover no-repeat;
+  background: url('/images/contact_hero_bg.png?v=clean') center center / cover no-repeat;
   color: #2e1065;
   min-height: calc(100vh - 70px);
   display: flex;
@@ -182,20 +183,22 @@
   font-weight: 800;
   margin: 0 0 24px;
   line-height: 1.1;
-  color: #170933;
+  color: #0f172a;
 }
 
 .k-hero-title span {
-  color: var(--k-primary);
+  color: #3b0764;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .k-hero-desc {
-  font-size: 16px;
-  color: #4c1d95;
-  line-height: 1.6;
+  font-size: 16.5px;
+  color: #0f172a;
+  line-height: 1.65;
   max-width: 520px;
   margin: 0 0 24px;
   font-weight: 500;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 @media (max-width: 991px) {

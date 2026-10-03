@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../About.module.css';
-import { Check, Users, Clock, Headphones, Leaf, Heart, BarChart3, MessageSquare } from 'lucide-react';
+import { Check, Heart, Store, ShoppingBag, Sparkles, ShieldCheck, Headphones, MessageSquare, Users } from 'lucide-react';
 
 export default function GlassCountersSection() {
   const containerRef = useRef(null);
@@ -25,35 +25,37 @@ export default function GlassCountersSection() {
 
   const countersData = [
     {
-      id: 'inspection',
-      topIcon: Check,
+      id: 'customer-focused',
+      topIcon: Heart,
       target: 100,
+      isNumeric: true,
       format: (val) => `${Math.floor(val)}%`,
-      label: 'PHYSICAL INSPECTION',
-      bottomIcon: Leaf,
+      text: '100%',
+      label: 'CUSTOMER FOCUSED',
+      bottomIcon: Users,
     },
     {
-      id: 'clients',
-      topIcon: Users,
-      target: 50,
-      format: (val) => `${Math.floor(val)}k+`,
-      label: 'HAPPY CLIENTS',
-      bottomIcon: Heart,
+      id: 'single-vendor',
+      topIcon: Store,
+      isNumeric: false,
+      text: 'SINGLE-VENDOR',
+      label: 'STORE EXPERIENCE',
+      bottomIcon: ShieldCheck,
     },
     {
-      id: 'updates',
-      topIcon: Clock,
-      target: 24,
-      format: (val) => `${Math.floor(val)}/7`,
-      label: 'LIVE WHATSAPP UPDATES',
-      bottomIcon: BarChart3,
+      id: 'simple-shopping',
+      topIcon: Sparkles,
+      isNumeric: false,
+      text: 'SIMPLE',
+      label: 'SHOPPING EXPERIENCE',
+      bottomIcon: ShoppingBag,
     },
     {
-      id: 'satisfaction',
+      id: 'order-support',
       topIcon: Headphones,
-      target: 4.9,
-      format: (val) => `${val.toFixed(1)}★`,
-      label: 'SATISFACTION RATING',
+      isNumeric: false,
+      text: 'END-TO-END',
+      label: 'ORDER SUPPORT',
       bottomIcon: MessageSquare,
     },
   ];
@@ -71,7 +73,7 @@ function CounterDisc({ item, isVisible }) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !item.isNumeric) return;
 
     let startTimestamp = null;
     const duration = 2000; // 2 seconds animated count up
@@ -83,7 +85,7 @@ function CounterDisc({ item, isVisible }) {
 
       // Cubic Ease-Out curve for smooth slowing down at the end
       const easeProgress = 1 - Math.pow(1 - progress, 3);
-      const currentVal = easeProgress * item.target;
+      const currentVal = easeProgress * (item.target || 100);
 
       setDisplayValue(currentVal);
 
@@ -93,11 +95,11 @@ function CounterDisc({ item, isVisible }) {
     };
 
     requestAnimationFrame(step);
-  }, [isVisible, item.target]);
+  }, [isVisible, item.target, item.isNumeric]);
 
   const TopIcon = item.topIcon;
   const BottomIcon = item.bottomIcon;
-  const formattedText = item.format(displayValue);
+  const formattedText = item.isNumeric ? item.format(displayValue) : item.text;
 
   return (
     <div className={styles['glass-counter-disc']}>
@@ -114,7 +116,9 @@ function CounterDisc({ item, isVisible }) {
 
       {/* Center Content */}
       <div className={styles['disc-center-content']}>
-        <div className={styles['disc-number']}>{formattedText}</div>
+        <div className={`${styles['disc-number']} ${!item.isNumeric ? styles['disc-number-text'] : ''}`}>
+          {formattedText}
+        </div>
         <div className={styles['disc-label']}>{item.label}</div>
       </div>
 

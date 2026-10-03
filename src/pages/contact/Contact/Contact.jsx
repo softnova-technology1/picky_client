@@ -18,8 +18,6 @@ import {
   Hash,
   MonitorPlay,
   MessageCircle,
-  CheckCircle2,
-  Send,
   Star
 } from 'lucide-react';
 
@@ -48,12 +46,6 @@ export default function Contact() {
           {/* Top subtle glow/curves can be added via CSS before/after */}
           <div className="k-container k-hero-grid">
             <div className="k-hero-content">
-              {/* Live Status Pill */}
-              <div className="k-hero-status-pill">
-                <span className="k-status-dot"></span>
-                <span>Live Support Active • We're Online Now</span>
-              </div>
-
               <div className="k-eyebrow-container">
                 <span className="k-eyebrow">GET IN TOUCH</span>
                 <div className="k-eyebrow-line"></div>
@@ -76,26 +68,6 @@ export default function Contact() {
                   <Phone size={18} />
                   <span>Call Customer Care</span>
                 </a>
-              </div>
-
-
-
-              {/* Single Horizontal Line Text-Only Pills */}
-              <div className="k-hero-features-capsules">
-                <div className="k-feature-pill-card">
-                  <span className="k-pill-label">Quick Support</span>
-                  <span className="k-pill-stat k-stat-violet">⚡ Within 15 Mins</span>
-                </div>
-
-                <div className="k-feature-pill-card">
-                  <span className="k-pill-label">Trusted Choice</span>
-                  <span className="k-pill-stat k-stat-emerald">⭐ 10,000+ Homes</span>
-                </div>
-
-                <div className="k-feature-pill-card">
-                  <span className="k-pill-label">Satisfaction</span>
-                  <span className="k-pill-stat k-stat-rose">🛡️ 100% Guaranteed</span>
-                </div>
               </div>
             </div>
 
@@ -278,56 +250,6 @@ export default function Contact() {
 
             </div>
 
-          </div>
-        </section>
-
-        {/* ============================================================== */}
-        {/* 4. NEWSLETTER SECTION                                          */}
-        {/* ============================================================== */}
-        <section className="k-newsletter-section">
-          <div className="k-container k-newsletter-grid">
-            <div className="k-newsletter-text">
-              <div className="k-eyebrow-container">
-                <div className="k-eyebrow-line-dark"></div>
-                <span className="k-eyebrow-dark">OUR NEWSLETTERS</span>
-              </div>
-              <h2 className="k-newsletter-title">
-                Stay <span>Updated</span>
-              </h2>
-              <p className="k-newsletter-desc">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis pulvinar.
-              </p>
-            </div>
-            
-            <div className="k-newsletter-form-wrapper">
-              <form className="k-newsletter-form">
-                <div className="k-newsletter-input-box">
-                  <Mail className="k-newsletter-icon" size={18} />
-                  <input type="email" placeholder="Enter your email address" required />
-                  <button type="submit" className="k-newsletter-btn">
-                    Subscribe <ArrowRight size={16} />
-                  </button>
-                </div>
-              </form>
-              <div className="k-newsletter-perks">
-                <div className="k-perk">
-                  <CheckCircle2 size={16} className="k-perk-icon" /> Latest Offers
-                </div>
-                <div className="k-perk">
-                  <CheckCircle2 size={16} className="k-perk-icon" /> Kitchen Tips
-                </div>
-                <div className="k-perk">
-                  <CheckCircle2 size={16} className="k-perk-icon" /> New Arrivals
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Decorative Paper Plane */}
-          <div className="k-paper-plane">
-            <Send size={32} />
-            <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 39C10 20 30 10 59 1" stroke="#a78bfa" strokeWidth="2" strokeDasharray="4 4" fill="none" />
-            </svg>
           </div>
         </section>
 

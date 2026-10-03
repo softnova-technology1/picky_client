@@ -4,9 +4,10 @@ import { Check } from 'lucide-react';
 
 export default function AboutFeatureSection() {
   const checkItems = [
-    "24 Month / 100% Quality Warranty & Inspection Guarantee",
-    "Curabitur dapibus nisl a urna congue, in pharetra urna accumsan.",
-    "Customer Rewards Program and excellent technology"
+    { title: "Carefully Selected Products" },
+    { title: "Clear Pricing & Simple Shopping" },
+    { title: "Reliable Delivery & Customer Support" },
+    { title: "Trusted Shopping Experience", subtitle: "Customer-first service" }
   ];
 
   return (
@@ -21,39 +22,38 @@ export default function AboutFeatureSection() {
               alt="Picky Luxury Showroom"
               className={styles['about-feature-img']}
             />
-            {/* Innovative Floating Badge */}
-            <div className={styles['about-feature-floating-badge']}>
-              <div className={styles['badge-icon-circle']}>✓</div>
-              <div className={styles['badge-text-group']}>
-                <span className={styles['badge-main-text']}>100% Verified</span>
-                <span className={styles['badge-sub-text']}>Single-Vendor Guarantee</span>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Right Column: Content matching image typography */}
         <div className={styles['about-feature-content-col']}>
-          <span className={styles['about-feature-tag']}>ABOUT US</span>
+          <span className={styles['about-feature-tag']}>ABOUT PICKY</span>
 
           <h2 className={styles['about-feature-main-heading']}>
-            Most Safe & Rated Store <br />
-            <span className={styles['about-feature-heading-italic']}>In India.</span>
+            Simple Shopping. <br />
+            <span className={styles['about-feature-heading-italic']}>Trusted Products.</span>
           </h2>
 
+          <p className={styles['about-feature-lead']}>
+            Everything you need, selected for everyday life.
+          </p>
+
           <p className={styles['about-feature-description']}>
-            Morbi tortor urna, placerat vel arcu quis, fringilla egestas neque. Morbi sit amet porta
-            erat, quis rutrum risus. Vivamus et gravida nibh, quis posuere felis. In commodo mi
-            lectus, Integer ligula lorem, finibus vitae lorem vitae tincidunt dolor consequat quis.
+            Picky brings together thoughtfully selected products across fashion, jewellery, home & kitchen, lifestyle, and more — with a simple shopping experience from discovery to delivery.
           </p>
 
           <ul className={styles['about-feature-checklist']}>
             {checkItems.map((item, idx) => (
               <li key={idx} className={styles['about-feature-check-item']}>
                 <span className={styles['check-icon-wrapper']}>
-                  <Check size={15} strokeWidth={3} />
+                  <Check size={16} strokeWidth={3} />
                 </span>
-                <span className={styles['check-text-content']}>{item}</span>
+                <div className={styles['check-text-group']}>
+                  <span className={styles['check-text-content']}>{item.title}</span>
+                  {item.subtitle && (
+                    <span className={styles['check-subtext-content']}>{item.subtitle}</span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

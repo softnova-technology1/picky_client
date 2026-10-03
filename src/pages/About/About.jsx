@@ -38,16 +38,17 @@ export default function About() {
                 letterSpacing: '0.1em',
                 marginBottom: '1.25rem'
               }}>
-                ✦ Our Mission & Vision ✦
+                ✦ OUR MISSION & VISION ✦
               </span>
-              <h2 style={{ fontSize: '2.4rem', color: '#ffffff', marginBottom: '1.25rem', fontWeight: 800 }}>
-                Eliminating Clutter, Elevating Every Choice
+              <h2 style={{ fontSize: '2.4rem', color: '#ffffff', marginBottom: '1.25rem', fontWeight: 800, lineHeight: 1.25 }}>
+                Making Online Shopping <br />
+                <span style={{ color: '#c084fc' }}>Simple & Trustworthy</span>
               </h2>
-              <p style={{ fontSize: '1.15rem', color: '#f3e8ff', lineHeight: 1.8, marginBottom: '1.5rem' }}>
-                <strong style={{ color: '#ffffff' }}>Picky</strong> was founded with a singular mission: eliminating the clutter and decision paralysis of endless low-quality e-commerce choices. Instead of listing thousands of unvetted products from random third-party sellers, Picky operates as a <strong style={{ color: '#ffffff' }}>curated single-vendor store</strong>.
+              <p style={{ fontSize: '1.15rem', color: '#f3e8ff', lineHeight: 1.8, marginBottom: '1.25rem' }}>
+                <strong style={{ color: '#ffffff' }}>Picky</strong> was created to make everyday online shopping easier, clearer, and more convenient. We bring carefully selected products together in one simple shopping experience.
               </p>
               <p style={{ fontSize: '1.05rem', color: '#e9d5ff', lineHeight: 1.7 }}>
-                Every single product in our catalog is physically inspected, tested, and stored in our dedicated fulfillment center before it is listed online — ensuring 100% authenticity and real-time live WhatsApp tracking from dispatch to delivery.
+                Our vision is to build a store where customers can discover useful products, shop with confidence, and enjoy a smooth experience from browsing to delivery.
               </p>
             </div>
 

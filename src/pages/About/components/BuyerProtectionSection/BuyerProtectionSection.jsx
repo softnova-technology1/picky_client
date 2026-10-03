@@ -5,7 +5,6 @@ import {
   RefreshCw,
   Headphones,
   CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 import styles from './BuyerProtectionSection.module.css';
 
@@ -22,9 +21,9 @@ export default function BuyerProtectionSection() {
       badgeBg: '#eff6ff',
       badgeColor: '#1d4ed8',
       badgeBorder: '#bfdbfe',
-      title: '100% Quality Tested',
-      desc: 'Every item physically inspected at our Madurai hub before packaging and dispatch.',
-      badge: 'Zero Defect Policy',
+      title: 'Carefully Selected Products',
+      desc: 'We carefully select products to offer useful choices across fashion, lifestyle, home, and more.',
+      badge: 'Quality Focused',
     },
     {
       step: '02',
@@ -37,9 +36,9 @@ export default function BuyerProtectionSection() {
       badgeBg: '#f0fdfa',
       badgeColor: '#0f766e',
       badgeBorder: '#99f6e4',
-      title: '24-48h Express Dispatch',
-      desc: 'Direct courier partners with instant SMS updates and live real-time AWB tracking to your doorstep.',
-      badge: 'Live AWB Tracking',
+      title: 'Reliable Shipping Process',
+      desc: 'Your order is packed carefully and handed over to a suitable courier for delivery.',
+      badge: 'Manual Courier Dispatch',
     },
     {
       step: '03',
@@ -52,9 +51,9 @@ export default function BuyerProtectionSection() {
       badgeBg: '#f5f3ff',
       badgeColor: '#6d28d9',
       badgeBorder: '#ddd6fe',
-      title: '7-Day Easy Replacement',
-      desc: 'Zero-hassle instant replacement guarantee on any size mismatch, transit damage, or defect.',
-      badge: 'Hassle-Free Return',
+      title: 'Clear Order Updates',
+      desc: 'Follow your order from confirmation to shipping and delivery through your order details.',
+      badge: 'Order Status Updates',
     },
     {
       step: '04',
@@ -67,9 +66,9 @@ export default function BuyerProtectionSection() {
       badgeBg: '#fdf2f8',
       badgeColor: '#9d174d',
       badgeBorder: '#fbcfe8',
-      title: '24/7 Dedicated Support',
-      desc: 'Instant WhatsApp chat and phone assistance with real friendly humans whenever you need help.',
-      badge: 'Direct WhatsApp Help',
+      title: 'Customer Support',
+      desc: 'Get help with orders, delivery questions, and other store-related concerns through our support team.',
+      badge: 'Customer Assistance',
     },
   ];
 
@@ -82,17 +81,12 @@ export default function BuyerProtectionSection() {
       <div className={styles.protectionContainer}>
         {/* ── Section Header ── */}
         <div className={styles.headerWrapper}>
-          <div className={styles.trustBadgePill}>
-            <Sparkles size={13} className={styles.trustBadgeIcon} />
-            <span>Picky Buyer Assurance</span>
-          </div>
-
           <h2 className={styles.mainTitle}>
             <span className={styles.titleGradient}>Picky Buyer Protection</span>
           </h2>
 
           <p className={styles.subTitle}>
-            Our 4-step quality assurance guarantee for every single order dispatched from our Madurai hub.
+            A simple and transparent shopping experience from product selection to delivery.
           </p>
 
           {/* Decorative Diamond Ornament Divider */}

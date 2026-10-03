@@ -23,7 +23,9 @@ import {
   Tag,
   Percent,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function BestSellers() {
@@ -34,6 +36,69 @@ export default function BestSellers() {
   const [highDiscountFilter, setHighDiscountFilter] = useState(false);
   const [fastDispatchFilter, setFastDispatchFilter] = useState(false);
   const catalogRef = useRef(null);
+  const tabsScrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const isPointerDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftStart = useRef(0);
+  const hasDragged = useRef(false);
+
+  const checkScroll = () => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, []);
+
+  const scrollTabs = (dir) => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    const amount = dir === 'left' ? -260 : 260;
+    el.scrollBy({ left: amount, behavior: 'smooth' });
+    setTimeout(checkScroll, 300);
+  };
+
+  const handleTabsWheel = (e) => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    if (e.deltaY !== 0) {
+      el.scrollLeft += e.deltaY;
+      checkScroll();
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    if (!tabsScrollRef.current) return;
+    isPointerDown.current = true;
+    hasDragged.current = false;
+    startX.current = e.pageX - tabsScrollRef.current.offsetLeft;
+    scrollLeftStart.current = tabsScrollRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isPointerDown.current || !tabsScrollRef.current) return;
+    const x = e.pageX - tabsScrollRef.current.offsetLeft;
+    const walk = x - startX.current;
+    if (Math.abs(walk) > 4) {
+      hasDragged.current = true;
+      tabsScrollRef.current.scrollLeft = scrollLeftStart.current - walk;
+      checkScroll();
+    }
+  };
+
+  const handleMouseUp = () => {
+    isPointerDown.current = false;
+    setTimeout(() => {
+      hasDragged.current = false;
+    }, 50);
+  };
 
   // Load products (API first, fallback to mock data)
   useEffect(() => {
@@ -134,14 +199,13 @@ export default function BestSellers() {
     return list;
   }, [allProducts, activeCategory, highDiscountFilter, fastDispatchFilter, sortBy]);
 
-  const hasActiveFilters = highDiscountFilter || fastDispatchFilter || activeCategory !== 'all';
+  const hasActiveFilters = highDiscountFilter || fastDispatchFilter || activeCategory !== 'all' || sortBy !== 'popular';
 
   const handleResetFilters = () => {
     setActiveCategory('all');
-    setMinRatingFilter(false);
     setHighDiscountFilter(false);
     setFastDispatchFilter(false);
-    setSortBy('rating');
+    setSortBy('popular');
   };
 
   return (
@@ -151,7 +215,7 @@ export default function BestSellers() {
         <BestSellersHeroSection />
 
         {/* ── 3. Catalog & Interactive Filter Grid Anchor ── */}
-        <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px' }}>
+        <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px', paddingTop: '2.5rem' }}>
           {/* Header Row */}
           <div
             style={{
@@ -244,59 +308,140 @@ export default function BestSellers() {
             </div>
           </div>
 
-          {/* Department Filter Tabs */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.65rem',
-              overflowX: 'auto',
-              paddingBottom: '0.75rem',
-              marginBottom: '1.5rem',
-              scrollbarWidth: 'none',
-            }}
-          >
-            {filterTabs.map((tab) => {
-              const isActive = activeCategory === tab.id;
-              const count = tabCounts[tab.id] || 0;
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveCategory(tab.id)}
-                  style={{
-                    background: isActive ? 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' : '#ffffff',
-                    color: isActive ? '#ffffff' : '#475569',
-                    border: isActive ? 'none' : '1px solid #e2e8f0',
-                    padding: '0.6rem 1.25rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.86rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: isActive ? '0 6px 18px rgba(124, 58, 237, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.04)',
-                    transition: 'all 0.2s ease',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <IconComponent size={15} />
-                  <span>{tab.label}</span>
-                  <span
+          {/* Department Filter Tabs with Wheel, Drag & Chevron Arrow Scrolling */}
+          <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+            {/* Left Scroll Chevron Button */}
+            {canScrollLeft && (
+              <button
+                type="button"
+                onClick={() => scrollTabs('left')}
+                aria-label="Scroll left"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 'calc(50% - 6px)',
+                  transform: 'translateY(-50%)',
+                  zIndex: 10,
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: '1.5px solid #ddd6fe',
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7c3aed',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+            )}
+
+            {/* Scrollable Tabs Track */}
+            <div
+              ref={tabsScrollRef}
+              onScroll={checkScroll}
+              onWheel={handleTabsWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{
+                display: 'flex',
+                gap: '0.65rem',
+                overflowX: 'auto',
+                paddingBottom: '0.75rem',
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+                scrollBehavior: 'smooth',
+                cursor: 'grab',
+                userSelect: 'none',
+              }}
+            >
+              {filterTabs.map((tab) => {
+                const isActive = activeCategory === tab.id;
+                const count = tabCounts[tab.id] || 0;
+                const IconComponent = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      if (hasDragged.current) return;
+                      setActiveCategory(tab.id);
+                    }}
                     style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '0.12rem 0.48rem',
+                      background: isActive ? 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' : '#ffffff',
+                      color: isActive ? '#ffffff' : '#475569',
+                      border: isActive ? 'none' : '1px solid #e2e8f0',
+                      padding: '0.6rem 1.25rem',
                       borderRadius: '9999px',
-                      background: isActive ? 'rgba(255, 255, 255, 0.28)' : '#f3e8ff',
-                      color: isActive ? '#ffffff' : '#7c3aed',
+                      fontSize: '0.86rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      boxShadow: isActive ? '0 6px 18px rgba(124, 58, 237, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.04)',
+                      transition: 'all 0.2s ease',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
                     }}
                   >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+                    <IconComponent size={15} />
+                    <span>{tab.label}</span>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '0.12rem 0.48rem',
+                        borderRadius: '9999px',
+                        background: isActive ? 'rgba(255, 255, 255, 0.28)' : '#f3e8ff',
+                        color: isActive ? '#ffffff' : '#7c3aed',
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right Scroll Chevron Button */}
+            {canScrollRight && (
+              <button
+                type="button"
+                onClick={() => scrollTabs('right')}
+                aria-label="Scroll right"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 'calc(50% - 6px)',
+                  transform: 'translateY(-50%)',
+                  zIndex: 10,
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: '1.5px solid #ddd6fe',
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7c3aed',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            )}
           </div>
 
           {/* Quick Filter Badges Bar */}

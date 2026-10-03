@@ -173,10 +173,13 @@ export function getCategories() {
 
 export function getCategoryBySlug(slug) {
   if (!slug) return null;
-  const s = slug.toLowerCase();
+  const decoded = decodeURIComponent(slug).toLowerCase().trim();
+  const normalized = decoded.replace(/[\s_]+/g, '-');
   return (
-    categories.find((c) => c.slug?.toLowerCase() === s) ||
+    categories.find((c) => c.slug?.toLowerCase() === normalized) ||
+    categories.find((c) => c.slug?.toLowerCase() === decoded) ||
     categories.find((c) => c._id === slug) ||
+    categories.find((c) => c.name?.toLowerCase() === decoded) ||
     null
   );
 }
@@ -188,10 +191,14 @@ export function getSubcategoriesByCategory(categorySlug) {
 
 export function getSubcategoryBySlug(categorySlug, subSlug) {
   const subcats = getSubcategoriesByCategory(categorySlug);
-  const s = (subSlug || '').toLowerCase();
+  if (!subSlug) return null;
+  const decoded = decodeURIComponent(subSlug).toLowerCase().trim();
+  const normalized = decoded.replace(/[\s_]+/g, '-');
   return (
-    subcats.find((sub) => sub.slug?.toLowerCase() === s) ||
+    subcats.find((sub) => sub.slug?.toLowerCase() === normalized) ||
+    subcats.find((sub) => sub.slug?.toLowerCase() === decoded) ||
     subcats.find((sub) => sub._id === subSlug) ||
+    subcats.find((sub) => sub.name?.toLowerCase() === decoded) ||
     null
   );
 }

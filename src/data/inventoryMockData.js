@@ -217,7 +217,7 @@ export const MOCK_INVENTORY = [
     category: 'Beauty & Personal Care',
     categoryId: 'cat-4',
     subCategory: 'Hair Accessories',
-    image: '/images/products/tshirt.png',
+    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
     currentStock: 90,
     lowStockThreshold: 15,
     price: 599,

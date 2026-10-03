@@ -13,7 +13,7 @@ import Home from '../Home';
 export default function Login({ initialTab = 'login' }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoggedIn } = useAuthStore();
+  const { login, isLoggedIn, user } = useAuthStore();
   const { items: localCartItems, setServerCart } = useCartStore();
   const { items: localWishlistItems, setWishlist } = useWishlistStore();
   const { showToast } = useUiStore();
@@ -45,9 +45,13 @@ export default function Login({ initialTab = 'login' }) {
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigate(from, { replace: true });
+      if (user?.role === 'admin') {
+        navigate('/pickyadmin-softnova2026', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     }
-  }, [isLoggedIn, navigate, from]);
+  }, [isLoggedIn, user?.role, navigate, from]);
 
   // Timer for OTP resend
   useEffect(() => {
@@ -234,10 +238,10 @@ export default function Login({ initialTab = 'login' }) {
     try {
       setLoading(true);
       const res = await authService.adminLogin(adminEmail.trim(), adminPassword);
-      const data = res?.data || res;
-      login(data.user, data.accessToken, data.refreshToken);
+      const payload = res?.data?.user ? res.data : (res?.user ? res : (res?.data || res));
+      const adminUser = payload?.user || payload;
+      login(adminUser, payload?.accessToken, payload?.refreshToken);
       showToast(`Welcome back, Administrator!`, 'success');
-      await syncGuestData();
       navigate('/pickyadmin-softnova2026', { replace: true });
     } catch (err) {
       console.warn('Backend admin login offline fallback:', err);

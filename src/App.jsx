@@ -98,6 +98,11 @@ export default function App() {
           <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
 
+          {/* ── Admin Aliases & Direct Entry ────────── */}
+          <Route path="/admin" element={<Navigate to={ADMIN} replace />} />
+          <Route path="/admin/login" element={<Navigate to={ADMIN} replace />} />
+          <Route path="/admin/*" element={<Navigate to={ADMIN} replace />} />
+
           {/* ── Catch-all 404 Page ───────────────────── */}
           <Route path="*" element={<NotFound />} />
         </Routes>

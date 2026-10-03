@@ -1,332 +1,252 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Sparkles, ChevronRight, ArrowLeft, ShoppingCart, Layers, ArrowRight } from 'lucide-react';
+import { ChevronRight, Layers, ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
 import { categoryService } from '../../services/category.service';
 import { getCategoryBySlug, getSubcategoriesByCategory, getProducts } from '../../data';
 import styles from './CategorySubcategories.module.css';
 
-// Curated Flipkart-Style Category-Specific Mini Carousel Banners
-const CATEGORY_MINI_BANNERS = {
-  'womens-fashion': [
-    {
-      badge: 'FESTIVE SPECIAL',
-      title: 'Handloom Sungudi & Silk Sarees',
-      subtitle: 'Flat 35% OFF on Pure Combed Cotton Weaves',
-      code: 'SUNGUDI35',
-      accent: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'NEW ARRIVALS 2026',
-      title: 'Embroidered Rayon Anarkali Sets',
-      subtitle: 'Extra ₹200 OFF on Orders Above ₹1,499',
-      code: 'ANARKALI200',
-      accent: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
-      image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'DAILY ESSENTIALS',
-      title: 'Soft Cotton Leggings & Dupattas',
-      subtitle: 'Starting from ₹199 • 100% Breathable Fit',
-      code: 'DAILYWEAR',
-      accent: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
-      image: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'home-kitchen': [
-    {
-      badge: 'KITCHEN HACKS',
-      title: 'Quick Multi-Blade Vegetable Choppers',
-      subtitle: 'Save 45% Time in Daily Cooking Prep',
-      code: 'CHOP45',
-      accent: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-      image: 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'HEALTHY COOKWARE',
-      title: 'Pre-Seasoned Heavy Cast Iron Kadais',
-      subtitle: '100% Natural Organic Oil Seasoning',
-      code: 'CASTIRON',
-      accent: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-      image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'SMART STORAGE',
-      title: 'BPA-Free Airtight Pantry Containers',
-      subtitle: 'Keep Spices & Pulses Fresh For Months',
-      code: 'FRESHBOX',
-      accent: 'linear-gradient(135deg, #4d7c0f 0%, #84cc16 100%)',
-      image: 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'artificial-jewellery': [
-    {
-      badge: 'TEMPLE JEWELRY',
-      title: 'Antique Matte Gold Lakshmi Choker Sets',
-      subtitle: 'Carved Ruby Kemp Stones • Up to 50% OFF',
-      code: 'KEMP50',
-      accent: 'linear-gradient(135deg, #d97706 0%, #fbbf24 100%)',
-      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'TRENDING JHUMKAS',
-      title: 'Kemp Pearl Bell Dome Jhumka Earrings',
-      subtitle: 'Lightweight Festive Polish • Starts @ ₹499',
-      code: 'JHUMKA',
-      accent: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)',
-      image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'BRIDAL COLLECTION',
-      title: '24K Micro Gold Plated Peacock Kasu Mala',
-      subtitle: 'Heritage Coin Motif with Adjustable Dori',
-      code: 'BRIDALMALA',
-      accent: 'linear-gradient(135deg, #b91c1c 0%, #f87171 100%)',
-      image: 'https://images.unsplash.com/photo-1611591475822-79f939316666?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'beauty-personal-care': [
-    {
-      badge: 'HERBAL CARE',
-      title: 'Rosemary & Bhringraj Dense Hair Growth Oil',
-      subtitle: '100% Pure Cold-Pressed Coconut Oil Base',
-      code: 'HERBALOIL',
-      accent: 'linear-gradient(135deg, #059669 0%, #34d399 100%)',
-      image: 'https://images.unsplash.com/photo-1608248597359-2ff6112f45c8?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'HAIR LUXURY',
-      title: 'Pure Mulberry Silk Satin Scrunchies Pack',
-      subtitle: 'Zero Frizz • Anti-Hair Breakage Night Care',
-      code: 'SILKSCRUNCH',
-      accent: 'linear-gradient(135deg, #db2777 0%, #f472b6 100%)',
-      image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'GLOWING SKIN',
-      title: 'Natural Kumkumadi Ayurvedic Face Serums',
-      subtitle: 'Deep Hydration & Radiance Booster',
-      code: 'GLOWSERUM',
-      accent: 'linear-gradient(135deg, #9333ea 0%, #c084fc 100%)',
-      image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'mobile-accessories': [
-    {
-      badge: 'FAST CHARGING',
-      title: 'Heavy Duty 65W Braided Type-C Cables',
-      subtitle: 'Tough Nylon Braid • 480Mbps Data Speed',
-      code: 'FAST65W',
-      accent: 'linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)',
-      image: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'HI-FI AUDIO',
-      title: 'Studio Pro ANC Wireless Over-Ear Headphones',
-      subtitle: '30dB Active Noise Cancellation • 40h Battery',
-      code: 'STUDIOANC',
-      accent: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-      image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'DESK ACCESSORY',
-      title: 'Aluminium Adjustable Phone & Tablet Stands',
-      subtitle: '270° Dual Rotation • Anti-Slip Alloy Base',
-      code: 'ALUSTAND',
-      accent: 'linear-gradient(135deg, #475569 0%, #94a3b8 100%)',
-      image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'traditional-tamil-products': [
-    {
-      badge: 'AUTHENTIC TAMIL',
-      title: 'Nachiarkoil Solid Brass Mayil Kuthu Vilakku',
-      subtitle: '100% Solid Heavy Virgin Brass • Artisan Crafted',
-      code: 'BRASSDEEPAM',
-      accent: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
-      image: 'https://images.unsplash.com/photo-1609137144822-26155986ec32?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'HERITAGE CRAFT',
-      title: 'Tanjore Lakshmi Gold Foil Relief Wall Art',
-      subtitle: 'Handcrafted Heritage Gifts for Auspicious Moments',
-      code: 'TANJORE',
-      accent: 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)',
-      image: 'https://images.unsplash.com/photo-1582561424760-0321d75e81fa?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'MADURAI WEAVES',
-      title: 'Authentic Pure Cotton Tie-Dye Sungudi Sarees',
-      subtitle: 'Traditional Zari Border • Made in Tamil Nadu',
-      code: 'MADURAICOTTON',
-      accent: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)',
-      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'snacks-foods': [
-    {
-      badge: 'FRESH & CRUNCHY',
-      title: 'Authentic Manapparai Rice Murukku Jars',
-      subtitle: 'Cold-Pressed Groundnut Oil • Zero Palm Oil',
-      code: 'MURUKKU',
-      accent: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
-      image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'NATIVE SWEETS',
-      title: 'Tirunelveli Pure Desi Ghee Wheat Halwa',
-      subtitle: 'Melt-In-Mouth Slow Cooked Recipe',
-      code: 'HALWA',
-      accent: 'linear-gradient(135deg, #9a3412 0%, #ea580c 100%)',
-      image: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'HOMEMADE PODI',
-      title: 'Spicy Garlic Idli Karapodi & South Pickles',
-      subtitle: 'Roasted Lentils & Guntur Chillies',
-      code: 'KARAPODI',
-      accent: 'linear-gradient(135deg, #dc2626 0%, #f87171 100%)',
-      image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'home-decor': [
-    {
-      badge: 'AESTHETIC LIVING',
-      title: 'Solid Pine Wood Tripod Floor & Table Lamps',
-      subtitle: '3000K Warm Golden Eye-Protecting Glow',
-      code: 'WARMLIGHT',
-      accent: 'linear-gradient(135deg, #4338ca 0%, #6366f1 100%)',
-      image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'NORDIC VIBES',
-      title: 'Minimalist Fluted Ceramic Vases & Pots',
-      subtitle: 'Stone-Matte Tactile Finish for Pampas & Florals',
-      code: 'CERAMIC',
-      accent: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
-      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'GREEN LIVING',
-      title: 'Artificial Plants with Natural Jute Hangers',
-      subtitle: 'Zero Maintenance Balcony & Room Greenery',
-      code: 'PLANTS',
-      accent: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)',
-      image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'kids-products': [
-    {
-      badge: 'SCREEN-FREE FUN',
-      title: 'Montessori Educational Wooden Shape Toys',
-      subtitle: 'Smooth Organic Pine • Non-Toxic Water Paint',
-      code: 'TOYS',
-      accent: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-      image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'SPEECH THERAPY',
-      title: 'Smart Talking Flashcards Card Readers',
-      subtitle: '112 Double-Sided Cards (224 Words & Sounds)',
-      code: 'FLASHCARDS',
-      accent: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)',
-      image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'BACK TO SCHOOL',
-      title: 'Cute School Accessories & Water Bottles',
-      subtitle: 'BPA-Free Leakproof Insulated Flasks',
-      code: 'SCHOOLPACK',
-      accent: 'linear-gradient(135deg, #db2777 0%, #fb7185 100%)',
-      image: 'https://images.unsplash.com/photo-1546872006-42c78c00b743?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-  'fitness-products': [
-    {
-      badge: 'YOGA & WELLNESS',
-      title: '6mm Cushioned TPE Non-Slip Yoga Mats',
-      subtitle: 'Laser Body Alignment Lines • Joint Protection',
-      code: 'YOGAMAT',
-      accent: 'linear-gradient(135deg, #0f766e 0%, #2dd4bf 100%)',
-      image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'WORKOUT AT HOME',
-      title: 'Heavy Anti-Snap Fabric Resistance Loop Bands',
-      subtitle: 'Set of 3 Resistance Levels • Non-Slip Internal Strips',
-      code: 'FABRICBANDS',
-      accent: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-      image: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      badge: 'HYDRATION ESSENTIAL',
-      title: '1000ml Vacuum Insulated Stainless Steel Bottles',
-      subtitle: '24 Hours Ice Cold • Leakproof Sports Straw Lid',
-      code: 'SACKBOTTLE',
-      accent: 'linear-gradient(135deg, #0369a1 0%, #38bdf8 100%)',
-      image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&auto=format&fit=crop&q=80',
-    },
-  ],
-};
+// 5 Vibrant Pastel Gradient Themes for Horizontal Capsule Cards (Image 2)
+const HORIZONTAL_CAPSULE_THEMES = [
+  {
+    bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #e0f2fe 50%, #dbeafe 100%)',
+    borderColor: 'rgba(59, 130, 246, 0.45)',
+    shadowColor: 'rgba(59, 130, 246, 0.18)',
+    btnColor: '#2563eb',
+    badgeColor: '#1d4ed8',
+    defaultBadge: 'Pocket Bazaar',
+  },
+  {
+    bgGradient: 'linear-gradient(135deg, #fefce8 0%, #fef9c3 50%, #fef08a 100%)',
+    borderColor: 'rgba(234, 179, 8, 0.45)',
+    shadowColor: 'rgba(234, 179, 8, 0.18)',
+    btnColor: '#b45309',
+    badgeColor: '#b45309',
+    defaultBadge: 'Daily Bazaar',
+  },
+  {
+    bgGradient: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fae8ff 100%)',
+    borderColor: 'rgba(217, 70, 239, 0.45)',
+    shadowColor: 'rgba(217, 70, 239, 0.18)',
+    btnColor: '#c026d3',
+    badgeColor: '#a21caf',
+    defaultBadge: 'Style Picks',
+  },
+  {
+    bgGradient: 'linear-gradient(135deg, #ede9fe 0%, #f3e8ff 50%, #e9d5ff 100%)',
+    borderColor: 'rgba(168, 85, 247, 0.45)',
+    shadowColor: 'rgba(124, 58, 237, 0.18)',
+    btnColor: '#7c3aed',
+    badgeColor: '#6d28d9',
+    defaultBadge: 'Heritage Luxe',
+  },
+  {
+    bgGradient: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #ccfbf1 100%)',
+    borderColor: 'rgba(16, 185, 129, 0.45)',
+    shadowColor: 'rgba(16, 185, 129, 0.18)',
+    btnColor: '#059669',
+    badgeColor: '#047857',
+    defaultBadge: 'Fresh Drop',
+  },
+];
 
-const MiniCategoryCarousel = ({ categorySlug }) => {
-  const slides = CATEGORY_MINI_BANNERS[categorySlug] || CATEGORY_MINI_BANNERS['womens-fashion'];
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    if (isHovered || !slides.length) return;
-    const timer = setInterval(() => {
-      setCurrentIdx((prev) => (prev + 1) % slides.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [isHovered, slides.length]);
-
-  const slide = slides[currentIdx];
+// Static Hero Showcase Banner matching Image 1 Signature Purple Theme & Transparent PNG
+const CategoryHeroBanner = ({ category, categorySlug }) => {
+  const normalizedSlug = (categorySlug || category?.slug || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
+  const mockCat = getCategoryBySlug(normalizedSlug) || getCategoryBySlug(categorySlug) || category;
+  const heroBadge = mockCat?.heroBadge || category?.heroBadge || 'New Collection';
+  const heroTitle = mockCat?.heroTitle || category?.heroTitle || 'Find Your Style,\nLove Your Look';
+  const heroSubtitle = mockCat?.heroSubtitle || category?.heroSubtitle || 'Discover the latest trends in fashion, beauty, and lifestyle.';
+  const heroImage = mockCat?.heroImage || category?.heroImage || '/images/category_hero_fashion.png';
+  const heroCta = mockCat?.heroCta || category?.heroCta || 'Shop Now';
+  const rawTitle = typeof heroTitle === 'string' ? heroTitle : 'Find Your Style,\nLove Your Look';
+  const titleText = rawTitle.replace(/✨/g, '').trim();
+  const heroImageSrc = heroImage ? `${heroImage}${heroImage.includes('?') ? '&' : '?'}v=cleanpng` : '/images/category_hero_fashion.png';
 
   return (
-    <div
-      className={styles['flipkart-mini-carousel']}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className={styles['mini-carousel-slide']}>
-        <img src={slide.image} alt={slide.title} className={styles['mini-slide-img']} />
-        <div className={styles['mini-slide-overlay']} style={{ background: slide.accent }} />
+    <div className={styles['hero-banner-card']}>
+      {/* Left Column Content */}
+      <div className={styles['hero-banner-content']}>
+        <div className={styles['hero-pill-badge']}>
+          {heroBadge}
+        </div>
 
-        <div className={styles['mini-slide-content']}>
-          <span className={styles['mini-slide-badge']}>
-            ✦ {slide.badge}
-          </span>
-          <h3 className={styles['mini-slide-title']}>{slide.title}</h3>
-          <p className={styles['mini-slide-subtitle']}>{slide.subtitle}</p>
+        <h1 className={styles['hero-banner-title']}>
+          {titleText.split('\n').map((line, idx) => (
+            <React.Fragment key={idx}>
+              {line}
+              {idx < titleText.split('\n').length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </h1>
 
-          <div className={styles['mini-slide-action']}>
-            <span className={styles['mini-coupon-tag']}>CODE: <strong>{slide.code}</strong></span>
-            <Link
-              to={`/products?category=${categorySlug}`}
-              className={styles['mini-shop-btn']}
-            >
-              <span>Shop Now</span>
-              <ChevronRight size={13} strokeWidth={3} />
-            </Link>
-          </div>
+        <p className={styles['hero-banner-subtitle']}>
+          {heroSubtitle}
+        </p>
+
+        <div className={styles['hero-action-wrapper']}>
+          <Link
+            to={`/products?category=${categorySlug || category?._id || ''}`}
+            className={styles['hero-shop-button']}
+          >
+            <span>{heroCta}</span>
+            <ArrowRight size={17} strokeWidth={2.4} />
+          </Link>
         </div>
       </div>
 
-      <div className={styles['mini-carousel-dots']}>
-        {slides.map((_, i) => (
-          <span
-            key={i}
-            className={`${styles['mini-dot']} ${i === currentIdx ? styles['active'] : ''}`}
-            onClick={() => setCurrentIdx(i)}
-          />
-        ))}
+      {/* Right Column Transparent PNG Model Visual */}
+      <div className={styles['hero-model-container']}>
+        <img
+          src={heroImageSrc}
+          alt={titleText.replace('\n', ' ')}
+          className={styles['hero-model-png']}
+        />
       </div>
     </div>
   );
+};
+
+// High-definition diverse gallery images for subcategory showcases
+const SUBCAT_GALLERY_IMAGES = {
+  'hair-accessories': [
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500',
+    'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500',
+    'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=500',
+    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
+  ],
+  'skincare': [
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500',
+    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
+    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=500',
+  ],
+  'herbal-products': [
+    'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=500',
+    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
+    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500',
+  ],
+  'sarees': [
+    'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500',
+    'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500',
+    'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500',
+    'https://images.unsplash.com/photo-1610030469857-897dbfcbebf6?w=500',
+  ],
+  'kurtis': [
+    'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500',
+    'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500',
+    'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500',
+    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
+  ],
+  'dresses': [
+    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500',
+    'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500',
+    'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500',
+    'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=500',
+  ],
+  'tops': [
+    'https://images.unsplash.com/photo-1564257631407-4deb129965a2?w=500',
+    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500',
+    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500',
+    'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=500',
+  ],
+  't-shirts': [
+    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500',
+    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500',
+    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500',
+    'https://images.unsplash.com/photo-1527719327859-c6ce80353573?w=500',
+  ],
+  'pants': [
+    'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500',
+    'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=500',
+    'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500',
+    'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=500',
+  ],
+  'pant': [
+    'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500',
+    'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=500',
+    'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500',
+    'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=500',
+  ],
+};
+
+const SUBCAT_SAMPLE_NAMES = {
+  'hair-accessories': [
+    'Silk Satin Scrunchie Pack',
+    'Pearl Encrusted Hair Claw',
+    'Velvet Bow Hair Barrette',
+    'Crystal Embellished Headband'
+  ],
+  'skincare': [
+    'Luminous Hydrating Face Serum',
+    'Rejuvenating Night Repair Cream',
+    'Gentle Rosewater Purifying Foam',
+    'Botanical Glow Radiance Oil'
+  ],
+  'herbal-products': [
+    'Ayurvedic Hair Scalp Elixir',
+    'Organic Neem Clarifying Gel',
+    'Herbal Ubtan Glow Clay Mask',
+    'Pure Cold-Pressed Almond Oil'
+  ],
+  'pants': [
+    'Cotton Straight Fit Cigarette Pant',
+    'Lycra Ankle-Length Stretchable Pant',
+    'Ethnic Solid Rayon Palazzo Pant',
+    'Casual Formal High-Waist Pant'
+  ],
+  'pant': [
+    'Cotton Straight Fit Cigarette Pant',
+    'Lycra Ankle-Length Stretchable Pant',
+    'Ethnic Solid Rayon Palazzo Pant',
+    'Casual Formal High-Waist Pant'
+  ],
+};
+
+// Helper to reliably retrieve 4 mock products for any subcategory
+const getProductsForSubcategory = (cat, sub) => {
+  const catSlug = (cat?.slug || '').toLowerCase();
+  const subSlug = (sub?.slug || '').toLowerCase();
+
+  const matches = getProducts({
+    category: catSlug,
+    subCategory: subSlug,
+  });
+
+  if (matches && matches.length >= 4) {
+    return matches.slice(0, 4);
+  }
+
+  const existing = matches || [];
+  const needed = 4 - existing.length;
+  const gallery = SUBCAT_GALLERY_IMAGES[subSlug] || [sub?.image || cat?.image || '/images/products/saree.png'];
+  const names = SUBCAT_SAMPLE_NAMES[subSlug] || [];
+
+  const fillers = Array.from({ length: needed }).map((_, i) => {
+    const idx = existing.length + i;
+    const prodImg = gallery[idx % gallery.length] || sub?.image || cat?.image || '/images/products/saree.png';
+    const prodName = names[idx % names.length] || `${sub?.name || 'Curated'} Premium Edition ${idx + 1}`;
+    return {
+      _id: `prod_mock_${subSlug}_${idx + 1}`,
+      id: `${subSlug}-${idx + 1}`,
+      name: prodName,
+      slug: `${subSlug}-edition-${idx + 1}`,
+      price: Math.round(1199 + ((i + 1) * 320)),
+      discountPrice: Math.round(699 + ((i + 1) * 210)),
+      category: { _id: cat?._id, name: cat?.name, slug: cat?.slug },
+      subCategory: { _id: sub?._id, name: sub?.name, slug: sub?.slug },
+      image: prodImg,
+      images: [prodImg],
+      stock: 45,
+      rating: Number((4.7 + ((i % 3) * 0.1)).toFixed(1)),
+      isFeatured: i === 0,
+      tags: [sub?.name || 'Exclusive', cat?.name || 'Curated'],
+    };
+  });
+
+  return [...existing, ...fillers];
 };
 
 export default function CategorySubcategories() {
@@ -337,25 +257,22 @@ export default function CategorySubcategories() {
 
   useEffect(() => {
     async function load() {
+      const mockCat = getCategoryBySlug(slug);
       try {
         const catRes = await categoryService.getBySlug(slug);
         const catData = catRes?.data || catRes;
         if (catData && catData.name) {
-          setCategory(catData);
+          setCategory({ ...mockCat, ...catData });
           const subList = catData.subcategories || getSubcategoriesByCategory(slug);
           setSubcategories(subList);
-        } else {
-          const fallbackCat = getCategoryBySlug(slug);
-          if (fallbackCat) {
-            setCategory(fallbackCat);
-            setSubcategories(fallbackCat.subcategories || []);
-          }
+        } else if (mockCat) {
+          setCategory(mockCat);
+          setSubcategories(mockCat.subcategories || []);
         }
       } catch (err) {
-        const fallbackCat = getCategoryBySlug(slug);
-        if (fallbackCat) {
-          setCategory(fallbackCat);
-          setSubcategories(fallbackCat.subcategories || []);
+        if (mockCat) {
+          setCategory(mockCat);
+          setSubcategories(mockCat.subcategories || []);
         }
       }
       setCategoryProducts(getProducts({ category: slug, limit: 5 }));
@@ -392,139 +309,141 @@ export default function CategorySubcategories() {
             <span className={styles['breadcrumb-active']}>{category.name}</span>
           </div>
 
-          {/* Department Showcase Hero Header Card with Flipkart-Style Mini Carousel */}
-          <div className={styles['hero-header-card']}>
-            <div className={styles['hero-left-col']}>
-              <div className={styles['hero-badge']}>
-                <Sparkles size={14} color="#7c3aed" /> Department Showcase
-              </div>
-              <h1 className={styles['hero-title']}>
-                {category.icon ? `${category.icon} ` : ''}{category.name}
-              </h1>
-              <p className={styles['hero-desc']}>
-                {category.subtext || category.description || `Browse curated collections and popular styles in ${category.name}.`}
-              </p>
+          {/* Category Hero Showcase Banner (Image 1 Signature Design) */}
+          <CategoryHeroBanner category={category} categorySlug={slug} />
 
-              <div className={styles['hero-actions-row']}>
-                <Link
-                  to="/categories"
-                  className={`btn btn-outline ${styles['all-cat-btn']}`}
-                >
-                  <ArrowLeft size={16} /> All Categories
-                </Link>
-                <Link
-                  to={`/products?category=${category.slug || category._id}`}
-                  className={`btn btn-primary ${styles['view-all-btn']}`}
-                >
-                  <ShoppingCart size={16} /> View All {category.name}
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Side Flipkart-Like Mini Banner Carousel */}
-            <div className={styles['hero-mini-carousel-wrapper']}>
-              <MiniCategoryCarousel categorySlug={slug} />
-            </div>
-          </div>
-
-          {/* Sub-Categories Outer Container Card (Exact 2nd Image Design) */}
+          {/* Sub-Categories Capsule Pill Cards with Section Title */}
           <div className={styles['subcat-container-card']}>
-            {/* Header Row */}
-            <div className={styles['subcat-header-row']}>
-              <div className={styles['subcat-header-left']}>
-                <div className={styles['subcat-icon-pod']}>
-                  <Layers size={20} color="#7c3aed" strokeWidth={2.3} />
-                </div>
-                <div>
-                  <div className={styles['title-row']}>
-                    <h2 className={styles['container-title']}>Browse Collections</h2>
-                    <span className={styles['categories-count-badge']}>
-                      {subcategories.length} Categories
-                    </span>
-                  </div>
-                  <p className={styles['container-subtext']}>
-                    Shop curated gear by category
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                to={`/products?category=${category.slug || category._id}`}
-                className={styles['view-all-collections-btn']}
-              >
-                <span>View all collections</span>
-                <ArrowRight size={14} />
-              </Link>
+            <div className={styles['subcat-pill-section-header']}>
+              <h2 className={styles['subcat-pill-main-title']}>Shop by Category</h2>
+              <p className={styles['subcat-pill-subtitle']}>Discover curated collections handpicked for you</p>
             </div>
 
-            {/* Horizontal Divider Line */}
-            <div className={styles['header-divider']} />
+            {(subcategories || []).length <= 5 ? (
+              <div className={`${styles['capsule-pills-grid']} ${(subcategories || []).length <= 3 ? styles['capsule-pills-trio'] : ''}`}>
+                {(subcategories || []).map((sub, idx) => {
+                  const theme = HORIZONTAL_CAPSULE_THEMES[idx % HORIZONTAL_CAPSULE_THEMES.length];
+                  return (
+                    <Link
+                      key={sub._id || sub.slug}
+                      to={`/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`}
+                      className={styles['capsule-pill-card']}
+                      style={{
+                        background: theme.bgGradient,
+                        boxShadow: `0 6px 18px -4px ${theme.shadowColor}`,
+                        '--card-glow': theme.shadowColor,
+                      }}
+                    >
+                      {/* Left Content Column: Subcategory Name & Shop Now Button */}
+                      <div className={styles['capsule-pill-content']}>
+                        <h3 className={styles['capsule-pill-title']} title={sub.name}>
+                          {sub.name}
+                        </h3>
+                        <span
+                          className={styles['capsule-pill-btn']}
+                          style={{ color: theme.btnColor }}
+                        >
+                          <span>Shop Now</span>
+                          <ArrowUpRight size={11} strokeWidth={2.6} />
+                        </span>
+                      </div>
 
-            {/* Compact Horizontal Cards Grid */}
-            <div className={styles['compact-subcat-grid']}>
-              {subcategories.map((sub) => (
-                <Link
-                  key={sub._id || sub.slug}
-                  to={`/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`}
-                  className={styles['compact-subcat-card']}
-                >
-                  <img
-                    src={sub.image || category.image}
-                    alt={sub.name}
-                    className={styles['compact-card-img']}
-                  />
-                  <div className={styles['compact-card-content']}>
-                    <h3 className={styles['compact-card-title']} title={sub.name}>
+                      {/* Right Circular Image (Contained Inside Card) */}
+                      <div className={styles['capsule-pill-circle-box']}>
+                        <img
+                          src={sub.image || category.image}
+                          alt={sub.name}
+                          className={styles['capsule-pill-circle-img']}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = category.image || '/images/products/saree.png';
+                          }}
+                        />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={styles['vertical-pills-grid']}>
+                {(subcategories || []).map((sub) => (
+                  <Link
+                    key={sub._id || sub.slug}
+                    to={`/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`}
+                    className={styles['vertical-pill-card']}
+                  >
+                    <div className={styles['vertical-pill-circle']}>
+                      <img
+                        src={sub.image || category.image}
+                        alt={sub.name}
+                        className={styles['vertical-pill-img']}
+                      />
+                    </div>
+                    <h3 className={styles['vertical-pill-title']} title={sub.name}>
                       {sub.name}
                     </h3>
-                    <span className={styles['compact-card-count']}>
-                      {sub.itemCount ? `${sub.itemCount} items` : 'In stock'}
+                    <span className={styles['vertical-pill-count']}>
+                      <span>Shop Now</span>
+                      <ArrowUpRight size={11} strokeWidth={2.6} />
                     </span>
-                    <div className={styles['compact-card-action']}>
-                      <span>Shop</span>
-                      <ArrowRight size={13} strokeWidth={2.5} />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Featured Highlights from this Category (Enhanced Section Container) */}
-          {categoryProducts.length > 0 && (
-            <div className={styles['top-picks-container-card']}>
-              <div className={styles['top-picks-header-row']}>
-                <div className={styles['top-picks-header-left']}>
-                  <div className={styles['top-picks-icon-pod']}>
-                    <Sparkles size={20} color="#7c3aed" strokeWidth={2.3} />
-                  </div>
-                  <div>
-                    <div className={styles['title-row']}>
-                      <h2 className={styles['container-title']}>Top Picks in {category.name}</h2>
-                      <span className={styles['picks-badge']}>✦ Customer Favorites</span>
-                    </div>
-                    <p className={styles['container-subtext']}>
-                      Customer favorites and highest rated items ready for fast 24-48h dispatch.
-                    </p>
-                  </div>
-                </div>
-
-                <Link
-                  to={`/products?category=${category.slug || category._id}`}
-                  className={styles['view-all-collections-btn']}
-                >
-                  <span>View All ({category.itemCount || 10}+ Items)</span>
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-
-              <div className="product-grid-5">
-                {categoryProducts.map((prod) => (
-                  <ProductCard key={prod._id || prod.id} product={prod} />
+                  </Link>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Subcategory Showcase Rows: Each Subcategory has 4 Products + 1 View All Card */}
+          {(subcategories || []).map((sub) => {
+            const subProducts = getProductsForSubcategory(category, sub);
+            const targetSubUrl = `/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`;
+
+            return (
+              <div key={sub._id || sub.slug} className={styles['subcat-products-section']}>
+                {/* Clean Centered Subcategory Title (All icons, badges, subtext removed) */}
+                <div className={styles['subcat-showcase-header']}>
+                  <h2 className={styles['subcat-showcase-title']}>{sub.name}</h2>
+                </div>
+
+                {/* 5 Cards Grid: 4 Products + 1 View All Card (Exact Same Architecture & Dimensions) */}
+                <div className="product-grid-5">
+                  {subProducts.map((prod) => (
+                    <ProductCard key={prod._id || prod.id} product={prod} />
+                  ))}
+
+                  {/* 5th Card: View All Subcategory Tile - Matches Exact ProductCard Architecture & Size */}
+                  <Link
+                    to={targetSubUrl}
+                    className={styles['view-all-product-tile']}
+                  >
+                    {/* Top Aspect-Ratio Section Matching ref-card-top */}
+                    <div className={styles['view-all-tile-top']}>
+                      <div className={styles['view-all-circle-icon']}>
+                        <ArrowRight size={28} strokeWidth={2.5} />
+                      </div>
+                    </div>
+
+                    {/* Bottom Info Section Matching ref-card-body */}
+                    <div className={styles['view-all-tile-bottom']}>
+                      <div>
+                        <span className={styles['view-all-category-tag']}>{category.name}</span>
+                        <h3 className={styles['view-all-tile-heading']}>
+                          View All {sub.name}
+                        </h3>
+                        <p className={styles['view-all-tile-subtext']}>
+                          Explore the entire curated collection
+                        </p>
+                      </div>
+
+                      <div className={styles['view-all-action-btn']}>
+                        <span>Explore Collection</span>
+                        <ArrowRight size={15} strokeWidth={2.5} />
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
 
           {/* Quick Option to browse full catalog */}
           <div className={styles['catalog-banner']}>

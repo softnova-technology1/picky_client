@@ -1,28 +1,28 @@
 import React from 'react';
 import styles from '../../About.module.css';
-import { Palette, Monitor, ShoppingBag, Rocket } from 'lucide-react';
+import { BadgeCheck, ShoppingCart, ShieldCheck, Headphones } from 'lucide-react';
 
 export default function AboutHeroSection() {
   const features = [
     {
-      id: 'design',
-      icon: Palette,
-      title: 'Design coloré et moderne',
+      id: 'selected',
+      icon: BadgeCheck,
+      title: 'Carefully Selected Products',
     },
     {
-      id: 'ux',
-      icon: Monitor,
-      title: 'Expérience utilisateur fluide',
+      id: 'simple-shopping',
+      icon: ShoppingCart,
+      title: 'Simple Shopping Experience',
     },
     {
-      id: 'store',
-      icon: ShoppingBag,
-      title: 'Optimisé pour Picky Store',
+      id: 'secure-orders',
+      icon: ShieldCheck,
+      title: 'Secure & Reliable Orders',
     },
     {
-      id: 'performance',
-      icon: Rocket,
-      title: 'Performant et évolutif',
+      id: 'support',
+      icon: Headphones,
+      title: 'Customer Support',
     },
   ];
 
@@ -32,12 +32,16 @@ export default function AboutHeroSection() {
       
       {/* Centered Main Hero Content */}
       <div className={styles['about-hero-content']}>
+        <div className={styles['about-hero-pill-badge']}>
+          About Picky
+        </div>
+
         <h1 className={styles['about-hero-title']}>
-          Design et développement de site E-commerce coloré pour Picky
+          Simple Shopping. <span>Trusted Products.</span>
         </h1>
         
         <p className={styles['about-hero-subtitle']}>
-          par <span>Picky Studio</span>
+          Discover thoughtfully selected products across fashion, lifestyle, home, and more.
         </p>
 
         {/* Decorative Cyan Squiggly Wave Separator */}
@@ -62,7 +66,7 @@ export default function AboutHeroSection() {
             return (
               <div className={styles['about-feature-item']} key={item.id}>
                 <div className={styles['about-feature-icon-wrapper']}>
-                  <IconComponent size={24} strokeWidth={2} />
+                  <IconComponent size={26} strokeWidth={2.2} />
                 </div>
                 <div className={styles['about-feature-title']}>
                   {item.title}

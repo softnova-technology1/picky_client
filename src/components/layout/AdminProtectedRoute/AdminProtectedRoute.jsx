@@ -70,8 +70,9 @@ export function AdminProtectedRoute({ children }) {
     try {
       setLoading(true);
       const res = await authService.adminLogin(email.trim(), password);
-      const data = res?.data || res;
-      login(data.user, data.accessToken, data.refreshToken);
+      const payload = res?.data?.user ? res.data : (res?.user ? res : (res?.data || res));
+      const adminUser = payload?.user || payload;
+      login(adminUser, payload?.accessToken, payload?.refreshToken);
     } catch (err) {
       console.warn('Backend offline / Network Error fallback to Demo Admin:', err);
       // Seamlessly fallback to demo admin if backend is offline or network fails
