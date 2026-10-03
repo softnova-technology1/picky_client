@@ -72,10 +72,12 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* ── Customer Account Hub & Orders ────────── */}
-          <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-          <Route path="/account/*" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-          <Route path="/orders" element={<Navigate to="/account?tab=orders" replace />} />
+          {/* ── Customer Profile Hub & Orders ────────── */}
+          <Route path="/profile" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+          <Route path="/profile/*" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+          <Route path="/account" element={<Navigate to="/profile" replace />} />
+          <Route path="/account/*" element={<Navigate to="/profile" replace />} />
+          <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
 
           {/* ── Support & Legal ──────────────────────── */}

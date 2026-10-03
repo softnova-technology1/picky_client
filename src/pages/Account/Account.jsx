@@ -12,6 +12,7 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import AccountProfile from '../../components/account/AccountProfile';
 import AccountAddresses from '../../components/account/AccountAddresses';
+import styles from './Account.module.css';
 import {
   User,
   Package,
@@ -74,266 +75,118 @@ export default function Account() {
 
   return (
     <PageWrapper>
-      <style>{`
-        .account-tab-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.65rem;
-          padding: 0.75rem 1.25rem;
-          border-radius: 14px;
-          font-size: 0.92rem;
-          font-weight: 600;
-          cursor: pointer;
-          text-decoration: none;
-          outline: none;
-          border: 1.5px solid transparent;
-          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-          white-space: nowrap;
-          user-select: none;
-        }
-        .account-tab-btn:hover {
-          transform: translateY(-2px);
-        }
-        .account-tab-inactive {
-          background: #ffffff;
-          color: #475569;
-          border-color: #e2e8f0;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
-        }
-        .account-tab-inactive:hover {
-          background: #faf5ff;
-          color: #6d28d9;
-          border-color: #c4b5fd;
-          box-shadow: 0 6px 16px rgba(124, 58, 237, 0.1);
-        }
-        .account-tab-active {
-          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-          color: #ffffff !important;
-          border-color: #6d28d9;
-          box-shadow: 0 8px 20px -3px rgba(124, 58, 237, 0.38);
-        }
-        .account-logout-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.6rem 1.15rem;
-          border-radius: 12px;
-          border: 1.5px solid #fecaca;
-          background: #fff1f2;
-          color: #e11d48;
-          font-weight: 600;
-          font-size: 0.88rem;
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .account-logout-btn:hover {
-          background: #ffe4e6;
-          border-color: #fda4af;
-          color: #be123c;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(225, 29, 72, 0.12);
-        }
-        .account-tabs-row::-webkit-scrollbar {
-          display: none;
-        }
-        .account-tabs-row {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .order-card-box {
-          border: 1.5px solid #e2e8f0;
-          border-radius: 18px;
-          background: #ffffff;
-          box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.04);
-          overflow: hidden;
-          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .order-card-box:hover {
-          transform: translateY(-2px);
-          border-color: #c4b5fd;
-          box-shadow: 0 14px 30px -8px rgba(124, 58, 237, 0.12);
-        }
-        .order-track-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-          color: #ffffff !important;
-          padding: 0.6rem 1.25rem;
-          border-radius: 12px;
-          font-size: 0.86rem;
-          font-weight: 700;
-          text-decoration: none;
-          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
-          border: 1px solid #6d28d9;
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-          white-space: nowrap;
-        }
-        .order-track-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 7px 20px rgba(124, 58, 237, 0.45);
-          background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
-        }
-      `}</style>
-
       <div className="section" style={{ background: 'linear-gradient(135deg, #faf7ff 0%, #f4effe 50%, #f8f5fe 100%)', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
-        <div className="container" style={{ maxWidth: '1100px' }}>
+        <div className="container" style={{ maxWidth: '1440px' }}>
           {/* Executive Top Profile Header & Navigation Bar */}
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.94)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: '24px',
-              padding: '1.5rem 1.75rem',
-              marginBottom: '2rem',
-              boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
-              border: '1.5px solid rgba(221, 214, 254, 0.75)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.25rem',
-            }}
-          >
-            {/* Top Row: User Identity & Sign Out */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '1rem',
-              }}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+            <button
+              onClick={() => setLogoutModalOpen(true)}
+              className={styles.accountLogoutBtn}
+              title="Sign out of your account"
             >
-              {/* User Avatar + Details */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div
-                  style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '18px',
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.3rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.5px',
-                    boxShadow: '0 8px 20px -4px rgba(124, 58, 237, 0.4)',
-                    border: '3px solid #ffffff',
-                    flexShrink: 0,
-                  }}
-                >
-                  {userInitials}
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                    <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-                      {user?.name || 'My Account'}
-                    </h2>
-                  </div>
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.88rem', color: '#64748b' }}>
-                    {user?.phone ? `📱 +91 ${user.phone}` : user?.email || 'Manage your orders, profile & delivery addresses'}
-                  </p>
-                </div>
-              </div>
+              <LogOut size={16} />
+              <span>Sign Out</span>
+            </button>
+          </div>
 
-              {/* Sign Out Action Button */}
-              <button
-                onClick={() => setLogoutModalOpen(true)}
-                className="account-logout-btn"
-                title="Sign out of your account"
-              >
-                <LogOut size={16} color="#e11d48" />
-                <span>Sign Out</span>
-              </button>
+          <div className={styles.profileBanner}>
+            {/* User Avatar + Details */}
+            <div className={styles.avatar3d}>
+              {userInitials}
+              <div className={styles.statusDot}></div>
             </div>
-
-            {/* Subtle Divider */}
-            <div style={{ height: '1px', background: 'rgba(226, 232, 240, 0.85)', width: '100%' }} />
-
-            {/* Horizontal Segmented Navigation Tabs */}
-            <div
-              className="account-tabs-row"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                overflowX: 'auto',
-                paddingBottom: '0.2rem',
-              }}
-            >
-              {/* Tab 1: Profile */}
-              <button
-                onClick={() => handleTabChange('profile')}
-                className={`account-tab-btn ${currentTab === 'profile' ? 'account-tab-active' : 'account-tab-inactive'}`}
-              >
-                <User size={18} color={currentTab === 'profile' ? '#ffffff' : '#7c3aed'} />
-                <span>My Profile</span>
-              </button>
-
-              {/* Tab 2: Orders */}
-              <button
-                onClick={() => handleTabChange('orders')}
-                className={`account-tab-btn ${currentTab === 'orders' ? 'account-tab-active' : 'account-tab-inactive'}`}
-              >
-                <Package size={18} color={currentTab === 'orders' ? '#ffffff' : '#7c3aed'} />
-                <span>My Orders</span>
-                {orders.length > 0 && (
-                  <span
-                    style={{
-                      background: currentTab === 'orders' ? 'rgba(255, 255, 255, 0.25)' : '#ede9fe',
-                      color: currentTab === 'orders' ? '#ffffff' : '#6d28d9',
-                      fontSize: '0.74rem',
-                      padding: '0.15rem 0.55rem',
-                      borderRadius: '999px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {orders.length}
-                  </span>
-                )}
-              </button>
-
-              {/* Tab 3: Addresses */}
-              <button
-                onClick={() => handleTabChange('addresses')}
-                className={`account-tab-btn ${currentTab === 'addresses' ? 'account-tab-active' : 'account-tab-inactive'}`}
-              >
-                <MapPin size={18} color={currentTab === 'addresses' ? '#ffffff' : '#7c3aed'} />
-                <span>Saved Addresses</span>
-              </button>
-
-              {/* Tab 4: Wishlist Link */}
-              <Link
-                to="/wishlist"
-                className="account-tab-btn account-tab-inactive"
-                style={{
-                  border: '1.5px solid #e2e8f0',
-                }}
-              >
-                <Heart size={18} color="#ec4899" fill={wishlistItems.length > 0 ? '#ec4899' : 'none'} />
-                <span>My Wishlist</span>
-                {wishlistItems.length > 0 && (
-                  <span
-                    style={{
-                      background: '#fce7f3',
-                      color: '#be185d',
-                      fontSize: '0.74rem',
-                      padding: '0.15rem 0.55rem',
-                      borderRadius: '999px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {wishlistItems.length}
-                  </span>
-                )}
-              </Link>
+            
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e1b4b', margin: '0 0 0.5rem', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {user?.name || 'My Account'}
+              </h2>
+              <p style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', color: '#4338ca', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }}>
+                <span style={{ display: 'inline-flex', padding: '0.2rem', background: 'rgba(255,255,255,0.5)', borderRadius: '6px' }}>📱</span>
+                {user?.phone ? `+91 ${user.phone}` : user?.email || 'Manage your orders, profile & delivery addresses'}
+              </p>
+              <p style={{ 
+                margin: 0, 
+                fontSize: '1.2rem', 
+                color: '#4f46e5',
+                fontFamily: '"Caveat", "Dancing Script", cursive, sans-serif',
+                fontStyle: 'italic',
+                fontWeight: 600,
+                opacity: 0.8
+              }}>
+                Better Details &nbsp;·&nbsp; Stronger Connections <span style={{ display: 'inline-block', borderBottom: '2px solid #a78bfa', width: '30px', verticalAlign: 'middle', marginLeft: '5px', opacity: 0.6 }}></span>
+              </p>
             </div>
           </div>
 
+          {/* Horizontal Segmented Navigation Tabs */}
+          <div className={styles.accountTabsRow}>
+            {/* Tab 1: Profile */}
+            <button
+              onClick={() => handleTabChange('profile')}
+              className={`${styles.accountTabBtn} ${currentTab === 'profile' ? styles.accountTabActive : styles.accountTabInactive}`}
+            >
+              <User size={18} color={currentTab === 'profile' ? '#ffffff' : '#7c3aed'} />
+              <span>My Profile</span>
+            </button>
+
+            {/* Tab 2: Orders */}
+            <button
+              onClick={() => handleTabChange('orders')}
+              className={`${styles.accountTabBtn} ${currentTab === 'orders' ? styles.accountTabActive : styles.accountTabInactive}`}
+            >
+              <Package size={18} color={currentTab === 'orders' ? '#ffffff' : '#7c3aed'} />
+              <span>My Orders</span>
+              {orders.length > 0 && (
+                <span
+                  style={{
+                    background: currentTab === 'orders' ? 'rgba(255, 255, 255, 0.25)' : '#ede9fe',
+                    color: currentTab === 'orders' ? '#ffffff' : '#6d28d9',
+                    fontSize: '0.74rem',
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {orders.length}
+                </span>
+              )}
+            </button>
+
+            {/* Tab 3: Addresses */}
+            <button
+              onClick={() => handleTabChange('addresses')}
+              className={`${styles.accountTabBtn} ${currentTab === 'addresses' ? styles.accountTabActive : styles.accountTabInactive}`}
+            >
+              <MapPin size={18} color={currentTab === 'addresses' ? '#ffffff' : '#7c3aed'} />
+              <span>Saved Addresses</span>
+            </button>
+
+            {/* Tab 4: Wishlist Link */}
+            <Link
+              to="/wishlist"
+              className={`${styles.accountTabBtn} ${styles.accountTabInactive}`}
+            >
+              <Heart size={18} color="#ec4899" fill={wishlistItems.length > 0 ? '#ec4899' : 'none'} />
+              <span>My Wishlist</span>
+              {wishlistItems.length > 0 && (
+                <span
+                  style={{
+                    background: '#fce7f3',
+                    color: '#be185d',
+                    fontSize: '0.74rem',
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {wishlistItems.length}
+                </span>
+              )}
+            </Link>
+          </div>
+
           {/* Main Tab Content Area */}
-          <div className="account-main-content" style={{ width: '100%' }}>
+          <div key={currentTab} className={`account-main-content ${styles.tabContentSwap}`} style={{ width: '100%' }}>
               {/* TAB 1: MY ORDERS */}
               {currentTab === 'orders' && (
                 <div
@@ -345,38 +198,74 @@ export default function Account() {
                     border: '1.5px solid rgba(221, 214, 254, 0.75)',
                   }}
                 >
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: '0 0 0.35rem' }}>My Orders</h2>
-                    <p style={{ color: '#64748b', fontSize: '0.92rem', margin: 0 }}>
-                      Track current shipments and view your order history.
-                    </p>
+                  {/* ── Top Header Row with 3D Illustration ── */}
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div
+                        style={{
+                          width: '54px',
+                          height: '54px',
+                          borderRadius: '18px',
+                          background: '#f3e8ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#7c3aed',
+                          flexShrink: 0,
+                          boxShadow: '0 4px 14px rgba(124, 58, 237, 0.15)',
+                        }}
+                      >
+                        <Package size={26} />
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#1e1b4b', margin: '0 0 0.25rem', letterSpacing: '-0.02em' }}>
+                          My Orders
+                        </h2>
+                        <p style={{ color: '#64748b', fontSize: '0.94rem', margin: 0, fontWeight: 500 }}>
+                          Track current shipments and view your order history.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Floating 3D Box Header Graphic */}
+                    <div style={{ position: 'relative', pointerEvents: 'none' }}>
+                      <img
+                        src="/orders-header-box.png"
+                        alt="3D Orders Box"
+                        style={{
+                          width: '130px',
+                          height: '130px',
+                          objectFit: 'contain',
+                          mixBlendMode: 'multiply',
+                          filter: 'drop-shadow(0 8px 16px rgba(124, 58, 237, 0.12))'
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  {/* ── Order Status Filter Chips ── */}
+                  {/* ── Order Status Filter Chips (Exact Pill Bar) ── */}
                   {!loadingOrders && orders.length > 0 && (() => {
                     const filterOptions = [
-                      { key: 'all', label: 'All Orders', color: '#7c3aed', bg: '#ede9fe', activeBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', activeColor: '#fff' },
-                      { key: 'confirmed', label: 'Confirmed', color: '#0369a1', bg: '#e0f2fe', activeBg: 'linear-gradient(135deg, #0284c7, #0369a1)', activeColor: '#fff' },
-                      { key: 'packing', label: 'Packing', color: '#7c3aed', bg: '#f3e8ff', activeBg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', activeColor: '#fff' },
-                      { key: 'shipped', label: 'Shipping', color: '#b45309', bg: '#fef3c7', activeBg: 'linear-gradient(135deg, #d97706, #b45309)', activeColor: '#fff' },
-                      { key: 'delivered', label: 'Delivered', color: '#15803d', bg: '#dcfce7', activeBg: 'linear-gradient(135deg, #16a34a, #15803d)', activeColor: '#fff' },
-                      { key: 'cancelled', label: 'Cancelled', color: '#b91c1c', bg: '#fee2e2', activeBg: 'linear-gradient(135deg, #dc2626, #b91c1c)', activeColor: '#fff' },
+                      { key: 'all', label: 'All Orders', icon: Package, color: '#7c3aed', bg: '#ede9fe', activeBg: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', activeColor: '#ffffff' },
+                      { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2, color: '#0369a1', bg: '#e0f2fe', activeBg: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', activeColor: '#ffffff' },
+                      { key: 'shipped', label: 'Shipping', icon: Truck, color: '#b45309', bg: '#fef3c7', activeBg: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', activeColor: '#ffffff' },
+                      { key: 'delivered', label: 'Delivered', icon: CheckCircle2, color: '#15803d', bg: '#dcfce7', activeBg: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', activeColor: '#ffffff' },
                     ];
                     return (
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.5rem',
+                          gap: '0.75rem',
                           flexWrap: 'wrap',
-                          marginBottom: '1.5rem',
-                          padding: '0.85rem 1rem',
-                          background: '#f8fafc',
-                          borderRadius: '14px',
+                          marginBottom: '2rem',
+                          padding: '0.65rem 0.85rem',
+                          background: '#ffffff',
+                          borderRadius: '20px',
                           border: '1.5px solid #f1f5f9',
+                          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)',
                         }}
                       >
-                        <Filter size={14} color="#94a3b8" style={{ marginRight: '0.25rem', flexShrink: 0 }} />
                         {filterOptions.map((opt) => {
                           const isActive = orderFilter === opt.key;
                           const statusCount = opt.key === 'all'
@@ -386,7 +275,7 @@ export default function Account() {
                                 if (opt.key === 'shipped') return st === 'shipped' || st === 'out_for_delivery';
                                 return st === opt.key;
                               }).length;
-                          if (opt.key !== 'all' && statusCount === 0) return null;
+                          const IconComp = opt.icon;
                           return (
                             <button
                               key={opt.key}
@@ -394,28 +283,33 @@ export default function Account() {
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.38rem 0.85rem',
+                                gap: '0.5rem',
+                                padding: '0.55rem 1.15rem',
                                 borderRadius: '999px',
-                                fontSize: '0.8rem',
+                                fontSize: '0.88rem',
                                 fontWeight: 700,
                                 cursor: 'pointer',
                                 border: 'none',
                                 outline: 'none',
-                                transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                                 background: isActive ? opt.activeBg : opt.bg,
                                 color: isActive ? opt.activeColor : opt.color,
-                                boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                                boxShadow: isActive ? '0 4px 14px rgba(124, 58, 237, 0.35)' : 'none',
                                 transform: isActive ? 'translateY(-1px)' : 'none',
                               }}
                             >
-                              {opt.label}
+                              <IconComp size={15} />
+                              <span>{opt.label}</span>
                               <span
                                 style={{
-                                  background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)',
+                                  background: isActive ? '#ffffff' : 'rgba(0, 0, 0, 0.08)',
+                                  color: isActive ? '#7c3aed' : opt.color,
                                   borderRadius: '999px',
-                                  padding: '0 0.4rem',
-                                  fontSize: '0.72rem',
+                                  padding: '0.1rem 0.55rem',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 800,
+                                  minWidth: '18px',
+                                  textAlign: 'center',
                                 }}
                               >
                                 {statusCount}
@@ -456,113 +350,177 @@ export default function Account() {
                         </p>
                       </div>
                     ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
                       {filteredOrders.map((order) => {
                         const totalFormatted = formatPrice(order.total ?? order.totalAmount ?? 0);
+                        const isShipping = (order.status || '').toLowerCase() === 'shipped' || (order.status || '').toLowerCase() === 'out_for_delivery';
+                        const isConfirmed = (order.status || '').toLowerCase() === 'confirmed';
+                        
                         return (
                           <div
                             key={order._id}
-                            className="order-card-box"
+                            style={{
+                              position: 'relative',
+                              borderRadius: '24px',
+                              background: '#ffffff',
+                              boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
+                              border: '1.5px solid rgba(221, 214, 254, 0.75)',
+                              overflow: 'hidden',
+                              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
                           >
+                            {/* Left Accent Bar */}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                bottom: 0,
+                                width: '5px',
+                                background: isShipping ? '#f59e0b' : isConfirmed ? '#3b82f6' : 'linear-gradient(180deg, #7c3aed 0%, #4f46e5 100%)',
+                              }}
+                            />
+
                             {/* Card Header Bar */}
                             <div
                               style={{
-                                background: 'linear-gradient(135deg, #fbfaff 0%, #f8fafc 100%)',
-                                borderBottom: '1px solid #e2e8f0',
-                                padding: '1rem 1.35rem',
+                                background: 'linear-gradient(135deg, #f8faff 0%, #f4f3ff 100%)',
+                                borderBottom: '1px solid #f1f5f9',
+                                padding: '1.15rem 1.6rem 1.15rem 1.8rem',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 flexWrap: 'wrap',
-                                gap: '0.85rem',
+                                gap: '1rem',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                                 <div
                                   style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '12px',
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '14px',
                                     background: '#f3e8ff',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: '#7c3aed',
                                     flexShrink: 0,
+                                    boxShadow: '0 3px 10px rgba(124, 58, 237, 0.12)',
                                   }}
                                 >
-                                  <Package size={20} />
+                                  {isShipping ? <Truck size={20} color="#d97706" /> : <Package size={20} />}
                                 </div>
                                 <div>
-                                  <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
+                                  <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
                                     Order #{order.orderNumber}
                                   </span>
-                                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                  <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 500 }}>
                                     Placed on {formatDate(order.createdAt)}
                                   </span>
                                 </div>
                               </div>
 
-                              {/* Prominent, Uncluttered Status Badge */}
+                              {/* Prominent Status Pill matching design */}
                               <div>
-                                <Badge status={order.status} />
+                                {isShipping ? (
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.45rem',
+                                      padding: '0.45rem 1.1rem',
+                                      borderRadius: '999px',
+                                      background: '#fff8e6',
+                                      border: '1.5px solid #ffe0b2',
+                                      color: '#d97706',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 800,
+                                      letterSpacing: '0.02em',
+                                      boxShadow: '0 2px 8px rgba(217, 119, 6, 0.1)',
+                                    }}
+                                  >
+                                    <Truck size={14} /> ORDER SHIPPING &gt;
+                                  </span>
+                                ) : isConfirmed ? (
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.45rem',
+                                      padding: '0.45rem 1.1rem',
+                                      borderRadius: '999px',
+                                      background: '#e6fffa',
+                                      border: '1.5px solid #a7f3d0',
+                                      color: '#0d9488',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 800,
+                                      letterSpacing: '0.02em',
+                                      boxShadow: '0 2px 8px rgba(13, 148, 136, 0.1)',
+                                    }}
+                                  >
+                                    <CheckCircle2 size={14} /> ORDER CONFIRMED &gt;
+                                  </span>
+                                ) : (
+                                  <Badge status={order.status} />
+                                )}
                               </div>
                             </div>
 
                             {/* Card Items Body */}
-                            <div style={{ padding: '1.25rem 1.35rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ padding: '1.4rem 1.6rem 1.4rem 1.8rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                               {order.items?.map((item, idx) => (
                                 <div
                                   key={idx}
                                   style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '1rem',
-                                    paddingBottom: idx !== order.items.length - 1 ? '1rem' : 0,
-                                    borderBottom: idx !== order.items.length - 1 ? '1px dashed #f1f5f9' : 'none',
+                                    gap: '1.25rem',
+                                    paddingBottom: idx !== order.items.length - 1 ? '1.25rem' : 0,
+                                    borderBottom: idx !== order.items.length - 1 ? '1px dashed #e2e8f0' : 'none',
                                   }}
                                 >
                                   <img
                                     src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=160'}
                                     alt={item.name}
                                     style={{
-                                      width: '60px',
-                                      height: '60px',
-                                      borderRadius: '12px',
+                                      width: '76px',
+                                      height: '76px',
+                                      borderRadius: '16px',
                                       objectFit: 'cover',
                                       border: '1.5px solid #ede9fe',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                      boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
                                       flexShrink: 0,
                                     }}
                                   />
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <h4
                                       style={{
-                                        margin: '0 0 0.35rem',
-                                        fontSize: '0.94rem',
+                                        margin: '0 0 0.45rem',
+                                        fontSize: '1rem',
                                         color: '#0f172a',
-                                        fontWeight: 600,
+                                        fontWeight: 700,
                                         lineHeight: 1.4,
+                                        letterSpacing: '-0.01em',
                                       }}
                                     >
                                       {item.name}
                                     </h4>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
                                       <span
                                         style={{
-                                          background: '#f8fafc',
-                                          border: '1px solid #e2e8f0',
-                                          color: '#475569',
-                                          fontSize: '0.78rem',
+                                          background: '#f1f5f9',
+                                          color: '#64748b',
+                                          fontSize: '0.8rem',
                                           fontWeight: 600,
-                                          padding: '0.15rem 0.55rem',
-                                          borderRadius: '6px',
+                                          padding: '0.2rem 0.65rem',
+                                          borderRadius: '8px',
                                         }}
                                       >
                                         Qty: {item.quantity}
                                       </span>
                                       {item.price && (
-                                        <span style={{ color: '#7c3aed', fontWeight: 700, fontSize: '0.92rem' }}>
+                                        <span style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem' }}>
                                           {formatPrice(item.price)}
                                         </span>
                                       )}
@@ -575,30 +533,32 @@ export default function Account() {
                             {/* Card Footer Bar - With Track Order on the Right */}
                             <div
                               style={{
-                                background: 'linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%)',
-                                borderTop: '1px solid #ede9fe',
-                                padding: '1rem 1.35rem',
+                                background: 'linear-gradient(135deg, #f8faff 0%, #f4f3ff 100%)',
+                                borderTop: '1px solid #f1f5f9',
+                                padding: '1.15rem 1.6rem 1.15rem 1.8rem',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 flexWrap: 'wrap',
-                                gap: '0.85rem',
+                                gap: '1rem',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                                <div style={{ fontSize: '0.94rem', color: '#64748b', fontWeight: 500 }}>
                                   Total Paid:{' '}
-                                  <strong style={{ color: '#0f172a', fontSize: '1.15rem', fontWeight: 800, marginLeft: '0.2rem' }}>
+                                  <strong style={{ color: '#0f172a', fontSize: '1.35rem', fontWeight: 800, marginLeft: '0.35rem' }}>
                                     {totalFormatted}
                                   </strong>
                                 </div>
 
+                                <div style={{ height: '24px', width: '1px', background: '#cbd5e1' }} />
+
                                 {order.trackingId ? (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#6d28d9', background: '#ede9fe', border: '1px solid #ddd6fe', padding: '0.25rem 0.65rem', borderRadius: '8px', fontWeight: 600 }}>
-                                    🚚 {order.courier || 'Express'}: {order.trackingId}
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#6d28d9', background: '#ede9fe', border: '1px solid #ddd6fe', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 700, boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)' }}>
+                                    💳 {order.courier || 'Express'}: {order.trackingId}
                                   </div>
                                 ) : (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.25rem 0.65rem', borderRadius: '8px', fontWeight: 600 }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: '#047857', background: '#e6fffa', border: '1px solid #a7f3d0', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 700, boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)' }}>
                                     ✓ 100% Prepaid Verified
                                   </span>
                                 )}
@@ -607,11 +567,18 @@ export default function Account() {
                               {/* Right: Prominent Track Order Button */}
                               <Link
                                 to={`/orders/${order._id}`}
-                                className="order-track-btn"
+                                className={styles.orderTrackBtn}
+                                style={{
+                                  borderRadius: '16px',
+                                  padding: '0.65rem 1.4rem',
+                                  fontWeight: 700,
+                                  fontSize: '0.9rem',
+                                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.35)',
+                                }}
                               >
-                                <Truck size={15} strokeWidth={2.5} />
+                                <Truck size={16} strokeWidth={2.5} />
                                 <span>Track Order</span>
-                                <span style={{ fontSize: '0.95rem', marginLeft: '0.1rem' }}>→</span>
+                                <span style={{ fontSize: '1rem', marginLeft: '0.15rem' }}>→</span>
                               </Link>
                             </div>
                           </div>
@@ -627,13 +594,53 @@ export default function Account() {
               {currentTab === 'profile' && (
                 <div
                   style={{
-                    background: 'rgba(255, 255, 255, 0.94)',
-                    borderRadius: '24px',
-                    padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
-                    boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08)',
+                    position: 'relative',
+                    background: 'rgba(255, 255, 255, 0.96)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    borderRadius: '28px',
+                    padding: 'clamp(2rem, 4vw, 3rem)',
+                    boxShadow: '0 20px 40px -15px rgba(124, 58, 237, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
                     border: '1.5px solid rgba(221, 214, 254, 0.75)',
+                    overflow: 'hidden'
                   }}
                 >
+                  {/* Dot pattern decorative element */}
+                  <div style={{ position: 'absolute', top: '1.75rem', right: '1.75rem', display: 'grid', gridTemplateColumns: 'repeat(4, 5px)', gap: '6px', opacity: 0.4 }}>
+                    {Array(16).fill(0).map((_, i) => (
+                       <div key={i} style={{ width: '5px', height: '5px', background: '#a78bfa', borderRadius: '50%' }} />
+                    ))}
+                  </div>
+                  
+                  {/* Soft Radial Glow behind decoration */}
+                  <div 
+                    style={{ 
+                      position: 'absolute', 
+                      bottom: '-20px', 
+                      right: '-20px', 
+                      width: '260px', 
+                      height: '260px', 
+                      background: 'radial-gradient(circle, rgba(221, 214, 254, 0.45) 0%, rgba(255, 255, 255, 0) 70%)', 
+                      borderRadius: '50%',
+                      pointerEvents: 'none'
+                    }} 
+                  />
+
+                  {/* Generated 3D e-commerce profile decoration on bottom right */}
+                  <div style={{ position: 'absolute', bottom: '5px', right: '15px', pointerEvents: 'none', zIndex: 0 }}>
+                    <img 
+                      src="/profile-corner-3d.png" 
+                      alt="Profile 3D Decoration" 
+                      style={{ 
+                        width: '200px', 
+                        height: '200px', 
+                        objectFit: 'contain', 
+                        mixBlendMode: 'multiply',
+                        filter: 'contrast(105%) brightness(102%) drop-shadow(0 10px 20px rgba(124, 58, 237, 0.1))' 
+                      }} 
+                    />
+                  </div>
+
                   <AccountProfile />
                 </div>
               )}
