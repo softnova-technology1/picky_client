@@ -369,6 +369,7 @@
   box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
   text-decoration: none;
   flex-shrink: 0;
+  overflow: visible !important;
 }
 
 .nav-icon-btn:hover {
@@ -381,8 +382,8 @@
 
 .nav-action-badge {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: -4px;
+  right: -4px;
   min-width: 18px;
   height: 18px;
   padding: 0 0.25rem;
@@ -396,6 +397,7 @@
   justify-content: center;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35);
+  z-index: 20;
 }
 
 .nav-action-badge-rose {

@@ -2,6 +2,7 @@
 @import './legal.css';
 @import './bestseller_hero.css';
 @import './login.css';
+@import './button-hover-fx.css';
 
 /* ─── CSS Variables & Purple Design System ──────────────────────── */
 :root {
@@ -118,36 +119,136 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
   font-size: 0.95rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
-  transition: var(--transition);
   cursor: pointer;
   border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* mouse-position vars (set by useButtonHoverFX hook) */
+  --btn-mx: 50%;
+  --btn-my: 50%;
+  transition:
+    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.22s ease,
+    border-color 0.22s ease;
 }
-.btn:hover { opacity: 0.94; transform: translateY(-1px); }
-.btn:active { transform: translateY(0); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+/* ── Cursor-tracking spotlight: rendered INSIDE background via ::before ── */
+/* z-index: -1 so it sits behind the button text but above nothing */
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle 80px at var(--btn-mx) var(--btn-my),
+    rgba(255, 255, 255, 0.22) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+  z-index: 0;   /* below text (text is natural flow above z:0 in same context) */
+}
+
+/* ── Diagonal shimmer sweep — uses mix-blend-mode so it never hides text ── */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    112deg,
+    transparent 18%,
+    rgba(255, 255, 255, 0.20) 46%,
+    rgba(255, 255, 255, 0.42) 50%,
+    transparent 82%
+  );
+  mix-blend-mode: overlay;
+  transform: translateX(-140%) skewX(-10deg);
+  transition: transform 0.52s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+  z-index: 2;   /* above text but blended via mix-blend-mode, never blocks */
+}
+
+/* ── Button text / children sit at z:1 — above spotlight, below shimmer blend ── */
+.btn > * { position: relative; z-index: 1; }
+
+/* ── Hover state ───────────────────────────────────────────────── */
+.btn:hover {
+  transform: translateY(-3px) scale(1.018);
+  box-shadow:
+    0 8px 22px -3px rgba(124, 58, 237, 0.24),
+    0 2px 8px -1px rgba(0, 0, 0, 0.09);
+}
+.btn:hover::before { opacity: 1; }
+.btn:hover::after  { transform: translateX(140%) skewX(-10deg); }
+
+/* ── Click snap-back ───────────────────────────────────────────── */
+.btn:active {
+  transform: translateY(0) scale(0.974);
+  transition:
+    transform 0.11s cubic-bezier(0.4, 0, 0.6, 1),
+    box-shadow 0.11s ease;
+  box-shadow: 0 2px 8px -2px rgba(124, 58, 237, 0.15);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
+
+/* ─── Variants ─────────────────────────────────────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  background-color: var(--color-primary);
   color: white;
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #6d28d9 0%, #7e22ce 100%);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+  background-color: var(--color-primary-dark);
+  box-shadow:
+    0 10px 28px -3px rgba(124, 58, 237, 0.52),
+    0 0 0 3px rgba(124, 58, 237, 0.13);
 }
-.btn-secondary { background: #f3e8ff; color: #581c87; border-color: #e9d5ff; }
-.btn-secondary:hover { background: #e9d5ff; }
-.btn-primary { background: var(--color-primary); color: white; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35); }
-.btn-primary:hover { background: var(--color-primary-dark); }
+
 .btn-secondary { background: #f3ebfc; color: #581c87; border-color: #e9daf8; }
 .btn-secondary:hover { background: #ebd9fc; border-color: #d8b4fe; }
+/* lighter spotlight on light buttons */
+.btn-secondary::before, .btn-outline::before {
+  background: radial-gradient(
+    circle 80px at var(--btn-mx) var(--btn-my),
+    rgba(124, 58, 237, 0.14) 0%,
+    transparent 70%
+  );
+}
+
 .btn-outline { background: transparent; border-color: var(--color-primary); color: var(--color-primary); }
 .btn-outline:hover { background: var(--color-primary-light); }
-.btn-danger { background: var(--color-danger); color: white; }
-.btn-success { background: var(--color-success); color: white; }
+
+.btn-danger { background-color: var(--color-danger); color: white; }
+.btn-danger:hover {
+  background-color: #dc2626;
+  box-shadow:
+    0 10px 28px -3px rgba(239, 68, 68, 0.44),
+    0 0 0 3px rgba(239, 68, 68, 0.11);
+}
+
+.btn-success { background-color: var(--color-success); color: white; }
+.btn-success:hover {
+  background-color: #059669;
+  box-shadow:
+    0 10px 28px -3px rgba(16, 185, 129, 0.44),
+    0 0 0 3px rgba(16, 185, 129, 0.11);
+}
+
 .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
 .btn-lg { padding: 0.85rem 1.75rem; font-size: 1.05rem; }
 .btn-block { width: 100%; }
+
+
 
 /* ─── Jelly Button Style & Physics Animation ───────────────────────────── */
 @keyframes globalJellyHover {
@@ -524,6 +625,7 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   text-decoration: none;
+  overflow: visible !important;
 }
 
 .picky-float-btn:hover {
@@ -538,15 +640,16 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
 
 .picky-chat-ping-badge {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 12px;
-  height: 12px;
+  top: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #ef4444;
   border: 2.5px solid #ffffff;
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
   animation: pingPulse 2s infinite ease-in-out;
+  z-index: 20;
 }
 
 @keyframes pingPulse {
@@ -575,7 +678,9 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #0f0720;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 20;
 }
 
 .picky-float-scroll {
