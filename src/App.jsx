@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AdminProtectedRoute } from './components/layout/AdminProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
+import { useButtonHoverFX } from './hooks/useButtonHoverFX';
 
 // Customer Pages
 import Home from './pages/Home';
@@ -44,6 +45,7 @@ const ADMIN = '/pickyadmin-softnova2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 export default function App() {
+  useButtonHoverFX();
   return (
     <QueryClientProvider client={qc}>
       <BrowserRouter>
