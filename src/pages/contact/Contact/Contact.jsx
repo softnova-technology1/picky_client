@@ -64,7 +64,7 @@ export default function Contact() {
                   <span>Send Us a Message</span>
                   <ArrowRight size={16} />
                 </a>
-                <a href="tel:+919876543210" className="k-hero-btn-secondary">
+                <a href="tel:+918300295721" className="k-hero-btn-secondary">
                   <Phone size={18} />
                   <span>Call Customer Care</span>
                 </a>

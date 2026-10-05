@@ -1,0 +1,140 @@
+/*
+ * button-hover-fx.css
+ * ──────────────────────────────────────────────────────────────────────────
+ * Universal button hover effects for the Picky site.
+ * Works on ALL buttons regardless of class name — via [class*="-btn"],
+ * [class*="btn-"], and the plain <button> element.
+ *
+ * Effects:
+ *   1. Diagonal shimmer sweep  (::after, mix-blend-mode: overlay)
+ *   2. Cursor-tracking spotlight (::before, radial-gradient via CSS vars)
+ *   3. Spring magnetic lift  (transform on :hover)
+ *   4. Click snap-back       (transform on :active)
+ *
+ * The JS hook (useButtonHoverFX) sets --btn-mx / --btn-my on each element.
+ * ──────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── 1. Shared pseudo-element base for ALL site buttons ──────────────────── */
+button,
+a[class*="btn"],
+[class*="-btn"],
+[class*="btn-"] {
+  --btn-mx: 50%;
+  --btn-my: 50%;
+}
+
+/* ── 2. Shimmer sweep layer (::after) ────────────────────────────────────── */
+/*    mix-blend-mode: overlay keeps text fully readable at all times          */
+button::after,
+a[class*="btn"]::after,
+[class*="-btn"]::after,
+[class*="btn-"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(112deg,
+      transparent 15%,
+      rgb(255, 255, 255) 44%,
+      rgb(58, 53, 53) 50%,
+      transparent 85%);
+  mix-blend-mode: overlay;
+  transform: translateX(-150%) skewX(-12deg);
+  transition: transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── 3. Cursor-tracking spotlight layer (::before) ───────────────────────── */
+/*    Radial glow that follows the mouse inside the button                    */
+button::before,
+a[class*="btn"]::before,
+[class*="-btn"]::before,
+[class*="btn-"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle 90px at var(--btn-mx) var(--btn-my),
+      rgba(255, 255, 255, 0.20) 0%,
+      transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 9;
+}
+
+/* ── 4. Hover: reveal spotlight + fire shimmer ───────────────────────────── */
+button:hover::before,
+a[class*="btn"]:hover::before,
+[class*="-btn"]:hover::before,
+[class*="btn-"]:hover::before {
+  opacity: 1;
+}
+
+button:hover::after,
+a[class*="btn"]:hover::after,
+[class*="-btn"]:hover::after,
+[class*="btn-"]:hover::after {
+  transform: translateX(150%) skewX(-12deg);
+}
+
+/* ── 5. Spring magnetic lift on hover ────────────────────────────────────── */
+/*    Only for buttons that don't already define their own transform hover    */
+button:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not(.no-hover-fx):hover,
+a[class*="btn"]:not(.no-hover-fx):hover,
+[class*="-btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="heart"]):not([class*="ping"]):not(.no-hover-fx):hover,
+[class*="btn-"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="heart"]):not([class*="ping"]):not(.no-hover-fx):hover {
+  transform: translateY(-2px) scale(1.012) !important;
+  transition:
+    transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.36s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* ── 6. Click snap-back ──────────────────────────────────────────────────── */
+button:not(.no-hover-fx):active,
+[class*="-btn"]:not(.no-hover-fx):active,
+[class*="btn-"]:not(.no-hover-fx):active {
+  transform: translateY(0) scale(0.972) !important;
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.6, 1) !important;
+}
+
+/* ── 7. Required: position context for pseudo-elements ───────────────────── */
+/*    Only set when not already positioned (avoids overriding fixed/absolute) */
+button:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn),
+[class*="-btn"]:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn),
+[class*="btn-"]:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn) {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── 8. Never animate disabled buttons ───────────────────────────────────── */
+button:disabled::after,
+button:disabled::before,
+[class*="-btn"]:disabled::after,
+[class*="-btn"]:disabled::before {
+  display: none;
+}
+
+button:disabled:hover,
+[class*="-btn"]:disabled:hover,
+[class*="btn-"]:disabled:hover {
+  transform: none !important;
+}
+
+/* ── 9. Exclude specific tiny/icon buttons from lift ─────────────────────── */
+.picky-float-btn:hover,
+.picky-float-scroll:hover,
+.stepper-btn:hover,
+.nav-icon-btn:hover,
+.picky-chat-ping-badge,
+[class*="close"]:hover,
+[class*="heart"]:hover {
+  transform: unset;
+}
+
+/* restore their own hover transforms */
+.picky-float-btn:hover {
+  transform: translateY(-3px) scale(1.05) !important;
+}

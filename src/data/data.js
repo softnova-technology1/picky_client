@@ -298,6 +298,69 @@ export function getOrderById(id) {
   );
 }
 
+export const blogStories = [
+  {
+    id: 1,
+    category: 'Shopping Guides',
+    title: 'Smart Buying: How to Choose Quality Accessories for Every Budget',
+    excerpt: 'Key indicators of durability, warranty perks, and value factors to check before adding items to your cart.',
+    image: '/images/blog/blog_featured_desk.jpg',
+    author: 'Maya Lin',
+    date: 'Oct 3, 2026',
+    readTime: '4 min read'
+  },
+  {
+    id: 2,
+    category: 'Product Tips',
+    title: 'The Tactile Revolution: Unlocking Peak Product Experience',
+    excerpt: 'An inside look at acoustic profiles, material ergonomics, and maintenance tips to double product longevity.',
+    image: '/images/blog/blog_hero_slash.jpg',
+    author: 'Alex Chen',
+    date: 'Sep 29, 2026',
+    readTime: '6 min read'
+  },
+  {
+    id: 3,
+    category: 'Lifestyle',
+    title: 'Curated Everyday Living: Minimalist Gear for Modern Posture',
+    excerpt: 'Disassembling complex routines into simple, elegant daily habits with essential lifestyle tools.',
+    image: '/images/blog/blog_featured_audio.jpg',
+    author: 'David Vance',
+    date: 'Sep 25, 2026',
+    readTime: '8 min read'
+  },
+  {
+    id: 4,
+    category: 'Fashion',
+    title: 'Curated Wardrobe & Accessories: Essential Drops for Minimalists',
+    excerpt: 'Our top recommendations for everyday carry gear, premium textures, and functional fashion accents.',
+    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=80',
+    author: 'Sarah Jenkins',
+    date: 'Sep 20, 2026',
+    readTime: '5 min read'
+  },
+  {
+    id: 5,
+    category: 'Home & Kitchen',
+    title: 'Elevating Your Home: Thoughtful Organizers & Kitchen Craft',
+    excerpt: 'Exploring space-saving storage boxes, precision tools, and aesthetics that transform your living space.',
+    image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=800&auto=format&fit=crop&q=80',
+    author: 'Karan Malhotra',
+    date: 'Sep 14, 2026',
+    readTime: '7 min read'
+  },
+  {
+    id: 6,
+    category: 'Picky Updates',
+    title: 'What’s New at Picky: Seasonal Drops & Exclusive Member Perks',
+    excerpt: 'Discover our latest Tamil traditional craft collection, quick delivery milestones, and new feature updates.',
+    image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop&q=80',
+    author: 'Elena Rostova',
+    date: 'Sep 10, 2026',
+    readTime: '5 min read'
+  }
+];
+
 export default {
   heroSlides,
   categories,
@@ -307,6 +370,7 @@ export default {
   coupons,
   mockOrders,
   storeInfo,
+  blogStories,
   getProducts,
   getProductBySlug,
   getProductById,
