@@ -354,9 +354,9 @@ export default function Home() {
                 <span className="hp-line" />
               </div>
               <h2 className="hp-cat-title">
-                Top <span className="purple-accent-text">Categories</span>
+                Explore <span className="purple-accent-text">Categories</span>
               </h2>
-              <p className="hp-cat-subtitle">Everything you need, in one place</p>
+              <p className="hp-cat-subtitle">Discover products for everyday life, all in one place.</p>
             </div>
 
             <button className="hp-cat-view-all-btn" onClick={() => navigate('/categories')}>

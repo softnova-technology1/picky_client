@@ -20,6 +20,7 @@ import {
   Tag,
   Percent,
   BadgePercent,
+  PackagePlus,
   X,
   Check,
   Search,
@@ -46,7 +47,7 @@ export default function NewArrivals() {
     {
       id: 'all',
       label: 'All New Arrivals',
-      icon: 'sparkles',
+      icon: 'package-plus',
     },
     {
       id: 'womens-fashion',
@@ -321,7 +322,7 @@ export default function NewArrivals() {
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper bg="#faf5ff">
       <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Streetwear Hero Showcase ── */}
         <div style={{ paddingTop: '2.5rem', position: 'relative' }}>
@@ -407,9 +408,9 @@ export default function NewArrivals() {
 
                       {/* Inner 100% Round Mask for High Detail Zoomed Content */}
                       <div className="story-circle-inner">
-                        {item.icon === 'sparkles' ? (
+                        {item.icon === 'package-plus' ? (
                           <div className="story-all-drops-icon">
-                            <Sparkles size={24} strokeWidth={1.75} />
+                            <PackagePlus size={24} strokeWidth={1.75} />
                           </div>
                         ) : (
                           <img

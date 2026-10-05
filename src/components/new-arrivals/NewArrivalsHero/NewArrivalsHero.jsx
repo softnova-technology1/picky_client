@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, ArrowRight, ShoppingCart, Star, ShieldCheck, Grid } from 'lucide-react';
+import { Sparkles, ArrowRight, ShoppingCart, Star } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useUiStore } from '../../../store/uiStore';
 
@@ -97,32 +97,8 @@ export default function NewArrivalsHero({ onExploreClick }) {
             />
           </div>
 
-          {/* 3. RIGHT COLUMN: 3 Badges & Floating "Featured Look" Card */}
+          {/* 3. RIGHT COLUMN: Floating "Featured Look" Card */}
           <div className="col-right">
-            {/* 3 Mini Feature Badges (Flat minimal icons matching Picky style) */}
-            <div className="right-feature-badges">
-              <div className="mini-badge-item">
-                <div className="badge-icon-wrap">
-                  <Sparkles size={20} strokeWidth={1.8} />
-                </div>
-                <span>Just In</span>
-              </div>
-
-              <div className="mini-badge-item">
-                <div className="badge-icon-wrap">
-                  <ShieldCheck size={20} strokeWidth={1.8} />
-                </div>
-                <span>100% Authentic</span>
-              </div>
-
-              <div className="mini-badge-item">
-                <div className="badge-icon-wrap">
-                  <Grid size={20} strokeWidth={1.8} />
-                </div>
-                <span>Fresh Styles</span>
-              </div>
-            </div>
-
             {/* Featured Look Label & Card */}
             <div className="featured-look-wrapper">
               <div className="featured-look-title-label">

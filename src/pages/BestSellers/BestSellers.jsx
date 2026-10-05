@@ -26,7 +26,10 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Search
+  Search,
+  ShoppingBag,
+  Truck,
+  Headphones,
 } from 'lucide-react';
 
 export default function BestSellers() {
@@ -205,7 +208,7 @@ export default function BestSellers() {
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper bg="#faf5ff">
       <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Hero Showcase with SVG Doodles & Stamp ── */}
         <BestSellersHeroSection />
@@ -453,9 +456,9 @@ export default function BestSellers() {
               >
                 <Award size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#1e1b4b' }}>100% Quality Inspected</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>CAREFULLY SELECTED PRODUCTS</h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Every bestseller is multi-point verified by our QA team before dispatch.
+                Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.
               </p>
             </div>
 
@@ -472,11 +475,11 @@ export default function BestSellers() {
                   justifyContent: 'center',
                 }}
               >
-                <Zap size={26} />
+                <ShoppingBag size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#1e1b4b' }}>24h Express Dispatch</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>EASY SHOPPING EXPERIENCE</h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Priority packed and shipped directly from our Tamil Nadu regional fulfillment center.
+                Simple product discovery, clear pricing, and a smooth shopping journey.
               </p>
             </div>
 
@@ -493,11 +496,11 @@ export default function BestSellers() {
                   justifyContent: 'center',
                 }}
               >
-                <RotateCcw size={26} />
+                <Truck size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#1e1b4b' }}>7-Day Easy Replacement</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>RELIABLE ORDER UPDATES</h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Simple, doorstep reverse pickup with zero hassles or hidden questions asked.
+                Track your order from confirmation to shipping and delivery through your order details.
               </p>
             </div>
 
@@ -514,11 +517,11 @@ export default function BestSellers() {
                   justifyContent: 'center',
                 }}
               >
-                <ShieldCheck size={26} />
+                <Headphones size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#1e1b4b' }}>COD & UPI Storewide</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>CUSTOMER SUPPORT</h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Pay conveniently with Cash on Delivery or 100% encrypted instant UPI checkout.
+                Get help with your order, products, delivery, or other shopping questions.
               </p>
             </div>
           </div>

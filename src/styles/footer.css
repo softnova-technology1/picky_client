@@ -13,7 +13,7 @@
   width: 100%;
   overflow: hidden;
   line-height: 0;
-  background: transparent !important;
+  background: #faf5ff !important;
   position: relative;
   z-index: 2;
   margin-bottom: -2px;
