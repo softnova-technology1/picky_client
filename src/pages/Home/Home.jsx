@@ -11,8 +11,9 @@ import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
-import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check } from 'lucide-react';
+import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye } from 'lucide-react';
 import '../../styles/home-premium.css';
+import '../../styles/mobile-responsive.css';
 
 // ─── Utility Components ──────────────────────────────────────────
 
@@ -227,7 +228,8 @@ export default function Home() {
   const scrollTrending = (direction) => {
     if (!trendingScrollRef.current) return;
     const container = trendingScrollRef.current;
-    const cardStep = 304; // 280px width + 24px gap
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    const cardStep = isMobile ? container.clientWidth : 304;
     if (direction === 'next') {
       if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
         container.scrollTo({ left: 0, behavior: 'smooth' });
@@ -250,7 +252,8 @@ export default function Home() {
     const autoScrollInterval = setInterval(() => {
       if (!trendingScrollRef.current) return;
       const container = trendingScrollRef.current;
-      const cardStep = 304; // 280px width + 24px gap
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+      const cardStep = isMobile ? container.clientWidth : 304;
 
       if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
         container.scrollTo({ left: 0, behavior: 'smooth' });
@@ -349,18 +352,21 @@ export default function Home() {
           <div className="hp-cat-header-wrap">
             <div className="hp-cat-header-center">
               <div className="hp-cat-eyebrow">
-                <span className="hp-line" />
-                <span>SHOP BY</span>
-                <span className="hp-line" />
+                <span className="hp-line hp-eyebrow-desktop" />
+                <span className="hp-eyebrow-desktop">SHOP BY</span>
+                <span className="hp-eyebrow-mobile">QUICK BUY</span>
+                <span className="hp-line hp-eyebrow-desktop" />
               </div>
               <h2 className="hp-cat-title">
-                Explore <span className="purple-accent-text">Categories</span>
+                <span className="hp-title-desktop">Explore <span className="purple-accent-text">Categories</span></span>
+                <span className="hp-title-mobile">Top Categories</span>
               </h2>
               <p className="hp-cat-subtitle">Discover products for everyday life, all in one place.</p>
             </div>
 
             <button className="hp-cat-view-all-btn" onClick={() => navigate('/categories')}>
-              <span>View All</span>
+              <span className="hp-view-all-desktop">View All</span>
+              <span className="hp-view-all-mobile">VIEW ALL</span>
               <ArrowRight size={14} />
             </button>
           </div>
@@ -530,8 +536,14 @@ export default function Home() {
                   </div>
 
                   <button className="spotlight-cta-btn" onClick={handleSpotlightAddToCart}>
-                    <ShoppingCart size={16} strokeWidth={2.3} />
-                    <span>Claim Deal & Add to Cart</span>
+                    <span className="spotlight-btn-desktop">
+                      <ShoppingCart size={16} strokeWidth={2.3} style={{ marginRight: '6px' }} />
+                      Claim Deal & Add to Cart
+                    </span>
+                    <span className="spotlight-btn-mobile">
+                      <Eye size={15} strokeWidth={2.3} style={{ marginRight: '6px' }} />
+                      VIEW DEAL
+                    </span>
                   </button>
                 </div>
               </div>

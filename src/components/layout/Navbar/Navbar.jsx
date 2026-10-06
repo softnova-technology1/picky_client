@@ -15,6 +15,7 @@ import {
   LogOut,
   Truck,
   Layers,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useCartStore } from '../../../store/cartStore';
@@ -163,8 +164,8 @@ export default function Navbar() {
       {/* ── 1. Top Running Marquee Announcement Bar (Replaces Static Row) ── */}
       <GlamicsMarqueeTicker />
 
-      {/* ── 2. Floating Pill Navbar (Restored Clean Pill Style) ────────────── */}
-      <header className="floating-nav-container">
+      {/* ── 2. Floating Pill Navbar (Desktop Only: > 768px) ────────────── */}
+      <header className="floating-nav-container desktop-nav-only">
         <div className="floating-nav-pill">
           {/* Brand & Divider (Left) */}
           <Link to="/" className="nav-brand-cluster" title="Picky Home">
@@ -447,6 +448,65 @@ export default function Navbar() {
             </div>
           </div>
         )}
+      </header>
+
+      {/* ── 2b. Mobile Header & Search (Mobile Only: 320px - 768px) ────────────── */}
+      <header className="mobile-nav-header mobile-nav-only">
+        <div className="mobile-nav-top-row">
+          {/* Hamburger Menu Toggle */}
+          <button
+            type="button"
+            className="mobile-nav-hamburger-btn"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu size={22} color="#1e1b4b" strokeWidth={2.2} />
+          </button>
+
+          {/* Centered Picky Logo */}
+          <Link to="/" className="mobile-nav-brand-logo" title="Picky">
+            <img src="/images/logo.png" alt="Picky Logo" />
+          </Link>
+
+          {/* Right Action Icons: Wishlist & Cart */}
+          <div className="mobile-nav-actions">
+            <Link to="/wishlist" className="mobile-nav-icon-link" aria-label="Wishlist">
+              <Heart size={20} color="#1e1b4b" strokeWidth={2} />
+              {totalWishlistCount > 0 && (
+                <span className="mobile-header-badge mobile-badge-rose">{totalWishlistCount}</span>
+              )}
+            </Link>
+
+            <Link to="/cart" className="mobile-nav-icon-link" aria-label="Cart">
+              <ShoppingCart size={20} color="#1e1b4b" strokeWidth={2} />
+              {totalCartCount > 0 && (
+                <span className="mobile-header-badge">{totalCartCount}</span>
+              )}
+            </Link>
+          </div>
+        </div>
+
+        {/* Search Row */}
+        <div className="mobile-nav-search-row">
+          <form onSubmit={handleSearchSubmit} className="mobile-search-form">
+            <Search size={16} className="mobile-search-icon" color="#94a3b8" />
+            <input
+              type="text"
+              className="mobile-search-input"
+              placeholder="Search products, brands, options, jewelry..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button
+              type="button"
+              className="mobile-search-filter-btn"
+              onClick={() => navigate('/products')}
+              aria-label="Filter"
+            >
+              <SlidersHorizontal size={15} color="#64748b" />
+            </button>
+          </form>
+        </div>
       </header>
 
       {/* ── 3. Quick Search Modal Popover ──────────────────────────────── */}

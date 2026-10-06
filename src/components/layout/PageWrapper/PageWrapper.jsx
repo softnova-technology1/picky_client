@@ -4,6 +4,7 @@ import Navbar from '../Navbar';
 import Footer from '../Footer';
 import Toast from '../../ui/Toast';
 import FloatingActions from '../../common/FloatingActions';
+import MobileBottomNav from '../MobileBottomNav';
 import styles from './PageWrapper.module.css';
 
 export default function PageWrapper({ children, hideFooter = false }) {
@@ -17,6 +18,7 @@ export default function PageWrapper({ children, hideFooter = false }) {
       </main>
       {!hideFooter && <Footer />}
       <FloatingActions />
+      <MobileBottomNav />
       <Toast />
     </div>
   );
