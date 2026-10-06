@@ -100,41 +100,6 @@ export default function Login({ initialTab = 'login' }) {
     }
   };
 
-  // ── Handle Temporary Quick Demo Login (Skip Backend Auth for Testing) ─────
-  // ── Handle Quick Login ─────────────────────────────────────────
-  const handleQuickDemoLogin = async () => {
-    try {
-      setLoading(true);
-      const demoUser = {
-        _id: 'usr_demo_888',
-        name: signupName.trim() || 'Valued Customer',
-        email: signupEmail.trim() || 'customer@picky.com',
-        phone: phone.trim() || signupPhone.trim() || '9876543210',
-        role: 'customer',
-        defaultAddress: {
-          fullName: signupName.trim() || 'Valued Customer',
-          phone: phone.trim() || signupPhone.trim() || '9876543210',
-          street: 'Peravurani Main Road',
-          city: 'Peravurani',
-          state: 'Tamil Nadu',
-          pincode: '614804',
-          landmark: 'Near Bus Stand',
-        },
-      };
-
-      login(demoUser, 'access_token_xyz123', 'refresh_token_xyz123');
-      showToast(`Welcome back, ${demoUser.name}!`, 'success');
-
-      await syncGuestData().catch(() => null);
-
-      navigate(from, { replace: true });
-    } catch (err) {
-      showToast('Login failed, please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ── Handle Send OTP (Login / Signup) ───────────────────────────────────────
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
@@ -170,9 +135,9 @@ export default function Login({ initialTab = 'login' }) {
       setTimer(60);
       setCanResend(false);
     } catch (err) {
-      console.warn('Backend OTP fallback:', err);
-      showToast('OTP sent! Verifying access...', 'info');
-      await handleQuickDemoLogin();
+      console.error('Backend send OTP error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Failed to send OTP. Please check your phone number and try again.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -215,9 +180,9 @@ export default function Login({ initialTab = 'login' }) {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      console.warn('Backend verify OTP fallback:', err);
-      showToast('Verification successful!', 'success');
-      await handleQuickDemoLogin();
+      console.error('Backend verify OTP error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Invalid or expired OTP. Please enter the correct code.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -244,18 +209,9 @@ export default function Login({ initialTab = 'login' }) {
       showToast(`Welcome back, Administrator!`, 'success');
       navigate('/pickyadmin-softnova2026', { replace: true });
     } catch (err) {
-      console.warn('Backend admin login offline fallback:', err);
-      const demoAdmin = {
-        id: 'admin_demo_01',
-        _id: 'admin_demo_01',
-        name: 'Super Admin (Demo)',
-        email: adminEmail.trim() || 'admin@picky.com',
-        role: 'admin',
-        phone: '+91 98765 43210'
-      };
-      login(demoAdmin, 'demo-admin-jwt-token', 'demo-admin-refresh-token');
-      showToast('Signed in with Demo Admin mode (UI Preview)', 'info');
-      navigate('/pickyadmin-softnova2026', { replace: true });
+      console.error('Admin login error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Invalid administrator credentials. Please check your email and password.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }

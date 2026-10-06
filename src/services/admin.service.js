@@ -36,5 +36,17 @@ export const adminService = {
   updateDiscount: (id, data) => api.put(`/discounts/${id}`, data),
   toggleDiscount: (id) => api.patch(`/discounts/${id}/toggle`),
   deleteDiscount: (id) => api.delete(`/discounts/${id}`),
+
+  // Customers
+  getCustomers: (params) => api.get('/customers', { params }),
+  getCustomerDetail: (id) => api.get(`/customers/${id}`),
+
+  // Settings
+  getSettings: () => api.get('/settings'),
+  updateSettings: (data) => api.patch('/settings', data),
+
+  // Inventory
+  getInventory: (params) => api.get('/inventory', { params }),
+  updateInventoryStock: (productId, data) => api.patch(`/inventory/${productId}`, data),
 };
 
