@@ -1,5 +1,4 @@
 import api from './api';
-import { validateCoupon } from '../data';
 
 export const cartService = {
   get: () => api.get('/cart'),
@@ -9,20 +8,7 @@ export const cartService = {
   clear: () => api.delete('/cart'),
   merge: (items) => api.post('/cart/merge', { items }),
 
-  applyCoupon: async (code, subtotal = 1000) => {
-    try {
-      const res = await api.post('/cart/coupon', { code });
-      if (res?.data) return res;
-    } catch (err) {
-      console.warn('Backend coupon verify unavailable, checking local Data:', err?.message || err);
-    }
-    const result = validateCoupon(code, subtotal);
-    if (!result.valid) {
-      throw new Error(result.message);
-    }
-    return { data: result };
-  },
-
+  applyCoupon: (code) => api.post('/cart/coupon', { code }),
   removeCoupon: () => api.delete('/cart/coupon'),
 };
 

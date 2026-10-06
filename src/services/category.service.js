@@ -1,32 +1,8 @@
 import api from './api';
-import { getCategories, getCategoryBySlug } from '../data';
 
 export const categoryService = {
-  list: async () => {
-    try {
-      const res = await api.get('/categories');
-      const items = res?.data?.data || res?.data;
-      if (Array.isArray(items) && items.length > 0) {
-        return res;
-      }
-    } catch (err) {
-      console.warn('Backend category list unavailable, using local Data:', err?.message || err);
-    }
-    return { data: getCategories() };
-  },
-
-  getBySlug: async (slug) => {
-    try {
-      const res = await api.get(`/categories/${slug}`);
-      const item = res?.data?.data || res?.data;
-      if (item && item.name) {
-        return { data: item };
-      }
-    } catch (err) {
-      console.warn('Backend category getBySlug unavailable, using local Data:', err?.message || err);
-    }
-    return { data: getCategoryBySlug(slug) };
-  },
+  list: () => api.get('/categories'),
+  getBySlug: (slug) => api.get(`/categories/${slug}`),
 
   // Admin
   create: (formData) => api.post('/categories', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
