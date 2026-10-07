@@ -11,7 +11,7 @@ import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
-import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye } from 'lucide-react';
+import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye, Zap } from 'lucide-react';
 import '../../styles/home-premium.css';
 import '../../styles/mobile-responsive.css';
 
@@ -44,13 +44,11 @@ const FlashDealMiniCard = ({ product }) => {
     );
   };
 
-  const handleQuickAdd = (e) => {
+  const handleBuyNow = (e) => {
     e.preventDefault();
     e.stopPropagation();
     addItem(product, 1);
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1600);
-    showToast(`Added "${product.name}" to cart!`, 'success');
+    navigate('/checkout');
   };
 
   const discountPercent = product.discountPrice && product.discountPrice < product.price
@@ -89,20 +87,10 @@ const FlashDealMiniCard = ({ product }) => {
 
       <div className="minimal-card-action">
         <button
-          onClick={handleQuickAdd}
-          className={`minimal-card-btn ${justAdded ? 'added' : ''}`}
+          onClick={handleBuyNow}
+          className="minimal-card-btn"
         >
-          {justAdded ? (
-            <>
-              <Check size={16} strokeWidth={2.8} />
-              <span>Added to Cart!</span>
-            </>
-          ) : (
-            <>
-              <ShoppingCart size={15} strokeWidth={2.3} />
-              <span>Add to Cart</span>
-            </>
-          )}
+          <span>Buy Now</span>
         </button>
       </div>
     </div>
@@ -225,45 +213,110 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // Infinite duplicate list for continuous loop marquee
+  const trendingProductsList = useMemo(() => {
+    if (!trendingProducts || trendingProducts.length === 0) return [];
+    let list = [...trendingProducts];
+    while (list.length < 10) {
+      list = [...list, ...trendingProducts];
+    }
+    return [...list, ...list];
+  }, [trendingProducts]);
+
+  const handleTrendingScroll = () => {
+    if (!trendingScrollRef.current) return;
+    const container = trendingScrollRef.current;
+    const singleSetWidth = container.scrollWidth / 2;
+    if (singleSetWidth <= 0) return;
+
+    if (container.scrollLeft >= singleSetWidth) {
+      container.scrollLeft -= singleSetWidth;
+    } else if (container.scrollLeft <= 0) {
+      container.scrollLeft += singleSetWidth;
+    }
+  };
+
   const scrollTrending = (direction) => {
     if (!trendingScrollRef.current) return;
     const container = trendingScrollRef.current;
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-    const cardStep = isMobile ? container.clientWidth : 304;
+    const cardStep = isMobile ? container.clientWidth / 2 : 304;
     if (direction === 'next') {
-      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
-        container.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        container.scrollBy({ left: cardStep, behavior: 'smooth' });
-      }
+      container.scrollBy({ left: cardStep, behavior: 'smooth' });
     } else {
-      if (container.scrollLeft <= 10) {
-        container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
-      } else {
-        container.scrollBy({ left: -cardStep, behavior: 'smooth' });
-      }
+      container.scrollBy({ left: -cardStep, behavior: 'smooth' });
     }
   };
 
-  // Auto-move Trending Now carousel every 3 seconds (3000ms)
+  // Continuous smooth auto-running marquee loop for Trending Now carousel
   useEffect(() => {
-    if (isTrendingHovered || !trendingProducts.length) return;
+    if (isTrendingHovered || !trendingProductsList.length) return;
 
-    const autoScrollInterval = setInterval(() => {
-      if (!trendingScrollRef.current) return;
-      const container = trendingScrollRef.current;
-      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-      const cardStep = isMobile ? container.clientWidth : 304;
+    const container = trendingScrollRef.current;
+    if (!container) return;
 
-      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 20) {
-        container.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        container.scrollBy({ left: cardStep, behavior: 'smooth' });
+    let animId;
+    const speed = 0.8; // pixels per frame (~48px/sec continuous smooth motion)
+
+    const step = () => {
+      if (trendingScrollRef.current) {
+        trendingScrollRef.current.scrollLeft += speed;
+        const singleSetWidth = trendingScrollRef.current.scrollWidth / 2;
+        if (singleSetWidth > 0 && trendingScrollRef.current.scrollLeft >= singleSetWidth) {
+          trendingScrollRef.current.scrollLeft -= singleSetWidth;
+        }
       }
-    }, 3000);
+      animId = requestAnimationFrame(step);
+    };
 
-    return () => clearInterval(autoScrollInterval);
-  }, [isTrendingHovered, trendingProducts.length]);
+    animId = requestAnimationFrame(step);
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isTrendingHovered, trendingProductsList]);
+
+  // Scroll ref & auto-scroll state for continuous running reviews carousel in mobile view
+  const reviewsScrollRef = useRef(null);
+  const [isReviewsHovered, setIsReviewsHovered] = useState(false);
+
+  // Infinite duplicate list for continuous loop marquee in reviews
+  const reviewsLoopList = useMemo(() => {
+    if (!REVIEWS_DATA || REVIEWS_DATA.length === 0) return [];
+    let list = [...REVIEWS_DATA];
+    while (list.length < 8) {
+      list = [...list, ...REVIEWS_DATA];
+    }
+    return [...list, ...list];
+  }, []);
+
+  // Continuous running marquee loop for Reviews on mobile
+  useEffect(() => {
+    if (isReviewsHovered || !reviewsLoopList.length) return;
+
+    const container = reviewsScrollRef.current;
+    if (!container) return;
+
+    let animId;
+    const speed = 0.65; // smooth gentle marquee speed
+
+    const step = () => {
+      if (reviewsScrollRef.current) {
+        reviewsScrollRef.current.scrollLeft += speed;
+        const singleSetWidth = reviewsScrollRef.current.scrollWidth / 2;
+        if (singleSetWidth > 0 && reviewsScrollRef.current.scrollLeft >= singleSetWidth) {
+          reviewsScrollRef.current.scrollLeft -= singleSetWidth;
+        }
+      }
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isReviewsHovered, reviewsLoopList]);
 
   useEffect(() => {
     async function loadData() {
@@ -302,13 +355,62 @@ export default function Home() {
     );
   }, [newArrivals, activeCategoryFilter]);
 
-  const spotlightProduct = fallbackProducts.find((p) => p.slug === 'pure-cotton-handloom-madurai-sungudi-saree') || fallbackProducts[0];
-  const flashDealProducts = [
-    fallbackProducts.find((p) => p.slug === 'antique-matte-gold-temple-choker-necklace-set') || fallbackProducts[7],
-    fallbackProducts.find((p) => p.slug === 'multi-blade-stainless-steel-quick-vegetable-chopper') || fallbackProducts[4],
-    fallbackProducts.find((p) => p.slug === 'traditional-kemp-pearl-bell-jhumka-earrings') || fallbackProducts[8],
-    fallbackProducts.find((p) => p.slug === 'pre-seasoned-heavy-cast-iron-deep-kadai') || fallbackProducts[5],
-  ].filter(Boolean);
+  // ── Flash Deals / Limited Time Deals 15-Second Auto-Rotation ─────────
+  const allDealProducts = useMemo(() => {
+    const list = (newArrivals && newArrivals.length > 0 ? newArrivals : fallbackProducts) || [];
+    const discounted = list.filter((p) => p && p.discountPrice && p.discountPrice < p.price);
+    return discounted.length >= 6 ? discounted : list;
+  }, [newArrivals]);
+
+  // Spotlight rotation list (prioritizes high discount products)
+  const spotlightProductsList = useMemo(() => {
+    if (!allDealProducts.length) return fallbackProducts.slice(0, 6);
+    return [...allDealProducts].sort((a, b) => {
+      const discA = ((a.price - a.discountPrice) / a.price) || 0;
+      const discB = ((b.price - b.discountPrice) / b.price) || 0;
+      return discB - discA;
+    });
+  }, [allDealProducts]);
+
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [miniBatchIndex, setMiniBatchIndex] = useState(0);
+  const [isRotating, setIsRotating] = useState(false);
+
+  useEffect(() => {
+    if (!spotlightProductsList.length) return;
+    const interval = setInterval(() => {
+      setIsRotating(true);
+      setTimeout(() => {
+        setSpotlightIndex((prev) => (prev + 1) % spotlightProductsList.length);
+        setMiniBatchIndex((prev) => prev + 1);
+        setTimeout(() => {
+          setIsRotating(false);
+        }, 120);
+      }, 300);
+    }, 15000); // exactly 15 seconds
+
+    return () => clearInterval(interval);
+  }, [spotlightProductsList.length]);
+
+  const spotlightProduct = spotlightProductsList[spotlightIndex % spotlightProductsList.length] || fallbackProducts[0];
+  const spotlightDiscountPercent = spotlightProduct?.discountPrice && spotlightProduct?.price
+    ? Math.round(((spotlightProduct.price - spotlightProduct.discountPrice) / spotlightProduct.price) * 100)
+    : 32;
+
+  const flashDealProducts = useMemo(() => {
+    if (!allDealProducts.length) return [];
+    const currentSpotlightSlug = spotlightProduct?.slug;
+    const nonSpotlight = allDealProducts.filter(
+      (p) => p.slug !== currentSpotlightSlug && (p._id || p.id) !== (spotlightProduct?._id || spotlightProduct?.id)
+    );
+    const pool = nonSpotlight.length >= 4 ? nonSpotlight : allDealProducts;
+    const startIndex = (miniBatchIndex * 4) % pool.length;
+    const result = [];
+    for (let i = 0; i < 4; i++) {
+      result.push(pool[(startIndex + i) % pool.length]);
+    }
+    return result;
+  }, [allDealProducts, spotlightProduct, miniBatchIndex]);
 
   const isSpotlightInWishlist = spotlightProduct
     ? isInWishlist(spotlightProduct._id || spotlightProduct.id || spotlightProduct.slug)
@@ -332,12 +434,12 @@ export default function Home() {
     );
   };
 
-  const handleSpotlightAddToCart = (e) => {
+  const handleSpotlightBuyNow = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!spotlightProduct) return;
     addItem(spotlightProduct, 1);
-    showToast(`Added "${spotlightProduct.name}" to cart!`, 'success');
+    navigate('/checkout');
   };
 
   return (
@@ -410,11 +512,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 03 — HORIZONTAL PRODUCT EXPERIENCE (TRENDING NOW - AUTO MOVES EVERY 3s) */}
+      {/* 03 — HORIZONTAL PRODUCT EXPERIENCE (TRENDING NOW - CONTINUOUS LOOP) */}
       <section
         className="hp-horizontal-section"
         onMouseEnter={() => setIsTrendingHovered(true)}
         onMouseLeave={() => setIsTrendingHovered(false)}
+        onTouchStart={() => setIsTrendingHovered(true)}
+        onTouchEnd={() => setIsTrendingHovered(false)}
       >
         <div className="hp-horizontal-inner">
           <div className="hp-section-header">
@@ -447,9 +551,17 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hp-horizontal-scroll-container" ref={trendingScrollRef}>
-            {trendingProducts.map((product, i) => (
-              <div key={product._id || product.id || i} className="hp-horizontal-card">
+          <div
+            className="hp-horizontal-scroll-container"
+            ref={trendingScrollRef}
+            onScroll={handleTrendingScroll}
+            onMouseEnter={() => setIsTrendingHovered(true)}
+            onMouseLeave={() => setIsTrendingHovered(false)}
+            onTouchStart={() => setIsTrendingHovered(true)}
+            onTouchEnd={() => setIsTrendingHovered(false)}
+          >
+            {trendingProductsList.map((product, i) => (
+              <div key={`${product._id || product.id || i}-${i}`} className="hp-horizontal-card">
                 <ProductCard product={product} />
               </div>
             ))}
@@ -493,15 +605,16 @@ export default function Home() {
           </div>
 
           {/* Flash Deals Main Grid (Spotlight Card + 4 Real Minimal Products) */}
-          <div className="hp-flash-deals-grid">
+          <div className={`hp-flash-deals-grid ${isRotating ? 'is-rotating' : ''}`}>
             
-            {/* Left Featured Spotlight Banner (Real Sungudi Saree) */}
+            {/* Left Featured Spotlight Banner (Dynamic 15s Rotation) */}
             <FadeUp delay={150}>
               <div
-                className="hp-flash-spotlight-card"
+                key={spotlightProduct._id || spotlightProduct.id || spotlightProduct.slug || spotlightIndex}
+                className="hp-flash-spotlight-card flash-card-animated"
                 onClick={() => navigate(`/products/${spotlightProduct.slug}`)}
               >
-                <div className="spotlight-tag">DEAL OF THE DAY • 32% OFF</div>
+                <div className="spotlight-tag">DEAL OF THE DAY • {spotlightDiscountPercent}% OFF</div>
                 
                 <div className="spotlight-img-wrap">
                   <button
@@ -525,36 +638,38 @@ export default function Home() {
                 </div>
 
                 <div className="spotlight-content">
-                  <div className="spotlight-category">Women's Fashion</div>
+                  <div className="spotlight-category">
+                    {spotlightProduct.category?.name || (typeof spotlightProduct.category === 'string' ? spotlightProduct.category : "Featured Deal")}
+                  </div>
                   <h3 className="spotlight-title">{spotlightProduct.name}</h3>
-                  <p className="spotlight-desc">{spotlightProduct.description}</p>
+                  <p className="spotlight-desc">{spotlightProduct.description || spotlightProduct.name}</p>
                   
                   <div className="spotlight-price-row">
-                    <span className="spotlight-current-price">₹{spotlightProduct.discountPrice}</span>
-                    <span className="spotlight-orig-price">₹{spotlightProduct.price}</span>
-                    <span className="spotlight-savings-tag">Save ₹{spotlightProduct.price - spotlightProduct.discountPrice}</span>
+                    <span className="spotlight-current-price">₹{spotlightProduct.discountPrice || spotlightProduct.price}</span>
+                    {spotlightProduct.discountPrice && spotlightProduct.price > spotlightProduct.discountPrice && (
+                      <>
+                        <span className="spotlight-orig-price">₹{spotlightProduct.price}</span>
+                        <span className="spotlight-savings-tag">Save ₹{spotlightProduct.price - spotlightProduct.discountPrice}</span>
+                      </>
+                    )}
                   </div>
 
-                  <button className="spotlight-cta-btn" onClick={handleSpotlightAddToCart}>
-                    <span className="spotlight-btn-desktop">
-                      <ShoppingCart size={16} strokeWidth={2.3} style={{ marginRight: '6px' }} />
-                      Claim Deal & Add to Cart
-                    </span>
-                    <span className="spotlight-btn-mobile">
-                      <Eye size={15} strokeWidth={2.3} style={{ marginRight: '6px' }} />
-                      VIEW DEAL
-                    </span>
+                  <button className="spotlight-cta-btn" onClick={handleSpotlightBuyNow}>
+                    <span>Buy Now</span>
                   </button>
                 </div>
               </div>
             </FadeUp>
 
-            {/* Right Side 4 Minimal Cards (Image + Add to Bag ONLY) */}
+            {/* Right Side 4 Minimal Cards (Dynamic 15s Rotation) */}
             <div className="hp-flash-products-grid">
               {flashDealProducts.map((product, idx) => (
-                <FadeUp key={product._id || product.id || idx} delay={200 + idx * 80}>
+                <div
+                  key={product._id || product.id || product.slug || `${miniBatchIndex}-${idx}`}
+                  className="flash-mini-animated"
+                >
                   <FlashDealMiniCard product={product} />
-                </FadeUp>
+                </div>
               ))}
             </div>
 
@@ -581,8 +696,9 @@ export default function Home() {
                 className="hp-view-all-btn"
                 onClick={() => navigate('/products?sort=newest')}
               >
-                <span>View All Drops</span>
-                <ArrowRight size={16} />
+                <span className="hp-view-all-desktop">View All Drops</span>
+                <span className="hp-view-all-mobile">VIEW ALL</span>
+                <ArrowRight size={14} />
               </button>
             </div>
           </div>
@@ -631,6 +747,15 @@ export default function Home() {
               </h2>
               <p className="hp-section-subtitle">Customer favorites, selected for you.</p>
             </FadeUp>
+
+            <button
+              className="hp-view-all-btn"
+              onClick={() => navigate('/products?sort=popular')}
+            >
+              <span className="hp-view-all-desktop">View All</span>
+              <span className="hp-view-all-mobile">VIEW ALL</span>
+              <ArrowRight size={14} />
+            </button>
           </div>
           <div style={{ marginTop: '2.5rem' }}>
             <ProductGrid products={(featuredProducts.length > 0 ? featuredProducts : fallbackProducts).slice(0, 5)} loading={loading} />
@@ -730,9 +855,16 @@ export default function Home() {
             </FadeUp>
           </div>
 
-          <div className="hp-reviews-grid">
-            {REVIEWS_DATA.slice(0, 3).map((rev, idx) => (
-              <FadeUp key={rev.id || idx} delay={150 + idx * 100}>
+          <div
+            ref={reviewsScrollRef}
+            className="hp-reviews-grid"
+            onMouseEnter={() => setIsReviewsHovered(true)}
+            onMouseLeave={() => setIsReviewsHovered(false)}
+            onTouchStart={() => setIsReviewsHovered(true)}
+            onTouchEnd={() => setIsReviewsHovered(false)}
+          >
+            {reviewsLoopList.map((rev, idx) => (
+              <div key={`${rev.id || idx}-${idx}`} className="hp-review-slide-item">
                 <div className="hp-review-card">
                   <div className="hp-review-watermark">“</div>
                   
@@ -757,28 +889,38 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </FadeUp>
+              </div>
             ))}
           </div>
 
         </div>
       </section>
 
-      {/* 10 — FINAL CTA BANNER */}
+      {/* 10 — FINAL CTA BANNER / INSTAGRAM COMMUNITY */}
       <section className="hp-final-cta-section">
         <div className="hp-final-cta-container">
           <div className="hp-final-cta-box">
             <FadeUp delay={100}>
-              <span className="hp-final-cta-badge">✦ CURATED FOR YOU</span>
-              <h2 className="hp-final-title">Find Something You'll Love</h2>
+              <span className="hp-final-cta-badge">✦ FOLLOW US ON INSTAGRAM</span>
+              <h2 className="hp-final-title">Join Our Community @picky.co.in</h2>
             </FadeUp>
             <FadeUp delay={200}>
-              <p className="hp-final-subtitle">Explore our latest collections and discover your next favorite piece.</p>
+              <p className="hp-final-subtitle">
+                Follow us on Instagram for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+              </p>
             </FadeUp>
             <FadeUp delay={300}>
-              <MagneticButton className="hp-final-cta-btn" onClick={() => navigate('/products')}>
-                <span>Start Shopping Now</span>
-                <ArrowRight size={18} />
+              <MagneticButton
+                className="hp-final-cta-btn"
+                onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                </svg>
+                <span>Follow on Instagram</span>
+                <ArrowRight size={16} />
               </MagneticButton>
             </FadeUp>
           </div>

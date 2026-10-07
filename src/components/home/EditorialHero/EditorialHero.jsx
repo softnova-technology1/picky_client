@@ -375,11 +375,6 @@ export default function EditorialHero() {
               </button>
             </div>
           )}
-
-          {/* Slide counter */}
-          <div className="hero-mobile-counter">
-            0{currentSlide + 1}/{totalSlides}
-          </div>
         </div>
       </div>
 

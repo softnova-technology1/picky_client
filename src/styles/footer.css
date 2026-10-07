@@ -13,7 +13,7 @@
   width: 100%;
   overflow: hidden;
   line-height: 0;
-  background: #faf5ff !important;
+  background:transparent;
   position: relative;
   z-index: 2;
   margin-bottom: -2px;
@@ -60,6 +60,9 @@
 @media (max-width: 768px) {
   .footer-skyline-img {
     height: 80px;
+  }
+  .footer-skyline-canvas-wrap {
+    background: transparent !important;
   }
   .footer-skyline-track {
     animation-duration: 28s;
