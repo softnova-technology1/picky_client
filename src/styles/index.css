@@ -3,6 +3,7 @@
 @import './bestseller_hero.css';
 @import './login.css';
 @import './button-hover-fx.css';
+@import './mobile-responsive.css';
 
 /* ─── CSS Variables & Purple Design System ──────────────────────── */
 :root {

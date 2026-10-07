@@ -65,6 +65,7 @@ export default function AdminProducts() {
     name: '',
     category: '',
     subCategory: '',
+    sku: '',
     price: '',
     discountPrice: '',
     description: '',
@@ -111,15 +112,46 @@ export default function AdminProducts() {
     }
   }, [searchParams, categories]);
 
+  const generateSku = (catIdOrName, subName) => {
+    let catCode = 'PRD';
+    const cat = categories.find((c) => c._id === catIdOrName || c.name === catIdOrName || c.slug === catIdOrName);
+    const catName = cat?.name || (typeof catIdOrName === 'string' ? catIdOrName : '');
+    
+    if (catName.toLowerCase().includes('women')) catCode = 'WF';
+    else if (catName.toLowerCase().includes('men')) catCode = 'MF';
+    else if (catName.toLowerCase().includes('kitchen') || catName.toLowerCase().includes('home')) catCode = 'HK';
+    else if (catName.toLowerCase().includes('jewel')) catCode = 'AJ';
+    else if (catName.toLowerCase().includes('beauty')) catCode = 'BP';
+    else if (catName.toLowerCase().includes('mobile') || catName.toLowerCase().includes('gadget')) catCode = 'MA';
+    else if (catName.toLowerCase().includes('snack') || catName.toLowerCase().includes('sweet')) catCode = 'SS';
+    else if (catName.toLowerCase().includes('footwear') || catName.toLowerCase().includes('shoe')) catCode = 'FW';
+    else if (catName.toLowerCase().includes('toy') || catName.toLowerCase().includes('baby')) catCode = 'TK';
+    else if (catName.toLowerCase().includes('bag')) catCode = 'BW';
+    else if (catName) {
+      catCode = catName.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase() || 'PRD';
+    }
+
+    let subCode = 'GEN';
+    if (subName) {
+      subCode = subName.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase();
+      if (subCode.length < 3) subCode = subCode.padEnd(3, 'X');
+    }
+
+    const randNum = String(Math.floor(100 + Math.random() * 900));
+    return `${catCode}-${subCode}-${randNum}`;
+  };
+
   const handleOpenAdd = () => {
     setEditingProduct(null);
     const defaultCat = categories[0]?._id || '';
     const defaultCatObj = categories.find((c) => c._id === defaultCat);
     const defaultSub = defaultCatObj?.subcategories?.[0]?.name || '';
+    const defaultSku = generateSku(defaultCat, defaultSub);
     setFormData({
       name: '',
       category: defaultCat,
       subCategory: defaultSub,
+      sku: defaultSku,
       price: '',
       discountPrice: '',
       description: '',
@@ -143,6 +175,7 @@ export default function AdminProducts() {
       name: p.name || '',
       category: catId,
       subCategory: subName,
+      sku: p.sku || generateSku(catId, subName),
       price: p.price ? String(p.price) : '',
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       description: p.description || '',
@@ -236,6 +269,8 @@ export default function AdminProducts() {
     const payload = new FormData();
     payload.append('name', formData.name.trim());
     payload.append('category', formData.category);
+    if (formData.subCategory) payload.append('subCategory', formData.subCategory);
+    if (formData.sku) payload.append('sku', formData.sku.trim().toUpperCase());
     payload.append('price', Number(formData.price));
     if (formData.discountPrice) payload.append('discountPrice', Number(formData.discountPrice));
     payload.append('stock', Number(formData.stock) || 0);
@@ -273,6 +308,7 @@ export default function AdminProducts() {
               ? {
                   ...p,
                   name: formData.name,
+                  sku: formData.sku ? formData.sku.trim().toUpperCase() : p.sku,
                   price: Number(formData.price),
                   discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
                   stock: Number(formData.stock),
@@ -290,6 +326,7 @@ export default function AdminProducts() {
         const newProduct = res?.data || {
           _id: `prod_${Date.now()}`,
           name: formData.name,
+          sku: formData.sku ? formData.sku.trim().toUpperCase() : `PK-${Date.now().toString(36).toUpperCase()}`,
           slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
           price: Number(formData.price),
           discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
@@ -923,11 +960,13 @@ export default function AdminProducts() {
                         const newCat = e.target.value;
                         const catObj = categories.find((c) => c._id === newCat);
                         const defaultSub = catObj?.subcategories?.[0]?.name || '';
-                        setFormData({
-                          ...formData,
+                        const autoSku = generateSku(newCat, defaultSub);
+                        setFormData((prev) => ({
+                          ...prev,
                           category: newCat,
                           subCategory: defaultSub,
-                        });
+                          sku: autoSku,
+                        }));
                         if (!editingProduct) setCharValues({});
                       }}
                       required
@@ -959,7 +998,15 @@ export default function AdminProducts() {
                     </label>
                     <select
                       value={formData.subCategory}
-                      onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                      onChange={(e) => {
+                        const newSub = e.target.value;
+                        const autoSku = generateSku(formData.category, newSub);
+                        setFormData((prev) => ({
+                          ...prev,
+                          subCategory: newSub,
+                          sku: autoSku,
+                        }));
+                      }}
                       style={{
                         width: '100%',
                         padding: '0.68rem 0.9rem',
@@ -986,31 +1033,49 @@ export default function AdminProducts() {
                 {/* 4. Pricing, Inventory & SKU Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', alignItems: 'start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         SKU
                       </label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, sku: generateSku(prev.category, prev.subCategory) }))}
+                        title="Click to re-generate auto SKU"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#7c3aed',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: '0 0.2rem',
+                        }}
+                      >
+                        🔄 Auto
+                      </button>
                     </div>
                     <input
                       type="text"
-                      value={formData.sku || 'Auto-generated'}
-                      readOnly
+                      placeholder="e.g. WF-SAR-001"
+                      value={formData.sku || ''}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
                       style={{
                         width: '100%',
                         padding: '0.68rem 0.9rem',
-                        background: '#f1f5f9',
-                        border: '1px solid #e2e8f0',
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
                         borderRadius: '10px',
                         fontSize: '0.84rem',
-                        fontWeight: 600,
-                        color: '#64748b',
+                        fontWeight: 700,
+                        color: '#7c3aed',
                         outline: 'none',
                         boxSizing: 'border-box',
-                        cursor: 'not-allowed'
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
                       }}
                     />
                     <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block', marginTop: '0.35rem' }}>
-                      Auto-generated SKU
+                      Auto/Manual SKU
                     </span>
                   </div>
 

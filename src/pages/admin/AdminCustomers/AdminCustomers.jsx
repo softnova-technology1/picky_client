@@ -174,14 +174,23 @@ export default function AdminCustomers() {
     async function load() {
       try {
         setLoading(true);
-        const res = await adminService.getSalesSummary().catch(() => null);
-        const sumData = res?.data || res;
+        const [sumRes, custRes] = await Promise.all([
+          adminService.getSalesSummary().catch(() => null),
+          adminService.getCustomers({ limit: 100 }).catch(() => null),
+        ]);
+        const sumData = sumRes?.data || sumRes;
         if (sumData && sumData.totalCustomers > 0) {
           setSummary(sumData);
         } else {
           setSummary(MOCK_SALES_SUMMARY);
         }
-        setCustomers(MOCK_CUSTOMERS);
+
+        const custList = Array.isArray(custRes?.data) ? custRes.data : (Array.isArray(custRes?.data?.data) ? custRes.data.data : (Array.isArray(custRes) ? custRes : []));
+        if (custList.length > 0) {
+          setCustomers(custList);
+        } else {
+          setCustomers(MOCK_CUSTOMERS);
+        }
       } catch (err) {
         console.error('Failed to load customers info:', err);
         setSummary(MOCK_SALES_SUMMARY);

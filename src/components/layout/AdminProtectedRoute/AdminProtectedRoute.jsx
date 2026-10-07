@@ -5,8 +5,8 @@ import Button from '../../ui/Button';
 
 export function AdminProtectedRoute({ children }) {
   const { isLoggedIn, user, login, logout } = useAuthStore();
-  const [email, setEmail] = useState('admin@picky.com');
-  const [password, setPassword] = useState('Admin@Picky2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,19 +45,7 @@ export function AdminProtectedRoute({ children }) {
     );
   }
 
-  // 3. If not logged in -> Show direct Admin Email & Password Login right on this URL!
-  const handleDemoBypass = () => {
-    const demoAdmin = {
-      id: 'admin_demo_01',
-      _id: 'admin_demo_01',
-      name: 'Super Admin (Demo)',
-      email: email.trim() || 'admin@picky.com',
-      role: 'admin',
-      phone: '+91 98765 43210'
-    };
-    login(demoAdmin, 'demo-admin-jwt-token', 'demo-admin-refresh-token');
-  };
-
+  // 3. Admin Authentication Form
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -74,9 +62,9 @@ export function AdminProtectedRoute({ children }) {
       const adminUser = payload?.user || payload;
       login(adminUser, payload?.accessToken, payload?.refreshToken);
     } catch (err) {
-      console.warn('Backend offline / Network Error fallback to Demo Admin:', err);
-      // Seamlessly fallback to demo admin if backend is offline or network fails
-      handleDemoBypass();
+      console.error('Admin Login Error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Invalid administrator credentials or server unavailable.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -91,7 +79,7 @@ export function AdminProtectedRoute({ children }) {
           </div>
           <h2 style={{ color: 'white', fontSize: '1.6rem', margin: '0.2rem 0 0.4rem', fontWeight: 700 }}>Admin Sign In</h2>
           <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
-            Enter your admin credentials or click below for quick UI demo access.
+            Authorized Administrator credentials required.
           </p>
         </div>
 

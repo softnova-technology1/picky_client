@@ -39,6 +39,7 @@ import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import styles from './AdminSettings.module.css';
 
@@ -510,6 +511,27 @@ export default function AdminSettings() {
     }
   });
 
+  // Load live settings from MongoDB Atlas
+  useEffect(() => {
+    async function loadBackendSettings() {
+      try {
+        const res = await adminService.getSettings().catch(() => null);
+        const data = res?.data || res;
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          setSettings((prev) => ({
+            ...prev,
+            ...data,
+            standardShippingFee: data.standardShippingFee !== undefined ? String(data.standardShippingFee) : prev.standardShippingFee,
+            sessionTimeoutMinutes: data.sessionTimeoutMinutes !== undefined ? String(data.sessionTimeoutMinutes) : prev.sessionTimeoutMinutes,
+          }));
+        }
+      } catch (err) {
+        console.warn('Using local settings cache:', err);
+      }
+    }
+    loadBackendSettings();
+  }, []);
+
   const handleChange = (field, value) => {
     setSettings((prev) => {
       const updated = { ...prev, [field]: value };
@@ -520,18 +542,17 @@ export default function AdminSettings() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     try {
       localStorage.setItem('picky_admin_settings', JSON.stringify(settings));
       localStorage.setItem('picky_admin_notifications', JSON.stringify(notifications));
-      setTimeout(() => {
-        setSaving(false);
-        showToast('Settings saved successfully!', 'success');
-      }, 350);
+      await adminService.updateSettings(settings).catch((err) => console.warn('Could not sync settings to DB:', err));
+      showToast('Settings saved successfully!', 'success');
     } catch {
-      setSaving(false);
       showToast('Failed to save settings', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 

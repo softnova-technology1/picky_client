@@ -49,8 +49,10 @@ export default function EditorialHero() {
         userSelect: 'none',
       }}
     >
-      {/* ── Diagonal Split Collage Slides (Loaded from mock data) ── */}
-      {slides.map((slide, index) => {
+      {/* ── Desktop View (> 768px) ── */}
+      <div className="hero-desktop-wrapper">
+        {/* ── Diagonal Split Collage Slides (Loaded from mock data) ── */}
+        {slides.map((slide, index) => {
         const isActive = index === currentSlide;
         return (
           <div
@@ -328,9 +330,72 @@ export default function EditorialHero() {
             }}
           />
         ))}
+        </div>
+      </div>
+
+      {/* ── Mobile View (320px - 768px ONLY) ── */}
+      <div className="hero-mobile-wrapper">
+        <div className="hero-mobile-card">
+          {slides.map((slide, idx) => {
+            const isActive = idx === currentSlide;
+            return (
+              <div
+                key={`mob_slide_${slide.id || idx}`}
+                className={`hero-mobile-slide ${isActive ? 'active' : ''}`}
+              >
+                <img
+                  src={slide.leftImage || slide.image}
+                  alt={slide.title}
+                  className="hero-mobile-img"
+                />
+                <div className="hero-mobile-overlay" />
+              </div>
+            );
+          })}
+
+          {/* Frosted Glass Overlay Card */}
+          {slides[currentSlide] && (
+            <div className="hero-mobile-frosted-card">
+              <span className="hero-mobile-eyebrow">
+                {slides[currentSlide].eyebrow || 'EXCLUSIVE 1 DAY DEALS'}
+              </span>
+              <h2 className="hero-mobile-title">
+                {slides[currentSlide].title || 'BRAND'}{' '}
+                <span className="hero-mobile-highlight">
+                  {slides[currentSlide].subtitle || '50% OFF'}
+                </span>
+              </h2>
+              <button
+                type="button"
+                className="hero-mobile-cta"
+                onClick={() => navigate(slides[currentSlide].ctaLink || '/products')}
+              >
+                <span>{slides[currentSlide].ctaText || 'SHOP NOW'}</span>
+                <ArrowRight size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+
+          {/* Slide counter */}
+          <div className="hero-mobile-counter">
+            0{currentSlide + 1}/{totalSlides}
+          </div>
+        </div>
       </div>
 
       <style>{`
+        /* Desktop isolation */
+        .hero-mobile-wrapper {
+          display: none;
+        }
+        .hero-desktop-wrapper {
+          display: block;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+
         /* Fast & Smooth Zoom In Effect for active slide background */
         .active-zoom-bg {
           animation: carouselZoomIn 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -368,7 +433,126 @@ export default function EditorialHero() {
           border-color: #663399 !important;
           gap: 0.65rem !important;
         }
+
+        /* Mobile Responsive View (320px - 768px) */
+        @media (max-width: 768px) {
+          .hero-desktop-wrapper {
+            display: none !important;
+          }
+          .picky-hero-banner-carousel {
+            min-height: auto !important;
+            background: transparent !important;
+            padding: 0 !important;
+          }
+          .hero-mobile-wrapper {
+            display: block !important;
+            position: relative;
+            width: 100%;
+            padding: 12px 14px 16px;
+            box-sizing: border-box;
+          }
+          .hero-mobile-card {
+            position: relative;
+            width: 100%;
+            height: clamp(250px, 62vw, 320px);
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
+            background: #181432;
+          }
+          .hero-mobile-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+          }
+          .hero-mobile-slide.active {
+            opacity: 1;
+            visibility: visible;
+          }
+          .hero-mobile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+          }
+          .hero-mobile-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);
+          }
+          .hero-mobile-frosted-card {
+            position: absolute;
+            bottom: 12px;
+            left: 14px;
+            right: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            padding: 12px 16px 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            z-index: 5;
+          }
+          .hero-mobile-eyebrow {
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #7c3aed;
+            text-transform: uppercase;
+          }
+          .hero-mobile-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            margin: 0;
+            line-height: 1.15;
+            text-transform: uppercase;
+          }
+          .hero-mobile-highlight {
+            color: #7c3aed;
+          }
+          .hero-mobile-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 9999px;
+            padding: 8px 24px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            margin-top: 4px;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+          }
+          .hero-mobile-counter {
+            position: absolute;
+            bottom: 12px;
+            right: 14px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            color: #ffffff;
+            font-size: 0.62rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 6px;
+            z-index: 6;
+          }
+        }
       `}</style>
+
     </section>
   );
 }

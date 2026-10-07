@@ -2,13 +2,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: #faf5ff;
   overflow-x: hidden;
 }
 
 .page-wrapper-main {
   flex: 1;
-  background: #ffffff;
+  background: transparent;
   animation: pageSwapSlowSmooth 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: transform, opacity, filter;
 }
@@ -24,6 +24,16 @@
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-wrapper-root {
+    padding-bottom: 64px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }
 

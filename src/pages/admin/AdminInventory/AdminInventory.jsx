@@ -27,6 +27,7 @@ import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
+import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import {
@@ -43,6 +44,43 @@ export default function AdminInventory() {
 
   // Inventory list derived from shared mockStockStore (single source of truth)
   const [inventoryList, setInventoryList] = useState(() => getInventoryList());
+
+  // Load live inventory from backend
+  useEffect(() => {
+    async function loadLiveInventory() {
+      try {
+        setIsLoading(true);
+        const res = await adminService.getInventory({ limit: 100 }).catch(() => null);
+        const items = res?.data?.items || res?.data?.data || res?.data;
+        if (Array.isArray(items) && items.length > 0) {
+          const mapped = items.map((inv) => {
+            const p = inv.product || {};
+            return {
+              _id: inv._id || `inv_${p._id}`,
+              productId: p._id || inv.product,
+              productName: p.name || 'Product',
+              sku: inv.sku || p.sku || 'SKU-001',
+              category: typeof p.category === 'object' ? p.category?.name : (p.category || 'Apparel'),
+              categoryId: typeof p.category === 'object' ? p.category?._id : (p.category || 'all'),
+              subCategory: p.subCategory || '',
+              currentStock: inv.quantity ?? 10,
+              lowStockThreshold: inv.lowStockThreshold ?? LOW_STOCK_THRESHOLD,
+              price: p.discountPrice || p.price || 999,
+              images: p.images || [],
+              lastUpdated: inv.updatedAt ? new Date(inv.updatedAt).toLocaleDateString('en-GB') : 'Recently',
+              lastReason: 'System Sync',
+            };
+          });
+          setInventoryList(mapped);
+        }
+      } catch (err) {
+        console.warn('Could not load live inventory, using store fallback:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadLiveInventory();
+  }, []);
 
   // URL Query Params Synchronization
   const [searchParams, setSearchParams] = useSearchParams();
@@ -398,9 +436,16 @@ export default function AdminInventory() {
         )
       );
 
-      // Update shared stock store
+      // Update shared stock store and live backend
       const delta = adjustType === 'add' ? qty : -qty;
       storeAdjustStock(selectedItem.productId, delta);
+
+      if (selectedItem.productId) {
+        adminService.updateInventoryStock(selectedItem.productId, {
+          quantity: updatedStock,
+          reason: adjustReason,
+        }).catch((err) => console.warn('Could not sync stock to server:', err));
+      }
 
       const actionWord = adjustType === 'add' ? 'added to' : 'removed from';
       showToast(

@@ -618,16 +618,34 @@ export default function AdminDashboard() {
   const [activeBarIndex, setActiveBarIndex] = useState(3);
   const [timeframe, setTimeframe] = useState('Week');
 
-  // Fetch live statistics seamlessly falling back to MOCK_SALES_SUMMARY
+  const [recentOrders, setRecentOrders] = useState(() => (MOCK_ORDERS_EXTENDED?.length >= 5 ? MOCK_ORDERS_EXTENDED : MOCK_ORDERS).slice(0, 5));
+  const [topProducts, setTopProducts] = useState(() => MOCK_TOP_PRODUCTS_REPORT.slice(0, 5));
+
+  // Fetch live statistics seamlessly
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await adminService.getSalesSummary().catch(() => null);
-        const data = res?.data || res;
-        if (data && data.totalOrders > 0) {
+        const [sumRes, topRes, ordRes] = await Promise.all([
+          adminService.getSalesSummary().catch(() => null),
+          adminService.getTopProducts(5).catch(() => null),
+          adminService.getOrders({ limit: 5 }).catch(() => null),
+        ]);
+        
+        const data = sumRes?.data || sumRes;
+        if (data && (data.totalOrders > 0 || data.totalRevenue > 0)) {
           setSummary(data);
         } else {
           setSummary(MOCK_SALES_SUMMARY);
+        }
+
+        const tpList = topRes?.data?.data || topRes?.data || topRes;
+        if (Array.isArray(tpList) && tpList.length > 0) {
+          setTopProducts(tpList);
+        }
+
+        const ordList = ordRes?.data?.data || ordRes?.data?.orders || ordRes?.data || ordRes;
+        if (Array.isArray(ordList) && ordList.length > 0) {
+          setRecentOrders(ordList.slice(0, 5));
         }
       } catch (err) {
         setSummary(MOCK_SALES_SUMMARY);
@@ -645,19 +663,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     setActiveBarIndex((prev) => Math.min(prev, (currentData.revenueData.length || 1) - 1));
   }, [timeframe, currentData]);
-
-  // Recent Orders (5 orders matching 5 Top Products)
-  const recentOrders = useMemo(() => {
-    const pool = (MOCK_ORDERS_EXTENDED && MOCK_ORDERS_EXTENDED.length >= 5)
-      ? MOCK_ORDERS_EXTENDED
-      : MOCK_ORDERS;
-    return pool.slice(0, 5);
-  }, []);
-
-  // Top Products (Top 5 products)
-  const topProducts = useMemo(() => {
-    return MOCK_TOP_PRODUCTS_REPORT.slice(0, 5);
-  }, []);
 
   // Sparkline SVGs for KPI Cards without overflow leakage
   const sparkline1 = (
