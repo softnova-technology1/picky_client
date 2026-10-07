@@ -243,7 +243,7 @@ export default function EditorialHero() {
       <button
         onClick={handlePrev}
         aria-label="Previous Slide"
-        className="carousel-arrow-btn arrow-btn-left"
+        className="carousel-arrow-btn arrow-btn-left no-hover-fx"
         style={{
           position: 'absolute',
           left: '24px',
@@ -271,7 +271,7 @@ export default function EditorialHero() {
       <button
         onClick={handleNext}
         aria-label="Next Slide"
-        className="carousel-arrow-btn arrow-btn-right"
+        className="carousel-arrow-btn arrow-btn-right no-hover-fx"
         style={{
           position: 'absolute',
           right: '24px',

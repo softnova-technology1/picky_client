@@ -27,10 +27,10 @@
 .blog-hero-fullwidth {
   width: 100%;
   background:
-    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.20) 0%, transparent 50%),
-    radial-gradient(circle at 85% 60%, rgba(236, 72, 153, 0.16) 0%, transparent 50%),
-    radial-gradient(circle at 50% 100%, rgba(168, 85, 247, 0.10) 0%, transparent 70%),
-    linear-gradient(135deg, #f5edff 0%, #fdfbff 50%, #f7efff 100%);
+    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.18) 0%, transparent 50%),
+    radial-gradient(circle at 85% 60%, rgba(236, 72, 153, 0.14) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(245, 237, 255, 0.72) 0%, rgba(253, 251, 255, 0.82) 50%, rgba(247, 239, 255, 0.72) 100%),
+    url('/images/blog/blog_hero_bg.jpg') center/cover no-repeat;
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid rgba(124, 58, 237, 0.08);

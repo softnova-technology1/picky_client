@@ -423,7 +423,7 @@ export default function Home() {
             {/* Right-Side Premium Carousel Navigation Controls */}
             <div className="hp-carousel-nav-btns">
               <button
-                className="hp-carousel-nav-btn"
+                className="hp-carousel-nav-btn no-hover-fx"
                 onClick={() => scrollTrending('prev')}
                 aria-label="Previous Trending Product"
                 title="Previous Product"
@@ -431,7 +431,7 @@ export default function Home() {
                 <ChevronLeft size={20} strokeWidth={2.3} />
               </button>
               <button
-                className="hp-carousel-nav-btn"
+                className="hp-carousel-nav-btn no-hover-fx"
                 onClick={() => scrollTrending('next')}
                 aria-label="Next Trending Product"
                 title="Next Product"

@@ -48,8 +48,13 @@ export function useButtonHoverFX() {
       const w = el.offsetWidth;
       const h = el.offsetHeight;
       if (w > 0 && w < 36 && h < 36) return;
-      // Skip nav/icon-only buttons that shouldn't animate
-      if (el.closest('.no-hover-fx')) return;
+      // Skip nav/icon-only/carousel/prev/next/arrow buttons that shouldn't animate
+      const classNameStr = (typeof el.className === 'string' ? el.className : '');
+      if (
+        el.closest('.no-hover-fx') ||
+        el.classList.contains('no-hover-fx') ||
+        /prev|next|carousel|arrow|nav-btn|slider|swiper|chevron/i.test(classNameStr)
+      ) return;
 
       attached.add(el);
       el.style.setProperty('--btn-mx', '50%');
