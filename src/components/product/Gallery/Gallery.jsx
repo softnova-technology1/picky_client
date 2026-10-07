@@ -111,10 +111,10 @@ export default function Gallery({
         {/* Circular Arrow Navigation Controls */}
         {displayImages.length > 1 && (
           <div className={styles['arrow-nav-group']}>
-            <button onClick={handlePrev} className={styles['arrow-btn']} title="Previous image">
+            <button onClick={handlePrev} className={`${styles['arrow-btn']} no-hover-fx`} title="Previous image">
               <ChevronLeft size={18} />
             </button>
-            <button onClick={handleNext} className={styles['arrow-btn']} title="Next image">
+            <button onClick={handleNext} className={`${styles['arrow-btn']} no-hover-fx`} title="Next image">
               <ChevronRight size={18} />
             </button>
           </div>

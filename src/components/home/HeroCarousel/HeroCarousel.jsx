@@ -241,7 +241,7 @@ export default function HeroCarousel() {
               cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
-            className="carousel-nav-btn"
+            className="carousel-nav-btn no-hover-fx"
           >
             <ChevronLeft size={24} />
           </button>
@@ -267,7 +267,7 @@ export default function HeroCarousel() {
               cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
-            className="carousel-nav-btn"
+            className="carousel-nav-btn no-hover-fx"
           >
             <ChevronRight size={24} />
           </button>

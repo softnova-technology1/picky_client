@@ -289,7 +289,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
-              className="carousel-arrow-btn"
+              className="carousel-arrow-btn no-hover-fx"
             >
               <ChevronUp size={19} strokeWidth={2.5} />
             </button>
@@ -313,7 +313,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
-              className="carousel-arrow-btn"
+              className="carousel-arrow-btn no-hover-fx"
             >
               <ChevronDown size={19} strokeWidth={2.5} />
             </button>

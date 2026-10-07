@@ -2,43 +2,34 @@
  * button-hover-fx.css
  * ──────────────────────────────────────────────────────────────────────────
  * Universal button hover effects for the Picky site.
- * Works on ALL buttons regardless of class name — via [class*="-btn"],
- * [class*="btn-"], and the plain <button> element.
- *
- * Effects:
- *   1. Diagonal shimmer sweep  (::after, mix-blend-mode: overlay)
- *   2. Cursor-tracking spotlight (::before, radial-gradient via CSS vars)
- *   3. Spring magnetic lift  (transform on :hover)
- *   4. Click snap-back       (transform on :active)
- *
- * The JS hook (useButtonHoverFX) sets --btn-mx / --btn-my on each element.
+ * Works on regular text buttons while excluding icon buttons, circular 
+ * action buttons, and floating widgets that have their own custom styling.
  * ──────────────────────────────────────────────────────────────────────────
  */
 
-/* ── 1. Shared pseudo-element base for ALL site buttons ──────────────────── */
-button,
-a[class*="btn"],
-[class*="-btn"],
-[class*="btn-"] {
+/* ── 1. Shared pseudo-element base for standard site buttons ─────────────── */
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx),
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx),
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx),
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx) {
   --btn-mx: 50%;
   --btn-my: 50%;
 }
 
-/* ── 2. Shimmer sweep layer (::after) ────────────────────────────────────── */
-/*    mix-blend-mode: overlay keeps text fully readable at all times          */
-button::after,
-a[class*="btn"]::after,
-[class*="-btn"]::after,
-[class*="btn-"]::after {
+/* ── 2. Shimmer sweep layer (::after) — Pure subtle white highlight ──────── */
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: linear-gradient(112deg,
-      transparent 15%,
-      rgb(255, 255, 255) 44%,
-      rgb(58, 53, 53) 50%,
-      transparent 85%);
+      transparent 18%,
+      rgba(255, 255, 255, 0.25) 46%,
+      rgba(255, 255, 255, 0.50) 50%,
+      transparent 82%);
   mix-blend-mode: overlay;
   transform: translateX(-150%) skewX(-12deg);
   transition: transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -47,11 +38,10 @@ a[class*="btn"]::after,
 }
 
 /* ── 3. Cursor-tracking spotlight layer (::before) ───────────────────────── */
-/*    Radial glow that follows the mouse inside the button                    */
-button::before,
-a[class*="btn"]::before,
-[class*="-btn"]::before,
-[class*="btn-"]::before {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -66,26 +56,25 @@ a[class*="btn"]::before,
 }
 
 /* ── 4. Hover: reveal spotlight + fire shimmer ───────────────────────────── */
-button:hover::before,
-a[class*="btn"]:hover::before,
-[class*="-btn"]:hover::before,
-[class*="btn-"]:hover::before {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before {
   opacity: 1;
 }
 
-button:hover::after,
-a[class*="btn"]:hover::after,
-[class*="-btn"]:hover::after,
-[class*="btn-"]:hover::after {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after {
   transform: translateX(150%) skewX(-12deg);
 }
 
-/* ── 5. Spring magnetic lift on hover ────────────────────────────────────── */
-/*    Only for buttons that don't already define their own transform hover    */
-button:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not(.no-hover-fx):hover,
-a[class*="btn"]:not(.no-hover-fx):hover,
-[class*="-btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="heart"]):not([class*="ping"]):not(.no-hover-fx):hover,
-[class*="btn-"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="heart"]):not([class*="ping"]):not(.no-hover-fx):hover {
+/* ── 5. Spring magnetic lift on hover (for text buttons) ─────────────────── */
+button:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover,
+a[class*="btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover,
+[class*="-btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover,
+[class*="btn-"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover {
   transform: translateY(-2px) scale(1.012) !important;
   transition:
     transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -93,18 +82,17 @@ a[class*="btn"]:not(.no-hover-fx):hover,
 }
 
 /* ── 6. Click snap-back ──────────────────────────────────────────────────── */
-button:not(.no-hover-fx):active,
-[class*="-btn"]:not(.no-hover-fx):active,
-[class*="btn-"]:not(.no-hover-fx):active {
+button:not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):active,
+[class*="-btn"]:not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):active,
+[class*="btn-"]:not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):active {
   transform: translateY(0) scale(0.972) !important;
   transition: transform 0.1s cubic-bezier(0.4, 0, 0.6, 1) !important;
 }
 
 /* ── 7. Required: position context for pseudo-elements ───────────────────── */
-/*    Only set when not already positioned (avoids overriding fixed/absolute) */
-button:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn),
-[class*="-btn"]:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn),
-[class*="btn-"]:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn) {
+button:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="heart-btn"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]),
+[class*="-btn"]:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="heart-btn"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]),
+[class*="btn-"]:not([style*="position"]):not(.no-hover-fx):not(.picky-float-btn):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="heart-btn"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]) {
   position: relative;
   overflow: hidden;
 }
@@ -114,7 +102,7 @@ button:disabled::after,
 button:disabled::before,
 [class*="-btn"]:disabled::after,
 [class*="-btn"]:disabled::before {
-  display: none;
+  display: none !important;
 }
 
 button:disabled:hover,
@@ -123,18 +111,79 @@ button:disabled:hover,
   transform: none !important;
 }
 
-/* ── 9. Exclude specific tiny/icon buttons from lift ─────────────────────── */
+/* ── 9. Exclude floating & icon buttons from transform overrides ────────── */
 .picky-float-btn:hover,
 .picky-float-scroll:hover,
 .stepper-btn:hover,
 .nav-icon-btn:hover,
 .picky-chat-ping-badge,
 [class*="close"]:hover,
-[class*="heart"]:hover {
+[class*="heart"]:hover,
+[class*="prev"]:hover,
+[class*="next"]:hover,
+[class*="arrow"]:hover,
+[class*="nav-btn"]:hover,
+[class*="carousel"]:hover,
+[class*="slider"]:hover,
+[class*="swiper"]:hover {
   transform: unset;
 }
 
-/* restore their own hover transforms */
 .picky-float-btn:hover {
   transform: translateY(-3px) scale(1.05) !important;
+}
+
+/* ── 10. Strictly disable pseudo-elements (shimmer/spotlight) for floating, icon, prev & next buttons ── */
+.picky-float-btn::before,
+.picky-float-btn::after,
+.picky-float-scroll::before,
+.picky-float-scroll::after,
+.nav-icon-btn::before,
+.nav-icon-btn::after,
+.minimal-card-heart-btn::before,
+.minimal-card-heart-btn::after,
+.spotlight-heart-btn::before,
+.spotlight-heart-btn::after,
+.ref-wishlist-btn::before,
+.ref-wishlist-btn::after,
+[class*="icon-btn"]::before,
+[class*="icon-btn"]::after,
+[class*="-icon-btn"]::before,
+[class*="-icon-btn"]::after,
+[class*="heart-btn"]::before,
+[class*="heart-btn"]::after,
+[class*="float-btn"]::before,
+[class*="float-btn"]::after,
+[class*="stepper-btn"]::before,
+[class*="stepper-btn"]::after,
+[class*="close-btn"]::before,
+[class*="close-btn"]::after,
+[class*="prev"]::before,
+[class*="prev"]::after,
+[class*="next"]::before,
+[class*="next"]::after,
+[class*="nav-btn"]::before,
+[class*="nav-btn"]::after,
+[class*="arrow"]::before,
+[class*="arrow"]::after,
+[class*="carousel"]::before,
+[class*="carousel"]::after,
+[class*="slider"]::before,
+[class*="slider"]::after,
+[class*="swiper"]::before,
+[class*="swiper"]::after,
+.hp-carousel-nav-btn::before,
+.hp-carousel-nav-btn::after,
+.carousel-arrow-btn::before,
+.carousel-arrow-btn::after,
+.carousel-nav-btn::before,
+.carousel-nav-btn::after,
+.arrow-btn-left::before,
+.arrow-btn-left::after,
+.arrow-btn-right::before,
+.arrow-btn-right::after,
+.no-hover-fx::before,
+.no-hover-fx::after {
+  display: none !important;
+  content: none !important;
 }
