@@ -2684,6 +2684,10 @@ body {
   gap: 2rem;
 }
 
+.hp-reviews-grid > :nth-child(n+4) {
+  display: none;
+}
+
 .hp-review-card {
   position: relative;
   background: linear-gradient(145deg, #ffffff 0%, #faf5ff 100%);
