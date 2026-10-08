@@ -7,12 +7,12 @@ import CategoryBudgetStore from '../../components/category/CategoryBudgetStore';
 import CategoryFeaturedDrops from '../../components/category/CategoryFeaturedDrops';
 import CategoryPromoBanner from '../../components/category/CategoryPromoBanner';
 import CategoryRecommendedDrops from '../../components/category/CategoryRecommendedDrops';
-import { MOCK_CATEGORIES } from '../../data/adminMockData';
+import { PICKY_CATEGORIES } from '../../data/categoriesData';
 import { Sparkles } from 'lucide-react';
 
 export default function Categories() {
-  // Use mock data from adminMockData.js
-  const [categories] = useState(MOCK_CATEGORIES);
+  // Use data from categoriesData.js
+  const [categories] = useState(PICKY_CATEGORIES);
 
   // Top 4 categories are featured in the top pill showcase
   const top4Slugs = useMemo(

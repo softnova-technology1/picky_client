@@ -45,11 +45,11 @@ export default function AdminCategories() {
     try {
       setLoading(true);
       const res = await categoryService.list().catch(() => null);
-      const list = res?.data || [];
-      setCategories(list.length > 0 ? list : MOCK_CATEGORIES);
+      const list = res ? res.data || [] : [];
+      setCategories(list);
     } catch (err) {
       console.error('Failed to load categories:', err);
-      setCategories(MOCK_CATEGORIES);
+      setCategories([]);
     } finally {
       setLoading(false);
     }

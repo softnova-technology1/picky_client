@@ -44,8 +44,24 @@ import AdminSettings from './pages/admin/AdminSettings';
 const ADMIN = '/pickyadmin-softnova2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
+import { useEffect } from 'react';
+import { useCustomizationStore } from './store/customizationStore';
+import { adminService } from './services/admin.service';
+
 export default function App() {
   useButtonHoverFX();
+  const { setSections, setPageSections } = useCustomizationStore();
+
+  useEffect(() => {
+    adminService.getCustomizations().then(res => {
+      if (res && res.data && Object.keys(res.data).length > 0) {
+        for (const [pageId, sections] of Object.entries(res.data)) {
+          setPageSections(pageId, sections);
+        }
+      }
+    }).catch(console.error);
+  }, []);
+
   return (
     <QueryClientProvider client={qc}>
       <BrowserRouter>

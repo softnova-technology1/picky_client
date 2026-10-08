@@ -5,7 +5,8 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import ProductGrid from '../../components/product/ProductGrid';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
-import { promoOffer, categories, valuePropositions, products as fallbackProducts, REVIEWS_DATA } from '../../data';
+import { promoOffer, valuePropositions, products as fallbackProducts, REVIEWS_DATA } from '../../data';
+import { PICKY_CATEGORIES as categories } from '../../data/categoriesData';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
@@ -302,13 +303,8 @@ export default function Home() {
     );
   }, [newArrivals, activeCategoryFilter]);
 
-  const spotlightProduct = fallbackProducts.find((p) => p.slug === 'pure-cotton-handloom-madurai-sungudi-saree') || fallbackProducts[0];
-  const flashDealProducts = [
-    fallbackProducts.find((p) => p.slug === 'antique-matte-gold-temple-choker-necklace-set') || fallbackProducts[7],
-    fallbackProducts.find((p) => p.slug === 'multi-blade-stainless-steel-quick-vegetable-chopper') || fallbackProducts[4],
-    fallbackProducts.find((p) => p.slug === 'traditional-kemp-pearl-bell-jhumka-earrings') || fallbackProducts[8],
-    fallbackProducts.find((p) => p.slug === 'pre-seasoned-heavy-cast-iron-deep-kadai') || fallbackProducts[5],
-  ].filter(Boolean);
+  const spotlightProduct = newArrivals.find((p) => p.slug === 'pure-cotton-handloom-madurai-sungudi-saree') || newArrivals[0] || null;
+  const flashDealProducts = newArrivals.slice(1, 5) || [];
 
   const isSpotlightInWishlist = spotlightProduct
     ? isInWishlist(spotlightProduct._id || spotlightProduct.id || spotlightProduct.slug)
@@ -495,58 +491,70 @@ export default function Home() {
           {/* Flash Deals Main Grid (Spotlight Card + 4 Real Minimal Products) */}
           <div className="hp-flash-deals-grid">
             
-            {/* Left Featured Spotlight Banner (Real Sungudi Saree) */}
+            {/* Left Featured Spotlight Banner */}
             <FadeUp delay={150}>
-              <div
-                className="hp-flash-spotlight-card"
-                onClick={() => navigate(`/products/${spotlightProduct.slug}`)}
-              >
-                <div className="spotlight-tag">DEAL OF THE DAY • 32% OFF</div>
-                
-                <div className="spotlight-img-wrap">
-                  <button
-                    onClick={handleToggleSpotlightWishlist}
-                    className="spotlight-heart-btn"
-                    title={isSpotlightInWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
-                  >
-                    <Heart
-                      size={18}
-                      color={isSpotlightInWishlist ? '#e11d48' : '#64748b'}
-                      fill={isSpotlightInWishlist ? '#e11d48' : 'transparent'}
-                      strokeWidth={2.3}
-                    />
-                  </button>
-                  <img
-                    src={spotlightProduct.images?.[0] || spotlightProduct.image}
-                    alt={spotlightProduct.name}
-                    className="spotlight-img"
-                  />
-                  <div className="spotlight-glow" />
-                </div>
-
-                <div className="spotlight-content">
-                  <div className="spotlight-category">Women's Fashion</div>
-                  <h3 className="spotlight-title">{spotlightProduct.name}</h3>
-                  <p className="spotlight-desc">{spotlightProduct.description}</p>
+              {spotlightProduct ? (
+                <div
+                  className="hp-flash-spotlight-card"
+                  onClick={() => navigate(`/products/${spotlightProduct.slug}`)}
+                >
+                  <div className="spotlight-tag">DEAL OF THE DAY • 32% OFF</div>
                   
-                  <div className="spotlight-price-row">
-                    <span className="spotlight-current-price">₹{spotlightProduct.discountPrice}</span>
-                    <span className="spotlight-orig-price">₹{spotlightProduct.price}</span>
-                    <span className="spotlight-savings-tag">Save ₹{spotlightProduct.price - spotlightProduct.discountPrice}</span>
+                  <div className="spotlight-img-wrap">
+                    <button
+                      onClick={handleToggleSpotlightWishlist}
+                      className="spotlight-heart-btn"
+                      title={isSpotlightInWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
+                    >
+                      <Heart
+                        size={18}
+                        color={isSpotlightInWishlist ? '#e11d48' : '#64748b'}
+                        fill={isSpotlightInWishlist ? '#e11d48' : 'transparent'}
+                        strokeWidth={2.3}
+                      />
+                    </button>
+                    <img
+                      src={spotlightProduct.images?.[0] || spotlightProduct.image}
+                      alt={spotlightProduct.name}
+                      className="spotlight-img"
+                    />
+                    <div className="spotlight-glow" />
                   </div>
 
-                  <button className="spotlight-cta-btn" onClick={handleSpotlightAddToCart}>
-                    <span className="spotlight-btn-desktop">
-                      <ShoppingCart size={16} strokeWidth={2.3} style={{ marginRight: '6px' }} />
-                      Claim Deal & Add to Cart
-                    </span>
-                    <span className="spotlight-btn-mobile">
-                      <Eye size={15} strokeWidth={2.3} style={{ marginRight: '6px' }} />
-                      VIEW DEAL
-                    </span>
-                  </button>
+                  <div className="spotlight-content">
+                    <div className="spotlight-category">Featured Offer</div>
+                    <h3 className="spotlight-title">{spotlightProduct.name}</h3>
+                    <p className="spotlight-desc">{spotlightProduct.description}</p>
+                    
+                    <div className="spotlight-price-row">
+                      <span className="spotlight-current-price">₹{spotlightProduct.discountPrice || spotlightProduct.price}</span>
+                      {spotlightProduct.discountPrice && spotlightProduct.discountPrice < spotlightProduct.price && (
+                        <>
+                          <span className="spotlight-orig-price">₹{spotlightProduct.price}</span>
+                          <span className="spotlight-savings-tag">Save ₹{spotlightProduct.price - spotlightProduct.discountPrice}</span>
+                        </>
+                      )}
+                    </div>
+
+                    <button className="spotlight-cta-btn" onClick={handleSpotlightAddToCart}>
+                      <span className="spotlight-btn-desktop">
+                        <ShoppingCart size={16} strokeWidth={2.3} style={{ marginRight: '6px' }} />
+                        Claim Deal & Add to Cart
+                      </span>
+                      <span className="spotlight-btn-mobile">
+                        <Eye size={15} strokeWidth={2.3} style={{ marginRight: '6px' }} />
+                        VIEW DEAL
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="hp-flash-spotlight-card">
+                  <div className="spotlight-content">
+                    <h3 className="spotlight-title">No Spotlight Deal Available</h3>
+                  </div>
+                </div>
+              )}
             </FadeUp>
 
             {/* Right Side 4 Minimal Cards (Image + Add to Bag ONLY) */}

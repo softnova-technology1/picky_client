@@ -43,7 +43,7 @@ export default function AdminInventory() {
   const { getInventoryList, adjustStock: storeAdjustStock } = useMockStockStore();
 
   // Inventory list derived from shared mockStockStore (single source of truth)
-  const [inventoryList, setInventoryList] = useState(() => getInventoryList());
+  const [inventoryList, setInventoryList] = useState([]);
 
   // Load live inventory from backend
   useEffect(() => {
@@ -51,8 +51,8 @@ export default function AdminInventory() {
       try {
         setIsLoading(true);
         const res = await adminService.getInventory({ limit: 100 }).catch(() => null);
-        const items = res?.data?.items || res?.data?.data || res?.data;
-        if (Array.isArray(items) && items.length > 0) {
+        const items = res ? (res.data?.items || res.data?.data || res.data) : [];
+        if (Array.isArray(items)) {
           const mapped = items.map((inv) => {
             const p = inv.product || {};
             return {
@@ -74,7 +74,8 @@ export default function AdminInventory() {
           setInventoryList(mapped);
         }
       } catch (err) {
-        console.warn('Could not load live inventory, using store fallback:', err);
+        console.warn('Could not load live inventory:', err);
+        setInventoryList([]);
       } finally {
         setIsLoading(false);
       }

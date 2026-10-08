@@ -27,6 +27,7 @@ export default function ProductList() {
   // Local state
   const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState(defaultCategories);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [gridCols, setGridCols] = useState(4); // 4-col compact grid default
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -41,13 +42,21 @@ export default function ProductList() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await categoryService.list();
-        const items = res?.data || res;
-        if (Array.isArray(items) && items.length > 0) {
-          setCategories(items);
+        const [catRes, subRes] = await Promise.all([
+          categoryService.list().catch(() => null),
+          categoryService.getSubCategories().catch(() => null),
+        ]);
+        const cItems = catRes?.data || [];
+        const sItems = subRes?.data || [];
+        if (Array.isArray(cItems) && cItems.length > 0) {
+          setCategories(cItems);
+        }
+        if (Array.isArray(sItems) && sItems.length > 0) {
+          setSubcategories(sItems);
         }
       } catch (err) {
         setCategories(defaultCategories);
+        setSubcategories([]);
       }
     }
     fetchCategories();
@@ -100,16 +109,19 @@ export default function ProductList() {
   // Current category details
   const currentCategoryObj = useMemo(() => {
     if (!selectedCategory) return null;
-    return (
-      categories.find(
-        (c) =>
-          c._id === selectedCategory ||
-          c.slug === selectedCategory ||
-          c.slug?.toLowerCase() === selectedCategory.toLowerCase() ||
-          c.name?.toLowerCase() === selectedCategory.toLowerCase()
-      ) || null
-    );
-  }, [categories, selectedCategory]);
+    const cat = categories.find(
+      (c) =>
+        c._id === selectedCategory ||
+        c.slug === selectedCategory ||
+        c.slug?.toLowerCase() === selectedCategory.toLowerCase() ||
+        c.name?.toLowerCase() === selectedCategory.toLowerCase()
+    ) || null;
+    
+    if (cat) {
+      cat.subcategories = subcategories.filter(s => s.categoryId === cat._id || s.categoryId?._id === cat._id);
+    }
+    return cat;
+  }, [categories, subcategories, selectedCategory]);
 
   // Multi-facet filtering on loaded products
   const filteredProducts = useMemo(() => {
