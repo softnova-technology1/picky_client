@@ -74,7 +74,7 @@ export default function AdminSubCategories() {
   // Master list of subcategories
   const [subcategories, setSubcategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryTab, setSelectedCategoryTab] = useState('all'); // 'all' or 'cat-1', 'cat-2', etc.
+  const [selectedCategoryTab, setSelectedCategoryTab] = useState(searchParams.get('category') || 'all'); // 'all' or 'cat-1', 'cat-2', etc.
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
   const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
   const deptDropdownRef = useRef(null);
@@ -170,18 +170,28 @@ export default function AdminSubCategories() {
       handleOpenAdd();
       setSearchParams({}, { replace: true });
     }
+    
+    const catParam = searchParams.get('category');
+    if (catParam) {
+      setSelectedCategoryTab(catParam);
+    }
   }, [searchParams]);
 
   // Derived KPI metrics
   const kpis = useMemo(() => {
     const total = subcategories.length;
     const active = subcategories.filter((s) => s.status === 'active').length;
-    const distinctCategories = new Set(subcategories.map((s) => s.categoryId)).size;
+    const distinctCategories = new Set(subcategories.map((s) => {
+      return typeof s.categoryId === 'string' ? s.categoryId : (s.categoryId?._id || '');
+    })).size;
     const totalProducts = subcategories.reduce((acc, curr) => acc + (Number(curr.itemCount) || 0), 0);
 
     // Subcategory counts mapped per parent department
     const catCounts = categories.map((cat) => {
-      const count = subcategories.filter((s) => s.categoryId === cat._id).length;
+      const count = subcategories.filter((s) => {
+        const sCatId = typeof s.categoryId === 'string' ? s.categoryId : (s.categoryId?._id || '');
+        return sCatId === cat._id;
+      }).length;
       return { ...cat, count };
     });
 
@@ -215,8 +225,9 @@ export default function AdminSubCategories() {
         (sub.categoryName && sub.categoryName.toLowerCase().includes(search)) ||
         (sub.description && sub.description.toLowerCase().includes(search));
 
+      const sCatId = typeof sub.categoryId === 'string' ? sub.categoryId : (sub.categoryId?._id || '');
       const matchCategory =
-        selectedCategoryTab === 'all' || sub.categoryId === selectedCategoryTab;
+        selectedCategoryTab === 'all' || sCatId === selectedCategoryTab;
       const matchStatus = selectedStatus === 'all' || sub.status === selectedStatus;
 
       return matchSearch && matchCategory && matchStatus;
@@ -275,10 +286,11 @@ export default function AdminSubCategories() {
   // Open Edit Sub-Category modal
   const handleOpenEdit = (item) => {
     setEditingItem(item);
+    const sCatId = typeof item.categoryId === 'string' ? item.categoryId : (item.categoryId?._id || '');
     setFormData({
       name: item.name || '',
       slug: item.slug || '',
-      categoryId: item.categoryId || (categories.length > 0 ? categories[0]._id : ''),
+      categoryId: sCatId || (categories.length > 0 ? categories[0]._id : ''),
       description: item.description || '',
       image: item.image || '',
       displayOrder: item.displayOrder || 1,

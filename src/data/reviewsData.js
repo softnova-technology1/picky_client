@@ -163,7 +163,7 @@ export function getProductReviews(product) {
 
   // 1. Direct match by product slug
   const directMatches = REVIEWS_DATA.filter(
-    (r) => r.productSlug === slug || r.productName.toLowerCase() === product.name?.toLowerCase()
+    (r) => r.productSlug === slug || r.productName?.toLowerCase() === product.name?.toLowerCase()
   );
 
   // 2. Category matches

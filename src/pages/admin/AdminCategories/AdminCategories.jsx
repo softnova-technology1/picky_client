@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Sliders, Layers } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
@@ -14,6 +14,7 @@ import { MOCK_CATEGORIES } from '../../../data/categoryMockData';
 export default function AdminCategories() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -247,98 +248,116 @@ export default function AdminCategories() {
       {loading ? (
         <Spinner size={36} />
       ) : (
-        <div className="table-container">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Slug</th>
-                <th>Characteristics</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((c) => (
-                <tr key={c._id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <img
-                        src={c.image || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=100'}
-                        alt={c.name}
-                        style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
-                      />
-                      <div>
-                        <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>{c.name}</strong>
-                        {c.description && <span style={{ fontSize: '0.76rem', color: '#64748b' }}>{c.description}</span>}
-                      </div>
-                    </div>
-                  </td>
-                  <td><code>/{c.slug}</code></td>
-                  <td>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        fontSize: '0.8rem',
-                        padding: '0.25rem 0.65rem',
-                        borderRadius: '999px',
-                        background: c.characteristics?.length ? '#ede8f8' : '#f1f5f9',
-                        color: c.characteristics?.length ? '#5b21b6' : '#64748b',
-                        fontWeight: 700,
-                      }}
-                    >
-                      🏷️ {c.characteristics?.length ? `${c.characteristics.length} Specs Configured` : '0 Specs'}
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      className={`adm-status-pill ${
-                        c.isActive !== false ? 'adm-status-delivered' : 'adm-status-cancelled'
-                      }`}
-                    >
-                      {c.isActive !== false ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      <button
-                        onClick={() => handleOpenEdit(c)}
-                        className="admin-period-select-btn"
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                      >
-                        <Edit2 size={13} color="#7c3aed" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleOpenCharacteristics(c)}
-                        className="admin-period-select-btn"
-                        style={{
-                          padding: '0.35rem 0.75rem',
-                          fontSize: '0.78rem',
-                          background: '#dcd0fa',
-                          color: '#2e1065',
-                          borderColor: '#c4b5fd',
-                        }}
-                      >
-                        <Sliders size={13} color="#5b21b6" />
-                        <span>Specs ({c.characteristics?.length || 0})</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(c._id)}
-                        className="admin-period-select-btn"
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', color: '#dc2626' }}
-                      >
-                        <Trash2 size={13} color="#dc2626" />
-                        <span>Deactivate</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '1.5rem',
+        }}>
+          {categories.map((c) => (
+            <div 
+              key={c._id}
+              onClick={() => navigate(`/softpicky-sn2026/subcategories?category=${c._id}`)}
+              style={{
+                background: '#fff',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                padding: '1.25rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                position: 'relative',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.12)';
+                e.currentTarget.style.borderColor = '#c4b5fd';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <img
+                  src={c.image || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=200'}
+                  alt={c.name}
+                  style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', color: '#1e1b4b', fontWeight: 800 }}>{c.name}</h3>
+                  <code style={{ fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>/{c.slug}</code>
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.82rem', color: '#475569', lineHeight: '1.4' }}>
+                    {c.description ? (c.description.length > 60 ? c.description.substring(0, 60) + '...' : c.description) : 'No description provided.'}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.75rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '999px',
+                    background: c.characteristics?.length ? '#ede8f8' : '#f1f5f9',
+                    color: c.characteristics?.length ? '#5b21b6' : '#64748b',
+                    fontWeight: 700,
+                  }}
+                >
+                  🏷️ {c.characteristics?.length || 0} Specs
+                </span>
+                
+                <span
+                  className={`adm-status-pill ${
+                    c.isActive !== false ? 'adm-status-delivered' : 'adm-status-cancelled'
+                  }`}
+                  style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}
+                >
+                  {c.isActive !== false ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }}
+                  className="admin-period-select-btn"
+                  style={{ flex: 1, padding: '0.4rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                >
+                  <Edit2 size={13} color="#7c3aed" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleOpenCharacteristics(c); }}
+                  className="admin-period-select-btn"
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    fontSize: '0.78rem',
+                    background: '#dcd0fa',
+                    color: '#2e1065',
+                    borderColor: '#c4b5fd',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Sliders size={13} color="#5b21b6" />
+                  <span>Specs</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
+                  className="admin-period-select-btn"
+                  style={{ padding: '0.4rem', fontSize: '0.78rem', color: '#dc2626' }}
+                >
+                  <Trash2 size={13} color="#dc2626" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

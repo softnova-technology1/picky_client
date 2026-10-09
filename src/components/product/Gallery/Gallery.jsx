@@ -34,7 +34,6 @@ export default function Gallery({
       <div
         className={styles['thumb-column']}
         style={{
-          maxHeight: '560px',
           overflowY: 'auto',
           paddingRight: '4px',
         }}

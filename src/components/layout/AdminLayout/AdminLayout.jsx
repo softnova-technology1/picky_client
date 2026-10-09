@@ -13,6 +13,7 @@ import {
   Menu,
   LogOut,
   ChevronDown,
+  ChevronRight,
   ArrowUpRight,
   Search,
   Bell,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
+import { useCategoryStore } from '../../../store/categoryStore';
 import { MOCK_PRODUCTS, MOCK_ORDERS, MOCK_CUSTOMERS } from '../../../data/adminMockData';
 import Toast from '../../ui/Toast';
 import '../../../styles/admin.css';
@@ -40,6 +42,7 @@ const ADMIN = '/softpicky-sn2026';
 export default function AdminLayout({ children, title }) {
   const { user, logout } = useAuthStore();
   const { showToast } = useUiStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,6 +52,11 @@ export default function AdminLayout({ children, title }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const dropdownRef = useRef(null);
   const quickAddRef = useRef(null);
@@ -259,6 +267,18 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Products</span>}
           </NavLink>
 
+
+          {/* 4. Categories */}
+          <NavLink
+            to={`${ADMIN}/categories`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Categories"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Layers size={19} />
+            </div>
+            {!collapsed && <span className="admin-nav-label">Categories</span>}
+          </NavLink>
 
           {/* 5. Sub-Categories */}
           <NavLink

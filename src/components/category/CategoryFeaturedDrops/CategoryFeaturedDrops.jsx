@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ProductCard from '../../product/ProductCard';
-import { MOCK_PRODUCTS } from '../../../data/adminMockData';
+import { productService } from '../../../services/product.service';
 
 // Top frequent primary quick tabs (clean text only)
 const PRIMARY_TABS = [
@@ -29,6 +29,9 @@ export default function CategoryFeaturedDrops() {
   const [activeTab, setActiveTab] = useState('all');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  
+  const [displayProducts, setDisplayProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -41,38 +44,21 @@ export default function CategoryFeaturedDrops() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filtered up to 10 products based on selected category
-  const displayProducts = useMemo(() => {
-    if (activeTab === 'all') {
-      const topSlugs = [
-        'pure-cotton-handloom-madurai-sungudi-saree',
-        'antique-matte-gold-temple-choker-necklace-set',
-        'pre-seasoned-heavy-cast-iron-deep-kadai',
-        'boompulse-360-portable-wireless-bluetooth-speaker',
-        'traditional-pure-brass-mayil-kuthu-vilakku-pair',
-        'classic-sapphire-chronograph-luxury-steel-watch',
-        'double-walled-vacuum-insulated-stainless-steel-sipper',
-        'heavy-duty-waterproof-expedition-travel-backpack-45l',
-        'uv400-polarized-retro-square-acetate-sunglasses',
-        'smart-talking-flash-cards-educational-audio-toy',
-      ];
-      const matched = topSlugs
-        .map((s) => MOCK_PRODUCTS.find((p) => p.slug === s))
-        .filter(Boolean);
-
-      if (matched.length < 10) {
-        for (const p of MOCK_PRODUCTS) {
-          if (!matched.some((m) => (m._id || m.id) === (p._id || p.id))) {
-            matched.push(p);
-            if (matched.length === 10) break;
-          }
-        }
-      }
-      return matched.slice(0, 10);
+  // Fetch products when activeTab changes
+  useEffect(() => {
+    setLoading(true);
+    const params = { limit: 10, sort: '-createdAt' };
+    if (activeTab !== 'all') {
+      params.category = activeTab;
     }
-
-    const filtered = MOCK_PRODUCTS.filter((p) => p.category?.slug === activeTab);
-    return filtered.length > 0 ? filtered.slice(0, 10) : MOCK_PRODUCTS.slice(0, 10);
+    
+    productService.list(params)
+      .then((res) => {
+        // ApiResponse.paginated returns { success: true, data: [...], pagination: {...} }
+        setDisplayProducts(res.data || []);
+      })
+      .catch((err) => console.error('Failed to load featured drops', err))
+      .finally(() => setLoading(false));
   }, [activeTab]);
 
   const activeCategoryObj = useMemo(() => {

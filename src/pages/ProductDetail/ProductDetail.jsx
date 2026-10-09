@@ -51,6 +51,30 @@ export default function ProductDetail() {
 
   const categorySlug = product?.category?.slug;
   const subCategorySlug = product?.subCategory?.slug;
+  const pId = product?._id || product?.id || slug;
+
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+    const all = getProducts();
+    const exclude = (p) => (p._id || p.id || p.slug) === pId || p.slug === slug;
+
+    // Primary: same category or matching tags
+    const primary = all.filter((p) => {
+      if (exclude(p)) return false;
+      return (
+        (product.category?.slug && p.category?.slug === product.category.slug) ||
+        (product.category?.name && p.category?.name === product.category.name) ||
+        (product.tags && p.tags && p.tags.some((t) => product.tags.includes(t)))
+      );
+    });
+
+    // Fallback: anything else to fill up to 4
+    const fallback = all.filter(
+      (p) => !exclude(p) && !primary.find((x) => (x._id || x.id || x.slug) === (p._id || p.id || p.slug))
+    );
+
+    return [...primary, ...fallback].slice(0, 4);
+  }, [product, pId, slug]);
 
   useEffect(() => {
     async function loadProduct() {
@@ -115,30 +139,7 @@ export default function ProductDetail() {
     );
   }
 
-  const pId = product._id || product.id || slug;
   const inWishlist = isInWishlist(pId);
-
-  const relatedProducts = useMemo(() => {
-    const all = getProducts();
-    const exclude = (p) => (p._id || p.id || p.slug) === pId || p.slug === slug;
-
-    // Primary: same category or matching tags
-    const primary = all.filter((p) => {
-      if (exclude(p)) return false;
-      return (
-        (product.category?.slug && p.category?.slug === product.category.slug) ||
-        (product.category?.name && p.category?.name === product.category.name) ||
-        (product.tags && p.tags && p.tags.some((t) => product.tags.includes(t)))
-      );
-    });
-
-    // Fallback: anything else to fill up to 4
-    const fallback = all.filter(
-      (p) => !exclude(p) && !primary.find((x) => (x._id || x.id || x.slug) === (p._id || p.id || p.slug))
-    );
-
-    return [...primary, ...fallback].slice(0, 4);
-  }, [product, pId, slug]);
 
   const handleToggleWishlist = async () => {
     toggleItem(product);

@@ -1,39 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Award } from 'lucide-react';
 import ProductCard from '../../product/ProductCard';
-import { MOCK_PRODUCTS } from '../../../data/adminMockData';
+import { productService } from '../../../services/product.service';
 
 export default function CategoryRecommendedDrops() {
-  // 10 handpicked, highest-rated customer favorites across departments (2 full rows of 5)
-  const recommendedSlugs = [
-    'authentic-manapparai-crispy-rice-murukku-500g',
-    'embroidered-rayon-anarkali-kurti-pant-set',
-    'traditional-kemp-pearl-bell-jhumka-earrings',
-    'studio-pro-hi-fi-wireless-over-ear-headphones-anc',
-    'multi-blade-stainless-steel-quick-vegetable-chopper',
-    'native-special-tirunelveli-pure-desi-ghee-halwa',
-    '22k-gold-plated-luxury-couple-solitaire-rings',
-    'non-slip-6mm-dual-color-alignment-tpe-yoga-mat',
-    'zari-woven-pure-kanchipuram-style-soft-silk-saree',
-    'heavy-duty-65w-braided-fast-charge-type-c-cable',
-  ];
+  const [displayProducts, setDisplayProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const displayProducts = React.useMemo(() => {
-    const matched = recommendedSlugs
-      .map((slug) => MOCK_PRODUCTS.find((p) => p.slug === slug))
-      .filter(Boolean);
-
-    // If any slug not found, fill up to 10 from MOCK_PRODUCTS
-    if (matched.length < 10) {
-      for (const p of MOCK_PRODUCTS) {
-        if (!matched.some((item) => (item._id || item.id) === (p._id || p.id))) {
-          matched.push(p);
-          if (matched.length === 10) break;
-        }
-      }
-    }
-    return matched.slice(0, 10);
+  useEffect(() => {
+    // Fetch top 10 recommended products (or fallback to latest 10)
+    productService.list({ limit: 10, sort: '-rating' })
+      .then((res) => {
+        setDisplayProducts(res.data || []);
+      })
+      .catch((err) => console.error('Failed to load recommended drops', err))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -102,9 +84,17 @@ export default function CategoryRecommendedDrops() {
           marginBottom: '2.5rem',
         }}
       >
-        {displayProducts.map((prod, idx) => (
-          <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
-        ))}
+        {loading ? (
+          <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>Loading recommended products...</div>
+        ) : displayProducts.length > 0 ? (
+          displayProducts.map((prod, idx) => (
+            <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
+          ))
+        ) : (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+            No recommended products found.
+          </div>
+        )}
       </div>
 
       {/* Centered View Best Rated CTA */}
