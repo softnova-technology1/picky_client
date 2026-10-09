@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 
 export default function Modal({ isOpen, onClose, title, children, maxWidth = 540 }) {
@@ -21,7 +22,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 540
 
   if (!isOpen) return null;
 
-  return (
+  const modalElement = (
     <div className={styles.overlay} onClick={onClose} aria-modal="true" role="dialog">
       <div
         className={styles.card}
@@ -43,4 +44,8 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 540
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalElement, document.body)
+    : modalElement;
 }

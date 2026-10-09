@@ -435,6 +435,14 @@ export default function Home() {
     navigate('/checkout');
   };
 
+  const handleSpotlightAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!spotlightProduct) return;
+    addItem(spotlightProduct, 1);
+    showToast(`Added "${spotlightProduct.name}" to cart!`, 'success');
+  };
+
   return (
     <PageWrapper>
       {/* 01 — EDITORIAL PRODUCT-CUTOUT HERO */}
@@ -670,7 +678,7 @@ export default function Home() {
             <div className="hp-flash-products-grid">
               {flashDealProducts.map((product, idx) => (
                 <div
-                  key={product._id || product.id || product.slug || `${miniBatchIndex}-${idx}`}
+                  key={`${product._id || product.id || product.slug || 'deal'}-${miniBatchIndex}-${idx}`}
                   className="flash-mini-animated"
                 >
                   <FlashDealMiniCard product={product} />
@@ -727,7 +735,7 @@ export default function Home() {
           {/* 5-Column Product Grid (1 Row of 5 Cards) */}
           <div className="hp-new-arrivals-grid">
             {(filteredArrivals.length > 0 ? filteredArrivals : newArrivals).slice(0, 5).map((product, i) => (
-              <FadeUp key={product._id || product.id || i} delay={i * 60}>
+              <FadeUp key={`${product._id || product.id || 'arrival'}-${i}`} delay={i * 60}>
                 <ProductCard
                   product={product}
                   badgeText={['HOT DROP', 'NEW ARRIVAL', 'TRENDING', 'SPECIAL EDITION', 'POPULAR'][i % 5]}

@@ -205,11 +205,36 @@ export default function AdminOrders() {
     setCurrentPage(1);
   }, [activeTab, searchTerm, dateFilter, priceFilter, quantityFilter, sortBy]);
 
+  // ─── Sync Orders from Backend Database ─────────────────────────────────────
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDbOrders = async () => {
+      try {
+        const res = await adminService.getOrders({ limit: 100 });
+        const dbOrders = res?.data?.data || res?.data;
+        if (Array.isArray(dbOrders) && dbOrders.length > 0 && isMounted) {
+          const dbOrderIds = new Set(dbOrders.map((o) => o._id || o.id));
+          const dbOrderNums = new Set(dbOrders.map((o) => o.orderNumber));
+          const merged = [...dbOrders];
+          storeOrders.forEach((so) => {
+            if (!dbOrderIds.has(so._id || so.id) && !dbOrderNums.has(so.orderNumber)) {
+              merged.push(so);
+            }
+          });
+          useOrderStore.getState().setOrders(merged);
+        }
+      } catch (err) {
+        console.warn('Backend orders fetch notice:', err?.message || err);
+      }
+    };
+    fetchDbOrders();
+    return () => { isMounted = false; };
+  }, []);
+
   // ─── Dashboard Stats Calculations ────────────────────────────────────────
   const totalOrders = storeOrders.length;
   const confirmedCount = storeOrders.filter((o) => o.status === 'confirmed').length;
-  const packingCount = storeOrders.filter((o) => o.status === 'packing').length;
-  const readyToDispatchCount = storeOrders.filter((o) => o.status === 'confirmed' || o.status === 'packing').length;
+  const readyToDispatchCount = storeOrders.filter((o) => o.status === 'confirmed').length;
   const shippedCount = storeOrders.filter((o) => o.status === 'shipped' || o.status === 'out_for_delivery').length;
   const deliveredCount = storeOrders.filter((o) => o.status === 'delivered').length;
 
@@ -484,7 +509,7 @@ export default function AdminOrders() {
 
   // ─── Handle status update ─────────────────────────────────────────────────
   const handleStatusUpdate = async (order) => {
-    const id = order._id;
+    const id = order._id || order.id;
     const newStatus = rowStatus[id] ?? order.status;
     const note = rowNote[id] ?? '';
     const cancelReason = rowCancelReason[id] ?? '';
@@ -501,10 +526,24 @@ export default function AdminOrders() {
 
     setRowLoading((p) => ({ ...p, [id]: true }));
     try {
-      await adminService.updateOrderStatus(id, { status: newStatus, note: fullNote }).catch(() => null);
+      const enteredAwb = newStatus === 'shipped' && note ? note.trim() : null;
+
+      try {
+        if (enteredAwb) {
+          await adminService.addTracking(id, {
+            trackingId: enteredAwb,
+            courier: order.courier || 'Standard Surface Delivery',
+          }).catch(() => null);
+        }
+        await adminService.updateOrderStatus(id, { status: newStatus, note: fullNote });
+      } catch (apiErr) {
+        console.warn('Backend order status update note:', apiErr?.message || apiErr);
+      }
+
       storeUpdateStatus(id, newStatus);
       updateOrder(id, {
         status: newStatus,
+        ...(enteredAwb ? { trackingId: enteredAwb } : {}),
         statusHistory: [
           ...(order.statusHistory || []),
           { status: newStatus, timestamp: new Date().toISOString(), note: fullNote },
@@ -1094,7 +1133,7 @@ export default function AdminOrders() {
                 const isOpen    = expandedId === order._id;
 
                 // Auto-advance to next logical status (so admin doesn't need to manually change)
-                const STATUS_FLOW = ['confirmed', 'packing', 'shipped', 'delivered'];
+                const STATUS_FLOW = ['confirmed', 'shipped', 'delivered'];
                 const flowIdx  = STATUS_FLOW.indexOf(order.status);
                 const nextAuto = flowIdx >= 0 && flowIdx < STATUS_FLOW.length - 1
                   ? STATUS_FLOW[flowIdx + 1]
@@ -1765,7 +1804,7 @@ export default function AdminOrders() {
                                       <div style={{ fontSize: '0.67rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.7rem' }}>Order Progress</div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                                         {ORDER_PROGRESS_STEPS.map((step, i, arr) => {
-                                          const stepOrder = ['confirmed', 'packing', 'shipped', 'delivered'];
+                                          const stepOrder = ['confirmed', 'shipped', 'delivered'];
                                           const currentIdx = stepOrder.indexOf(order.status);
                                           const stepIdx = stepOrder.indexOf(step.key);
                                           const isDone   = order.status !== 'cancelled' && stepIdx <= currentIdx;

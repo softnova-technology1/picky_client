@@ -2,7 +2,6 @@ import React from 'react';
 import { useOrderTracking } from '../../../hooks/useOrderTracking';
 import TrackingStepper from '../TrackingStepper';
 import AWBBox from '../AWBBox';
-import StatusTimeline from '../StatusTimeline';
 import Spinner from '../../ui/Spinner';
 import { Activity } from 'lucide-react';
 import styles from './OrderTracker.module.css';
@@ -27,21 +26,15 @@ export default function OrderTracker({ orderId, initialData }) {
           </span>
           <h3 className={styles.trackerMainTitle}>Order #{data.orderNumber}</h3>
         </div>
-        <div className={styles.livePill}>
-          <span className={styles.livePulseDot} />
-          Auto-updating (30s)
-        </div>
       </div>
 
       <TrackingStepper currentStatus={data.status} />
 
-      <AWBBox
-        trackingId={data.trackingId || 'DTDC-TN-' + (data.orderNumber ? data.orderNumber.replace(/\D/g, '') : '9823412')}
-        courier={data.courier || 'DTDC Priority Air Express'}
-      />
-
-      {data.statusHistory && data.statusHistory.length > 0 && (
-        <StatusTimeline statusHistory={data.statusHistory} />
+      {data.trackingId && (
+        <AWBBox
+          trackingId={data.trackingId}
+          courier={data.courier || 'DTDC Priority Air Express'}
+        />
       )}
     </div>
   );

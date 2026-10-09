@@ -3,6 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { useAuthStore } from '../../store/authStore';
 import { useWishlistStore } from '../../store/wishlistStore';
+import { useOrderStore } from '../../store/orderStore';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
@@ -41,11 +42,33 @@ export default function Account() {
     async function loadOrders() {
       try {
         setLoadingOrders(true);
-        const res = await orderService.list();
-        const list = res?.data?.data || res?.data || [];
-        setOrders(list);
+        const res = await orderService.list().catch(() => null);
+        const serverList = res?.data?.data || res?.data || [];
+        const localList = useOrderStore.getState().orders || [];
+
+        // Combine server orders with any locally stored orders, deduplicating by ID/orderNumber
+        const orderMap = new Map();
+        if (Array.isArray(serverList)) {
+          serverList.forEach((o) => {
+            const key = o._id || o.id || o.orderNumber;
+            if (key) orderMap.set(String(key), o);
+          });
+        }
+        if (Array.isArray(localList)) {
+          localList.forEach((o) => {
+            const key = o._id || o.id || o.orderNumber;
+            if (key && !orderMap.has(String(key))) {
+              orderMap.set(String(key), o);
+            }
+          });
+        }
+
+        const merged = Array.from(orderMap.values());
+        setOrders(merged);
       } catch (err) {
         console.warn('Account orders load error:', err);
+        const fallback = useOrderStore.getState().orders || [];
+        setOrders(fallback);
       } finally {
         setLoadingOrders(false);
       }
@@ -97,24 +120,9 @@ export default function Account() {
             </div>
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e1b4b', margin: '0 0 0.5rem', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e1b4b', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {user?.name || 'My Account'}
               </h2>
-              <p style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', color: '#4338ca', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }}>
-                <span style={{ display: 'inline-flex', padding: '0.2rem', background: 'rgba(255,255,255,0.5)', borderRadius: '6px' }}>📱</span>
-                {user?.phone ? `+91 ${user.phone}` : user?.email || 'Manage your orders, profile & delivery addresses'}
-              </p>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '1.2rem', 
-                color: '#4f46e5',
-                fontFamily: '"Caveat", "Dancing Script", cursive, sans-serif',
-                fontStyle: 'italic',
-                fontWeight: 600,
-                opacity: 0.8
-              }}>
-                Better Details &nbsp;·&nbsp; Stronger Connections <span style={{ display: 'inline-block', borderBottom: '2px solid #a78bfa', width: '30px', verticalAlign: 'middle', marginLeft: '5px', opacity: 0.6 }}></span>
-              </p>
             </div>
           </div>
 

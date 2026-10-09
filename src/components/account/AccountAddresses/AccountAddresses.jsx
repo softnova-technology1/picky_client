@@ -19,35 +19,48 @@ import {
 } from 'lucide-react';
 import styles from './AccountAddresses.module.css';
 
-const STORAGE_KEY = 'picky-saved-addresses';
-
 export default function AccountAddresses() {
   const { user, updateUser } = useAuthStore();
   const { showToast } = useUiStore();
 
-  const [addresses, setAddresses] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (_) {}
-    // Seed default if user has defaultAddress
-    if (user?.defaultAddress) {
-      return [
-        {
-          id: 'addr_default',
-          fullName: user?.name || 'Home Address',
-          phone: user?.phone || '',
-          street: user.defaultAddress.street || '',
-          city: user.defaultAddress.city || '',
-          state: user.defaultAddress.state || '',
-          pincode: user.defaultAddress.pincode || '',
-          landmark: user.defaultAddress.landmark || '',
-          isDefault: true,
-        },
-      ];
-    }
-    return [];
-  });
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch addresses from MongoDB on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAddresses = async () => {
+      try {
+        setLoading(true);
+        const res = await authService.getAddresses();
+        const list = res?.data || res || [];
+        const normList = Array.isArray(list)
+          ? list.map((a) => ({
+              ...a,
+              id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+            }))
+          : [];
+        if (isMounted) {
+          setAddresses(normList);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch addresses from DB:', err);
+        if (user?.addresses && Array.isArray(user.addresses)) {
+          const normList = user.addresses.map((a) => ({
+            ...a,
+            id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+          }));
+          if (isMounted) setAddresses(normList);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchAddresses();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?._id || user?.id]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState(null);
@@ -63,13 +76,6 @@ export default function AccountAddresses() {
     isDefault: addresses.length === 0,
   });
 
-  const saveToStorage = (list) => {
-    setAddresses(list);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch (_) {}
-  };
-
   const getInitials = (name) => {
     if (!name) return 'A';
     const parts = name.trim().split(/\s+/);
@@ -81,7 +87,7 @@ export default function AccountAddresses() {
     setEditingAddr(null);
     setNewAddr({
       fullName: user?.name || '',
-      phone: user?.phone || '',
+      phone: user?.phone ? user.phone.replace(/^\+91\s*/, '') : '',
       street: '',
       landmark: '',
       city: '',
@@ -98,62 +104,38 @@ export default function AccountAddresses() {
     setIsModalOpen(true);
   };
 
-  const handleAddAddress = (e) => {
+  const handleAddAddress = async (e) => {
     e.preventDefault();
     if (!newAddr.street || !newAddr.city || !newAddr.pincode) {
       showToast('Please fill in street address, city, and pincode', 'error');
       return;
     }
 
-    // ── EDIT existing address ──
-    if (editingAddr) {
-      let updatedList = addresses.map((a) =>
-        a.id === editingAddr.id ? { ...a, ...newAddr } : a
-      );
-      if (newAddr.isDefault) {
-        updatedList = updatedList.map((a) => ({ ...a, isDefault: a.id === editingAddr.id }));
+    try {
+      const res = await authService.addAddress({
+        fullName: newAddr.fullName,
+        phone: newAddr.phone,
+        street: newAddr.street,
+        city: newAddr.city,
+        state: newAddr.state,
+        pincode: newAddr.pincode,
+        landmark: newAddr.landmark,
+        isDefault: newAddr.isDefault,
+      });
+      const resData = res?.data || res;
+      const updatedList = (resData?.addresses || []).map((a) => ({
+        ...a,
+        id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+      }));
+      setAddresses(updatedList);
+      if (updateUser) {
+        updateUser({ addresses: resData?.addresses, defaultAddress: resData?.defaultAddress });
       }
-      saveToStorage(updatedList);
       setIsModalOpen(false);
-      showToast('Address updated successfully!', 'success');
-      const def = updatedList.find((a) => a.isDefault);
-      if (def) {
-        authService.updateProfile({
-          defaultAddress: { street: def.street, city: def.city, state: def.state, pincode: def.pincode, landmark: def.landmark },
-        }).catch(() => null);
-      }
-      return;
-    }
-
-    // ── ADD new address ──
-    const created = {
-      id: `addr_${Date.now()}`,
-      ...newAddr,
-    };
-
-    let updatedList = [];
-    if (created.isDefault) {
-      updatedList = addresses.map((a) => ({ ...a, isDefault: false }));
-      updatedList.unshift(created);
-    } else {
-      updatedList = [...addresses, created];
-    }
-
-    saveToStorage(updatedList);
-    setIsModalOpen(false);
-    showToast('Delivery address saved successfully!', 'success');
-
-    // Optionally sync default address to backend profile
-    if (created.isDefault) {
-      authService.updateProfile({
-        defaultAddress: {
-          street: created.street,
-          city: created.city,
-          state: created.state,
-          pincode: created.pincode,
-          landmark: created.landmark,
-        },
-      }).catch(() => null);
+      showToast('Delivery address saved to database successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to save address to DB:', err);
+      showToast('Failed to save address', 'error');
     }
   };
 
@@ -161,36 +143,47 @@ export default function AccountAddresses() {
     setAddressToDelete(id);
   };
 
-  const confirmDeleteAddress = () => {
+  const confirmDeleteAddress = async () => {
     if (!addressToDelete) return;
-    const next = addresses.filter((a) => a.id !== addressToDelete);
-    if (next.length > 0 && !next.some((a) => a.isDefault)) {
-      next[0].isDefault = true;
+    try {
+      const res = await authService.deleteAddress(addressToDelete);
+      const resData = res?.data || res;
+      const updatedList = (resData?.addresses || []).map((a) => ({
+        ...a,
+        id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+      }));
+      setAddresses(updatedList);
+      if (updateUser) {
+        updateUser({ addresses: resData?.addresses, defaultAddress: resData?.defaultAddress });
+      }
+      showToast('Address removed from database', 'info');
+    } catch (err) {
+      console.error('Failed to delete address:', err);
+      setAddresses((prev) => prev.filter((a) => a.id !== addressToDelete));
+      showToast('Address removed', 'info');
+    } finally {
+      setAddressToDelete(null);
     }
-    saveToStorage(next);
-    showToast('Address removed', 'info');
-    setAddressToDelete(null);
   };
 
-  const handleSetDefault = (id) => {
-    const next = addresses.map((a) => ({
-      ...a,
-      isDefault: a.id === id,
-    }));
-    saveToStorage(next);
-    const def = next.find((a) => a.id === id);
-    if (def) {
-      authService.updateProfile({
-        defaultAddress: {
-          street: def.street,
-          city: def.city,
-          state: def.state,
-          pincode: def.pincode,
-          landmark: def.landmark,
-        },
-      }).catch(() => null);
+  const handleSetDefault = async (id) => {
+    try {
+      const res = await authService.setDefaultAddress(id);
+      const resData = res?.data || res;
+      const updatedList = (resData?.addresses || []).map((a) => ({
+        ...a,
+        id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+      }));
+      setAddresses(updatedList);
+      if (updateUser) {
+        updateUser({ addresses: resData?.addresses, defaultAddress: resData?.defaultAddress });
+      }
+      showToast('Primary delivery address updated in database', 'success');
+    } catch (err) {
+      console.error('Failed to set default address:', err);
+      setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a.id === id })));
+      showToast('Primary delivery address updated', 'success');
     }
-    showToast('Primary delivery address updated', 'success');
   };
 
   return (

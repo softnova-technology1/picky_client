@@ -5,7 +5,7 @@ import styles from './TrackingStepper.module.css';
 const STEPS = [
   {
     id: 'confirmed',
-    label: 'Order Confirmed',
+    label: 'Confirm',
     sub: 'Payment received',
     icon: (
       <svg viewBox="0 0 28 28" fill="none" width="22" height="22">
@@ -16,20 +16,9 @@ const STEPS = [
     ),
   },
   {
-    id: 'processing',
-    label: 'Packed',
-    sub: 'Ready to ship',
-    icon: (
-      <svg viewBox="0 0 28 28" fill="none" width="22" height="22">
-        <path d="M5 10.5L14 5l9 5.5V20a1 1 0 01-1 1H6a1 1 0 01-1-1v-9.5z" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-        <path d="M10 21v-8h8v8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'shipped',
-    label: 'Dispatched',
-    sub: 'AWB generated',
+    id: 'shipping',
+    label: 'Shipping',
+    sub: 'On the way',
     icon: (
       <svg viewBox="0 0 28 28" fill="none" width="22" height="22">
         <path d="M4 11h14v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9z" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.8"/>
@@ -40,20 +29,9 @@ const STEPS = [
     ),
   },
   {
-    id: 'in_transit',
-    label: 'In Transit',
-    sub: 'On the way',
-    icon: (
-      <svg viewBox="0 0 28 28" fill="none" width="22" height="22">
-        <path d="M14 3C10.134 3 7 6.134 7 10c0 6.5 7 15 7 15s7-8.5 7-15c0-3.866-3.134-7-7-7z" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.8"/>
-        <circle cx="14" cy="10" r="2.5" fill="currentColor"/>
-      </svg>
-    ),
-  },
-  {
     id: 'delivered',
-    label: 'Delivered',
-    sub: 'Order complete',
+    label: 'Delivery',
+    sub: 'Order completed',
     icon: (
       <svg viewBox="0 0 28 28" fill="none" width="22" height="22">
         <path d="M5 13.5l5.5 5.5L23 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -64,12 +42,14 @@ const STEPS = [
 
 const STATUS_ORDER = {
   confirmed: 0,
-  processing: 1,
-  packed: 1,
-  shipped: 2,
-  in_transit: 3,
-  out_for_delivery: 3,
-  delivered: 4,
+  processing: 0,
+  packed: 0,
+  shipping: 1,
+  shipped: 1,
+  in_transit: 1,
+  out_for_delivery: 1,
+  delivery: 2,
+  delivered: 2,
   cancelled: -1,
 };
 
@@ -79,18 +59,21 @@ export default function TrackingStepper({ currentStatus }) {
 
   const getStepState = (idx) => {
     if (normalized === 'cancelled') return 'cancelled';
+    if (normalized === 'delivered' || normalized === 'delivery') return 'completed';
     if (currentIdx > idx) return 'completed';
     if (currentIdx === idx) return 'active';
     return 'pending';
   };
 
   const progressPct = {
+    delivery: 100,
     delivered: 100,
-    in_transit: 75,
-    out_for_delivery: 75,
+    in_transit: 50,
+    out_for_delivery: 50,
+    shipping: 50,
     shipped: 50,
-    processing: 25,
-    packed: 25,
+    processing: 0,
+    packed: 0,
     confirmed: 0,
   }[normalized] ?? 0;
 
