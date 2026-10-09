@@ -24,7 +24,7 @@ import {
 } from '../../../data/adminMockData';
 import styles from './AdminDashboard.module.css';
 
-const ADMIN = '/pickyadmin-softnova2026';
+const ADMIN = '/softpicky-sn2026';
 
 const TIMEFRAME_OPTIONS = [
   { value: 'Week', label: 'Week' },

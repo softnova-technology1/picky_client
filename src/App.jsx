@@ -41,7 +41,7 @@ import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminCustomization from './pages/admin/AdminCustomization';
 import AdminSettings from './pages/admin/AdminSettings';
 
-const ADMIN = '/pickyadmin-softnova2026';
+const ADMIN = '/softpicky-sn2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 export default function App() {
@@ -102,10 +102,6 @@ export default function App() {
           <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
 
-          {/* ── Admin Aliases & Direct Entry ────────── */}
-          <Route path="/admin" element={<Navigate to={ADMIN} replace />} />
-          <Route path="/admin/login" element={<Navigate to={ADMIN} replace />} />
-          <Route path="/admin/*" element={<Navigate to={ADMIN} replace />} />
 
           {/* ── Catch-all 404 Page ───────────────────── */}
           <Route path="*" element={<NotFound />} />

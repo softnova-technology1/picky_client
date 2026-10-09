@@ -46,7 +46,7 @@ export default function Login({ initialTab = 'login' }) {
   useEffect(() => {
     if (isLoggedIn) {
       if (user?.role === 'admin') {
-        navigate('/pickyadmin-softnova2026', { replace: true });
+        navigate('/softpicky-sn2026', { replace: true });
       } else {
         navigate(from, { replace: true });
       }
@@ -175,7 +175,7 @@ export default function Login({ initialTab = 'login' }) {
       await syncGuestData();
 
       if (data.user?.role === 'admin') {
-        navigate('/pickyadmin-softnova2026', { replace: true });
+        navigate('/softpicky-sn2026', { replace: true });
       } else {
         navigate(from, { replace: true });
       }
@@ -207,7 +207,7 @@ export default function Login({ initialTab = 'login' }) {
       const adminUser = payload?.user || payload;
       login(adminUser, payload?.accessToken, payload?.refreshToken);
       showToast(`Welcome back, Administrator!`, 'success');
-      navigate('/pickyadmin-softnova2026', { replace: true });
+      navigate('/softpicky-sn2026', { replace: true });
     } catch (err) {
       console.error('Admin login error:', err);
       const msg = err?.response?.data?.message || err?.message || 'Invalid administrator credentials. Please check your email and password.';
@@ -565,7 +565,7 @@ export default function Login({ initialTab = 'login' }) {
                     <input
                       type="email"
                       className="picky-pill-input"
-                      placeholder="admin@picky.com"
+                      placeholder="Enter admin email"
                       value={adminEmail}
                       onChange={(e) => setAdminEmail(e.target.value)}
                       required
@@ -669,7 +669,7 @@ export default function Login({ initialTab = 'login' }) {
                     className="picky-admin-login-link"
                     onClick={() => {
                       setIsAdminMode(true);
-                      setAdminEmail('admin@picky.com');
+                      setAdminEmail('');
                       setAdminPassword('');
                     }}
                   >

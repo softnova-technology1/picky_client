@@ -25,7 +25,7 @@ import { formatDate } from '../../../utils/formatDate';
 import { MOCK_ORDERS_EXTENDED, COMMON_COURIERS } from '../../../data/adminMockData';
 import { useOrderStore } from '../../../store/orderStore';
 
-const ADMIN = '/pickyadmin-softnova2026';
+const ADMIN = '/softpicky-sn2026';
 
 export default function AdminOrderDetail() {
   const { id } = useParams();

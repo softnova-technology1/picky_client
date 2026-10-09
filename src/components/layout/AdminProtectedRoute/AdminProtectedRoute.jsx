@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { authService } from '../../../services/auth.service';
 import Button from '../../ui/Button';
@@ -7,6 +8,7 @@ export function AdminProtectedRoute({ children }) {
   const { isLoggedIn, user, login, logout } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -50,20 +52,23 @@ export function AdminProtectedRoute({ children }) {
     e.preventDefault();
     setError('');
 
-    if (!email.trim() || !password) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
       setError('Please enter both admin email and password');
       return;
     }
 
     try {
       setLoading(true);
-      const res = await authService.adminLogin(email.trim(), password);
+      const res = await authService.adminLogin(cleanEmail, cleanPassword);
       const payload = res?.data?.user ? res.data : (res?.user ? res : (res?.data || res));
       const adminUser = payload?.user || payload;
       login(adminUser, payload?.accessToken, payload?.refreshToken);
     } catch (err) {
       console.error('Admin Login Error:', err);
-      const msg = err?.response?.data?.message || err?.message || 'Invalid administrator credentials or server unavailable.';
+      const msg = err?.error || err?.response?.data?.message || err?.message || 'Invalid administrator credentials or server unavailable.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -98,7 +103,7 @@ export function AdminProtectedRoute({ children }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@picky.com"
+              placeholder="Enter admin email"
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
@@ -116,26 +121,48 @@ export function AdminProtectedRoute({ children }) {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-              Encrypted Password
+              Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                background: '#0f172a',
-                border: '1.5px solid #334155',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '0.95rem',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter admin password"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 2.8rem 0.75rem 1rem',
+                  background: '#0f172a',
+                  border: '1.5px solid #334155',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                }}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div>
