@@ -1,15 +1,17 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { MOCK_ORDERS_EXTENDED } from '../data/adminMockData';
 
-// ─── Picky Shared Order Store (Mock Mode) ────────────────────────────────────
-// Single source of truth for orders in mock mode.
-// Admin status/AWB changes here reflect in customer /orders and /orders/:id.
+// ─── Picky Shared Order Store ────────────────────────────────────────────────
+// Single source of truth for orders.
+// Persists in localStorage and syncs with backend API.
 
-export const useOrderStore = create((set, get) => ({
-  // Seeded with mock extended orders + any new session orders
-  orders: [...MOCK_ORDERS_EXTENDED],
-  activeOrder: null,
-  trackingInfo: null,
+export const useOrderStore = create(
+  persist(
+    (set, get) => ({
+      orders: [...MOCK_ORDERS_EXTENDED],
+      activeOrder: null,
+      trackingInfo: null,
 
   // ── Customer: Add a newly placed order (from Checkout) ──────────────────────
   addOrder: (order) => {
@@ -64,8 +66,14 @@ export const useOrderStore = create((set, get) => ({
     }));
   },
 
-  setOrders: (orders) => set({ orders }),
-  setActiveOrder: (order) => set({ activeOrder: order }),
-  setTrackingInfo: (info) => set({ trackingInfo: info }),
-  clearOrder: () => set({ activeOrder: null, trackingInfo: null }),
-}));
+      setOrders: (orders) => set({ orders }),
+      setActiveOrder: (order) => set({ activeOrder: order }),
+      setTrackingInfo: (info) => set({ trackingInfo: info }),
+      clearOrder: () => set({ activeOrder: null, trackingInfo: null }),
+    }),
+    {
+      name: 'picky_order_store',
+      partialize: (state) => ({ orders: state.orders }),
+    }
+  )
+);

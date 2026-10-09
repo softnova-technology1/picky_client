@@ -14,7 +14,6 @@ import {
 export const STATUS_TABS = [
   { key: 'all',       label: 'All Orders',      icon: ShoppingBag, color: '#7c3aed' },
   { key: 'confirmed', label: 'Order Confirmed', icon: Clock,       color: '#d97706' },
-  { key: 'packing',   label: 'Order Packing',   icon: Package,     color: '#8b5cf6' },
   { key: 'shipped',   label: 'Order Shipping',  icon: Truck,       color: '#2563eb' },
   { key: 'delivered', label: 'Order Delivered', icon: BadgeCheck,  color: '#16a34a' },
   { key: 'cancelled', label: 'Cancelled Order', icon: XCircle,     color: '#dc2626' },
@@ -42,7 +41,6 @@ export const CANCEL_REASONS = [
 // ─── Status Dropdown Selection Options ────────────────────────────────────────
 export const STATUS_OPTIONS = [
   { value: 'confirmed', label: 'Order Confirmed', icon: Clock,      color: '#b45309', bg: '#fffbeb' },
-  { value: 'packing',   label: 'Order Packing',   icon: Package,    color: '#7c3aed', bg: '#f3e8ff' },
   { value: 'shipped',   label: 'Order Shipping',  icon: Truck,      color: '#1d4ed8', bg: '#eff6ff' },
   { value: 'delivered', label: 'Order Delivered', icon: BadgeCheck, color: '#15803d', bg: '#f0fdf4' },
   { value: 'cancelled', label: 'Cancelled Order', icon: XCircle,    color: '#b91c1c', bg: '#fef2f2' },
@@ -51,7 +49,6 @@ export const STATUS_OPTIONS = [
 // ─── Order Progress Steps Flow ───────────────────────────────────────────────
 export const ORDER_PROGRESS_STEPS = [
   { key: 'confirmed', label: 'Confirmed', icon: Clock,      color: '#b45309', bg: '#fffbeb' },
-  { key: 'packing',   label: 'Packing',   icon: Package,    color: '#7c3aed', bg: '#f3e8ff' },
   { key: 'shipped',   label: 'Shipping',  icon: Truck,      color: '#1d4ed8', bg: '#eff6ff' },
   { key: 'delivered', label: 'Delivered', icon: BadgeCheck, color: '#15803d', bg: '#f0fdf4' },
 ];

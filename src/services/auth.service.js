@@ -12,4 +12,8 @@ export const authService = {
   logout: () => api.post('/auth/logout'),  // server reads userId from JWT Bearer token
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.patch('/auth/profile', data),
+  getAddresses: () => api.get('/auth/addresses'),
+  addAddress: (data) => api.post('/auth/addresses', data),
+  setDefaultAddress: (id) => api.patch(`/auth/addresses/${id}/default`),
+  deleteAddress: (id) => api.delete(`/auth/addresses/${id}`),
 };

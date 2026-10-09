@@ -3,6 +3,7 @@ import api from './api';
 export const orderService = {
   createRazorpayOrder: (body) => api.post('/orders/razorpay/create-order', body),
   verifyRazorpayPayment: (body) => api.post('/orders/razorpay/verify', body),
+  create: (body) => api.post('/orders', body),
 
   list: (params) => api.get('/orders', { params }),
   getById: (id) => api.get(`/orders/${id}`),

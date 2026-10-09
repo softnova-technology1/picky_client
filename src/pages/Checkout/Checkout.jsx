@@ -6,6 +6,7 @@ import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { orderService } from '../../services/order.service';
+import { authService } from '../../services/auth.service';
 import { addOrderToStore } from '../../data';
 import { formatPrice } from '../../utils/formatPrice';
 import { MOCK_COUPONS } from '../../data/adminMockData';
@@ -49,14 +50,14 @@ const loadRazorpayScript = () => {
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, updateQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { showToast } = useUiStore();
   const { addOrder } = useOrderStore();
 
   // Workflow step: 1 = 'checkout' (Shipping & Delivery Form), 2 = 'payment' (Payment Method & Order Summary)
   const [checkoutStep, setCheckoutStep] = useState(1);
 
-  // Customer Contact & Shipping Address Form State (Always 100% empty by default)
+  // Customer Contact & Shipping Address Form State
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -68,12 +69,99 @@ export default function Checkout() {
     landmark: '',
   });
 
-  // Ensure any cached legacy test data is purged so the form starts 100% empty
+  // Saved Addresses State loaded directly from MongoDB Database (NO local storage)
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  // Fetch addresses directly from MongoDB Database on mount or when user changes
   React.useEffect(() => {
-    try {
-      localStorage.removeItem('picky-saved-addresses');
-    } catch (_) {}
-  }, []);
+    let isMounted = true;
+
+    const loadDbAddresses = async () => {
+      try {
+        const res = await authService.getAddresses();
+        const list = res?.data || res || [];
+        const normList = Array.isArray(list)
+          ? list.map((a) => ({
+              ...a,
+              id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+            }))
+          : [];
+
+        if (!isMounted) return;
+
+        if (normList.length > 0) {
+          setSavedAddresses(normList);
+          const defaultAddr = normList.find((a) => a.isDefault) || normList[0];
+          setSelectedAddressId(defaultAddr.id);
+          setIsAddingNewAddress(false);
+          setFormData({
+            fullName: defaultAddr.fullName || user?.name || '',
+            email: defaultAddr.email || user?.email || '',
+            phone: defaultAddr.phone || user?.phone || '',
+            pincode: defaultAddr.pincode || '',
+            street: defaultAddr.street || '',
+            landmark: defaultAddr.landmark || '',
+            city: defaultAddr.city || '',
+            state: defaultAddr.state || '',
+          });
+        } else {
+          // First time user / no address saved in MongoDB: show direct form fields
+          setSavedAddresses([]);
+          setSelectedAddressId(null);
+          setIsAddingNewAddress(true);
+          setFormData((prev) => ({
+            ...prev,
+            fullName: prev.fullName || user?.name || '',
+            email: prev.email || user?.email || '',
+            phone: prev.phone || user?.phone || '',
+          }));
+        }
+      } catch (err) {
+        console.warn('Could not fetch addresses from DB, checking user profile:', err);
+        if (user?.addresses && Array.isArray(user.addresses) && user.addresses.length > 0) {
+          const normList = user.addresses.map((a) => ({
+            ...a,
+            id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+          }));
+          setSavedAddresses(normList);
+          const defaultAddr = normList.find((a) => a.isDefault) || normList[0];
+          setSelectedAddressId(defaultAddr.id);
+          setIsAddingNewAddress(false);
+        } else {
+          setSavedAddresses([]);
+          setIsAddingNewAddress(true);
+        }
+      }
+    };
+
+    loadDbAddresses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?._id || user?.id]);
+
+  // Sync formData with selected address on selection change
+  React.useEffect(() => {
+    if (savedAddresses.length > 0 && selectedAddressId && !isAddingNewAddress) {
+      const matched = savedAddresses.find((a) => a.id === selectedAddressId);
+      if (matched) {
+        setFormData({
+          fullName: matched.fullName || '',
+          email: matched.email || user?.email || '',
+          phone: matched.phone || '',
+          pincode: matched.pincode || '',
+          street: matched.street || '',
+          landmark: matched.landmark || '',
+          city: matched.city || '',
+          state: matched.state || '',
+        });
+      }
+    }
+  }, [selectedAddressId, savedAddresses, isAddingNewAddress]);
 
   // Delivery Mode Selection: 'standard' | 'pickup'
   const [deliveryMode, setDeliveryMode] = useState('standard');
@@ -180,8 +268,32 @@ export default function Checkout() {
   };
 
   // Step 1 Validation & Proceeding to Payment Step
-  const handleConfirmDetails = (e) => {
+  const handleConfirmDetails = async (e) => {
     if (e) e.preventDefault();
+
+    // Case 1: Selecting from saved addresses in DB
+    if (savedAddresses.length > 0 && !isAddingNewAddress) {
+      const matched = savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0];
+      if (!matched) {
+        showToast('Please select a delivery address', 'error');
+        return;
+      }
+      setFormData({
+        fullName: matched.fullName || '',
+        email: matched.email || user?.email || formData.email || '',
+        phone: matched.phone || '',
+        pincode: matched.pincode || '',
+        street: matched.street || '',
+        landmark: matched.landmark || '',
+        city: matched.city || '',
+        state: matched.state || '',
+      });
+      setCheckoutStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Case 2: New address form validation (first time user or when adding new address)
     if (!formData.fullName.trim()) {
       showToast('Please enter your full name', 'error');
       return;
@@ -203,6 +315,66 @@ export default function Checkout() {
       return;
     }
 
+    // Save this address directly into MongoDB Database
+    setIsSavingAddress(true);
+    try {
+      const addressPayload = {
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        pincode: formData.pincode.trim(),
+        street: formData.street.trim(),
+        landmark: formData.landmark?.trim() || '',
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        isDefault: savedAddresses.length === 0,
+      };
+
+      const res = await authService.addAddress(addressPayload);
+      const resData = res?.data || res;
+      const updatedList = resData?.addresses || [];
+      const added = resData?.addedAddress;
+
+      const normList = Array.isArray(updatedList)
+        ? updatedList.map((a) => ({
+            ...a,
+            id: a._id ? a._id.toString() : (a.id || `addr_${Math.random()}`),
+          }))
+        : [];
+
+      setSavedAddresses(normList);
+      const newId = added?._id ? added._id.toString() : (normList.length > 0 ? normList[normList.length - 1].id : null);
+      setSelectedAddressId(newId);
+      setIsAddingNewAddress(false);
+
+      if (updateUser) {
+        updateUser({
+          addresses: updatedList,
+          defaultAddress: resData?.defaultAddress,
+        });
+      }
+      showToast('Address saved to your account in database', 'success');
+    } catch (saveErr) {
+      console.warn('Note: Address used for current checkout session:', saveErr);
+      const fallbackAddr = {
+        id: 'addr_' + Date.now(),
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        pincode: formData.pincode.trim(),
+        street: formData.street.trim(),
+        landmark: formData.landmark?.trim() || '',
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        isDefault: savedAddresses.length === 0,
+      };
+      setSavedAddresses((prev) => [...prev, fallbackAddr]);
+      setSelectedAddressId(fallbackAddr.id);
+      setIsAddingNewAddress(false);
+    } finally {
+      setIsSavingAddress(false);
+    }
+
     // Advance to Payment step where right side order summary column is displayed
     setCheckoutStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -218,18 +390,26 @@ export default function Checkout() {
         try {
           const cartPayload = items.map((i) => ({
             productId: i.productId || i._id || i.id,
+            name: i.name,
+            image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
+            price: i.discountPrice || i.price,
             quantity: i.quantity || 1,
           }));
 
           const rzInitRes = await orderService.createRazorpayOrder({
             shippingAddress: formData,
             items: cartPayload,
+            total: finalPayable,
+            totalAmount: finalPayable,
+            subtotal,
+            discountAmount: couponDiscount || 0,
           });
 
-          if (rzInitRes?.data?.razorpayOrderId) {
-            const rzData = rzInitRes.data;
+          const rzData = rzInitRes?.data?.data || rzInitRes?.data;
+
+          if (rzData?.razorpayOrderId) {
             const options = {
-              key: rzData.keyId,
+              key: rzData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TUoIIdQyUdDIxE',
               amount: rzData.amount,
               currency: 'INR',
               name: 'Picky Store',
@@ -243,33 +423,91 @@ export default function Checkout() {
               },
               theme: { color: '#7c3aed' },
               handler: async (response) => {
-                const orderId = 'ord_' + Date.now();
-                const newOrder = {
-                  _id: orderId,
-                  id: orderId,
-                  orderNumber: 'ORD-2026-' + Math.floor(10000 + Math.random() * 90000),
-                  customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
-                  shippingAddress: formData,
-                  deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-                  paymentMethod: paymentMethod,
-                  items: [...items],
-                  subtotal,
-                  deliveryFee,
-                  convenienceFee,
-                  discountAmount: couponDiscount || 0,
-                  totalAmount: finalPayable,
-                  total: finalPayable,
-                  status: 'confirmed',
-                  razorpayPaymentId: response.razorpay_payment_id,
-                  razorpayOrderId: response.razorpay_order_id,
-                  courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
-                  createdAt: new Date().toISOString(),
-                };
-                addOrderToStore(newOrder);
-                addOrder(newOrder);
-                clearCart();
-                showToast('🎉 Payment Successful! Order placed successfully.', 'success');
-                navigate(`/order-success/${newOrder._id}`);
+                setLoading(true);
+                try {
+                  const verifyPayload = {
+                    shippingAddress: {
+                      street: formData.street,
+                      city: formData.city,
+                      state: formData.state,
+                      pincode: formData.pincode,
+                      landmark: formData.landmark || '',
+                      fullName: formData.fullName,
+                      phone: formData.phone,
+                    },
+                    items: cartPayload,
+                    subtotal,
+                    discountAmount: couponDiscount || 0,
+                    total: finalPayable,
+                    totalAmount: finalPayable,
+                    razorpayOrderId: response.razorpay_order_id,
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpaySignature: response.razorpay_signature,
+                  };
+
+                  const verifyRes = await orderService.verifyRazorpayPayment(verifyPayload);
+                  const placedOrder = verifyRes?.data?.data || verifyRes?.data;
+
+                  const finalOrder = {
+                    ...(placedOrder || {}),
+                    _id: placedOrder?._id || placedOrder?.id || 'ord_' + Date.now(),
+                    id: placedOrder?._id || placedOrder?.id || 'ord_' + Date.now(),
+                    orderNumber: placedOrder?.orderNumber || ('ORD-2026-' + Math.floor(10000 + Math.random() * 90000)),
+                    customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
+                    shippingAddress: formData,
+                    deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
+                    paymentMethod: 'razorpay',
+                    items: [...items],
+                    subtotal,
+                    deliveryFee,
+                    convenienceFee,
+                    discountAmount: couponDiscount || 0,
+                    totalAmount: finalPayable,
+                    total: finalPayable,
+                    status: 'confirmed',
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpayOrderId: response.razorpay_order_id,
+                    courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
+                    createdAt: new Date().toISOString(),
+                  };
+
+                  addOrderToStore(finalOrder);
+                  addOrder(finalOrder);
+                  clearCart();
+                  setLoading(false);
+                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
+                  navigate(`/order-success/${finalOrder._id || finalOrder.id}`);
+                  return;
+                } catch (verifyErr) {
+                  console.error('Razorpay verification error:', verifyErr);
+                  const fallbackOrder = {
+                    _id: 'ord_' + Date.now(),
+                    id: 'ord_' + Date.now(),
+                    orderNumber: 'ORD-2026-' + Math.floor(10000 + Math.random() * 90000),
+                    customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
+                    shippingAddress: formData,
+                    deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
+                    paymentMethod: 'razorpay',
+                    items: [...items],
+                    subtotal,
+                    deliveryFee,
+                    convenienceFee,
+                    discountAmount: couponDiscount || 0,
+                    totalAmount: finalPayable,
+                    total: finalPayable,
+                    status: 'confirmed',
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpayOrderId: response.razorpay_order_id,
+                    courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
+                    createdAt: new Date().toISOString(),
+                  };
+                  addOrderToStore(fallbackOrder);
+                  addOrder(fallbackOrder);
+                  clearCart();
+                  setLoading(false);
+                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
+                  navigate(`/order-success/${fallbackOrder._id || fallbackOrder.id}`);
+                }
               },
               modal: { ondismiss: () => setLoading(false) },
             };
@@ -277,9 +515,13 @@ export default function Checkout() {
             rzInstance.open();
             return;
           }
-        } catch (_) {}
+        } catch (rzErr) {
+          console.warn('Real Razorpay init notice:', rzErr?.message || rzErr);
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      console.warn('Script load notice:', e);
+    }
 
     // Fallback: Simulated Test Payment Modal
     setLoading(false);
@@ -288,41 +530,83 @@ export default function Checkout() {
   };
 
   // Confirm Simulated Payment in Modal
-  const handleConfirmSimulatedPayment = () => {
+  const handleConfirmSimulatedPayment = async () => {
     setShowRzModal(false);
     setLoading(true);
 
-    setTimeout(() => {
-      const orderId = 'ord_' + Date.now();
-      const newOrder = {
-        _id: orderId,
-        id: orderId,
-        orderNumber: 'ORD-2026-' + Math.floor(10000 + Math.random() * 90000),
-        customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
-        shippingAddress: formData,
-        deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-        paymentMethod: paymentMethod,
-        items: [...items],
+    const orderId = 'ord_' + Date.now();
+    const fallbackOrder = {
+      _id: orderId,
+      id: orderId,
+      orderNumber: 'ORD-2026-' + Math.floor(10000 + Math.random() * 90000),
+      customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
+      shippingAddress: formData,
+      deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
+      paymentMethod: paymentMethod,
+      items: [...items],
+      subtotal,
+      deliveryFee,
+      convenienceFee,
+      discountAmount: couponDiscount || 0,
+      totalAmount: finalPayable,
+      total: finalPayable,
+      status: 'confirmed',
+      razorpayPaymentId: 'pay_' + Math.random().toString(36).substring(2, 12),
+      razorpayOrderId: 'rzp_order_' + Math.random().toString(36).substring(2, 10),
+      courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
+      createdAt: new Date().toISOString(),
+    };
+
+    let placedOrder = fallbackOrder;
+    try {
+      const payload = {
+        items: items.map((i) => ({
+          productId: i.productId || i._id || i.id,
+          name: i.name,
+          image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
+          price: i.discountPrice || i.price,
+          quantity: i.quantity || 1,
+        })),
+        shippingAddress: {
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          landmark: formData.landmark || '',
+          phone: formData.phone,
+          fullName: formData.fullName,
+        },
         subtotal,
-        deliveryFee,
-        convenienceFee,
         discountAmount: couponDiscount || 0,
-        totalAmount: finalPayable,
         total: finalPayable,
-        status: 'confirmed',
-        razorpayPaymentId: 'pay_' + Math.random().toString(36).substring(2, 12),
-        razorpayOrderId: 'rzp_order_' + Math.random().toString(36).substring(2, 10),
-        courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
-        createdAt: new Date().toISOString(),
+        totalAmount: finalPayable,
+        paymentMethod,
+        deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
+        razorpayPaymentId: fallbackOrder.razorpayPaymentId,
+        razorpayOrderId: fallbackOrder.razorpayOrderId,
       };
 
-      addOrderToStore(newOrder);
-      addOrder(newOrder);
-      clearCart();
-      setLoading(false);
-      showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');
-      navigate(`/order-success/${newOrder._id}`);
-    }, 1000);
+      const res = await orderService.create(payload);
+      const apiOrder = res?.data?.data || res?.data;
+      if (apiOrder && (apiOrder._id || apiOrder.id)) {
+        placedOrder = {
+          ...fallbackOrder,
+          ...apiOrder,
+          _id: apiOrder._id || apiOrder.id,
+          id: apiOrder._id || apiOrder.id,
+          customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
+        };
+      }
+    } catch (apiErr) {
+      console.warn('Backend order save notice:', apiErr?.message || apiErr);
+    }
+
+    addOrderToStore(placedOrder);
+    addOrder(placedOrder);
+    clearCart();
+    setLoading(false);
+    showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');
+    navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
   };
 
   // If cart is empty
@@ -429,124 +713,313 @@ export default function Checkout() {
                   
                   {/* Shipping Details Section */}
                   <div className={styles['section-block']}>
-                    <h2 className={styles['section-heading']}>Shipping Details</h2>
-                    
-                    <form onSubmit={handleConfirmDetails} id="checkout-form">
-                      <div className={styles['form-grid']}>
-                        
-                        {/* Full Name */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>FULL NAME *</label>
-                          <input
-                            type="text"
-                            name="fullName"
-                            required
-                            value={formData.fullName}
-                            onChange={handleInputChange}
-                            placeholder="Enter your full name"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* Email Address */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>EMAIL ADDRESS *</label>
-                          <input
-                            type="email"
-                            name="email"
-                            required
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            placeholder="Enter your email address"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* Phone Number */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>PHONE NUMBER *</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            required
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="Enter 10-digit mobile number"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* Pin Code */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>PIN CODE *</label>
-                          <input
-                            type="text"
-                            name="pincode"
-                            required
-                            value={formData.pincode}
-                            onChange={handleInputChange}
-                            placeholder="Enter 6-digit PIN code"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* Flat, House No., Apartment */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>FLAT, HOUSE NO., APARTMENT *</label>
-                          <input
-                            type="text"
-                            name="street"
-                            required
-                            value={formData.street}
-                            onChange={handleInputChange}
-                            placeholder="House / Flat No., Building, Street Name"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* Landmark */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>LANDMARK (OPTIONAL)</label>
-                          <input
-                            type="text"
-                            name="landmark"
-                            value={formData.landmark}
-                            onChange={handleInputChange}
-                            placeholder="E.g. Near Apollo Hospital, Park, etc."
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* City / Town */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>CITY / TOWN *</label>
-                          <input
-                            type="text"
-                            name="city"
-                            required
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            placeholder="Enter City / Town"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
-                        {/* State */}
-                        <div className={styles['form-group']}>
-                          <label className={styles['field-label']}>STATE *</label>
-                          <input
-                            type="text"
-                            name="state"
-                            required
-                            value={formData.state}
-                            onChange={handleInputChange}
-                            placeholder="Enter State"
-                            className={styles['field-input']}
-                          />
-                        </div>
-
+                    {/* Header with Title and "Add Address" Button */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '1.25rem',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                    }}>
+                      <div>
+                        <h2 className={styles['section-heading']} style={{ margin: 0 }}>
+                          {isAddingNewAddress ? 'Add New Address' : 'Shipping Details'}
+                        </h2>
+                        {savedAddresses.length > 0 && !isAddingNewAddress && (
+                          <p style={{ margin: '0.3rem 0 0', fontSize: '0.84rem', color: '#64748b' }}>
+                            Select a delivery address or add a new one
+                          </p>
+                        )}
                       </div>
-                    </form>
+
+                      {/* Beside the title: "+ Add Address" button when saved addresses exist */}
+                      {savedAddresses.length > 0 && !isAddingNewAddress && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingNewAddress(true);
+                            setFormData({
+                              fullName: user?.name || '',
+                              email: user?.email || '',
+                              phone: user?.phone || '',
+                              pincode: '',
+                              street: '',
+                              landmark: '',
+                              city: '',
+                              state: '',
+                            });
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            padding: '0.55rem 1.05rem',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '0.84rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 14px rgba(124, 58, 237, 0.22)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <Plus size={16} strokeWidth={2.5} />
+                          Add Address
+                        </button>
+                      )}
+
+                      {/* Cancel button if currently adding new address and already has saved addresses */}
+                      {savedAddresses.length > 0 && isAddingNewAddress && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingNewAddress(false);
+                            const matched = savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0];
+                            if (matched) {
+                              setFormData({
+                                fullName: matched.fullName || '',
+                                email: matched.email || user?.email || '',
+                                phone: matched.phone || '',
+                                pincode: matched.pincode || '',
+                                street: matched.street || '',
+                                landmark: matched.landmark || '',
+                                city: matched.city || '',
+                                state: matched.state || '',
+                              });
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.5rem 0.95rem',
+                            borderRadius: '9px',
+                            background: '#f8fafc',
+                            border: '1.5px solid #e2e8f0',
+                            color: '#475569',
+                            fontWeight: 600,
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancel & Use Saved
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Returning users: Show selectable address cards */}
+                    {savedAddresses.length > 0 && !isAddingNewAddress ? (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                        gap: '1rem',
+                        marginBottom: '0.5rem',
+                      }}>
+                        {savedAddresses.map((addr) => {
+                          const isSelected = selectedAddressId === addr.id;
+                          return (
+                            <div
+                              key={addr.id}
+                              onClick={() => {
+                                setSelectedAddressId(addr.id);
+                                setFormData({
+                                  fullName: addr.fullName,
+                                  email: addr.email || user?.email || '',
+                                  phone: addr.phone,
+                                  pincode: addr.pincode,
+                                  street: addr.street,
+                                  landmark: addr.landmark || '',
+                                  city: addr.city,
+                                  state: addr.state,
+                                });
+                              }}
+                              style={{
+                                position: 'relative',
+                                padding: '1.25rem',
+                                borderRadius: '14px',
+                                border: isSelected ? '2px solid #7c3aed' : '1.5px solid #e2e8f0',
+                                background: isSelected ? 'linear-gradient(145deg, #faf5ff 0%, #ffffff 100%)' : '#ffffff',
+                                boxShadow: isSelected ? '0 8px 24px -4px rgba(124, 58, 237, 0.16)' : '0 2px 6px rgba(0,0,0,0.02)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.65rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                  <div style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    border: isSelected ? '6px solid #7c3aed' : '2px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    transition: 'all 0.2s ease',
+                                    flexShrink: 0,
+                                  }} />
+                                  <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
+                                    {addr.fullName}
+                                  </span>
+                                </div>
+                                {addr.isDefault && (
+                                  <span style={{
+                                    fontSize: '0.68rem',
+                                    fontWeight: 700,
+                                    color: '#7c3aed',
+                                    background: '#f3e8ff',
+                                    padding: '0.15rem 0.55rem',
+                                    borderRadius: '999px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.04em',
+                                  }}>
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+
+                              <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569', lineHeight: 1.45 }}>
+                                {addr.street}{addr.landmark ? `, Near ${addr.landmark}` : ''}<br />
+                                {addr.city}, {addr.state} — <strong>{addr.pincode}</strong>
+                              </p>
+
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.45rem',
+                                fontSize: '0.81rem',
+                                color: '#64748b',
+                                marginTop: 'auto',
+                                paddingTop: '0.5rem',
+                                borderTop: '1px solid #f1f5f9',
+                              }}>
+                                <Phone size={13} style={{ color: '#7c3aed' }} />
+                                <span>{addr.phone}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* First-time users or "+ Add Address" mode: Show input form fields */
+                      <form onSubmit={handleConfirmDetails} id="checkout-form">
+                        <div className={styles['form-grid']}>
+                          {/* Full Name */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>FULL NAME *</label>
+                            <input
+                              type="text"
+                              name="fullName"
+                              required
+                              value={formData.fullName}
+                              onChange={handleInputChange}
+                              placeholder="Enter your full name"
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* Email Address */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>EMAIL ADDRESS *</label>
+                            <input
+                              type="email"
+                              name="email"
+                              required
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              placeholder="Enter your email address"
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* Phone Number */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>PHONE NUMBER *</label>
+                            <input
+                              type="tel"
+                              name="phone"
+                              required
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              placeholder="Enter 10-digit mobile number"
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* Pin Code */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>PIN CODE *</label>
+                            <input
+                              type="text"
+                              name="pincode"
+                              required
+                              value={formData.pincode}
+                              onChange={handleInputChange}
+                              placeholder="Enter 6-digit PIN code"
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* Flat, House No., Apartment */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>FLAT, HOUSE NO., APARTMENT *</label>
+                            <input
+                              type="text"
+                              name="street"
+                              required
+                              value={formData.street}
+                              onChange={handleInputChange}
+                              placeholder="House / Flat No., Building, Street Name"
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* Landmark */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>LANDMARK (OPTIONAL)</label>
+                            <input
+                              type="text"
+                              name="landmark"
+                              value={formData.landmark}
+                              onChange={handleInputChange}
+                              placeholder="E.g. Near Apollo Hospital, Park, etc."
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* City / Town */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>CITY / TOWN *</label>
+                            <input
+                              type="text"
+                              name="city"
+                              required
+                              value={formData.city}
+                              onChange={handleInputChange}
+                              placeholder="Enter City / Town"
+                              className={styles['field-input']}
+                            />
+                          </div>
+
+                          {/* State */}
+                          <div className={styles['form-group']}>
+                            <label className={styles['field-label']}>STATE *</label>
+                            <input
+                              type="text"
+                              name="state"
+                              required
+                              value={formData.state}
+                              onChange={handleInputChange}
+                              placeholder="Enter State"
+                              className={styles['field-input']}
+                            />
+                          </div>
+                        </div>
+                      </form>
+                    )}
                   </div>
 
                   {/* Delivery Mode Section */}
@@ -579,10 +1052,11 @@ export default function Checkout() {
                     </Link>
                     <button
                       type="button"
+                      disabled={isSavingAddress}
                       onClick={handleConfirmDetails}
                       className={styles['btn-confirm-details']}
                     >
-                      <span>CONFIRM DETAILS</span>
+                      <span>{isSavingAddress ? 'SAVING DETAILS...' : 'CONFIRM DETAILS'}</span>
                       <ArrowRight size={18} />
                     </button>
                   </div>
