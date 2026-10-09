@@ -43,8 +43,8 @@ export default function ProductGrid({ products = [], loading = false }) {
 
   return (
     <div className="product-grid-5">
-      {products.map((product) => (
-        <ProductCard key={product._id || product.id} product={product} />
+      {products.map((product, idx) => (
+        <ProductCard key={`${product._id || product.id || 'prod'}-${idx}`} product={product} />
       ))}
     </div>
   );
