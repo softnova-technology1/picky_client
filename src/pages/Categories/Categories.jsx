@@ -7,12 +7,11 @@ import CategoryBudgetStore from '../../components/category/CategoryBudgetStore';
 import CategoryFeaturedDrops from '../../components/category/CategoryFeaturedDrops';
 import CategoryPromoBanner from '../../components/category/CategoryPromoBanner';
 import CategoryRecommendedDrops from '../../components/category/CategoryRecommendedDrops';
-import { PICKY_CATEGORIES } from '../../data/categoriesData';
+import { useCategoryStore } from '../../store/categoryStore';
 import { Sparkles } from 'lucide-react';
 
 export default function Categories() {
-  // Use data from categoriesData.js
-  const [categories] = useState(PICKY_CATEGORIES);
+  const categories = useCategoryStore((state) => state.categories);
 
   // Top 4 categories are featured in the top pill showcase
   const top4Slugs = useMemo(

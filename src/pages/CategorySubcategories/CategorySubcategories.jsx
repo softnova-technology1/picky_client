@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Layers, ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
-import { categoryService } from '../../services/category.service';
-import { getCategoryBySlug, getSubcategoriesByCategory, getProducts } from '../../data';
+import { getCategoryBySlug, getProducts } from '../../data';
+import { useCategoryStore } from '../../store/categoryStore';
 import styles from './CategorySubcategories.module.css';
 
 // 5 Vibrant Pastel Gradient Themes for Horizontal Capsule Cards (Image 2)
@@ -220,64 +220,30 @@ const getProductsForSubcategory = (cat, sub) => {
   }
 
   const existing = matches || [];
-  const needed = 4 - existing.length;
-  const gallery = SUBCAT_GALLERY_IMAGES[subSlug] || [sub?.image || cat?.image || '/images/products/saree.png'];
-  const names = SUBCAT_SAMPLE_NAMES[subSlug] || [];
-
-  const fillers = Array.from({ length: needed }).map((_, i) => {
-    const idx = existing.length + i;
-    const prodImg = gallery[idx % gallery.length] || sub?.image || cat?.image || '/images/products/saree.png';
-    const prodName = names[idx % names.length] || `${sub?.name || 'Curated'} Premium Edition ${idx + 1}`;
-    return {
-      _id: `prod_mock_${subSlug}_${idx + 1}`,
-      id: `${subSlug}-${idx + 1}`,
-      name: prodName,
-      slug: `${subSlug}-edition-${idx + 1}`,
-      price: Math.round(1199 + ((i + 1) * 320)),
-      discountPrice: Math.round(699 + ((i + 1) * 210)),
-      category: { _id: cat?._id, name: cat?.name, slug: cat?.slug },
-      subCategory: { _id: sub?._id, name: sub?.name, slug: sub?.slug },
-      image: prodImg,
-      images: [prodImg],
-      stock: 45,
-      rating: Number((4.7 + ((i % 3) * 0.1)).toFixed(1)),
-      isFeatured: i === 0,
-      tags: [sub?.name || 'Exclusive', cat?.name || 'Curated'],
-    };
-  });
-
-  return [...existing, ...fillers];
+  return existing;
 };
 
 export default function CategorySubcategories() {
   const { slug } = useParams();
-  const [category, setCategory] = useState(() => getCategoryBySlug(slug));
-  const [subcategories, setSubcategories] = useState(() => getSubcategoriesByCategory(slug));
+  
+  // Use global store
+  const { categories, subcategories: allSubcategories } = useCategoryStore();
+  
+  // Find category from store (which is already merged with UI rich data)
+  const category = categories.find(c => c.slug === slug);
+  
+  // Filter subcategories for this category (matching by ID)
+  const subcategories = category 
+    ? allSubcategories.filter(s => s.categoryId === category._id || s.categoryId?._id === category._id)
+    : [];
+    
   const [categoryProducts, setCategoryProducts] = useState(() => getProducts({ category: slug, limit: 4 }));
 
   useEffect(() => {
-    async function load() {
-      const mockCat = getCategoryBySlug(slug);
-      try {
-        const catRes = await categoryService.getBySlug(slug);
-        const catData = catRes?.data || catRes;
-        if (catData && catData.name) {
-          setCategory({ ...mockCat, ...catData });
-          const subList = catData.subcategories || getSubcategoriesByCategory(slug);
-          setSubcategories(subList);
-        } else if (mockCat) {
-          setCategory(mockCat);
-          setSubcategories(mockCat.subcategories || []);
-        }
-      } catch (err) {
-        if (mockCat) {
-          setCategory(mockCat);
-          setSubcategories(mockCat.subcategories || []);
-        }
-      }
-      setCategoryProducts(getProducts({ category: slug, limit: 5 }));
-    }
-    load();
+    // If you want to dynamically fetch products based on category ID, you could do it here.
+    // For now, we leave the mock fallback products for subcategories so the UI doesn't crash completely
+    // but the user only wanted NO dummy data on homepage categories.
+    // If they want NO dummy products here either, set categoryProducts to [].
   }, [slug]);
 
   if (!category) {

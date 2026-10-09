@@ -135,7 +135,7 @@ export default function AdminSubCategories() {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    categoryId: 'cat-1',
+    categoryId: '',
     description: '',
     image: '',
     displayOrder: 1,
@@ -186,11 +186,14 @@ export default function AdminSubCategories() {
     });
 
     const sortedDesc = [...catCounts].sort((a, b) => b.count - a.count);
-    const mostCategory = sortedDesc[0] || { name: "Women's Fashion", count: 5, _id: 'cat-1' };
-
+    const mostCategory = sortedDesc[0] || { name: "N/A", count: 0, _id: null };
+    
     const sortedAsc = [...catCounts].sort((a, b) => a.count - b.count);
-    const leastCategory = sortedAsc[0] || { name: "Beauty & Personal Care", count: 0, _id: 'cat-4' };
-    const newCount = 4;
+    const leastCategory = sortedAsc[0] || { name: "N/A", count: 0, _id: null };
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const newCount = subcategories.filter(s => new Date(s.createdAt || Date.now()) >= thirtyDaysAgo).length;
 
     return { total, active, distinctCategories, totalProducts, mostCategory, leastCategory, newCount };
   }, [subcategories, categories]);
@@ -236,10 +239,9 @@ export default function AdminSubCategories() {
   }, [filteredSubcategories, currentPage, itemsPerPage]);
 
 
-  // Open Add Sub-Category modal
   const handleOpenAdd = () => {
     setEditingItem(null);
-    const defaultCatId = selectedCategoryTab !== 'all' ? selectedCategoryTab : 'cat-1';
+    const defaultCatId = selectedCategoryTab !== 'all' ? selectedCategoryTab : (categories.length > 0 ? categories[0]._id : '');
     setFormData({
       name: '',
       slug: '',
@@ -276,7 +278,7 @@ export default function AdminSubCategories() {
     setFormData({
       name: item.name || '',
       slug: item.slug || '',
-      categoryId: item.categoryId || 'cat-1',
+      categoryId: item.categoryId || (categories.length > 0 ? categories[0]._id : ''),
       description: item.description || '',
       image: item.image || '',
       displayOrder: item.displayOrder || 1,
@@ -617,19 +619,19 @@ export default function AdminSubCategories() {
         />
         <AdminStatCard
           title="MOST SUB-CATEGORIES"
-          value={kpis.mostCategory?.count ?? 5}
-          icon={getCategoryLucideIcon(kpis.mostCategory?._id || 'cat-1', 22, '#ffffff')}
+          value={kpis.mostCategory?.count ?? 0}
+          icon={getCategoryLucideIcon(kpis.mostCategory?._id, 22, '#ffffff')}
           variant="blue"
-          footerLabel={kpis.mostCategory?.name || "Women's Fashion"}
+          footerLabel={kpis.mostCategory?.name || "N/A"}
           footerValue="Highest"
-          progress={Math.round(((kpis.mostCategory?.count ?? 5) / (kpis.total || 1)) * 100)}
+          progress={kpis.total > 0 ? Math.round(((kpis.mostCategory?.count ?? 0) / kpis.total) * 100) : 0}
         />
         <AdminStatCard
           title="LEAST SUB-CATEGORIES"
           value={kpis.leastCategory?.count ?? 0}
-          icon={getCategoryLucideIcon(kpis.leastCategory?._id || 'cat-4', 22, '#ffffff')}
+          icon={getCategoryLucideIcon(kpis.leastCategory?._id, 22, '#ffffff')}
           variant="amber"
-          footerLabel={kpis.leastCategory?.name || "Beauty & Personal Care"}
+          footerLabel={kpis.leastCategory?.name || "N/A"}
           footerValue="Lowest"
           progress={0}
         />
@@ -1066,8 +1068,10 @@ export default function AdminSubCategories() {
                 </tr>
               ) : (
                 paginatedSubcategories.map((sub, index) => {
-                  const parent = categories.find((c) => c._id === sub.categoryId);
-                  const parentSlug = parent?.slug || 'womens-fashion';
+                  const catIdStr = typeof sub.categoryId === 'object' ? sub.categoryId?._id : sub.categoryId;
+                  const parent = categories.find((c) => c._id === catIdStr);
+                  const parentSlug = parent?.slug || (typeof sub.categoryId === 'object' ? sub.categoryId?.slug : 'fashion');
+                  const parentName = parent?.name || (typeof sub.categoryId === 'object' ? sub.categoryId?.name : sub.categoryName);
                   const fullSlug = `/${parentSlug}/${sub.slug}`;
 
                   return (
@@ -1157,8 +1161,8 @@ export default function AdminSubCategories() {
                             border: '1px solid #e9d5ff',
                           }}
                         >
-                          {getCategoryLucideIcon(parent?._id || sub.categoryId, 13, '#6d28d9')}
-                          <span>{parent?.name || sub.categoryName}</span>
+                          {getCategoryLucideIcon(parent?._id || catIdStr, 13, '#6d28d9')}
+                          <span>{parentName}</span>
                         </span>
                       </td>
 

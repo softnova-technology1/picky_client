@@ -23,11 +23,12 @@ import {
   CreditCard,
   Sparkles,
 } from 'lucide-react';
-import { PICKY_CATEGORIES } from '../../../data/categoriesData';
+import { useCategoryStore } from '../../../store/categoryStore';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const categories = useCategoryStore((state) => state.categories);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -176,7 +177,7 @@ export default function Footer() {
             <div className="footer-col">
               <h4 className="footer-heading">Top Categories</h4>
               <ul className="footer-links-list">
-                {PICKY_CATEGORIES.slice(0, 6).map((cat) => (
+                {categories.slice(0, 6).map((cat) => (
                   <li key={cat.slug}>
                     <Link to={`/categories/${cat.slug}`} className="footer-link">
                       <Sparkles size={13} className="footer-icon-accent" />
