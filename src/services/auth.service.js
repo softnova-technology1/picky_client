@@ -9,7 +9,7 @@ export const authService = {
     return await api.post('/auth/admin/login', { email: cleanEmail, password: cleanPassword });
   },
   refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
-  logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
+  logout: () => api.post('/auth/logout'),  // server reads userId from JWT Bearer token
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.patch('/auth/profile', data),
 };

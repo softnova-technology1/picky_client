@@ -46,7 +46,7 @@ api.interceptors.response.use(
         useAuthStore.getState().logout();
         // Only redirect to login if not already on login or admin portal
         const path = window.location.pathname;
-        if (!path.includes('/login') && !path.includes('/pickyadmin')) {
+        if (!path.includes('/login') && !path.includes('/softpicky-sn2026')) {
           window.location.href = '/login';
         }
       }

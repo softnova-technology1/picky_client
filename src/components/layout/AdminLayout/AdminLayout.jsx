@@ -35,7 +35,7 @@ import { MOCK_PRODUCTS, MOCK_ORDERS, MOCK_CUSTOMERS } from '../../../data/adminM
 import Toast from '../../ui/Toast';
 import '../../../styles/admin.css';
 
-const ADMIN = '/pickyadmin-softnova2026';
+const ADMIN = '/softpicky-sn2026';
 
 export default function AdminLayout({ children, title }) {
   const { user, logout } = useAuthStore();
