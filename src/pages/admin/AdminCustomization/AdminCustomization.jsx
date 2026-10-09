@@ -197,18 +197,21 @@ function ImageUploadControl({ label, value, onChange }) {
   const [urlError, setUrlError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleFileProcess = (file) => {
+  const handleFileProcess = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setUrlError('Please select a valid image file (JPG, PNG, WEBP, SVG)');
       return;
     }
     setUrlError(null);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      onChange(e.target.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await adminService.uploadImage(formData);
+      onChange(res.data?.url || res.url);
+    } catch (err) {
+      setUrlError('Failed to upload image to server');
+    }
   };
 
   const handleUrlBlur = (url) => {
@@ -994,33 +997,39 @@ export default function AdminCustomization() {
   };
 
   // Save Page Section Order & Visibility
-  const handleSaveOrderAndVisibility = () => {
+  const handleSaveOrderAndVisibility = async () => {
     setIsSavingOrder(true);
-    setTimeout(() => {
+    try {
+      await adminService.updateCustomization(activePageId, currentSections);
       setSavedPageSections((prev) => ({
         ...prev,
         [activePageId]: [...currentSections],
       }));
       storeSavePageSections(activePageId, currentSections);
 
-      setIsSavingOrder(false);
       setLastSavedOrderTimeMap((prev) => ({
         ...prev,
         [activePageId]: Date.now(),
       }));
       showToast('🎉 Section order & visibility saved!', 'success');
-    }, 350);
+    } catch (err) {
+      showToast('Failed to save customization', 'error');
+    } finally {
+      setIsSavingOrder(false);
+    }
   };
 
   // Save Current Active Section
-  const handleSaveCurrentSection = () => {
+  const handleSaveCurrentSection = async () => {
     if (!hasCurrentSectionEdits) return;
 
     setIsSavingSection(true);
-    setTimeout(() => {
+    try {
       const updatedSaved = currentSections.map((s) =>
         s.id === activeSectionId ? { ...s, settings: { ...currentSection.settings } } : s
       );
+
+      await adminService.updateCustomization(activePageId, updatedSaved);
 
       setSavedPageSections((prev) => ({
         ...prev,
@@ -1028,13 +1037,16 @@ export default function AdminCustomization() {
       }));
       storeSavePageSections(activePageId, updatedSaved);
 
-      setIsSavingSection(false);
       setLastSavedSectionTimeMap((prev) => ({
         ...prev,
         [activeSectionId]: Date.now(),
       }));
       showToast(`🎉 Changes to ${currentSection.name} saved!`, 'success');
-    }, 350);
+    } catch (err) {
+      showToast('Failed to save section changes', 'error');
+    } finally {
+      setIsSavingSection(false);
+    }
   };
 
   // CTA link validation helpers

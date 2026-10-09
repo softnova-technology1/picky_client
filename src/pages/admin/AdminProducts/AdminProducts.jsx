@@ -40,6 +40,7 @@ export default function AdminProducts() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // View Mode: 'table' | 'form'
@@ -76,25 +77,30 @@ export default function AdminProducts() {
   });
 
   const [charValues, setCharValues] = useState({});
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [primaryFile, setPrimaryFile] = useState(null);
+  const [secondaryFiles, setSecondaryFiles] = useState([]);
   const [primaryPreview, setPrimaryPreview] = useState(null);
   const [secondaryPreviews, setSecondaryPreviews] = useState([]);
 
   async function loadData() {
     try {
       setLoading(true);
-      const [prodRes, catRes] = await Promise.all([
-        productService.list({ limit: 100 }).catch(() => null),
+      const [prodRes, catRes, subRes] = await Promise.all([
+        productService.list({ limit: 100, includeInactive: true }).catch(() => null),
         categoryService.list().catch(() => null),
+        adminService.getSubCategories().catch(() => null),
       ]);
-      const pList = prodRes?.data?.data || prodRes?.data || [];
-      const cList = catRes?.data || [];
-      setProducts(pList.length > 0 ? pList : MOCK_PRODUCTS);
-      setCategories(cList.length > 0 ? cList : MOCK_CATEGORIES);
+      const pList = prodRes ? (prodRes.data?.data || prodRes.data || []) : [];
+      const cList = catRes ? (catRes.data?.data || catRes.data || []) : [];
+      const sList = subRes ? (subRes.data?.data || subRes.data || []) : [];
+      setProducts(pList);
+      setCategories(cList);
+      setSubcategories(sList);
     } catch (err) {
       console.error('Failed to load products:', err);
-      setProducts(MOCK_PRODUCTS);
-      setCategories(MOCK_CATEGORIES);
+      setProducts([]);
+      setCategories([]);
+      setSubcategories([]);
     } finally {
       setLoading(false);
     }
@@ -161,7 +167,8 @@ export default function AdminProducts() {
       isActive: true,
     });
     setCharValues({});
-    setSelectedFiles([]);
+    setPrimaryFile(null);
+    setSecondaryFiles([]);
     setPrimaryPreview(null);
     setSecondaryPreviews([]);
     setViewMode('form');
@@ -198,7 +205,8 @@ export default function AdminProducts() {
     const imgs = p.images || (p.image ? [p.image] : []);
     setPrimaryPreview(imgs[0] || null);
     setSecondaryPreviews(imgs.slice(1));
-    setSelectedFiles([]);
+    setPrimaryFile(null);
+    setSecondaryFiles([]);
     setViewMode('form');
   };
 
@@ -206,8 +214,9 @@ export default function AdminProducts() {
     const file = e.target.files?.[0];
     if (file) {
       setPrimaryPreview(URL.createObjectURL(file));
-      setSelectedFiles((prev) => [file, ...prev.slice(1)]);
+      setPrimaryFile(file);
     }
+    e.target.value = '';
   };
 
   const handleSecondaryFileSelect = (e) => {
@@ -221,37 +230,58 @@ export default function AdminProducts() {
       const filesToAdd = files.slice(0, remainingSlots);
       const newUrls = filesToAdd.map((f) => URL.createObjectURL(f));
       setSecondaryPreviews((prev) => [...prev, ...newUrls]);
-      setSelectedFiles((prev) => [...prev, ...filesToAdd]);
+      setSecondaryFiles((prev) => [...prev, ...filesToAdd]);
       if (files.length > remainingSlots) {
         showToast(`Added ${remainingSlots} images. (Limit is 10 max)`, 'info');
       }
     }
+    e.target.value = '';
   };
 
   const handleSetAsCover = (index) => {
     const targetUrl = secondaryPreviews[index];
+    const targetFile = secondaryFiles[index]; // Could be undefined if it's an existing URL
     if (!targetUrl) return;
-    const oldPrimary = primaryPreview;
+    
+    const oldPrimaryUrl = primaryPreview;
+    const oldPrimaryFile = primaryFile;
+
     setPrimaryPreview(targetUrl);
+    setPrimaryFile(targetFile || null);
+
     setSecondaryPreviews((prev) => {
       const updated = [...prev];
-      if (oldPrimary) {
-        updated[index] = oldPrimary;
+      if (oldPrimaryUrl) {
+        updated[index] = oldPrimaryUrl;
       } else {
         updated.splice(index, 1);
       }
       return updated;
     });
+
+    setSecondaryFiles((prev) => {
+      const updated = [...prev];
+      if (oldPrimaryFile) {
+        updated[index] = oldPrimaryFile;
+      } else {
+        updated.splice(index, 1);
+      }
+      return updated;
+    });
+
     showToast('Promoted gallery image to Primary Cover!', 'success');
   };
 
   const handleRemovePrimary = () => {
     if (secondaryPreviews.length > 0) {
       setPrimaryPreview(secondaryPreviews[0]);
+      setPrimaryFile(secondaryFiles[0] || null);
       setSecondaryPreviews((prev) => prev.slice(1));
+      setSecondaryFiles((prev) => prev.slice(1));
       showToast('First gallery image set as Primary Cover', 'info');
     } else {
       setPrimaryPreview(null);
+      setPrimaryFile(null);
     }
   };
 
@@ -292,16 +322,32 @@ export default function AdminProducts() {
       payload.append('characteristics', JSON.stringify(characteristicsList));
     }
 
-    if (selectedFiles.length > 0) {
-      for (const file of selectedFiles) {
+    // Combine and send files
+    const allSelectedFiles = [];
+    if (primaryFile) allSelectedFiles.push(primaryFile);
+    secondaryFiles.forEach((f) => {
+      if (f) allSelectedFiles.push(f);
+    });
+
+    if (allSelectedFiles.length > 0) {
+      for (const file of allSelectedFiles) {
         payload.append('images', file);
       }
     }
 
+    // Send existing URLs so backend can preserve them
+    const existingUrls = [];
+    if (primaryPreview && !primaryPreview.startsWith('blob:')) existingUrls.push(primaryPreview);
+    secondaryPreviews.forEach((url) => {
+      if (url && !url.startsWith('blob:')) existingUrls.push(url);
+    });
+    
+    existingUrls.forEach(url => payload.append('existingImages[]', url));
+
     try {
       setModalLoading(true);
       if (editingProduct) {
-        await adminService.updateProduct(editingProduct._id, payload).catch(() => null);
+        await adminService.updateProduct(editingProduct._id, payload);
         setProducts((prev) =>
           prev.map((p) =>
             p._id === editingProduct._id
@@ -322,8 +368,8 @@ export default function AdminProducts() {
         );
         showToast('Product updated successfully', 'success');
       } else {
-        const res = await adminService.createProduct(payload).catch(() => null);
-        const newProduct = res?.data || {
+        const res = await adminService.createProduct(payload);
+        const newProduct = res?.data?.data || res?.data || {
           _id: `prod_${Date.now()}`,
           name: formData.name,
           sku: formData.sku ? formData.sku.trim().toUpperCase() : `PK-${Date.now().toString(36).toUpperCase()}`,
@@ -341,7 +387,7 @@ export default function AdminProducts() {
       }
       setViewMode('table');
     } catch (err) {
-      showToast(err.message || 'Failed to save product', 'error');
+      showToast(err?.response?.data?.error || err.message || 'Failed to save product', 'error');
     } finally {
       setModalLoading(false);
     }
@@ -365,11 +411,16 @@ export default function AdminProducts() {
 
   const availableSubCategories = useMemo(() => {
     if (!formData.category) return [];
-    if (currentCategoryObj?.subcategories && currentCategoryObj.subcategories.length > 0) {
-      return currentCategoryObj.subcategories;
-    }
-    return MOCK_SUBCATEGORIES.filter((s) => s.categoryId === formData.category);
-  }, [formData.category, currentCategoryObj]);
+    const selectedCat = categories.find(c => c._id === formData.category);
+    return subcategories.filter((s) => {
+      if (s.categoryId === formData.category || s.categoryId?._id === formData.category) return true;
+      if (selectedCat && selectedCat.slug && typeof s.categoryId === 'string' && s.categoryId.startsWith('cat-')) {
+        const mockCat = MOCK_CATEGORIES.find(mc => mc._id === s.categoryId);
+        if (mockCat && mockCat.slug === selectedCat.slug) return true;
+      }
+      return false;
+    });
+  }, [formData.category, subcategories, categories]);
 
   const toggleMultiSelect = (charName, val) => {
     const current = Array.isArray(charValues[charName]) ? charValues[charName] : [];
@@ -800,7 +851,10 @@ export default function AdminProducts() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setSecondaryPreviews((prev) => prev.filter((_, idx) => idx !== i))}
+                            onClick={() => {
+                              setSecondaryPreviews((prev) => prev.filter((_, idx) => idx !== i));
+                              setSecondaryFiles((prev) => prev.filter((_, idx) => idx !== i));
+                            }}
                             title="Delete Image"
                             style={{
                               width: '24px',
@@ -1873,6 +1927,34 @@ export default function AdminProducts() {
                             >
                               <Edit2 size={12} color="#6d28d9" />
                               <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(p._id)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.76rem',
+                                fontWeight: 600,
+                                background: '#f8fafc',
+                                color: '#ef4444',
+                                border: '1px solid #e2e8f0',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#fef2f2';
+                                e.currentTarget.style.borderColor = '#fecaca';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#f8fafc';
+                                e.currentTarget.style.borderColor = '#e2e8f0';
+                              }}
+                            >
+                              <Trash2 size={12} color="#ef4444" />
+                              <span>Delete</span>
                             </button>
                           </div>
                         </td>

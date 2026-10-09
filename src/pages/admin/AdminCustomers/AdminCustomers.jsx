@@ -1237,25 +1237,42 @@ export default function AdminCustomers() {
                           <div className="admin-customer-avatar">{c.name ? c.name[0] : 'U'}</div>
                           <div>
                             <strong style={{ fontSize: '0.88rem', color: '#1e1b4b', display: 'block' }}>
-                              {c.name}
+                              {c.name || 'Unnamed User'}
                             </strong>
-                            {(c.isVerified === false || c.verified === false) && (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  marginTop: '2px',
-                                  padding: '0.1rem 0.45rem',
-                                  borderRadius: '4px',
-                                  background: '#fee2e2',
-                                  color: '#dc2626',
-                                  fontSize: '0.68rem',
-                                  fontWeight: 700,
-                                  letterSpacing: '0.02em',
-                                }}
-                              >
-                                Unverified
-                              </span>
-                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px', flexWrap: 'wrap' }}>
+                              {c.role && (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '0.1rem 0.45rem',
+                                    borderRadius: '4px',
+                                    background: c.role === 'admin' ? '#ede8f8' : '#e0f2fe',
+                                    color: c.role === 'admin' ? '#7c3aed' : '#0284c7',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                  }}
+                                >
+                                  {c.role}
+                                </span>
+                              )}
+                              {(c.isVerified === false || c.verified === false) && (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '0.1rem 0.45rem',
+                                    borderRadius: '4px',
+                                    background: '#fee2e2',
+                                    color: '#dc2626',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.02em',
+                                  }}
+                                >
+                                  Unverified
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>

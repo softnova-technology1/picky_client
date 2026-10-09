@@ -23,6 +23,12 @@ export const adminService = {
   updateCategoryCharacteristics: (id, characteristics) => api.patch(`/categories/${id}/characteristics`, { characteristics }),
   deleteCategory: (id) => api.delete(`/categories/${id}`),
 
+  // SubCategories
+  getSubCategories: (params) => api.get('/subcategories', { params }),
+  createSubCategory: (data) => api.post('/subcategories', data),
+  updateSubCategory: (id, data) => api.put(`/subcategories/${id}`, data),
+  deleteSubCategory: (id) => api.delete(`/subcategories/${id}`),
+
   // Coupons
   getCoupons: () => api.get('/coupons'),
   createCoupon: (data) => api.post('/coupons', data),
@@ -48,5 +54,12 @@ export const adminService = {
   // Inventory
   getInventory: (params) => api.get('/inventory', { params }),
   updateInventoryStock: (productId, data) => api.patch(`/inventory/${productId}`, data),
+
+  // Customization
+  getCustomizations: () => api.get('/customization'),
+  updateCustomization: (pageId, sections) => api.put('/customization', { pageId, sections }),
+
+  // Upload
+  uploadImage: (formData) => api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 

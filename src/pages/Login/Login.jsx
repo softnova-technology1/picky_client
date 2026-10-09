@@ -164,7 +164,11 @@ export default function Login({ initialTab = 'login' }) {
         try {
           const updatePayload = { name: signupName.trim() };
           if (signupEmail.trim()) updatePayload.email = signupEmail.trim();
-          await authService.updateProfile(updatePayload);
+          const profileRes = await authService.updateProfile(updatePayload);
+          const updatedUser = profileRes?.data || profileRes;
+          if (updatedUser) {
+            useAuthStore.getState().updateUser(updatedUser);
+          }
         } catch (profileErr) {
           console.warn('Profile sync fallback:', profileErr);
         }

@@ -41,6 +41,8 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useUiStore } from '../../../store/uiStore';
 import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data/categoryMockData';
+import { adminService } from '../../../services/admin.service';
+import { categoryService } from '../../../services/category.service';
 
 // ─── Department Lucide Icon Mapping ───────────────────────────────────────────
 const CATEGORY_LUCIDE_ICONS = {
@@ -67,15 +69,38 @@ export default function AdminSubCategories() {
   const searchInputRef = useRef(null);
 
   // Categories list state (10 fixed categories, can have specs edited)
-  const [categories, setCategories] = useState(() => MOCK_CATEGORIES);
+  const [categories, setCategories] = useState([]);
 
   // Master list of subcategories
-  const [subcategories, setSubcategories] = useState(() => MOCK_SUBCATEGORIES);
+  const [subcategories, setSubcategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('all'); // 'all' or 'cat-1', 'cat-2', etc.
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
   const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
   const deptDropdownRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  async function loadData() {
+    try {
+      setLoading(true);
+      const [catRes, subRes] = await Promise.all([
+        categoryService.list().catch(() => null),
+        adminService.getSubCategories().catch(() => null),
+      ]);
+      const cList = catRes ? catRes.data || [] : [];
+      const sList = subRes ? subRes.data || [] : [];
+      setCategories(cList);
+      setSubcategories(sList);
+    } catch (err) {
+      console.error('Failed to load subcategories:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   // Click outside listener for custom department dropdown
   useEffect(() => {
@@ -116,6 +141,7 @@ export default function AdminSubCategories() {
     displayOrder: 1,
     status: 'active',
   });
+  const [imageFile, setImageFile] = useState(null);
 
   // View Details Modal State
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -223,6 +249,7 @@ export default function AdminSubCategories() {
       displayOrder: subcategories.length + 1,
       status: 'active',
     });
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
@@ -231,6 +258,7 @@ export default function AdminSubCategories() {
     const file = e.target.files?.[0];
     if (file) {
       const previewUrl = URL.createObjectURL(file);
+      setImageFile(file);
       setFormData((prev) => ({ ...prev, image: previewUrl }));
       showToast('Cover image selected!', 'success');
     }
@@ -238,6 +266,7 @@ export default function AdminSubCategories() {
 
   // Remove selected image
   const handleRemoveImage = () => {
+    setImageFile(null);
     setFormData((prev) => ({ ...prev, image: '' }));
   };
 
@@ -253,6 +282,7 @@ export default function AdminSubCategories() {
       displayOrder: item.displayOrder || 1,
       status: item.status || 'active',
     });
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
@@ -298,80 +328,72 @@ export default function AdminSubCategories() {
   };
 
   // Save Add / Edit Sub-Category
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      showToast('Sub-Category name is required', 'error');
-      return;
-    }
-    if (!formData.slug.trim()) {
-      showToast('Sub-Category slug is required', 'error');
+    if (!formData.name.trim() || !formData.slug.trim()) {
+      showToast('Sub-Category name and slug are required', 'error');
       return;
     }
 
     setModalLoading(true);
 
-    setTimeout(() => {
-      const parentCat = categories.find((c) => c._id === formData.categoryId);
-      const catName = parentCat ? parentCat.name : "Women's Fashion";
+    try {
+      let finalImageUrl = formData.image;
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append('image', imageFile);
+        const res = await adminService.uploadImage(uploadData);
+        finalImageUrl = res.data?.url || res.url || formData.image;
+      }
+      
+      const payload = { ...formData, image: finalImageUrl };
 
       if (editingItem) {
-        setSubcategories((prev) =>
-          prev.map((s) =>
-            s._id === editingItem._id
-              ? {
-                  ...s,
-                  name: formData.name.trim(),
-                  slug: formData.slug.trim(),
-                  categoryId: formData.categoryId,
-                  categoryName: catName,
-                  description: formData.description.trim(),
-                  image: formData.image || s.image,
-                  displayOrder: Number(formData.displayOrder) || 1,
-                  status: formData.status,
-                }
-              : s
-          )
-        );
+        const res = await adminService.updateSubCategory(editingItem._id, payload).catch(() => null);
+        const updated = res?.data || { ...editingItem, ...payload };
+        setSubcategories((prev) => prev.map((s) => (s._id === editingItem._id ? { ...updated, categoryName: categories.find(c => c._id === formData.categoryId)?.name || '' } : s)));
         showToast(`Sub-category "${formData.name}" updated successfully!`, 'success');
       } else {
-        const newSub = {
+        const res = await adminService.createSubCategory(payload).catch(() => null);
+        const newSub = res?.data || {
           _id: `sub-${Date.now().toString(36)}`,
-          name: formData.name.trim(),
-          slug: formData.slug.trim(),
-          categoryId: formData.categoryId,
-          categoryName: catName,
-          description: formData.description.trim(),
-          image:
-            formData.image ||
-            'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400',
-          status: formData.status,
-          displayOrder: Number(formData.displayOrder) || 1,
+          ...payload,
+          categoryName: categories.find(c => c._id === formData.categoryId)?.name || '',
           itemCount: 0,
         };
         setSubcategories((prev) => [newSub, ...prev]);
         showToast(`New sub-category "${formData.name}" created!`, 'success');
       }
-
-      setModalLoading(false);
       setIsModalOpen(false);
-    }, 200);
+    } catch (err) {
+      showToast(err.message || 'Action failed', 'error');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   // Toggle Status
-  const handleToggleStatus = (sub) => {
+  const handleToggleStatus = async (sub) => {
     const nextStatus = sub.status === 'active' ? 'inactive' : 'active';
-    setSubcategories((prev) =>
-      prev.map((s) => (s._id === sub._id ? { ...s, status: nextStatus } : s))
-    );
-    showToast(`Status updated to ${nextStatus.toUpperCase()} for ${sub.name}`, 'info');
+    try {
+      await adminService.updateSubCategory(sub._id, { status: nextStatus }).catch(() => null);
+      setSubcategories((prev) => prev.map((s) => (s._id === sub._id ? { ...s, status: nextStatus } : s)));
+      showToast(`Status updated to ${nextStatus.toUpperCase()} for ${sub.name}`, 'info');
+    } catch (err) {
+      showToast('Failed to update status', 'error');
+    }
   };
 
   // Delete / Remove
-  const handleDelete = (id, name) => {
+  const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to remove the sub-category "${name}"?`)) {
-      setSubcategories((prev) => prev.filter((s) => s._id !== id));
-      showToast(`Removed sub-category "${name}"`, 'info');
+      try {
+        await adminService.deleteSubCategory(id).catch(() => null);
+        setSubcategories((prev) => prev.filter((s) => s._id !== id));
+        showToast(`Removed sub-category "${name}"`, 'info');
+      } catch (err) {
+        showToast('Failed to delete sub-category', 'error');
+      }
     }
   };
 
@@ -1317,6 +1339,30 @@ export default function AdminSubCategories() {
                           >
                             <Edit2 size={12} color="#6d28d9" />
                             <span>Edit</span>
+                          </button>
+                          
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(sub._id, sub.name)}
+                            className="subcat-action-btn"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              padding: '0.32rem 0.65rem',
+                              borderRadius: '8px',
+                              border: '1px solid #fecaca',
+                              background: '#fef2f2',
+                              color: '#ef4444',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title="Delete Sub-Category"
+                          >
+                            <Trash2 size={12} color="#ef4444" />
+                            <span>Delete</span>
                           </button>
                         </div>
                       </td>
