@@ -568,9 +568,9 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
 /* Toast */
 .toast-container {
   position: fixed;
-  bottom: 1.5rem;
+  top: 1.5rem;
   right: 1.5rem;
-  z-index: 1000;
+  z-index: 999999;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -592,8 +592,8 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
 .toast-info { border-left: 4px solid var(--color-accent); }
 
 @keyframes slideIn {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────── */

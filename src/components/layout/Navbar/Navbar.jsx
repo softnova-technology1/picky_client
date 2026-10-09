@@ -20,7 +20,7 @@ import {
 import { useAuthStore } from '../../../store/authStore';
 import { useCartStore } from '../../../store/cartStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
-import { MEGAMENU_ALL_CATEGORIES } from '../../../data/categoriesData';
+import { useCategoryStore } from '../../../store/categoryStore';
 import CategoryIcon from '../../common/CategoryIcon';
 import GlamicsMarqueeTicker from '../../category/GlamicsMarqueeTicker';
 import Modal from '../../ui/Modal/Modal';
@@ -86,6 +86,8 @@ export default function Navbar() {
   const { isLoggedIn, user, logout } = useAuthStore();
   const { items } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
+  
+  const megaMenuCategories = useCategoryStore((state) => state.getMegaMenu());
 
   const totalCartCount = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
   const totalWishlistCount = wishlistItems.length;
@@ -419,7 +421,7 @@ export default function Navbar() {
             onMouseLeave={handleCategoryMouseLeave}
           >
             <div className="nav-all-categories-strip">
-              {MEGAMENU_ALL_CATEGORIES.map((cat, idx) => (
+              {megaMenuCategories.map((cat, idx) => (
                 <div
                   key={cat.slug}
                   className={`nav-mega-column ${idx % 2 === 1 ? 'shaded' : ''}`}

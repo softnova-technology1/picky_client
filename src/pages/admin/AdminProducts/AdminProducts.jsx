@@ -324,9 +324,23 @@ export default function AdminProducts() {
 
     // Combine and send files
     const allSelectedFiles = [];
-    if (primaryFile) allSelectedFiles.push(primaryFile);
-    secondaryFiles.forEach((f) => {
-      if (f) allSelectedFiles.push(f);
+    const imagePositions = [];
+
+    if (primaryPreview) {
+      if (!primaryPreview.startsWith('blob:')) imagePositions.push(primaryPreview);
+      else {
+        imagePositions.push('file');
+        if (primaryFile) allSelectedFiles.push(primaryFile);
+      }
+    }
+
+    secondaryPreviews.forEach((url, i) => {
+      if (url && !url.startsWith('blob:')) {
+        imagePositions.push(url);
+      } else {
+        imagePositions.push('file');
+        if (secondaryFiles[i]) allSelectedFiles.push(secondaryFiles[i]);
+      }
     });
 
     if (allSelectedFiles.length > 0) {
@@ -335,14 +349,7 @@ export default function AdminProducts() {
       }
     }
 
-    // Send existing URLs so backend can preserve them
-    const existingUrls = [];
-    if (primaryPreview && !primaryPreview.startsWith('blob:')) existingUrls.push(primaryPreview);
-    secondaryPreviews.forEach((url) => {
-      if (url && !url.startsWith('blob:')) existingUrls.push(url);
-    });
-    
-    existingUrls.forEach(url => payload.append('existingImages[]', url));
+    imagePositions.forEach(pos => payload.append('imagePositions[]', pos));
 
     try {
       setModalLoading(true);
@@ -387,7 +394,7 @@ export default function AdminProducts() {
       }
       setViewMode('table');
     } catch (err) {
-      showToast(err?.response?.data?.error || err.message || 'Failed to save product', 'error');
+      showToast(err?.error || err?.message || 'Failed to save product', 'error');
     } finally {
       setModalLoading(false);
     }

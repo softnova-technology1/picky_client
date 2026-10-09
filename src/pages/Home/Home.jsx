@@ -6,7 +6,7 @@ import ProductGrid from '../../components/product/ProductGrid';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
 import { promoOffer, valuePropositions, products as fallbackProducts, REVIEWS_DATA } from '../../data';
-import { PICKY_CATEGORIES as categories } from '../../data/categoriesData';
+import { useCategoryStore } from '../../store/categoryStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
@@ -176,9 +176,9 @@ const MagneticButton = ({ children, className = '', onClick }) => {
 // ─── Home Page Component ─────────────────────────────────────────
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState(() => (fallbackProducts || []).slice(0, 8));
-  const [trendingProducts, setTrendingProducts] = useState(() => (fallbackProducts || []).slice(0, 10));
-  const [newArrivals, setNewArrivals] = useState(() => fallbackProducts || []);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [trendingProducts, setTrendingProducts] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -186,6 +186,7 @@ export default function Home() {
   const { isInWishlist, toggleItem } = useWishlistStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
+  const categories = useCategoryStore((state) => state.categories);
 
   // Scroll ref & auto-scroll state for horizontal trending products carousel
   const trendingScrollRef = useRef(null);
@@ -214,14 +215,9 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  // Infinite duplicate list for continuous loop marquee
   const trendingProductsList = useMemo(() => {
     if (!trendingProducts || trendingProducts.length === 0) return [];
-    let list = [...trendingProducts];
-    while (list.length < 10) {
-      list = [...list, ...trendingProducts];
-    }
-    return [...list, ...list];
+    return [...trendingProducts];
   }, [trendingProducts]);
 
   const handleTrendingScroll = () => {
@@ -324,21 +320,21 @@ export default function Home() {
       setLoading(true);
       try {
         const prodRes = await productService.list({ sort: 'featured', limit: 16 });
-        const pItems = prodRes?.data?.data || prodRes?.data || fallbackProducts;
+        const pItems = prodRes?.data?.data || prodRes?.data || [];
         if (Array.isArray(pItems) && pItems.length > 0) {
           setFeaturedProducts(pItems.slice(0, 8)); // Best sellers
           setTrendingProducts(pItems.slice(0, 10)); // Trending horizontal
           setNewArrivals(pItems); // New arrivals
         } else {
-          setFeaturedProducts((fallbackProducts || []).slice(0, 8));
-          setTrendingProducts((fallbackProducts || []).slice(0, 10));
-          setNewArrivals(fallbackProducts || []);
+          setFeaturedProducts([]);
+          setTrendingProducts([]);
+          setNewArrivals([]);
         }
       } catch (err) {
         console.error('Home load error:', err);
-        setFeaturedProducts((fallbackProducts || []).slice(0, 8));
-        setTrendingProducts((fallbackProducts || []).slice(0, 10));
-        setNewArrivals(fallbackProducts || []);
+        setFeaturedProducts([]);
+        setTrendingProducts([]);
+        setNewArrivals([]);
       } finally {
         setLoading(false);
       }
@@ -358,14 +354,14 @@ export default function Home() {
 
   // ── Flash Deals / Limited Time Deals 15-Second Auto-Rotation ─────────
   const allDealProducts = useMemo(() => {
-    const list = (newArrivals && newArrivals.length > 0 ? newArrivals : fallbackProducts) || [];
+    const list = newArrivals || [];
     const discounted = list.filter((p) => p && p.discountPrice && p.discountPrice < p.price);
     return discounted.length >= 6 ? discounted : list;
   }, [newArrivals]);
 
   // Spotlight rotation list (prioritizes high discount products)
   const spotlightProductsList = useMemo(() => {
-    if (!allDealProducts.length) return fallbackProducts.slice(0, 6);
+    if (!allDealProducts.length) return [];
     return [...allDealProducts].sort((a, b) => {
       const discA = ((a.price - a.discountPrice) / a.price) || 0;
       const discB = ((b.price - b.discountPrice) / b.price) || 0;
@@ -393,7 +389,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [spotlightProductsList.length]);
 
-  const spotlightProduct = spotlightProductsList[spotlightIndex % spotlightProductsList.length] || fallbackProducts[0];
+  const spotlightProduct = spotlightProductsList[spotlightIndex % spotlightProductsList.length] || null;
   const spotlightDiscountPercent = spotlightProduct?.discountPrice && spotlightProduct?.price
     ? Math.round(((spotlightProduct.price - spotlightProduct.discountPrice) / spotlightProduct.price) * 100)
     : 32;
@@ -404,13 +400,9 @@ export default function Home() {
     const nonSpotlight = allDealProducts.filter(
       (p) => p.slug !== currentSpotlightSlug && (p._id || p.id) !== (spotlightProduct?._id || spotlightProduct?.id)
     );
-    const pool = nonSpotlight.length >= 4 ? nonSpotlight : allDealProducts;
-    const startIndex = (miniBatchIndex * 4) % pool.length;
-    const result = [];
-    for (let i = 0; i < 4; i++) {
-      result.push(pool[(startIndex + i) % pool.length]);
-    }
-    return result;
+    
+    // Instead of forcing exactly 4 items by looping, just return up to 4 available unique items
+    return nonSpotlight.slice(0, 4);
   }, [allDealProducts, spotlightProduct, miniBatchIndex]);
 
   const isSpotlightInWishlist = spotlightProduct
@@ -653,7 +645,7 @@ export default function Home() {
                       )}
                     </div>
 
-                    <button className="spotlight-cta-btn" onClick={handleSpotlightAddToCart}>
+                    <button className="spotlight-cta-btn" onClick={handleSpotlightBuyNow}>
                       <span className="spotlight-btn-desktop">
                         <ShoppingCart size={16} strokeWidth={2.3} style={{ marginRight: '6px' }} />
                         Claim Deal & Add to Cart
@@ -771,7 +763,7 @@ export default function Home() {
             </button>
           </div>
           <div style={{ marginTop: '2.5rem' }}>
-            <ProductGrid products={(featuredProducts.length > 0 ? featuredProducts : fallbackProducts).slice(0, 5)} loading={loading} />
+            <ProductGrid products={featuredProducts.slice(0, 5)} loading={loading} />
           </div>
         </div>
       </section>

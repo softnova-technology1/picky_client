@@ -47,6 +47,7 @@ const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 import { useEffect } from 'react';
 import { useCustomizationStore } from './store/customizationStore';
 import { adminService } from './services/admin.service';
+import { useCategoryStore } from './store/categoryStore';
 
 export default function App() {
   useButtonHoverFX();
@@ -60,6 +61,9 @@ export default function App() {
         }
       }
     }).catch(console.error);
+
+    // Fetch real DB categories for frontend navigation
+    useCategoryStore.getState().fetchCategories();
   }, []);
 
   return (

@@ -2,9 +2,9 @@
 export const PICKY_CATEGORIES = [
   {
     _id: 'cat-1',
-    name: "Women's Fashion",
-    slug: 'womens-fashion',
-    subtext: 'Sarees, Kurtis, Leggings, Pant, Nightwear, Dupattas',
+    name: "Fashion",
+    slug: 'fashion',
+    subtext: 'mens ladies kids..',
     icon: '👗',
     badge: 'Popular',
     image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
