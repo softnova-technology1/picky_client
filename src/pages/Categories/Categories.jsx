@@ -15,7 +15,7 @@ export default function Categories() {
 
   // Top 4 categories are featured in the top pill showcase
   const top4Slugs = useMemo(
-    () => ['womens-fashion', 'artificial-jewellery', 'mobile-accessories', 'home-kitchen'],
+    () => ['fashion', 'artificial-jewellery', 'mobile-accessories', 'home-kitchen'],
     []
   );
 

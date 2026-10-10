@@ -2,6 +2,18 @@ import React from 'react';
 
 // ─── Curated Luxury Palette & Metadata for Picky Departments ─────────────────
 export const CATEGORY_THEMES = {
+  'fashion': {
+    name: 'Fashion',
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+    iconGradientId: 'grad-fashion',
+    startColor: '#ec4899',
+    stopColor: '#8b5cf6',
+    bgLight: '#fdf2f8',
+    borderColor: '#fbcfe8',
+    glowColor: 'rgba(236, 72, 153, 0.22)',
+    textColor: '#9d174d',
+    badge: 'Popular',
+  },
   'womens-fashion': {
     name: "Women's Fashion",
     gradient: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
@@ -141,6 +153,7 @@ function RenderVectorGlyph({ slug, size = 24, strokeWidth = 2, fill = 'none' }) 
   const stroke = `url(#${gradId})`;
 
   switch (slug) {
+    case 'fashion':
     case 'womens-fashion':
       // Haute couture gown silhouette with sparkle
       return (

@@ -138,9 +138,40 @@ function formatAxisTick(val) {
     return val % 1000000 === 0 ? `${val / 1000000}M` : `${(val / 1000000).toFixed(1)}M`;
   }
   if (val >= 1000) {
-    return `${Math.round(val / 1000)}k`;
+    return val % 1000 === 0 ? `${val / 1000}k` : `${(val / 1000).toFixed(1)}k`;
   }
   return `${val}`;
+}
+
+// Dynamically calculates Y-axis maximum and balanced grid intervals
+function getDynamicChartScale(maxVal) {
+  if (maxVal <= 0) {
+
+
+
+    
+    return {
+      maxValue: 1000,
+      gridLines: [1000, 800, 600, 400, 200, 0],
+    };
+  }
+
+  const target = maxVal * 1.25;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(target)));
+  const normalized = target / magnitude;
+
+  let step;
+  if (normalized <= 2) step = 0.4 * magnitude;
+  else if (normalized <= 5) step = 1 * magnitude;
+  else step = 2 * magnitude;
+
+  const maxValue = Math.ceil(target / step) * step;
+  const gridLines = [];
+  for (let i = 5; i >= 0; i--) {
+    gridLines.push(Math.round((maxValue / 5) * i));
+  }
+
+  return { maxValue, gridLines };
 }
 
 // ─── 1. Left Graph: Total Revenue Premium Spline Chart ───────────────────────
@@ -164,10 +195,10 @@ function RevenueWaveChart({
   const points = useMemo(() => {
     if (!data.length) return [];
     const usableWidth = chartWidth - paddingLeft - paddingRight;
-    const stepX = usableWidth / (data.length - 1);
+    const stepX = data.length > 1 ? usableWidth / (data.length - 1) : 0;
 
     return data.map((item, idx) => {
-      const x = paddingLeft + idx * stepX;
+      const x = paddingLeft + (data.length > 1 ? idx * stepX : usableWidth / 2);
       const y = chartBottom - (item.revenue / maxValue) * (chartBottom - chartTop);
       return { ...item, idx, x, y };
     });
@@ -657,8 +688,40 @@ export default function AdminDashboard() {
   // Dynamically map real summary data or fallback to config
   const currentData = useMemo(() => {
     const baseConfig = TIMEFRAME_CONFIG[timeframe] || TIMEFRAME_CONFIG['Week'];
-    
+
     if (summary && summary.totalRevenue !== undefined && summary.totalOrders !== undefined) {
+      const salesByDay = {};
+      if (Array.isArray(summary.dailySales)) {
+        summary.dailySales.forEach((s) => {
+          if (s && s._id) {
+            const dayKey = new Date(s._id).toLocaleDateString('en-US', { weekday: 'short' });
+            salesByDay[dayKey] = s;
+          }
+        });
+      }
+
+      const revData = baseConfig.revenueData.map((d) => {
+        const matchingSale = salesByDay[d.day];
+        if (matchingSale) {
+          return {
+            ...d,
+            revenue: matchingSale.sales || 0,
+            ordersCount: matchingSale.orders || 0,
+            revenueFormatted: formatPrice(matchingSale.sales || 0),
+            label: new Date(matchingSale._id).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
+          };
+        }
+        return {
+          ...d,
+          revenue: 0,
+          ordersCount: 0,
+          revenueFormatted: '₹0',
+        };
+      });
+
+      const maxSale = Math.max(...revData.map((d) => d.revenue), 0);
+      const chartScale = getDynamicChartScale(maxSale);
+
       return {
         ...baseConfig,
         kpis: {
@@ -670,6 +733,8 @@ export default function AdminDashboard() {
         revenueCard: {
           ...baseConfig.revenueCard,
           headlineAmount: formatPrice(summary.totalRevenue),
+          maxValue: chartScale.maxValue,
+          gridLines: chartScale.gridLines,
         },
         ordersOverview: {
           totalOrders: summary.totalOrders,
@@ -680,29 +745,29 @@ export default function AdminDashboard() {
             { id: 'confirmed', name: 'Confirmed', count: summary.confirmedOrders - Math.floor(summary.confirmedOrders * 0.3) - Math.floor(summary.confirmedOrders * 0.5), pct: summary.totalOrders ? Math.round(((summary.confirmedOrders - Math.floor(summary.confirmedOrders * 0.3) - Math.floor(summary.confirmedOrders * 0.5)) / summary.totalOrders) * 100) : 0, color: '#10b981' },
           ],
         },
-        revenueData: summary.dailySales?.length ? summary.dailySales.map((s) => ({
-          day: new Date(s._id).toLocaleDateString('en-US', { weekday: 'short' }),
-          revenue: s.sales,
-          ordersCount: s.orders,
-          revenueFormatted: formatPrice(s.sales),
-          label: new Date(s._id).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-        })) : baseConfig.revenueData.map(d => ({ ...d, revenue: 0, ordersCount: 0, revenueFormatted: '₹0' }))
+        revenueData: revData,
       };
     }
-    
-    // Completely clear baseConfig if summary is still loading or doesn't match
+
     return {
       ...baseConfig,
       kpis: { totalRevenue: '₹0', totalOrders: '0', customers: '0', totalProducts: '0' },
       revenueCard: { ...baseConfig.revenueCard, headlineAmount: '₹0' },
-      revenueData: baseConfig.revenueData.map(d => ({ ...d, revenue: 0, ordersCount: 0, revenueFormatted: '₹0' })),
-      ordersOverview: { totalOrders: 0, breakdown: baseConfig.ordersOverview.breakdown.map(b => ({...b, count: 0, pct: 0})) }
+      revenueData: baseConfig.revenueData.map((d) => ({ ...d, revenue: 0, ordersCount: 0, revenueFormatted: '₹0' })),
+      ordersOverview: { totalOrders: 0, breakdown: baseConfig.ordersOverview.breakdown.map((b) => ({ ...b, count: 0, pct: 0 })) },
     };
   }, [timeframe, summary]);
 
-  // Keep active index bounded when timeframe data length changes
+  // Set active bar index to the day with sales or keep bounded
   useEffect(() => {
-    setActiveBarIndex((prev) => Math.min(prev, (currentData.revenueData.length || 1) - 1));
+    if (currentData.revenueData?.length) {
+      const activeIdx = currentData.revenueData.findIndex((d) => d.revenue > 0);
+      if (activeIdx !== -1) {
+        setActiveBarIndex(activeIdx);
+      } else {
+        setActiveBarIndex((prev) => Math.min(prev, currentData.revenueData.length - 1));
+      }
+    }
   }, [timeframe, currentData]);
 
   // Sparkline SVGs for KPI Cards without overflow leakage
@@ -837,7 +902,7 @@ export default function AdminDashboard() {
               <div className={`${styles.kpiMiniIcon} ${styles.green}`}>
                 <Users size={16} />
               </div>
-              <span className={styles.kpiLabel}>Customers</span>
+              <span className={styles.kpiLabel}>Users</span>
             </div>
             <div className={styles.kpiVal}>{currentData.kpis.customers}</div>
           </div>

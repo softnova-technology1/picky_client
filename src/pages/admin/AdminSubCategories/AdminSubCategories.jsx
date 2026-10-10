@@ -40,7 +40,6 @@ import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useUiStore } from '../../../store/uiStore';
-import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data/categoryMockData';
 import { adminService } from '../../../services/admin.service';
 import { categoryService } from '../../../services/category.service';
 

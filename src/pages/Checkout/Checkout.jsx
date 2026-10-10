@@ -7,9 +7,8 @@ import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { orderService } from '../../services/order.service';
 import { authService } from '../../services/auth.service';
-import { addOrderToStore } from '../../data';
 import { formatPrice } from '../../utils/formatPrice';
-import { MOCK_COUPONS } from '../../data/adminMockData';
+import { useCouponStore } from '../../store/couponStore';
 import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
 import {
@@ -52,7 +51,7 @@ export default function Checkout() {
   const { items, updateQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
   const { user, updateUser } = useAuthStore();
   const { showToast } = useUiStore();
-  const { addOrder } = useOrderStore();
+  const { coupons } = useCouponStore();
 
   // Workflow step: 1 = 'checkout' (Shipping & Delivery Form), 2 = 'payment' (Payment Method & Order Summary)
   const [checkoutStep, setCheckoutStep] = useState(1);
@@ -218,18 +217,19 @@ export default function Checkout() {
       return;
     }
 
-    // Find matching active coupon from MOCK_COUPONS
-    const matched = MOCK_COUPONS.find(
-      (c) => c.code.toUpperCase() === code && c.isActive
+    // Find matching active coupon from live coupon store
+    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
+    const matched = availableCoupons.find(
+      (c) => c.code.toUpperCase() === code && c.isActive !== false
     );
 
     if (!matched) {
-      const inactive = MOCK_COUPONS.find((c) => c.code.toUpperCase() === code);
+      const inactive = availableCoupons.find((c) => c.code.toUpperCase() === code);
       if (inactive) {
         setPromoError(`Coupon "${code}" has expired or is no longer active.`);
       } else {
-        const activeCodes = MOCK_COUPONS.filter((c) => c.isActive).map((c) => c.code).join(', ');
-        setPromoError(`Invalid coupon. Try: ${activeCodes}`);
+        const activeCodes = availableCoupons.filter((c) => c.isActive !== false).map((c) => c.code).join(', ');
+        setPromoError(activeCodes ? `Invalid coupon. Try: ${activeCodes}` : 'Invalid coupon code.');
       }
       showToast('Coupon code is invalid or inactive', 'error');
       return;
@@ -471,8 +471,6 @@ export default function Checkout() {
                     createdAt: new Date().toISOString(),
                   };
 
-                  addOrderToStore(finalOrder);
-                  addOrder(finalOrder);
                   clearCart();
                   setLoading(false);
                   showToast('🎉 Payment Successful! Order placed successfully.', 'success');
@@ -501,8 +499,6 @@ export default function Checkout() {
                     courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
                     createdAt: new Date().toISOString(),
                   };
-                  addOrderToStore(fallbackOrder);
-                  addOrder(fallbackOrder);
                   clearCart();
                   setLoading(false);
                   showToast('🎉 Payment Successful! Order placed successfully.', 'success');
@@ -601,8 +597,6 @@ export default function Checkout() {
       console.warn('Backend order save notice:', apiErr?.message || apiErr);
     }
 
-    addOrderToStore(placedOrder);
-    addOrder(placedOrder);
     clearCart();
     setLoading(false);
     showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');

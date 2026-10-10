@@ -24,6 +24,7 @@ import {
 
 const CATEGORY_LUCIDE_ICONS = {
   'all': Store,
+  'fashion': Shirt,
   'womens-fashion': Shirt,
   'home-kitchen': UtensilsCrossed,
   'artificial-jewellery': Gem,

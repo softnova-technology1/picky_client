@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
-import { getOrderById } from '../../data';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import { CheckCircle2, Package, Truck, ArrowRight, ShoppingBag, ShieldCheck, Sparkles, Check } from 'lucide-react';
@@ -11,7 +10,7 @@ import styles from './OrderSuccess.module.css';
 
 export default function OrderSuccess() {
   const { id } = useParams();
-  const [order, setOrder] = useState(() => getOrderById(id));
+  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,16 +19,11 @@ export default function OrderSuccess() {
         setLoading(true);
         const res = await orderService.getById(id);
         const data = res?.data || res;
-        if (data && data.orderNumber) {
+        if (data && (data.orderNumber || data._id)) {
           setOrder(data);
-        } else {
-          const fallback = getOrderById(id);
-          if (fallback) setOrder(fallback);
         }
       } catch (err) {
-        console.warn('Failed to load order details:', err);
-        const fallback = getOrderById(id);
-        if (fallback) setOrder(fallback);
+        console.warn('Failed to load order details from server:', err);
       } finally {
         setLoading(false);
       }

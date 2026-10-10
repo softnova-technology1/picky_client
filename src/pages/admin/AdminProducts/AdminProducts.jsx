@@ -27,11 +27,12 @@ import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
-import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from '../../../data';
 
 const PREDEFINED_TAGS = [
-  'Traditional', 'Handloom', 'Cotton', 'Festive', 'Premium', 
-  'Silk', 'Daily Wear', 'Party Wear', 'Organic'
+  'Limited Deals',
+  'Trending Now',
+  'New Arrivals',
+  'Best Sellers',
 ];
 
 export default function AdminProducts() {
@@ -186,7 +187,7 @@ export default function AdminProducts() {
       price: p.price ? String(p.price) : '',
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       description: p.description || '',
-      tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
+      tags: Array.isArray(p.tags) && p.tags.length > 0 ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : ''),
       stock: p.stock !== undefined ? String(p.stock) : '',
       isFeatured: !!p.isFeatured,
       isActive: true,
@@ -307,7 +308,9 @@ export default function AdminProducts() {
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
 
-    const tagsArray = formData.tags.split(',').map((t) => t.trim()).filter(Boolean);
+    const singleTag = formData.tags ? formData.tags.split(',')[0].trim() : '';
+    const tagsArray = singleTag ? [singleTag] : [];
+    payload.append('tags', singleTag);
     tagsArray.forEach((t) => payload.append('tags[]', t));
 
     // Serialize category characteristics
@@ -354,17 +357,20 @@ export default function AdminProducts() {
     try {
       setModalLoading(true);
       if (editingProduct) {
-        await adminService.updateProduct(editingProduct._id, payload);
+        const res = await adminService.updateProduct(editingProduct._id, payload);
+        const updated = res?.data?.data || res?.data;
         setProducts((prev) =>
           prev.map((p) =>
             p._id === editingProduct._id
               ? {
                   ...p,
+                  ...(updated || {}),
                   name: formData.name,
                   sku: formData.sku ? formData.sku.trim().toUpperCase() : p.sku,
                   price: Number(formData.price),
                   discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
                   stock: Number(formData.stock),
+                  tags: tagsArray,
                   isFeatured: formData.isFeatured,
                   images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : p.images,
                   category: categories.find((c) => c._id === formData.category) || p.category,
@@ -374,9 +380,11 @@ export default function AdminProducts() {
           )
         );
         showToast('Product updated successfully', 'success');
+        loadData();
       } else {
         const res = await adminService.createProduct(payload);
-        const newProduct = res?.data?.data || res?.data || {
+        const updated = res?.data?.data || res?.data;
+        const newProduct = updated || {
           _id: `prod_${Date.now()}`,
           name: formData.name,
           sku: formData.sku ? formData.sku.trim().toUpperCase() : `PK-${Date.now().toString(36).toUpperCase()}`,
@@ -384,6 +392,7 @@ export default function AdminProducts() {
           price: Number(formData.price),
           discountPrice: formData.discountPrice ? Number(formData.discountPrice) : null,
           stock: Number(formData.stock),
+          tags: tagsArray,
           isFeatured: formData.isFeatured,
           category: categories.find((c) => c._id === formData.category) || { name: 'General' },
           subCategory: { name: formData.subCategory || 'General' },
@@ -391,6 +400,7 @@ export default function AdminProducts() {
         };
         setProducts((prev) => [newProduct, ...prev]);
         showToast('Product created successfully', 'success');
+        loadData();
       }
       setViewMode('table');
     } catch (err) {
@@ -1361,16 +1371,38 @@ export default function AdminProducts() {
                   </div>
                 )}
 
-                {/* 6. Tags & Options */}
+                {/* 6. Tags & Options (Single Tag Only) */}
                 <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
-                    TAGS (COMMA-SEPARATED)
-                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      PRODUCT TAG (SELECT ONLY ONE)
+                    </label>
+                    {formData.tags && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, tags: '' })}
+                        style={{
+                          fontSize: '0.68rem',
+                          color: '#ef4444',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          padding: 0
+                        }}
+                      >
+                        Remove Tag
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
-                    placeholder="e.g. saree, traditional, cotton, festive"
+                    placeholder="Select or enter 1 tag (e.g. Limited Deals, Trending Now, New Arrivals, Best Sellers)"
                     value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value.split(',')[0].trim();
+                      setFormData({ ...formData, tags: val });
+                    }}
                     style={{
                       width: '100%',
                       padding: '0.68rem 0.9rem',
@@ -1386,22 +1418,14 @@ export default function AdminProducts() {
                   />
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                     {PREDEFINED_TAGS.map(tag => {
-                      const isSelected = formData.tags.toLowerCase().includes(tag.toLowerCase());
+                      const isSelected = formData.tags.trim().toLowerCase() === tag.toLowerCase();
                       return (
                         <button
                           key={tag}
                           type="button"
                           onClick={() => {
-                            let currentTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-                            const tagLower = tag.toLowerCase();
-                            const existingIdx = currentTags.findIndex(t => t.toLowerCase() === tagLower);
-                            
-                            if (existingIdx >= 0) {
-                              currentTags.splice(existingIdx, 1);
-                            } else {
-                              currentTags.push(tag);
-                            }
-                            setFormData({ ...formData, tags: currentTags.join(', ') });
+                            const newTag = isSelected ? '' : tag;
+                            setFormData({ ...formData, tags: newTag });
                           }}
                           style={{
                             fontSize: '0.72rem',
@@ -1412,7 +1436,7 @@ export default function AdminProducts() {
                             background: isSelected ? '#f3e8ff' : '#ffffff',
                             color: isSelected ? '#6d28d9' : '#475569',
                             cursor: 'pointer',
-                            fontWeight: isSelected ? 600 : 400,
+                            fontWeight: isSelected ? 700 : 400,
                             transition: 'all 0.15s ease'
                           }}
                         >

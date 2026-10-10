@@ -24,6 +24,7 @@ import {
 // Pure Lucide icon mapping for all 10 departments + All Departments
 const CATEGORY_LUCIDE_ICONS = {
   'all': Store,
+  'fashion': Shirt,
   'womens-fashion': Shirt,
   'home-kitchen': UtensilsCrossed,
   'artificial-jewellery': Gem,

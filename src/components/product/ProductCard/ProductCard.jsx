@@ -88,28 +88,37 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     : 0;
 
   const getBadgeInfo = () => {
-    const customBadge = badgeText || product.badge;
-    if (customBadge) {
-      const upper = customBadge.toUpperCase();
-      if (upper.includes('HOT') || upper.includes('TREND')) {
-        return { text: upper, icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+    let customBadge = badgeText || product.badge;
+
+    if (!customBadge && Array.isArray(product.tags) && product.tags.length > 0) {
+      const priorityTags = ['limited deals', 'trending now', 'new arrivals', 'best sellers'];
+      const matched = product.tags.find((t) =>
+        priorityTags.some((pt) => t.toLowerCase().includes(pt) || pt.includes(t.toLowerCase()))
+      );
+      if (matched) {
+        customBadge = matched;
       }
-      if (upper.includes('POPULAR') || upper.includes('BEST')) {
-        return { text: upper, icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
-      }
-      if (upper.includes('SPECIAL') || upper.includes('EDITION')) {
-        return { text: upper, icon: Zap, color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' };
-      }
-      return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
     }
-    if (product.isTrending) return { text: 'TRENDING', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
-    if (discountPercent >= 50) return { text: 'MEGA DEAL', icon: Zap, color: '#6d28d9', bg: '#f3e8ff', border: '#d8b4fe' };
-    if (discountPercent >= 40) return { text: 'POPULAR', icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
-    if (discountPercent >= 25) return { text: 'HOT PICK', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
-    return { text: 'SELLING FAST', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
+
+    if (!customBadge) return null;
+
+    const upper = customBadge.toUpperCase().trim();
+    if (upper.includes('LIMITED') || upper.includes('DEAL')) {
+      return { text: 'LIMITED DEALS', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
+    }
+    if (upper.includes('TREND')) {
+      return { text: 'TRENDING NOW', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+    }
+    if (upper.includes('NEW') || upper.includes('ARRIVAL')) {
+      return { text: 'NEW ARRIVALS', icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
+    }
+    if (upper.includes('BEST') || upper.includes('SELLER')) {
+      return { text: 'BEST SELLERS', icon: Flame, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+    }
+    return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
   };
   const badgeInfo = getBadgeInfo();
-  const BadgeIcon = badgeInfo.icon;
+  const BadgeIcon = badgeInfo?.icon;
 
   return (
     <div className="ref-product-card">

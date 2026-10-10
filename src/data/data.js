@@ -93,8 +93,9 @@ export const storeInfo = {
 
 // Slug alias map: URL slug → canonical data slug
 export const SLUG_ALIAS_MAP = {
-  'women-fashion': 'womens-fashion',
-  'womens-fashion': 'womens-fashion',
+  'fashion': 'fashion',
+  'womens-fashion': 'fashion',
+  'women-fashion': 'fashion',
   'home-kitchen': 'home-kitchen',
   'artificial-jewellery': 'artificial-jewellery',
   'beauty-personal-care': 'beauty-personal-care',
@@ -265,28 +266,10 @@ export function addOrderToStore(newOrder) {
   if (!existing) {
     mockOrders.unshift(newOrder);
   }
-  try {
-    const saved = JSON.parse(localStorage.getItem('picky_created_orders') || '[]');
-    const isSaved = saved.some((o) => (o._id || o.id || o.orderNumber) === pId);
-    if (!isSaved) {
-      saved.unshift(newOrder);
-      localStorage.setItem('picky_created_orders', JSON.stringify(saved));
-    }
-  } catch (_) {}
 }
 
 export function getOrders() {
-  let localCreated = [];
-  try {
-    localCreated = JSON.parse(localStorage.getItem('picky_created_orders') || '[]');
-  } catch (_) {}
-  const combined = [...localCreated, ...mockOrders];
-  const uniqueMap = new Map();
-  combined.forEach((o) => {
-    const key = o._id || o.id || o.orderNumber;
-    if (!uniqueMap.has(key)) uniqueMap.set(key, o);
-  });
-  return Array.from(uniqueMap.values());
+  return mockOrders;
 }
 
 export function getOrderById(id) {

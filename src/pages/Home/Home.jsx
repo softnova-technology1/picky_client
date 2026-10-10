@@ -5,13 +5,13 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import ProductGrid from '../../components/product/ProductGrid';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
-import { promoOffer, valuePropositions, products as fallbackProducts, REVIEWS_DATA } from '../../data';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
+import { REVIEWS_DATA } from '../../data/reviewsData';
 import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye, Zap } from 'lucide-react';
 import '../../styles/home-premium.css';
 import '../../styles/mobile-responsive.css';
@@ -179,6 +179,7 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
+  const [dealProducts, setDealProducts] = useState([]);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -319,22 +320,45 @@ export default function Home() {
     async function loadData() {
       setLoading(true);
       try {
-        const prodRes = await productService.list({ sort: 'featured', limit: 16 });
+        const prodRes = await productService.list({ limit: 50 });
         const pItems = prodRes?.data?.data || prodRes?.data || [];
         if (Array.isArray(pItems) && pItems.length > 0) {
-          setFeaturedProducts(pItems.slice(0, 8)); // Best sellers
-          setTrendingProducts(pItems.slice(0, 10)); // Trending horizontal
-          setNewArrivals(pItems); // New arrivals
+          // 1. Trending Now filter (matches 'trending now', 'trend', or isTrending)
+          const trending = pItems.filter((p) =>
+            p.tags?.some((t) => t.toLowerCase().includes('trend')) || p.isTrending
+          );
+          setTrendingProducts(trending.length > 0 ? trending : pItems.slice(0, 10));
+
+          // 2. Best Sellers filter (matches 'best sellers', 'best', 'seller')
+          const bestSellers = pItems.filter((p) =>
+            p.tags?.some((t) => t.toLowerCase().includes('best') || t.toLowerCase().includes('seller'))
+          );
+          setFeaturedProducts(bestSellers.length > 0 ? bestSellers : pItems.slice(0, 8));
+
+          // 3. New Arrivals filter (matches 'new arrivals', 'new', 'arrival')
+          const arrivals = pItems.filter((p) =>
+            p.tags?.some((t) => t.toLowerCase().includes('new') || t.toLowerCase().includes('arrival'))
+          );
+          setNewArrivals(arrivals.length > 0 ? arrivals : pItems);
+
+          // 4. Limited Deals filter (matches 'limited deals', 'limited', 'deal')
+          const deals = pItems.filter((p) =>
+            p.tags?.some((t) => t.toLowerCase().includes('deal') || t.toLowerCase().includes('limited'))
+          );
+          const fallbackDeals = pItems.filter((p) => p && p.discountPrice && p.discountPrice < p.price);
+          setDealProducts(deals.length > 0 ? deals : (fallbackDeals.length > 0 ? fallbackDeals : pItems));
         } else {
           setFeaturedProducts([]);
           setTrendingProducts([]);
           setNewArrivals([]);
+          setDealProducts([]);
         }
       } catch (err) {
         console.error('Home load error:', err);
         setFeaturedProducts([]);
         setTrendingProducts([]);
         setNewArrivals([]);
+        setDealProducts([]);
       } finally {
         setLoading(false);
       }
@@ -354,10 +378,8 @@ export default function Home() {
 
   // ── Flash Deals / Limited Time Deals 15-Second Auto-Rotation ─────────
   const allDealProducts = useMemo(() => {
-    const list = newArrivals || [];
-    const discounted = list.filter((p) => p && p.discountPrice && p.discountPrice < p.price);
-    return discounted.length >= 6 ? discounted : list;
-  }, [newArrivals]);
+    return dealProducts.length > 0 ? dealProducts : newArrivals;
+  }, [dealProducts, newArrivals]);
 
   // Spotlight rotation list (prioritizes high discount products)
   const spotlightProductsList = useMemo(() => {
@@ -736,10 +758,7 @@ export default function Home() {
           <div className="hp-new-arrivals-grid">
             {(filteredArrivals.length > 0 ? filteredArrivals : newArrivals).slice(0, 5).map((product, i) => (
               <FadeUp key={`${product._id || product.id || 'arrival'}-${i}`} delay={i * 60}>
-                <ProductCard
-                  product={product}
-                  badgeText={['HOT DROP', 'NEW ARRIVAL', 'TRENDING', 'SPECIAL EDITION', 'POPULAR'][i % 5]}
-                />
+                <ProductCard product={product} />
               </FadeUp>
             ))}
           </div>

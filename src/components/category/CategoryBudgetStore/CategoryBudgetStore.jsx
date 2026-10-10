@@ -7,12 +7,12 @@ export default function CategoryBudgetStore() {
   // Top 4 Flagship Store Categories in Cinematic Asymmetrical Bento Grid
   const categoryCards = [
     {
-      id: 'cat-womens-fashion',
+      id: 'cat-fashion',
       tag: "FLAGSHIP • WOMEN'S FASHION",
       title: 'Elegance in Every Thread',
       subtext: 'Handloom Sungudi silks, embroidered festive Anarkalis & breathable cotton kurtis.',
       btnLabel: 'Explore Fashion',
-      link: '/categories/womens-fashion',
+      link: '/categories/fashion',
       isWide: true,
       badgeBg: 'rgba(168, 85, 247, 0.28)',
       badgeColor: '#f3e8ff',

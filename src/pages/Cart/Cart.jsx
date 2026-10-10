@@ -8,8 +8,6 @@ import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { cartService } from '../../services/cart.service';
 import { formatPrice } from '../../utils/formatPrice';
-import { MOCK_PRODUCTS } from '../../data/adminMockData';
-import { DEFAULT_WISHLIST_ITEMS } from '../Wishlist/Wishlist';
 import {
   ShoppingCart,
   Trash2,
@@ -33,15 +31,6 @@ const getItemSizes = (item) => {
   if (Array.isArray(item.availableSizes) && item.availableSizes.length > 0) return item.availableSizes;
   if (Array.isArray(item.sizes) && item.sizes.length > 0) return item.sizes;
   if (Array.isArray(item.variants?.options) && item.variants.options.length > 0) return item.variants.options;
-  const found = MOCK_PRODUCTS.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
-  if (found) {
-    if (Array.isArray(found.variants?.options) && found.variants.options.length > 0) return found.variants.options;
-    if (Array.isArray(found.sizes) && found.sizes.length > 0) return found.sizes;
-  }
-  const foundMock = DEFAULT_WISHLIST_ITEMS?.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
-  if (foundMock && Array.isArray(foundMock.sizes) && foundMock.sizes.length > 0) {
-    return foundMock.sizes;
-  }
   return [];
 };
 
@@ -50,15 +39,6 @@ const getItemColors = (item) => {
   if (Array.isArray(item.availableColors) && item.availableColors.length > 0) return item.availableColors;
   if (Array.isArray(item.colors) && item.colors.length > 0) return item.colors;
   if (Array.isArray(item.variants?.colors) && item.variants.colors.length > 0) return item.variants.colors;
-  const found = MOCK_PRODUCTS.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
-  if (found) {
-    if (Array.isArray(found.variants?.colors) && found.variants.colors.length > 0) return found.variants.colors;
-    if (Array.isArray(found.colors) && found.colors.length > 0) return found.colors;
-  }
-  const foundMock = DEFAULT_WISHLIST_ITEMS?.find((p) => p._id === item.productId || p._id === item._id || p.slug === item.slug);
-  if (foundMock && Array.isArray(foundMock.colors) && foundMock.colors.length > 0) {
-    return foundMock.colors;
-  }
   return [];
 };
 

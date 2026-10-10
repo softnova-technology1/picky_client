@@ -212,16 +212,8 @@ export default function AdminOrders() {
       try {
         const res = await adminService.getOrders({ limit: 100 });
         const dbOrders = res?.data?.data || res?.data;
-        if (Array.isArray(dbOrders) && dbOrders.length > 0 && isMounted) {
-          const dbOrderIds = new Set(dbOrders.map((o) => o._id || o.id));
-          const dbOrderNums = new Set(dbOrders.map((o) => o.orderNumber));
-          const merged = [...dbOrders];
-          storeOrders.forEach((so) => {
-            if (!dbOrderIds.has(so._id || so.id) && !dbOrderNums.has(so.orderNumber)) {
-              merged.push(so);
-            }
-          });
-          useOrderStore.getState().setOrders(merged);
+        if (Array.isArray(dbOrders) && isMounted) {
+          useOrderStore.getState().setOrders(dbOrders);
         }
       } catch (err) {
         console.warn('Backend orders fetch notice:', err?.message || err);

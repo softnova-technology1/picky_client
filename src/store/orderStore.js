@@ -1,19 +1,14 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { MOCK_ORDERS_EXTENDED } from '../data/adminMockData';
 
 // ─── Picky Shared Order Store ────────────────────────────────────────────────
-// Single source of truth for orders.
-// Persists in localStorage and syncs with backend API.
+// In-memory store synced directly with backend MongoDB database (NO localStorage).
 
-export const useOrderStore = create(
-  persist(
-    (set, get) => ({
-      orders: [...MOCK_ORDERS_EXTENDED],
-      activeOrder: null,
-      trackingInfo: null,
+export const useOrderStore = create((set, get) => ({
+  orders: [],
+  activeOrder: null,
+  trackingInfo: null,
 
-  // ── Customer: Add a newly placed order (from Checkout) ──────────────────────
+  // ── Customer: Add a newly placed order (in-memory) ───────────────────────────
   addOrder: (order) => {
     set((state) => ({ orders: [order, ...state.orders] }));
   },
@@ -28,7 +23,6 @@ export const useOrderStore = create(
   },
 
   // ── Admin: Update order status ────────────────────────────────────────────────
-  // Progression: confirmed → shipped → delivered | cancelled (terminal)
   updateOrderStatus: (orderId, newStatus) => {
     set((state) => ({
       orders: state.orders.map((o) =>
@@ -55,7 +49,7 @@ export const useOrderStore = create(
     }));
   },
 
-  // ── Admin: Full order update (status + AWB together) ─────────────────────────
+  // ── Admin: Full order update ────────────────────────────────────────────────
   updateOrder: (orderId, updates) => {
     set((state) => ({
       orders: state.orders.map((o) =>
@@ -66,14 +60,8 @@ export const useOrderStore = create(
     }));
   },
 
-      setOrders: (orders) => set({ orders }),
-      setActiveOrder: (order) => set({ activeOrder: order }),
-      setTrackingInfo: (info) => set({ trackingInfo: info }),
-      clearOrder: () => set({ activeOrder: null, trackingInfo: null }),
-    }),
-    {
-      name: 'picky_order_store',
-      partialize: (state) => ({ orders: state.orders }),
-    }
-  )
-);
+  setOrders: (orders) => set({ orders }),
+  setActiveOrder: (order) => set({ activeOrder: order }),
+  setTrackingInfo: (info) => set({ trackingInfo: info }),
+  clearOrder: () => set({ activeOrder: null, trackingInfo: null }),
+}));

@@ -33,7 +33,8 @@ import {
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
-import { MOCK_PRODUCTS, MOCK_ORDERS, MOCK_CUSTOMERS } from '../../../data/adminMockData';
+import { adminService } from '../../../services/admin.service';
+import { productService } from '../../../services/product.service';
 import Toast from '../../ui/Toast';
 import '../../../styles/admin.css';
 
@@ -51,6 +52,8 @@ export default function AdminLayout({ children, title }) {
   const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
 
@@ -146,33 +149,50 @@ export default function AdminLayout({ children, title }) {
   const adminName = user?.name || 'Aglishwaran S';
   const adminEmail = user?.email || 'aglish@softnova.dev';
 
-  // Instant Search Results
+  // Instant Search Results from live database
   const trimmed = searchQuery.trim().toLowerCase();
-  const searchResults = trimmed.length > 0 ? {
-    orders: (MOCK_ORDERS || []).filter((o) => {
-      const ordNum = (o.orderNumber || '').toLowerCase();
-      const custName = (o.customer?.name || o.customerName || o.shippingAddress?.fullName || '').toLowerCase();
-      const city = (o.shippingAddress?.city || o.shippingCity || '').toLowerCase();
-      const phone = (o.customer?.phone || '').toLowerCase();
-      return ordNum.includes(trimmed) || custName.includes(trimmed) || city.includes(trimmed) || phone.includes(trimmed);
-    }).slice(0, 3),
-    products: (MOCK_PRODUCTS || []).filter((p) => {
-      const pName = (p.name || '').toLowerCase();
-      const catName = (typeof p.category === 'object' ? (p.category?.name || '') : (p.category || '')).toLowerCase();
-      const subCatName = (typeof p.subCategory === 'object' ? (p.subCategory?.name || '') : (p.subCategory || '')).toLowerCase();
-      return pName.includes(trimmed) || catName.includes(trimmed) || subCatName.includes(trimmed);
-    }).slice(0, 3),
-    customers: (MOCK_CUSTOMERS || []).filter((c) => {
-      const cName = (c.name || '').toLowerCase();
-      const cEmail = (c.email || '').toLowerCase();
-      const cPhone = (c.phone || c.mobile || '').toLowerCase();
-      const cCity = (c.city || '').toLowerCase();
-      return cName.includes(trimmed) || cEmail.includes(trimmed) || cPhone.includes(trimmed) || cCity.includes(trimmed);
-    }).slice(0, 3),
-  } : null;
+
+  useEffect(() => {
+    if (!trimmed) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const [ordersRes, productsRes, customersRes] = await Promise.all([
+          adminService.getOrders({ search: trimmed, limit: 3 }).catch(() => null),
+          productService.list({ search: trimmed, limit: 3 }).catch(() => null),
+          adminService.getCustomers({ search: trimmed, limit: 3 }).catch(() => null),
+        ]);
+
+        const oRaw = ordersRes?.data?.orders || ordersRes?.data || ordersRes;
+        const pRaw = productsRes?.data?.products || productsRes?.data || productsRes;
+        const cRaw = customersRes?.data?.customers || customersRes?.data || customersRes;
+
+        const oList = Array.isArray(oRaw) ? oRaw : (Array.isArray(oRaw?.data) ? oRaw.data : []);
+        const pList = Array.isArray(pRaw) ? pRaw : (Array.isArray(pRaw?.data) ? pRaw.data : []);
+        const cList = Array.isArray(cRaw) ? cRaw : (Array.isArray(cRaw?.data) ? cRaw.data : []);
+
+        setSearchResults({
+          orders: oList.slice(0, 3),
+          products: pList.slice(0, 3),
+          customers: cList.slice(0, 3),
+        });
+      } catch (err) {
+        setSearchResults({ orders: [], products: [], customers: [] });
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [trimmed]);
 
   const totalResultsCount = searchResults
-    ? searchResults.orders.length + searchResults.products.length + searchResults.customers.length
+    ? (searchResults.orders?.length || 0) + (searchResults.products?.length || 0) + (searchResults.customers?.length || 0)
     : 0;
 
   const handleSearchSelect = (url) => {
@@ -304,16 +324,16 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Inventory</span>}
           </NavLink>
 
-          {/* 7. Customers */}
+          {/* 7. Users */}
           <NavLink
             to={`${ADMIN}/customers`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Customers"
+            title="Users"
           >
             <div className="admin-nav-icon-wrap">
               <Users size={19} />
             </div>
-            {!collapsed && <span className="admin-nav-label">Customers</span>}
+            {!collapsed && <span className="admin-nav-label">Users</span>}
           </NavLink>
 
           {/* 8. Discount & Coupons */}
@@ -460,17 +480,22 @@ export default function AdminLayout({ children, title }) {
             {/* Quick Live Search Results Dropdown */}
             {searchOpen && trimmed.length > 0 && (
               <div className="admin-search-results-dropdown">
-                {totalResultsCount === 0 ? (
+                {searchLoading ? (
+                  <div className="admin-search-empty" style={{ padding: '1rem', color: '#64748b' }}>
+                    <span>Searching database...</span>
+                  </div>
+                ) : totalResultsCount === 0 ? (
                   <div className="admin-search-empty">
                     <span>No matches found for "{searchQuery}"</span>
                   </div>
                 ) : (
                   <>
-                    {searchResults?.orders.length > 0 && (
+                    {searchResults?.orders?.length > 0 && (
                       <div className="admin-search-group">
                         <span className="admin-search-group-title">Orders</span>
                         {searchResults.orders.map((ord) => {
-                          const orderCustomer = ord.customer?.name || ord.customerName || ord.shippingAddress?.fullName || 'Customer';
+                          const orderCustomer = ord.customer?.name || ord.user?.name || ord.customerName || ord.shippingAddress?.fullName || 'Customer';
+                          const orderAmount = ord.pricing?.finalTotal ?? ord.total ?? ord.totalAmount ?? 0;
                           return (
                             <div
                               key={ord._id || ord.orderNumber}
@@ -480,7 +505,7 @@ export default function AdminLayout({ children, title }) {
                               <ShoppingBag size={14} className="admin-search-row-icon" />
                               <div className="admin-search-row-text">
                                 <span className="admin-search-row-main">{ord.orderNumber} — {orderCustomer}</span>
-                                <span className="admin-search-row-sub">₹{ord.totalAmount?.toLocaleString()} • {ord.status}</span>
+                                <span className="admin-search-row-sub">₹{Number(orderAmount).toLocaleString()} • {ord.status}</span>
                               </div>
                               <span className="admin-search-badge badge-order">Order</span>
                             </div>
@@ -489,11 +514,12 @@ export default function AdminLayout({ children, title }) {
                       </div>
                     )}
 
-                    {searchResults?.products.length > 0 && (
+                    {searchResults?.products?.length > 0 && (
                       <div className="admin-search-group">
                         <span className="admin-search-group-title">Products</span>
                         {searchResults.products.map((p) => {
                           const catName = typeof p.category === 'object' ? p.category?.name : (p.category || 'Product');
+                          const price = p.discountPrice || p.price || 0;
                           return (
                             <div
                               key={p._id || p.id}
@@ -503,7 +529,7 @@ export default function AdminLayout({ children, title }) {
                               <Package size={14} className="admin-search-row-icon" />
                               <div className="admin-search-row-text">
                                 <span className="admin-search-row-main">{p.name}</span>
-                                <span className="admin-search-row-sub">₹{p.price?.toLocaleString()} • {catName}</span>
+                                <span className="admin-search-row-sub">₹{Number(price).toLocaleString()} • {catName}</span>
                               </div>
                               <span className="admin-search-badge badge-product">Product</span>
                             </div>
@@ -512,9 +538,9 @@ export default function AdminLayout({ children, title }) {
                       </div>
                     )}
 
-                    {searchResults?.customers.length > 0 && (
+                    {searchResults?.customers?.length > 0 && (
                       <div className="admin-search-group">
-                        <span className="admin-search-group-title">Customers</span>
+                        <span className="admin-search-group-title">Users</span>
                         {searchResults.customers.map((c) => (
                           <div
                             key={c._id || c.id}
@@ -524,9 +550,9 @@ export default function AdminLayout({ children, title }) {
                             <Users size={14} className="admin-search-row-icon" />
                             <div className="admin-search-row-text">
                               <span className="admin-search-row-main">{c.name}</span>
-                              <span className="admin-search-row-sub">{c.phone || c.mobile || c.email} • {c.city || 'Tamil Nadu'}</span>
+                              <span className="admin-search-row-sub">{c.phone || c.email || 'User'} • {c.city || 'Tamil Nadu'}</span>
                             </div>
-                            <span className="admin-search-badge badge-customer">Customer</span>
+                            <span className="admin-search-badge badge-customer">User</span>
                           </div>
                         ))}
                       </div>

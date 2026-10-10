@@ -13,13 +13,13 @@ export const adminService = {
   updateOrderStatus: (id, data) => api.patch(`/orders/admin/${id}/status`, data),
 
   // Products
-  createProduct: (formData) => api.post('/products', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  updateProduct: (id, formData) => api.put(`/products/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  createProduct: (formData) => api.post('/products', formData),
+  updateProduct: (id, formData) => api.put(`/products/${id}`, formData),
   deleteProduct: (id) => api.delete(`/products/${id}`),
 
   // Categories
-  createCategory: (formData) => api.post('/categories', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  updateCategory: (id, formData) => api.put(`/categories/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  createCategory: (formData) => api.post('/categories', formData),
+  updateCategory: (id, formData) => api.put(`/categories/${id}`, formData),
   updateCategoryCharacteristics: (id, characteristics) => api.patch(`/categories/${id}/characteristics`, { characteristics }),
   deleteCategory: (id) => api.delete(`/categories/${id}`),
 

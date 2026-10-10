@@ -44,27 +44,7 @@ export default function Account() {
         setLoadingOrders(true);
         const res = await orderService.list().catch(() => null);
         const serverList = res?.data?.data || res?.data || [];
-        const localList = useOrderStore.getState().orders || [];
-
-        // Combine server orders with any locally stored orders, deduplicating by ID/orderNumber
-        const orderMap = new Map();
-        if (Array.isArray(serverList)) {
-          serverList.forEach((o) => {
-            const key = o._id || o.id || o.orderNumber;
-            if (key) orderMap.set(String(key), o);
-          });
-        }
-        if (Array.isArray(localList)) {
-          localList.forEach((o) => {
-            const key = o._id || o.id || o.orderNumber;
-            if (key && !orderMap.has(String(key))) {
-              orderMap.set(String(key), o);
-            }
-          });
-        }
-
-        const merged = Array.from(orderMap.values());
-        setOrders(merged);
+        setOrders(Array.isArray(serverList) ? serverList : []);
       } catch (err) {
         console.warn('Account orders load error:', err);
         const fallback = useOrderStore.getState().orders || [];
@@ -559,16 +539,13 @@ export default function Account() {
                                   </strong>
                                 </div>
 
-                                <div style={{ height: '24px', width: '1px', background: '#cbd5e1' }} />
-
-                                {order.trackingId ? (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#6d28d9', background: '#ede9fe', border: '1px solid #ddd6fe', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 700, boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)' }}>
-                                    💳 {order.courier || 'Express'}: {order.trackingId}
-                                  </div>
-                                ) : (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: '#047857', background: '#e6fffa', border: '1px solid #a7f3d0', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 700, boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)' }}>
-                                    ✓ 100% Prepaid Verified
-                                  </span>
+                                {order.trackingId && (
+                                  <>
+                                    <div style={{ height: '24px', width: '1px', background: '#cbd5e1' }} />
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#6d28d9', background: '#ede9fe', border: '1px solid #ddd6fe', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 700, boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)' }}>
+                                      💳 {order.courier || 'Express'}: {order.trackingId}
+                                    </div>
+                                  </>
                                 )}
                               </div>
 

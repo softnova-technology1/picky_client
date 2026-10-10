@@ -9,7 +9,6 @@ import Spinner from '../../../components/ui/Spinner';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
-import { MOCK_CATEGORIES } from '../../../data/categoryMockData';
 
 export default function AdminCategories() {
   const { showToast } = useUiStore();
@@ -105,30 +104,25 @@ export default function AdminCategories() {
     try {
       setModalLoading(true);
       if (editingCategory) {
-        await adminService.updateCategory(editingCategory._id, payload).catch(() => null);
-        setCategories((prev) =>
-          prev.map((c) =>
-            c._id === editingCategory._id
-              ? { ...c, name: formData.name, description: formData.description }
-              : c
-          )
-        );
+        const res = await adminService.updateCategory(editingCategory._id, payload);
+        const updatedCat = res?.data;
+        if (updatedCat) {
+          setCategories((prev) =>
+            prev.map((c) => (c._id === editingCategory._id ? updatedCat : c))
+          );
+        }
         showToast('Category updated successfully', 'success');
       } else {
-        const res = await adminService.createCategory(payload).catch(() => null);
-        const newCat = res?.data || {
-          _id: `cat_${Date.now()}`,
-          name: formData.name,
-          slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-          description: formData.description,
-          characteristics: [],
-          isActive: true,
-          image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300',
-        };
-        setCategories((prev) => [newCat, ...prev]);
+        const res = await adminService.createCategory(payload);
+        const newCat = res?.data;
+        if (newCat) {
+          setCategories((prev) => [newCat, ...prev]);
+        }
         showToast('Category created successfully', 'success');
       }
       setIsModalOpen(false);
+      setImageFile(null);
+      await loadData();
     } catch (err) {
       showToast(err.message || 'Failed to save category', 'error');
     } finally {
@@ -389,10 +383,22 @@ export default function AdminCategories() {
 
           <div className="form-group">
             <label className="form-label">Category Banner Image</label>
+            {(imageFile || editingCategory?.image) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <img
+                  src={imageFile ? URL.createObjectURL(imageFile) : editingCategory.image}
+                  alt="Category Banner Preview"
+                  style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                />
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  {imageFile ? 'Selected new image' : 'Current saved image'}
+                </span>
+              </div>
+            )}
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => setImageFile(e.target.files[0])}
+              onChange={(e) => setImageFile(e.target.files[0] || null)}
               className="form-input"
             />
           </div>

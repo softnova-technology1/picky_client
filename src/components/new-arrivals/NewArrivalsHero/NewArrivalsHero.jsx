@@ -3,26 +3,27 @@ import { Sparkles, ArrowRight, ShoppingCart, Star } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useUiStore } from '../../../store/uiStore';
 
-export default function NewArrivalsHero({ onExploreClick }) {
+export default function NewArrivalsHero({ onExploreClick, featuredProduct }) {
   const { addItem } = useCartStore();
   const { showToast } = useUiStore();
 
+  const displayProduct = featuredProduct || {
+    _id: 'featured_tech_hub',
+    id: 'featured_tech_2026',
+    name: 'Pro Wireless Headphones',
+    slug: 'pro-wireless-headphones',
+    price: 4999,
+    discountPrice: 2499,
+    image: '/images/pill_tech_product.jpg',
+    images: ['/images/pill_tech_product.jpg'],
+    category: { name: "Electronics", slug: 'electronics' },
+    stock: 45,
+  };
+
   const handleAddFeaturedLook = (e) => {
     e.preventDefault();
-    const featuredProduct = {
-      _id: 'featured_tech_hub',
-      id: 'featured_tech_2026',
-      name: 'Pro Wireless Headphones',
-      slug: 'pro-wireless-headphones',
-      price: 4999,
-      discountPrice: 2499,
-      image: '/images/pill_tech_product.jpg',
-      images: ['/images/pill_tech_product.jpg'],
-      category: { name: "Electronics", slug: 'electronics' },
-      stock: 45,
-    };
-    addItem(featuredProduct, 1);
-    showToast('Added "Pro Wireless Headphones" to cart! ✨', 'success');
+    addItem(displayProduct, 1);
+    showToast(`Added "${displayProduct.name}" to cart! ✨`, 'success');
   };
 
   return (
@@ -108,14 +109,14 @@ export default function NewArrivalsHero({ onExploreClick }) {
               <div className="featured-look-card-box">
                 <div className="featured-card-img">
                   <img
-                    src="/images/pill_tech_product.jpg"
-                    alt="Pro Wireless Headphones - Electronics"
+                    src={displayProduct.images?.[0] || displayProduct.image || '/images/pill_tech_product.jpg'}
+                    alt={displayProduct.name}
                   />
                 </div>
 
                 <div className="featured-card-meta">
-                  <h4 className="card-item-title">Pro Wireless Headphones</h4>
-                  <p className="card-item-sub">Premium Electronics</p>
+                  <h4 className="card-item-title">{displayProduct.name}</h4>
+                  <p className="card-item-sub">{displayProduct.category?.name || 'New Arrival'}</p>
 
                   <button
                     onClick={handleAddFeaturedLook}
@@ -124,7 +125,7 @@ export default function NewArrivalsHero({ onExploreClick }) {
                     title="Add to cart"
                   >
                     <ShoppingCart size={13} />
-                    <span>₹2,499</span>
+                    <span>₹{(displayProduct.discountPrice || displayProduct.price)?.toLocaleString('en-IN')}</span>
                   </button>
                 </div>
               </div>

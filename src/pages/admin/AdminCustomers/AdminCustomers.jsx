@@ -28,7 +28,7 @@ import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDateShort } from '../../../utils/formatDate';
-import { MOCK_CUSTOMERS, MOCK_SALES_SUMMARY, MOCK_ORDERS_EXTENDED } from '../../../data/adminMockData';
+import { MOCK_CUSTOMERS, MOCK_SALES_SUMMARY } from '../../../data/adminMockData';
 
 // ─── Customer Tier Classification Constant ──────────────────────────────────
 export const CUSTOMER_TIERS = {
@@ -71,56 +71,7 @@ export const getCustomerTier = (customer) => {
   return CUSTOMER_TIERS.NEW;
 };
 
-// ─── Deterministic Mock Orders Generator for Customer Drawer ────────────────
-export const getCustomerOrders = (customer) => {
-  if (!customer) return [];
-  const normalizedPhone = (customer.phone || '').replace(/\D/g, '');
-  const normalizedName = (customer.name || '').toLowerCase().trim();
-
-  // Find matches from MOCK_ORDERS_EXTENDED first
-  const realMatches = (MOCK_ORDERS_EXTENDED || []).filter((o) => {
-    const oPhone = (o.customer?.phone || '').replace(/\D/g, '');
-    const oName = (o.customer?.name || '').toLowerCase().trim();
-    return (normalizedPhone && oPhone === normalizedPhone) || (normalizedName && oName === normalizedName);
-  });
-
-  const totalCount = Number(customer.totalOrders || customer.ordersCount) || realMatches.length || 0;
-  if (totalCount === 0) return [];
-
-  if (realMatches.length >= totalCount) {
-    return realMatches.slice(0, totalCount);
-  }
-
-  // Deterministically generate remaining order history
-  const orders = [...realMatches];
-  const statuses = ['delivered', 'shipped', 'confirmed'];
-  const baseDate = new Date(customer.joinedDate || '2026-06-01');
-  const remainingCount = totalCount - realMatches.length;
-  const existingSpent = realMatches.reduce((s, o) => s + (o.totalAmount || 0), 0);
-  const remainingSpent = Math.max(0, (customer.totalSpent || 3500) - existingSpent);
-  const avgRemaining = Math.max(350, Math.round(remainingSpent / Math.max(1, remainingCount)));
-
-  const seed = parseInt(customer._id?.replace(/\D/g, '') || '1', 10);
-
-  for (let i = 0; i < remainingCount; i++) {
-    const orderNum = 8800 + seed * 15 + i;
-    const orderDate = new Date(baseDate.getTime() + (i + 1) * 14 * 24 * 60 * 60 * 1000);
-    const amount =
-      i === remainingCount - 1
-        ? Math.max(350, remainingSpent - avgRemaining * (remainingCount - 1))
-        : avgRemaining;
-    orders.push({
-      _id: `mock_ord_${customer._id}_${i}`,
-      orderNumber: `ORD-2026-${orderNum}`,
-      createdAt: orderDate.toISOString(),
-      totalAmount: amount,
-      status: statuses[(seed + i) % statuses.length],
-      itemsCount: 1 + ((seed + i) % 3),
-    });
-  }
-
-  return orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-};
+export const getCustomerOrders = () => [];
 
 export default function AdminCustomers() {
   const [summary, setSummary] = useState(null);
@@ -165,6 +116,8 @@ export default function AdminCustomers() {
 
   // Customer Detail Drawer State
   const [selectedCustomerId, setSelectedCustomerId] = useState(urlCustomer);
+  const [drawerOrders, setDrawerOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   const tableTopRef = useRef(null);
   const drawerRef = useRef(null);
@@ -262,11 +215,37 @@ export default function AdminCustomers() {
     }
   }, [searchParams]);
 
-  // Selected customer object for drawer
   const selectedCustomer = useMemo(() => {
     if (!selectedCustomerId) return null;
     return customers.find((c) => c._id === selectedCustomerId) || null;
   }, [customers, selectedCustomerId]);
+
+  // Load customer order history from database for the drawer
+  useEffect(() => {
+    if (!selectedCustomerId) {
+      setDrawerOrders([]);
+      return;
+    }
+    let isMounted = true;
+    async function loadCustomerDetail() {
+      try {
+        setLoadingOrders(true);
+        const res = await adminService.getCustomerDetail(selectedCustomerId);
+        if (isMounted) {
+          const list = res?.data?.orders || res?.orders || [];
+          setDrawerOrders(Array.isArray(list) ? list : []);
+        }
+      } catch (err) {
+        if (isMounted) setDrawerOrders([]);
+      } finally {
+        if (isMounted) setLoadingOrders(false);
+      }
+    }
+    loadCustomerDetail();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCustomerId]);
 
   // Drawer ESC key listener & body scroll lock
   useEffect(() => {
@@ -575,7 +554,7 @@ export default function AdminCustomers() {
   ];
 
   const selectedTier = selectedCustomer ? getCustomerTier(selectedCustomer) : null;
-  const selectedCustomerOrders = selectedCustomer ? getCustomerOrders(selectedCustomer) : [];
+  const selectedCustomerOrders = drawerOrders;
   const selectedAov =
     selectedCustomer && (selectedCustomer.totalOrders || selectedCustomer.ordersCount)
       ? Math.round(
@@ -585,7 +564,7 @@ export default function AdminCustomers() {
       : 0;
 
   return (
-    <AdminLayout title="Customers & Directory">
+    <AdminLayout title="Users & Directory">
       {/* ── Keyframes for Smooth Drawer & Fade Animations ── */}
       <style>{`
         @keyframes drawerSlideIn {
@@ -1908,7 +1887,20 @@ export default function AdminCustomers() {
                   </h4>
                 </div>
 
-                {selectedCustomerOrders.length === 0 ? (
+                {loadingOrders ? (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '2.5rem 1rem',
+                      color: '#94a3b8',
+                      background: '#faf8fe',
+                      borderRadius: '12px',
+                      border: '1px dashed #dcd0fa',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.84rem' }}>Loading orders...</span>
+                  </div>
+                ) : selectedCustomerOrders.length === 0 ? (
                   <div
                     style={{
                       textAlign: 'center',
@@ -1933,7 +1925,7 @@ export default function AdminCustomers() {
 
                       return (
                         <div
-                          key={ord._id}
+                          key={ord._id || ord.id || ord.orderNumber}
                           style={{
                             background: '#ffffff',
                             border: '1px solid #ede8f8',
@@ -1969,7 +1961,7 @@ export default function AdminCustomers() {
                           </div>
 
                           <strong style={{ fontSize: '0.92rem', color: '#7c3aed' }}>
-                            {formatPrice(ord.totalAmount)}
+                            {formatPrice(ord.total ?? ord.pricing?.finalTotal ?? ord.totalAmount ?? 0)}
                           </strong>
                         </div>
                       );

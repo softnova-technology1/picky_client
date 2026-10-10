@@ -1,8 +1,10 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import NewArrivalsHero from '../../components/new-arrivals/NewArrivalsHero';
 import ProductCard from '../../components/product/ProductCard';
-import { MOCK_PRODUCTS } from '../../data/adminMockData';
+import Spinner from '../../components/ui/Spinner';
+import { productService } from '../../services/product.service';
+import { SLUG_ALIAS_MAP } from '../../data/data';
 import {
   Sparkles,
   ArrowRight,
@@ -28,10 +30,16 @@ import {
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
 import { useUiStore } from '../../store/uiStore';
+import { useCategoryStore } from '../../store/categoryStore';
 
 export default function NewArrivals() {
+  const { categories, fetchCategories } = useCategoryStore();
   const { addItem } = useCartStore();
   const { showToast } = useUiStore();
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeSubcategory, setActiveSubcategory] = useState('all');
@@ -40,95 +48,127 @@ export default function NewArrivals() {
   const [availabilityFilter, setAvailabilityFilter] = useState('all'); // 'all' | 'inStock' | 'outOfStock'
   const [discountFilter, setDiscountFilter] = useState('all'); // 'all' | '10' | '20' | '30' | '50'
   const [isFilterFolderOpen, setIsFilterFolderOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const catalogRef = useRef(null);
 
-  // 10 Core Store Categories + All New Arrivals as Circular Story Avatars (100% Radius)
-  const categoryStories = [
-    {
-      id: 'all',
-      label: 'All New Arrivals',
-      icon: 'package-plus',
-    },
-    {
-      id: 'womens-fashion',
-      label: "Women's Fashion",
-      image: '/images/products/saree.png',
-    },
-    {
-      id: 'home-kitchen',
-      label: 'Home & Kitchen',
-      image: '/images/products/chopper.png',
-    },
-    {
-      id: 'artificial-jewellery',
-      label: 'Artificial Jewellery',
-      image: '/images/products/necklace.png',
-    },
-    {
-      id: 'beauty-personal-care',
-      label: 'Beauty & Personal Care',
-      image: '/images/products/sunglasses.png',
-    },
-    {
-      id: 'mobile-accessories',
-      label: 'Mobile Accessories',
-      image: '/images/products/headphones.png',
-    },
-    {
-      id: 'traditional-tamil-products',
-      label: 'Traditional Tamil Products',
-      image: '/images/products/gold_ring.png',
-    },
-    {
-      id: 'snacks-foods',
-      label: 'Snacks & Foods',
-      image: '/images/products/murukku.png',
-    },
-    {
-      id: 'home-decor',
-      label: 'Home Décor',
-      image: '/images/products/speaker.png',
-    },
-    {
-      id: 'kids-products',
-      label: 'Kids Products',
-      image: '/images/products/camera.png',
-    },
-    {
-      id: 'fitness-products',
-      label: 'Fitness Products',
-      image: '/images/products/yogamat.png',
-    },
-  ];
+  // Helper to strictly filter for products with New Arrivals tag / flag
+  const isNewArrivalProduct = (p) => {
+    if (!p) return false;
+    if (p.isNewArrival) return true;
+    if (typeof p.badge === 'string') {
+      const b = p.badge.toLowerCase();
+      if (b.includes('new') || b.includes('arrival')) return true;
+    }
+    const rawTags = Array.isArray(p.tags)
+      ? p.tags
+      : typeof p.tags === 'string'
+      ? p.tags.split(',')
+      : [];
+    return rawTags.some((t) => {
+      if (!t) return false;
+      const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
+      return clean.includes('new') || clean.includes('arrival');
+    });
+  };
 
-  // Dynamic subcategories derived from mock data based on activeCategory
+  // Fetch real newest products from database (strictly filtered by New Arrivals tag)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadNewArrivals() {
+      try {
+        setLoading(true);
+        const res = await productService.list({ limit: 100, sort: 'newest' });
+        const data = res?.data || res;
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        if (isMounted) {
+          const newArrivalsOnly = items.filter(isNewArrivalProduct);
+          setProducts(newArrivalsOnly);
+        }
+      } catch (err) {
+        console.error('Failed to load new arrivals:', err);
+        if (isMounted) setProducts([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadNewArrivals();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Dynamic DB Categories + All New Arrivals as Circular Story Avatars (100% Radius)
+  const categoryStories = useMemo(() => {
+    const list = [
+      {
+        id: 'all',
+        label: 'All New Arrivals',
+        icon: 'package-plus',
+      },
+    ];
+
+    if (Array.isArray(categories) && categories.length > 0) {
+      categories.forEach((cat) => {
+        list.push({
+          id: cat.slug || cat._id,
+          label: cat.name,
+          image: cat.image || '/images/products/saree.png',
+          _id: cat._id,
+        });
+      });
+    }
+
+    return list;
+  }, [categories]);
+
+  // Dynamic subcategories derived from products based on activeCategory
   const availableSubcategories = useMemo(() => {
     const map = new Map();
-    MOCK_PRODUCTS.forEach((p) => {
-      if (activeCategory === 'all' || p.category?.slug === activeCategory) {
-        if (p.subCategory?.slug && p.subCategory?.name) {
+    products.forEach((p) => {
+      const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
+      const normalizedCat = (SLUG_ALIAS_MAP[rawSlug] || rawSlug).toLowerCase();
+      const normalizedActive = (SLUG_ALIAS_MAP[activeCategory] || activeCategory).toLowerCase();
+      const pId = p.category?._id || (typeof p.category === 'object' ? p.category?._id : p.category);
+      if (
+        activeCategory === 'all' ||
+        normalizedCat === normalizedActive ||
+        rawSlug.toLowerCase() === normalizedActive ||
+        pId === activeCategory
+      ) {
+        if (typeof p.subCategory === 'string' && p.subCategory) {
+          map.set(p.subCategory.toLowerCase(), p.subCategory);
+        } else if (p.subCategory?.slug && p.subCategory?.name) {
           map.set(p.subCategory.slug, p.subCategory.name);
         }
       }
     });
     return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
-  }, [activeCategory]);
+  }, [products, activeCategory]);
 
   // Compute counts for each category tab
   const tabCounts = useMemo(() => {
-    const counts = { all: MOCK_PRODUCTS.length };
-    MOCK_PRODUCTS.forEach((p) => {
-      const slug = p.category?.slug;
+    const counts = { all: products.length };
+    products.forEach((p) => {
+      const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
+      const catId = p.category?._id || (typeof p.category === 'object' ? p.category?._id : '');
+      const slug = (SLUG_ALIAS_MAP[rawSlug] || rawSlug).toLowerCase();
       if (slug) {
         counts[slug] = (counts[slug] || 0) + 1;
       }
+      if (rawSlug && rawSlug !== slug) {
+        counts[rawSlug] = (counts[rawSlug] || 0) + 1;
+      }
+      if (catId) {
+        counts[catId] = (counts[catId] || 0) + 1;
+      }
     });
     return counts;
-  }, []);
+  }, [products]);
 
   // Filter & Sort Products Dynamically
   const processedProducts = useMemo(() => {
-    let list = [...MOCK_PRODUCTS];
+    let list = [...products];
 
     // 1. Search Filter: Search by Product Name or SKU
     const q = searchQuery.trim().toLowerCase();
@@ -146,12 +186,25 @@ export default function NewArrivals() {
 
     // 2. Category Filter
     if (activeCategory !== 'all') {
-      list = list.filter((p) => p.category?.slug === activeCategory);
+      const targetCat = (SLUG_ALIAS_MAP[activeCategory] || activeCategory).toLowerCase();
+      list = list.filter((p) => {
+        const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
+        const pCat = (SLUG_ALIAS_MAP[rawSlug] || rawSlug).toLowerCase();
+        const pId = p.category?._id || (typeof p.category === 'object' ? p.category?._id : p.category);
+        return (
+          pCat === targetCat ||
+          rawSlug.toLowerCase() === targetCat ||
+          pId === activeCategory
+        );
+      });
     }
 
     // 3. Subcategory Filter
     if (activeSubcategory !== 'all') {
-      list = list.filter((p) => p.subCategory?.slug === activeSubcategory);
+      list = list.filter((p) => {
+        const subSlug = p.subCategory?.slug || (typeof p.subCategory === 'string' ? p.subCategory.toLowerCase() : '');
+        return subSlug.toLowerCase() === activeSubcategory.toLowerCase();
+      });
     }
 
     // 4. Price Range Filter
@@ -198,6 +251,7 @@ export default function NewArrivals() {
 
     return list;
   }, [
+    products,
     searchQuery,
     activeCategory,
     activeSubcategory,
@@ -326,7 +380,7 @@ export default function NewArrivals() {
       <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Streetwear Hero Showcase ── */}
         <div style={{ paddingTop: '2.5rem', position: 'relative' }}>
-          <NewArrivalsHero onExploreClick={handleScrollToCatalog} />
+          <NewArrivalsHero onExploreClick={handleScrollToCatalog} featuredProduct={products[0]} />
         </div>
 
         {/* ── 2. New Arrivals Catalog Section ── */}
@@ -831,7 +885,25 @@ export default function NewArrivals() {
           )}
 
           {/* Products Grid with Generous Spacing */}
-          {processedProducts.length === 0 ? (
+          {loading ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '6rem 2rem',
+                background: '#ffffff',
+                borderRadius: '24px',
+                border: '1.5px solid #ede9fe',
+                marginBottom: '4rem',
+              }}
+            >
+              <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
+                <Spinner size={40} />
+              </div>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+                Loading fresh new arrivals...
+              </p>
+            </div>
+          ) : processedProducts.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
@@ -866,7 +938,7 @@ export default function NewArrivals() {
           ) : (
             <div className="new-arrivals-product-grid">
               {processedProducts.map((prod, idx) => (
-                <ProductCard key={prod._id || prod.id} product={prod} index={idx} hideBadge={true} />
+                <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
               ))}
             </div>
           )}

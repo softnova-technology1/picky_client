@@ -75,6 +75,42 @@ export function isExpiringSoon(coupon, status) {
   return diffMs > 0 && diffMs <= threeDaysMs;
 }
 
+export const DEFAULT_COUPONS = [
+  {
+    _id: 'cpn_welcome100',
+    code: 'WELCOME100',
+    type: 'flat',
+    value: 100,
+    minOrderAmount: 999,
+    maxDiscountAmount: 100,
+    isActive: true,
+    applicableOn: 'All Products',
+    validTill: '2026-12-31',
+  },
+  {
+    _id: 'cpn_picky10',
+    code: 'PICKY10',
+    type: 'percentage',
+    value: 10,
+    minOrderAmount: 499,
+    maxDiscountAmount: 300,
+    isActive: true,
+    applicableOn: 'All Products',
+    validTill: '2026-12-31',
+  },
+  {
+    _id: 'cpn_festive20',
+    code: 'FESTIVE20',
+    type: 'percentage',
+    value: 20,
+    minOrderAmount: 1499,
+    maxDiscountAmount: 500,
+    isActive: true,
+    applicableOn: 'All Products',
+    validTill: '2026-12-31',
+  },
+];
+
 // ─── Picky Shared Coupon Store ────────────────────────────────────────────────
 // Single shared source of truth for coupons and automatic discounts.
 // Status changes in Coupons page reflect immediately in Reports page and Checkout.
@@ -82,7 +118,7 @@ export function isExpiringSoon(coupon, status) {
 export const useCouponStore = create(
   persist(
     (set, get) => ({
-      coupons: [...MOCK_COUPONS],
+      coupons: [...DEFAULT_COUPONS],
       discounts: [...MOCK_DISCOUNTS],
 
       setCoupons: (coupons) => set({ coupons }),
@@ -159,7 +195,7 @@ export const useCouponStore = create(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         if (!state.coupons || state.coupons.length === 0) {
-          state.coupons = [...MOCK_COUPONS];
+          state.coupons = [...DEFAULT_COUPONS];
         }
         if (!state.discounts || state.discounts.length === 0) {
           state.discounts = [...MOCK_DISCOUNTS];

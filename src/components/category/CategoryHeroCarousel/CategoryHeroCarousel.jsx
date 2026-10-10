@@ -348,7 +348,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
           >
             {safeCategories.map((cat, idx) => {
               const isActive = idx === currentIdx;
-              const imgSrc = cat.slug === 'womens-fashion' 
+              const imgSrc = (cat.slug === 'fashion' || cat.slug === 'womens-fashion') 
                 ? '/images/glamics_summer_model.jpg' 
                 : (cat.image || '/images/glamics_summer_model.jpg');
 

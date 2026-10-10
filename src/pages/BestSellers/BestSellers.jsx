@@ -5,7 +5,7 @@ import BestSellersHeroSection from '../../components/bestseller/BestSellersHeroS
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
 import { MOCK_PRODUCTS } from '../../data/adminMockData';
-import { getProducts } from '../../data';
+import { getProducts, SLUG_ALIAS_MAP } from '../../data';
 import {
   Flame,
   Award,
@@ -31,6 +31,25 @@ import {
   Truck,
   Headphones,
 } from 'lucide-react';
+
+const isBestSellerProduct = (p) => {
+  if (!p) return false;
+  if (p.isBestSeller) return true;
+  if (typeof p.badge === 'string') {
+    const b = p.badge.toLowerCase();
+    if (b.includes('best') || b.includes('seller')) return true;
+  }
+  const rawTags = Array.isArray(p.tags)
+    ? p.tags
+    : typeof p.tags === 'string'
+    ? p.tags.split(',')
+    : [];
+  return rawTags.some((t) => {
+    if (!t) return false;
+    const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
+    return clean.includes('best') || clean.includes('seller');
+  });
+};
 
 export default function BestSellers() {
   const [allProducts, setAllProducts] = useState([]);
@@ -103,26 +122,25 @@ export default function BestSellers() {
     }, 50);
   };
 
-  // Load products (API first, fallback to mock data)
+  // Load products (Strictly filter for products with Best Sellers tag)
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
 
     const loadData = async () => {
       try {
-        const res = await productService.list({ sort: 'rating' });
+        const res = await productService.list({ limit: 100, sort: 'rating' });
         if (isMounted) {
           const items = res?.data?.data || res?.data || [];
-          if (Array.isArray(items) && items.length > 0) {
-            setAllProducts(items);
-          } else {
-            setAllProducts(MOCK_PRODUCTS);
-          }
+          const sourceList = Array.isArray(items) && items.length > 0 ? items : (getProducts() || MOCK_PRODUCTS || []);
+          const bestSellersOnly = sourceList.filter(isBestSellerProduct);
+          setAllProducts(bestSellersOnly);
         }
       } catch (err) {
         if (isMounted) {
-          const fallback = getProducts() || MOCK_PRODUCTS;
-          setAllProducts(fallback);
+          const fallback = getProducts() || MOCK_PRODUCTS || [];
+          const bestSellersOnly = fallback.filter(isBestSellerProduct);
+          setAllProducts(bestSellersOnly);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -150,7 +168,8 @@ export default function BestSellers() {
   const tabCounts = useMemo(() => {
     const counts = { all: allProducts.length };
     allProducts.forEach((p) => {
-      const slug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
+      const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
+      const slug = (SLUG_ALIAS_MAP?.[rawSlug] || rawSlug).toLowerCase();
       if (slug) {
         counts[slug] = (counts[slug] || 0) + 1;
       }
@@ -162,11 +181,13 @@ export default function BestSellers() {
   const filteredProducts = useMemo(() => {
     let list = [...allProducts];
 
-    // Category filter
+    // Category filter with slug alias support
     if (activeCategory !== 'all') {
+      const targetCat = (SLUG_ALIAS_MAP?.[activeCategory] || activeCategory).toLowerCase();
       list = list.filter((p) => {
-        const slug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
-        return slug === activeCategory;
+        const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
+        const pCat = (SLUG_ALIAS_MAP?.[rawSlug] || rawSlug).toLowerCase();
+        return pCat === targetCat;
       });
     }
 

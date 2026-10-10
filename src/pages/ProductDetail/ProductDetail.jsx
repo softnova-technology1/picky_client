@@ -9,7 +9,7 @@ import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
-import { getProductBySlug, getProducts, getProductReviews } from '../../data';
+import { getProductReviews } from '../../data';
 import styles from './ProductDetail.module.css';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
 import ProductVariantSelector from '../../components/product/ProductVariantSelector/ProductVariantSelector';
@@ -29,18 +29,15 @@ import {
 export default function ProductDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(() => getProductBySlug(slug));
-  const [loading, setLoading] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeDetailTab, setActiveDetailTab] = useState('description');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // ── Category-aware variant state — derived from product.variants ──
-  const [selectedVariant, setSelectedVariant] = useState(() => {
-    const v = product?.variants;
-    if (!v || v.type === 'none') return null;
-    return v.default || (v.options && v.options[0]) || null;
-  });
+  const [selectedVariant, setSelectedVariant] = useState(null);
 
   const productReviews = useMemo(() => getProductReviews(product), [product]);
 
@@ -53,32 +50,10 @@ export default function ProductDetail() {
   const subCategorySlug = product?.subCategory?.slug;
   const pId = product?._id || product?.id || slug;
 
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
-    const all = getProducts();
-    const exclude = (p) => (p._id || p.id || p.slug) === pId || p.slug === slug;
-
-    // Primary: same category or matching tags
-    const primary = all.filter((p) => {
-      if (exclude(p)) return false;
-      return (
-        (product.category?.slug && p.category?.slug === product.category.slug) ||
-        (product.category?.name && p.category?.name === product.category.name) ||
-        (product.tags && p.tags && p.tags.some((t) => product.tags.includes(t)))
-      );
-    });
-
-    // Fallback: anything else to fill up to 4
-    const fallback = all.filter(
-      (p) => !exclude(p) && !primary.find((x) => (x._id || x.id || x.slug) === (p._id || p.id || p.slug))
-    );
-
-    return [...primary, ...fallback].slice(0, 4);
-  }, [product, pId, slug]);
-
   useEffect(() => {
     async function loadProduct() {
       try {
+        setLoading(true);
         const res = await productService.getBySlug(slug);
         const item = res?.data || res;
         if (item && item.name) {
@@ -90,25 +65,33 @@ export default function ProductDetail() {
           } else {
             setSelectedVariant(null);
           }
-        } else {
-          const fallback = getProductBySlug(slug);
-          if (fallback) {
-            setProduct(fallback);
-            const v = fallback.variants;
-            if (v && v.type !== 'none') {
-              setSelectedVariant(v.default || (v.options && v.options[0]) || null);
+
+          // Fetch real related products from DB matching category
+          try {
+            const catId = typeof item.category === 'object' ? (item.category?._id || item.category?.id) : item.category;
+            const relatedRes = await productService.list(catId ? { category: catId, limit: 6 } : { limit: 6 });
+            let rItems = relatedRes?.data?.data || relatedRes?.data || [];
+            if (!Array.isArray(rItems) || rItems.length <= 1) {
+              const allRes = await productService.list({ limit: 6 });
+              rItems = allRes?.data?.data || allRes?.data || [];
             }
+            if (Array.isArray(rItems)) {
+              const currentId = item._id || item.id || slug;
+              const filtered = rItems.filter((p) => (p._id || p.id || p.slug) !== currentId);
+              setRelatedProducts(filtered.slice(0, 4));
+            }
+          } catch (rErr) {
+            console.warn('Could not load related products:', rErr);
+            setRelatedProducts([]);
           }
+        } else {
+          setProduct(null);
         }
       } catch (err) {
-        const fallback = getProductBySlug(slug);
-        if (fallback) {
-          setProduct(fallback);
-          const v = fallback.variants;
-          if (v && v.type !== 'none') {
-            setSelectedVariant(v.default || (v.options && v.options[0]) || null);
-          }
-        }
+        console.error('Failed to load product:', err);
+        setProduct(null);
+      } finally {
+        setLoading(false);
       }
     }
     loadProduct();

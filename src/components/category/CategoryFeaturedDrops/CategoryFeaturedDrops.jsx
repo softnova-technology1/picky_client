@@ -7,7 +7,7 @@ import { productService } from '../../../services/product.service';
 // Top frequent primary quick tabs (clean text only)
 const PRIMARY_TABS = [
   { id: 'all', label: 'All' },
-  { id: 'womens-fashion', label: 'Fashion' },
+  { id: 'fashion', label: 'Fashion' },
   { id: 'artificial-jewellery', label: 'Jewellery' },
 ];
 

@@ -8,7 +8,7 @@ export default function GlamicsSplitBanners() {
       badge: 'TRENDING COLLECTION',
       title: "WOMEN'S FASHION",
       subtext: 'Up to 35% Off Sarees & Kurtis',
-      link: '/categories/womens-fashion',
+      link: '/categories/fashion',
       image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
       gradient: 'linear-gradient(135deg, #be185d 0%, #ec4899 50%, #9333ea 100%)',
     },

@@ -22,7 +22,7 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
-import { MOCK_ORDERS_EXTENDED, COMMON_COURIERS } from '../../../data/adminMockData';
+import { COMMON_COURIERS } from '../../../data/ordersMockData';
 import { useOrderStore } from '../../../store/orderStore';
 
 const ADMIN = '/softpicky-sn2026';
@@ -68,24 +68,24 @@ export default function AdminOrderDetail() {
           throw new Error('Order not found');
         }
       } catch (err) {
-        console.error('Order detail fallback to mock store:', err);
-        // Try shared orderStore first (has session-placed orders), then MOCK_ORDERS_EXTENDED
+        console.warn('Order detail fetch notice:', err?.message || err);
+        // Try shared in-memory orderStore (for session-placed orders)
         const storeMatch = getOrderById(id);
-        const mockMatch =
-          storeMatch ||
-          MOCK_ORDERS_EXTENDED.find((o) => o._id === id || o.orderNumber === id) ||
-          MOCK_ORDERS_EXTENDED[0];
-        setOrder(mockMatch);
-        if (mockMatch.trackingId) setTrackingId(mockMatch.trackingId);
-        if (mockMatch.courier) {
-          if (COMMON_COURIERS.includes(mockMatch.courier)) {
-            setCourier(mockMatch.courier);
-          } else {
-            setCourier('Other');
-            setCustomCourier(mockMatch.courier);
+        if (storeMatch) {
+          setOrder(storeMatch);
+          if (storeMatch.trackingId) setTrackingId(storeMatch.trackingId);
+          if (storeMatch.courier) {
+            if (COMMON_COURIERS.includes(storeMatch.courier)) {
+              setCourier(storeMatch.courier);
+            } else {
+              setCourier('Other');
+              setCustomCourier(storeMatch.courier);
+            }
           }
+          if (storeMatch.status) setNewStatus(storeMatch.status);
+        } else {
+          setOrder(null);
         }
-        setNewStatus(mockMatch.status);
       } finally {
         setLoading(false);
       }

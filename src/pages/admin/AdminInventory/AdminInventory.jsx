@@ -28,6 +28,7 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
+import { categoryService } from '../../../services/category.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import {
@@ -35,23 +36,26 @@ import {
   calculateInventoryKPIs,
   LOW_STOCK_THRESHOLD,
 } from '../../../data/inventoryMockData';
-import { MOCK_CATEGORIES } from '../../../data/categoryMockData';
 import { useMockStockStore } from '../../../store/mockStockStore';
 
 export default function AdminInventory() {
   const { showToast } = useUiStore();
   const { getInventoryList, adjustStock: storeAdjustStock } = useMockStockStore();
 
-  // Inventory list derived from shared mockStockStore (single source of truth)
+  // Inventory list and DB categories
   const [inventoryList, setInventoryList] = useState([]);
+  const [categories, setCategories] = useState([]);
 
-  // Load live inventory from backend
+  // Load live inventory and categories from backend
   useEffect(() => {
     async function loadLiveInventory() {
       try {
         setIsLoading(true);
-        const res = await adminService.getInventory({ limit: 100 }).catch(() => null);
-        const items = res ? (res.data?.items || res.data?.data || res.data) : [];
+        const [invRes, catRes] = await Promise.all([
+          adminService.getInventory({ limit: 100 }).catch(() => null),
+          categoryService.list().catch(() => null),
+        ]);
+        const items = invRes ? (invRes.data?.items || invRes.data?.data || invRes.data) : [];
         if (Array.isArray(items)) {
           const mapped = items.map((inv) => {
             const p = inv.product || {};
@@ -61,17 +65,22 @@ export default function AdminInventory() {
               productName: p.name || 'Product',
               sku: inv.sku || p.sku || 'SKU-001',
               category: typeof p.category === 'object' ? p.category?.name : (p.category || 'Apparel'),
-              categoryId: typeof p.category === 'object' ? p.category?._id : (p.category || 'all'),
+              categoryId: typeof p.category === 'object' ? (p.category?._id || p.category?.id) : (p.category || 'all'),
               subCategory: p.subCategory || '',
               currentStock: inv.quantity ?? 10,
               lowStockThreshold: inv.lowStockThreshold ?? LOW_STOCK_THRESHOLD,
               price: p.discountPrice || p.price || 999,
               images: p.images || [],
+              image: (Array.isArray(p.images) && p.images[0]) || p.image || '',
               lastUpdated: inv.updatedAt ? new Date(inv.updatedAt).toLocaleDateString('en-GB') : 'Recently',
               lastReason: 'System Sync',
             };
           });
           setInventoryList(mapped);
+        }
+        const cItems = catRes?.data || [];
+        if (Array.isArray(cItems)) {
+          setCategories(cItems);
         }
       } catch (err) {
         console.warn('Could not load live inventory:', err);
@@ -200,8 +209,8 @@ export default function AdminInventory() {
       // Category filter
       const matchCategory =
         selectedCategory === 'all' ||
-        item.categoryId === selectedCategory ||
-        item.category.toLowerCase() === selectedCategory.toLowerCase();
+        String(item.categoryId) === String(selectedCategory) ||
+        (item.category && item.category.toLowerCase() === selectedCategory.toLowerCase());
 
       // Stock status filter
       const stock = Number(item.currentStock) || 0;
@@ -540,9 +549,9 @@ export default function AdminInventory() {
   const categoryOptions = useMemo(() => {
     return [
       { value: 'all', label: 'All Categories' },
-      ...MOCK_CATEGORIES.map((c) => ({ value: c._id, label: c.name })),
+      ...categories.map((c) => ({ value: c._id, label: c.name })),
     ];
-  }, []);
+  }, [categories]);
 
   const statusOptions = useMemo(() => {
     return [
@@ -1261,7 +1270,7 @@ export default function AdminInventory() {
                       <td style={{ padding: '0.95rem 1.25rem', verticalAlign: 'middle' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                           <img
-                            src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
+                            src={item.image || (item.images && item.images[0]) || ''}
                             alt={item.productName}
                             style={{
                               width: '44px',
@@ -1839,7 +1848,7 @@ export default function AdminInventory() {
               }}
             >
               <img
-                src={selectedItem.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
+                src={selectedItem.image || (selectedItem.images && selectedItem.images[0]) || ''}
                 alt={selectedItem.productName}
                 style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
               />
@@ -2014,7 +2023,7 @@ export default function AdminInventory() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
               <img
-                src={viewProductItem.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}
+                src={viewProductItem.image || (viewProductItem.images && viewProductItem.images[0]) || ''}
                 alt={viewProductItem.productName}
                 style={{
                   width: '100px',
