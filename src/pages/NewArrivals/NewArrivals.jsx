@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import NewArrivalsHero from '../../components/new-arrivals/NewArrivalsHero';
 import ProductCard from '../../components/product/ProductCard';
@@ -51,6 +52,18 @@ export default function NewArrivals() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const catalogRef = useRef(null);
+
+  // Lock body scroll when drawer is open so the viewport stays stationary
+  useEffect(() => {
+    if (isFilterFolderOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isFilterFolderOpen]);
 
   // Helper to strictly filter for products with New Arrivals tag / flag
   const isNewArrivalProduct = (p) => {
@@ -590,283 +603,215 @@ export default function NewArrivals() {
             </div>
           )}
 
-          {/* ── Expandable Filter Folder Panel Tray ── */}
-          {isFilterFolderOpen && (
-            <div className="filter-folder-panel">
-              {/* Folder Header */}
-              <div className="folder-header-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div className="folder-header-icon-box">
-                    <SlidersHorizontal size={18} color="#7c3aed" />
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <strong style={{ color: '#1e1b4b', fontSize: '1.05rem', fontWeight: 800 }}>
-                        Curated Filter Folder
-                      </strong>
-                      {activeFiltersCount > 0 && (
-                        <span className="folder-active-count-tag">
-                          {activeFiltersCount} active
-                        </span>
-                      )}
+          {/* ── Slide-Over Side Filter Drawer (From Left - Portaled to document.body) ── */}
+          {isFilterFolderOpen &&
+            typeof document !== 'undefined' &&
+            createPortal(
+              <div className="filter-drawer-overlay" onClick={() => setIsFilterFolderOpen(false)}>
+              <div
+                className="filter-drawer-container"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drawer Header */}
+                <div className="drawer-header">
+                  <div className="drawer-header-title">
+                    <div className="drawer-icon-box">
+                      <SlidersHorizontal size={18} color="#7c3aed" />
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-                      Filter new arrivals by category, subcategory, price, availability, discount & sorting
-                    </p>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <h3 className="drawer-title">Filters</h3>
+                        {activeFiltersCount > 0 && (
+                          <span className="drawer-active-badge">
+                            {activeFiltersCount}
+                          </span>
+                        )}
+                      </div>
+                      <p className="drawer-subtitle">
+                        Refine by category, price & deals
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  {activeFiltersCount > 0 && (
-                    <button onClick={handleResetAllFilters} className="folder-reset-link">
-                      <RotateCcw size={13} />
-                      <span>Reset Filters</span>
-                    </button>
-                  )}
                   <button
                     onClick={() => setIsFilterFolderOpen(false)}
-                    className="folder-close-btn"
-                    title="Close Filter Folder"
+                    className="drawer-close-btn"
+                    title="Close filters"
                   >
-                    <X size={16} />
+                    <X size={18} />
                   </button>
                 </div>
-              </div>
 
-              {/* Symmetrical 6-Card Grid (3 columns on desktop) */}
-              <div className="folder-cards-grid">
-                {/* 1. Category Filter Card */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <Layers size={15} color="#7c3aed" />
-                      <span className="col-label">Category</span>
-                    </div>
-                    {activeCategory !== 'all' && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
-                  </div>
-                  <div className="group-chips-stack" style={{ maxHeight: '230px', overflowY: 'auto', paddingRight: '2px' }}>
-                    {categoryStories.map((cat) => {
-                      const isSelected = activeCategory === cat.id;
-                      return (
+                {/* Drawer Body - Clean Scrollable Stack */}
+                <div className="drawer-body">
+                  {/* 1. Category Section */}
+                  <div className="drawer-section">
+                    <div className="drawer-section-header">
+                      <div className="drawer-section-label">
+                        <Layers size={14} color="#7c3aed" />
+                        <span>Category</span>
+                      </div>
+                      {activeCategory !== 'all' && (
                         <button
-                          key={cat.id}
                           onClick={() => {
-                            setActiveCategory(cat.id);
+                            setActiveCategory('all');
                             setActiveSubcategory('all');
                           }}
-                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                          className="drawer-section-clear"
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <div className="drawer-pills-list">
+                      {categoryStories.map((cat) => {
+                        const isSelected = activeCategory === cat.id;
+                        return (
+                          <button
+                            key={cat.id}
+                            onClick={() => {
+                              setActiveCategory(cat.id);
+                              setActiveSubcategory('all');
+                            }}
+                            className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                          >
                             <span>{cat.label}</span>
-                          </div>
-                          {isSelected && <Check size={13} strokeWidth={3} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. Subcategory Filter Card */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <Tag size={15} color="#7c3aed" />
-                      <span className="col-label">Subcategory</span>
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        );
+                      })}
                     </div>
-                    {activeSubcategory !== 'all' && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
                   </div>
-                  <div className="group-chips-stack" style={{ maxHeight: '230px', overflowY: 'auto', paddingRight: '2px' }}>
-                    <button
-                      onClick={() => setActiveSubcategory('all')}
-                      className={`folder-chip ${activeSubcategory === 'all' ? 'active' : ''}`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <span>All Subcategories</span>
+
+                  {/* 2. Subcategory Section */}
+                  {availableSubcategories.length > 0 && (
+                    <div className="drawer-section">
+                      <div className="drawer-section-header">
+                        <div className="drawer-section-label">
+                          <Tag size={14} color="#7c3aed" />
+                          <span>Subcategory</span>
+                        </div>
+                        {activeSubcategory !== 'all' && (
+                          <button
+                            onClick={() => setActiveSubcategory('all')}
+                            className="drawer-section-clear"
+                          >
+                            Reset
+                          </button>
+                        )}
                       </div>
-                      {activeSubcategory === 'all' && <Check size={13} strokeWidth={3} />}
-                    </button>
-                    {availableSubcategories.map((sub) => {
-                      const isSelected = activeSubcategory === sub.slug;
-                      return (
+                      <div className="drawer-pills-list">
                         <button
-                          key={sub.slug}
-                          onClick={() => setActiveSubcategory(sub.slug)}
-                          className={`folder-chip ${isSelected ? 'active' : ''}`}
+                          onClick={() => setActiveSubcategory('all')}
+                          className={`drawer-pill ${activeSubcategory === 'all' ? 'active' : ''}`}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <span>{sub.name}</span>
-                          </div>
-                          {isSelected && <Check size={13} strokeWidth={3} />}
+                          <span>All</span>
+                          {activeSubcategory === 'all' && <Check size={12} strokeWidth={3} />}
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 3. Price Range Card */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <Coins size={15} color="#7c3aed" />
-                      <span className="col-label">Price Range</span>
+                        {availableSubcategories.map((sub) => {
+                          const isSelected = activeSubcategory === sub.slug;
+                          return (
+                            <button
+                              key={sub.slug}
+                              onClick={() => setActiveSubcategory(sub.slug)}
+                              className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                            >
+                              <span>{sub.name}</span>
+                              {isSelected && <Check size={12} strokeWidth={3} />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    {priceRange !== 'all' && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
-                  </div>
-                  <div className="group-chips-stack">
-                    {[
-                      { id: 'all', label: 'All Prices', icon: Coins },
-                      { id: 'under500', label: 'Under ₹500', icon: IndianRupee },
-                      { id: '500-1500', label: '₹500 - ₹1,500', icon: IndianRupee },
-                      { id: '1500-3000', label: '₹1,500 - ₹3,000', icon: IndianRupee },
-                      { id: 'above3000', label: 'Above ₹3,000', icon: Crown },
-                    ].map((item) => {
-                      const IconComp = item.icon;
-                      const isSelected = priceRange === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => setPriceRange(item.id)}
-                          className={`folder-chip ${isSelected ? 'active' : ''}`}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <IconComp size={13} strokeWidth={2.2} />
-                            <span>{item.label}</span>
-                          </div>
-                          {isSelected && <Check size={13} strokeWidth={3} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                  )}
 
-                {/* 4. Availability Card */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <CheckCircle2 size={15} color="#7c3aed" />
-                      <span className="col-label">Availability</span>
+                  {/* 3. Price Range Section */}
+                  <div className="drawer-section">
+                    <div className="drawer-section-header">
+                      <div className="drawer-section-label">
+                        <Coins size={14} color="#7c3aed" />
+                        <span>Price Range</span>
+                      </div>
+                      {priceRange !== 'all' && (
+                        <button
+                          onClick={() => setPriceRange('all')}
+                          className="drawer-section-clear"
+                        >
+                          Reset
+                        </button>
+                      )}
                     </div>
-                    {availabilityFilter !== 'all' && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
-                  </div>
-                  <div className="group-chips-stack">
-                    {[
-                      { id: 'all', label: 'All Items' },
-                      { id: 'inStock', label: 'In Stock' },
-                      { id: 'outOfStock', label: 'Out of Stock' },
-                    ].map((item) => {
-                      const isSelected = availabilityFilter === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => setAvailabilityFilter(item.id)}
-                          className={`folder-chip ${isSelected ? 'active' : ''}`}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <CheckCircle2 size={13} strokeWidth={2.2} />
+                    <div className="drawer-pills-list">
+                      {[
+                        { id: 'all', label: 'All Prices' },
+                        { id: 'under500', label: 'Under ₹500' },
+                        { id: '500-1500', label: '₹500 - ₹1,500' },
+                        { id: '1500-3000', label: '₹1,500 - ₹3,000' },
+                        { id: 'above3000', label: 'Above ₹3,000' },
+                      ].map((item) => {
+                        const isSelected = priceRange === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => setPriceRange(item.id)}
+                            className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                          >
                             <span>{item.label}</span>
-                          </div>
-                          {isSelected && <Check size={13} strokeWidth={3} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 5. Discount Tiers Card */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <Percent size={15} color="#7c3aed" />
-                      <span className="col-label">Discount</span>
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        );
+                      })}
                     </div>
-                    {discountFilter !== 'all' && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
                   </div>
-                  <div className="group-chips-stack">
-                    {[
-                      { id: 'all', label: 'All Discounts', icon: Layers },
-                      { id: '10', label: '10% OFF+', icon: Percent },
-                      { id: '20', label: '20% OFF+', icon: Percent },
-                      { id: '30', label: '30% OFF+', icon: BadgePercent },
-                      { id: '50', label: '50% OFF+', icon: Flame },
-                    ].map((item) => {
-                      const IconComp = item.icon;
-                      const isSelected = discountFilter === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => setDiscountFilter(item.id)}
-                          className={`folder-chip ${isSelected ? 'active' : ''}`}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <IconComp size={13} strokeWidth={2.2} />
-                            <span>{item.label}</span>
-                          </div>
-                          {isSelected && <Check size={13} strokeWidth={3} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                {/* 6. Sorting Card */}
-                <div className="folder-group-card">
-                  <div className="group-card-header">
-                    <div className="group-header-left">
-                      <ArrowDownNarrowWide size={15} color="#7c3aed" />
-                      <span className="col-label">Sorting</span>
+                  {/* 4. Discounts Section */}
+                  <div className="drawer-section">
+                    <div className="drawer-section-header">
+                      <div className="drawer-section-label">
+                        <Percent size={14} color="#7c3aed" />
+                        <span>Discounts</span>
+                      </div>
+                      {discountFilter !== 'all' && (
+                        <button
+                          onClick={() => setDiscountFilter('all')}
+                          className="drawer-section-clear"
+                        >
+                          Reset
+                        </button>
+                      )}
                     </div>
-                    {activeSort !== 'newest' && (
-                      <span className="group-active-indicator">Active</span>
-                    )}
-                  </div>
-                  <div className="group-chips-stack">
-                    {[
-                      { id: 'newest', label: 'Newest (default)', icon: Sparkles },
-                      { id: 'price-low', label: 'Price: Low to High', icon: ArrowDownNarrowWide },
-                      { id: 'price-high', label: 'Price: High to Low', icon: ArrowUpNarrowWide },
-                    ].map((item) => {
-                      const IconComp = item.icon;
-                      const isSelected = activeSort === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => setActiveSort(item.id)}
-                          className={`folder-chip ${isSelected ? 'active' : ''}`}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <IconComp size={13} strokeWidth={2.2} />
+                    <div className="drawer-pills-list">
+                      {[
+                        { id: 'all', label: 'All Deals' },
+                        { id: '10', label: '10% OFF+' },
+                        { id: '20', label: '20% OFF+' },
+                        { id: '30', label: '30% OFF+' },
+                        { id: '50', label: '50% OFF+' },
+                      ].map((item) => {
+                        const isSelected = discountFilter === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => setDiscountFilter(item.id)}
+                            className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                          >
                             <span>{item.label}</span>
-                          </div>
-                          {isSelected && <Check size={13} strokeWidth={3} />}
-                        </button>
-                      );
-                    })}
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Folder Bottom Action Bar */}
-              <div className="folder-footer-bar">
-                <div className="folder-footer-counter">
-                  Showing <strong>{processedProducts.length}</strong> matching new arrivals
-                </div>
-                <div className="folder-footer-actions">
+                {/* Drawer Sticky Footer */}
+                <div className="drawer-footer">
                   {activeFiltersCount > 0 && (
                     <button
                       onClick={handleResetAllFilters}
-                      className="folder-footer-clear-btn"
+                      className="drawer-reset-btn"
                     >
-                      Reset All
+                      <RotateCcw size={13} />
+                      <span>Reset</span>
                     </button>
                   )}
                   <button
@@ -874,14 +819,15 @@ export default function NewArrivals() {
                       setIsFilterFolderOpen(false);
                       handleScrollToCatalog();
                     }}
-                    className="folder-apply-btn"
+                    className="drawer-apply-btn"
                   >
-                    <span>Apply & View New Arrivals ({processedProducts.length})</span>
+                    <span>Show {processedProducts.length} Items</span>
                     <ArrowRight size={15} />
                   </button>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* Products Grid with Generous Spacing */}
@@ -1457,88 +1403,106 @@ export default function NewArrivals() {
           margin-left: 0.25rem;
         }
 
-        /* ── Expandable Filter Folder Panel Tray ── */
-        .filter-folder-panel {
+        /* ── Slide-Over Side Filter Drawer (From Left) ── */
+        .filter-drawer-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(15, 23, 42, 0.48);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          z-index: 99999;
+          display: flex;
+          justify-content: flex-start;
+          animation: drawerFadeIn 0.22s ease-out;
+        }
+
+        @keyframes drawerFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .filter-drawer-container {
+          width: 100%;
+          max-width: 420px;
+          height: 100vh;
+          max-height: 100vh;
           background: #ffffff;
-          border: 2px solid #ede9fe;
-          border-radius: 28px;
-          padding: 1.75rem 2rem;
-          margin-bottom: 2.5rem;
-          box-shadow: 0 16px 45px -10px rgba(124, 58, 237, 0.12), 0 4px 16px rgba(0, 0, 0, 0.03);
-          animation: folderSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          box-shadow: 12px 0 40px rgba(15, 23, 42, 0.2);
+          animation: drawerSlideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+          overflow: hidden;
         }
 
-        @keyframes folderSlideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        @keyframes drawerSlideInLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
         }
 
-        .folder-header-row {
+        /* Drawer Header */
+        .drawer-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 1.25rem;
-          margin-bottom: 1.5rem;
+          padding: 1.25rem 1.5rem;
           border-bottom: 1.5px solid #f1f5f9;
+          background: #ffffff;
+          flex-shrink: 0;
         }
 
-        .folder-header-icon-box {
-          width: 40px;
-          height: 40px;
+        .drawer-header-title {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .drawer-icon-box {
+          width: 38px;
+          height: 38px;
           border-radius: 12px;
           background: #f5edff;
-          border: 1.5px solid #d8b4fe;
+          border: 1.5px solid #ddd6fe;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
         }
 
-        .folder-active-count-tag {
-          font-size: 0.72rem;
+        .drawer-title {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #1e1b4b;
+          line-height: 1.2;
+        }
+
+        .drawer-active-badge {
+          font-size: 0.7rem;
           font-weight: 800;
           color: #ffffff;
           background: linear-gradient(135deg, #7c3aed, #9333ea);
-          padding: 0.15rem 0.55rem;
+          padding: 0.12rem 0.5rem;
           border-radius: 9999px;
-          line-height: 1.3;
         }
 
-        .folder-reset-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #dc2626;
-          font-size: 0.8rem;
-          font-weight: 800;
-          cursor: pointer;
-          padding: 0.4rem 0.85rem;
-          border-radius: 9999px;
-          transition: all 0.2s ease;
+        .drawer-subtitle {
+          margin: 0.2rem 0 0 0;
+          font-size: 0.76rem;
+          color: #64748b;
         }
 
-        .folder-reset-link:hover {
-          background: #fee2e2;
-          border-color: #f87171;
-          color: #b91c1c;
-          transform: translateY(-1px);
-        }
-
-        .folder-close-btn {
-          width: 34px;
-          height: 34px;
+        .drawer-close-btn {
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           border: 1px solid #e2e8f0;
           background: #f8fafc;
-          color: #64748b;
+          color: #475569;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1546,181 +1510,175 @@ export default function NewArrivals() {
           transition: all 0.2s ease;
         }
 
-        .folder-close-btn:hover {
+        .drawer-close-btn:hover {
           background: #fee2e2;
           color: #dc2626;
           border-color: #fca5a5;
           transform: rotate(90deg);
         }
 
-        /* Symmetrical 6-Card Folder Grid (3 columns on desktop) */
-        .folder-cards-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .folder-group-card {
-          background: #fcfaff;
-          border: 1.5px solid #ede9fe;
-          border-radius: 20px;
-          padding: 1.15rem;
+        /* Drawer Body */
+        .drawer-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 1.35rem 1.5rem;
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+          gap: 1.35rem;
         }
 
-        .folder-group-card:hover {
-          border-color: #d8b4fe;
-          box-shadow: 0 6px 18px rgba(124, 58, 237, 0.07);
+        .drawer-body::-webkit-scrollbar {
+          width: 5px;
         }
 
-        .group-card-header {
+        .drawer-body::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 5px;
+        }
+
+        /* Drawer Section */
+        .drawer-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.7rem;
+          padding-bottom: 1.25rem;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .drawer-section:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .drawer-section-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 0.65rem;
-          border-bottom: 1px solid #f1edfa;
         }
 
-        .group-header-left {
+        .drawer-section-label {
           display: flex;
           align-items: center;
           gap: 0.45rem;
-        }
-
-        .col-label {
           font-size: 0.8rem;
           font-weight: 800;
           color: #1e1b4b;
-          letter-spacing: -0.01em;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
-        .group-active-indicator {
-          font-size: 0.68rem;
-          font-weight: 800;
+        .drawer-section-clear {
+          background: none;
+          border: none;
           color: #7c3aed;
-          background: #ede9fe;
-          padding: 0.12rem 0.45rem;
-          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          padding: 0;
+          transition: color 0.15s ease;
         }
 
-        .group-chips-stack {
+        .drawer-section-clear:hover {
+          color: #dc2626;
+          text-decoration: underline;
+        }
+
+        /* Drawer Pills */
+        .drawer-pills-list {
           display: flex;
-          flex-direction: column;
+          flex-wrap: wrap;
           gap: 0.45rem;
         }
 
-        .group-chips-stack .folder-chip {
-          width: 100%;
-          display: flex;
+        .drawer-pill {
+          display: inline-flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 0.55rem 0.85rem;
-          border-radius: 12px;
-          background: #ffffff;
+          gap: 0.35rem;
+          padding: 0.45rem 0.85rem;
+          border-radius: 9999px;
+          background: #f8fafc;
           border: 1.2px solid #e2e8f0;
-          font-size: 0.82rem;
+          font-size: 0.8rem;
           font-weight: 600;
           color: #334155;
-          transition: all 0.18s ease;
           cursor: pointer;
+          transition: all 0.18s ease;
           outline: none;
         }
 
-        .group-chips-stack .folder-chip svg {
-          flex-shrink: 0;
-        }
-
-        .group-chips-stack .folder-chip:hover {
+        .drawer-pill:hover {
           border-color: #c084fc;
           color: #7c3aed;
           background: #faf5ff;
-          transform: translateX(2px);
+          transform: translateY(-1px);
         }
 
-        .group-chips-stack .folder-chip.active {
-          background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%) !important;
+        .drawer-pill.active {
+          background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
           border-color: #7c3aed !important;
           color: #ffffff !important;
           font-weight: 700;
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28);
+          box-shadow: 0 3px 10px rgba(124, 58, 237, 0.28);
+          transform: translateY(-1px);
         }
 
-        /* Folder Footer Bar */
-        .folder-footer-bar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding-top: 1.25rem;
-          border-top: 1.5px solid #f1f5f9;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        .folder-footer-counter {
-          font-size: 0.88rem;
-          color: #64748b;
-        }
-
-        .folder-footer-counter strong {
-          color: #1e1b4b;
-          font-weight: 800;
-        }
-
-        .folder-footer-actions {
+        /* Drawer Sticky Footer */
+        .drawer-footer {
           display: flex;
           align-items: center;
           gap: 0.75rem;
+          padding: 1.15rem 1.5rem;
+          border-top: 1.5px solid #f1f5f9;
+          background: #ffffff;
+          flex-shrink: 0;
         }
 
-        .folder-footer-clear-btn {
+        .drawer-reset-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
           background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          border: 1.2px solid #e2e8f0;
           color: #64748b;
           font-size: 0.82rem;
           font-weight: 700;
-          padding: 0.6rem 1.15rem;
-          border-radius: 9999px;
+          padding: 0.75rem 1.1rem;
+          border-radius: 12px;
           cursor: pointer;
           transition: all 0.2s ease;
+          flex-shrink: 0;
         }
 
-        .folder-footer-clear-btn:hover {
+        .drawer-reset-btn:hover {
           background: #fee2e2;
-          border-color: #fca5a5;
           color: #dc2626;
+          border-color: #fca5a5;
         }
 
-        .folder-apply-btn {
+        .drawer-apply-btn {
+          flex: 1;
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 0.5rem;
           background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
           color: #ffffff;
           border: none;
-          font-size: 0.85rem;
+          font-size: 0.88rem;
           font-weight: 800;
-          padding: 0.65rem 1.4rem;
-          border-radius: 9999px;
+          padding: 0.78rem 1.25rem;
+          border-radius: 12px;
           cursor: pointer;
-          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.32);
           transition: all 0.2s ease;
         }
 
-        .folder-apply-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+        .drawer-apply-btn:hover {
           background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+          box-shadow: 0 6px 18px rgba(124, 58, 237, 0.42);
+          transform: translateY(-1px);
         }
 
-        @media (max-width: 1024px) {
-          .folder-cards-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
 
         @media (max-width: 990px) {
           .circular-categories-track {
@@ -1768,18 +1726,8 @@ export default function NewArrivals() {
             width: 100%;
             margin-left: 0;
           }
-          .folder-cards-grid {
-            grid-template-columns: 1fr;
-          }
-          .filter-folder-panel {
-            padding: 1.25rem 1rem;
-          }
-          .folder-footer-bar {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          .folder-apply-btn {
-            justify-content: center;
+          .filter-drawer-container {
+            max-width: 100%;
           }
         }
       `}</style>

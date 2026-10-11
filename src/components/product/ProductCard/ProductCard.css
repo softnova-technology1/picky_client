@@ -321,13 +321,86 @@
 }
 
 /* Mobile adjustments */
+/* Mobile adjustments for 2-column layout (320px - 480px) */
 @media (max-width: 480px) {
+    .ref-product-card {
+        border-radius: 18px;
+    }
+
+    .ref-card-top {
+        border-radius: 18px;
+        padding-top: 10px;
+    }
+
+    .ref-top-bar {
+        padding: 8px 8px 0;
+    }
+
+    .ref-mega-deal {
+        font-size: 0.62rem;
+        padding: 2px 6px;
+        gap: 3px;
+    }
+
+    .ref-wishlist-btn {
+        width: 30px;
+        height: 30px;
+    }
+
     .ref-card-bottom {
-        padding: 12px;
-        gap: 10px;
+        padding: 8px 10px 10px;
+        gap: 6px;
+    }
+
+    .ref-product-title {
+        font-size: 0.85rem;
+        line-height: 1.25;
+    }
+
+    .ref-price-tag {
+        gap: 4px;
+        flex-wrap: wrap;
+        align-items: baseline;
     }
 
     .ref-current-price {
-        font-size: 1.2rem;
+        font-size: 1.05rem;
+    }
+
+    .ref-original-price {
+        font-size: 0.72rem;
+    }
+
+    .ref-discount-pill {
+        font-size: 0.62rem;
+        padding: 2px 5px;
+        border-radius: 4px;
+    }
+
+    .ref-add-cart-btn {
+        height: 36px;
+        font-size: 0.76rem;
+        border-radius: 10px;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 350px) {
+    .ref-card-bottom {
+        padding: 6px 8px 8px;
+        gap: 4px;
+    }
+
+    .ref-product-title {
+        font-size: 0.78rem;
+    }
+
+    .ref-current-price {
+        font-size: 0.95rem;
+    }
+
+    .ref-add-cart-btn {
+        height: 32px;
+        font-size: 0.7rem;
     }
 }

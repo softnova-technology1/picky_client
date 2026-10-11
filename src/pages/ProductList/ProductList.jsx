@@ -9,7 +9,7 @@ import ShopInFeedBanner from '../../components/shop/ShopInFeedBanner';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
 import { getProducts, categories as defaultCategories, searchProducts } from '../../data';
-import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight } from 'lucide-react';
+import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();
@@ -31,7 +31,24 @@ export default function ProductList() {
   const [loading, setLoading] = useState(true);
   const [gridCols, setGridCols] = useState(4); // 4-col compact grid default
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isMobileSortOpen, setIsMobileSortOpen] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState(searchQuery);
   const [visibleCount, setVisibleCount] = useState(16);
+
+  // Sync mobile search query with URL param
+  useEffect(() => {
+    setMobileSearchQuery(searchQuery);
+  }, [searchQuery]);
+
+  const getSortLabel = (s) => {
+    switch (s) {
+      case 'newest': return 'Newest';
+      case 'price_asc': return 'Price: Low';
+      case 'price_desc': return 'Price: High';
+      case 'featured': return 'Featured';
+      default: return 'Featured';
+    }
+  };
 
   // Quick Filters State
   const [quickFilters, setQuickFilters] = useState({
@@ -332,17 +349,204 @@ export default function ProductList() {
   return (
     <PageWrapper>
       <div style={{ background: '#ffffff', minHeight: '100vh', paddingBottom: '6rem' }}>
-        {/* ── 1. Hero Spotlight: Rich Indigo Gradient + Crisp White Text ── */}
-        <ShopHeroSpotlight
-          totalProducts={filteredProducts.length}
-          categoryName={currentCategoryObj ? currentCategoryObj.name : ''}
-          searchQuery={searchQuery}
-          onSearchSubmit={handleSearchSubmit}
-          onSearchClear={handleSearchClear}
-        />
+        {/* ── 1. Hero Spotlight: Desktop Only (> 768px) ── */}
+        <div className="desktop-shop-hero-wrapper">
+          <ShopHeroSpotlight
+            totalProducts={filteredProducts.length}
+            categoryName={currentCategoryObj ? currentCategoryObj.name : ''}
+            searchQuery={searchQuery}
+            onSearchSubmit={handleSearchSubmit}
+            onSearchClear={handleSearchClear}
+          />
+        </div>
 
-        {/* ── 2. Master 2-Column Shopping Catalog ── */}
+        {/* ── 2. Master Shopping Catalog ── */}
         <div className="container">
+          {/* ── Mobile Central Shop Layout (320px–768px ONLY) ── */}
+          <div className="shop-mobile-center-header">
+            {/* 1. Mobile Search Bar */}
+            <form
+              className="shop-mobile-search-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearchSubmit(mobileSearchQuery);
+              }}
+            >
+              <div className="shop-mobile-search-box">
+                <Search size={18} className="shop-mobile-search-icon" />
+                <input
+                  type="text"
+                  value={mobileSearchQuery}
+                  onChange={(e) => setMobileSearchQuery(e.target.value)}
+                  placeholder="Search products or category..."
+                  className="shop-mobile-search-input"
+                />
+                {mobileSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileSearchQuery('');
+                      handleSearchClear();
+                    }}
+                    className="shop-mobile-search-clear"
+                    aria-label="Clear search"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+                <div
+                  className="shop-mobile-search-scan"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  title="Filter Scanner"
+                >
+                  <SlidersHorizontal size={16} />
+                </div>
+              </div>
+            </form>
+
+            {/* 2. Horizontally Scrollable Category Tabs */}
+            <div className="shop-mobile-category-track">
+              <button
+                type="button"
+                onClick={() => handleCategoryChange('')}
+                className={`shop-mobile-cat-pill ${!selectedCategory ? 'active' : ''}`}
+              >
+                All Products
+              </button>
+              {categories.map((cat) => {
+                const catSlug = cat.slug || cat._id;
+                const isActive =
+                  selectedCategory === catSlug ||
+                  selectedCategory === cat._id ||
+                  selectedCategory?.toLowerCase() === cat.slug?.toLowerCase();
+                return (
+                  <button
+                    key={cat._id || catSlug}
+                    type="button"
+                    onClick={() => handleCategoryChange(isActive ? '' : catSlug)}
+                    className={`shop-mobile-cat-pill ${isActive ? 'active' : ''}`}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 3. Controls Row (Product Count, Sort, Filter) */}
+            <div className="shop-mobile-controls-row">
+              <div className="shop-mobile-item-count">
+                <span className="shop-mobile-count-dot" />
+                <span>
+                  <strong>{filteredProducts.length}</strong> items found
+                </span>
+              </div>
+              <div className="shop-mobile-ctrl-actions">
+                {/* Sort Button & Dropdown */}
+                <div className="shop-mobile-sort-wrapper">
+                  <button
+                    type="button"
+                    className="shop-mobile-sort-btn"
+                    onClick={() => setIsMobileSortOpen((prev) => !prev)}
+                  >
+                    <ArrowUpDown size={13} />
+                    <span>{getSortLabel(sort)}</span>
+                  </button>
+                  {isMobileSortOpen && (
+                    <div className="shop-mobile-sort-menu">
+                      {[
+                        { id: 'all', label: 'Featured' },
+                        { id: 'newest', label: 'Newest Arrivals' },
+                        { id: 'price_asc', label: 'Price: Low to High' },
+                        { id: 'price_desc', label: 'Price: High to Low' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          className={`shop-mobile-sort-item ${sort === opt.id ? 'active' : ''}`}
+                          onClick={() => {
+                            const next = new URLSearchParams(searchParams);
+                            next.set('sort', opt.id);
+                            setSearchParams(next);
+                            setIsMobileSortOpen(false);
+                          }}
+                        >
+                          <span>{opt.label}</span>
+                          {sort === opt.id && <Check size={14} />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Filters Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(true)}
+                  className={`shop-mobile-filter-pill ${activeFilterCount > 0 ? 'has-active' : ''}`}
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="shop-mobile-filter-badge">{activeFilterCount}</span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* 4. Active Filter Chips Row */}
+            {activeFilterCount > 0 && (
+              <div className="shop-mobile-chips-row">
+                {searchQuery && (
+                  <div className="shop-mobile-chip">
+                    <span>&quot;{searchQuery}&quot;</span>
+                    <button type="button" onClick={handleSearchClear}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                {selectedCategory && (
+                  <div className="shop-mobile-chip">
+                    <span>Category: {currentCategoryObj ? currentCategoryObj.name : selectedCategory}</span>
+                    <button type="button" onClick={() => handleCategoryChange('')}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                {selectedSubCategory && (
+                  <div className="shop-mobile-chip">
+                    <span>Sub: {selectedSubCategory}</span>
+                    <button type="button" onClick={() => handleSubCategoryChange('')}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                {urlMaxPrice && (
+                  <div className="shop-mobile-chip">
+                    <span>Under ₹{urlMaxPrice}</span>
+                    <button type="button" onClick={() => handleMaxPriceChange('')}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                {(urlMinDiscount || quickFilters.discount40) && (
+                  <div className="shop-mobile-chip">
+                    <span>{urlMinDiscount || '40'}%+ OFF</span>
+                    <button type="button" onClick={() => handleDiscountChange('')}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleResetAll}
+                  className="shop-mobile-clear-all-link"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+          </div>
+
           <div
             className="shop-main-layout"
             style={{
@@ -373,6 +577,7 @@ export default function ProductList() {
             <main style={{ flexGrow: 1, minWidth: 0, width: '100%' }}>
               {/* Catalog Control Header Bar */}
               <div
+                className="shop-desktop-control-bar"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -658,6 +863,26 @@ export default function ProductList() {
           border-color: #7c3aed !important;
           box-shadow: 0 8px 24px rgba(124, 58, 237, 0.28) !important;
           transform: translateY(-2px);
+        }
+        /* Desktop Isolation Defaults (> 768px) */
+        @media (min-width: 769px) {
+          .shop-mobile-center-header {
+            display: none !important;
+          }
+          .desktop-shop-hero-wrapper {
+            display: block !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .desktop-shop-hero-wrapper {
+            display: none !important;
+          }
+          .shop-desktop-control-bar {
+            display: none !important;
+          }
+          .shop-main-layout > aside {
+            display: none !important;
+          }
         }
         @media (max-width: 990px) {
           .shop-mobile-filter-btn {
