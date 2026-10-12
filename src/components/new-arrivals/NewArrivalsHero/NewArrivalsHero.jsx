@@ -1,19 +1,32 @@
-import React, { useMemo, useState } from 'react';
-import { ArrowRight, PackagePlus, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 
-const FALLBACK_CATEGORIES = [
-  { id: 'all', label: 'All New Arrivals', icon: 'package-plus' },
-  { id: 'medicine', label: 'medicine', image: '/images/products/saree.png' },
-  { id: 'fashion', label: 'Fashion', image: '/images/top_category_fashion.jpg' },
-  { id: 'home-kitchen', label: 'Home & Kitchen', image: '/images/top_category_kitchen.jpg' },
-  { id: 'artificial-jewellery', label: 'Artificial Jewellery', image: '/images/top_category_jewellery.jpg' },
-  { id: 'beauty-personal-care', label: 'Beauty & Personal Care', image: '/images/pill_beauty_product.jpg' },
-  { id: 'mobile-accessories', label: 'Mobile Accessories', image: '/images/top_category_tech.jpg' },
-  { id: 'traditional-tamil-products', label: 'Traditional Tamil Products', image: '/images/products/saree.png' },
-  { id: 'snacks-foods', label: 'Snacks & Foods', image: '/images/products/saree.png' },
-  { id: 'home-decor', label: 'Home Décor', image: '/images/pill_model_decor.png' },
-  { id: 'kids-products', label: 'Kids Products', image: '/images/pill_model_western.png' },
-  { id: 'fitness-products', label: 'Fitness Products', image: '/images/pill_tech_product.jpg' },
+const HERO_BUBBLE_CATEGORIES = [
+  {
+    id: 'beauty-personal-care',
+    label: 'Beauty',
+    image: '/images/new-arrivals-hero/orb-beauty-v2.png',
+  },
+  {
+    id: 'mobile-accessories',
+    label: 'Accessories',
+    image: '/images/new-arrivals-hero/orb-accessories.png',
+  },
+  {
+    id: 'traditional-tamil-products',
+    label: 'Tamil Products',
+    image: '/images/new-arrivals-hero/orb-tamil.png',
+  },
+  {
+    id: 'snacks-foods',
+    label: 'Snacks',
+    image: '/images/new-arrivals-hero/orb-snacks.png',
+  },
+  {
+    id: 'artificial-jewellery',
+    label: 'Jewellery',
+    image: '/images/new-arrivals-hero/orb-jewellery.png',
+  },
 ];
 
 export default function NewArrivalsHero({
@@ -22,561 +35,685 @@ export default function NewArrivalsHero({
   activeCategory = 'all',
   onSelectCategory,
 }) {
-  const [manualOffset, setManualOffset] = useState(0);
+  const [hoveredOrb, setHoveredOrb] = useState(null);
 
-  const rawList = categories && categories.length > 0 ? categories : FALLBACK_CATEGORIES;
-
-  // Build a seamless circular constellation of category items (24 items for full circle)
-  const orbitalItems = useMemo(() => {
-    let list = [...rawList];
-    while (list.length < 24) {
-      list = [...list, ...rawList];
-    }
-    return list;
-  }, [rawList]);
-
-  // Rotate opposite direction on manual click
-  const handleStepRotate = (dir) => {
-    const step = 360 / orbitalItems.length;
-    setManualOffset((prev) => prev + (dir === 'left' ? -step : step));
-  };
-
-  const handleItemClick = (e, item) => {
-    e.stopPropagation();
+  const handleOrbClick = (catId) => {
     if (onSelectCategory) {
-      onSelectCategory(item.id);
+      onSelectCategory(catId);
     }
   };
 
   return (
-    <section className="new-arrivals-hero-wrapper">
-      <div className="new-arrivals-dome-hero">
-        {/* Soft Ambient Lighting Orbs */}
-        <div className="dome-ambient-orb orb-top" />
-        <div className="dome-ambient-orb orb-bottom" />
+    <section className="fresh-drops-hero-stage">
+      {/* ── AMBIENT COSMIC GRADIENT BLOBS & CURVES ── */}
+      <div className="hero-cosmic-bg">
+        <div className="cosmic-blob blob-top-right" />
+        <div className="cosmic-blob blob-bottom-left" />
+        <div className="cosmic-blob blob-top-left" />
+        <div className="cosmic-blob blob-center-violet" />
+        <div className="cosmic-bottom-wave" />
+      </div>
 
-        {/* ── 1. CENTERED EDITORIAL CONTENT ── */}
-        <div className="dome-center-content">
-          <div className="hero-live-pill">
-            <span className="live-pulse-dot" />
-            <span className="pill-text">PICKY EXCLUSIVE ✦ FRESH DROPS 2026</span>
-          </div>
+      {/* ── 4 FLOATING SHOWCASE LIFESTYLE CLUSTERS ── */}
+      {/* Top Left: Unboxing box with sneaker & apparel */}
+      <div className="hero-lifestyle-cluster cluster-top-left" aria-hidden="true">
+        <img
+          src="/images/new-arrivals-hero/cluster-fashion-box.png"
+          alt="Fashion Drops Unboxing"
+          className="cluster-img"
+          loading="eager"
+        />
+      </div>
 
-          <h1 className="hero-heading">
-            Fresh Drops & <br />
-            <span className="hero-heading-gradient">Statement Fits</span>
-          </h1>
+      {/* Top Right: Holographic smartphones with cyan neon light trail */}
+      <div className="hero-lifestyle-cluster cluster-top-right" aria-hidden="true">
+        <img
+          src="/images/new-arrivals-hero/cluster-phones.png"
+          alt="Gadgets & Accessories"
+          className="cluster-img"
+          loading="eager"
+        />
+      </div>
 
-          <p className="hero-subtext">
-            Discover this week's handpicked styles, fresh gadgets, and latest arrivals before they sell out.
-          </p>
+      {/* Middle Left: Traditional Brass pooja items & silk saree */}
+      <div className="hero-lifestyle-cluster cluster-mid-left" aria-hidden="true">
+        <img
+          src="/images/new-arrivals-hero/cluster-pooja.png"
+          alt="Traditional Heritage"
+          className="cluster-img"
+          loading="eager"
+        />
+      </div>
 
-          <button
-            onClick={onExploreClick}
-            className="explore-now-btn"
-            type="button"
-          >
-            <span>Explore Catalog</span>
-            <div className="arrow-circle">
-              <ArrowRight size={14} />
-            </div>
-          </button>
+      {/* Middle Right: Organic snacks, samosas & crisps */}
+      <div className="hero-lifestyle-cluster cluster-mid-right" aria-hidden="true">
+        <img
+          src="/images/new-arrivals-hero/cluster-snacks.png"
+          alt="Crispy Snacks & Delights"
+          className="cluster-img"
+          loading="eager"
+        />
+      </div>
+
+      {/* ── CENTER EDITORIAL CONTENT ── */}
+      <div className="hero-editorial-center">
+        {/* Top Capsule Badge */}
+        <div className="hero-sparkle-pill">
+          <span className="pill-star">✦</span>
+          <span className="pill-title">PICKY EXCLUSIVE ✦ FRESH DROPS 2026</span>
+          <span className="pill-star">✦</span>
         </div>
 
-        {/* ── 2. CURVED ARCH CATEGORY RUNNER (Clean Floating Arc, No Lines) ── */}
-        <div className="dome-horizon-stage">
-          {/* Interactive Step Nudge Controls */}
+        {/* Display Typography */}
+        <h1 className="hero-main-title">
+          <span className="title-serif-white">Fresh Drops &</span>
+          <br />
+          <span className="title-gradient-sunset">Statement Fits</span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="hero-description">
+          Discover this week's handpicked styles, fresh gadgets,
+          <br className="hero-desc-br" />
+          and latest arrivals before they sell out.
+        </p>
+
+        {/* Explore CTA Button */}
+        <div className="hero-cta-halo">
           <button
             type="button"
-            className="dome-nav-arrow arrow-left"
-            onClick={() => handleStepRotate('left')}
-            aria-label="Rotate categories left"
+            className="hero-sunset-cta"
+            onClick={onExploreClick}
           >
-            <ChevronLeft size={20} strokeWidth={2.6} />
+            <span className="cta-label">Explore Catalog</span>
+            <span className="cta-icon-disc">
+              <ArrowRight size={14} strokeWidth={3} />
+            </span>
           </button>
-
-          <button
-            type="button"
-            className="dome-nav-arrow arrow-right"
-            onClick={() => handleStepRotate('right')}
-            aria-label="Rotate categories right"
-          >
-            <ChevronRight size={20} strokeWidth={2.6} />
-          </button>
-
-          {/* Rotating Planetary Wheel running along the arc (Opposite Direction: Right to Left) */}
-          <div
-            className="dome-orbit-wheel"
-            style={{
-              transform: `translate(-50%, 0) rotate(${manualOffset}deg)`,
-            }}
-          >
-            {orbitalItems.map((item, idx) => {
-              const total = orbitalItems.length;
-              const angleDeg = (idx / total) * 360;
-              const isActive = activeCategory === item.id;
-
-              return (
-                <div
-                  key={`${item.id}-${idx}`}
-                  className="dome-orbit-node"
-                  style={{
-                    '--node-angle': `${angleDeg}deg`,
-                  }}
-                >
-                  {/* Upright holder cancels the static node angle */}
-                  <div
-                    className="dome-upright-holder"
-                    style={{
-                      transform: `rotate(-${angleDeg}deg)`,
-                    }}
-                  >
-                    {/* Button continuously counter-spins to stay 100% upright at all angles */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleItemClick(e, item)}
-                      className={`dome-item-button ${isActive ? 'active' : ''}`}
-                      title={item.label}
-                    >
-                      {/* Circle Avatar Pod */}
-                      <div className="dome-avatar-pod">
-                        <div className="dome-avatar-inner">
-                          {item.icon === 'package-plus' ? (
-                            <div className="all-drops-icon-wrap">
-                              <PackagePlus size={22} strokeWidth={2} />
-                            </div>
-                          ) : (
-                            <img
-                              src={item.image || '/images/products/saree.png'}
-                              alt={item.label}
-                              className="dome-avatar-img"
-                              loading="lazy"
-                            />
-                          )}
-                        </div>
-                        {/* Active Indicator Dot */}
-                        {isActive && <div className="active-radiant-glow" />}
-                      </div>
-
-                      {/* Category Label */}
-                      <span className="dome-item-label">{item.label}</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
 
-      <style>{`
-        .new-arrivals-hero-wrapper {
-          width: 100%;
-          position: relative;
-          overflow: hidden;
-        }
+      {/* ── 5 CRYSTAL 3D GLASS BUBBLE CATEGORY PODS ── */}
+      <div className="hero-bubble-dock-container">
+        <div className="hero-bubble-dock">
+          {HERO_BUBBLE_CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            const isHovered = hoveredOrb === cat.id;
 
-        /* ── Full Width Cosmic Deep Purple Hero Card ── */
-        .new-arrivals-dome-hero {
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`bubble-card-item ${isActive ? 'is-active' : ''} ${isHovered ? 'is-hovered' : ''}`}
+                onClick={() => handleOrbClick(cat.id)}
+                onMouseEnter={() => setHoveredOrb(cat.id)}
+                onMouseLeave={() => setHoveredOrb(null)}
+                aria-label={`Select ${cat.label}`}
+              >
+                {/* 3D Glass Bubble Orb */}
+                <div className="bubble-sphere-wrapper">
+                  <div className="bubble-sphere-glass">
+                    {/* Inner image */}
+                    <img
+                      src={cat.image}
+                      alt={cat.label}
+                      className="bubble-inner-img"
+                      loading="eager"
+                    />
+
+                    {/* Specular curved reflection layer */}
+                    <div className="bubble-specular-sheen" />
+
+                    {/* Translucent rim inner shadow */}
+                    <div className="bubble-rim-refraction" />
+                  </div>
+
+                  {/* Active radiant halo */}
+                  {isActive && <div className="bubble-active-ring" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── STYLES (MATCHING MOCKUP WITH PIXEL PRECISION & RESPONSIVE POLISH) ── */}
+      <style>{`
+        /* ── Container Stage ── */
+        .fresh-drops-hero-stage {
           position: relative;
           width: 100%;
           min-height: 560px;
           background: 
-            radial-gradient(circle at 50% 12%, rgba(168, 85, 247, 0.42) 0%, transparent 55%),
-            radial-gradient(ellipse at 85% 85%, rgba(124, 58, 237, 0.28) 0%, transparent 50%),
-            radial-gradient(ellipse at 15% 85%, rgba(192, 132, 252, 0.25) 0%, transparent 50%),
-            linear-gradient(180deg, #110426 0%, #1c0838 45%, #2a0b52 75%, #180630 100%);
+            radial-gradient(ellipse at 15% 15%, rgba(168, 85, 247, 0.25) 0%, transparent 55%),
+            radial-gradient(ellipse at 85% 20%, rgba(147, 51, 234, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(109, 40, 217, 0.2) 0%, transparent 60%),
+            linear-gradient(140deg, #110324 0%, #1c063b 30%, #2a0a54 60%, #160430 100%);
           overflow: hidden;
-          border-bottom: 1.5px solid rgba(255, 255, 255, 0.14);
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: flex-start;
-          padding-top: clamp(2rem, 3.5vw, 3rem);
+          justify-content: space-between;
+          padding: 2.2rem 1.5rem 2rem;
           box-sizing: border-box;
+          user-select: none;
         }
 
-        /* Ambient Lighting Orbs */
-        .dome-ambient-orb {
+        /* ── Background Organic Glow Curves & Nebulas (Purple Family) ── */
+        .hero-cosmic-bg {
           position: absolute;
-          border-radius: 50%;
-          filter: blur(90px);
+          inset: 0;
           pointer-events: none;
+          overflow: hidden;
           z-index: 1;
         }
-        .orb-top {
-          width: 500px;
-          height: 350px;
-          top: -120px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(192, 132, 252, 0.35);
-        }
-        .orb-bottom {
-          width: 650px;
-          height: 250px;
-          bottom: -50px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(124, 58, 237, 0.35);
+
+        .cosmic-blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.88;
         }
 
-        /* ── 1. Centered Editorial Content ── */
-        .dome-center-content {
+        /* Top Right Soft Lavender/Purple Glow */
+        .blob-top-right {
+          top: -80px;
+          right: -60px;
+          width: 480px;
+          height: 420px;
+          background: radial-gradient(circle at 60% 40%, rgba(192, 132, 252, 0.38) 0%, rgba(139, 92, 246, 0.28) 45%, rgba(109, 40, 217, 0.15) 70%, transparent 100%);
+          filter: blur(85px);
+          opacity: 0.9;
+        }
+
+        /* Bottom Left Deep Amethyst/Violet fluid blob */
+        .blob-bottom-left {
+          bottom: -70px;
+          left: -80px;
+          width: 460px;
+          height: 400px;
+          background: radial-gradient(circle at 40% 60%, rgba(168, 85, 247, 0.35) 0%, rgba(124, 58, 237, 0.25) 45%, rgba(76, 29, 149, 0.15) 75%, transparent 100%);
+          filter: blur(85px);
+          opacity: 0.85;
+        }
+
+        /* Top Left violet glow */
+        .blob-top-left {
+          top: -60px;
+          left: 10%;
+          width: 340px;
+          height: 280px;
+          background: radial-gradient(circle, rgba(147, 51, 234, 0.3) 0%, rgba(76, 29, 149, 0.18) 60%, transparent 100%);
+          filter: blur(80px);
+          opacity: 0.75;
+        }
+
+        /* Center violet ambient nebula */
+        .blob-center-violet {
+          top: 35%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 650px;
+          height: 380px;
+          background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(88, 28, 135, 0.15) 60%, transparent 100%);
+          filter: blur(95px);
+          opacity: 0.85;
+        }
+
+        /* Fluid curved bottom wave */
+        .cosmic-bottom-wave {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 180px;
+          background: linear-gradient(180deg, transparent 0%, rgba(28, 8, 56, 0.45) 40%, rgba(17, 4, 36, 0.95) 100%);
+          pointer-events: none;
+        }
+
+        /* ── Floating Lifestyle Showcase Clusters ── */
+        .hero-lifestyle-cluster {
+          position: absolute;
+          z-index: 4;
+          pointer-events: none;
+          transition: transform 0.4s ease-out;
+        }
+
+        .cluster-img {
+          display: block;
+          width: 100%;
+          height: auto;
+          filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.45));
+        }
+
+        /* Top Left: Fashion Box */
+        .cluster-top-left {
+          top: 24px;
+          left: 4.5%;
+          width: clamp(170px, 19vw, 240px);
+          animation: floatSway1 6s ease-in-out infinite alternate;
+        }
+
+        /* Top Right: Holographic Phones */
+        .cluster-top-right {
+          top: 28px;
+          right: 4.5%;
+          width: clamp(160px, 17vw, 220px);
+          animation: floatSway2 6.5s ease-in-out infinite alternate;
+        }
+
+        /* Middle Left: Traditional Pooja & Saree */
+        .cluster-mid-left {
+          top: 230px;
+          left: 8.5%;
+          width: clamp(140px, 15vw, 190px);
+          animation: floatSway3 7s ease-in-out infinite alternate;
+        }
+
+        /* Middle Right: Crispy Snacks */
+        .cluster-mid-right {
+          top: 200px;
+          right: 5%;
+          width: clamp(155px, 17vw, 225px);
+          animation: floatSway1 5.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatSway1 {
+          0% { transform: translateY(0) rotate(0deg); }
+          100% { transform: translateY(-10px) rotate(1.2deg); }
+        }
+        @keyframes floatSway2 {
+          0% { transform: translateY(0) rotate(0deg); }
+          100% { transform: translateY(-8px) rotate(-1.5deg); }
+        }
+        @keyframes floatSway3 {
+          0% { transform: translateY(0) scale(1); }
+          100% { transform: translateY(-7px) scale(1.02); }
+        }
+
+        /* ── Center Editorial Content ── */
+        .hero-editorial-center {
           position: relative;
           z-index: 10;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
-          max-width: 780px;
-          padding: 0 1.5rem;
-          margin-bottom: 1.25rem;
+          max-width: 680px;
+          margin: 0 auto;
+          padding: 0 1rem;
         }
 
-        .hero-live-pill {
+        /* Sparkle Pill */
+        .hero-sparkle-pill {
           display: inline-flex;
           align-items: center;
-          gap: 0.6rem;
-          background: rgba(255, 255, 255, 0.12);
+          gap: 0.55rem;
+          background: rgba(255, 255, 255, 0.08);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
-          color: #f3e8ff;
-          padding: 0.42rem 1.25rem;
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          padding: 0.45rem 1.3rem;
           border-radius: 9999px;
-          border: 1px solid rgba(255, 255, 255, 0.28);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-          margin-bottom: 0.85rem;
+          box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+          margin-bottom: 1.15rem;
         }
 
-        .live-pulse-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #4ade80;
-          box-shadow: 0 0 10px #4ade80;
-          animation: pulseGreen 1.8s infinite;
+        .pill-star {
+          color: #fbbf24;
+          font-size: 0.85rem;
+          text-shadow: 0 0 8px rgba(251, 191, 36, 0.7);
         }
 
-        @keyframes pulseGreen {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(1.35); }
-        }
-
-        .pill-text {
+        .pill-title {
           font-size: 0.78rem;
-          font-weight: 800;
+          font-weight: 700;
           letter-spacing: 0.08em;
+          color: #f5f3ff;
           text-transform: uppercase;
         }
 
-        .hero-heading {
-          font-family: var(--font-primary, serif);
-          font-size: clamp(2.3rem, 4.2vw, 3.8rem);
-          font-weight: 900;
-          line-height: 1.1;
-          color: #ffffff;
-          margin: 0 0 0.75rem 0;
-          letter-spacing: -0.025em;
-          text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+        /* Main Heading */
+        .hero-main-title {
+          margin: 0 0 0.85rem;
+          line-height: 1.12;
+          letter-spacing: -0.015em;
         }
 
-        .hero-heading-gradient {
-          background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 40%, #c084fc 100%);
+        .title-serif-white {
+          font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+          font-size: clamp(2.4rem, 4.6vw, 3.8rem);
+          font-weight: 700;
+          color: #ffffff;
+          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+        }
+
+        .title-gradient-sunset {
+          font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+          font-size: clamp(2.5rem, 4.8vw, 4rem);
+          font-weight: 800;
+          background: linear-gradient(90deg, #ffd3b6 0%, #ff859d 48%, #f472b6 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 2px 14px rgba(244, 63, 94, 0.35));
+          display: inline-block;
         }
 
-        .hero-subtext {
-          font-size: clamp(0.92rem, 1.15vw, 1.05rem);
-          line-height: 1.6;
-          color: rgba(243, 232, 255, 0.92);
-          margin: 0 0 1.25rem 0;
-          max-width: 580px;
-          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        /* Subtitle */
+        .hero-description {
+          font-size: clamp(0.95rem, 1.25vw, 1.08rem);
+          line-height: 1.55;
+          color: rgba(243, 232, 255, 0.9);
+          margin: 0 0 1.5rem;
+          font-weight: 400;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
 
-        .explore-now-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.85rem;
-          background: #ffffff;
-          color: #1e0b38;
-          border: none;
-          border-radius: 9999px;
-          padding: 0.75rem 1.75rem;
-          font-size: 0.94rem;
-          font-weight: 800;
-          cursor: pointer;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 25px rgba(255, 255, 255, 0.25);
-          transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .explore-now-btn:hover {
-          transform: translateY(-2px) scale(1.02);
-          background: #fdfcff;
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 35px rgba(192, 132, 252, 0.6);
-        }
-
-        .arrow-circle {
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          background: #7c3aed;
-          color: #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.22s ease;
-        }
-
-        .explore-now-btn:hover .arrow-circle {
-          transform: translateX(3px);
-          background: #6d28d9;
-        }
-
-        /* ── 2. Curved Arc Category Runner Stage (Clean Background, No Planet Graphic) ── */
-        .dome-horizon-stage {
-          position: relative;
-          width: 100%;
-          height: 230px;
-          overflow: hidden;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          z-index: 5;
-          margin-top: 0.5rem;
-          --wheel-radius: 800px;
-          --wheel-pivot-top: 830px;
-        }
-
-        /* Nav Nudge Buttons */
-        .dome-nav-arrow {
-          position: absolute;
-          top: 45px;
-          z-index: 20;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.14);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.25);
-          color: #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-        }
-
-        .dome-nav-arrow:hover {
-          background: rgba(255, 255, 255, 0.28);
-          transform: scale(1.1);
-          color: #f3e8ff;
-        }
-
-        .arrow-left { left: clamp(1rem, 4vw, 3rem); }
-        .arrow-right { right: clamp(1rem, 4vw, 3rem); }
-
-        /* ── Rotating Wheel running in OPPOSITE DIRECTION (Right to Left: 360deg -> 0deg) ── */
-        .dome-orbit-wheel {
-          position: absolute;
-          top: var(--wheel-pivot-top);
-          left: 50%;
-          width: 0;
-          height: 0;
-          z-index: 6;
-          animation: spinDomeWheelReverse 50s linear infinite;
-          will-change: transform;
-        }
-
-        /* Hover pauses rotation for easy clicking */
-        .dome-horizon-stage:hover .dome-orbit-wheel,
-        .dome-horizon-stage:hover .dome-item-button {
-          animation-play-state: paused !important;
-        }
-
-        /* Reverse direction: Rotates counter-clockwise so items move RIGHT to LEFT across the top */
-        @keyframes spinDomeWheelReverse {
-          from {
-            transform: translate(-50%, 0) rotate(360deg);
-          }
-          to {
-            transform: translate(-50%, 0) rotate(0deg);
-          }
-        }
-
-        /* ── Each Node Positioned on the Perimeter Rim ── */
-        .dome-orbit-node {
-          position: absolute;
-          top: 0;
-          left: 0;
-          transform: translate(-50%, -50%) rotate(var(--node-angle)) translateY(calc(-1 * var(--wheel-radius)));
-          width: 100px;
-          height: 120px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-        }
-
-        /* Upright Holder counter-rotates the static node angle */
-        .dome-upright-holder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: auto;
-        }
-
-        /* Item button continuously counter-spins clockwise to cancel wheel rotation (Always 100% Upright) */
-        .dome-item-button {
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 0.45rem;
-          animation: counterSpinClockwise 50s linear infinite;
-          transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-          user-select: none;
-          padding: 4px;
-        }
-
-        @keyframes counterSpinClockwise {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .dome-item-button:hover {
-          transform: scale(1.15) !important;
-        }
-
-        /* Avatar Pod */
-        .dome-avatar-pod {
-          position: relative;
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background: #ffffff;
-          padding: 3px;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.2);
-          transition: all 0.22s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .dome-item-button:hover .dome-avatar-pod {
-          box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6), 0 0 20px rgba(255, 255, 255, 0.8);
-          transform: translateY(-2px);
-        }
-
-        .dome-item-button.active .dome-avatar-pod {
-          background: #c084fc;
-          box-shadow: 0 0 22px rgba(233, 213, 255, 0.95), 0 6px 20px rgba(124, 58, 237, 0.7);
-        }
-
-        .dome-avatar-inner {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          overflow: hidden;
-          background: #f8fafc;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .dome-avatar-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+        .hero-desc-br {
           display: block;
         }
 
-        .all-drops-icon-wrap {
-          width: 100%;
-          height: 100%;
+        /* ── Explore CTA Button (Halo + Signature Purple Gradient Pill) ── */
+        .hero-cta-halo {
+          padding: 5px;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.12);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid rgba(216, 180, 254, 0.35);
+          box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4), 0 0 20px rgba(168, 85, 247, 0.25);
+          display: inline-block;
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .hero-cta-halo:hover {
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 12px 38px rgba(147, 51, 234, 0.6), 0 0 26px rgba(192, 38, 211, 0.45);
+        }
+
+        .hero-sunset-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.9rem;
+          background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+          border: none;
+          padding: 0.68rem 1.6rem 0.68rem 1.85rem;
+          border-radius: 9999px;
+          color: #ffffff;
+          font-size: 0.95rem;
+          font-weight: 700;
+          cursor: pointer;
+          letter-spacing: 0.01em;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 15px rgba(124, 58, 237, 0.35);
+          transition: filter 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hero-sunset-cta:hover {
+          filter: brightness(1.1);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 6px 20px rgba(147, 51, 234, 0.5);
+        }
+
+        .cta-icon-disc {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
           background: #ffffff;
           color: #7c3aed;
           display: flex;
           align-items: center;
           justify-content: center;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+          transition: transform 0.2s ease;
         }
 
-        .active-radiant-glow {
-          position: absolute;
-          top: -3px;
-          right: -3px;
-          width: 13px;
-          height: 13px;
+        .hero-sunset-cta:hover .cta-icon-disc {
+          transform: translateX(3px);
+        }
+
+        /* ── 5 Crystal 3D Glass Bubble Category Pods (Bottom Dock) ── */
+        .hero-bubble-dock-container {
+          position: relative;
+          z-index: 10;
+          width: 100%;
+          max-width: 1100px;
+          margin-top: 2rem;
+          display: flex;
+          justify-content: center;
+        }
+
+        .hero-bubble-dock {
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          gap: clamp(1.2rem, 3.6vw, 3.8rem);
+          width: 100%;
+          padding: 0.5rem 0.5rem 0.75rem;
+          box-sizing: border-box;
+        }
+
+        .bubble-card-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          outline: none;
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .bubble-card-item:hover,
+        .bubble-card-item.is-hovered {
+          transform: translateY(-8px);
+        }
+
+        .bubble-card-item.is-active {
+          transform: translateY(-10px);
+        }
+
+        /* The 3D Glass Sphere */
+        .bubble-sphere-wrapper {
+          position: relative;
+          width: clamp(86px, 9.5vw, 126px);
+          height: clamp(86px, 9.5vw, 126px);
+        }
+
+        .bubble-sphere-glass {
+          position: relative;
+          width: 100%;
+          height: 100%;
           border-radius: 50%;
-          background: #4ade80;
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 10px #4ade80;
-        }
-
-        /* Label Text */
-        .dome-item-label {
-          font-size: 0.73rem;
-          font-weight: 700;
-          color: #ffffff;
-          max-width: 92px;
-          white-space: nowrap;
           overflow: hidden;
-          text-overflow: ellipsis;
-          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-          transition: color 0.18s ease;
+          background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(18, 5, 42, 0.65) 100%);
+          box-shadow:
+            inset 0 2px 8px rgba(255, 255, 255, 0.42),
+            inset 0 -8px 20px rgba(124, 58, 237, 0.35),
+            0 12px 28px rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .dome-item-button:hover .dome-item-label,
-        .dome-item-button.active .dome-item-label {
-          color: #f3e8ff;
+        .bubble-card-item:hover .bubble-sphere-glass {
+          border-color: rgba(255, 255, 255, 0.5);
+          box-shadow:
+            inset 0 3px 12px rgba(255, 255, 255, 0.6),
+            inset 0 -8px 24px rgba(168, 85, 247, 0.45),
+            0 16px 36px rgba(0, 0, 0, 0.6),
+            0 0 25px rgba(168, 85, 247, 0.4);
+        }
+
+        .bubble-card-item.is-active .bubble-sphere-glass {
+          border-color: #a855f7;
+          box-shadow:
+            inset 0 3px 14px rgba(255, 255, 255, 0.7),
+            inset 0 -8px 25px rgba(147, 51, 234, 0.5),
+            0 18px 40px rgba(0, 0, 0, 0.65),
+            0 0 28px #a855f7;
+        }
+
+        /* Bubble image */
+        .bubble-inner-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          border-radius: 50%;
+          transform: scale(1.02);
+          transition: transform 0.35s ease;
+        }
+
+        .bubble-card-item:hover .bubble-inner-img {
+          transform: scale(1.08);
+        }
+
+        /* Specular Curved Highlight */
+        .bubble-specular-sheen {
+          position: absolute;
+          top: 3%;
+          left: 12%;
+          width: 60%;
+          height: 38%;
+          border-radius: 50%;
+          background: radial-gradient(ellipse at 45% 20%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 70%);
+          pointer-events: none;
+          transform: rotate(-15deg);
+        }
+
+        /* Rim Refraction */
+        .bubble-rim-refraction {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          box-shadow: inset 0 0 14px rgba(255, 255, 255, 0.25);
+          pointer-events: none;
+        }
+
+        /* Active Radiant Halo Ring */
+        .bubble-active-ring {
+          position: absolute;
+          inset: -6px;
+          border-radius: 50%;
+          border: 2px dashed rgba(192, 132, 252, 0.9);
+          animation: spinRing 12s linear infinite;
+          pointer-events: none;
+        }
+
+        @keyframes spinRing {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Category Label */
+        .bubble-category-text {
+          margin-top: 0.75rem;
+          font-size: clamp(0.82rem, 1vw, 0.96rem);
+          font-weight: 600;
+          color: rgba(245, 243, 255, 0.88);
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+          letter-spacing: 0.01em;
+          transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+
+        .bubble-card-item:hover .bubble-category-text,
+        .bubble-card-item.is-hovered .bubble-category-text {
+          color: #ffffff;
+          text-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+        }
+
+        .bubble-card-item.is-active .bubble-category-text {
+          color: #ffedd5;
           font-weight: 800;
-          text-shadow: 0 0 12px rgba(216, 180, 254, 0.9);
+          text-shadow: 0 0 14px rgba(251, 146, 60, 0.9);
         }
 
-        /* ── Responsive Adaptations ── */
-        @media (max-width: 900px) {
-          .dome-horizon-stage {
-            height: 210px;
-            --wheel-radius: 650px;
-            --wheel-pivot-top: 675px;
-          }
-          .dome-avatar-pod {
-            width: 52px;
-            height: 52px;
-          }
-          .dome-item-label {
-            font-size: 0.68rem;
+        /* ── RESPONSIVE DESIGN (320px–768px MOBILE RULES APPLIED) ── */
+        @media (max-width: 1024px) {
+          .cluster-mid-left,
+          .cluster-mid-right {
+            opacity: 0.7;
           }
         }
 
-        @media (max-width: 600px) {
-          .dome-horizon-stage {
-            height: 190px;
-            --wheel-radius: 480px;
-            --wheel-pivot-top: 500px;
+        @media (max-width: 768px) {
+          .fresh-drops-hero-stage {
+            min-height: auto;
+            padding: 1.8rem 1rem 1.6rem;
           }
-          .dome-avatar-pod {
-            width: 46px;
-            height: 46px;
-          }
-          .dome-item-label {
-            font-size: 0.64rem;
-            max-width: 75px;
-          }
-          .dome-nav-arrow {
+
+          /* Hide complex side clusters on mobile so text & orbs are clean and uncluttered */
+          .hero-lifestyle-cluster {
             display: none;
+          }
+
+          .hero-desc-br {
+            display: none;
+          }
+
+          .hero-description {
+            font-size: 0.88rem;
+            margin-bottom: 1.25rem;
+          }
+
+          .hero-sparkle-pill {
+            padding: 0.38rem 1rem;
+            margin-bottom: 0.85rem;
+          }
+
+          .pill-title {
+            font-size: 0.7rem;
+          }
+
+          .hero-sunset-cta {
+            padding: 0.58rem 1.35rem;
+            font-size: 0.88rem;
+          }
+
+          .hero-bubble-dock-container {
+            margin-top: 1.6rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.4rem;
+          }
+
+          .hero-bubble-dock-container::-webkit-scrollbar {
+            display: none;
+          }
+
+          .hero-bubble-dock {
+            justify-content: flex-start;
+            gap: 1.1rem;
+            padding: 0.25rem 0.5rem;
+            width: max-content;
+            margin: 0 auto;
+          }
+
+          .bubble-sphere-wrapper {
+            width: 76px;
+            height: 76px;
+          }
+
+          .bubble-category-text {
+            font-size: 0.75rem;
+            margin-top: 0.55rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .bubble-sphere-wrapper {
+            width: 68px;
+            height: 68px;
+          }
+
+          .hero-bubble-dock {
+            gap: 0.9rem;
+          }
+
+          .bubble-category-text {
+            font-size: 0.72rem;
           }
         }
       `}</style>

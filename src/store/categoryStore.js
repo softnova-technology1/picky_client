@@ -19,13 +19,13 @@ export const useCategoryStore = create((set, get) => ({
       ]);
       const dbCategories = catRes?.data?.data || catRes?.data || [];
       
-      // Merge DB categories with rich UI properties from PICKY_CATEGORIES
+      // Merge DB categories - STRICTLY use real DB image only (no mock images)
       const cList = dbCategories.map(dbCat => {
         const mockCat = PICKY_CATEGORIES.find(mc => mc.slug === dbCat.slug);
         return {
-          ...mockCat, // Fallback rich properties (bgGradient, heroImage, etc.)
+          ...mockCat, // Fallback non-image properties (icon, bgGradient)
           ...dbCat,   // Override with DB real data (name, slug, _id, isActive)
-          image: dbCat.image || mockCat?.image, // Prefer DB image, fallback to mock
+          image: dbCat.image || null, // STRICTLY REAL DB image only! No mock image fallback
         };
       });
 

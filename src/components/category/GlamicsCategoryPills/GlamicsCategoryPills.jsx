@@ -27,7 +27,7 @@ export default function GlamicsCategoryPills({ categories = [] }) {
         }}
       >
         {categories.map((cat) => {
-          const imgSrc = CATEGORY_IMAGES[cat.slug] || cat.image || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400';
+          const imgSrc = cat.image || null;
 
           return (
             <Link
@@ -72,22 +72,22 @@ export default function GlamicsCategoryPills({ categories = [] }) {
                     transition: 'all 0.25s ease',
                   }}
                 >
-                  <img
-                    src={imgSrc}
-                    alt={cat.name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                      transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                    className="glamics-cat-img"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400';
-                    }}
-                  />
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={cat.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                        transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                      className="glamics-cat-img"
+                    />
+                  ) : (
+                    <span style={{ fontSize: '1.25rem' }}>{cat.icon || '📦'}</span>
+                  )}
                 </div>
 
                 {/* Category Name & Clean Product Count (Badges Removed) */}

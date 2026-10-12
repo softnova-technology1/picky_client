@@ -12,7 +12,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
 import { REVIEWS_DATA } from '../../data/reviewsData';
-import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye, Zap } from 'lucide-react';
+import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye, Zap, Layers } from 'lucide-react';
 import '../../styles/home-premium.css';
 import '../../styles/mobile-responsive.css';
 
@@ -467,11 +467,27 @@ export default function Home() {
                 >
                   {/* Dome / Arch Image Card */}
                   <div className="hp-category-arch-wrapper">
-                    <img
-                      src={cat.image || 'https://images.unsplash.com/photo-1611078489935-0cb964de46d6?w=400'}
-                      alt={cat.name}
-                      className="hp-category-arch-img"
-                    />
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="hp-category-arch-img"
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'linear-gradient(135deg, #2d1052 0%, #170733 100%)',
+                          color: '#c4b5fd',
+                        }}
+                      >
+                        <Layers size={26} strokeWidth={1.8} />
+                      </div>
+                    )}
                     <div className="hp-arch-purple-tint" />
                     {/* Floating Bottom Center Arrow Button — Uniform Picky Theme */}
                     <div className="hp-category-arrow-badge">

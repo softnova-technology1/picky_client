@@ -126,7 +126,7 @@ export default function NewArrivals() {
         list.push({
           id: cat.slug || cat._id,
           label: cat.name,
-          image: cat.image || '/images/products/saree.png',
+          image: cat.image || null,
           _id: cat._id,
         });
       });
@@ -473,13 +473,28 @@ export default function NewArrivals() {
                           <div className="story-all-drops-icon">
                             <PackagePlus size={24} strokeWidth={1.75} />
                           </div>
-                        ) : (
+                        ) : item.image ? (
                           <img
                             src={item.image}
                             alt={item.label}
                             className={`story-circle-img img-${item.id}`}
                             loading="lazy"
                           />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: '#ede9fe',
+                              color: '#7c3aed',
+                            }}
+                            title="No image in DB"
+                          >
+                            <Layers size={22} strokeWidth={2} />
+                          </div>
                         )}
                       </div>
                     </div>
