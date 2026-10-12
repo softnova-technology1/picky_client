@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../components/layout/PageWrapper';
 import { useUiStore } from '../../../store/uiStore';
+import { contactService } from '../../../services/contact.service';
 import './Contact.css';
+import '../../../styles/home-premium.css';
 import {
   Headset,
   ShieldCheck,
@@ -18,22 +21,172 @@ import {
   Hash,
   MonitorPlay,
   MessageCircle,
-  Star
+  Star,
+  Clock,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Paperclip,
+  UploadCloud,
+  FileText,
+  X
 } from 'lucide-react';
 
-export default function Contact() {
-  const { showToast } = useUiStore();
-  const [form, setForm] = useState({ fullName: '', email: '', message: '' });
-  const [loading, setLoading] = useState(false);
+const promoSlides = [
+  {
+    id: 1,
+    tag: 'NEW ARRIVALS',
+    subtitle: 'Discover trending seasonal drops & modern curated accessories',
+    btnText: 'Shop New Arrivals',
+    link: '/new-arrivals',
+    image: '/images/contact_slide_1.jpg?v=clean'
+  },
+  {
+    id: 2,
+    tag: 'BESTSELLERS',
+    subtitle: 'Our highest-rated customer favorites and everyday essentials',
+    btnText: 'Explore Best Sellers',
+    link: '/best-sellers',
+    image: '/images/contact_slide_2.jpg?v=clean'
+  },
+  {
+    id: 3,
+    tag: 'SHOP ALL ITEMS',
+    subtitle: 'Browse through our full catalog of lifestyle, home & wellness goods',
+    btnText: 'Shop All Items',
+    link: '/shop',
+    image: '/images/contact_slide_3.jpg?v=clean'
+  }
+];
 
-  const handleFormSubmit = (e) => {
+export default function Contact() {
+  const navigate = useNavigate();
+  const { showToast } = useUiStore();
+  const [form, setForm] = useState({ fullName: '', phone: '', message: '' });
+  const [loading, setLoading] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // File upload state
+  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      showToast('File size exceeds 15MB limit. Please choose a smaller file.', 'warning');
+      return;
+    }
+
+    setSelectedFile(file);
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setFilePreviewUrl(url);
+    } else {
+      setFilePreviewUrl(null);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    if (filePreviewUrl) {
+      URL.revokeObjectURL(filePreviewUrl);
+      setFilePreviewUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + promoSlides.length) % promoSlides.length);
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+  };
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!form.fullName.trim() || !form.message.trim()) {
+      showToast('Please fill in your name and message.', 'warning');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append('fullName', form.fullName.trim());
+      if (form.phone && form.phone.trim()) {
+        formData.append('phone', form.phone.trim());
+      }
+      formData.append('message', form.message.trim());
+      if (selectedFile) {
+        formData.append('file', selectedFile);
+      }
+
+      const res = await contactService.submit(formData);
+
+      // Sync notification with localStorage for instant admin bell badge & notifications feed
+      try {
+        const saved = localStorage.getItem('picky_admin_notifications');
+        const list = saved ? JSON.parse(saved) : [];
+        const newNotif = {
+          id: res?.data?.notificationId || `notif-contact-${Date.now()}`,
+          type: 'contact',
+          category: 'Contact & Support',
+          title: `New Support Inquiry from ${form.fullName.trim()}`,
+          message: selectedFile
+            ? `${form.message.slice(0, 90)}... (📎 Attachment: ${selectedFile.name})`
+            : form.message.slice(0, 90),
+          date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          relativeTime: 'Just now',
+          unread: true,
+          starred: false,
+          link: '/softpicky-sn2026/settings?tab=notifications',
+          linkText: 'View Inquiry',
+          hasAttachment: Boolean(selectedFile),
+          attachmentName: selectedFile ? selectedFile.name : null,
+          attachmentUrl: res?.data?.inquiry?.file?.url || (filePreviewUrl || null),
+          metadata: {
+            inquiryId: res?.data?.inquiry?._id,
+            fullName: form.fullName.trim(),
+            email: '',
+            phone: form.phone.trim(),
+            message: form.message.trim(),
+            hasAttachment: Boolean(selectedFile),
+            fileName: selectedFile ? selectedFile.name : null,
+            fileUrl: res?.data?.inquiry?.file?.url || null,
+          },
+        };
+        const updated = [newNotif, ...list];
+        localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
+      } catch (syncErr) {
+        console.error('Local notification sync error:', syncErr);
+      }
+
+      showToast('Your message has been sent successfully! Our team will get back to you soon.', 'success');
+      setForm({ fullName: '', phone: '', message: '' });
+      handleRemoveFile();
+    } catch (err) {
+      console.error('Contact submission error:', err);
+      showToast(err?.message || 'Failed to send message. Please try again or WhatsApp us.', 'error');
+    } finally {
       setLoading(false);
-      showToast('Message sent successfully! We will get back to you soon.', 'success');
-      setForm({ fullName: '', email: '', message: '' });
-    }, 600);
+    }
   };
 
   return (
@@ -64,9 +217,20 @@ export default function Contact() {
                   <span>Send Us a Message</span>
                   <ArrowRight size={16} />
                 </a>
-                <a href="tel:+918300295721" className="k-hero-btn-secondary">
-                  <Phone size={18} />
-                  <span>Call Customer Care</span>
+
+                <a
+                  href="https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20consult%20regarding%20products."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="k-hero-btn-secondary"
+                  style={{ borderColor: 'rgba(37, 211, 102, 0.5)', color: '#047857' }}
+                  title="WhatsApp Consulting (+91 83002 95721)"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                  </svg>
+                  <span>WhatsApp Consulting</span>
                 </a>
               </div>
             </div>
@@ -215,9 +379,9 @@ export default function Contact() {
         </section>
 
         {/* ============================================================== */}
-        {/* 3. FORM AND MAP SECTION                                        */}
+        {/* 3. FORM AND DIRECT ASSISTANCE HUB                              */}
         {/* ============================================================== */}
-        <section className="k-form-map-section">
+        <section id="contact-form-section" className="k-form-map-section">
           <div className="k-container k-form-map-grid">
             
             {/* Left: Form Container */}
@@ -227,10 +391,10 @@ export default function Contact() {
                 <span className="k-eyebrow">GET IN TOUCH</span>
               </div>
               <h2 className="k-form-title">
-                Let's Talk About<br/>Your <span>Dream Kitchen</span>
+                Let's Connect With<br/>Our <span>Support Team</span>
               </h2>
               <p className="k-form-desc">
-                Have a project in mind? Send us a message and our team will get back to you as soon as possible.
+                Have questions about your order, products, or deliveries? Send us a message and our team will get back to you promptly.
               </p>
 
               <form onSubmit={handleFormSubmit} className="k-contact-form">
@@ -245,80 +409,281 @@ export default function Contact() {
                   />
                 </div>
                 <div className="k-input-group">
-                  <Mail className="k-input-icon" size={18} />
+                  <Phone className="k-input-icon" size={18} />
                   <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    required
+                    type="tel"
+                    placeholder="Phone Number"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
                 </div>
                 <div className="k-input-group k-textarea-group">
                   <MessageSquare className="k-input-icon" size={18} />
                   <textarea
-                    placeholder="Message"
+                    placeholder="Message *"
                     rows={4}
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     required
                   ></textarea>
                 </div>
+
+                {/* File Upload Zone */}
+                <div className="k-file-upload-wrap">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    id="contact-file-input"
+                    className="k-file-hidden-input"
+                    onChange={handleFileSelect}
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                  />
+                  {!selectedFile ? (
+                    <button
+                      type="button"
+                      className="k-file-dropzone"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <div className="k-file-icon-box">
+                        <Paperclip size={18} />
+                      </div>
+                      <div className="k-file-text-col">
+                        <span className="k-file-main-text">Attach Screenshot or Document (Optional)</span>
+                        <span className="k-file-sub-text">Supports JPG, PNG, PDF, DOC up to 15MB</span>
+                      </div>
+                      <UploadCloud size={16} className="k-file-upload-cloud" />
+                    </button>
+                  ) : (
+                    <div className="k-file-selected-card">
+                      <div className="k-file-selected-left">
+                        {filePreviewUrl ? (
+                          <div className="k-file-thumb-box">
+                            <img src={filePreviewUrl} alt="Upload preview" className="k-file-thumb-img" />
+                          </div>
+                        ) : (
+                          <div className="k-file-doc-box">
+                            <FileText size={20} />
+                          </div>
+                        )}
+                        <div className="k-file-selected-meta">
+                          <span className="k-file-name" title={selectedFile.name}>
+                            {selectedFile.name}
+                          </span>
+                          <span className="k-file-size">
+                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to send
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="k-file-remove-btn"
+                        onClick={handleRemoveFile}
+                        title="Remove attached file"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <button type="submit" disabled={loading} className="k-submit-btn">
-                  {loading ? 'Sending...' : 'Submit Message'}
+                  {loading ? 'Submitting Message...' : 'Submit Message'}
                   <ArrowRight size={18} />
                 </button>
               </form>
             </div>
 
-            {/* Right: Map and Social */}
-            <div className="k-map-container">
-              <div className="k-eyebrow-container">
-                <div className="k-eyebrow-line-dark"></div>
-                <span className="k-eyebrow-dark">OUR LOCATION</span>
-              </div>
-              <h2 className="k-section-title k-map-title">Visit Our Store</h2>
-              <p className="k-section-desc k-map-desc">
-                Experience our curated collections in person. Drop by our store located in the heart of Peravurani.
-              </p>
-
-              {/* Google Map Interactive Iframe */}
-              <div className="k-map-box">
-                <iframe
-                  title="Picky Store Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15682.261947230621!2d79.23122712952882!3d10.29749550302482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5518b3f2e1a3d9%3A0x6b8f3a3e6f7b1b3a!2sPeravurani%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1698765432100!5m2!1sen!2sin"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0, width: '100%', height: '100%' }}
-                  allowFullScreen=""
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                ></iframe>
-                {/* Floating Info Card */}
-                <div className="k-map-card">
-                  <h4>Picky Experience Center</h4>
-                  <p>1st Floor, Softnova Apartment, Peravurani</p>
-                  <div className="k-map-rating">
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
-                      ))}
-                    </div>
-                    <span>4.9</span>
-                  </div>
-                  <a 
-                    href="https://maps.google.com/?q=T+Nagar+Chennai+Tamil+Nadu" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+            {/* Right: 3-Images Interactive Slide Section (1:1 Ratio & Enhanced Animation) */}
+            <div
+              className="k-promo-slider-container"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
+              {promoSlides.map((slide, idx) => {
+                const isActive = currentSlide === idx;
+                return (
+                  <div
+                    key={slide.id}
+                    className={`k-promo-slide ${isActive ? 'is-active' : ''}`}
+                    aria-hidden={!isActive}
                   >
-                    View on Google Maps ↗
-                  </a>
-                </div>
+                    <img
+                      src={slide.image}
+                      alt={slide.tag}
+                      className="k-promo-slide-img"
+                    />
+
+                    {/* Gradient & Clean Overlay */}
+                    <div className="k-promo-slide-overlay">
+                      {/* Top Header Pill */}
+                      <div className="k-promo-slide-top">
+                        <span className="k-promo-slide-tag">
+                          <Sparkles size={13} />
+                          <span>{slide.tag}</span>
+                        </span>
+                        <span className="k-promo-slide-counter">
+                          0{idx + 1} / 0{promoSlides.length}
+                        </span>
+                      </div>
+
+                      {/* Bottom Floating Action Card */}
+                      <div className="k-promo-slide-footer">
+                        <p className="k-promo-slide-desc">{slide.subtitle}</p>
+                        <button
+                          type="button"
+                          className="k-promo-slide-btn"
+                          onClick={() => navigate(slide.link)}
+                        >
+                          <span>{slide.btnText}</span>
+                          <ArrowRight size={17} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Navigation Arrows */}
+              <button
+                type="button"
+                className="k-promo-nav-btn k-promo-prev"
+                onClick={handlePrevSlide}
+                aria-label="Previous Slide"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                type="button"
+                className="k-promo-nav-btn k-promo-next"
+                onClick={handleNextSlide}
+                aria-label="Next Slide"
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              {/* Pagination Dots */}
+              <div className="k-promo-dots">
+                {promoSlides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`k-promo-dot ${currentSlide === idx ? 'active' : ''}`}
+                    onClick={() => setCurrentSlide(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
               </div>
-
-
             </div>
 
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* 4. DEDICATED STORE LOCATION & MAP SECTION                      */}
+        {/* ============================================================== */}
+        <section id="store-map-section" className="k-store-map-section">
+          <div className="k-container">
+            <div className="k-store-map-header">
+              <div className="k-eyebrow-container-center">
+                <div className="k-eyebrow-line-dark"></div>
+                <span className="k-eyebrow-dark">FIND OUR STORE</span>
+                <div className="k-eyebrow-line-dark"></div>
+              </div>
+              <h2 className="k-section-title k-store-map-title">Visit Our Experience Store</h2>
+              <p className="k-section-desc k-store-map-desc">
+                Experience our curated collections in person. Drop by our store located in the heart of Peravurani for hands-on browsing and personalized assistance.
+              </p>
+            </div>
+          </div>
+
+          {/* Full-width Satellite Map Container with Floating Store Details Badge */}
+          <div className="k-store-map-wrapper k-store-map-fullwidth">
+            <iframe
+              title="Softnova Picky Store Location - Satellite View"
+              src="https://www.google.com/maps/embed?pb=!1m12!1m8!1m3!1d2200!2d79.20430085807035!3d10.292564423223569!3m2!1i1024!2i768!4f13.1!2m1!1ssoftnova!5e1!3m2!1sen!2sin!4v1791799524428!5m2!1sen!2sin"
+              width="100%"
+              height="100%"
+              style={{ border: 0, width: '100%', height: '100%', display: 'block' }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            ></iframe>
+
+            {/* Store Details Card Overlay */}
+            <div className="k-store-map-badge">
+              <div className="k-store-badge-top">
+                <span className="k-store-badge-pill">★ 4.9 Rated</span>
+                <span className="k-store-badge-status">Open Today</span>
+              </div>
+              <h3 className="k-store-badge-name">Picky Experience Center</h3>
+              <p className="k-store-badge-addr">
+                Softnova, Peravurani, Tamil Nadu 614804
+              </p>
+              <div className="k-store-badge-meta">
+                <div className="k-store-badge-meta-item">
+                  <Clock size={14} />
+                  <span>Mon - Sat: 9:00 AM - 8:00 PM</span>
+                </div>
+                <div className="k-store-badge-meta-item">
+                  <Phone size={14} />
+                  <span>+91 83002 95721</span>
+                </div>
+              </div>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=10.292564423223569,79.20430085807035"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="k-store-badge-btn"
+              >
+                <span>Get Directions on Google Maps</span>
+                <ExternalLink size={15} />
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 4. Community CTA Banner ── */}
+        <section className="hp-final-cta-section" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
+          <div className="hp-final-cta-container">
+            <div className="hp-final-cta-box">
+              <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
+              <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+              <p className="hp-final-subtitle">
+                Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+              </p>
+              <div className="hp-final-cta-btn-group no-hover-fx">
+                <button
+                  type="button"
+                  className="hp-final-cta-btn no-hover-fx"
+                  onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                  <span>Follow on Instagram</span>
+                  <ArrowRight size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  className="hp-final-cta-outline-btn no-hover-fx"
+                  onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                  aria-label="Join WhatsApp Group"
+                  title="Join WhatsApp Group"
+                >
+                  <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                  </svg>
+                  <span className="hp-cta-wa-label">
+                    <span>Join WhatsApp Group</span>
+                    <ArrowRight size={16} />
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 

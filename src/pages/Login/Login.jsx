@@ -10,6 +10,20 @@ import { useUiStore } from '../../store/uiStore';
 import { X, Phone, Lock, Mail, User, ArrowRight, Eye, EyeOff, Zap } from 'lucide-react';
 import Home from '../Home';
 
+const WhatsAppIcon = ({ size = 18, color = 'currentColor', className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    className={className}
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+  >
+    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.12-.533-1.666-.693-2.73-2.39-2.813-2.5-.083-.11-.664-.882-.664-1.682 0-.8.419-1.194.568-1.356.148-.162.325-.202.434-.202.108 0 .216.002.311.007.1.005.234-.038.366.279.136.327.464 1.132.505 1.215.041.083.068.18.014.288-.054.11-.081.18-.162.275-.081.095-.17.212-.243.285-.081.082-.166.172-.072.334.095.162.421.694.904 1.124.622.554 1.146.726 1.309.807.162.081.257.068.351-.041.095-.108.405-.473.514-.635.108-.162.216-.135.365-.081.148.054.946.446 1.109.527.162.081.27.122.311.19.041.067.041.391-.103.796z" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.98-1.398C8.423 21.503 10.151 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.61 0-3.13-.45-4.43-1.23l-.32-.19-3.27.92.93-3.18-.21-.34C3.84 14.86 3.4 13.48 3.4 12c0-4.74 3.86-8.6 8.6-8.6s8.6 3.86 8.6 8.6-3.86 8.6-8.6 8.6z" />
+  </svg>
+);
+
 export default function Login({ initialTab = 'login' }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,7 +121,7 @@ export default function Login({ initialTab = 'login' }) {
     const cleanPhone = rawPhone.trim();
 
     if (!cleanPhone || cleanPhone.replace(/\D/g, '').length < 10) {
-      showToast('Please enter a valid 10-digit phone number', 'error');
+      showToast('Please enter a valid 10-digit WhatsApp number', 'error');
       return;
     }
 
@@ -123,7 +137,7 @@ export default function Login({ initialTab = 'login' }) {
     try {
       setLoading(true);
       await authService.sendOTP(formattedPhone);
-      showToast('OTP sent to your WhatsApp / SMS!', 'success');
+      showToast('6-digit OTP sent to your WhatsApp!', 'success');
 
       if (activeTab === 'signup') {
         setSignupPhone(formattedPhone);
@@ -136,7 +150,7 @@ export default function Login({ initialTab = 'login' }) {
       setCanResend(false);
     } catch (err) {
       console.error('Backend send OTP error:', err);
-      const msg = err?.response?.data?.message || err?.message || 'Failed to send OTP. Please check your phone number and try again.';
+      const msg = err?.response?.data?.message || err?.message || 'Failed to send WhatsApp OTP. Please check your WhatsApp number and try again.';
       showToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -147,7 +161,7 @@ export default function Login({ initialTab = 'login' }) {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     if (!otp || otp.length < 4) {
-      showToast('Please enter the OTP you received', 'error');
+      showToast('Please enter the 6-digit WhatsApp OTP you received', 'error');
       return;
     }
 
@@ -185,7 +199,7 @@ export default function Login({ initialTab = 'login' }) {
       }
     } catch (err) {
       console.error('Backend verify OTP error:', err);
-      const msg = err?.response?.data?.message || err?.message || 'Invalid or expired OTP. Please enter the correct code.';
+      const msg = err?.response?.data?.message || err?.message || 'Invalid or expired WhatsApp OTP. Please enter the correct code.';
       showToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -305,18 +319,18 @@ export default function Login({ initialTab = 'login' }) {
                     ? 'Create an Account'
                     : step === 'phone'
                     ? 'Login to Picky'
-                    : 'Enter Verification Code'}
+                    : 'Verify WhatsApp Code'}
                 </h2>
                 <p>
                   {isAdminMode
                     ? 'Sign in with your administrator credentials'
                     : activeTab === 'signup'
                     ? step === 'phone'
-                      ? 'Enter your mobile number to receive verification code.'
-                      : `Enter the code sent to ${signupPhone}`
+                      ? 'Enter your WhatsApp number to receive your verification code.'
+                      : `Enter the 6-digit code sent to your WhatsApp at ${signupPhone}`
                     : step === 'phone'
-                    ? 'We will send a fast 6-digit OTP to your WhatsApp.'
-                    : `Enter the code sent to ${phone}`}
+                    ? 'Enter your WhatsApp number to log in. We will send a fast 6-digit OTP exclusively to your WhatsApp.'
+                    : `Enter the 6-digit code sent to your WhatsApp at ${phone}`}
                 </p>
               </div>
 
@@ -346,37 +360,55 @@ export default function Login({ initialTab = 'login' }) {
                 </div>
               )}
 
-              {/* ── 1. CUSTOMER LOGIN (PHONE OTP) ── */}
+              {/* Prominent WhatsApp Only Mention Banner */}
+              {!isAdminMode && step === 'phone' && (
+                <div className="picky-whatsapp-mention-banner">
+                  <div className="picky-wa-pulse-icon">
+                    <WhatsAppIcon size={16} color="#25D366" />
+                  </div>
+                  <div className="picky-wa-mention-text">
+                    <span className="picky-wa-mention-tag">WhatsApp Number Only</span>
+                    <span className="picky-wa-mention-sub">
+                      Verification code is sent strictly via WhatsApp. Normal SMS is not supported.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* ── 1. CUSTOMER LOGIN (WHATSAPP OTP) ── */}
               {!isAdminMode && activeTab === 'login' && (
                 <>
                   {step === 'phone' ? (
                     <form onSubmit={handleSendOtp} className="picky-auth-form">
-                      <div className="picky-input-group">
-                        <span className="picky-input-icon">
-                          <Phone size={18} />
+                      <div className="picky-input-group picky-wa-input-group">
+                        <span className="picky-input-icon picky-wa-icon-wrap">
+                          <WhatsAppIcon size={19} color="#25D366" />
                         </span>
+                        <span className="picky-wa-country-badge">+91</span>
                         <input
                           type="tel"
-                          className="picky-pill-input"
-                          placeholder="Phone Number (e.g. 9876543210)"
+                          className="picky-pill-input picky-wa-pill-input"
+                          placeholder="WhatsApp Number (e.g. 9876543210)"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                           required
                           autoComplete="tel"
                           autoFocus
+                          maxLength={10}
                         />
                       </div>
 
                       <button
                         type="submit"
-                        className="picky-auth-submit-btn"
+                        className="picky-auth-submit-btn picky-wa-submit-btn"
                         disabled={loading}
                       >
                         {loading ? (
                           <div className="picky-auth-spinner" />
                         ) : (
                           <>
-                            <span>CONTINUE</span>
+                            <WhatsAppIcon size={17} color="#ffffff" />
+                            <span>CONTINUE WITH WHATSAPP</span>
                             <span className="arrow">→</span>
                           </>
                         )}
@@ -384,6 +416,10 @@ export default function Login({ initialTab = 'login' }) {
                     </form>
                   ) : (
                     <form onSubmit={handleVerifyOtp} className="picky-auth-form">
+                      <div className="picky-wa-otp-notice">
+                        <WhatsAppIcon size={16} color="#25D366" />
+                        <span>OTP sent to WhatsApp: <strong>{phone}</strong></span>
+                      </div>
                       <div className="picky-input-group">
                         <input
                           type="text"
@@ -391,7 +427,7 @@ export default function Login({ initialTab = 'login' }) {
                           className="picky-pill-input picky-otp-input"
                           placeholder="• • • • • •"
                           value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                           required
                           autoFocus
                         />
@@ -403,7 +439,7 @@ export default function Login({ initialTab = 'login' }) {
                           className="picky-otp-back-btn"
                           onClick={() => setStep('phone')}
                         >
-                          ← Change Phone
+                          ← Change WhatsApp Number
                         </button>
 
                         {canResend ? (
@@ -412,7 +448,7 @@ export default function Login({ initialTab = 'login' }) {
                             className="picky-otp-resend-btn"
                             onClick={handleSendOtp}
                           >
-                            Resend OTP
+                            Resend WhatsApp OTP
                           </button>
                         ) : (
                           <span style={{ color: '#cbd5e1' }}>Resend in {timer}s</span>
@@ -428,7 +464,7 @@ export default function Login({ initialTab = 'login' }) {
                           <div className="picky-auth-spinner" />
                         ) : (
                           <>
-                            <span>VERIFY & CONTINUE</span>
+                            <span>VERIFY & LOG IN</span>
                             <span className="arrow">→</span>
                           </>
                         )}
@@ -438,7 +474,7 @@ export default function Login({ initialTab = 'login' }) {
                 </>
               )}
 
-              {/* ── 2. CUSTOMER SIGNUP (NAME, PHONE, OTP) ── */}
+              {/* ── 2. CUSTOMER SIGNUP (NAME, WHATSAPP, OTP) ── */}
               {!isAdminMode && activeTab === 'signup' && (
                 <>
                   {step === 'phone' ? (
@@ -459,18 +495,20 @@ export default function Login({ initialTab = 'login' }) {
                         />
                       </div>
 
-                      <div className="picky-input-group">
-                        <span className="picky-input-icon">
-                          <Phone size={18} />
+                      <div className="picky-input-group picky-wa-input-group">
+                        <span className="picky-input-icon picky-wa-icon-wrap">
+                          <WhatsAppIcon size={19} color="#25D366" />
                         </span>
+                        <span className="picky-wa-country-badge">+91</span>
                         <input
                           type="tel"
-                          className="picky-pill-input"
-                          placeholder="Phone Number for OTP"
+                          className="picky-pill-input picky-wa-pill-input"
+                          placeholder="WhatsApp Number for OTP"
                           value={signupPhone}
-                          onChange={(e) => setSignupPhone(e.target.value)}
+                          onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                           required
                           autoComplete="tel"
+                          maxLength={10}
                         />
                       </div>
 
@@ -490,14 +528,15 @@ export default function Login({ initialTab = 'login' }) {
 
                       <button
                         type="submit"
-                        className="picky-auth-submit-btn"
+                        className="picky-auth-submit-btn picky-wa-submit-btn"
                         disabled={loading}
                       >
                         {loading ? (
                           <div className="picky-auth-spinner" />
                         ) : (
                           <>
-                            <span>CONTINUE</span>
+                            <WhatsAppIcon size={17} color="#ffffff" />
+                            <span>CONTINUE WITH WHATSAPP</span>
                             <span className="arrow">→</span>
                           </>
                         )}
@@ -505,6 +544,10 @@ export default function Login({ initialTab = 'login' }) {
                     </form>
                   ) : (
                     <form onSubmit={handleVerifyOtp} className="picky-auth-form">
+                      <div className="picky-wa-otp-notice">
+                        <WhatsAppIcon size={16} color="#25D366" />
+                        <span>OTP sent to WhatsApp: <strong>{signupPhone}</strong></span>
+                      </div>
                       <div className="picky-input-group">
                         <input
                           type="text"
@@ -512,7 +555,7 @@ export default function Login({ initialTab = 'login' }) {
                           className="picky-pill-input picky-otp-input"
                           placeholder="• • • • • •"
                           value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                           required
                           autoFocus
                         />
@@ -524,7 +567,7 @@ export default function Login({ initialTab = 'login' }) {
                           className="picky-otp-back-btn"
                           onClick={() => setStep('phone')}
                         >
-                          ← Change Phone
+                          ← Change WhatsApp Number
                         </button>
 
                         {canResend ? (
@@ -533,7 +576,7 @@ export default function Login({ initialTab = 'login' }) {
                             className="picky-otp-resend-btn"
                             onClick={handleSendOtp}
                           >
-                            Resend OTP
+                            Resend WhatsApp OTP
                           </button>
                         ) : (
                           <span style={{ color: '#cbd5e1' }}>Resend in {timer}s</span>

@@ -3,6 +3,7 @@ import React from 'react';
 export default function GlamicsMarqueeTicker() {
   const items = [
     'LIMITED TIME OFFER',
+    'LIVE WHATSAPP: +91 83002 95721',
     'FREE EXPRESS DELIVERY ON ORDERS OVER ₹999',
     '100% QUALITY INSPECTED',
     'AUTHENTIC TAMIL TRADITIONAL CRAFTS',

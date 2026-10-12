@@ -100,7 +100,7 @@ export const MOCK_PAGE_SECTIONS = {
       settings: {
         showMobileBottomNav: true,
         enableDirectWhatsAppChat: true,
-        whatsappNumber: '+91 98401 23456',
+        whatsappNumber: '+91 83002 95721',
         supportCallout: 'Need help ordering? WhatsApp Us',
       },
     },
@@ -468,7 +468,7 @@ export const MOCK_PAGE_SECTIONS = {
         newsletterSubtitle: 'Get early access to festive handloom drops and exclusive coupon codes.',
         copyrightText: '© 2026 Picky Retail Tech. All rights reserved. Crafted in Tamil Nadu.',
         instagram: 'https://instagram.com/pickystore',
-        whatsapp: '+91 98401 23456',
+        whatsapp: '+91 83002 95721',
         supportEmail: 'care@pickystore.in',
       },
     },
@@ -500,7 +500,7 @@ export const MOCK_PAGE_SECTIONS = {
       type: 'contact_page',
       description: 'Customer hotline, WhatsApp support hours, and headquarters address.',
       settings: {
-        supportPhone: '+91 98401 23456',
+        supportPhone: '+91 83002 95721',
         supportEmail: 'support@pickystore.in',
         workingHours: 'Mon - Sat: 9:30 AM to 7:00 PM IST',
         officeAddress: '128, West Masi Street, Madurai, Tamil Nadu 625001',
@@ -530,9 +530,9 @@ export const MOCK_STORE_CUSTOMIZATION = {
     tagline: 'Curated South Indian Heritage & Modern Lifestyle Essentials',
     primaryColor: '#7025fb',
     secondaryColor: '#5b13df',
-    supportPhone: '+91 98401 23456',
+    supportPhone: '+91 83002 95721',
     supportEmail: 'support@pickystore.in',
-    whatsappNumber: '+91 98401 23456',
+    whatsappNumber: '+91 83002 95721',
   },
   sections: [
     ...MOCK_PAGE_SECTIONS.global_header,

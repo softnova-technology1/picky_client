@@ -6,6 +6,7 @@ import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
 import { MOCK_PRODUCTS } from '../../data/adminMockData';
 import { getProducts, SLUG_ALIAS_MAP } from '../../data';
+import '../../styles/home-premium.css';
 import {
   Flame,
   Award,
@@ -30,6 +31,10 @@ import {
   ShoppingBag,
   Truck,
   Headphones,
+  Filter,
+  ArrowUpDown,
+  ChevronDown,
+  X,
 } from 'lucide-react';
 
 const isBestSellerProduct = (p) => {
@@ -51,12 +56,22 @@ const isBestSellerProduct = (p) => {
   });
 };
 
+const PRICE_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'below-199', label: 'Below ₹199', max: 199 },
+  { id: 'under-299', label: 'Under ₹299', max: 299 },
+  { id: 'under-399', label: 'Under ₹399', max: 399 },
+  { id: 'under-499', label: 'Under ₹499', max: 499 },
+  { id: 'above-499', label: 'Above ₹499', min: 499 },
+];
+
 export default function BestSellers() {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPriceFilter, setSelectedPriceFilter] = useState('all');
   const catalogRef = useRef(null);
   const tabsScrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -164,18 +179,7 @@ export default function BestSellers() {
     { id: 'traditional-tamil-products', label: 'Traditional Tamil Products', icon: Crown },
   ];
 
-  // Dynamic counts for each tab
-  const tabCounts = useMemo(() => {
-    const counts = { all: allProducts.length };
-    allProducts.forEach((p) => {
-      const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
-      const slug = (SLUG_ALIAS_MAP?.[rawSlug] || rawSlug).toLowerCase();
-      if (slug) {
-        counts[slug] = (counts[slug] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [allProducts]);
+
 
   // Filter & sort products
   const filteredProducts = useMemo(() => {
@@ -189,6 +193,26 @@ export default function BestSellers() {
         const pCat = (SLUG_ALIAS_MAP?.[rawSlug] || rawSlug).toLowerCase();
         return pCat === targetCat;
       });
+    }
+
+    // Price filter
+    if (selectedPriceFilter !== 'all') {
+      const f = PRICE_FILTERS.find((item) => item.id === selectedPriceFilter);
+      if (f) {
+        list = list.filter((p) => {
+          const price = Number(p.discountPrice || p.price || 0);
+          if (f.max !== undefined && f.min !== undefined) {
+            return price >= f.min && price <= f.max;
+          }
+          if (f.max !== undefined) {
+            return price <= f.max;
+          }
+          if (f.min !== undefined) {
+            return price >= f.min;
+          }
+          return true;
+        });
+      }
     }
 
     // Search filter
@@ -218,14 +242,15 @@ export default function BestSellers() {
     });
 
     return list;
-  }, [allProducts, activeCategory, sortBy, searchQuery]);
+  }, [allProducts, activeCategory, selectedPriceFilter, sortBy, searchQuery]);
 
-  const hasActiveFilters = activeCategory !== 'all' || searchQuery.trim() !== '' || sortBy !== 'popular';
+  const hasActiveFilters = activeCategory !== 'all' || searchQuery.trim() !== '' || sortBy !== 'popular' || selectedPriceFilter !== 'all';
 
   const handleResetFilters = () => {
     setActiveCategory('all');
     setSearchQuery('');
     setSortBy('popular');
+    setSelectedPriceFilter('all');
   };
 
   return (
@@ -236,153 +261,135 @@ export default function BestSellers() {
 
         {/* ── 2. Catalog & Interactive Filter Grid Anchor ── */}
         <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px', paddingTop: '4.5rem' }}>
-          {/* Header Title Row */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <h2
-              style={{
-                fontFamily: 'var(--font-primary, system-ui, sans-serif)',
-                fontSize: 'clamp(1.7rem, 3.2vw, 2.4rem)',
-                fontWeight: 900,
-                color: '#1e1b4b',
-                margin: 0,
-                letterSpacing: '-0.02em',
-              }}
-            >
+          {/* Header Title Section */}
+          <div className="bestsellers-catalog-header">
+            <div className="bestsellers-badge-kicker">
+              <Sparkles size={13} className="bestsellers-badge-kicker-icon" />
+              <span>Curated & Top Ranked</span>
+            </div>
+            <h2 className="bestsellers-main-title">
               Customer Favorites & Top Ranked
             </h2>
+            <p className="bestsellers-main-subtitle">
+              Explore our best-performing, customer-loved products backed by authentic high ratings
+            </p>
           </div>
 
-          {/* Full Width Controls Bar (Search, Category, Sort, Reset, Shop All) */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              gap: '1rem',
-              flexWrap: 'wrap',
-              marginBottom: '2rem',
-            }}
-          >
-            {/* Search Bar (flex 1 on left) */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '0.55rem 1rem',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-                flex: '1 1 280px',
-                maxWidth: '420px',
-              }}
-            >
-              <Search size={16} color="#64748b" style={{ marginRight: '0.5rem', flexShrink: 0 }} />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  border: 'none',
-                  outline: 'none',
-                  width: '100%',
-                  fontSize: '0.86rem',
-                  color: '#1e293b',
-                  background: 'transparent',
-                }}
-              />
+          {/* ── Unified Premium Filter & Search Hub ── */}
+          <div className="bestsellers-premium-hub">
+            {/* Top Tier: Budget Quick Filters */}
+            <div className="bestsellers-hub-top-row">
+              <div className="bestsellers-filter-label-group">
+                <span className="bestsellers-filter-label-icon">₹</span>
+                <span>BUDGET</span>
+              </div>
+              <div className="bestsellers-price-filter-cluster" role="group" aria-label="Filter by price">
+                {PRICE_FILTERS.map((f) => {
+                  const isActive = selectedPriceFilter === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className={`bestsellers-price-pill ${isActive ? 'active' : ''}`}
+                      onClick={() => setSelectedPriceFilter(isActive && f.id !== 'all' ? 'all' : f.id)}
+                      title={`Filter: ${f.label}`}
+                      aria-pressed={isActive}
+                    >
+                      <span className="price-pill-dot">₹</span>
+                      <span className="price-pill-label">{f.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Right Controls Group */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-                flexWrap: 'wrap',
-                marginLeft: 'auto',
-              }}
-            >
-              {/* Category Dropdown */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>CATEGORY:</span>
-                <select
-                  value={activeCategory}
-                  onChange={(e) => setActiveCategory(e.target.value)}
-                  style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #e2e8f0',
-                    background: '#ffffff',
-                    color: '#1e293b',
-                    fontSize: '0.86rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-                  }}
-                >
-                  {filterTabs.map((tab) => (
-                    <option key={tab.id} value={tab.id}>
-                      {tab.label} ({tabCounts[tab.id] || 0})
-                    </option>
-                  ))}
-                </select>
+            {/* Hub Divider */}
+            <div className="bestsellers-hub-divider" />
+
+            {/* Bottom Tier: Search & Controls Bar */}
+            <div className="bestsellers-hub-controls-row">
+              {/* Premium Search Bar with Glowing Icon */}
+              <div className="bestsellers-search-premium">
+                <div className="bestsellers-search-icon-badge">
+                  <Search size={17} strokeWidth={2.4} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search top products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bestsellers-search-input"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="bestsellers-search-clear-btn"
+                    title="Clear search"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
 
-              {/* Sort Selector */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>SORT:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #e2e8f0',
-                    background: '#ffffff',
-                    color: '#1e293b',
-                    fontSize: '0.86rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-                  }}
-                >
-                  <option value="popular">Best Selling</option>
-                  <option value="newest">Newest</option>
-                  <option value="price-low">Price Low → High</option>
-                  <option value="price-high">Price High → Low</option>
-                </select>
+              {/* Right Controls: Category, Sort, Reset */}
+              <div className="bestsellers-hub-right-controls">
+                {/* Category Select Dropdown */}
+                <div className="bestsellers-select-wrapper">
+                  <div className="bestsellers-select-icon">
+                    <Filter size={15} strokeWidth={2.2} />
+                  </div>
+                  <div className="bestsellers-select-content">
+                    <span className="bestsellers-select-label">CATEGORY</span>
+                    <select
+                      value={activeCategory}
+                      onChange={(e) => setActiveCategory(e.target.value)}
+                      className="bestsellers-custom-select"
+                    >
+                      {filterTabs.map((tab) => (
+                        <option key={tab.id} value={tab.id}>
+                          {tab.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <ChevronDown size={14} className="bestsellers-select-chevron" />
+                </div>
+
+                {/* Sort Selector Dropdown */}
+                <div className="bestsellers-select-wrapper">
+                  <div className="bestsellers-select-icon">
+                    <ArrowUpDown size={15} strokeWidth={2.2} />
+                  </div>
+                  <div className="bestsellers-select-content">
+                    <span className="bestsellers-select-label">SORT BY</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bestsellers-custom-select"
+                    >
+                      <option value="popular">Best Selling</option>
+                      <option value="newest">Newest</option>
+                      <option value="price-low">Price Low → High</option>
+                      <option value="price-high">Price High → Low</option>
+                    </select>
+                  </div>
+                  <ChevronDown size={14} className="bestsellers-select-chevron" />
+                </div>
+
+                {/* Reset Filters */}
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="bestsellers-reset-btn"
+                    title="Reset all filters"
+                  >
+                    <RotateCcw size={14} />
+                    <span>Reset</span>
+                  </button>
+                )}
               </div>
-
-              {/* Reset Filters */}
-              {hasActiveFilters && (
-                <button
-                  onClick={handleResetFilters}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.55rem 1rem',
-                    borderRadius: '12px',
-                    fontSize: '0.86rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: '1.5px solid #fee2e2',
-                    background: '#fef2f2',
-                    color: '#dc2626',
-                    transition: 'all 0.15s ease',
-                    flexShrink: 0,
-                  }}
-                >
-                  <RotateCcw size={14} />
-                  <span>Reset</span>
-                </button>
-              )}
-
             </div>
           </div>
 
@@ -546,6 +553,51 @@ export default function BestSellers() {
               </p>
             </div>
           </div>
+
+          {/* ── 4. Final Community CTA Banner ── */}
+          <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
+            <div className="hp-final-cta-container" style={{ padding: 0 }}>
+              <div className="hp-final-cta-box">
+                <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
+                <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+                <p className="hp-final-subtitle">
+                  Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+                </p>
+                <div className="hp-final-cta-btn-group no-hover-fx">
+                  <button
+                    type="button"
+                    className="hp-final-cta-btn no-hover-fx"
+                    onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                    </svg>
+                    <span>Follow on Instagram</span>
+                    <ArrowRight size={16} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="hp-final-cta-outline-btn no-hover-fx"
+                    onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                    aria-label="Join WhatsApp Group"
+                    title="Join WhatsApp Group"
+                  >
+                    <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                      <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                    </svg>
+                    <span className="hp-cta-wa-label">
+                      <span>Join WhatsApp Group</span>
+                      <ArrowRight size={16} />
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </PageWrapper>

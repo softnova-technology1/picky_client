@@ -32,6 +32,16 @@ export default function Navbar() {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 36);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const categoryDropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
@@ -167,7 +177,7 @@ export default function Navbar() {
       <GlamicsMarqueeTicker />
 
       {/* ── 2. Floating Pill Navbar (Desktop Only: > 768px) ────────────── */}
-      <header className="floating-nav-container desktop-nav-only">
+      <header className={`floating-nav-container desktop-nav-only ${isScrolled ? 'is-scrolled' : ''}`}>
         <div className="floating-nav-pill">
           {/* Brand & Divider (Left) */}
           <Link to="/" className="nav-brand-cluster" title="Picky Home">
@@ -453,7 +463,7 @@ export default function Navbar() {
       </header>
 
       {/* ── 2b. Mobile Header & Search (Mobile Only: 320px - 768px) ────────────── */}
-      <header className="mobile-nav-header mobile-nav-only">
+      <header className={`mobile-nav-header mobile-nav-only ${isScrolled ? 'is-scrolled' : ''}`}>
         <div className="mobile-nav-top-row">
           {/* Hamburger Menu Toggle */}
           <button
