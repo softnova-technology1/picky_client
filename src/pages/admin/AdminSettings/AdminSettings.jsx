@@ -34,154 +34,21 @@ import {
   ExternalLink,
   RotateCcw,
   Settings,
+  MessageSquare,
+  FileText,
+  Download,
+  Eye,
+  Paperclip,
+  User,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { adminService } from '../../../services/admin.service';
+import { contactService } from '../../../services/contact.service';
 import { useUiStore } from '../../../store/uiStore';
 import styles from './AdminSettings.module.css';
-
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 'notif-1',
-    type: 'order',
-    category: 'Orders',
-    title: 'New Order #ORD-2026-894 received',
-    message: 'Priya Ramesh placed an order for ₹2,499 (3 items) with Online Payment.',
-    date: '01 Oct 2026',
-    time: '02:35 PM',
-    relativeTime: '10 mins ago',
-    unread: true,
-    starred: false,
-    link: '/softpicky-sn2026/orders',
-    linkText: 'View Order',
-    tagClass: 'tagOrder',
-    iconClass: 'iconOrder',
-  },
-  {
-    id: 'notif-2',
-    type: 'inventory',
-    category: 'Inventory',
-    title: 'Low Stock Alert: Embroidered Rayon Anarkali Kurti',
-    message: 'Stock level dropped to 3 units remaining. Please reorder from supplier.',
-    date: '01 Oct 2026',
-    time: '01:55 PM',
-    relativeTime: '45 mins ago',
-    unread: true,
-    starred: true,
-    link: '/softpicky-sn2026/inventory',
-    linkText: 'Inspect Stock',
-    tagClass: 'tagInventory',
-    iconClass: 'iconInventory',
-  },
-  {
-    id: 'notif-3',
-    type: 'coupon',
-    category: 'Coupons & Discounts',
-    title: 'Coupon Limit Reaching: FESTIVE25',
-    message: 'Coupon FESTIVE25 reached 85% of total redemption limit (425 of 500 uses applied).',
-    date: '01 Oct 2026',
-    time: '12:40 PM',
-    relativeTime: '2 hours ago',
-    unread: false,
-    link: '/softpicky-sn2026/coupons',
-    linkText: 'Manage Coupons',
-    tagClass: 'tagCoupon',
-    iconClass: 'iconCoupon',
-  },
-  {
-    id: 'notif-8',
-    type: 'product',
-    category: 'Products',
-    title: 'New Product Added: Cotton Chikankari Kurta',
-    message: 'Product successfully added to Women\'s Fashion catalog with 5 size variants.',
-    date: '01 Oct 2026',
-    time: '11:30 AM',
-    relativeTime: '3 hours ago',
-    unread: true,
-    link: '/softpicky-sn2026/products',
-    linkText: 'View Product',
-    tagClass: 'tagProduct',
-    iconClass: 'iconProduct',
-  },
-  {
-    id: 'notif-4',
-    type: 'order',
-    category: 'Orders',
-    title: 'Order #ORD-2026-889 Dispatched',
-    message: 'Package handed over to Blue Dart courier with tracking code #BD9827361.',
-    date: '01 Oct 2026',
-    time: '10:20 AM',
-    relativeTime: '4 hours ago',
-    unread: false,
-    link: '/softpicky-sn2026/orders',
-    linkText: 'Track Shipment',
-    tagClass: 'tagOrder',
-    iconClass: 'iconOrder',
-  },
-  {
-    id: 'notif-5',
-    type: 'customer',
-    category: 'Customers',
-    title: 'New VIP Customer Registration',
-    message: 'Ananya Krishnan (ananya.k@gmail.com) created an account from Chennai, TN.',
-    date: '01 Oct 2026',
-    time: '08:45 AM',
-    relativeTime: '6 hours ago',
-    unread: true,
-    link: '/softpicky-sn2026/customers',
-    linkText: 'View Profile',
-    tagClass: 'tagCustomer',
-    iconClass: 'iconCustomer',
-  },
-  {
-    id: 'notif-9',
-    type: 'product',
-    category: 'Products',
-    title: 'Catalog Price Updated: Festive Sale',
-    message: 'Festive discount prices applied across 12 items in Ethnic Wear collection.',
-    date: '30 Sep 2026',
-    time: '06:15 PM',
-    relativeTime: 'Yesterday',
-    unread: false,
-    link: '/softpicky-sn2026/products',
-    linkText: 'Inspect Catalog',
-    tagClass: 'tagProduct',
-    iconClass: 'iconProduct',
-  },
-  {
-    id: 'notif-6',
-    type: 'inventory',
-    category: 'Inventory',
-    title: 'Out of Stock: Traditional Temple Silk Saree',
-    message: 'Variant "Maroon / Free Size" is completely sold out. Auto-marked out of stock.',
-    date: '30 Sep 2026',
-    time: '04:10 PM',
-    relativeTime: 'Yesterday',
-    unread: false,
-    link: '/softpicky-sn2026/inventory',
-    linkText: 'Restock Product',
-    tagClass: 'tagInventory',
-    iconClass: 'iconInventory',
-  },
-  {
-    id: 'notif-7',
-    type: 'system',
-    category: 'System',
-    title: 'Automated Catalog Backup Completed',
-    message: 'Weekly system backup of 10 categories and 124 product variants completed successfully.',
-    date: '30 Sep 2026',
-    time: '02:00 AM',
-    relativeTime: 'Yesterday',
-    unread: false,
-    link: null,
-    linkText: null,
-    tagClass: 'tagSystem',
-    iconClass: 'iconSystem',
-  },
-];
 
 const DEFAULT_SETTINGS = {
   // General
@@ -210,6 +77,22 @@ const DEFAULT_SETTINGS = {
   apiRateLimit: '100 requests / min',
 };
 
+const isNotifToday = (notif) => {
+  if (!notif) return false;
+  if (notif.createdAt) {
+    const d = new Date(notif.createdAt);
+    if (!isNaN(d.getTime())) {
+      const now = new Date();
+      return (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      );
+    }
+  }
+  return notif.relativeTime === 'Today';
+};
+
 export default function AdminSettings() {
   const navigate = useNavigate();
   const { showToast } = useUiStore();
@@ -221,32 +104,20 @@ export default function AdminSettings() {
     tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'general'
   );
 
-  // Notifications center state
+  // Notifications center state - purely from live database or synced cache
   const [notifications, setNotifications] = useState(() => {
     try {
       const saved = localStorage.getItem('picky_admin_notifications');
       if (saved) {
         const parsed = JSON.parse(saved);
-        const cleaned = parsed.map((n) => {
-          const match = INITIAL_NOTIFICATIONS.find((init) => init.id === n.id);
-          return {
-            ...n,
-            message: n.message ? n.message.replace(/Cash on Delivery/gi, 'Online Payment') : n.message,
-            date: n.date || match?.date || '01 Oct 2026',
-            time: n.time && n.time.includes('M') ? n.time : (match?.time || '02:35 PM'),
-            relativeTime: n.relativeTime || (n.time && !n.time.includes('M') ? n.time : match?.relativeTime || '10 mins ago'),
-            link: n.link || match?.link || null,
-            linkText: n.linkText || match?.linkText || 'View Details',
-            starred: n.starred !== undefined ? n.starred : (match?.starred || false),
-          };
-        });
-        if (cleaned.some((n) => n.type === 'product')) {
-          return cleaned;
+        if (Array.isArray(parsed)) {
+          // Reject any legacy mock items
+          return parsed.filter((n) => n && n.id && !String(n.id).startsWith('notif-'));
         }
       }
-      return INITIAL_NOTIFICATIONS;
+      return [];
     } catch {
-      return INITIAL_NOTIFICATIONS;
+      return [];
     }
   });
 
@@ -255,6 +126,61 @@ export default function AdminSettings() {
   const [notifDate, setNotifDate] = useState('all');
   const [notifSearch, setNotifSearch] = useState('');
   const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const [selectedContactModal, setSelectedContactModal] = useState(null);
+  const [contactDetailsLoading, setContactDetailsLoading] = useState(false);
+  const [contactFullData, setContactFullData] = useState(null);
+
+  // Sync notifications with backend on mount & listen to changes
+  useEffect(() => {
+    async function syncBackendNotifs() {
+      try {
+        const res = await contactService.getNotifications({ limit: 50 }).catch(() => null);
+        const apiNotifs = res?.data?.notifications || res?.data;
+        if (Array.isArray(apiNotifs)) {
+          const apiFormatted = apiNotifs.map((n) => {
+            const created = n.createdAt ? new Date(n.createdAt) : new Date();
+            const today = isNotifToday(n);
+            return {
+              ...n,
+              id: n._id ? String(n._id) : String(n.id),
+              date: created.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+              }),
+              time: created.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              relativeTime: today ? 'Today' : 'Earlier',
+            };
+          });
+
+          // Pure 100% database notifications - overwrite any stale dummy cache
+          setNotifications(apiFormatted);
+          try {
+            localStorage.setItem('picky_admin_notifications', JSON.stringify(apiFormatted));
+          } catch {}
+        }
+      } catch (err) {
+        console.warn('Backend notification fetch note:', err);
+      }
+    }
+    syncBackendNotifs();
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'picky_admin_notifications' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setNotifications(parsed.filter((n) => n && n.id && !String(n.id).startsWith('notif-')));
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const filteredNotifications = notifications.filter((n) => {
     let matchesCategory = true;
@@ -263,13 +189,14 @@ export default function AdminSettings() {
     else if (notifCategory === 'customers') matchesCategory = n.type === 'customer';
     else if (notifCategory === 'inventory') matchesCategory = n.type === 'inventory';
     else if (notifCategory === 'coupons') matchesCategory = n.type === 'coupon';
+    else if (notifCategory === 'contact') matchesCategory = n.type === 'contact';
     else if (notifCategory === 'system') matchesCategory = n.type === 'system';
 
     let matchesDate = true;
     if (notifDate === 'today') {
-      matchesDate = !n.relativeTime?.includes('Yesterday') && (n.date?.includes('01 Oct') || !n.date);
+      matchesDate = isNotifToday(n);
     } else if (notifDate === 'earlier') {
-      matchesDate = n.relativeTime?.includes('Yesterday') || (n.date && n.date.includes('30 Sep'));
+      matchesDate = !isNotifToday(n);
     }
 
     let matchesSearch = true;
@@ -329,28 +256,26 @@ export default function AdminSettings() {
   const catCustomersCount = notifications.filter((n) => n.type === 'customer').length;
   const catInventoryCount = notifications.filter((n) => n.type === 'inventory').length;
   const catCouponsCount = notifications.filter((n) => n.type === 'coupon').length;
+  const catContactCount = notifications.filter((n) => n.type === 'contact').length;
   const catSystemCount = notifications.filter((n) => n.type === 'system').length;
 
   // Date counts for filter pills
   const dateAllCount = notifications.length;
-  const dateTodayCount = notifications.filter(
-    (n) => !n.relativeTime?.includes('Yesterday') && (n.date?.includes('01 Oct') || !n.date)
-  ).length;
-  const dateEarlierCount = notifications.filter(
-    (n) => n.relativeTime?.includes('Yesterday') || (n.date && n.date.includes('30 Sep'))
-  ).length;
+  const dateTodayCount = notifications.filter(isNotifToday).length;
+  const dateEarlierCount = notifications.filter((n) => !isNotifToday(n)).length;
 
   // Status counts
   const statusAllCount = notifications.length;
   const statusUnreadCount = notifications.filter((n) => n.unread).length;
   const statusReadCount = notifications.filter((n) => !n.unread).length;
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     const updated = notifications.map((n) => ({ ...n, unread: false }));
     setNotifications(updated);
     try {
       localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
     } catch {}
+    contactService.markAllNotificationsRead().catch(() => {});
     showToast('All notifications marked as read', 'info');
   };
 
@@ -360,6 +285,9 @@ export default function AdminSettings() {
     try {
       localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
     } catch {}
+    if (id && !id.startsWith('notif-')) {
+      contactService.deleteNotification(id).catch(() => {});
+    }
     showToast('Notification dismissed', 'info');
   };
 
@@ -371,13 +299,35 @@ export default function AdminSettings() {
     try {
       localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
     } catch {}
+    if (id && !id.startsWith('notif-')) {
+      contactService.markNotificationRead(id).catch(() => {});
+    }
   };
 
-  const handleNotificationClick = (notif) => {
+  const handleNotificationClick = async (notif) => {
     if (notif.unread) {
       handleToggleRead(notif.id);
     }
-    if (notif.link) {
+    // If it's a contact inquiry, open modal with inquiry and file preview/download
+    if (notif.type === 'contact' || notif.metadata?.inquiryId) {
+      setSelectedContactModal(notif);
+      setContactFullData(null);
+      if (notif.metadata?.inquiryId) {
+        setContactDetailsLoading(true);
+        try {
+          const res = await contactService.getById(notif.metadata.inquiryId).catch(() => null);
+          if (res?.data) {
+            setContactFullData(res.data);
+          }
+        } catch (e) {
+          console.warn('Could not fetch inquiry details:', e);
+        } finally {
+          setContactDetailsLoading(false);
+        }
+      }
+      return;
+    }
+    if (notif.link && notif.link !== `${ADMIN}/settings?tab=notifications`) {
       navigate(notif.link);
     }
   };
@@ -437,6 +387,9 @@ export default function AdminSettings() {
     try {
       localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
     } catch {}
+    if (id && !id.startsWith('notif-')) {
+      contactService.deleteNotification(id).catch(() => {});
+    }
     showToast('Notification deleted', 'info');
   };
 
@@ -445,6 +398,9 @@ export default function AdminSettings() {
       selectedIds.includes(n.id) ? { ...n, unread: false } : n
     );
     setNotifications(updated);
+    selectedIds.forEach((id) => {
+      if (id && !id.startsWith('notif-')) contactService.markNotificationRead(id).catch(() => {});
+    });
     setSelectedIds([]);
     try {
       localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
@@ -459,6 +415,9 @@ export default function AdminSettings() {
     }
     const count = selectedIds.length;
     const updated = notifications.filter((n) => !selectedIds.includes(n.id));
+    selectedIds.forEach((id) => {
+      if (id && !id.startsWith('notif-')) contactService.deleteNotification(id).catch(() => {});
+    });
     setNotifications(updated);
     setSelectedIds([]);
     try {
@@ -468,10 +427,16 @@ export default function AdminSettings() {
   };
 
   const formatEmailDate = (notif) => {
-    if (notif.relativeTime === 'Yesterday' || (notif.date && notif.date.includes('30 Sep'))) {
-      return '30 Sept';
+    if (notif.createdAt) {
+      const d = new Date(notif.createdAt);
+      if (!isNaN(d.getTime())) {
+        if (isNotifToday(notif)) {
+          return notif.time || d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      }
     }
-    return notif.time || '02:35 PM';
+    return notif.time || 'Recent';
   };
 
   const renderNotifIcon = (type) => {
@@ -486,6 +451,8 @@ export default function AdminSettings() {
         return <Tag size={18} />;
       case 'customer':
         return <Users size={18} />;
+      case 'contact':
+        return <MessageSquare size={18} />;
       default:
         return <CheckCircle2 size={18} />;
     }
@@ -813,6 +780,7 @@ export default function AdminSettings() {
                     <option value="orders">Orders ({catOrdersCount})</option>
                     <option value="products">Products ({catProductsCount})</option>
                     <option value="customers">Customers ({catCustomersCount})</option>
+                    <option value="contact">Contact & Support ({catContactCount})</option>
                     <option value="inventory">Inventory ({catInventoryCount})</option>
                     <option value="coupons">Coupons & Discounts ({catCouponsCount})</option>
                     <option value="system">System ({catSystemCount})</option>
@@ -1008,6 +976,11 @@ export default function AdminSettings() {
                           {/* Subject & Snippet Column (Single Line Gmail Style) */}
                           <div className={styles.emailContent}>
                             <span className={styles.emailSubject}>{notif.title}</span>
+                            {(notif.hasAttachment || notif.metadata?.hasAttachment || notif.attachmentUrl || notif.metadata?.fileUrl) && (
+                              <span className={styles.attachmentBadge} title="File attachment included">
+                                <Paperclip size={12} /> File
+                              </span>
+                            )}
                             <span className={styles.emailSeparator}>-</span>
                             <span className={styles.emailSnippet}>{notif.message}</span>
                           </div>
@@ -1016,7 +989,19 @@ export default function AdminSettings() {
                           <div className={styles.emailDateActions}>
                             {/* Hover Quick Action Buttons */}
                             <div className={styles.emailRowActions}>
-                              {notif.link && (
+                              {notif.type === 'contact' || notif.metadata?.inquiryId ? (
+                                <button
+                                  type="button"
+                                  className={styles.emailActionBtn}
+                                  title="Preview inquiry & attachment"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleNotificationClick(notif);
+                                  }}
+                                >
+                                  <Eye size={15} />
+                                </button>
+                              ) : notif.link ? (
                                 <button
                                   type="button"
                                   className={styles.emailActionBtn}
@@ -1029,7 +1014,7 @@ export default function AdminSettings() {
                                 >
                                   <ExternalLink size={15} />
                                 </button>
-                              )}
+                              ) : null}
                               <button
                                 type="button"
                                 className={styles.emailActionBtn}
@@ -1173,6 +1158,196 @@ export default function AdminSettings() {
                     </Button>
                   </div>
                 </div>
+              </Modal>
+
+              {/* Contact Inquiry & Attachment Preview Modal */}
+              <Modal
+                isOpen={Boolean(selectedContactModal)}
+                onClose={() => {
+                  setSelectedContactModal(null);
+                  setContactFullData(null);
+                }}
+                title="Support Inquiry & Attachment"
+                maxWidth={620}
+              >
+                {selectedContactModal && (() => {
+                  const inquiry = contactFullData || selectedContactModal.metadata || {};
+                  const fullName = inquiry.fullName || selectedContactModal.title.replace('New Support Inquiry from ', '') || 'Customer';
+                  const email = inquiry.email || selectedContactModal.metadata?.email;
+                  const phone = inquiry.phone || selectedContactModal.metadata?.phone;
+                  const message = inquiry.message || selectedContactModal.message;
+                  const file = inquiry.file || (selectedContactModal.metadata?.fileUrl ? {
+                    url: selectedContactModal.metadata.fileUrl,
+                    originalName: selectedContactModal.metadata.fileName,
+                    mimeType: selectedContactModal.metadata.fileMime,
+                    size: selectedContactModal.metadata.fileSize,
+                  } : null) || (selectedContactModal.attachmentUrl ? {
+                    url: selectedContactModal.attachmentUrl,
+                    originalName: selectedContactModal.attachmentName,
+                  } : null);
+
+                  const fileUrl = file?.url || '';
+                  const fileName = file?.originalName || 'Attachment';
+                  const isImage = file?.mimeType?.startsWith('image/') ||
+                    (fileUrl && /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(fileUrl)) ||
+                    (fileName && /\.(png|jpe?g|webp|gif|svg)$/i.test(fileName));
+
+                  const isPdf = file?.mimeType?.includes('pdf') ||
+                    (fileUrl && /\.pdf(\?.*)?$/i.test(fileUrl)) ||
+                    (fileName && /\.pdf$/i.test(fileName));
+
+                  return (
+                    <div className={styles.contactModalWrap}>
+                      {/* Customer Profile Card */}
+                      <div className={styles.contactModalCard}>
+                        <div className={styles.contactHeaderRow}>
+                          <div className={styles.contactAvatar}>
+                            <User size={22} />
+                          </div>
+                          <div className={styles.contactMetaCol}>
+                            <div className={styles.contactCustomerName}>{fullName}</div>
+                            <div className={styles.contactTimeRow}>
+                              <span>{selectedContactModal.date || 'Today'} at {selectedContactModal.time || 'Recent'}</span>
+                              <span className={styles.contactInquiryPill}>Support Inquiry</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={styles.contactInfoGrid}>
+                          <div className={styles.contactInfoField}>
+                            <span className={styles.contactInfoLabel}>Email Address</span>
+                            {email ? (
+                              <a href={`mailto:${email}`} className={styles.contactEmailLink}>
+                                <Mail size={13} /> {email}
+                              </a>
+                            ) : (
+                              <span className={styles.contactOptionalMuted}>Not provided (Optional)</span>
+                            )}
+                          </div>
+
+                          {phone ? (
+                            <div className={styles.contactInfoField}>
+                              <span className={styles.contactInfoLabel}>Phone Number</span>
+                              <a href={`tel:${phone}`} className={styles.contactPhoneLink}>
+                                <Phone size={13} /> {phone}
+                              </a>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Customer Message */}
+                        <div className={styles.contactMessageBox}>
+                          <div className={styles.contactMessageLabel}>Customer Message:</div>
+                          <p className={styles.contactMessageText}>{message}</p>
+                        </div>
+
+                        {/* Attachment Box with Preview & Download */}
+                        {fileUrl ? (
+                          <div className={styles.contactAttachmentBox}>
+                            <div className={styles.attachmentBoxHeader}>
+                              <div className={styles.attachmentBoxTitle}>
+                                <Paperclip size={15} />
+                                <span>Attached File / Screenshot</span>
+                              </div>
+                              {file.size ? (
+                                <span className={styles.attachmentSize}>
+                                  {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                </span>
+                              ) : null}
+                            </div>
+
+                            {/* Preview Area */}
+                            <div className={styles.attachmentPreviewContainer}>
+                              {isImage ? (
+                                <div className={styles.imagePreviewWrap}>
+                                  <img
+                                    src={fileUrl}
+                                    alt={fileName}
+                                    className={styles.inquiryPreviewImg}
+                                    onClick={() => window.open(fileUrl, '_blank')}
+                                    title="Click to view full image in new tab"
+                                  />
+                                </div>
+                              ) : isPdf ? (
+                                <div className={styles.docPreviewWrap}>
+                                  <div className={styles.docIconBox}>
+                                    <FileText size={34} style={{ color: '#ef4444' }} />
+                                  </div>
+                                  <div className={styles.docInfoCol}>
+                                    <span className={styles.docFileName}>{fileName}</span>
+                                    <span className={styles.docHint}>PDF Document Attachment</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className={styles.docPreviewWrap}>
+                                  <div className={styles.docIconBox}>
+                                    <FileText size={34} style={{ color: '#7025fb' }} />
+                                  </div>
+                                  <div className={styles.docInfoCol}>
+                                    <span className={styles.docFileName}>{fileName}</span>
+                                    <span className={styles.docHint}>Customer Document File</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Download & Preview Action Buttons */}
+                            <div className={styles.attachmentActionRow}>
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.attachmentPreviewBtn}
+                              >
+                                <Eye size={15} />
+                                <span>Preview in New Tab</span>
+                              </a>
+
+                              <a
+                                href={fileUrl}
+                                download={fileName}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.attachmentDownloadBtn}
+                              >
+                                <Download size={15} />
+                                <span>Download File</span>
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={styles.noAttachmentNote}>
+                            <span>No file attachment was included with this inquiry.</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Modal Footer Controls */}
+                      <div className={styles.contactModalFooter}>
+                        <button
+                          type="button"
+                          className={styles.modalSecondaryBtn}
+                          onClick={() => {
+                            setSelectedContactModal(null);
+                            setContactFullData(null);
+                          }}
+                        >
+                          Close
+                        </button>
+
+                        {email && (
+                          <a
+                            href={`mailto:${email}?subject=Regarding your Picky inquiry`}
+                            className={styles.modalReplyBtn}
+                          >
+                            <Mail size={14} />
+                            <span>Reply via Email</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </Modal>
             </div>
           )}

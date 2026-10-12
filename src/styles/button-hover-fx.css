@@ -71,10 +71,10 @@ a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn
 }
 
 /* ── 5. Spring magnetic lift on hover (for text buttons) ─────────────────── */
-button:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover,
-a[class*="btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover,
-[class*="-btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover,
-[class*="btn-"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):hover {
+button:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):not(.hp-final-cta-btn):not(.hp-final-cta-outline-btn):hover,
+a[class*="btn"]:not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):not(.hp-final-cta-btn):not(.hp-final-cta-outline-btn):hover,
+[class*="-btn"]:not([class*="group"]):not([class*="wrap"]):not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):not(.hp-final-cta-btn):not(.hp-final-cta-outline-btn):hover,
+[class*="btn-"]:not([class*="group"]):not([class*="wrap"]):not([class*="stepper"]):not([class*="icon"]):not([class*="close"]):not([class*="scroll"]):not([class*="tab"]):not([class*="clear"]):not([class*="float"]):not([class*="heart"]):not([class*="prev"]):not([class*="next"]):not([class*="arrow"]):not([class*="nav-btn"]):not([class*="carousel"]):not([class*="slider"]):not([class*="swiper"]):not(.nav-icon-btn):not(.no-hover-fx):not(.hp-final-cta-btn):not(.hp-final-cta-outline-btn):hover {
   transform: translateY(-2px) scale(1.012) !important;
   transition:
     transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -111,12 +111,18 @@ button:disabled:hover,
   transform: none !important;
 }
 
-/* ── 9. Exclude floating & icon buttons from transform overrides ────────── */
+/* ── 9. Exclude floating, icon, group & final CTA buttons from transform overrides ────────── */
 .picky-float-btn:hover,
 .picky-float-scroll:hover,
 .stepper-btn:hover,
 .nav-icon-btn:hover,
 .picky-chat-ping-badge,
+.hp-final-cta-btn-group,
+.hp-final-cta-btn-group:hover,
+[class*="btn-group"],
+[class*="btn-group"]:hover,
+[class*="btn-wrapper"],
+[class*="btn-wrapper"]:hover,
 [class*="close"]:hover,
 [class*="heart"]:hover,
 [class*="prev"]:hover,
@@ -126,7 +132,7 @@ button:disabled:hover,
 [class*="carousel"]:hover,
 [class*="slider"]:hover,
 [class*="swiper"]:hover {
-  transform: unset;
+  transform: none !important;
 }
 
 .picky-float-btn:hover {
@@ -134,6 +140,16 @@ button:disabled:hover,
 }
 
 /* ── 10. Strictly disable pseudo-elements (shimmer/spotlight) for floating, icon, prev & next buttons ── */
+.hp-final-cta-btn::before,
+.hp-final-cta-btn::after,
+.hp-final-cta-outline-btn::before,
+.hp-final-cta-outline-btn::after,
+.hp-final-cta-btn-group::before,
+.hp-final-cta-btn-group::after,
+[class*="btn-group"]::before,
+[class*="btn-group"]::after,
+[class*="btn-wrapper"]::before,
+[class*="btn-wrapper"]::after,
 .picky-float-btn::before,
 .picky-float-btn::after,
 .picky-float-scroll::before,

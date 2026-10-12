@@ -1014,3 +1014,114 @@
     gap: 0.65rem;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WHATSAPP EXCLUSIVE LOGIN STYLING & NOTICES
+   ────────────────────────────────────────────────────────────────────────── */
+.picky-whatsapp-mention-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.95rem;
+  margin-bottom: 0.85rem;
+  border-radius: 14px;
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(37, 211, 102, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.08);
+  animation: bannerGlow 3s infinite ease-in-out;
+}
+
+@keyframes bannerGlow {
+  0%, 100% {
+    border-color: rgba(37, 211, 102, 0.28);
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.08);
+  }
+  50% {
+    border-color: rgba(37, 211, 102, 0.55);
+    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.2);
+  }
+}
+
+.picky-wa-pulse-icon {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  background: rgba(37, 211, 102, 0.15);
+  border: 1px solid rgba(37, 211, 102, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picky-wa-mention-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.picky-wa-mention-tag {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.picky-wa-mention-sub {
+  font-size: 0.74rem;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.picky-wa-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picky-wa-country-badge {
+  position: absolute;
+  left: 2.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #c084fc;
+  padding-right: 0.5rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+.picky-wa-pill-input {
+  padding-left: 5.75rem !important;
+}
+
+.picky-wa-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.picky-wa-otp-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(37, 211, 102, 0.2);
+  border-radius: 12px;
+  padding: 0.5rem 0.8rem;
+}
+
+.picky-wa-otp-notice strong {
+  color: #4ade80;
+  font-weight: 700;
+}
+

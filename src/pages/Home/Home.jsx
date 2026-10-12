@@ -274,47 +274,7 @@ export default function Home() {
     };
   }, [isTrendingHovered, trendingProductsList]);
 
-  // Scroll ref & auto-scroll state for continuous running reviews carousel in mobile view
-  const reviewsScrollRef = useRef(null);
-  const [isReviewsHovered, setIsReviewsHovered] = useState(false);
 
-  // Infinite duplicate list for continuous loop marquee in reviews
-  const reviewsLoopList = useMemo(() => {
-    if (!REVIEWS_DATA || REVIEWS_DATA.length === 0) return [];
-    let list = [...REVIEWS_DATA];
-    while (list.length < 8) {
-      list = [...list, ...REVIEWS_DATA];
-    }
-    return [...list, ...list];
-  }, []);
-
-  // Continuous running marquee loop for Reviews on mobile
-  useEffect(() => {
-    if (isReviewsHovered || !reviewsLoopList.length) return;
-
-    const container = reviewsScrollRef.current;
-    if (!container) return;
-
-    let animId;
-    const speed = 0.65; // smooth gentle marquee speed
-
-    const step = () => {
-      if (reviewsScrollRef.current) {
-        reviewsScrollRef.current.scrollLeft += speed;
-        const singleSetWidth = reviewsScrollRef.current.scrollWidth / 2;
-        if (singleSetWidth > 0 && reviewsScrollRef.current.scrollLeft >= singleSetWidth) {
-          reviewsScrollRef.current.scrollLeft -= singleSetWidth;
-        }
-      }
-      animId = requestAnimationFrame(step);
-    };
-
-    animId = requestAnimationFrame(step);
-
-    return () => {
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [isReviewsHovered, reviewsLoopList]);
 
   useEffect(() => {
     async function loadData() {
@@ -886,45 +846,85 @@ export default function Home() {
               </div>
             </FadeUp>
           </div>
+        </div>
 
-          <div
-            ref={reviewsScrollRef}
-            className="hp-reviews-grid"
-            onMouseEnter={() => setIsReviewsHovered(true)}
-            onMouseLeave={() => setIsReviewsHovered(false)}
-            onTouchStart={() => setIsReviewsHovered(true)}
-            onTouchEnd={() => setIsReviewsHovered(false)}
-          >
-            {reviewsLoopList.map((rev, idx) => (
-              <div key={`${rev.id || idx}-${idx}`} className="hp-review-slide-item">
-                <div className="hp-review-card">
-                  <div className="hp-review-watermark">“</div>
-                  
-                  <div className="hp-review-card-top">
-                    <div className="hp-review-stars">
-                      {[...Array(rev.rating || 5)].map((_, i) => (
-                        <Star key={i} size={16} fill="#f59e0b" color="#f59e0b" />
-                      ))}
+        {/* Smooth Continuous Running Marquee Carousel (Full Width Edge-to-Edge) */}
+        <div className="hp-reviews-carousel-wrap">
+          <div className="hp-reviews-marquee-track">
+            {/* Group 1: 7 authentic Tamil Nadu style cards */}
+            <div className="hp-reviews-marquee-group">
+              {REVIEWS_DATA.slice(0, 7).map((rev, idx) => (
+                <div key={`rev-g1-${rev.id || idx}`} className="hp-review-slide-item">
+                  <div className="hp-review-card">
+                    <div className="hp-review-watermark">“</div>
+                    
+                    <div className="hp-review-card-top">
+                      <div className="hp-review-stars">
+                        {[...Array(rev.rating || 5)].map((_, i) => (
+                          <Star key={i} size={16} fill="#f59e0b" color="#f59e0b" />
+                        ))}
+                      </div>
+                      <span className="hp-verified-badge">
+                        <CheckCircle size={13} strokeWidth={2.8} /> Verified Buyer
+                      </span>
                     </div>
-                    <span className="hp-verified-badge">
-                      <CheckCircle size={13} strokeWidth={2.8} /> Verified Buyer
-                    </span>
-                  </div>
 
-                  <p className="hp-review-text">"{rev.comment}"</p>
+                    <p className="hp-review-text">"{rev.comment}"</p>
 
-                  <div className="hp-review-footer">
-                    <img src={rev.avatar} alt={rev.name} className="hp-review-avatar" />
-                    <div className="hp-review-user-info">
-                      <h4 className="hp-review-user-name">{rev.name}</h4>
-                      <span className="hp-review-user-meta">{rev.city} • Purchased {rev.productName}</span>
+                    <div className="hp-review-footer">
+                      <div
+                        className="hp-review-initial-badge"
+                        style={{ background: rev.badgeColor }}
+                      >
+                        {rev.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="hp-review-user-info">
+                        <h4 className="hp-review-user-name">{rev.name}</h4>
+                        <span className="hp-review-user-meta">{rev.city}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
+            {/* Group 2: Seamless Duplicate for Infinite Marquee */}
+            <div className="hp-reviews-marquee-group" aria-hidden="true">
+              {REVIEWS_DATA.slice(0, 7).map((rev, idx) => (
+                <div key={`rev-g2-${rev.id || idx}`} className="hp-review-slide-item">
+                  <div className="hp-review-card">
+                    <div className="hp-review-watermark">“</div>
+                    
+                    <div className="hp-review-card-top">
+                      <div className="hp-review-stars">
+                        {[...Array(rev.rating || 5)].map((_, i) => (
+                          <Star key={i} size={16} fill="#f59e0b" color="#f59e0b" />
+                        ))}
+                      </div>
+                      <span className="hp-verified-badge">
+                        <CheckCircle size={13} strokeWidth={2.8} /> Verified Buyer
+                      </span>
+                    </div>
+
+                    <p className="hp-review-text">"{rev.comment}"</p>
+
+                    <div className="hp-review-footer">
+                      <div
+                        className="hp-review-initial-badge"
+                        style={{ background: rev.badgeColor }}
+                      >
+                        {rev.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="hp-review-user-info">
+                        <h4 className="hp-review-user-name">{rev.name}</h4>
+                        <span className="hp-review-user-meta">{rev.city}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -933,27 +933,48 @@ export default function Home() {
         <div className="hp-final-cta-container">
           <div className="hp-final-cta-box">
             <FadeUp delay={100}>
-              <span className="hp-final-cta-badge">✦ FOLLOW US ON INSTAGRAM</span>
-              <h2 className="hp-final-title">Join Our Community @picky.co.in</h2>
+              <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
+              <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
             </FadeUp>
             <FadeUp delay={200}>
               <p className="hp-final-subtitle">
-                Follow us on Instagram for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+                Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
               </p>
             </FadeUp>
             <FadeUp delay={300}>
-              <MagneticButton
-                className="hp-final-cta-btn"
-                onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                </svg>
-                <span>Follow on Instagram</span>
-                <ArrowRight size={16} />
-              </MagneticButton>
+              <div className="hp-final-cta-btn-group no-hover-fx">
+                <button
+                  type="button"
+                  className="hp-final-cta-btn no-hover-fx"
+                  onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                  <span>Follow on Instagram</span>
+                  <ArrowRight size={16} />
+                </button>
+
+
+                <button
+                  type="button"
+                  className="hp-final-cta-outline-btn no-hover-fx"
+                  onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                  aria-label="Join WhatsApp Group"
+                  title="Join WhatsApp Group"
+                >
+                  <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                  </svg>
+                  <span className="hp-cta-wa-label">
+                    <span>Join WhatsApp Group</span>
+                    <ArrowRight size={16} />
+                  </span>
+                </button>
+              </div>
             </FadeUp>
           </div>
         </div>

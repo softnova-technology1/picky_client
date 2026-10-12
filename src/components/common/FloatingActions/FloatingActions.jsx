@@ -42,16 +42,16 @@ export default function FloatingActions() {
 
       {/* ── Bottom Right: Floating Chat & Cart Stack ── */}
       <div className="picky-float-stack-right">
-        {/* WhatsApp Live Support Chat Bubble */}
+        {/* WhatsApp Live Consulting Chat Bubble */}
         <a
-          href="https://wa.me/919876543210?text=Hi%20Picky%20Support!%20I%20have%20a%20question."
+          href="https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20consult%20regarding%20products."
           target="_blank"
           rel="noopener noreferrer"
           className="picky-float-btn picky-float-chat"
           aria-label="Chat on WhatsApp"
-          title="Direct WhatsApp Support"
+          title="WhatsApp Consulting: +91 83002 95721"
         >
-          <MessageCircle size={22} color="#ffffff" />
+          <MessageCircle size={21} color="#ffffff" />
           <span className="picky-chat-ping-badge" />
         </a>
 

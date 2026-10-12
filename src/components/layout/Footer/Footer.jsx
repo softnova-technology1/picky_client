@@ -132,11 +132,11 @@ export default function Footer() {
                     </svg>
                   </a>
                   <a
-                    href="https://wa.me/919876543210"
+                    href="https://wa.me/918300295721"
                     target="_blank"
                     rel="noreferrer"
                     className="footer-social-icon"
-                    title="WhatsApp"
+                    title="WhatsApp (+91 83002 95721)"
                     aria-label="WhatsApp"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -300,7 +300,9 @@ export default function Footer() {
                     <Phone size={15} className="footer-contact-icon" />
                   </div>
                   <div>
-                    <span className="footer-contact-sub">Toll-Free: <strong>1800-098-8300</strong></span>
+                    <a href="tel:+918300295721" className="footer-contact-sub" style={{ color: 'inherit', textDecoration: 'none' }}>
+                      Phone Consulting: <strong>+91 83002 95721</strong>
+                    </a>
                   </div>
                 </div>
 
@@ -315,14 +317,14 @@ export default function Footer() {
               </div>
 
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20consult%20regarding%20products."
                 target="_blank"
                 rel="noreferrer"
                 className="footer-whatsapp-chip"
-                title="Direct WhatsApp Support"
+                title="WhatsApp Consulting (+91 83002 95721)"
               >
                 <span className="whatsapp-status-dot"></span>
-                <span>Live WhatsApp Support</span>
+                <span>WhatsApp: +91 83002 95721</span>
               </a>
             </div>
 

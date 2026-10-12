@@ -35,6 +35,7 @@ import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
 import { adminService } from '../../../services/admin.service';
 import { productService } from '../../../services/product.service';
+import { contactService } from '../../../services/contact.service';
 import Toast from '../../ui/Toast';
 import '../../../styles/admin.css';
 
@@ -56,6 +57,75 @@ export default function AdminLayout({ children, title }) {
   const [searchLoading, setSearchLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+
+  // Real-time synced admin notifications state
+  const [adminNotifications, setAdminNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('picky_admin_notifications');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((n) => n && n.id && !String(n.id).startsWith('notif-'));
+        }
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+
+  const refreshAdminNotifications = async () => {
+    try {
+      const res = await contactService.getNotifications({ limit: 10 }).catch(() => null);
+      const apiNotifs = res?.data?.notifications || res?.data;
+      if (Array.isArray(apiNotifs) && apiNotifs.length > 0) {
+        const formatted = apiNotifs.map((n) => ({
+          ...n,
+          id: n.id || n._id,
+          relativeTime: n.relativeTime || (n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'),
+        }));
+        setAdminNotifications(formatted);
+        localStorage.setItem('picky_admin_notifications', JSON.stringify(formatted));
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
+    try {
+      const saved = localStorage.getItem('picky_admin_notifications');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setAdminNotifications(parsed.filter((n) => n && n.id && !String(n.id).startsWith('notif-')));
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    refreshAdminNotifications();
+    const handleStorage = (e) => {
+      if (e.key === 'picky_admin_notifications') {
+        try {
+          if (e.newValue) {
+            const parsed = JSON.parse(e.newValue);
+            if (Array.isArray(parsed)) {
+              setAdminNotifications(parsed.filter((n) => n && n.id && !String(n.id).startsWith('notif-')));
+            }
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', refreshAdminNotifications);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', refreshAdminNotifications);
+    };
+  }, []);
+
+  const unreadCount = adminNotifications.filter((n) => n.unread).length;
+  const displayNotifs = adminNotifications.slice(0, 5);
 
   useEffect(() => {
     fetchCategories();
@@ -665,23 +735,29 @@ export default function AdminLayout({ children, title }) {
               )}
             </div>
 
-            {/* Notification Bell Dropdown (Hover & Click with Max 3 Notifications) */}
+            {/* Notification Bell Dropdown (Hover & Click with Real-Time Synced Notifications) */}
             <div
               className="admin-topbar-notif-wrap"
               ref={notifRef}
-              onMouseEnter={handleNotifMouseEnter}
+              onMouseEnter={() => {
+                refreshAdminNotifications();
+                handleNotifMouseEnter();
+              }}
               onMouseLeave={handleNotifMouseLeave}
             >
               <button
                 type="button"
                 className="admin-topbar-notif-btn"
-                onClick={handleNotifToggle}
+                onClick={(e) => {
+                  refreshAdminNotifications();
+                  handleNotifToggle(e);
+                }}
                 title="Notifications (Hover to preview, Click to open)"
                 aria-label="Notifications"
                 aria-expanded={notifOpen}
               >
                 <Bell size={18} />
-                <span className="admin-topbar-notif-dot" />
+                {unreadCount > 0 && <span className="admin-topbar-notif-dot" />}
               </button>
 
               {notifOpen && (
@@ -694,66 +770,49 @@ export default function AdminLayout({ children, title }) {
                     <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e1b4b' }}>
                       <Bell size={15} style={{ color: '#7025fb' }} /> Notifications
                     </span>
-                    <span className="admin-notif-badge">3 New</span>
+                    <span className="admin-notif-badge">
+                      {unreadCount > 0 ? `${unreadCount} New` : 'All caught up'}
+                    </span>
                   </div>
 
                   <div className="admin-notif-list">
-                    {/* Notification 1: New Order */}
-                    <div
-                      className="admin-notif-item"
-                      onClick={() => {
-                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-                        setNotifOpen(false);
-                        navigate(`${ADMIN}/orders`);
-                      }}
-                    >
-                      <span className="admin-notif-dot-active" />
-                      <div className="admin-notif-content">
-                        <div className="admin-notif-title">New Order #ORD-2026-894</div>
-                        <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
-                          Priya Ramesh placed an order for ₹2,499
-                        </span>
-                        <span className="admin-notif-time">10 mins ago</span>
+                    {displayNotifs.length > 0 ? (
+                      displayNotifs.map((n) => {
+                        const isContact = n.type === 'contact';
+                        const dotColor = isContact ? '#7c3aed' : (n.type === 'inventory' ? '#f59e0b' : (n.type === 'coupon' ? '#10b981' : '#7025fb'));
+                        return (
+                          <div
+                            key={n.id}
+                            className="admin-notif-item"
+                            onClick={() => {
+                              if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+                              setNotifOpen(false);
+                              navigate(n.link || `${ADMIN}/settings?tab=notifications`);
+                            }}
+                          >
+                            <span className="admin-notif-dot-active" style={{ background: dotColor }} />
+                            <div className="admin-notif-content">
+                              <div className="admin-notif-title" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span>{n.title}</span>
+                                {(n.hasAttachment || n.metadata?.hasAttachment) && (
+                                  <span style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', background: '#ede9fe', color: '#6d28d9', fontWeight: 600 }}>
+                                    📎 File
+                                  </span>
+                                )}
+                              </div>
+                              <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                                {n.message}
+                              </span>
+                              <span className="admin-notif-time">{n.relativeTime || n.time || 'Recent'}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+                        No new notifications
                       </div>
-                    </div>
-
-                    {/* Notification 2: Low Stock */}
-                    <div
-                      className="admin-notif-item"
-                      onClick={() => {
-                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-                        setNotifOpen(false);
-                        navigate(`${ADMIN}/inventory`);
-                      }}
-                    >
-                      <span className="admin-notif-dot-active" style={{ background: '#f59e0b' }} />
-                      <div className="admin-notif-content">
-                        <div className="admin-notif-title">Low Stock Alert: Kurti Set</div>
-                        <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
-                          Rayon Anarkali Kurti only 3 units left
-                        </span>
-                        <span className="admin-notif-time">45 mins ago</span>
-                      </div>
-                    </div>
-
-                    {/* Notification 3: Coupon usage */}
-                    <div
-                      className="admin-notif-item"
-                      onClick={() => {
-                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-                        setNotifOpen(false);
-                        navigate(`${ADMIN}/coupons`);
-                      }}
-                    >
-                      <span className="admin-notif-dot-active" style={{ background: '#10b981' }} />
-                      <div className="admin-notif-content">
-                        <div className="admin-notif-title">Coupon Limit: FESTIVE25</div>
-                        <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
-                          Reached 85% of total redemption limit
-                        </span>
-                        <span className="admin-notif-time">2 hours ago</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="admin-notif-footer">

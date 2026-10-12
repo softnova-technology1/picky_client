@@ -53,7 +53,7 @@ export function useButtonHoverFX() {
       if (
         el.closest('.no-hover-fx') ||
         el.classList.contains('no-hover-fx') ||
-        /prev|next|carousel|arrow|nav-btn|slider|swiper|chevron/i.test(classNameStr)
+        /prev|next|carousel|arrow|nav-btn|slider|swiper|chevron|group|wrap|container|hp-final-cta/i.test(classNameStr)
       ) return;
 
       attached.add(el);
