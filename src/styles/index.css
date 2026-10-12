@@ -49,7 +49,8 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font-secondary);
   color: var(--color-text);
-  background: #ffffff;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }

@@ -498,49 +498,77 @@
 .trust-badges-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-}
-
-@media (max-width: 640px) {
-  .trust-badges-grid {
-    grid-template-columns: 1fr;
-  }
+  gap: 1.5rem;
+  margin-top: 3.5rem;
+  margin-bottom: 2rem;
+  width: 100%;
 }
 
 .trust-card {
   background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  padding: 1.25rem;
+  border-radius: 20px;
+  border: 1.5px solid #ede9fe;
+  padding: 1.6rem 1.85rem;
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
+  gap: 1.15rem;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.04);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trust-card:hover {
+  transform: translateY(-4px);
+  border-color: #c084fc;
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.1);
 }
 
 .trust-icon-box {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #f5f3ff;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: #faf5ff;
+  border: 1.5px solid #d8b4fe;
   color: #7c3aed;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.28s ease;
+}
+
+.trust-card:hover .trust-icon-box {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #ffffff;
+  border-color: transparent;
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
 }
 
 .trust-title {
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: var(--font-primary, serif);
   color: #0f172a;
-  margin: 0 0 0.15rem;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
 }
 
 .trust-subtext {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: #64748b;
   margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .trust-badges-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 2.5rem;
+  }
+  .trust-card {
+    padding: 1.25rem 1.4rem;
+  }
 }
 
 /* ── Right Column: Order Summary Card ── */
@@ -900,5 +928,124 @@
   .summary-card {
     padding: 1.5rem 1.25rem;
     border-radius: 16px;
+  }
+}
+
+/* ─── Best Sellers Infinite Running Showcase (1-Row Loop) ─── */
+.bestsellers-section {
+  margin-top: 4.5rem;
+  padding-top: 3.5rem;
+  border-top: 1.5px solid rgba(226, 232, 240, 0.9);
+  position: relative;
+  width: 100%;
+}
+
+.bestsellers-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bestsellers-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #7c3aed;
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.bestsellers-badge-icon {
+  color: #e11d48;
+}
+
+.bestsellers-title {
+  font-family: var(--font-primary, serif);
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.65rem 0;
+  line-height: 1.15;
+}
+
+.bestsellers-title span {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bestsellers-subtitle {
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* 1-Row Infinite Running Viewport */
+.bestsellers-viewport {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 1rem 0 2rem;
+  mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+}
+
+.bestsellers-track {
+  display: flex;
+  align-items: stretch;
+  gap: 1.5rem;
+  width: max-content;
+  will-change: transform;
+  animation: bestsellersMarqueeRun 45s linear infinite;
+}
+
+/* Hover pauses the loop so users can explore and click freely */
+.bestsellers-track:hover {
+  animation-play-state: paused !important;
+}
+
+.bestsellers-card-item {
+  flex: 0 0 270px;
+  width: 270px;
+  transition: transform 0.28s ease;
+}
+
+.bestsellers-card-item:hover {
+  transform: translateY(-4px);
+}
+
+@keyframes bestsellersMarqueeRun {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .bestsellers-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+  }
+  .bestsellers-card-item {
+    flex: 0 0 230px;
+    width: 230px;
+  }
+  .bestsellers-track {
+    gap: 1rem;
+    animation-duration: 35s;
   }
 }

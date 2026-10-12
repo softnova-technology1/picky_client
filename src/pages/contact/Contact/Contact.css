@@ -19,7 +19,7 @@
 
 .ketchen-contact-page {
   font-family: var(--k-font-main);
-  background-color: var(--k-white);
+  background-color: transparent;
   color: var(--k-title-dark);
   overflow-x: hidden;
 }

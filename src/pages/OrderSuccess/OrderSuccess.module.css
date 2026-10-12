@@ -2,7 +2,7 @@
 
 .success-section {
   min-height: 85vh;
-  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 60%, #faf5ff 100%);
+  background: transparent;
   padding: 2rem 0 5rem;
 }
 

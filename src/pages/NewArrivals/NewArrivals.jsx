@@ -159,25 +159,6 @@ export default function NewArrivals() {
     return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
   }, [products, activeCategory]);
 
-  // Compute counts for each category tab
-  const tabCounts = useMemo(() => {
-    const counts = { all: products.length };
-    products.forEach((p) => {
-      const rawSlug = p.category?.slug || (typeof p.category === 'string' ? p.category : '');
-      const catId = p.category?._id || (typeof p.category === 'object' ? p.category?._id : '');
-      const slug = (SLUG_ALIAS_MAP[rawSlug] || rawSlug).toLowerCase();
-      if (slug) {
-        counts[slug] = (counts[slug] || 0) + 1;
-      }
-      if (rawSlug && rawSlug !== slug) {
-        counts[rawSlug] = (counts[rawSlug] || 0) + 1;
-      }
-      if (catId) {
-        counts[catId] = (counts[catId] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [products]);
 
   // Filter & Sort Products Dynamically
   const processedProducts = useMemo(() => {
@@ -382,6 +363,19 @@ export default function NewArrivals() {
     setDiscountFilter('all');
   };
 
+  // Continuous infinite running cards list
+  const marqueeItems = useMemo(() => {
+    const baseList = products.length > 0 ? products : processedProducts;
+    if (!baseList.length) return [];
+
+    let singleCycle = [...baseList];
+    while (singleCycle.length < 6) {
+      singleCycle = [...singleCycle, ...baseList];
+    }
+
+    return [...singleCycle, ...singleCycle];
+  }, [products, processedProducts]);
+
   const handleScrollToCatalog = () => {
     if (catalogRef.current) {
       catalogRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -389,11 +383,19 @@ export default function NewArrivals() {
   };
 
   return (
-    <PageWrapper bg="#faf5ff">
-      <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
-        {/* ── 1. Streetwear Hero Showcase ── */}
-        <div style={{ paddingTop: '2.5rem', position: 'relative' }}>
-          <NewArrivalsHero onExploreClick={handleScrollToCatalog} featuredProduct={products[0]} />
+    <PageWrapper>
+      <div style={{ background: 'transparent', minHeight: '100vh', paddingBottom: '6rem' }}>
+        {/* ── 1. Celestial Dome Arc Hero Showcase (Full Width) ── */}
+        <div style={{ position: 'relative' }}>
+          <NewArrivalsHero
+            onExploreClick={handleScrollToCatalog}
+            categories={categoryStories}
+            activeCategory={activeCategory}
+            onSelectCategory={(id) => {
+              setActiveCategory(id);
+              setActiveSubcategory('all');
+            }}
+          />
         </div>
 
         {/* ── 2. New Arrivals Catalog Section ── */}
@@ -452,7 +454,6 @@ export default function NewArrivals() {
             <div className="circular-categories-track">
               {categoryStories.map((item) => {
                 const isActive = activeCategory === item.id;
-                const count = tabCounts[item.id] || 0;
 
                 return (
                   <button
@@ -462,17 +463,10 @@ export default function NewArrivals() {
                       setActiveSubcategory('all');
                     }}
                     className={`category-story-item ${isActive ? 'active' : ''}`}
-                    title={`${item.label} (${count} new arrivals)`}
+                    title={item.label}
                   >
                     {/* 100% Circular Avatar Container */}
                     <div className="story-circle-pod">
-                      {/* Notification Count Badge (Top-Right) */}
-                      {count > 0 && (
-                        <span className="story-notification-badge">
-                          {count}
-                        </span>
-                      )}
-
                       {/* Inner 100% Round Mask for High Detail Zoomed Content */}
                       <div className="story-circle-inner">
                         {item.icon === 'package-plus' ? (
@@ -888,6 +882,62 @@ export default function NewArrivals() {
               ))}
             </div>
           )}
+
+          {/* ── 3. Continuous Running Showcase Section (Infinite Marquee) ── */}
+          {marqueeItems.length > 0 && (
+            <section className="new-arrivals-marquee-section" aria-label="New Arrivals Live Showcase">
+              <div className="new-arrivals-marquee-header-wrap">
+                <div className="marquee-badge-pill">
+                  <Sparkles size={14} className="marquee-sparkle-icon" />
+                  <span>Live Stream • Always In Motion</span>
+                </div>
+                <h3 className="new-arrivals-marquee-title">
+                  All New Arrivals <span>Running Live</span>
+                </h3>
+                <p className="new-arrivals-marquee-subtitle">
+                  Continuous live stream of our latest handpicked releases. Hover over any card to pause and explore.
+                </p>
+              </div>
+
+              {/* Viewport for infinite running ribbon */}
+              <div className="new-arrivals-marquee-viewport">
+                <div className="new-arrivals-marquee-track">
+                  {marqueeItems.map((prod, idx) => (
+                    <div
+                      key={`marquee-${prod._id || prod.id || 'p'}-${idx}`}
+                      className="new-arrivals-marquee-card-item"
+                    >
+                      <ProductCard product={prod} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ── 4. Instagram Community CTA Banner ── */}
+          <section className="new-arrivals-instagram-section" aria-label="Instagram Community">
+            <div className="new-arrivals-instagram-box">
+              <span className="new-arrivals-instagram-badge">✦ FOLLOW US ON INSTAGRAM</span>
+              <h2 className="new-arrivals-instagram-title">Join Our Community @picky.co.in</h2>
+              <p className="new-arrivals-instagram-subtitle">
+                Follow us on Instagram for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+              </p>
+              <button
+                type="button"
+                className="new-arrivals-instagram-btn"
+                onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                </svg>
+                <span>Follow on Instagram</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -1004,33 +1054,6 @@ export default function NewArrivals() {
           background: #ffffff;
         }
 
-        /* Top-Right Notification Count Badge */
-        .story-notification-badge {
-          position: absolute;
-          top: -3px;
-          right: -3px;
-          background: #7c3aed;
-          color: #ffffff;
-          font-size: 0.72rem;
-          font-weight: 800;
-          min-width: 21px;
-          height: 21px;
-          padding: 0 5px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 9999px;
-          border: 2px solid #ffffff;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          z-index: 5;
-          letter-spacing: -0.01em;
-          line-height: 1;
-        }
-
-        .category-story-item.active .story-notification-badge {
-          background: #6d28d9;
-          box-shadow: none;
-        }
 
         /* All New Arrivals Simple Clean Icon Circle */
         .story-all-drops-icon {
@@ -1693,13 +1716,6 @@ export default function NewArrivals() {
             width: 64px;
             height: 64px;
           }
-          .story-notification-badge {
-            min-width: 21px;
-            height: 21px;
-            font-size: 0.7rem;
-            top: -3px;
-            right: -3px;
-          }
           .story-label-text {
             font-size: 0.74rem;
             max-width: 85px;
@@ -1728,6 +1744,237 @@ export default function NewArrivals() {
           }
           .filter-drawer-container {
             max-width: 100%;
+          }
+        }
+
+        /* ── Continuous Running Marquee Section Styles ── */
+        .new-arrivals-marquee-section {
+          margin-top: 3.5rem;
+          margin-bottom: 2rem;
+          width: 100%;
+          position: relative;
+        }
+
+        .new-arrivals-marquee-header-wrap {
+          text-align: center;
+          margin-bottom: 2rem;
+          padding: 0 1rem;
+        }
+
+        .marquee-badge-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          background: #f3e8ff;
+          color: #7c3aed;
+          border: 1px solid #ddd6fe;
+          border-radius: 9999px;
+          padding: 0.35rem 0.95rem;
+          font-size: 0.78rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          margin-bottom: 0.75rem;
+        }
+
+        .marquee-sparkle-icon {
+          animation: spinPulse 3s infinite ease-in-out;
+        }
+
+        @keyframes spinPulse {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          50% { transform: scale(1.2) rotate(180deg); }
+        }
+
+        .new-arrivals-marquee-title {
+          font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+          font-weight: 900;
+          color: #1e1b4b;
+          margin: 0 0 0.5rem 0;
+          letter-spacing: -0.02em;
+        }
+
+        .new-arrivals-marquee-title span {
+          background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .new-arrivals-marquee-subtitle {
+          font-size: 0.92rem;
+          color: #64748b;
+          max-width: 580px;
+          margin: 0 auto;
+          line-height: 1.5;
+        }
+
+        .new-arrivals-marquee-viewport {
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+          padding: 1.25rem 0 1.5rem 0;
+          mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+        }
+
+        .new-arrivals-marquee-track {
+          display: flex;
+          align-items: stretch;
+          gap: 1.5rem;
+          width: max-content;
+          will-change: transform;
+          animation: newArrivalsMarqueeRun 35s linear infinite;
+        }
+
+        .new-arrivals-marquee-track:hover {
+          animation-play-state: paused;
+        }
+
+        .new-arrivals-marquee-card-item {
+          flex: 0 0 250px;
+          width: 250px;
+          min-width: 250px;
+          transition: transform 0.25s ease;
+        }
+
+        .new-arrivals-marquee-card-item:hover {
+          transform: translateY(-4px);
+        }
+
+        @keyframes newArrivalsMarqueeRun {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .new-arrivals-marquee-card-item {
+            flex: 0 0 190px;
+            width: 190px;
+            min-width: 190px;
+          }
+          .new-arrivals-marquee-track {
+            gap: 1rem;
+            animation-duration: 25s;
+          }
+          .new-arrivals-marquee-section {
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+          }
+        }
+
+        /* ── 4. Instagram Community CTA Banner Styles ── */
+        .new-arrivals-instagram-section {
+          margin-top: 3.5rem;
+          margin-bottom: 2.5rem;
+          width: 100%;
+        }
+
+        .new-arrivals-instagram-box {
+          position: relative;
+          background: linear-gradient(135deg, #1e1035 0%, #3b185f 45%, #6d28d9 100%);
+          border: 1.5px solid rgba(168, 85, 247, 0.3);
+          border-radius: 36px;
+          padding: 3.5rem 2.5rem;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.25rem;
+          box-shadow: 0 20px 50px -15px rgba(109, 40, 217, 0.35);
+          overflow: hidden;
+        }
+
+        .new-arrivals-instagram-box::before {
+          content: "";
+          position: absolute;
+          top: -50%;
+          right: -20%;
+          width: 450px;
+          height: 450px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .new-arrivals-instagram-badge {
+          display: inline-block;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          color: #f3e8ff;
+          font-size: 0.74rem;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          padding: 0.35rem 0.95rem;
+          border-radius: 9999px;
+          margin-bottom: 0.25rem;
+        }
+
+        .new-arrivals-instagram-title {
+          font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+          font-size: clamp(2.2rem, 4.2vw, 3.6rem);
+          font-weight: 400;
+          color: #ffffff;
+          letter-spacing: -0.02em;
+          line-height: 1.15;
+          margin: 0;
+        }
+
+        .new-arrivals-instagram-subtitle {
+          font-size: clamp(0.95rem, 1.3vw, 1.12rem);
+          color: #e2e8f0;
+          font-weight: 400;
+          max-width: 580px;
+          margin: 0;
+          line-height: 1.5;
+        }
+
+        .new-arrivals-instagram-btn {
+          margin-top: 0.5rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.6rem;
+          background: #ffffff;
+          color: #6d28d9;
+          border: none;
+          padding: 0.95rem 2.4rem;
+          border-radius: 9999px;
+          font-size: 0.92rem;
+          font-weight: 800;
+          letter-spacing: 0.03em;
+          cursor: pointer;
+          transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .new-arrivals-instagram-btn:hover {
+          background: #f3e8ff;
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+          .new-arrivals-instagram-box {
+            padding: 2.5rem 1.5rem;
+            border-radius: 24px;
+            gap: 1rem;
+          }
+          .new-arrivals-instagram-title {
+            font-size: 1.85rem;
+          }
+          .new-arrivals-instagram-subtitle {
+            font-size: 0.88rem;
+          }
+          .new-arrivals-instagram-btn {
+            padding: 0.85rem 1.8rem;
+            font-size: 0.86rem;
+            width: 100%;
+            justify-content: center;
           }
         }
       `}</style>

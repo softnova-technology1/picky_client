@@ -2,7 +2,7 @@
 
 .wishlist-wrapper {
   padding: 1.5rem 0 5rem;
-  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 50%, #faf5ff 100%);
+  background: transparent;
   min-height: 85vh;
 }
 
@@ -179,6 +179,46 @@
   gap: 0;
 }
 
+/* ── Stat Card Outer Wrapper (Carries the shadow outside clip-path boundary!) ── */
+.stat-card-wrapper {
+  position: relative;
+  width: 175px;
+  height: 175px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Clean, subtle & balanced shadow: crisp edge + gentle elevation */
+  filter: 
+    drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08))
+    drop-shadow(0 6px 14px rgba(124, 58, 237, 0.12))
+    drop-shadow(0 10px 20px rgba(15, 23, 42, 0.07));
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s ease;
+}
+
+.stat-card-wrapper:hover {
+  transform: translateY(-4px) scale(1.03);
+  filter: 
+    drop-shadow(0 2px 4px rgba(15, 23, 42, 0.1))
+    drop-shadow(0 8px 18px rgba(124, 58, 237, 0.22))
+    drop-shadow(0 14px 26px rgba(15, 23, 42, 0.09));
+}
+
+.active-wrapper {
+  filter: 
+    drop-shadow(0 2px 4px rgba(109, 40, 217, 0.12))
+    drop-shadow(0 6px 16px rgba(124, 58, 237, 0.22))
+    drop-shadow(0 10px 22px rgba(15, 23, 42, 0.08));
+}
+
+.active-wrapper:hover {
+  transform: translateY(-4px) scale(1.03);
+  filter: 
+    drop-shadow(0 3px 6px rgba(109, 40, 217, 0.18))
+    drop-shadow(0 10px 22px rgba(124, 58, 237, 0.3))
+    drop-shadow(0 14px 26px rgba(15, 23, 42, 0.1));
+}
+
 /* Individual Stat Card - hexagonal/shield shape */
 .stat-card {
   display: flex;
@@ -187,19 +227,43 @@
   justify-content: center;
   gap: 0.45rem;
   background: #ffffff;
-  border: 1.5px solid #ede9fe;
   border-radius: 4px;
   clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
-  width: 175px;
-  height: 175px;
-  filter: drop-shadow(0 12px 26px rgba(124, 58, 237, 0.18)) drop-shadow(0 4px 10px rgba(168, 85, 247, 0.12));
-  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.55s ease;
+  width: 100%;
+  height: 100%;
   position: relative;
-  flex-shrink: 0;
   overflow: hidden;
 }
 
-/* Bottom-to-top fill pseudo-element */
+/* ── Pre-filled First Stat Card (Active by default, without needing hover) ── */
+.stat-card-active {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.stat-card-active::before {
+  display: none !important;
+}
+
+.stat-card-active .stat-icon-wrap {
+  color: #ffffff !important;
+}
+
+.stat-card-active .stat-value {
+  color: #ffffff !important;
+}
+
+.stat-card-active .stat-label {
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.stat-card-active .stat-underline {
+  background: #ffffff !important;
+  opacity: 0.85;
+}
+
+/* Bottom-to-top fill pseudo-element for other cards on hover */
 .stat-card::before {
   content: '';
   position: absolute;
@@ -212,13 +276,9 @@
   z-index: 0;
 }
 
+.stat-card-wrapper:hover .stat-card::before,
 .stat-card:hover::before {
   height: 100%;
-}
-
-.stat-card:hover {
-  transform: translateY(-6px) scale(1.05);
-  filter: drop-shadow(0 22px 42px rgba(124, 58, 237, 0.38)) drop-shadow(0 8px 18px rgba(147, 51, 234, 0.25));
 }
 
 .stat-icon-wrap {
@@ -232,6 +292,7 @@
   transition: color 0.35s ease;
 }
 
+.stat-card-wrapper:hover .stat-icon-wrap,
 .stat-card:hover .stat-icon-wrap {
   color: #ffffff;
 }
@@ -252,6 +313,7 @@
   transition: color 0.35s ease;
 }
 
+.stat-card-wrapper:hover .stat-value,
 .stat-card:hover .stat-value {
   color: #ffffff;
 }
@@ -270,8 +332,9 @@
   transition: color 0.35s ease;
 }
 
+.stat-card-wrapper:hover .stat-label,
 .stat-card:hover .stat-label {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .stat-underline {
@@ -284,8 +347,9 @@
   transition: background 0.35s ease;
 }
 
+.stat-card-wrapper:hover .stat-underline,
 .stat-card:hover .stat-underline {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 /* Connector between cards */
@@ -315,7 +379,7 @@
 }
 
 @media (max-width: 992px) {
-  .stat-card {
+  .stat-card-wrapper {
     width: 145px;
     height: 145px;
   }
@@ -340,19 +404,24 @@
   }
 
   .stats-cards-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
     width: 100%;
-    max-width: 340px;
+    max-width: 360px;
     margin: 0 auto;
-    justify-items: center;
+  }
+
+  .stat-card-wrapper {
+    width: 100%;
+    max-width: 155px;
+    height: 145px;
   }
 
   .stat-card {
     width: 100%;
-    max-width: 155px;
-    height: 145px;
+    height: 100%;
     gap: 0.35rem;
   }
 
@@ -1294,4 +1363,383 @@
   .banner-right-graphic { display: none; }
   .hero-banner { min-height: 160px; }
 }
+
+/* ─── Recommended Products Infinite Running Showcase (1-Row Loop) ─── */
+.recommended-section {
+  margin-top: 4.5rem;
+  padding-top: 3.5rem;
+  border-top: 1.5px solid rgba(226, 232, 240, 0.9);
+  position: relative;
+  width: 100%;
+}
+
+.recommended-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recommended-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #7c3aed;
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.recommended-sparkle {
+  color: #7c3aed;
+  animation: recSparklePulse 3s ease-in-out infinite;
+}
+
+@keyframes recSparklePulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.25) rotate(180deg); }
+}
+
+.recommended-title {
+  font-family: var(--font-primary, serif);
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.65rem 0;
+  line-height: 1.15;
+}
+
+.recommended-title span {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.recommended-subtitle {
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* 1-Row Infinite Running Viewport */
+.recommended-viewport {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 1rem 0 2rem;
+  mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+}
+
+.recommended-track {
+  display: flex;
+  align-items: stretch;
+  gap: 1.5rem;
+  width: max-content;
+  will-change: transform;
+  animation: recommendedMarqueeRun 45s linear infinite;
+}
+
+/* Hover pauses the loop so users can explore and click freely */
+.recommended-track:hover {
+  animation-play-state: paused !important;
+}
+
+.recommended-card-item {
+  flex: 0 0 270px;
+  width: 270px;
+  transition: transform 0.28s ease;
+}
+
+.recommended-card-item:hover {
+  transform: translateY(-4px);
+}
+
+@keyframes recommendedMarqueeRun {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .recommended-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+  }
+  .recommended-card-item {
+    flex: 0 0 230px;
+    width: 230px;
+  }
+  .recommended-track {
+    gap: 1rem;
+    animation-duration: 35s;
+  }
+}
+
+/* ─── Luxury Picky E-Commerce Curated Parallax Banner (100% Full Width & Pure Fixed BG) ─── */
+.wardrobe-banner-section {
+  margin-top: 5rem;
+  margin-bottom: 0;
+  width: 100%;
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5.5rem 2rem;
+  box-sizing: border-box;
+  background-image: url('/images/picky_ecommerce_parallax_banner.jpg');
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed !important;
+  box-shadow: 0 25px 60px rgba(15, 10, 30, 0.28);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.wardrobe-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 50% 50%, rgba(18, 8, 36, 0.42) 0%, rgba(12, 5, 24, 0.52) 60%, rgba(8, 3, 18, 0.65) 100%),
+    linear-gradient(180deg, rgba(20, 10, 40, 0.30) 0%, rgba(10, 4, 20, 0.45) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wardrobe-banner-content {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.wardrobe-atelier-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #e9d5ff;
+  background: rgba(124, 58, 237, 0.28);
+  border: 1px solid rgba(192, 132, 252, 0.45);
+  padding: 0.45rem 1.25rem;
+  border-radius: 9999px;
+  margin-bottom: 1.15rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.28);
+}
+
+.wardrobe-title {
+  font-family: var(--font-primary, serif);
+  font-size: clamp(2.2rem, 4.4vw, 3.6rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.85rem 0;
+  line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75);
+}
+
+.wardrobe-sparkle-divider {
+  color: #c084fc;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 14px rgba(192, 132, 252, 0.85);
+}
+
+.wardrobe-desc {
+  font-size: clamp(0.94rem, 1.2vw, 1.06rem);
+  line-height: 1.68;
+  color: rgba(243, 232, 255, 0.94);
+  margin: 0 0 2.2rem 0;
+  max-width: 580px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+
+.wardrobe-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.95rem 2.25rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  border: 1px solid rgba(233, 213, 255, 0.35);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.45), 0 0 20px rgba(192, 132, 252, 0.35);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wardrobe-cta-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.6), 0 0 30px rgba(216, 180, 254, 0.55);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .wardrobe-banner-section {
+    margin-top: 3.5rem;
+    min-height: 420px;
+    padding: 3.5rem 1.25rem;
+    background-attachment: scroll !important;
+  }
+  .wardrobe-title {
+    font-size: 2rem;
+  }
+  .wardrobe-cta-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* ─── 5. The Picky Assurance & Quality Guarantee Section ─── */
+.assurance-section {
+  padding: 5rem 0 3.5rem;
+  background: #ffffff;
+  position: relative;
+  width: 100%;
+}
+
+.assurance-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.assurance-tag {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-bottom: 0.65rem;
+}
+
+.assurance-title {
+  font-family: var(--font-primary, serif);
+  font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.assurance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.assurance-card {
+  background: #ffffff;
+  border: 1.5px solid #ede9fe;
+  border-radius: 20px;
+  padding: 2.5rem 1.6rem 2.2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.assurance-card:hover {
+  transform: translateY(-6px);
+  border-color: #c084fc;
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.12);
+}
+
+.assurance-icon-bubble {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #faf5ff;
+  border: 1.5px solid #d8b4fe;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.assurance-card:hover .assurance-icon-bubble {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #ffffff;
+  border-color: transparent;
+  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
+}
+
+.assurance-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.65rem 0;
+  line-height: 1.35;
+}
+
+.assurance-card-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 1024px) {
+  .assurance-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .assurance-section {
+    padding: 3rem 0 1.5rem;
+  }
+  .assurance-header {
+    margin-bottom: 2rem;
+  }
+  .assurance-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .assurance-card {
+    padding: 1.8rem 1.25rem;
+  }
+}
+
+
 

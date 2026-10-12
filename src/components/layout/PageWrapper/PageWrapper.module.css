@@ -2,28 +2,21 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #faf5ff;
-  overflow-x: hidden;
+  background: transparent;
 }
 
 .page-wrapper-main {
   flex: 1;
   background: transparent;
-  animation: pageSwapSlowSmooth 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity, filter;
+  animation: pageSwapSlowSmooth 0.4s ease-out;
 }
 
 @keyframes pageSwapSlowSmooth {
   0% {
     opacity: 0;
-    transform: translateY(28px) scale(0.982);
-  }
-  50% {
-    opacity: 0.75;
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 

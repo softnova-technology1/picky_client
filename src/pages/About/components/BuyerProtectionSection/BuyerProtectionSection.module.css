@@ -4,33 +4,15 @@
   position: relative;
   width: 100%;
   padding: 6rem 1.5rem 7.5rem;
-  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 50%, #f5f0ff 100%);
+  background: transparent;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-/* Subtle background ambient mesh glow */
-.ambientGlowTop {
-  position: absolute;
-  top: -120px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 400px;
-  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.08) 0%, rgba(236, 72, 153, 0.04) 45%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
+/* Background ambient mesh glows disabled to ensure seamless transparency */
+.ambientGlowTop,
 .ambientGlowBottom {
-  position: absolute;
-  bottom: -80px;
-  right: 5%;
-  width: 600px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.06) 0%, rgba(59, 130, 246, 0.03) 50%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 .protectionContainer {

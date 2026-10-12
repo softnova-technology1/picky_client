@@ -6,6 +6,7 @@ import ShopHeroSpotlight from '../../components/shop/ShopHeroSpotlight';
 import ShopSidebarFilter from '../../components/shop/ShopSidebarFilter';
 import ShopFilterDrawer from '../../components/shop/ShopFilterDrawer';
 import ShopInFeedBanner from '../../components/shop/ShopInFeedBanner';
+import ShopSubcategoryCards from '../../components/shop/ShopSubcategoryCards';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
 import { getProducts, categories as defaultCategories, searchProducts } from '../../data';
@@ -132,12 +133,32 @@ export default function ProductList() {
         c.slug === selectedCategory ||
         c.slug?.toLowerCase() === selectedCategory.toLowerCase() ||
         c.name?.toLowerCase() === selectedCategory.toLowerCase()
-    ) || null;
+    );
+    if (!cat) return null;
     
-    if (cat) {
-      cat.subcategories = subcategories.filter(s => s.categoryId === cat._id || s.categoryId?._id === cat._id);
+    const clonedCat = { ...cat };
+    const matchedSubs = subcategories.filter((s) => {
+      const sCatId = typeof s.categoryId === 'string'
+        ? s.categoryId
+        : (s.categoryId?._id || s.category?._id || s.category || '');
+      const sCatSlug = s.categorySlug || s.categoryId?.slug || s.category?.slug || '';
+      return (
+        (sCatId && String(sCatId) === String(clonedCat._id)) ||
+        (sCatSlug && (sCatSlug === clonedCat.slug || sCatSlug.toLowerCase() === clonedCat.slug?.toLowerCase()))
+      );
+    });
+
+    if (matchedSubs.length > 0) {
+      clonedCat.subcategories = matchedSubs;
+    } else if (Array.isArray(clonedCat.subcategories) && clonedCat.subcategories.length > 0) {
+      // keep existing
+    } else if (Array.isArray(clonedCat.subCategories) && clonedCat.subCategories.length > 0) {
+      clonedCat.subcategories = clonedCat.subCategories;
+    } else {
+      clonedCat.subcategories = [];
     }
-    return cat;
+
+    return clonedCat;
   }, [categories, subcategories, selectedCategory]);
 
   // Multi-facet filtering on loaded products
@@ -633,23 +654,10 @@ export default function ProductList() {
                     )}
                   </button>
 
-                  {/* Clean Product Title & Count */}
+                  {/* Clean Product Title */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
                       {currentCategoryObj ? currentCategoryObj.name : 'All Products'}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        color: '#6d28d9',
-                        background: '#f5edff',
-                        padding: '0.2rem 0.65rem',
-                        borderRadius: '9999px',
-                        border: '1px solid #ddd6fe',
-                      }}
-                    >
-                      {filteredProducts.length} {filteredProducts.length === 1 ? 'Product' : 'Products'}
                     </span>
                   </div>
                 </div>
@@ -689,6 +697,14 @@ export default function ProductList() {
                   </div>
                 </div>
               </div>
+
+              {/* ── Subcategory Cards Carousel (Matches Reference Design) ── */}
+              <ShopSubcategoryCards
+                currentCategoryObj={currentCategoryObj}
+                selectedSubCategory={selectedSubCategory}
+                onSelectSubCategory={handleSubCategoryChange}
+                allProducts={allProducts}
+              />
 
               {/* Product Catalog Grid */}
               {loading ? (

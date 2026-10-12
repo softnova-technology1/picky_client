@@ -3,12 +3,7 @@
   Minimal, Modern, Elegant, Editorial
 */
 
-/* ─── Ambient Background Mesh ───────────────────── */
-body {
-  background: radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.03), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(124, 58, 237, 0.04), transparent 25%);
-  background-color: #FAF9FC;
-}
+/* ─── Ambient Background Mesh Neutralized ───────────────────── */
 
 /* ─── Editorial Product-Cutout Hero Section ───────── */
 .editorial-hero-section {
@@ -1370,7 +1365,7 @@ body {
 .hp-category-nav {
   position: relative;
   padding: 3.5rem 0 3rem;
-  background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 50%, #faf5ff 100%);
+  background: transparent;
   width: 100%;
   overflow: hidden;
 }

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
 import Modal from '../../components/ui/Modal/Modal';
+import ProductCard from '../../components/product/ProductCard';
+import { productService } from '../../services/product.service';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
@@ -23,8 +25,29 @@ import {
   Heart,
   Tag,
   Ticket,
+  Flame,
+  Sparkles,
 } from 'lucide-react';
 import styles from './Cart.module.css';
+
+const isBestSellerProduct = (p) => {
+  if (!p) return false;
+  if (p.isBestSeller) return true;
+  if (typeof p.badge === 'string') {
+    const b = p.badge.toLowerCase();
+    if (b.includes('best') || b.includes('seller')) return true;
+  }
+  const rawTags = Array.isArray(p.tags)
+    ? p.tags
+    : typeof p.tags === 'string'
+    ? p.tags.split(',')
+    : [];
+  return rawTags.some((t) => {
+    if (!t) return false;
+    const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
+    return clean.includes('best') || clean.includes('seller');
+  });
+};
 
 // Helper to reliably extract available sizes for a cart item
 const getItemSizes = (item) => {
@@ -61,6 +84,40 @@ export default function Cart() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [bestSellerProducts, setBestSellerProducts] = useState([]);
+
+  // Fetch best seller products for running marquee showcase
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBestSellers() {
+      try {
+        const res = await productService.list({ limit: 40, sort: 'rating' });
+        const data = res?.data || res;
+        const itemsList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        if (isMounted) {
+          const filtered = itemsList.filter(isBestSellerProduct);
+          const finalItems = filtered.length > 0 ? filtered : itemsList.slice(0, 12);
+          setBestSellerProducts(finalItems);
+        }
+      } catch (err) {
+        console.error('Failed to load best seller products for cart:', err);
+      }
+    }
+    loadBestSellers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Duplicate items for perfectly seamless 50% infinite marquee loop
+  const marqueeBestSellers = useMemo(() => {
+    if (bestSellerProducts.length === 0) return [];
+    let list = [...bestSellerProducts];
+    while (list.length < 12) {
+      list = [...list, ...bestSellerProducts];
+    }
+    return [...list, ...list];
+  }, [bestSellerProducts]);
 
   // Subtotal (Current Selling Price Total)
   const subtotal = items.reduce((sum, item) => {
@@ -199,11 +256,79 @@ export default function Cart() {
     }
   };
 
+  const renderBestSellers = () => {
+    if (marqueeBestSellers.length === 0) return null;
+    return (
+      <section className={styles['bestsellers-section']} aria-label="Best Sellers">
+        <div className={styles['bestsellers-header']}>
+          <div className={styles['bestsellers-badge']}>
+            <Flame size={14} className={styles['bestsellers-badge-icon']} />
+            <span>MOST POPULAR PICKS</span>
+          </div>
+          <h2 className={styles['bestsellers-title']}>
+            Best <span>Sellers</span>
+          </h2>
+          <p className={styles['bestsellers-subtitle']}>
+            Customer-favorite trending styles and top-rated drops to complete your bag.
+          </p>
+        </div>
+
+        {/* Viewport for infinite running ribbon */}
+        <div className={styles['bestsellers-viewport']}>
+          <div className={styles['bestsellers-track']}>
+            {marqueeBestSellers.map((prod, idx) => (
+              <div
+                key={`bs-${prod._id || prod.id || 'p'}-${idx}`}
+                className={styles['bestsellers-card-item']}
+              >
+                <ProductCard product={prod} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderTrustBadges = () => (
+    <div className={styles['trust-badges-grid']}>
+      <div className={styles['trust-card']}>
+        <div className={styles['trust-icon-box']}>
+          <Truck size={22} strokeWidth={2} />
+        </div>
+        <div>
+          <h3 className={styles['trust-title']}>Express Shipping</h3>
+          <p className={styles['trust-subtext']}>Fast door delivery</p>
+        </div>
+      </div>
+
+      <div className={styles['trust-card']}>
+        <div className={styles['trust-icon-box']}>
+          <RotateCcw size={22} strokeWidth={2} />
+        </div>
+        <div>
+          <h3 className={styles['trust-title']}>7-Day Easy Returns</h3>
+          <p className={styles['trust-subtext']}>Hassle-free policy</p>
+        </div>
+      </div>
+
+      <div className={styles['trust-card']}>
+        <div className={styles['trust-icon-box']}>
+          <ShieldCheck size={22} strokeWidth={2} />
+        </div>
+        <div>
+          <h3 className={styles['trust-title']}>100% Verified Quality</h3>
+          <p className={styles['trust-subtext']}>Guaranteed products</p>
+        </div>
+      </div>
+    </div>
+  );
+
   if (items.length === 0) {
     return (
       <PageWrapper>
         <div className={styles['cart-page-root']}>
-          <div className="container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+          <div className="container" style={{ textAlign: 'center', padding: '5rem 1rem 2rem' }}>
             <div
               style={{
                 width: '80px',
@@ -239,6 +364,9 @@ export default function Cart() {
             >
               Start Shopping <ArrowRight size={18} />
             </Link>
+
+            {renderBestSellers()}
+            {renderTrustBadges()}
           </div>
         </div>
       </PageWrapper>
@@ -451,39 +579,6 @@ export default function Cart() {
                   </Link>
                 </div>
               </div>
-
-              {/* 3 Trust Badges Below Card */}
-              <div className={styles['trust-badges-grid']}>
-                <div className={styles['trust-card']}>
-                  <div className={styles['trust-icon-box']}>
-                    <Truck size={18} strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h3 className={styles['trust-title']}>Express Shipping</h3>
-                    <p className={styles['trust-subtext']}>Fast door delivery</p>
-                  </div>
-                </div>
-
-                <div className={styles['trust-card']}>
-                  <div className={styles['trust-icon-box']}>
-                    <RotateCcw size={18} strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h3 className={styles['trust-title']}>7-Day Easy Returns</h3>
-                    <p className={styles['trust-subtext']}>Hassle-free policy</p>
-                  </div>
-                </div>
-
-                <div className={styles['trust-card']}>
-                  <div className={styles['trust-icon-box']}>
-                    <ShieldCheck size={18} strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h3 className={styles['trust-title']}>100% Verified Quality</h3>
-                    <p className={styles['trust-subtext']}>Guaranteed products</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Right Column: Order Summary Card */}
@@ -572,10 +667,24 @@ export default function Cart() {
                   </div>
                 )}
 
-                <div className={styles['breakdown-row']}>
-                  <span className={styles['row-label']}>Delivery Fee</span>
-                  <span className={styles['row-value']} style={{ color: '#16a34a', fontWeight: 700 }}>
-                    FREE
+                <div className={styles['breakdown-row']} style={{ gap: '0.75rem', alignItems: 'center' }}>
+                  <span className={styles['row-label']} style={{ fontWeight: 700, color: '#1e293b', flexShrink: 0 }}>
+                    Shipping & Delivery
+                  </span>
+                  <span
+                    className={styles['row-value']}
+                    style={{
+                      fontStyle: 'italic',
+                      fontWeight: 400,
+                      fontSize: '0.74rem',
+                      color: '#64748b',
+                      textAlign: 'right',
+                      marginLeft: 'auto',
+                      lineHeight: 1.25,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    Enter address to calculate
                   </span>
                 </div>
 
@@ -606,6 +715,12 @@ export default function Cart() {
               </div>
             </div>
           </div>
+
+          {/* ── Best Sellers 1-Row Infinite Running Showcase ── */}
+          {renderBestSellers()}
+
+          {/* ── 3 Trust Badges Section - Placed right above footer across full width ── */}
+          {renderTrustBadges()}
         </div>
       </div>
 

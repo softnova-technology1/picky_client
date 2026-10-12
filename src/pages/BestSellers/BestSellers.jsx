@@ -229,8 +229,8 @@ export default function BestSellers() {
   };
 
   return (
-    <PageWrapper bg="#faf5ff">
-      <div style={{ background: '#faf5ff', minHeight: '100vh', paddingBottom: '6rem' }}>
+    <PageWrapper>
+      <div style={{ background: 'transparent', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Hero Showcase with SVG Doodles & Stamp ── */}
         <BestSellersHeroSection />
 

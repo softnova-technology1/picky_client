@@ -6,25 +6,13 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #fbf9ff 0%, #f4efff 50%, #faf6ff 100%);
+  background: transparent;
   padding: 3rem 1.5rem;
   text-align: center;
 }
 
-/* Subtle luxury diagonal micro-weave pattern overlay */
 .not-found-container::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(124, 58, 237, 0.075) 0px,
-    rgba(124, 58, 237, 0.025) 1px,
-    transparent 1px,
-    transparent 12px
-  );
-  pointer-events: none;
-  z-index: 1;
+  display: none;
 }
 
 /* Soft central ambient purple glow behind animation */

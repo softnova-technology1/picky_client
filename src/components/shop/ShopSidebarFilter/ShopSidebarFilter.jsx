@@ -183,38 +183,6 @@ export default function ShopSidebarFilter({
                       </span>
                       {isChecked && <Check size={12} strokeWidth={3} className="check-indicator" />}
                     </button>
-
-                    {/* Subcategories if this category is selected */}
-                    {isChecked &&
-                      currentCategoryObj &&
-                      Array.isArray(currentCategoryObj.subcategories) &&
-                      currentCategoryObj.subcategories.length > 0 && (
-                        <div className="sidebar-subcategories-wrap">
-                          <button
-                            type="button"
-                            onClick={() => onSelectSubCategory('')}
-                            className={`sidebar-sub-item ${!selectedSubCategory ? 'active' : ''}`}
-                          >
-                            All {currentCategoryObj.name}
-                          </button>
-                          {currentCategoryObj.subcategories.map((sub) => {
-                            const isSubActive =
-                              selectedSubCategory === sub.slug ||
-                              selectedSubCategory === sub._id ||
-                              selectedSubCategory.toLowerCase() === sub.slug?.toLowerCase();
-                            return (
-                              <button
-                                key={sub._id || sub.slug}
-                                type="button"
-                                onClick={() => onSelectSubCategory(sub.slug || sub._id)}
-                                className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
-                              >
-                                {sub.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
                   </div>
                 );
               })}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { useWishlistStore } from '../../store/wishlistStore';
@@ -8,18 +8,23 @@ import { useUiStore } from '../../store/uiStore';
 import { useMockStockStore } from '../../store/mockStockStore';
 import { wishlistService } from '../../services/wishlist.service';
 import styles from './Wishlist.module.css';
+import ProductCard from '../../components/product/ProductCard';
+import { productService } from '../../services/product.service';
 import {
   Heart,
   ShoppingCart,
   ArrowRight,
   Sparkles,
-  Bell,
   Tag,
   AlertTriangle,
   Trash2,
   Check,
   Flame,
-  Zap
+  Zap,
+  ShieldCheck,
+  Truck,
+  Headphones,
+  RotateCcw
 } from 'lucide-react';
 
 // Sample Kurta Collection items for manual Demo testing
@@ -82,6 +87,29 @@ export const DEFAULT_WISHLIST_ITEMS = [
   }
 ];
 
+export const ASSURANCE_FEATURES = [
+  {
+    icon: ShieldCheck,
+    title: '100% Verified Authentic',
+    desc: 'Directly sourced from certified brands and master artisans with verifiable hallmark purity and authenticity.',
+  },
+  {
+    icon: Truck,
+    title: 'Free Insured Shipping',
+    desc: 'Complimentary priority doorstep delivery across India with 100% zero-loss tamper-proof transit insurance.',
+  },
+  {
+    icon: Headphones,
+    title: 'Dedicated VIP Concierge',
+    desc: 'Personalized 1-on-1 styling assistance, custom size guidance, and 24/7 dedicated customer care.',
+  },
+  {
+    icon: RotateCcw,
+    title: 'Hassle-Free 7-Day Returns',
+    desc: 'Instant seamless return requests and complimentary doorstep pickups with 100% direct account refunds.',
+  },
+];
+
 export default function Wishlist() {
   const { items, removeItem, setWishlist, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
@@ -92,6 +120,45 @@ export default function Wishlist() {
   const [sortBy, setSortBy] = useState('recent');
   const [productToRemove, setProductToRemove] = useState(null);
   const [addedFeedback, setAddedFeedback] = useState({});
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+
+  // Fetch recommended trending drops for running marquee showcase
+  useEffect(() => {
+    let isMounted = true;
+    async function loadRecommended() {
+      try {
+        const res = await productService.list({ limit: 12, sort: '-rating' });
+        const data = res?.data || res;
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        if (isMounted) {
+          if (items.length > 0) {
+            setRecommendedProducts(items);
+          } else {
+            setRecommendedProducts(DEFAULT_WISHLIST_ITEMS);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load recommended products:', err);
+        if (isMounted) {
+          setRecommendedProducts(DEFAULT_WISHLIST_ITEMS);
+        }
+      }
+    }
+    loadRecommended();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Duplicate items for perfectly seamless 50% infinite translation loop
+  const marqueeRecommended = useMemo(() => {
+    if (recommendedProducts.length === 0) return [];
+    let list = [...recommendedProducts];
+    while (list.length < 12) {
+      list = [...list, ...recommendedProducts];
+    }
+    return [...list, ...list];
+  }, [recommendedProducts]);
 
   // Real store logic: If logged in, load server wishlist. Do NOT auto-inject mock items!
   useEffect(() => {
@@ -161,7 +228,6 @@ export default function Wishlist() {
     const curr = p.discountPrice || p.price || 0;
     return sum + Math.max(0, orig - curr);
   }, 0);
-  const priceDrops = displayItems.filter((p) => p.discountPrice && p.discountPrice < p.price).length;
 
 
   const handleRemoveItem = (product) => {
@@ -256,12 +322,12 @@ export default function Wishlist() {
     <PageWrapper>
       <div className={styles['wishlist-wrapper']}>
         <div className={styles['container']}>
-          {/* ── Luxury Stats Strip (Page Header) ── */}
-          {displayItems.length > 0 && (
-            <div className={styles['stats-strip']}>
-              <div className={styles['stats-cards-row']}>
-                {/* Stat 1 – Total Items */}
-                <div className={styles['stat-card']}>
+          {/* ── Luxury Stats Strip (Page Header) - Always Visible ── */}
+          <div className={styles['stats-strip']}>
+            <div className={styles['stats-cards-row']}>
+              {/* Stat 1 – Total Items (Pre-filled solid purple active state) */}
+              <div className={`${styles['stat-card-wrapper']} ${styles['active-wrapper']}`}>
+                <div className={`${styles['stat-card']} ${styles['stat-card-active']}`}>
                   <div className={styles['stat-icon-wrap']}>
                     <Heart size={22} strokeWidth={1.8} />
                   </div>
@@ -271,14 +337,16 @@ export default function Wishlist() {
                   <div className={styles['stat-label']}>TOTAL ITEMS</div>
                   <div className={styles['stat-underline']} />
                 </div>
+              </div>
 
-                <div className={styles['stat-connector']}>
-                  <span className={styles['connector-dot']} />
-                  <div className={styles['connector-line']} />
-                  <span className={styles['connector-dot']} />
-                </div>
+              <div className={styles['stat-connector']}>
+                <span className={styles['connector-dot']} />
+                <div className={styles['connector-line']} />
+                <span className={styles['connector-dot']} />
+              </div>
 
-                {/* Stat 2 – Wishlist Value */}
+              {/* Stat 2 – Wishlist Value */}
+              <div className={styles['stat-card-wrapper']}>
                 <div className={styles['stat-card']}>
                   <div className={styles['stat-icon-wrap']}>
                     <ShoppingCart size={22} strokeWidth={1.8} />
@@ -289,14 +357,16 @@ export default function Wishlist() {
                   <div className={styles['stat-label']}>WISHLIST VALUE</div>
                   <div className={styles['stat-underline']} />
                 </div>
+              </div>
 
-                <div className={styles['stat-connector']}>
-                  <span className={styles['connector-dot']} />
-                  <div className={styles['connector-line']} />
-                  <span className={styles['connector-dot']} />
-                </div>
+              <div className={styles['stat-connector']}>
+                <span className={styles['connector-dot']} />
+                <div className={styles['connector-line']} />
+                <span className={styles['connector-dot']} />
+              </div>
 
-                {/* Stat 3 – Potential Savings */}
+              {/* Stat 3 – Potential Savings */}
+              <div className={styles['stat-card-wrapper']}>
                 <div className={styles['stat-card']}>
                   <div className={styles['stat-icon-wrap']}>
                     <Tag size={22} strokeWidth={1.8} />
@@ -307,27 +377,9 @@ export default function Wishlist() {
                   <div className={styles['stat-label']}>POTENTIAL SAVINGS</div>
                   <div className={styles['stat-underline']} />
                 </div>
-
-                <div className={styles['stat-connector']}>
-                  <span className={styles['connector-dot']} />
-                  <div className={styles['connector-line']} />
-                  <span className={styles['connector-dot']} />
-                </div>
-
-                {/* Stat 4 – Price Drops */}
-                <div className={styles['stat-card']}>
-                  <div className={styles['stat-icon-wrap']}>
-                    <Bell size={22} strokeWidth={1.8} />
-                  </div>
-                  <div className={styles['stat-value']}>
-                    {String(priceDrops).padStart(2, '0')}
-                  </div>
-                  <div className={styles['stat-label']}>PRICE DROPS</div>
-                  <div className={styles['stat-underline']} />
-                </div>
               </div>
             </div>
-          )}
+          </div>
 
           {/* ── Controls Bar ── */}
           {displayItems.length > 0 && (
@@ -548,7 +600,101 @@ export default function Wishlist() {
               })}
             </div>
           )}
+
+          {/* ── Recommended Products Running Showcase (Infinite 1-Row Marquee Loop) ── */}
+          {marqueeRecommended.length > 0 && (
+            <section className={styles['recommended-section']} aria-label="Recommended Products">
+              <div className={styles['recommended-header']}>
+                <div className={styles['recommended-badge']}>
+                  <Sparkles size={14} className={styles['recommended-sparkle']} />
+                  <span>CURATED PICKS FOR YOU</span>
+                </div>
+                <h3 className={styles['recommended-title']}>
+                  Recommended <span>Products</span>
+                </h3>
+                <p className={styles['recommended-subtitle']}>
+                  Trending favorites and top-rated drops handpicked to match your style.
+                </p>
+              </div>
+
+              {/* Viewport for infinite running ribbon */}
+              <div className={styles['recommended-viewport']}>
+                <div className={styles['recommended-track']}>
+                  {marqueeRecommended.map((prod, idx) => (
+                    <div
+                      key={`rec-${prod._id || prod.id || 'p'}-${idx}`}
+                      className={styles['recommended-card-item']}
+                    >
+                      <ProductCard product={prod} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
         </div>
+
+        {/* ── 4. Luxury Picky E-Commerce Curated Parallax Banner (100% Full Width & Fixed BG) ── */}
+        <section
+          className={styles['wardrobe-banner-section']}
+          aria-label="Curate Your Entire Wardrobe"
+        >
+          <div className={styles['wardrobe-banner-overlay']} />
+
+          <div className={styles['wardrobe-banner-content']}>
+            <span className={styles['wardrobe-atelier-tag']}>
+              <Sparkles size={13} />
+              <span>THE PICKY FLAGSHIP ATELIER</span>
+            </span>
+
+            <h2 className={styles['wardrobe-title']}>
+              Curate Your Entire Wardrobe
+            </h2>
+
+            <div className={styles['wardrobe-sparkle-divider']}>✦</div>
+
+            <p className={styles['wardrobe-desc']}>
+              Explore our latest arrivals across Fashion, Tech, Jewellery, and Lifestyle. Handcrafted and handpicked for your statement aesthetic.
+            </p>
+
+            <Link to="/new-arrivals" className={styles['wardrobe-cta-btn']}>
+              <span>DISCOVER NEW ARRIVALS</span>
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
+
+        {/* ── 5. The Picky Assurance & Quality Guarantee Section ── */}
+        <section
+          className={styles['assurance-section']}
+          aria-label="The Picky Assurance & Quality Guarantee"
+        >
+          <div className={styles['container']}>
+            <div className={styles['assurance-header']}>
+              <span className={styles['assurance-tag']}>
+                THE PICKY ASSURANCE
+              </span>
+              <h2 className={styles['assurance-title']}>
+                Authentic Service & Quality Guarantee
+              </h2>
+            </div>
+
+            <div className={styles['assurance-grid']}>
+              {ASSURANCE_FEATURES.map((item, idx) => {
+                const IconComponent = item.icon;
+                return (
+                  <div key={idx} className={styles['assurance-card']}>
+                    <div className={styles['assurance-icon-bubble']}>
+                      <IconComponent size={24} strokeWidth={1.8} />
+                    </div>
+                    <h3 className={styles['assurance-card-title']}>{item.title}</h3>
+                    <p className={styles['assurance-card-desc']}>{item.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* ── Remove Confirmation Modal ── */}
