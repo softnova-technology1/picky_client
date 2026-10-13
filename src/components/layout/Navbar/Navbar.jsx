@@ -368,6 +368,14 @@ export default function Navbar() {
                       <span>My Profile</span>
                     </Link>
                     <Link
+                      to="/track-order"
+                      className="nav-user-menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Truck size={15} />
+                      <span>Track Order</span>
+                    </Link>
+                    <Link
                       to="/profile?tab=orders"
                       className="nav-user-menu-link"
                       onClick={() => setIsUserMenuOpen(false)}
@@ -710,7 +718,7 @@ export default function Navbar() {
               <Link to="/blog" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Blog / Insights</span>
               </Link>
-              <Link to="/orders" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/track-order" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Track Order</span>
               </Link>
             </div>

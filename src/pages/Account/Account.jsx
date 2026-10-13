@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { useAuthStore } from '../../store/authStore';
-import { useWishlistStore } from '../../store/wishlistStore';
 import { useOrderStore } from '../../store/orderStore';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
@@ -13,12 +12,13 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import AccountProfile from '../../components/account/AccountProfile';
 import AccountAddresses from '../../components/account/AccountAddresses';
+import AccountSecurity from '../../components/account/AccountSecurity';
 import styles from './Account.module.css';
 import {
   User,
   Package,
   MapPin,
-  Heart,
+  KeyRound,
   LogOut,
   Truck,
   CheckCircle2,
@@ -31,7 +31,6 @@ export default function Account() {
   const navigate = useNavigate();
 
   const { user, logout } = useAuthStore();
-  const { items: wishlistItems } = useWishlistStore();
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -149,28 +148,14 @@ export default function Account() {
               <span>Saved Addresses</span>
             </button>
 
-            {/* Tab 4: Wishlist Link */}
-            <Link
-              to="/wishlist"
-              className={`${styles.accountTabBtn} ${styles.accountTabInactive}`}
+            {/* Tab 4: Password Change */}
+            <button
+              onClick={() => handleTabChange('password')}
+              className={`${styles.accountTabBtn} ${currentTab === 'password' ? styles.accountTabActive : styles.accountTabInactive}`}
             >
-              <Heart size={18} color="#ec4899" fill={wishlistItems.length > 0 ? '#ec4899' : 'none'} />
-              <span>My Wishlist</span>
-              {wishlistItems.length > 0 && (
-                <span
-                  style={{
-                    background: '#fce7f3',
-                    color: '#be185d',
-                    fontSize: '0.74rem',
-                    padding: '0.15rem 0.55rem',
-                    borderRadius: '999px',
-                    fontWeight: 700,
-                  }}
-                >
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
+              <KeyRound size={18} color={currentTab === 'password' ? '#ffffff' : '#7c3aed'} />
+              <span>Password Change</span>
+            </button>
           </div>
 
           {/* Main Tab Content Area */}
@@ -632,6 +617,23 @@ export default function Account() {
 
               {/* TAB 4: ADDRESSES */}
               {currentTab === 'addresses' && <AccountAddresses />}
+
+              {/* TAB 5: SECURITY & LOGIN (PASSWORD CHANGE) */}
+              {currentTab === 'password' && (
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.94)',
+                    borderRadius: '24px',
+                    padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                    boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08)',
+                    border: '1.5px solid rgba(221, 214, 254, 0.75)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <AccountSecurity />
+                </div>
+              )}
           </div>
         </div>
       </div>

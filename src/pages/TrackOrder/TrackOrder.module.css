@@ -1,0 +1,1391 @@
+/* ─── Picky Brand Luxury Order Tracking Page Styles ─────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+
+.trackOrderPage {
+  min-height: 100vh;
+  background-color: #FAF7FF;
+  /* Picky signature subtle luxury lavender watermark lattice pattern */
+  background-image: 
+    radial-gradient(rgba(168, 85, 247, 0.16) 0.75px, transparent 0.75px),
+    radial-gradient(rgba(168, 85, 247, 0.12) 0.75px, #FAF7FF 0.75px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+  position: relative;
+  padding-bottom: 6rem;
+  overflow-x: hidden;
+}
+
+/* Subtle decorative Picky lavender ambient radiance */
+.trackOrderPage::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1200px;
+  height: 480px;
+  background: radial-gradient(ellipse at 50% 25%, rgba(243, 232, 255, 0.75) 0%, rgba(250, 247, 255, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mainContainer {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 2rem;
+}
+
+/* ── Hero Header ────────────────────────────────────────────── */
+.heroHeader {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 3rem;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-bottom: 1.1rem;
+}
+
+.mainTitle {
+  font-family: 'Alex Brush', 'Cormorant Garamond', 'Playfair Display', cursive, serif;
+  font-size: clamp(3rem, 6vw, 4.4rem);
+  font-weight: 400;
+  color: #2e1065;
+  line-height: 1.15;
+  margin: 0 0 1.2rem;
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 14px rgba(124, 58, 237, 0.1);
+}
+
+.subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #585066;
+  line-height: 1.65;
+  margin: 0 auto;
+  max-width: 600px;
+  letter-spacing: 0.01em;
+}
+
+/* ── Central White Search Card ──────────────────────────────── */
+.searchCard {
+  background: #FFFFFF;
+  border-radius: 14px;
+  box-shadow: 
+    0 16px 45px -12px rgba(124, 58, 237, 0.08),
+    0 4px 18px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(233, 213, 255, 0.8);
+  padding: 3.2rem 3.5rem;
+  max-width: 760px;
+  margin: 0 auto;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.searchCard:hover {
+  border-color: #d8b4fe;
+  box-shadow: 
+    0 22px 55px -15px rgba(124, 58, 237, 0.12),
+    0 6px 20px rgba(0, 0, 0, 0.04);
+}
+
+.searchForm {
+  display: flex;
+  flex-direction: column;
+}
+
+.inputsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.8rem;
+  align-items: flex-end;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.inputLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 0.65rem;
+}
+
+.inputField {
+  border: none;
+  border-bottom: 1.5px solid #e9d5ff;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.55rem 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.15rem;
+  color: #1e1b4b;
+  letter-spacing: 0.03em;
+  outline: none;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.inputField::placeholder {
+  color: #c4b5fd;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.inputField:focus {
+  border-bottom-color: #7c3aed;
+}
+
+.actionsRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.6rem;
+}
+
+.locateBtn {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2.6rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.24);
+}
+
+.locateBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9 0%, #581c87 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.32);
+}
+
+.locateBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.locateBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Sample Quick-test pills */
+.demoPillBox {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.demoPill {
+  background: #f5f3ff;
+  border: 1px solid #e9d5ff;
+  color: #7c3aed;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.demoPill:hover {
+  background: #7c3aed;
+  color: #FFFFFF;
+  border-color: #7c3aed;
+}
+
+/* ── Tracking Result Section ────────────────────────────────── */
+.resultSection {
+  margin-top: 3.5rem;
+  animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resultCard {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 
+    0 18px 50px -15px rgba(124, 58, 237, 0.08),
+    0 4px 18px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(233, 213, 255, 0.8);
+  overflow: hidden;
+}
+
+/* Top Banner */
+.resultHeader {
+  background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%);
+  padding: 1.8rem 2.4rem;
+  border-bottom: 1px solid #ede9fe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.resultOrderMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.orderBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.orderNumberTag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e1035;
+  letter-spacing: 0.05em;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #EDE9FE;
+  color: #6D28D9;
+  border: 1px solid #DDD6FE;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.statusPillPulse {
+  width: 8px;
+  height: 8px;
+  background: #7C3AED;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7);
+  animation: pulseIndicator 1.8s infinite;
+}
+
+@keyframes pulseIndicator {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+  }
+}
+
+.orderDateSub {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.deliveryEstimateBox {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.estimateLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.estimateDate {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #6d28d9;
+}
+
+/* ─── Admin Order Progress Stepper ──────────────────────── */
+@keyframes shimmerBeam {
+  0%   { background-position: -300% 0; }
+  100% { background-position: 300% 0; }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0.9); opacity: 0.7; }
+  80%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+
+@keyframes badgePop {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  65%  { transform: scale(1.25) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.35), 0 4px 16px rgba(124, 58, 237, 0.25); }
+  50%       { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0), 0 6px 24px rgba(124, 58, 237, 0.45); }
+}
+
+.journeySection {
+  padding: 2.8rem 2.4rem 2.4rem;
+  border-bottom: 1px solid #ede9fe;
+}
+
+.journeyHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.journeyTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2e1065;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.liveStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  color: #7c3aed;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.cancelledBanner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  border-radius: 16px;
+  color: #991b1b;
+  margin: 1rem 0;
+}
+
+.progressContainer {
+  position: relative;
+  padding: 1.8rem 0 1.2rem;
+  margin: 0.5rem 0 1rem;
+  user-select: none;
+}
+
+.progressRail {
+  position: absolute;
+  top: calc(1.8rem + 24px);
+  left: calc(16.666% + 24px);
+  right: calc(16.666% + 24px);
+  height: 6px;
+  border-radius: 99px;
+  background: #ede9fe;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.progressRailFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(
+    90deg,
+    #10b981 0%,
+    #06b6d4 30%,
+    #7c3aed 70%,
+    #a855f7 100%
+  );
+  position: relative;
+  transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.progressRailFill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmerBeam 2.4s linear infinite;
+}
+
+.progressStepsRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.progressStepItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.85rem;
+  padding: 0 0.8rem;
+}
+
+.progressCircleWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activePulseRing {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.22);
+  animation: ripple 1.8s ease-out infinite;
+  z-index: 0;
+}
+
+.progressCircle {
+  position: relative;
+  z-index: 1;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s ease;
+}
+
+.stepPending .progressCircle {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.stepActive .progressCircle {
+  background: linear-gradient(145deg, #a78bfa 0%, #7c3aed 55%, #5b21b6 100%);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  color: #ffffff;
+  animation: pulseGlow 2.4s ease-in-out infinite;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+.stepCompleted .progressCircle {
+  background: linear-gradient(145deg, #34d399 0%, #10b981 55%, #059669 100%);
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+
+.checkBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  border: 2.2px solid #ffffff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.4);
+  animation: badgePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.progressLabelBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.progressLabelMain {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #64748b;
+  transition: color 0.25s;
+}
+
+.stepCompleted .progressLabelMain {
+  color: #059669;
+}
+
+.stepActive .progressLabelMain {
+  color: #6d28d9;
+  font-weight: 800;
+  font-size: 0.98rem;
+}
+
+.progressLabelSub {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #94a3b8;
+  max-width: 260px;
+  line-height: 1.35;
+}
+
+.stepCompleted .progressLabelSub {
+  color: #059669;
+  font-weight: 500;
+}
+
+.stepActive .progressLabelSub {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Dispatch details & items split */
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  padding: 2.2rem 2.4rem;
+  gap: 2.5rem;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.orderPricingSummary {
+  background: #FAF7FF;
+  border-radius: 12px;
+  border: 1px solid #ede9fe;
+  padding: 1.15rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pricingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.pricingTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  border-top: 1px dashed #d8b4fe;
+  padding-top: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.itemPreviewCard {
+  background: #FAF7FF;
+  border-radius: 12px;
+  border: 1px solid #ede9fe;
+  padding: 1.4rem;
+  display: flex;
+  gap: 1.4rem;
+  align-items: center;
+}
+
+.itemImage {
+  width: 90px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e9d5ff;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.08);
+}
+
+.itemDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.itemCategoryTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7c3aed;
+}
+
+.itemTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e1b4b;
+  line-height: 1.35;
+}
+
+.itemAttr {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.itemPrice {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #6d28d9;
+  margin-top: 0.2rem;
+}
+
+/* Address & Carrier Box */
+.infoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.infoTile {
+  background: #FAF7FF;
+  border-radius: 12px;
+  border: 1px solid #ede9fe;
+  padding: 1.25rem 1.4rem;
+}
+
+.infoTileLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.infoTileText {
+  font-size: 0.85rem;
+  color: #1e1b4b;
+  line-height: 1.5;
+}
+
+/* Footer Actions */
+.resultFooter {
+  background: #FAF7FF;
+  border-top: 1px solid #ede9fe;
+  padding: 1.4rem 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.supportNote {
+  font-size: 0.82rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actionButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.secondaryBtn {
+  background: #FFFFFF;
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
+  padding: 0.6rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryBtn:hover {
+  background: #7c3aed;
+  color: #FFFFFF;
+  border-color: #7c3aed;
+}
+
+/* Error State */
+.errorBox {
+  background: #FFF5F5;
+  border: 1px solid #FED7D7;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  margin-top: 2rem;
+  color: #C53030;
+}
+
+/* ════════════ RESULT SECTION: TWO-CARD REFERENCE DESIGN ════════════ */
+.resultSection {
+  margin-top: 3.5rem;
+  scroll-margin-top: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ──── CARD 1: Tracking, Stepper & Courier/Address Meta ──── */
+.trackingCard {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #e9d5ff;
+  box-shadow: 
+    0 16px 45px -12px rgba(124, 58, 237, 0.08),
+    0 4px 18px rgba(0, 0, 0, 0.03);
+  padding: 2.5rem 3rem;
+  transition: border-color 0.2s ease;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.headerLeftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.orderTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.orderTitle {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.95rem;
+  font-weight: 600;
+  color: #2e1065;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.trackingPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 99px;
+  background: #faf5ff;
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.estimatedArrivalRow {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+.estimatePrefix {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.estimateDates {
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.headerRightCol {
+  display: flex;
+  align-items: flex-start;
+}
+
+.statusOutlineBadge {
+  padding: 0.4rem 0.95rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #faf5ff;
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
+  transition: all 0.2s;
+}
+
+.statusBadgeDelivered {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.statusBadgeShipped {
+  background: #faf5ff;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+}
+
+.statusBadgeConfirmed {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.statusBadgeCancelled {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+/* ── Stepper Section with Continuous Centered Rail ── */
+.stepperSection {
+  margin: 2rem 0 1.8rem;
+  padding: 1.4rem 1.6rem 1.8rem;
+  background: #faf8ff;
+  border-radius: 14px;
+  border: 1px solid #ede9fe;
+}
+
+.orderProgressHeader {
+  margin-bottom: 1.4rem;
+}
+
+.orderProgressLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.stepperWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Rail running behind the circles at dead center of the 42px circle (top: 21px) */
+.stepperRail {
+  position: absolute;
+  top: 21px;
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 3px;
+  background: #ede9fe;
+  border-radius: 99px;
+  z-index: 1;
+  transform: translateY(-50%);
+  overflow: hidden;
+}
+
+.stepperRailFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.stepsRow {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.stepNode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stepCircle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #ede9fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  transition: all 0.25s ease;
+  margin-bottom: 0.65rem;
+  flex-shrink: 0;
+}
+
+.stepTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 180px;
+}
+
+.stepMainLabel {
+  font-size: 0.84rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.stepSubLabel {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.cancelledBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.2rem;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+/* ── Courier Service & Delivery Address Meta Grid ── */
+.metaGrid {
+  border-top: 1px solid #f3e8ff;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+}
+
+.metaCol {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+}
+
+.metaIcon {
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ede9fe;
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
+}
+
+.metaBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.metaLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c3aed;
+}
+
+.metaCourierName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.metaTrackingRow {
+  font-size: 0.88rem;
+  color: #4b5563;
+}
+
+.metaTrackingRow strong {
+  color: #6d28d9;
+  font-weight: 700;
+}
+
+.trackShipmentLink {
+  font-size: 0.84rem;
+  color: #7c3aed;
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+  word-break: break-all;
+  transition: color 0.15s;
+}
+
+.trackShipmentLink:hover {
+  color: #581c87;
+}
+
+.metaRecipientName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.metaAddressText {
+  font-size: 0.88rem;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+/* ──── CARD 2: Items in Order & Financial Breakdown ──── */
+.itemsCard {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #e9d5ff;
+  box-shadow: 
+    0 16px 45px -12px rgba(124, 58, 237, 0.08),
+    0 4px 18px rgba(0, 0, 0, 0.03);
+  padding: 2.4rem 3rem;
+  transition: border-color 0.2s ease;
+}
+
+.itemsCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.6rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid #f3e8ff;
+}
+
+.itemsCountTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.itemsCountTitle svg {
+  color: #7c3aed;
+}
+
+.itemsTotalPaid {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.itemsListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  margin-bottom: 2rem;
+}
+
+.orderItemRow {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  padding-bottom: 1.35rem;
+  border-bottom: 1px solid #f5f3ff;
+}
+
+.orderItemThumb {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e9d5ff;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
+  flex-shrink: 0;
+}
+
+.orderItemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.orderItemName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1035;
+  text-transform: capitalize;
+}
+
+.orderItemSku {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  background: #faf5ff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  border: 1px solid #ede9fe;
+}
+
+.orderItemQtyPrice {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.orderItemTotalPrice {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e1035;
+}
+
+.pricingBreakdownBox {
+  background: #faf8ff;
+  border: 1px solid #ede9fe;
+  border-radius: 12px;
+  padding: 1.3rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 2rem;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.breakdownDivider {
+  border-top: 1px dashed #d8b4fe;
+  margin: 0.4rem 0;
+}
+
+.breakdownTotalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e1035;
+}
+
+.cardActionsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.printInvoiceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.45rem;
+  border-radius: 10px;
+  border: 1px solid #ddd6fe;
+  background: #faf5ff;
+  color: #6d28d9;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.printInvoiceBtn:hover {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #5b21b6;
+  transform: translateY(-1px);
+}
+
+.whatsappSupportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+}
+
+.whatsappSupportBtn:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.38);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  .mainContainer {
+    padding: 3rem 1rem 2rem;
+  }
+
+  .mainTitle {
+    font-size: 2.7rem;
+  }
+
+  .searchCard {
+    padding: 2.2rem 1.6rem;
+  }
+
+  .inputsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+
+  .trackingCard,
+  .itemsCard {
+    padding: 1.8rem 1.4rem;
+  }
+
+  .stepperSection {
+    margin: 1.4rem 0;
+    padding: 1.2rem 1.1rem 1.4rem;
+  }
+
+  .stepperRail {
+    display: none;
+  }
+
+  .stepsRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    position: relative;
+    padding-left: 0.4rem;
+  }
+
+  .stepsRow::before {
+    content: '';
+    position: absolute;
+    top: 21px;
+    bottom: 21px;
+    left: calc(0.4rem + 20px);
+    width: 2px;
+    background: #ede9fe;
+    z-index: 0;
+  }
+
+  .stepNode {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 1rem;
+    width: 100%;
+    z-index: 1;
+  }
+
+  .stepCircle {
+    margin-bottom: 0;
+  }
+
+  .stepTextGroup {
+    align-items: flex-start;
+    text-align: left;
+    max-width: none;
+    padding-top: 0.2rem;
+  }
+
+  .stepSubLabel {
+    text-align: left;
+  }
+
+  .metaGrid {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+
+  .cardActionsRow {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .printInvoiceBtn,
+  .whatsappSupportBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

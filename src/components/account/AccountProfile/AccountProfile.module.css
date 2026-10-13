@@ -1,1 +1,30 @@
-/* AccountProfile CSS Module */
+/* ==========================================================================
+   PERSONAL PROFILE SECTION - 2-ROW GRID ALIGNMENT
+   ========================================================================== */
+
+.profileContainer {
+  width: 100%;
+  max-width: 960px;
+  position: relative;
+  z-index: 1;
+}
+
+.profileGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 1.75rem;
+  width: 100%;
+}
+
+@media (max-width: 820px) {
+  .profileGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+.fieldCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
