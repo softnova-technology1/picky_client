@@ -11,6 +11,7 @@ export const adminService = {
   getOrderDetail: (id) => api.get(`/orders/admin/${id}`),
   addTracking: (id, data) => api.patch(`/orders/admin/${id}/tracking`, data),
   updateOrderStatus: (id, data) => api.patch(`/orders/admin/${id}/status`, data),
+  deleteOrder: (id) => api.delete(`/orders/admin/${id}`),
 
   // Products
   createProduct: (formData) => api.post('/products', formData),

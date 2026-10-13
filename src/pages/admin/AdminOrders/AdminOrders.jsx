@@ -39,6 +39,7 @@ import {
   FileText,
   X,
   RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -164,8 +165,12 @@ function StatusSelect({ value, onChange }) {
 }
 
 export default function AdminOrders() {
-  const { orders: storeOrders, updateOrderStatus: storeUpdateStatus, updateOrder } = useOrderStore();
+  const { orders: storeOrders, updateOrderStatus: storeUpdateStatus, updateOrder, deleteOrder: storeDeleteOrder } = useOrderStore();
   const { showToast } = useUiStore();
+
+  // ─── Delete Order State ───────────────────────────────────────────────────
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // ─── Filter & Search State ────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('all');
@@ -193,6 +198,8 @@ export default function AdminOrders() {
   // Per-row status change state
   const [rowStatus, setRowStatus] = useState({});
   const [rowNote, setRowNote] = useState({});
+  const [rowCourier, setRowCourier] = useState({});
+  const [rowCourierUrl, setRowCourierUrl] = useState({});
   const [rowCancelReason, setRowCancelReason] = useState({});
   const [rowLoading, setRowLoading] = useState({});
 
@@ -502,7 +509,12 @@ export default function AdminOrders() {
   // ─── Handle status update ─────────────────────────────────────────────────
   const handleStatusUpdate = async (order) => {
     const id = order._id || order.id;
-    const newStatus = rowStatus[id] ?? order.status;
+    const STATUS_FLOW = ['confirmed', 'shipped', 'delivered'];
+    const flowIdx = STATUS_FLOW.indexOf(order.status);
+    const nextAuto = flowIdx >= 0 && flowIdx < STATUS_FLOW.length - 1
+      ? STATUS_FLOW[flowIdx + 1]
+      : order.status;
+    const newStatus = rowStatus[id] ?? nextAuto;
     const note = rowNote[id] ?? '';
     const cancelReason = rowCancelReason[id] ?? '';
 
@@ -518,30 +530,35 @@ export default function AdminOrders() {
 
     setRowLoading((p) => ({ ...p, [id]: true }));
     try {
-      const enteredAwb = newStatus === 'shipped' && note ? note.trim() : null;
+      const enteredAwb = (rowNote[id] !== undefined ? rowNote[id] : (order.trackingId || '')).trim();
+      const enteredCourier = (rowCourier[id] !== undefined ? rowCourier[id] : (order.courier || '')).trim();
+      const enteredCourierUrl = (rowCourierUrl[id] !== undefined ? rowCourierUrl[id] : (order.courierUrl || '')).trim();
 
-      try {
-        if (enteredAwb) {
-          await adminService.addTracking(id, {
-            trackingId: enteredAwb,
-            courier: order.courier || 'Standard Surface Delivery',
-          }).catch(() => null);
-        }
-        await adminService.updateOrderStatus(id, { status: newStatus, note: fullNote });
-      } catch (apiErr) {
-        console.warn('Backend order status update note:', apiErr?.message || apiErr);
-      }
+      const trackingPayload = {};
+      if (enteredAwb) trackingPayload.trackingId = enteredAwb;
+      if (enteredCourier) trackingPayload.courier = enteredCourier;
+      if (enteredCourierUrl) trackingPayload.courierUrl = enteredCourierUrl;
+
+      // Single atomic status & tracking update to backend database
+      const res = await adminService.updateOrderStatus(id, {
+        status: newStatus,
+        note: fullNote,
+        ...trackingPayload,
+      });
+      const updatedOrderData = res?.data?.data || res?.data;
 
       storeUpdateStatus(id, newStatus);
       updateOrder(id, {
         status: newStatus,
-        ...(enteredAwb ? { trackingId: enteredAwb } : {}),
+        ...trackingPayload,
         statusHistory: [
           ...(order.statusHistory || []),
           { status: newStatus, timestamp: new Date().toISOString(), note: fullNote },
         ],
       });
       setRowNote((p) => ({ ...p, [id]: '' }));
+      setRowCourier((p) => ({ ...p, [id]: '' }));
+      setRowCourierUrl((p) => ({ ...p, [id]: '' }));
       setRowCancelReason((p) => ({ ...p, [id]: '' }));
       setRowStatus((p) => { const n = { ...p }; delete n[id]; return n; });
       showToast(`✅ Order status updated to "${STATUS_CFG[newStatus]?.label || newStatus}"`, 'success');
@@ -549,6 +566,39 @@ export default function AdminOrders() {
       showToast('Status update failed', 'error');
     } finally {
       setRowLoading((p) => ({ ...p, [id]: false }));
+    }
+  };
+
+  // ─── Handle Delete Order ──────────────────────────────────────────────────
+  const handleConfirmDelete = async () => {
+    if (!orderToDelete) return;
+    const id = orderToDelete._id || orderToDelete.id;
+    const orderNum = orderToDelete.orderNumber || id;
+
+    setIsDeleting(true);
+    try {
+      await adminService.deleteOrder(id);
+      if (storeDeleteOrder) {
+        storeDeleteOrder(id);
+      }
+      if (expandedId === id) {
+        setExpandedId(null);
+      }
+      showToast(`Order #${orderNum} deleted successfully`, 'success');
+      setOrderToDelete(null);
+    } catch (err) {
+      console.warn('Backend delete order notice:', err?.message || err);
+      // Fallback update store in case of network/mock state
+      if (storeDeleteOrder) {
+        storeDeleteOrder(id);
+      }
+      if (expandedId === id) {
+        setExpandedId(null);
+      }
+      showToast(`Order #${orderNum} removed`, 'info');
+      setOrderToDelete(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -1131,7 +1181,9 @@ export default function AdminOrders() {
                   ? STATUS_FLOW[flowIdx + 1]
                   : order.status;
                 const currentRowStatus    = rowStatus[order._id]       ?? nextAuto;
-                const currentRowNote      = rowNote[order._id]         ?? '';
+                const currentRowNote      = rowNote[order._id]         ?? (order.trackingId || '');
+                const currentRowCourier   = rowCourier[order._id]      ?? (order.courier || '');
+                const currentRowCourierUrl= rowCourierUrl[order._id]   ?? (order.courierUrl || '');
                 const currentCancelReason = rowCancelReason[order._id] ?? '';
                 const isUpdating          = rowLoading[order._id]       ?? false;
 
@@ -1274,9 +1326,9 @@ export default function AdminOrders() {
                         </span>
                       </td>
 
-                      {/* Action Cell: Manage Accordion Toggle */}
+                      {/* Action Cell: Manage Accordion Toggle & Delete Button */}
                       <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.45rem' }}>
                           {/* Manage Order Accordion Toggle Button */}
                           <button
                             onClick={(e) => {
@@ -1307,6 +1359,45 @@ export default function AdminOrders() {
                           >
                             {isOpen ? <ChevronUp size={13} /> : <ChevronsUpDown size={13} />}
                             {isOpen ? 'Close Panel' : 'Manage Order'}
+                          </button>
+
+                          {/* Delete Order Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOrderToDelete(order);
+                            }}
+                            title={`Delete Order #${order.orderNumber}`}
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '9999px',
+                              border: '1px solid #fecdd3',
+                              background: '#fff1f2',
+                              color: '#e11d48',
+                              cursor: 'pointer',
+                              transition: 'all 0.18s ease',
+                              boxSizing: 'border-box',
+                              flexShrink: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#e11d48';
+                              e.currentTarget.style.color = '#ffffff';
+                              e.currentTarget.style.borderColor = '#e11d48';
+                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(225,29,72,0.3)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#fff1f2';
+                              e.currentTarget.style.color = '#e11d48';
+                              e.currentTarget.style.borderColor = '#fecdd3';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
@@ -1468,12 +1559,18 @@ export default function AdminOrders() {
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.79rem', color: '#64748b' }}>
                                     <span>Items Subtotal</span>
                                     <span style={{ fontWeight: 600, color: '#1e293b' }}>
-                                      {formatPrice(order.totalAmount || order.total || 0)}
+                                      {formatPrice(order.subtotal || (order.total - (order.shippingFee || 0)) || order.total || 0)}
                                     </span>
                                   </div>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.79rem', color: '#64748b' }}>
                                     <span>Delivery / Shipping</span>
-                                    <span style={{ fontWeight: 700, color: '#16a34a' }}>FREE</span>
+                                    <span style={{ fontWeight: 700, color: (order.shippingFee > 0 || (order.total - (order.subtotal || order.total)) > 0) ? '#1e293b' : '#16a34a' }}>
+                                      {order.shippingFee !== undefined && order.shippingFee > 0
+                                        ? formatPrice(order.shippingFee)
+                                        : ((order.total && order.subtotal && order.total > order.subtotal)
+                                          ? formatPrice(order.total - order.subtotal + (order.discountAmount || 0))
+                                          : 'FREE')}
+                                    </span>
                                   </div>
                                   <div
                                     style={{
@@ -1687,25 +1784,25 @@ export default function AdminOrders() {
                                       />
                                     </div>
 
-                                    {/* ── AWB Input: shown only when Shipping is selected ── */}
-                                    {currentRowStatus === 'shipped' && (
+                                    {/* ── Courier Name Input: shown when Confirmed ── */}
+                                    {currentRowStatus === 'confirmed' && (
                                       <div style={{ animation: 'fadeIn 0.22s ease' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                          <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                            <Truck size={13} color="#1d4ed8" /> Tracking / AWB Number
+                                          <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                            <Truck size={13} color="#7c3aed" /> Courier Name
                                           </label>
-                                          <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                          <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#f8fafc', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
                                         </div>
                                         <input
                                           type="text"
-                                          value={currentRowNote}
-                                          onChange={(e) => setRowNote((p) => ({ ...p, [order._id]: e.target.value }))}
-                                          placeholder="e.g. Courier: BlueDart | AWB #987654321"
+                                          value={currentRowCourier}
+                                          onChange={(e) => setRowCourier((p) => ({ ...p, [order._id]: e.target.value }))}
+                                          placeholder="e.g. ST Courier, Blue Dart, DTDC"
                                           style={{
                                             width: '100%',
                                             padding: '0.62rem 0.85rem',
-                                            background: '#eff6ff',
-                                            border: '1px dashed #93c5fd',
+                                            background: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
                                             borderRadius: '10px',
                                             fontSize: '0.81rem',
                                             color: '#0f172a',
@@ -1713,9 +1810,104 @@ export default function AdminOrders() {
                                             boxSizing: 'border-box',
                                             transition: 'all 0.2s ease',
                                           }}
-                                          onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
-                                          onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                          onFocus={(e) => { e.target.style.borderColor = '#7c3aed'; e.target.style.background = '#ffffff'; }}
+                                          onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
                                         />
+                                      </div>
+                                    )}
+
+                                    {/* ── Courier Details & AWB Input: shown only when Shipping is selected ── */}
+                                    {currentRowStatus === 'shipped' && (
+                                      <div style={{ animation: 'fadeIn 0.22s ease', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        {/* Field 1: Courier Name */}
+                                        <div>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                            <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <Truck size={13} color="#1d4ed8" /> Courier Name
+                                            </label>
+                                            <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                          </div>
+                                          <input
+                                            type="text"
+                                            value={currentRowCourier}
+                                            onChange={(e) => setRowCourier((p) => ({ ...p, [order._id]: e.target.value }))}
+                                            placeholder="e.g. ST Courier, Blue Dart, DTDC"
+                                            style={{
+                                              width: '100%',
+                                              padding: '0.62rem 0.85rem',
+                                              background: '#eff6ff',
+                                              border: '1px dashed #93c5fd',
+                                              borderRadius: '10px',
+                                              fontSize: '0.81rem',
+                                              color: '#0f172a',
+                                              outline: 'none',
+                                              boxSizing: 'border-box',
+                                              transition: 'all 0.2s ease',
+                                            }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                          />
+                                        </div>
+
+                                        {/* Field 2: Courier Site URL Link */}
+                                        <div>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                            <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <ArrowUpRight size={13} color="#1d4ed8" /> Courier Site URL Link
+                                            </label>
+                                            <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                          </div>
+                                          <input
+                                            type="text"
+                                            value={currentRowCourierUrl}
+                                            onChange={(e) => setRowCourierUrl((p) => ({ ...p, [order._id]: e.target.value }))}
+                                            placeholder="e.g. https://stcourier.com/"
+                                            style={{
+                                              width: '100%',
+                                              padding: '0.62rem 0.85rem',
+                                              background: '#eff6ff',
+                                              border: '1px dashed #93c5fd',
+                                              borderRadius: '10px',
+                                              fontSize: '0.81rem',
+                                              color: '#0f172a',
+                                              outline: 'none',
+                                              boxSizing: 'border-box',
+                                              transition: 'all 0.2s ease',
+                                            }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                          />
+                                        </div>
+
+                                        {/* Existing Tracking / AWB Number (Untouched!) */}
+                                        <div>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                            <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <Truck size={13} color="#1d4ed8" /> Tracking / AWB Number
+                                            </label>
+                                            <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                          </div>
+                                          <input
+                                            type="text"
+                                            value={currentRowNote}
+                                            onChange={(e) => setRowNote((p) => ({ ...p, [order._id]: e.target.value }))}
+                                            placeholder="e.g. Courier: BlueDart | AWB #987654321"
+                                            style={{
+                                              width: '100%',
+                                              padding: '0.62rem 0.85rem',
+                                              background: '#eff6ff',
+                                              border: '1px dashed #93c5fd',
+                                              borderRadius: '10px',
+                                              fontSize: '0.81rem',
+                                              color: '#0f172a',
+                                              outline: 'none',
+                                              boxSizing: 'border-box',
+                                              transition: 'all 0.2s ease',
+                                            }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                          />
+                                        </div>
                                       </div>
                                     )}
 
@@ -2010,6 +2202,110 @@ export default function AdminOrders() {
           </div>
         </div>
       </div>
+
+      {/* ── Delete Order Confirmation Modal ─────────────────────────────────── */}
+      {orderToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={() => { if (!isDeleting) setOrderToDelete(null); }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '430px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #f1f5f9',
+              textAlign: 'center',
+              animation: 'ordAccordionIn 0.2s ease',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Warning Trash Icon */}
+            <div
+              style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                background: '#fee2e2',
+                color: '#e11d48',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <Trash2 size={26} />
+            </div>
+
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>
+              Delete Order?
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5 }}>
+              Are you sure you want to delete order <strong style={{ color: '#0f172a' }}>#{orderToDelete.orderNumber}</strong>?
+              This action cannot be undone and will permanently remove this order from the system.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setOrderToDelete(null)}
+                style={{
+                  flex: 1,
+                  padding: '0.7rem 1.25rem',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  background: '#f8fafc',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                style={{
+                  flex: 1,
+                  padding: '0.7rem 1.25rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(225, 29, 72, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {isDeleting ? 'Deleting…' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Accordion and Spin Animations */}
       <style>{`

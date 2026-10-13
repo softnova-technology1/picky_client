@@ -153,7 +153,7 @@ export default function OrderSuccess() {
             {/* Action Buttons */}
             <div className={styles['actions-row']}>
               <Link
-                to={`/orders/${id || order?._id || order?.orderNumber}`}
+                to={`/track-order?id=${order?.orderNumber || id || order?._id}`}
                 className={`${styles['action-btn']} ${styles['primary']}`}
               >
                 <span>Track Live Order Timeline</span>

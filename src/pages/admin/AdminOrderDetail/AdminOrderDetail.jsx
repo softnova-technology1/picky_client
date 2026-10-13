@@ -410,7 +410,7 @@ export default function AdminOrderDetail() {
                 </strong>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b21a8', fontWeight: 600 }}>
                   <Phone size={13} />
-                  <span>{order.customer?.phone || order.user?.phone || order.shippingAddress?.phone || '+91 98401 23456'}</span>
+                  <span>{order.customer?.phone || order.user?.phone || order.shippingAddress?.phone || 'Not provided'}</span>
                 </div>
                 {order.customer?.email && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.8rem' }}>
@@ -425,11 +425,11 @@ export default function AdminOrderDetail() {
                   <MapPin size={14} color="#7c3aed" />
                   <span>Shipping Address</span>
                 </strong>
-                <div>{order.shippingAddress?.street || '#42, 4th Cross, Indiranagar'}</div>
+                <div>{order.shippingAddress?.street || ''}</div>
                 {order.shippingAddress?.landmark && <div>Landmark: {order.shippingAddress.landmark}</div>}
                 <div>
-                  {order.shippingAddress?.city || 'Bengaluru'}, {order.shippingAddress?.state || 'Karnataka'} -{' '}
-                  {order.shippingAddress?.pincode || '560038'}
+                  {[order.shippingAddress?.city, order.shippingAddress?.state].filter(Boolean).join(', ')}
+                  {order.shippingAddress?.pincode ? ` - ${order.shippingAddress.pincode}` : ''}
                 </div>
               </div>
             </div>

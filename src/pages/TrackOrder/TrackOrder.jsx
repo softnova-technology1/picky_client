@@ -25,20 +25,7 @@ import {
 } from 'lucide-react';
 import styles from './TrackOrder.module.css';
 
-// ─── Courier Link & Arrival Window Helpers ─────────────────────────────────
-const getCourierUrl = (courierName, trackingId) => {
-  const name = (courierName || '').toLowerCase();
-  if (name.includes('st cour') || name.includes('stcour')) return 'https://stcourier.com/';
-  if (name.includes('dtdc')) return 'https://www.dtdc.in/';
-  if (name.includes('delhivery')) return 'https://www.delhivery.com/';
-  if (name.includes('blue') || name.includes('dart')) return 'https://www.bluedart.com/';
-  if (name.includes('india') || name.includes('post')) return 'https://www.indiapost.gov.in/';
-  if (name.includes('shadowfax')) return 'https://www.shadowfax.in/';
-  if (name.includes('xpressbees')) return 'https://www.xpressbees.com/';
-  if (name.includes('ecom')) return 'https://ecomexpress.in/';
-  return 'https://stcourier.com/';
-};
-
+// ─── Arrival Window Helper ────────────────────────────────────────────────
 const getEstimatedArrivalWindow = (createdAt, isDelivered) => {
   if (isDelivered) return 'Delivered to Doorstep';
   let base = createdAt ? new Date(createdAt) : new Date();
@@ -86,6 +73,15 @@ export default function TrackOrder() {
   const [trackedOrder, setTrackedOrder] = useState(null);
   const [copiedAwb, setCopiedAwb] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleCopyTrackingId = (idToCopy) => {
+    if (!idToCopy) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(idToCopy);
+    }
+    setCopiedAwb(true);
+    setTimeout(() => setCopiedAwb(false), 2000);
+  };
 
   const resultRef = useRef(null);
 
@@ -150,17 +146,13 @@ export default function TrackOrder() {
 
         let statusBadgeText = 'CONFIRMED';
         if (isDelivered) statusBadgeText = 'DELIVERED';
-        else if (isShipped) statusBadgeText = 'IN TRANSIT';
+        else if (isShipped) statusBadgeText = 'SHIPPING';
         else if (isCancelled) statusBadgeText = 'CANCELLED';
         else statusBadgeText = 'CONFIRMED';
 
-        const carrierName = foundOrder.courier || 'st cour';
-        const trackingId =
-          foundOrder.trackingId ||
-          (foundOrder.orderNumber
-            ? foundOrder.orderNumber.replace(/[^0-9]/g, '').slice(-6) || '574354'
-            : '574354');
-        const courierUrl = getCourierUrl(carrierName, trackingId);
+        const carrierName = foundOrder.courier || '';
+        const trackingId = foundOrder.trackingId || '';
+        const courierUrl = foundOrder.courierUrl || '';
         const estimatedArrival = getEstimatedArrivalWindow(foundOrder.createdAt, isDelivered);
 
         // Format Admin Stepper Steps
@@ -174,7 +166,7 @@ export default function TrackOrder() {
             subText = `Placed on ${formatDate(foundOrder.createdAt)}`;
           } else if (step.key === 'shipped') {
             subText = (isShipped || isDelivered)
-              ? `${carrierName}${trackingId ? ` • ${trackingId}` : ''}`
+              ? `${carrierName ? carrierName : 'Shipped'}${trackingId ? ` • ${trackingId}` : ''}`
               : 'Preparing for dispatch';
           } else if (step.key === 'delivered') {
             subText = isDelivered
@@ -191,15 +183,15 @@ export default function TrackOrder() {
           };
         });
 
-        // Format Items
+        // Format Items (100% pure DB data)
         const rawItems = Array.isArray(foundOrder.items) ? foundOrder.items : [];
         const itemsList = rawItems.map((it, idx) => ({
           id: it._id || it.product || `order-item-${idx}`,
-          title: it.name || it.title || 'Soft Lichi Silk Saree',
-          sku: it.sku || `MV-${(it._id || 'LS').toString().slice(-6).toUpperCase()}`,
+          title: it.name || it.title || 'Product',
+          sku: it.sku || '',
           price: it.price || 0,
           quantity: it.quantity || 1,
-          image: it.image || (Array.isArray(it.images) ? it.images[0] : null) || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=160',
+          image: it.image || (Array.isArray(it.images) ? it.images[0] : null) || '',
         }));
 
         const recipientName =
@@ -207,7 +199,7 @@ export default function TrackOrder() {
           foundOrder.shippingAddress?.name ||
           foundOrder.customer?.name ||
           foundOrder.user?.name ||
-          'Valued Patron';
+          '';
 
         const line1 =
           foundOrder.shippingAddress?.street ||
@@ -219,11 +211,20 @@ export default function TrackOrder() {
         const pincode = foundOrder.shippingAddress?.pincode || foundOrder.shippingAddress?.postalCode || '';
         const addressText = line1
           ? `${line1}${city ? `, ${city}, ${state} - ${pincode}` : ''}`
-          : 'Customer Address Preserved';
+          : (pincode ? `Pincode: ${pincode}` : '');
+
+        // Delivery calculation: strictly from DB shippingFee, or exact difference between total and subtotal (never hardcoded formula)
+        const computedShippingFee = foundOrder.shippingFee !== undefined
+          ? Number(foundOrder.shippingFee)
+          : Math.max(0, (Number(foundOrder.total) || 0) - (Number(foundOrder.subtotal) || 0) + (Number(foundOrder.discountAmount) || 0));
 
         setTrackedOrder({
           orderNumber: foundOrder.orderNumber || foundOrder._id,
           statusBadgeText,
+          status,
+          isShipped,
+          isDelivered,
+          isConfirmed,
           currentStepIdx,
           adminSteps,
           isCancelled,
@@ -235,7 +236,7 @@ export default function TrackOrder() {
           estimatedArrival,
           items: itemsList,
           subtotal: foundOrder.subtotal || foundOrder.total,
-          shippingFee: foundOrder.shippingFee !== undefined ? foundOrder.shippingFee : (foundOrder.total > 1000 ? 0 : 75),
+          shippingFee: computedShippingFee,
           convenienceFee: foundOrder.convenienceFee || 0,
           discountAmount: foundOrder.discountAmount || 0,
           total: foundOrder.total || 0,
@@ -354,12 +355,6 @@ export default function TrackOrder() {
                       <h2 className={styles.orderTitle}>
                         Order #{trackedOrder.orderNumber}
                       </h2>
-                      {trackedOrder.trackingId && (
-                        <span className={styles.trackingPill}>
-                          <Package size={13} />
-                          Tracking ID: {trackedOrder.trackingId}
-                        </span>
-                      )}
                     </div>
                     <div className={styles.estimatedArrivalRow}>
                       <span className={styles.estimatePrefix}>Estimated Arrival:</span>{' '}
@@ -377,7 +372,7 @@ export default function TrackOrder() {
                           ? styles.statusBadgeDelivered
                           : trackedOrder.statusBadgeText === 'CANCELLED'
                           ? styles.statusBadgeCancelled
-                          : trackedOrder.statusBadgeText === 'IN TRANSIT'
+                          : (trackedOrder.statusBadgeText === 'SHIPPING' || trackedOrder.statusBadgeText === 'IN TRANSIT')
                           ? styles.statusBadgeShipped
                           : styles.statusBadgeConfirmed
                       }`}
@@ -484,20 +479,61 @@ export default function TrackOrder() {
                     <div className={styles.metaBody}>
                       <span className={styles.metaLabel}>COURIER SERVICE</span>
                       <span className={styles.metaCourierName}>
-                        {trackedOrder.carrier}
+                        {trackedOrder.carrier || (trackedOrder.isShipped || trackedOrder.isDelivered ? 'Courier Dispatched' : 'Courier Partner')}
                       </span>
-                      <span className={styles.metaTrackingRow}>
-                        Tracking ID: <strong>{trackedOrder.trackingId}</strong>
-                      </span>
-                      {trackedOrder.courierUrl && (
-                        <a
-                          href={trackedOrder.courierUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.trackShipmentLink}
-                        >
-                          Track Shipment ↗ ({trackedOrder.courierUrl})
-                        </a>
+                      {/* Show Tracking ID & Website Link ONLY when order status is Shipped / Delivered, and only if entered */}
+                      {(trackedOrder.isShipped || trackedOrder.isDelivered) && (
+                        <>
+                          {trackedOrder.trackingId && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.15rem' }}>
+                              <span className={styles.metaTrackingRow} style={{ margin: 0 }}>
+                                Tracking ID: <strong>{trackedOrder.trackingId}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyTrackingId(trackedOrder.trackingId)}
+                                title={copiedAwb ? 'Copied to clipboard!' : 'Copy Tracking ID'}
+                                style={{
+                                  background: copiedAwb ? '#dcfce7' : '#f3e8ff',
+                                  border: '1px solid',
+                                  borderColor: copiedAwb ? '#86efac' : '#d8b4fe',
+                                  borderRadius: '6px',
+                                  padding: '0.18rem 0.42rem',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  cursor: 'pointer',
+                                  color: copiedAwb ? '#15803d' : '#7c3aed',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  transition: 'all 0.18s ease',
+                                }}
+                              >
+                                {copiedAwb ? (
+                                  <>
+                                    <Check size={12} strokeWidth={2.8} />
+                                    <span>Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={12} strokeWidth={2} />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                          {trackedOrder.courierUrl && (
+                            <a
+                              href={trackedOrder.courierUrl.startsWith('http') ? trackedOrder.courierUrl : `https://${trackedOrder.courierUrl}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.trackShipmentLink}
+                            >
+                              Track Shipment ↗ ({trackedOrder.courierUrl})
+                            </a>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -606,7 +642,7 @@ export default function TrackOrder() {
                     <span>Print Tax Invoice</span>
                   </button>
                   <a
-                    href={`https://wa.me/919840123456?text=${encodeURIComponent(`Hi Picky Store, I need an update on my Order #${trackedOrder.orderNumber}`)}`}
+                    href={`https://wa.me/918300295721?text=${encodeURIComponent(`Hi Picky Store, I need an update on my Order #${trackedOrder.orderNumber}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.whatsappSupportBtn}

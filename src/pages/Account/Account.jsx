@@ -23,6 +23,8 @@ import {
   Truck,
   CheckCircle2,
   Filter,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export default function Account() {
@@ -36,6 +38,16 @@ export default function Account() {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [orderFilter, setOrderFilter] = useState('all');
+  const [copiedOrderId, setCopiedOrderId] = useState(null);
+
+  const handleCopyOrderId = (idToCopy) => {
+    if (!idToCopy) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(idToCopy);
+    }
+    setCopiedOrderId(idToCopy);
+    setTimeout(() => setCopiedOrderId(null), 2000);
+  };
 
   useEffect(() => {
     async function loadOrders() {
@@ -385,9 +397,43 @@ export default function Account() {
                                   {isShipping ? <Truck size={20} color="#d97706" /> : <Package size={20} />}
                                 </div>
                                 <div>
-                                  <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
-                                    Order #{order.orderNumber}
-                                  </span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
+                                      Order #{order.orderNumber}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyOrderId(order.orderNumber)}
+                                      title={copiedOrderId === order.orderNumber ? 'Copied to clipboard!' : 'Copy Order ID'}
+                                      style={{
+                                        background: copiedOrderId === order.orderNumber ? '#dcfce7' : '#f3e8ff',
+                                        border: '1px solid',
+                                        borderColor: copiedOrderId === order.orderNumber ? '#86efac' : '#d8b4fe',
+                                        borderRadius: '6px',
+                                        padding: '0.18rem 0.42rem',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                        cursor: 'pointer',
+                                        color: copiedOrderId === order.orderNumber ? '#15803d' : '#7c3aed',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 600,
+                                        transition: 'all 0.18s ease',
+                                      }}
+                                    >
+                                      {copiedOrderId === order.orderNumber ? (
+                                        <>
+                                          <Check size={12} strokeWidth={2.8} />
+                                          <span>Copied!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy size={12} strokeWidth={2} />
+                                          <span>Copy</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
                                   <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 500 }}>
                                     Placed on {formatDate(order.createdAt)}
                                   </span>
@@ -536,7 +582,7 @@ export default function Account() {
 
                               {/* Right: Prominent Track Order Button */}
                               <Link
-                                to={`/orders/${order._id}`}
+                                to={`/track-order?id=${order.orderNumber || order._id}`}
                                 className={styles.orderTrackBtn}
                                 style={{
                                   borderRadius: '16px',

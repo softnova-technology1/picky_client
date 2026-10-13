@@ -161,7 +161,7 @@ export default function Orders() {
 
                     <div className={styles['order-actions']}>
                       <Badge status={order.status} />
-                      <Link to={`/orders/${order._id}`} className={`btn btn-outline btn-sm ${styles['track-order-btn']}`}>
+                      <Link to={`/track-order?id=${order.orderNumber || order._id}`} className={`btn btn-outline btn-sm ${styles['track-order-btn']}`}>
                         <Search size={14} /> Track Order
                       </Link>
                     </div>
