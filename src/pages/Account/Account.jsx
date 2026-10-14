@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { useAuthStore } from '../../store/authStore';
-import { useWishlistStore } from '../../store/wishlistStore';
 import { useOrderStore } from '../../store/orderStore';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
@@ -13,16 +12,19 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import AccountProfile from '../../components/account/AccountProfile';
 import AccountAddresses from '../../components/account/AccountAddresses';
+import AccountSecurity from '../../components/account/AccountSecurity';
 import styles from './Account.module.css';
 import {
   User,
   Package,
   MapPin,
-  Heart,
+  KeyRound,
   LogOut,
   Truck,
   CheckCircle2,
   Filter,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export default function Account() {
@@ -31,12 +33,21 @@ export default function Account() {
   const navigate = useNavigate();
 
   const { user, logout } = useAuthStore();
-  const { items: wishlistItems } = useWishlistStore();
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [orderFilter, setOrderFilter] = useState('all');
+  const [copiedOrderId, setCopiedOrderId] = useState(null);
+
+  const handleCopyOrderId = (idToCopy) => {
+    if (!idToCopy) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(idToCopy);
+    }
+    setCopiedOrderId(idToCopy);
+    setTimeout(() => setCopiedOrderId(null), 2000);
+  };
 
   useEffect(() => {
     async function loadOrders() {
@@ -149,28 +160,14 @@ export default function Account() {
               <span>Saved Addresses</span>
             </button>
 
-            {/* Tab 4: Wishlist Link */}
-            <Link
-              to="/wishlist"
-              className={`${styles.accountTabBtn} ${styles.accountTabInactive}`}
+            {/* Tab 4: Password Change */}
+            <button
+              onClick={() => handleTabChange('password')}
+              className={`${styles.accountTabBtn} ${currentTab === 'password' ? styles.accountTabActive : styles.accountTabInactive}`}
             >
-              <Heart size={18} color="#ec4899" fill={wishlistItems.length > 0 ? '#ec4899' : 'none'} />
-              <span>My Wishlist</span>
-              {wishlistItems.length > 0 && (
-                <span
-                  style={{
-                    background: '#fce7f3',
-                    color: '#be185d',
-                    fontSize: '0.74rem',
-                    padding: '0.15rem 0.55rem',
-                    borderRadius: '999px',
-                    fontWeight: 700,
-                  }}
-                >
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
+              <KeyRound size={18} color={currentTab === 'password' ? '#ffffff' : '#7c3aed'} />
+              <span>Password Change</span>
+            </button>
           </div>
 
           {/* Main Tab Content Area */}
@@ -400,9 +397,43 @@ export default function Account() {
                                   {isShipping ? <Truck size={20} color="#d97706" /> : <Package size={20} />}
                                 </div>
                                 <div>
-                                  <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
-                                    Order #{order.orderNumber}
-                                  </span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', display: 'block', letterSpacing: '-0.01em' }}>
+                                      Order #{order.orderNumber}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyOrderId(order.orderNumber)}
+                                      title={copiedOrderId === order.orderNumber ? 'Copied to clipboard!' : 'Copy Order ID'}
+                                      style={{
+                                        background: copiedOrderId === order.orderNumber ? '#dcfce7' : '#f3e8ff',
+                                        border: '1px solid',
+                                        borderColor: copiedOrderId === order.orderNumber ? '#86efac' : '#d8b4fe',
+                                        borderRadius: '6px',
+                                        padding: '0.18rem 0.42rem',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                        cursor: 'pointer',
+                                        color: copiedOrderId === order.orderNumber ? '#15803d' : '#7c3aed',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 600,
+                                        transition: 'all 0.18s ease',
+                                      }}
+                                    >
+                                      {copiedOrderId === order.orderNumber ? (
+                                        <>
+                                          <Check size={12} strokeWidth={2.8} />
+                                          <span>Copied!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy size={12} strokeWidth={2} />
+                                          <span>Copy</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
                                   <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 500 }}>
                                     Placed on {formatDate(order.createdAt)}
                                   </span>
@@ -551,7 +582,7 @@ export default function Account() {
 
                               {/* Right: Prominent Track Order Button */}
                               <Link
-                                to={`/orders/${order._id}`}
+                                to={`/track-order?id=${order.orderNumber || order._id}`}
                                 className={styles.orderTrackBtn}
                                 style={{
                                   borderRadius: '16px',
@@ -632,6 +663,23 @@ export default function Account() {
 
               {/* TAB 4: ADDRESSES */}
               {currentTab === 'addresses' && <AccountAddresses />}
+
+              {/* TAB 5: SECURITY & LOGIN (PASSWORD CHANGE) */}
+              {currentTab === 'password' && (
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.94)',
+                    borderRadius: '24px',
+                    padding: 'clamp(1.75rem, 3.5vw, 2.5rem)',
+                    boxShadow: '0 15px 35px -10px rgba(124, 58, 237, 0.08)',
+                    border: '1.5px solid rgba(221, 214, 254, 0.75)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <AccountSecurity />
+                </div>
+              )}
           </div>
         </div>
       </div>

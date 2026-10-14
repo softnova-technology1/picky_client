@@ -1,585 +1,318 @@
-import React, { useMemo, useState } from 'react';
-import { ArrowRight, PackagePlus, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowRight, Package, BadgePercent, Sparkles } from 'lucide-react';
+import { useCartStore } from '../../../store/cartStore';
+import { useUiStore } from '../../../store/uiStore';
+import { productService } from '../../../services/product.service';
+import styles from './NewArrivalsHero.module.css';
 
-const FALLBACK_CATEGORIES = [
-  { id: 'all', label: 'All New Arrivals', icon: 'package-plus' },
-  { id: 'medicine', label: 'medicine', image: '/images/products/saree.png' },
-  { id: 'fashion', label: 'Fashion', image: '/images/top_category_fashion.jpg' },
-  { id: 'home-kitchen', label: 'Home & Kitchen', image: '/images/top_category_kitchen.jpg' },
-  { id: 'artificial-jewellery', label: 'Artificial Jewellery', image: '/images/top_category_jewellery.jpg' },
-  { id: 'beauty-personal-care', label: 'Beauty & Personal Care', image: '/images/pill_beauty_product.jpg' },
-  { id: 'mobile-accessories', label: 'Mobile Accessories', image: '/images/top_category_tech.jpg' },
-  { id: 'traditional-tamil-products', label: 'Traditional Tamil Products', image: '/images/products/saree.png' },
-  { id: 'snacks-foods', label: 'Snacks & Foods', image: '/images/products/saree.png' },
-  { id: 'home-decor', label: 'Home Décor', image: '/images/pill_model_decor.png' },
-  { id: 'kids-products', label: 'Kids Products', image: '/images/pill_model_western.png' },
-  { id: 'fitness-products', label: 'Fitness Products', image: '/images/pill_tech_product.jpg' },
+// Fallback items if database products are still loading
+const FALLBACK_SPOTLIGHT_PRODUCTS = [
+  {
+    id: 'spotlight-icebreeze-hoodie',
+    title: 'IceBreeze Comfort Hoodie',
+    price: 1699,
+    displayPrice: '₹1,699',
+    image: '/images/new-arrivals-hero/spotlight_green_hoodie.jpg',
+    isFeatured: false,
+  },
+  {
+    id: 'spotlight-warmnest-hoodie',
+    title: 'WarmNest Hoodie',
+    price: 2499,
+    displayPrice: '₹2,499',
+    image: '/images/new-arrivals-hero/spotlight_forest_hoodie.jpg',
+    isFeatured: false,
+  },
+  {
+    id: 'spotlight-snowshield-hoodie',
+    title: 'SnowShield Hoodie',
+    price: 2499,
+    displayPrice: '₹2,499',
+    image: '/images/new-arrivals-hero/spotlight_blue_puffer.jpg',
+    isFeatured: true,
+  },
+  {
+    id: 'spotlight-heatsole-shoes',
+    title: 'HeatSole Comfort Shoes',
+    price: 1299,
+    displayPrice: '₹1,299',
+    image: '/images/new-arrivals-hero/spotlight_shoes.jpg',
+    isFeatured: false,
+  },
 ];
 
 export default function NewArrivalsHero({
+  products: propProducts = [],
   onExploreClick,
   categories = [],
   activeCategory = 'all',
   onSelectCategory,
 }) {
-  const [manualOffset, setManualOffset] = useState(0);
+  const { addItem } = useCartStore();
+  const { showToast } = useUiStore();
+  const [dbProducts, setDbProducts] = useState(propProducts);
 
-  const rawList = categories && categories.length > 0 ? categories : FALLBACK_CATEGORIES;
-
-  // Build a seamless circular constellation of category items (24 items for full circle)
-  const orbitalItems = useMemo(() => {
-    let list = [...rawList];
-    while (list.length < 24) {
-      list = [...list, ...rawList];
+  // Sync propProducts or fetch directly from backend DB API
+  useEffect(() => {
+    if (Array.isArray(propProducts) && propProducts.length > 0) {
+      setDbProducts(propProducts);
+      return;
     }
-    return list;
-  }, [rawList]);
 
-  // Rotate opposite direction on manual click
-  const handleStepRotate = (dir) => {
-    const step = 360 / orbitalItems.length;
-    setManualOffset((prev) => prev + (dir === 'left' ? -step : step));
-  };
+    let isMounted = true;
+    async function fetchDbProducts() {
+      try {
+        const res = await productService.list({ limit: 20, sort: 'newest' });
+        const data = res?.data || res;
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        if (isMounted && items.length > 0) {
+          setDbProducts(items);
+        }
+      } catch (err) {
+        console.warn('Hero could not fetch DB products:', err);
+      }
+    }
+    fetchDbProducts();
 
-  const handleItemClick = (e, item) => {
+    return () => {
+      isMounted = false;
+    };
+  }, [propProducts]);
+
+  // Transform DB products into spotlight card model
+  const spotlightList = useMemo(() => {
+    if (Array.isArray(dbProducts) && dbProducts.length > 0) {
+      return dbProducts.map((p, idx) => {
+        const rawImg = (Array.isArray(p.images) && p.images[0]) || p.image || '/images/new-arrivals-hero/spotlight_forest_hoodie.jpg';
+        return {
+          id: p._id || p.id || `db-prod-${idx}`,
+          rawProduct: p,
+          title: p.title || p.name || 'New Arrival Collection',
+          price: p.price || 1999,
+          displayPrice: `₹${(p.price || 0).toLocaleString('en-IN')}`,
+          image: rawImg,
+          isFeatured: idx % 4 === 2, // highlight every 3rd or 4th card with the signature purple border
+        };
+      });
+    }
+    return FALLBACK_SPOTLIGHT_PRODUCTS;
+  }, [dbProducts]);
+
+  // Duplicate for seamless 360-degree running marquee loop
+  const runningMarqueeCards = useMemo(() => {
+    if (!spotlightList.length) return [];
+    let base = [...spotlightList];
+    while (base.length < 8) {
+      base = [...base, ...spotlightList];
+    }
+    return [...base, ...base];
+  }, [spotlightList]);
+
+  const handleBuyNow = (product, e) => {
     e.stopPropagation();
-    if (onSelectCategory) {
-      onSelectCategory(item.id);
+    try {
+      const itemToAdd = product.rawProduct || {
+        _id: product.id,
+        id: product.id,
+        title: product.title,
+        name: product.title,
+        price: product.price,
+        images: [product.image],
+        image: product.image,
+        inStock: true,
+      };
+
+      addItem(itemToAdd, 1);
+      if (showToast) {
+        showToast(`Added ${product.title} to your bag!`, 'success');
+      }
+    } catch (err) {
+      console.warn('Could not add to cart:', err);
     }
   };
 
   return (
-    <section className="new-arrivals-hero-wrapper">
-      <div className="new-arrivals-dome-hero">
-        {/* Soft Ambient Lighting Orbs */}
-        <div className="dome-ambient-orb orb-top" />
-        <div className="dome-ambient-orb orb-bottom" />
+    <section className={styles.heroStage} aria-label="New Arrivals Winter Showcase">
+      {/* ── 4K Studio Architectural Background Layer ── */}
+      <div className={styles.heroBgContainer} aria-hidden="true">
+        <img
+          src="/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg"
+          alt="New Arrivals Luxury 4K Arch & Studio Showcase"
+          className={styles.heroBgImg}
+          loading="eager"
+          fetchpriority="high"
+        />
+        <div className={styles.heroBgOverlay} />
+      </div>
 
-        {/* ── 1. CENTERED EDITORIAL CONTENT ── */}
-        <div className="dome-center-content">
-          <div className="hero-live-pill">
-            <span className="live-pulse-dot" />
-            <span className="pill-text">PICKY EXCLUSIVE ✦ FRESH DROPS 2026</span>
+      {/* ── Inner Content Container (Elevated, Compact & Aligned) ── */}
+      <div className={styles.heroContainer}>
+        {/* Top Row: Left-Aligned Studio Editorial */}
+        <div className={styles.leftEditorial}>
+          {/* Top Capsule Badge */}
+          <div className={styles.capsuleBadge}>
+            <span className={styles.capsuleStar}>✦</span>
+            <span className={styles.capsuleText}>WINTER COLLECTION 2026</span>
           </div>
 
-          <h1 className="hero-heading">
-            Fresh Drops & <br />
-            <span className="hero-heading-gradient">Statement Fits</span>
-          </h1>
+          {/* Bold Display Headline with Luxury Serif Accent */}
+          <div className={styles.heroTitle}>
+            <div className={styles.titleLineNew}>
+              <span>NEW</span>
+              <span className={styles.titleStar}>✦</span>
+            </div>
+            <div className={styles.titleLineArrivals}>
+              <span className={styles.arrivalsText}>ARRIVALS</span>
+              <svg
+                className={styles.arrivalsSwoosh}
+                viewBox="0 0 280 18"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 13C65 18 195 18 278 4C210 11 90 11 2 13Z"
+                  fill="url(#swooshGradient)"
+                />
+                <defs>
+                  <linearGradient
+                    id="swooshGradient"
+                    x1="2"
+                    y1="13"
+                    x2="278"
+                    y2="13"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="#6D28D9" />
+                    <stop offset="0.5" stopColor="#9333EA" />
+                    <stop offset="1" stopColor="#C084FC" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
 
-          <p className="hero-subtext">
-            Discover this week's handpicked styles, fresh gadgets, and latest arrivals before they sell out.
+          {/* Subtitle */}
+          <p className={styles.heroSubtitle}>
+            Trendy styles, everyday comfort made for your season.
           </p>
 
-          <button
-            onClick={onExploreClick}
-            className="explore-now-btn"
-            type="button"
-          >
-            <span>Explore Catalog</span>
-            <div className="arrow-circle">
-              <ArrowRight size={14} />
+          {/* Trust / Benefit Feature Highlights Card */}
+          <div className={styles.trustCard}>
+            <div className={styles.trustItem}>
+              <div className={styles.trustIconBox}>
+                <Package size={17} strokeWidth={2.2} />
+              </div>
+              <div className={styles.trustText}>
+                <span className={styles.trustTitle}>7 DAYS</span>
+                <span className={styles.trustSubtitle}>Easy Returns</span>
+              </div>
             </div>
+
+            <div className={styles.trustDivider} aria-hidden="true" />
+
+            <div className={styles.trustItem}>
+              <div className={styles.trustIconBox}>
+                <BadgePercent size={17} strokeWidth={2.2} />
+              </div>
+              <div className={styles.trustText}>
+                <span className={styles.trustTitle}>
+                  Extra <span className={styles.trustHighlight}>10% OFF</span>
+                </span>
+                <span className={styles.trustSubtitle}>For New Users</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to Action Button */}
+          <button
+            type="button"
+            className={styles.discoverBtn}
+            onClick={onExploreClick}
+            aria-label="Discover more new arrivals"
+          >
+            <span>Discover More</span>
+            <ArrowRight size={15} strokeWidth={2.6} className={styles.discoverArrow} />
           </button>
         </div>
 
-        {/* ── 2. CURVED ARCH CATEGORY RUNNER (Clean Floating Arc, No Lines) ── */}
-        <div className="dome-horizon-stage">
-          {/* Interactive Step Nudge Controls */}
-          <button
-            type="button"
-            className="dome-nav-arrow arrow-left"
-            onClick={() => handleStepRotate('left')}
-            aria-label="Rotate categories left"
-          >
-            <ChevronLeft size={20} strokeWidth={2.6} />
-          </button>
+        {/* ── Bottom Row: "Explore Collection" Live Running Cards Marquee ── */}
+        <div className={styles.exploreCollectionSection}>
+          {/* Section Header Row */}
+          <div className={styles.exploreHeaderRow}>
+            <div className={styles.exploreTitleGroup}>
+              <div className={styles.exploreHeadingRow}>
+                <h2 className={styles.exploreTitle}>Explore Collection</h2>
+                <span className={styles.liveDropPill}>
+                  <span className={styles.livePulseDot} />
+                  Live Drops ({spotlightList.length})
+                </span>
+              </div>
+              <p className={styles.exploreSubtitle}>
+                Warm, durable, and made for winter adventures.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            className="dome-nav-arrow arrow-right"
-            onClick={() => handleStepRotate('right')}
-            aria-label="Rotate categories right"
-          >
-            <ChevronRight size={20} strokeWidth={2.6} />
-          </button>
+            <button
+              type="button"
+              className={styles.viewAllLink}
+              onClick={onExploreClick}
+              aria-label="View all items in collection"
+            >
+              <span>View All</span>
+              <ArrowRight size={15} strokeWidth={2.4} />
+              <span className={styles.viewAllLine} />
+            </button>
+          </div>
 
-          {/* Rotating Planetary Wheel running along the arc (Opposite Direction: Right to Left) */}
-          <div
-            className="dome-orbit-wheel"
-            style={{
-              transform: `translate(-50%, 0) rotate(${manualOffset}deg)`,
-            }}
-          >
-            {orbitalItems.map((item, idx) => {
-              const total = orbitalItems.length;
-              const angleDeg = (idx / total) * 360;
-              const isActive = activeCategory === item.id;
-
-              return (
+          {/* Smooth Continuous Running Marquee Runner */}
+          <div className={styles.cardsMarqueeWrapper}>
+            <div className={styles.cardsMarqueeTrack}>
+              {runningMarqueeCards.map((prod, idx) => (
                 <div
-                  key={`${item.id}-${idx}`}
-                  className="dome-orbit-node"
-                  style={{
-                    '--node-angle': `${angleDeg}deg`,
+                  key={`${prod.id}-${idx}`}
+                  className={`${styles.spotlightCard} ${
+                    prod.isFeatured ? styles.spotlightCardFeatured : ''
+                  }`}
+                  onClick={onExploreClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') onExploreClick?.();
                   }}
                 >
-                  {/* Upright holder cancels the static node angle */}
-                  <div
-                    className="dome-upright-holder"
-                    style={{
-                      transform: `rotate(-${angleDeg}deg)`,
-                    }}
-                  >
-                    {/* Button continuously counter-spins to stay 100% upright at all angles */}
+                  <div className={styles.spotlightCardLeft}>
+                    <div className={styles.spotlightCardTitle}>{prod.title}</div>
+                    <div className={styles.spotlightCardPrice}>{prod.displayPrice}</div>
                     <button
                       type="button"
-                      onClick={(e) => handleItemClick(e, item)}
-                      className={`dome-item-button ${isActive ? 'active' : ''}`}
-                      title={item.label}
+                      className={styles.buyNowBtn}
+                      onClick={(e) => handleBuyNow(prod, e)}
+                      aria-label={`Buy ${prod.title}`}
                     >
-                      {/* Circle Avatar Pod */}
-                      <div className="dome-avatar-pod">
-                        <div className="dome-avatar-inner">
-                          {item.icon === 'package-plus' ? (
-                            <div className="all-drops-icon-wrap">
-                              <PackagePlus size={22} strokeWidth={2} />
-                            </div>
-                          ) : (
-                            <img
-                              src={item.image || '/images/products/saree.png'}
-                              alt={item.label}
-                              className="dome-avatar-img"
-                              loading="lazy"
-                            />
-                          )}
-                        </div>
-                        {/* Active Indicator Dot */}
-                        {isActive && <div className="active-radiant-glow" />}
-                      </div>
-
-                      {/* Category Label */}
-                      <span className="dome-item-label">{item.label}</span>
+                      Buy Now
                     </button>
                   </div>
+
+                  <div className={styles.spotlightCardRight}>
+                    <img
+                      src={prod.image}
+                      alt={prod.title}
+                      className={styles.spotlightCardImg}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/new-arrivals-hero/spotlight_green_hoodie.jpg';
+                      }}
+                    />
+                  </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        .new-arrivals-hero-wrapper {
-          width: 100%;
-          position: relative;
-          overflow: hidden;
-        }
-
-        /* ── Full Width Cosmic Deep Purple Hero Card ── */
-        .new-arrivals-dome-hero {
-          position: relative;
-          width: 100%;
-          min-height: 560px;
-          background: 
-            radial-gradient(circle at 50% 12%, rgba(168, 85, 247, 0.42) 0%, transparent 55%),
-            radial-gradient(ellipse at 85% 85%, rgba(124, 58, 237, 0.28) 0%, transparent 50%),
-            radial-gradient(ellipse at 15% 85%, rgba(192, 132, 252, 0.25) 0%, transparent 50%),
-            linear-gradient(180deg, #110426 0%, #1c0838 45%, #2a0b52 75%, #180630 100%);
-          overflow: hidden;
-          border-bottom: 1.5px solid rgba(255, 255, 255, 0.14);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          padding-top: clamp(2rem, 3.5vw, 3rem);
-          box-sizing: border-box;
-        }
-
-        /* Ambient Lighting Orbs */
-        .dome-ambient-orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(90px);
-          pointer-events: none;
-          z-index: 1;
-        }
-        .orb-top {
-          width: 500px;
-          height: 350px;
-          top: -120px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(192, 132, 252, 0.35);
-        }
-        .orb-bottom {
-          width: 650px;
-          height: 250px;
-          bottom: -50px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(124, 58, 237, 0.35);
-        }
-
-        /* ── 1. Centered Editorial Content ── */
-        .dome-center-content {
-          position: relative;
-          z-index: 10;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          max-width: 780px;
-          padding: 0 1.5rem;
-          margin-bottom: 1.25rem;
-        }
-
-        .hero-live-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.6rem;
-          background: rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          color: #f3e8ff;
-          padding: 0.42rem 1.25rem;
-          border-radius: 9999px;
-          border: 1px solid rgba(255, 255, 255, 0.28);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-          margin-bottom: 0.85rem;
-        }
-
-        .live-pulse-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #4ade80;
-          box-shadow: 0 0 10px #4ade80;
-          animation: pulseGreen 1.8s infinite;
-        }
-
-        @keyframes pulseGreen {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(1.35); }
-        }
-
-        .pill-text {
-          font-size: 0.78rem;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        .hero-heading {
-          font-family: var(--font-primary, serif);
-          font-size: clamp(2.3rem, 4.2vw, 3.8rem);
-          font-weight: 900;
-          line-height: 1.1;
-          color: #ffffff;
-          margin: 0 0 0.75rem 0;
-          letter-spacing: -0.025em;
-          text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
-        }
-
-        .hero-heading-gradient {
-          background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 40%, #c084fc 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtext {
-          font-size: clamp(0.92rem, 1.15vw, 1.05rem);
-          line-height: 1.6;
-          color: rgba(243, 232, 255, 0.92);
-          margin: 0 0 1.25rem 0;
-          max-width: 580px;
-          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .explore-now-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.85rem;
-          background: #ffffff;
-          color: #1e0b38;
-          border: none;
-          border-radius: 9999px;
-          padding: 0.75rem 1.75rem;
-          font-size: 0.94rem;
-          font-weight: 800;
-          cursor: pointer;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 25px rgba(255, 255, 255, 0.25);
-          transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .explore-now-btn:hover {
-          transform: translateY(-2px) scale(1.02);
-          background: #fdfcff;
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 35px rgba(192, 132, 252, 0.6);
-        }
-
-        .arrow-circle {
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          background: #7c3aed;
-          color: #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.22s ease;
-        }
-
-        .explore-now-btn:hover .arrow-circle {
-          transform: translateX(3px);
-          background: #6d28d9;
-        }
-
-        /* ── 2. Curved Arc Category Runner Stage (Clean Background, No Planet Graphic) ── */
-        .dome-horizon-stage {
-          position: relative;
-          width: 100%;
-          height: 230px;
-          overflow: hidden;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          z-index: 5;
-          margin-top: 0.5rem;
-          --wheel-radius: 800px;
-          --wheel-pivot-top: 830px;
-        }
-
-        /* Nav Nudge Buttons */
-        .dome-nav-arrow {
-          position: absolute;
-          top: 45px;
-          z-index: 20;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.14);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.25);
-          color: #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-        }
-
-        .dome-nav-arrow:hover {
-          background: rgba(255, 255, 255, 0.28);
-          transform: scale(1.1);
-          color: #f3e8ff;
-        }
-
-        .arrow-left { left: clamp(1rem, 4vw, 3rem); }
-        .arrow-right { right: clamp(1rem, 4vw, 3rem); }
-
-        /* ── Rotating Wheel running in OPPOSITE DIRECTION (Right to Left: 360deg -> 0deg) ── */
-        .dome-orbit-wheel {
-          position: absolute;
-          top: var(--wheel-pivot-top);
-          left: 50%;
-          width: 0;
-          height: 0;
-          z-index: 6;
-          animation: spinDomeWheelReverse 50s linear infinite;
-          will-change: transform;
-        }
-
-        /* Hover pauses rotation for easy clicking */
-        .dome-horizon-stage:hover .dome-orbit-wheel,
-        .dome-horizon-stage:hover .dome-item-button {
-          animation-play-state: paused !important;
-        }
-
-        /* Reverse direction: Rotates counter-clockwise so items move RIGHT to LEFT across the top */
-        @keyframes spinDomeWheelReverse {
-          from {
-            transform: translate(-50%, 0) rotate(360deg);
-          }
-          to {
-            transform: translate(-50%, 0) rotate(0deg);
-          }
-        }
-
-        /* ── Each Node Positioned on the Perimeter Rim ── */
-        .dome-orbit-node {
-          position: absolute;
-          top: 0;
-          left: 0;
-          transform: translate(-50%, -50%) rotate(var(--node-angle)) translateY(calc(-1 * var(--wheel-radius)));
-          width: 100px;
-          height: 120px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-        }
-
-        /* Upright Holder counter-rotates the static node angle */
-        .dome-upright-holder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: auto;
-        }
-
-        /* Item button continuously counter-spins clockwise to cancel wheel rotation (Always 100% Upright) */
-        .dome-item-button {
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 0.45rem;
-          animation: counterSpinClockwise 50s linear infinite;
-          transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-          user-select: none;
-          padding: 4px;
-        }
-
-        @keyframes counterSpinClockwise {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .dome-item-button:hover {
-          transform: scale(1.15) !important;
-        }
-
-        /* Avatar Pod */
-        .dome-avatar-pod {
-          position: relative;
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background: #ffffff;
-          padding: 3px;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.2);
-          transition: all 0.22s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .dome-item-button:hover .dome-avatar-pod {
-          box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6), 0 0 20px rgba(255, 255, 255, 0.8);
-          transform: translateY(-2px);
-        }
-
-        .dome-item-button.active .dome-avatar-pod {
-          background: #c084fc;
-          box-shadow: 0 0 22px rgba(233, 213, 255, 0.95), 0 6px 20px rgba(124, 58, 237, 0.7);
-        }
-
-        .dome-avatar-inner {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          overflow: hidden;
-          background: #f8fafc;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .dome-avatar-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        .all-drops-icon-wrap {
-          width: 100%;
-          height: 100%;
-          background: #ffffff;
-          color: #7c3aed;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .active-radiant-glow {
-          position: absolute;
-          top: -3px;
-          right: -3px;
-          width: 13px;
-          height: 13px;
-          border-radius: 50%;
-          background: #4ade80;
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 10px #4ade80;
-        }
-
-        /* Label Text */
-        .dome-item-label {
-          font-size: 0.73rem;
-          font-weight: 700;
-          color: #ffffff;
-          max-width: 92px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-          transition: color 0.18s ease;
-        }
-
-        .dome-item-button:hover .dome-item-label,
-        .dome-item-button.active .dome-item-label {
-          color: #f3e8ff;
-          font-weight: 800;
-          text-shadow: 0 0 12px rgba(216, 180, 254, 0.9);
-        }
-
-        /* ── Responsive Adaptations ── */
-        @media (max-width: 900px) {
-          .dome-horizon-stage {
-            height: 210px;
-            --wheel-radius: 650px;
-            --wheel-pivot-top: 675px;
-          }
-          .dome-avatar-pod {
-            width: 52px;
-            height: 52px;
-          }
-          .dome-item-label {
-            font-size: 0.68rem;
-          }
-        }
-
-        @media (max-width: 600px) {
-          .dome-horizon-stage {
-            height: 190px;
-            --wheel-radius: 480px;
-            --wheel-pivot-top: 500px;
-          }
-          .dome-avatar-pod {
-            width: 46px;
-            height: 46px;
-          }
-          .dome-item-label {
-            font-size: 0.64rem;
-            max-width: 75px;
-          }
-          .dome-nav-arrow {
-            display: none;
-          }
-        }
-      `}</style>
     </section>
   );
 }

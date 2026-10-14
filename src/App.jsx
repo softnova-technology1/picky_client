@@ -21,6 +21,7 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+import TrackOrder from './pages/TrackOrder';
 import Account from './pages/Account';
 import Contact from './pages/contact/Contact';
 import About from './pages/About';
@@ -104,8 +105,8 @@ export default function App() {
           <Route path="/profile" element={<ProtectedRoute><Account /></ProtectedRoute>} />
           <Route path="/profile/*" element={<ProtectedRoute><Account /></ProtectedRoute>} />
           <Route path="/account" element={<Navigate to="/profile" replace />} />
-          <Route path="/account/*" element={<Navigate to="/profile" replace />} />
-          <Route path="/orders" element={<Navigate to="/profile?tab=orders" replace />} />
+          <Route path="/orders" element={<TrackOrder />} />
+          <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
 
           {/* ── Support & Legal ──────────────────────── */}

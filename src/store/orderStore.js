@@ -60,6 +60,13 @@ export const useOrderStore = create((set, get) => ({
     }));
   },
 
+  // ── Admin: Delete order ──────────────────────────────────────────────────
+  deleteOrder: (orderId) => {
+    set((state) => ({
+      orders: state.orders.filter((o) => o._id !== orderId && o.id !== orderId),
+    }));
+  },
+
   setOrders: (orders) => set({ orders }),
   setActiveOrder: (order) => set({ activeOrder: order }),
   setTrackingInfo: (info) => set({ trackingInfo: info }),

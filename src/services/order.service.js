@@ -8,6 +8,7 @@ export const orderService = {
   list: (params) => api.get('/orders', { params }),
   getById: (id) => api.get(`/orders/${id}`),
   getTracking: (id) => api.get(`/orders/${id}/tracking`),
+  trackByOrderNumber: (orderNumber) => api.get(`/orders/track/${encodeURIComponent(orderNumber)}`),
 
   // Admin
   adminList: (params) => api.get('/orders/admin/list', { params }),

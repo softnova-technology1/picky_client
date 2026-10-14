@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Sliders, Layers } from 'lucide-react';
+import { Plus, Edit2, Trash2, Sliders, Layers, ImageOff } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
@@ -276,11 +276,34 @@ export default function AdminCategories() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                <img
-                  src={c.image || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=200'}
-                  alt={c.name}
-                  style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover' }}
-                />
+                {c.image ? (
+                  <img
+                    src={c.image}
+                    alt={c.name}
+                    style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '10px',
+                      background: '#f8fafc',
+                      border: '1.5px dashed #cbd5e1',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#94a3b8',
+                      flexShrink: 0,
+                      gap: '3px',
+                    }}
+                    title="No image in database"
+                  >
+                    <ImageOff size={18} strokeWidth={1.8} />
+                    <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.02em' }}>No Image</span>
+                  </div>
+                )}
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', color: '#1e1b4b', fontWeight: 800 }}>{c.name}</h3>
                   <code style={{ fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>/{c.slug}</code>

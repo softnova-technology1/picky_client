@@ -48,6 +48,45 @@ const loadRazorpayScript = () => {
   });
 };
 
+// Dynamic delivery fee and duration calculator based on PIN Code zones
+export const calculateDeliveryByPincode = (pincodeStr) => {
+  const pin = (pincodeStr || '').toString().trim().replace(/\D/g, '');
+  if (!pin || pin.length < 2) {
+    return { fee: 60, daysText: 'Delivery in 5–7 business days', zone: 'Standard' };
+  }
+
+  // Zone 1: Local / Nearby Area (Pattukkottai, Peravurani, Thanjavur district - 614xxx)
+  if (pin.startsWith('614')) {
+    return { fee: 40, daysText: 'Delivery in 1–2 business days', zone: 'Local Fast Delivery' };
+  }
+
+  // Zone 2: Tamil Nadu & Pondicherry (60xxxx - 64xxxx)
+  const firstTwo = parseInt(pin.slice(0, 2), 10);
+  if (firstTwo >= 60 && firstTwo <= 64) {
+    return { fee: 60, daysText: 'Delivery in 2–3 business days', zone: 'Tamil Nadu & Pondy' };
+  }
+
+  // Zone 3: South India States (AP/Telangana 50-53, Karnataka 56-59, Kerala 67-69)
+  if (
+    (firstTwo >= 50 && firstTwo <= 53) ||
+    (firstTwo >= 56 && firstTwo <= 59) ||
+    (firstTwo >= 67 && firstTwo <= 69)
+  ) {
+    return { fee: 80, daysText: 'Delivery in 3–5 business days', zone: 'South India' };
+  }
+
+  // Zone 4: Rest of India / Metros (Delhi NCR 11-13, Maharashtra/Mumbai 40-44, Central/West 20-49)
+  if (
+    (firstTwo >= 11 && firstTwo <= 13) ||
+    (firstTwo >= 20 && firstTwo <= 49)
+  ) {
+    return { fee: 100, daysText: 'Delivery in 4–6 business days', zone: 'National Delivery' };
+  }
+
+  // Zone 5: East, North-East, Remote (70-79, 18-19, etc.)
+  return { fee: 120, daysText: 'Delivery in 5–7 business days', zone: 'Special Express' };
+};
+
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -205,8 +244,10 @@ export default function Checkout() {
     return sum + origPrice * (item.quantity || 1);
   }, 0);
 
-  // Shipping & Delivery Fee: ₹60 for Standard Delivery, ₹0 for Self Pickup
-  const deliveryFee = deliveryMode === 'pickup' ? 0 : 60;
+  // Dynamic Pincode-based Delivery Calculation (Zone-based)
+  const activePincode = (formData.pincode || (savedAddresses.find((a) => a.id === selectedAddressId)?.pincode) || '').toString().trim();
+  const deliveryInfo = calculateDeliveryByPincode(activePincode);
+  const deliveryFee = deliveryMode === 'pickup' ? 0 : deliveryInfo.fee;
   
   // Fixed Convenience Fee as shown in reference design: ₹2
   const convenienceFee = activeItems.length > 0 ? 2 : 0;
@@ -487,6 +528,7 @@ export default function Checkout() {
                     },
                     items: cartPayload,
                     subtotal,
+                    shippingFee: deliveryFee,
                     discountAmount: couponDiscount || 0,
                     total: finalPayable,
                     totalAmount: finalPayable,
@@ -617,6 +659,7 @@ export default function Checkout() {
           fullName: formData.fullName,
         },
         subtotal,
+        shippingFee: deliveryFee,
         discountAmount: couponDiscount || 0,
         total: finalPayable,
         totalAmount: finalPayable,
@@ -1142,9 +1185,16 @@ export default function Checkout() {
                       >
                         <div className={styles['mode-info']}>
                           <span className={styles['mode-title']}>STANDARD DELIVERY</span>
-                          <span className={styles['mode-desc']}>Delivery in 5–7 business days</span>
+                          <span className={styles['mode-desc']}>
+                            {deliveryInfo.daysText}
+                            {activePincode && (
+                              <span style={{ marginLeft: '0.45rem', fontSize: '0.78rem', color: '#7c3aed', fontWeight: 600 }}>
+                                • {deliveryInfo.zone} ({activePincode})
+                              </span>
+                            )}
+                          </span>
                         </div>
-                        <div className={styles['mode-price']}>₹60</div>
+                        <div className={styles['mode-price']}>₹{deliveryFee}</div>
                       </div>
 
 
@@ -1211,7 +1261,7 @@ export default function Checkout() {
                         <span className={styles['detail-value']}>
                           <span className={styles['delivery-badge']}>
                             <Truck size={12} />
-                            Standard Delivery (₹60)
+                            Standard Delivery (₹{deliveryFee})
                           </span>
                         </span>
                       </div>

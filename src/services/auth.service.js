@@ -16,4 +16,5 @@ export const authService = {
   addAddress: (data) => api.post('/auth/addresses', data),
   setDefaultAddress: (id) => api.patch(`/auth/addresses/${id}/default`),
   deleteAddress: (id) => api.delete(`/auth/addresses/${id}`),
+  changePassword: (data) => api.post('/auth/change-password', data),
 };
