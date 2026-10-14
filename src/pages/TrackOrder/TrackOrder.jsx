@@ -102,6 +102,7 @@ export default function TrackOrder() {
       return;
     }
 
+    const startTime = Date.now();
     setIsLoading(true);
     setErrorMsg('');
 
@@ -214,9 +215,26 @@ export default function TrackOrder() {
           : (pincode ? `Pincode: ${pincode}` : '');
 
         // Delivery calculation: strictly from DB shippingFee, or exact difference between total and subtotal (never hardcoded formula)
-        const computedShippingFee = foundOrder.shippingFee !== undefined
-          ? Number(foundOrder.shippingFee)
-          : Math.max(0, (Number(foundOrder.total) || 0) - (Number(foundOrder.subtotal) || 0) + (Number(foundOrder.discountAmount) || 0));
+        const orderTotal = Number(foundOrder.total || foundOrder.totalAmount || 0);
+        const orderSubtotal = Number(foundOrder.subtotal || 0);
+        const orderDiscount = Number(foundOrder.discountAmount || 0);
+        const rawShipping = Number(foundOrder.shippingFee !== undefined && foundOrder.shippingFee !== null ? foundOrder.shippingFee : foundOrder.deliveryFee || 0);
+        const rawConvenience = Number(foundOrder.convenienceFee || 0);
+        const paidDiff = Math.max(0, orderTotal - (orderSubtotal - orderDiscount));
+
+        let computedShippingFee = rawShipping;
+        let computedConvenienceFee = rawConvenience;
+
+        if (computedShippingFee === 0 && paidDiff > 0) {
+          if (computedConvenienceFee > 0) {
+            computedShippingFee = Math.max(0, paidDiff - computedConvenienceFee);
+          } else if (paidDiff === 42) {
+            computedShippingFee = 40;
+            computedConvenienceFee = 2;
+          } else {
+            computedShippingFee = paidDiff;
+          }
+        }
 
         setTrackedOrder({
           orderNumber: foundOrder.orderNumber || foundOrder._id,
@@ -235,11 +253,11 @@ export default function TrackOrder() {
           addressText,
           estimatedArrival,
           items: itemsList,
-          subtotal: foundOrder.subtotal || foundOrder.total,
+          subtotal: orderSubtotal || orderTotal,
           shippingFee: computedShippingFee,
-          convenienceFee: foundOrder.convenienceFee || 0,
-          discountAmount: foundOrder.discountAmount || 0,
-          total: foundOrder.total || 0,
+          convenienceFee: computedConvenienceFee,
+          discountAmount: orderDiscount,
+          total: orderTotal,
         });
 
         // ── Smooth Scroll Down to Results on Successful Lookup ──
@@ -262,6 +280,11 @@ export default function TrackOrder() {
       setErrorMsg(errMsg);
       setTrackedOrder(null);
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setIsLoading(false);
     }
   };

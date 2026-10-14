@@ -143,6 +143,7 @@ export default function BestSellers() {
     setLoading(true);
 
     const loadData = async () => {
+      const startTime = Date.now();
       try {
         const res = await productService.list({ limit: 100, sort: 'rating' });
         if (isMounted) {
@@ -158,6 +159,11 @@ export default function BestSellers() {
           setAllProducts(bestSellersOnly);
         }
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         if (isMounted) setLoading(false);
       }
     };

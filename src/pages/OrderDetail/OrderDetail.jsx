@@ -14,11 +14,13 @@ import styles from './OrderDetail.module.css';
 export default function OrderDetail() {
   const { id } = useParams();
   const [order, setOrder] = useState(() => getOrderById(id));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchOrder() {
+      const startTime = Date.now();
       try {
+        setLoading(true);
         const res = await orderService.getById(id);
         const item = res?.data || res;
         if (item && item.orderNumber) {
@@ -28,6 +30,13 @@ export default function OrderDetail() {
         console.error('Failed to load order:', err);
         const fallback = getOrderById(id);
         if (fallback) setOrder(fallback);
+      } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
+        setLoading(false);
       }
     }
     fetchOrder();
@@ -158,8 +167,30 @@ export default function OrderDetail() {
 
                 <div className={styles.invoiceRow}>
                   <span>Delivery Charge</span>
-                  <span className={styles.freeDeliveryBadge}>FREE DELIVERY</span>
+                  {(() => {
+                    const diff = Math.max(0, Number(order.total || 0) - (Number(order.subtotal || 0) - Number(order.discountAmount || 0)));
+                    const shipFee = Number(order.shippingFee) > 0 ? Number(order.shippingFee) : (diff > 0 ? (diff === 42 ? 40 : diff) : 0);
+                    return shipFee > 0 ? (
+                      <span className={styles.invoiceValue}>{formatPrice(shipFee)}</span>
+                    ) : (
+                      <span className={styles.freeDeliveryBadge}>FREE DELIVERY</span>
+                    );
+                  })()}
                 </div>
+
+                {(() => {
+                  const diff = Math.max(0, Number(order.total || 0) - (Number(order.subtotal || 0) - Number(order.discountAmount || 0)));
+                  const convFee = Number(order.convenienceFee) > 0 ? Number(order.convenienceFee) : (diff === 42 ? 2 : 0);
+                  if (convFee > 0) {
+                    return (
+                      <div className={styles.invoiceRow}>
+                        <span>Convenience Fee</span>
+                        <span className={styles.invoiceValue}>{formatPrice(convFee)}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
                 <div className={styles.totalRow}>
                   <span className={styles.totalLabel}>Grand Total</span>

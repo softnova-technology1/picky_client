@@ -134,6 +134,7 @@ export default function Login({ initialTab = 'login' }) {
       ? cleanPhone
       : `+91${cleanPhone.replace(/\D/g, '').slice(-10)}`;
 
+    const startTime = Date.now();
     try {
       setLoading(true);
       await authService.sendOTP(formattedPhone);
@@ -153,6 +154,11 @@ export default function Login({ initialTab = 'login' }) {
       const msg = err?.response?.data?.message || err?.message || 'Failed to send WhatsApp OTP. Please check your WhatsApp number and try again.';
       showToast(msg, 'error');
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   };
@@ -166,6 +172,7 @@ export default function Login({ initialTab = 'login' }) {
     }
 
     const activePhone = activeTab === 'signup' ? signupPhone : phone;
+    const startTime = Date.now();
 
     try {
       setLoading(true);
@@ -202,6 +209,11 @@ export default function Login({ initialTab = 'login' }) {
       const msg = err?.response?.data?.message || err?.message || 'Invalid or expired WhatsApp OTP. Please enter the correct code.';
       showToast(msg, 'error');
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   };
@@ -218,6 +230,7 @@ export default function Login({ initialTab = 'login' }) {
       return;
     }
 
+    const startTime = Date.now();
     try {
       setLoading(true);
       const res = await authService.adminLogin(adminEmail.trim(), adminPassword);
@@ -231,6 +244,11 @@ export default function Login({ initialTab = 'login' }) {
       const msg = err?.response?.data?.message || err?.message || 'Invalid administrator credentials. Please check your email and password.';
       showToast(msg, 'error');
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   };
@@ -273,31 +291,19 @@ export default function Login({ initialTab = 'login' }) {
         <div
           className="picky-auth-left"
           style={{ 
-            backgroundImage: activeTab === 'signup' 
-              ? `url('/images/top_category_jewellery.jpg')` 
-              : `url('/images/picky_all_categories_bg.jpg')`,
+            backgroundImage: `url('/images/auth_luxury_concept.jpg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             transition: 'background-image 0.65s ease-in-out'
           }}
         >
-          {/* Floating Pill and Glowing Orb on dividing seam */}
-          <div className="picky-floating-member-badge">
-            <span className="sparkle">✦</span>
-            <span>Premium Member</span>
-          </div>
-          <div className="picky-seam-orb" title="Picky Elite" />
 
           <div className="picky-auth-left-content">
             {/* Top Spacer (Rating Badge Removed as requested) */}
             <div className="picky-auth-left-top" />
 
-            {/* Bottom Elements: 1st Order Special Gift Glass Badge & Brand Logo */}
+            {/* Bottom Brand Logo & Tagline */}
             <div className="picky-auth-left-bottom">
-              <div className="picky-glass-promo-badge">
-                <div className="picky-promo-tag">1ST ORDER</div>
-                <div className="picky-promo-value">Special Gift 🎁</div>
-                <div className="picky-promo-desc">Exclusive surprise with your first order</div>
-              </div>
-
               <div className="picky-brand-typography" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                 <img src="/images/logo.png" alt="Picky Logo" style={{ height: '56px', width: 'auto', objectFit: 'contain' }} />
                 <p className="picky-brand-tagline">BECAUSE EVERY CHOICE MATTERS</p>
@@ -360,20 +366,6 @@ export default function Login({ initialTab = 'login' }) {
                 </div>
               )}
 
-              {/* Prominent WhatsApp Only Mention Banner */}
-              {!isAdminMode && step === 'phone' && (
-                <div className="picky-whatsapp-mention-banner">
-                  <div className="picky-wa-pulse-icon">
-                    <WhatsAppIcon size={16} color="#25D366" />
-                  </div>
-                  <div className="picky-wa-mention-text">
-                    <span className="picky-wa-mention-tag">WhatsApp Number Only</span>
-                    <span className="picky-wa-mention-sub">
-                      Verification code is sent strictly via WhatsApp. Normal SMS is not supported.
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* ── 1. CUSTOMER LOGIN (WHATSAPP OTP) ── */}
               {!isAdminMode && activeTab === 'login' && (

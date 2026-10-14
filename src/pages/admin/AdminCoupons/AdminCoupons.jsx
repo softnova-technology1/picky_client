@@ -219,6 +219,7 @@ export default function AdminCoupons() {
   });
 
   async function loadData() {
+    const startTime = Date.now();
     try {
       setLoading(true);
       const [cRes, dRes] = await Promise.all([
@@ -271,6 +272,11 @@ export default function AdminCoupons() {
       if (!coupons || coupons.length === 0) setCoupons([...MOCK_COUPONS]);
       if (!discounts || discounts.length === 0) setDiscounts([...MOCK_DISCOUNTS]);
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   }

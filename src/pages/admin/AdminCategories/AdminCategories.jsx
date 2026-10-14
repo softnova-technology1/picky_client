@@ -42,6 +42,7 @@ export default function AdminCategories() {
   const [previewValues, setPreviewValues] = useState({});
 
   async function loadData() {
+    const startTime = Date.now();
     try {
       setLoading(true);
       const res = await categoryService.list().catch(() => null);
@@ -51,6 +52,11 @@ export default function AdminCategories() {
       console.error('Failed to load categories:', err);
       setCategories([]);
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   }

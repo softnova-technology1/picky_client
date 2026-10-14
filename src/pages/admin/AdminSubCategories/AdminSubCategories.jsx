@@ -80,6 +80,7 @@ export default function AdminSubCategories() {
   const [loading, setLoading] = useState(false);
 
   async function loadData() {
+    const startTime = Date.now();
     try {
       setLoading(true);
       const [catRes, subRes] = await Promise.all([
@@ -93,6 +94,11 @@ export default function AdminSubCategories() {
     } catch (err) {
       console.error('Failed to load subcategories:', err);
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   }

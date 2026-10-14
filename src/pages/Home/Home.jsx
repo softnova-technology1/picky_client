@@ -291,6 +291,7 @@ export default function Home() {
 
   useEffect(() => {
     async function loadData() {
+      const startTime = Date.now();
       setLoading(true);
       try {
         const prodRes = await productService.list({ limit: 50 });
@@ -333,6 +334,11 @@ export default function Home() {
         setNewArrivals([]);
         setDealProducts([]);
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         setLoading(false);
       }
     }

@@ -110,6 +110,7 @@ export default function NewArrivals() {
 
   // Fetch real products from database (New Arrivals for Catalog, Best Sellers for Marquee)
   const loadNewArrivals = async (retryCount = 1) => {
+    const startTime = Date.now();
     try {
       setLoading(true);
       setFetchError(null);
@@ -122,6 +123,8 @@ export default function NewArrivals() {
       // Best sellers filtering for live running marquee section
       const bestSellersOnly = items.filter(isBestSellerProduct);
       setBestSellerProducts(bestSellersOnly.length > 0 ? bestSellersOnly : items);
+
+
     } catch (err) {
       console.error('Failed to load products:', err);
       if (retryCount > 0) {
@@ -131,6 +134,11 @@ export default function NewArrivals() {
       setProducts([]);
       setBestSellerProducts([]);
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   };

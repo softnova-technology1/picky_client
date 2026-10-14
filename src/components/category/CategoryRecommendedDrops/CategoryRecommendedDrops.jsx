@@ -9,13 +9,22 @@ export default function CategoryRecommendedDrops() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const startTime = Date.now();
+    setLoading(true);
     // Fetch top 10 recommended products (or fallback to latest 10)
     productService.list({ limit: 10, sort: '-rating' })
       .then((res) => {
         setDisplayProducts(res.data || []);
       })
       .catch((err) => console.error('Failed to load recommended drops', err))
-      .finally(() => setLoading(false));
+      .finally(async () => {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
+        setLoading(false);
+      });
   }, []);
 
   return (

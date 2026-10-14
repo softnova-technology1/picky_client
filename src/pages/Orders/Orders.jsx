@@ -18,6 +18,7 @@ export default function Orders() {
 
   useEffect(() => {
     async function loadOrders() {
+      const startTime = Date.now();
       try {
         setLoading(true);
         const res = await orderService.list();
@@ -31,6 +32,11 @@ export default function Orders() {
         console.error('Failed to load orders:', err);
         setOrders(mockOrders);
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         setLoading(false);
       }
     }

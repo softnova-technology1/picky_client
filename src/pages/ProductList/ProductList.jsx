@@ -82,7 +82,9 @@ export default function ProductList() {
 
   // Fetch or filter products based on query and sort
   useEffect(() => {
+    let isMounted = true;
     async function load() {
+      const startTime = Date.now();
       try {
         setLoading(true);
         const params = { sort: sort === 'all' ? 'newest' : sort };
@@ -103,25 +105,39 @@ export default function ProductList() {
         }
 
         if (Array.isArray(items) && items.length > 0) {
-          setAllProducts(items);
+          if (isMounted) setAllProducts(items);
         } else {
-          if (searchQuery.trim()) {
-            setAllProducts(searchProducts(searchQuery, params));
-          } else {
-            setAllProducts(getProducts(params));
+          if (isMounted) {
+            if (searchQuery.trim()) {
+              setAllProducts(searchProducts(searchQuery, params));
+            } else {
+              setAllProducts(getProducts(params));
+            }
           }
         }
+
+
       } catch (err) {
-        if (searchQuery.trim()) {
-          setAllProducts(searchProducts(searchQuery, { sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
-        } else {
-          setAllProducts(getProducts({ sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
+        if (isMounted) {
+          if (searchQuery.trim()) {
+            setAllProducts(searchProducts(searchQuery, { sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
+          } else {
+            setAllProducts(getProducts({ sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
+          }
         }
       } finally {
-        setLoading(false);
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
+        if (isMounted) setLoading(false);
       }
     }
     load();
+    return () => {
+      isMounted = false;
+    };
   }, [selectedCategory, selectedSubCategory, searchQuery, sort]);
 
   // Current category details

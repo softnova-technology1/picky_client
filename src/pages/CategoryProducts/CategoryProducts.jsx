@@ -26,7 +26,9 @@ export default function CategoryProducts() {
 
   useEffect(() => {
     async function load() {
+      const startTime = Date.now();
       try {
+        setLoading(true);
         const catRes = await categoryService.getBySlug(slug);
         const catData = catRes?.data || catRes;
         if (catData) setCategory(catData);
@@ -65,6 +67,13 @@ export default function CategoryProducts() {
             })
           );
         }
+      } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
+        setLoading(false);
       }
     }
     load();

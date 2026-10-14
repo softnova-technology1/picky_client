@@ -30,6 +30,7 @@ export default function AccountAddresses() {
   useEffect(() => {
     let isMounted = true;
     const fetchAddresses = async () => {
+      const startTime = Date.now();
       try {
         setLoading(true);
         const res = await authService.getAddresses();
@@ -53,6 +54,11 @@ export default function AccountAddresses() {
           if (isMounted) setAddresses(normList);
         }
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         if (isMounted) setLoading(false);
       }
     };

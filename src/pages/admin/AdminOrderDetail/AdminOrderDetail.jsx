@@ -48,6 +48,7 @@ export default function AdminOrderDetail() {
 
   useEffect(() => {
     async function loadDetail() {
+      const startTime = Date.now();
       try {
         setLoading(true);
         const res = await adminService.getOrderDetail(id);
@@ -87,6 +88,11 @@ export default function AdminOrderDetail() {
           setOrder(null);
         }
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         setLoading(false);
       }
     }

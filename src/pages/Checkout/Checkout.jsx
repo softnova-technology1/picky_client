@@ -631,6 +631,7 @@ export default function Checkout() {
   // Confirm Simulated Payment in Modal
   const handleConfirmSimulatedPayment = async () => {
     setShowRzModal(false);
+    const startTime = Date.now();
     setLoading(true);
 
     const orderId = 'ord_' + Date.now();
@@ -705,6 +706,11 @@ export default function Checkout() {
       clearBuyNowItem();
     } else {
       clearCart();
+    }
+    const elapsed = Date.now() - startTime;
+    const remainingDelay = Math.max(0, 2000 - elapsed);
+    if (remainingDelay > 0) {
+      await new Promise((r) => setTimeout(r, remainingDelay));
     }
     setLoading(false);
     showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');
@@ -1167,7 +1173,7 @@ export default function Checkout() {
                     </div>
                   </div>
 
-                  {/* Form Action Row: Continue to Next Step */}
+                  {/* Form Action Row: Back to Cart / Shop */}
                   <div className={styles['step1-actions-row']}>
                     {isBuyNow ? (
                       <button
@@ -1182,15 +1188,6 @@ export default function Checkout() {
                         <ArrowLeft size={16} /> Back to Bag
                       </Link>
                     )}
-                    <button
-                      type="button"
-                      disabled={isSavingAddress}
-                      onClick={handleConfirmDetails}
-                      className={styles['btn-confirm-details']}
-                    >
-                      <span>{isSavingAddress ? 'SAVING DETAILS...' : 'CONFIRM DETAILS'}</span>
-                      <ArrowRight size={18} />
-                    </button>
                   </div>
 
                 </div>

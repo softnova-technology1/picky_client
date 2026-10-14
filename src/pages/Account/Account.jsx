@@ -51,6 +51,7 @@ export default function Account() {
 
   useEffect(() => {
     async function loadOrders() {
+      const startTime = Date.now();
       try {
         setLoadingOrders(true);
         const res = await orderService.list().catch(() => null);
@@ -61,6 +62,11 @@ export default function Account() {
         const fallback = useOrderStore.getState().orders || [];
         setOrders(fallback);
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         setLoadingOrders(false);
       }
     }

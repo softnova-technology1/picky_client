@@ -49,6 +49,7 @@ export default function AdminInventory() {
   // Load live inventory and categories from backend
   useEffect(() => {
     async function loadLiveInventory() {
+      const startTime = Date.now();
       try {
         setIsLoading(true);
         const [invRes, catRes] = await Promise.all([
@@ -86,6 +87,11 @@ export default function AdminInventory() {
         console.warn('Could not load live inventory:', err);
         setInventoryList([]);
       } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
         setIsLoading(false);
       }
     }

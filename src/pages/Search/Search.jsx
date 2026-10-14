@@ -20,7 +20,9 @@ export default function Search() {
     }
 
     async function doSearch() {
+      const startTime = Date.now();
       try {
+        setLoading(true);
         const res = await productService.search(query);
         const items = res?.data?.data || res?.data;
         if (Array.isArray(items)) {
@@ -29,6 +31,13 @@ export default function Search() {
       } catch (err) {
         console.error('Search error:', err);
         setProducts(searchProducts(query));
+      } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 2000 - elapsed);
+        if (remainingDelay > 0) {
+          await new Promise((r) => setTimeout(r, remainingDelay));
+        }
+        setLoading(false);
       }
     }
     doSearch();

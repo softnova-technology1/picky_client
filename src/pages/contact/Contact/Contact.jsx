@@ -125,6 +125,7 @@ export default function Contact() {
       return;
     }
 
+    const startTime = Date.now();
     setLoading(true);
     try {
       const formData = new FormData();
@@ -185,6 +186,11 @@ export default function Contact() {
       console.error('Contact submission error:', err);
       showToast(err?.message || 'Failed to send message. Please try again or WhatsApp us.', 'error');
     } finally {
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 2000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
       setLoading(false);
     }
   };
