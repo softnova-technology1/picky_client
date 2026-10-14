@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Modal from '../../components/ui/Modal/Modal';
 import { useCartStore } from '../../store/cartStore';
@@ -10,6 +10,7 @@ import { authService } from '../../services/auth.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { useCouponStore } from '../../store/couponStore';
 import { useOrderStore } from '../../store/orderStore';
+import { useAbandonedCartStore } from '../../store/abandonedCartStore';
 import styles from './Checkout.module.css';
 import {
   CreditCard,
@@ -32,7 +33,8 @@ import {
   Tag,
   Minus,
   Plus,
-  Edit3
+  Edit3,
+  Zap,
 } from 'lucide-react';
 
 const loadRazorpayScript = () => {
@@ -48,10 +50,15 @@ const loadRazorpayScript = () => {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, updateQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
+  const location = useLocation();
+  const { items, updateQty, coupon, couponDiscount, setCoupon, clearCart, removeItem } = useCartStore();
   const { user, updateUser } = useAuthStore();
   const { showToast } = useUiStore();
   const { coupons } = useCouponStore();
+
+  // Support single-item "Buy Now" flow (bypasses full bag checkout)
+  const [singleItem, setSingleItem] = useState(location.state?.singleItem || null);
+  const activeItems = useMemo(() => (singleItem ? [singleItem] : items), [singleItem, items]);
 
   // Workflow step: 1 = 'checkout' (Shipping & Delivery Form), 2 = 'payment' (Payment Method & Order Summary)
   const [checkoutStep, setCheckoutStep] = useState(1);
@@ -185,13 +192,13 @@ export default function Checkout() {
   };
 
   // Calculate pricing breakdown
-  const subtotal = items.reduce((sum, item) => {
+  const subtotal = activeItems.reduce((sum, item) => {
     const price = item.discountPrice || item.price || 0;
     return sum + price * (item.quantity || 1);
   }, 0);
 
   // Original total before discounts for strikethrough effect
-  const originalSubtotal = items.reduce((sum, item) => {
+  const originalSubtotal = activeItems.reduce((sum, item) => {
     const origPrice = item.price && item.discountPrice && item.price > item.discountPrice
       ? item.price
       : Math.round((item.discountPrice || item.price || 0) * 1.25);
@@ -202,10 +209,53 @@ export default function Checkout() {
   const deliveryFee = deliveryMode === 'pickup' ? 0 : 60;
   
   // Fixed Convenience Fee as shown in reference design: ₹2
-  const convenienceFee = items.length > 0 ? 2 : 0;
+  const convenienceFee = activeItems.length > 0 ? 2 : 0;
 
   // Final Payable
   const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee - (couponDiscount || 0));
+
+  const handleItemQty = (targetItem, newQty) => {
+    if (singleItem) {
+      if (newQty <= 0) {
+        showToast('Quantity cannot be less than 1 for single checkout', 'warning');
+        return;
+      }
+      setSingleItem((prev) => ({ ...prev, quantity: newQty }));
+    } else {
+      updateQty(targetItem, newQty);
+    }
+  };
+
+  const onOrderComplete = async (placedOrder, orderItems, totalPaid) => {
+    if (singleItem) {
+      const targetId = singleItem._id || singleItem.id || singleItem.productId || singleItem.product?._id || singleItem.product?.id || singleItem.product;
+      removeItem(targetId || singleItem);
+    } else {
+      clearCart();
+    }
+
+    try {
+      const abandonedStore = useAbandonedCartStore.getState();
+      const currentCarts = abandonedStore.carts || [];
+      const userCart = currentCarts.find(
+        (c) =>
+          (c.user && (c.user._id === user?._id || c.user === user?._id)) ||
+          (c.customer && (c.customer.email === formData.email || c.customer.phone === formData.phone))
+      );
+      if (userCart) {
+        await abandonedStore.markAsRecovered(userCart._id || userCart.id, placedOrder.orderNumber, {
+          convertedItems: orderItems,
+          wonBackAmount: totalPaid,
+        });
+      }
+    } catch (e) {
+      console.warn('Abandoned cart sync notice:', e);
+    }
+
+    setLoading(false);
+    showToast('🎉 Order placed successfully!', 'success');
+    navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
+  };
 
   // Handle Promo Code Application — validated against centralized MOCK_COUPONS
   const handleApplyPromo = (e) => {
@@ -388,7 +438,7 @@ export default function Checkout() {
       const isLoaded = await loadRazorpayScript();
       if (isLoaded && window.Razorpay) {
         try {
-          const cartPayload = items.map((i) => ({
+          const cartPayload = activeItems.map((i) => ({
             productId: i.productId || i._id || i.id,
             name: i.name,
             image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
@@ -413,7 +463,7 @@ export default function Checkout() {
               amount: rzData.amount,
               currency: 'INR',
               name: 'Picky Store',
-              description: `Order Payment (${items.length} items)`,
+              description: `Order Payment (${activeItems.length} items)`,
               image: '/images/logo.png',
               order_id: rzData.razorpayOrderId,
               prefill: {
@@ -457,7 +507,7 @@ export default function Checkout() {
                     shippingAddress: formData,
                     deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
                     paymentMethod: 'razorpay',
-                    items: [...items],
+                    items: [...activeItems],
                     subtotal,
                     deliveryFee,
                     convenienceFee,
@@ -471,10 +521,7 @@ export default function Checkout() {
                     createdAt: new Date().toISOString(),
                   };
 
-                  clearCart();
-                  setLoading(false);
-                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
-                  navigate(`/order-success/${finalOrder._id || finalOrder.id}`);
+                  await onOrderComplete(finalOrder, activeItems, finalPayable);
                   return;
                 } catch (verifyErr) {
                   console.error('Razorpay verification error:', verifyErr);
@@ -486,7 +533,7 @@ export default function Checkout() {
                     shippingAddress: formData,
                     deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
                     paymentMethod: 'razorpay',
-                    items: [...items],
+                    items: [...activeItems],
                     subtotal,
                     deliveryFee,
                     convenienceFee,
@@ -499,10 +546,7 @@ export default function Checkout() {
                     courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
                     createdAt: new Date().toISOString(),
                   };
-                  clearCart();
-                  setLoading(false);
-                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
-                  navigate(`/order-success/${fallbackOrder._id || fallbackOrder.id}`);
+                  await onOrderComplete(fallbackOrder, activeItems, finalPayable);
                 }
               },
               modal: { ondismiss: () => setLoading(false) },
@@ -539,7 +583,7 @@ export default function Checkout() {
       shippingAddress: formData,
       deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
       paymentMethod: paymentMethod,
-      items: [...items],
+      items: [...activeItems],
       subtotal,
       deliveryFee,
       convenienceFee,
@@ -556,7 +600,7 @@ export default function Checkout() {
     let placedOrder = fallbackOrder;
     try {
       const payload = {
-        items: items.map((i) => ({
+        items: activeItems.map((i) => ({
           productId: i.productId || i._id || i.id,
           name: i.name,
           image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
@@ -597,14 +641,11 @@ export default function Checkout() {
       console.warn('Backend order save notice:', apiErr?.message || apiErr);
     }
 
-    clearCart();
-    setLoading(false);
-    showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');
-    navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
+    await onOrderComplete(placedOrder, activeItems, finalPayable);
   };
 
   // If cart is empty
-  if (items.length === 0) {
+  if (activeItems.length === 0) {
     return (
       <PageWrapper>
         <div className={styles['checkout-wrapper']}>
@@ -631,6 +672,78 @@ export default function Checkout() {
             <span className={styles['breadcrumb-separator']}>/</span>
             <span className={styles['breadcrumb-current']}>Checkout</span>
           </nav>
+
+          {/* ⚡ DIRECT SINGLE-ITEM PURCHASE BANNER */}
+          {singleItem && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+              border: '1.5px solid #c4b5fd',
+              borderRadius: '14px',
+              padding: '0.9rem 1.25rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
+                }}>
+                  <ShoppingBag size={17} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#4c1d95', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span>Instant Single-Item Checkout</span>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      background: '#7c3aed',
+                      color: '#ffffff',
+                      padding: '0.1rem 0.5rem',
+                      borderRadius: '999px',
+                      textTransform: 'uppercase',
+                    }}>
+                      Buy Now Mode
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.83rem', color: '#6d28d9', lineHeight: 1.4 }}>
+                    Purchasing <strong>"{singleItem.name}"</strong> only. Other items in your cart will remain safely saved in your bag!
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/cart"
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#6d28d9',
+                  background: '#ffffff',
+                  border: '1px solid #ddd6fe',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                ← Back to All Bag Items
+              </Link>
+            </div>
+          )}
 
           {/* ── 4-STEP HIGH-VISIBILITY FLOATING STEPPER HEADER BAR ── */}
           <div className={styles['stepper-wrapper']}>
@@ -1165,7 +1278,7 @@ export default function Checkout() {
 
                   {/* Cart Items List with Quantity Controls */}
                   <div className={styles['cart-items-wrapper']}>
-                    {items.map((item, index) => {
+                    {activeItems.map((item, index) => {
                       const price = item.discountPrice || item.price || 0;
                       const origPrice = item.price && item.discountPrice && item.price > item.discountPrice
                         ? item.price
@@ -1209,7 +1322,7 @@ export default function Checkout() {
                                 <button
                                   type="button"
                                   className={styles['qty-btn']}
-                                  onClick={() => updateQty(item, qty - 1)}
+                                  onClick={() => handleItemQty(item, qty - 1)}
                                   aria-label="Decrease quantity"
                                 >
                                   <Minus size={12} />
@@ -1218,7 +1331,7 @@ export default function Checkout() {
                                 <button
                                   type="button"
                                   className={styles['qty-btn']}
-                                  onClick={() => updateQty(item, qty + 1)}
+                                  onClick={() => handleItemQty(item, qty + 1)}
                                   aria-label="Increase quantity"
                                 >
                                   <Plus size={12} />

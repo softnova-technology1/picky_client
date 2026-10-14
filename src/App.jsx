@@ -33,6 +33,7 @@ import NotFound from './pages/NotFound';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
+import AdminReturns from './pages/admin/AdminReturns';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminSubCategories from './pages/admin/AdminSubCategories';
@@ -41,6 +42,10 @@ import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminCustomization from './pages/admin/AdminCustomization';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminReviews from './pages/admin/AdminReviews';
+import AdminAbandonedCarts from './pages/admin/AdminAbandonedCarts';
+import AdminBroadcast from './pages/admin/AdminBroadcast';
+import AdminFlashSales from './pages/admin/AdminFlashSales';
 
 const ADMIN = '/softpicky-sn2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
@@ -114,10 +119,15 @@ export default function App() {
           <Route path={ADMIN} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/returns`} element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/abandoned-carts`} element={<AdminProtectedRoute><AdminAbandonedCarts /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/broadcast`} element={<AdminProtectedRoute><AdminBroadcast /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/flash-sales`} element={<AdminProtectedRoute><AdminFlashSales /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/subcategories`} element={<AdminProtectedRoute><AdminSubCategories /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/reviews`} element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />

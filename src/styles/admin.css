@@ -254,6 +254,31 @@
   letter-spacing: 0.01em;
 }
 
+.admin-layout .admin-nav-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 0.75rem 0.8rem 0.25rem;
+  user-select: none;
+}
+
+.admin-layout .admin-sidebar.collapsed .admin-nav-section-title {
+  display: none;
+}
+
+.admin-layout .admin-nav-badge {
+  margin-left: auto;
+  padding: 0.12rem 0.45rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #f59e0b;
+  color: #1e1b4b;
+  line-height: 1;
+}
+
 /* ─── Nested Nav Groups in Sidebar ────────────────────────────────────────── */
 .admin-layout .admin-nav-group {
   display: flex;

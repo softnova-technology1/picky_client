@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Users,
   Layers,
-  BarChart3,
   ShoppingBag,
   Package,
   Tag,
@@ -29,10 +28,19 @@ import {
   Share2,
   Copy,
   ExternalLink,
+  RotateCcw,
+  Star,
+  ShoppingCart,
+  MessageCircle,
+  Flame,
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
+import { useReturnStore } from '../../../store/returnStore';
+import { useReviewStore } from '../../../store/reviewStore';
+import { useAbandonedCartStore } from '../../../store/abandonedCartStore';
+import { useBroadcastStore } from '../../../store/broadcastStore';
 import { adminService } from '../../../services/admin.service';
 import { productService } from '../../../services/product.service';
 import { contactService } from '../../../services/contact.service';
@@ -45,6 +53,10 @@ export default function AdminLayout({ children, title }) {
   const { user, logout } = useAuthStore();
   const { showToast } = useUiStore();
   const { categories, fetchCategories } = useCategoryStore();
+  const pendingReturnsCount = useReturnStore((s) => s.returns.filter((r) => r.status === 'pending').length);
+  const pendingReviewsCount = useReviewStore((s) => s.reviews.filter((r) => r.status === 'pending').length);
+  const pendingCartsCount = useAbandonedCartStore((s) => s.carts.filter((c) => c.status === 'pending').length);
+  const campaigns = useBroadcastStore((s) => s.campaigns);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -318,9 +330,10 @@ export default function AdminLayout({ children, title }) {
           </Link>
         </div>
 
-        {/* Navigation List - Flat Single-Level Clean Luxury Sidebar */}
+        {/* Navigation List - Structured SaaS Luxury Sidebar */}
         <nav className="admin-sidebar-nav">
-          {/* 1. Dashboard */}
+          {/* ── OVERVIEW ── */}
+          {!collapsed && <div className="admin-nav-section-title">Overview</div>}
           <NavLink
             to={ADMIN}
             end
@@ -333,7 +346,8 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Dashboard</span>}
           </NavLink>
 
-          {/* 2. Orders */}
+          {/* ── SALES & FULFILLMENT ── */}
+          {!collapsed && <div className="admin-nav-section-title">Sales & Fulfillment</div>}
           <NavLink
             to={`${ADMIN}/orders`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -345,7 +359,48 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Orders</span>}
           </NavLink>
 
-          {/* 3. Products */}
+          <NavLink
+            to={`${ADMIN}/returns`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Returns & Refunds"
+          >
+            <div className="admin-nav-icon-wrap">
+              <RotateCcw size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">Returns & Refunds</span>
+                {pendingReturnsCount > 0 && (
+                  <span className="admin-nav-badge" title={`${pendingReturnsCount} pending review`}>
+                    {pendingReturnsCount}
+                  </span>
+                )}
+              </>
+            )}
+          </NavLink>
+
+          <NavLink
+            to={`${ADMIN}/abandoned-carts`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Abandoned Carts Recovery"
+          >
+            <div className="admin-nav-icon-wrap">
+              <ShoppingCart size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">Abandoned Carts</span>
+                {pendingCartsCount > 0 && (
+                  <span className="admin-nav-badge" style={{ background: '#ef4444', color: '#ffffff' }} title={`${pendingCartsCount} pending recovery alert`}>
+                    {pendingCartsCount}
+                  </span>
+                )}
+              </>
+            )}
+          </NavLink>
+
+          {/* ── CATALOG & STOCK ── */}
+          {!collapsed && <div className="admin-nav-section-title">Catalog & Stock</div>}
           <NavLink
             to={`${ADMIN}/products`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -357,8 +412,6 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Products</span>}
           </NavLink>
 
-
-          {/* 4. Categories */}
           <NavLink
             to={`${ADMIN}/categories`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -370,7 +423,6 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Categories</span>}
           </NavLink>
 
-          {/* 5. Sub-Categories */}
           <NavLink
             to={`${ADMIN}/subcategories`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -382,7 +434,6 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Sub-Categories</span>}
           </NavLink>
 
-          {/* 6. Inventory */}
           <NavLink
             to={`${ADMIN}/inventory`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -394,19 +445,39 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Inventory</span>}
           </NavLink>
 
-          {/* 7. Users */}
+          <NavLink
+            to={`${ADMIN}/reviews`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Product Reviews & Ratings"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Star size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">Reviews & Ratings</span>
+                {pendingReviewsCount > 0 && (
+                  <span className="admin-nav-badge" title={`${pendingReviewsCount} pending moderation`}>
+                    {pendingReviewsCount}
+                  </span>
+                )}
+              </>
+            )}
+          </NavLink>
+
+          {/* ── CUSTOMERS & OFFERS ── */}
+          {!collapsed && <div className="admin-nav-section-title">Customers & Offers</div>}
           <NavLink
             to={`${ADMIN}/customers`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Users"
+            title="Users & Customers"
           >
             <div className="admin-nav-icon-wrap">
               <Users size={19} />
             </div>
-            {!collapsed && <span className="admin-nav-label">Users</span>}
+            {!collapsed && <span className="admin-nav-label">Users / Customers</span>}
           </NavLink>
 
-          {/* 8. Discount & Coupons */}
           <NavLink
             to={`${ADMIN}/coupons`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -418,25 +489,67 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && <span className="admin-nav-label">Discount & Coupons</span>}
           </NavLink>
 
+          <NavLink
+            to={`${ADMIN}/broadcast`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="WhatsApp Broadcast & Marketing Center"
+          >
+            <div className="admin-nav-icon-wrap">
+              <MessageCircle size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">WhatsApp Broadcast</span>
+                <span
+                  className="admin-nav-badge"
+                  style={{ background: '#059669', color: '#ffffff', fontSize: '0.66rem' }}
+                  title="Meta Cloud API Connected"
+                >
+                  LIVE
+                </span>
+              </>
+            )}
+          </NavLink>
 
+          <NavLink
+            to={`${ADMIN}/flash-sales`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Flash Sales & Festival Campaigns"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Flame size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">Flash Sales & Events</span>
+                <span
+                  className="admin-nav-badge"
+                  style={{ background: '#dc2626', color: '#ffffff', fontSize: '0.66rem' }}
+                  title="Active Flash Deals"
+                >
+                  HOT
+                </span>
+              </>
+            )}
+          </NavLink>
 
-          {/* 10. Customization */}
+          {/* ── STOREFRONT & SYSTEM ── */}
+          {!collapsed && <div className="admin-nav-section-title">Storefront & System</div>}
           <NavLink
             to={`${ADMIN}/customization`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Customization"
+            title="Store Customization"
           >
             <div className="admin-nav-icon-wrap">
               <Palette size={19} />
             </div>
-            {!collapsed && <span className="admin-nav-label">Customization</span>}
+            {!collapsed && <span className="admin-nav-label">Customization (CMS)</span>}
           </NavLink>
 
-          {/* 11. Settings */}
           <NavLink
             to={`${ADMIN}/settings`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Settings"
+            title="Store Settings"
           >
             <div className="admin-nav-icon-wrap">
               <Settings size={19} />
