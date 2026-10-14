@@ -27,6 +27,7 @@ import {
   Ticket,
   Flame,
   Sparkles,
+  ShoppingBag,
 } from 'lucide-react';
 import styles from './Cart.module.css';
 
@@ -85,6 +86,13 @@ export default function Cart() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [bestSellerProducts, setBestSellerProducts] = useState([]);
+
+  // Sync latest cart data from MongoDB on page mount
+  useEffect(() => {
+    if (isLoggedIn) {
+      useCartStore.getState().fetchCart?.();
+    }
+  }, [isLoggedIn]);
 
   // Fetch best seller products for running marquee showcase
   useEffect(() => {
@@ -156,6 +164,20 @@ export default function Cart() {
       return;
     }
     navigate('/checkout');
+  };
+
+  const handleBuyNowSingleItem = (item) => {
+    const sizes = getItemSizes(item);
+    const colors = getItemColors(item);
+    if (sizes.length > 0 && !item.selectedSize) {
+      showToast(`⚠️ Please select Size for "${item.name}" before checkout.`, 'error');
+      return;
+    }
+    if (colors.length > 0 && !item.selectedColor) {
+      showToast(`⚠️ Please select Color for "${item.name}" before checkout.`, 'error');
+      return;
+    }
+    navigate('/checkout', { state: { singleItem: item } });
   };
 
   const handleMoveToWishlist = (item) => {
@@ -233,27 +255,17 @@ export default function Cart() {
     const item = itemToRemove;
     const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
     removeItem(targetId || item);
-    if (isLoggedIn && targetId) {
-      cartService.removeItem(targetId).catch((err) => {
-        console.warn('Backend cart item remove fallback:', err?.message || err);
-      });
-    }
     showToast(`Removed "${item.name || 'Item'}" from cart`, 'info');
     setItemToRemove(null);
   };
 
-  const handleUpdateQty = async (item, newQty) => {
+  const handleUpdateQty = (item, newQty) => {
     const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
     if (newQty <= 0) {
       handleRemoveItem(item);
       return;
     }
     updateQty(targetId || item, newQty);
-    if (isLoggedIn && targetId) {
-      cartService.updateQty(targetId, newQty).catch((err) => {
-        console.warn('Backend cart item update fallback:', err?.message || err);
-      });
-    }
   };
 
   const renderBestSellers = () => {
@@ -519,6 +531,16 @@ export default function Cart() {
                         {/* Actions Row: Left Secondary Actions, Right Quantity Stepper */}
                         <div className={styles['item-actions-row']}>
                           <div className={styles['secondary-actions-group']}>
+                            {/* Buy Now Single Item Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleBuyNowSingleItem(item)}
+                              className={styles['buy-now-single-btn']}
+                              title={`Buy only ${item.name} now`}
+                            >
+                              <ShoppingBag size={13} strokeWidth={2.2} /> Buy Now
+                            </button>
+
                             {/* Save to Wishlist Button */}
                             <button
                               type="button"

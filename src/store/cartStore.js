@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { cartService } from '../services/cart.service';
+import { useAuthStore } from './authStore';
 
 const getItemId = (item) => {
   if (!item) return '';
   if (typeof item === 'string') return item;
   return item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product || '';
 };
+
+const qtyDebounceTimers = {};
 
 export const useCartStore = create(
   persist(
@@ -52,17 +56,15 @@ export const useCartStore = create(
         const idx = items.findIndex((i) => getItemId(i) === prodId);
         let newItems;
         if (idx > -1) {
-          newItems = items.map((i, index) => {
-            if (index === idx) {
-              const currentStock = typeof i.stock === 'number' ? i.stock : stockLimit;
-              const nextQty = Math.min((i.quantity || 1) + quantity, currentStock);
-              return { ...i, quantity: nextQty, stock: currentStock };
-            }
-            return i;
-          });
+          const currentStock = typeof items[idx].stock === 'number' ? items[idx].stock : stockLimit;
+          const nextQty = Math.min((items[idx].quantity || 1) + quantity, currentStock);
+          const updatedItem = { ...items[idx], quantity: nextQty, stock: currentStock };
+          newItems = [
+            updatedItem,
+            ...items.filter((_, index) => index !== idx),
+          ];
         } else {
           newItems = [
-            ...items,
             {
               _id: prodId,
               id: prodId,
@@ -82,9 +84,28 @@ export const useCartStore = create(
               quantity: Math.min(quantity, stockLimit),
               stock: stockLimit,
             },
+            ...items,
           ];
         }
         set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
+
+        // Real-time backend MongoDB sync with debounce
+        try {
+          const auth = useAuthStore.getState();
+          if (auth?.isLoggedIn && auth?.accessToken) {
+            const itemInList = newItems.find((i) => getItemId(i) === prodId);
+            const totalQty = itemInList ? itemInList.quantity : quantity;
+            if (qtyDebounceTimers[prodId]) {
+              clearTimeout(qtyDebounceTimers[prodId]);
+            }
+            qtyDebounceTimers[prodId] = setTimeout(() => {
+              cartService.updateQty(prodId, totalQty).catch(() => {
+                cartService.addItem(prodId, quantity).catch(() => null);
+              });
+              delete qtyDebounceTimers[prodId];
+            }, 300);
+          }
+        } catch (_) {}
       },
 
       updateVariant: (target, { selectedSize, selectedColor }) => {
@@ -132,23 +153,81 @@ export const useCartStore = create(
                 }
                 return i;
               });
-        set({ items: newItems, total: calcTotal(newItems) });
+        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
+
+        // Clear previous pending debounce for this product
+        if (qtyDebounceTimers[targetId]) {
+          clearTimeout(qtyDebounceTimers[targetId]);
+          delete qtyDebounceTimers[targetId];
+        }
+
+        // Real-time backend MongoDB sync with 300ms debounce
+        try {
+          const auth = useAuthStore.getState();
+          if (auth?.isLoggedIn && auth?.accessToken) {
+            if (quantity <= 0) {
+              cartService.removeItem(targetId).catch(() => null);
+            } else {
+              qtyDebounceTimers[targetId] = setTimeout(() => {
+                cartService.updateQty(targetId, quantity).catch((err) => {
+                  const msg = err?.response?.data?.message || err?.response?.data?.error || '';
+                  if (msg.toLowerCase().includes('stock')) {
+                    cartService.getCart().then((res) => {
+                      if (res.data?.data) get().setServerCart(res.data.data);
+                    }).catch(() => null);
+                  }
+                });
+                delete qtyDebounceTimers[targetId];
+              }, 300);
+            }
+          }
+        } catch (_) {}
       },
 
       removeItem: (target) => {
         const targetId = String(getItemId(target));
         if (!targetId) return;
 
-        const currentBuyNow = get().buyNowItem;
-        if (currentBuyNow && String(getItemId(currentBuyNow)) === targetId) {
-          set({ buyNowItem: null });
+        if (qtyDebounceTimers[targetId]) {
+          clearTimeout(qtyDebounceTimers[targetId]);
+          delete qtyDebounceTimers[targetId];
         }
 
         const newItems = get().items.filter((i) => String(getItemId(i)) !== targetId);
-        set({ items: newItems, total: calcTotal(newItems) });
+        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
+
+        // Real-time backend MongoDB sync
+        try {
+          const auth = useAuthStore.getState();
+          if (auth?.isLoggedIn && auth?.accessToken) {
+            cartService.removeItem(targetId).catch(() => null);
+          }
+        } catch (_) {}
       },
 
-      clearCart: () => set({ items: [], total: 0, coupon: null, couponDiscount: 0 }),
+      clearCart: () => {
+        set({ items: [], total: 0, coupon: null, couponDiscount: 0 });
+        try {
+          const auth = useAuthStore.getState();
+          if (auth?.isLoggedIn && auth?.accessToken) {
+            cartService.clear().catch(() => null);
+          }
+        } catch (_) {}
+      },
+
+
+      fetchCart: async () => {
+        try {
+          const auth = useAuthStore.getState();
+          if (auth?.isLoggedIn && auth?.accessToken) {
+            const res = await cartService.get();
+            const serverCart = res?.data || res;
+            if (serverCart && Array.isArray(serverCart.items)) {
+              get().setServerCart(serverCart);
+            }
+          }
+        } catch (_) {}
+      },
 
       setServerCart: (serverCart) => {
         const rawItems = serverCart.items || [];
