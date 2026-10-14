@@ -1,75 +1,74 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowRight, Package, BadgePercent, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useUiStore } from '../../../store/uiStore';
 import { productService } from '../../../services/product.service';
 import styles from './NewArrivalsHero.module.css';
 
-// Fallback items if database products are still loading
-const FALLBACK_SPOTLIGHT_PRODUCTS = [
-  {
-    id: 'spotlight-icebreeze-hoodie',
-    title: 'IceBreeze Comfort Hoodie',
-    price: 1699,
-    displayPrice: '₹1,699',
-    image: '/images/new-arrivals-hero/spotlight_green_hoodie.jpg',
-    isFeatured: false,
-  },
-  {
-    id: 'spotlight-warmnest-hoodie',
-    title: 'WarmNest Hoodie',
-    price: 2499,
-    displayPrice: '₹2,499',
-    image: '/images/new-arrivals-hero/spotlight_forest_hoodie.jpg',
-    isFeatured: false,
-  },
-  {
-    id: 'spotlight-snowshield-hoodie',
-    title: 'SnowShield Hoodie',
-    price: 2499,
-    displayPrice: '₹2,499',
-    image: '/images/new-arrivals-hero/spotlight_blue_puffer.jpg',
-    isFeatured: true,
-  },
-  {
-    id: 'spotlight-heatsole-shoes',
-    title: 'HeatSole Comfort Shoes',
-    price: 1299,
-    displayPrice: '₹1,299',
-    image: '/images/new-arrivals-hero/spotlight_shoes.jpg',
-    isFeatured: false,
-  },
-];
+// Tag check helper for New Arrivals products
+const isNewArrivalItem = (p) => {
+  if (!p) return false;
+  if (p.isNewArrival) return true;
+  if (typeof p.badge === 'string') {
+    const b = p.badge.toLowerCase();
+    if (b.includes('new') || b.includes('arrival')) return true;
+  }
+  const rawTags = Array.isArray(p.tags)
+    ? p.tags
+    : typeof p.tags === 'string'
+    ? p.tags.split(',')
+    : [];
+  return rawTags.some((t) => {
+    if (!t) return false;
+    const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
+    return clean.includes('new') || clean.includes('arrival');
+  });
+};
 
 export default function NewArrivalsHero({
   products: propProducts = [],
+  isLoading: propLoading = false,
   onExploreClick,
   categories = [],
   activeCategory = 'all',
   onSelectCategory,
 }) {
-  const { addItem } = useCartStore();
+  const navigate = useNavigate();
+  const { addItem, setBuyNowItem } = useCartStore();
   const { showToast } = useUiStore();
-  const [dbProducts, setDbProducts] = useState(propProducts);
+  const [dbProducts, setDbProducts] = useState(propProducts || []);
+  const [isLoading, setIsLoading] = useState(propLoading || (!propProducts || propProducts.length === 0));
 
   // Sync propProducts or fetch directly from backend DB API
   useEffect(() => {
     if (Array.isArray(propProducts) && propProducts.length > 0) {
       setDbProducts(propProducts);
+      setIsLoading(false);
+      return;
+    }
+
+    // If parent is currently loading products, wait for parent without duplicate fetch
+    if (propLoading) {
+      setIsLoading(true);
       return;
     }
 
     let isMounted = true;
     async function fetchDbProducts() {
       try {
-        const res = await productService.list({ limit: 20, sort: 'newest' });
+        setIsLoading(true);
+        const res = await productService.list({ limit: 50, sort: 'newest' });
         const data = res?.data || res;
         const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-        if (isMounted && items.length > 0) {
-          setDbProducts(items);
+        if (isMounted) {
+          const newArrivals = items.filter(isNewArrivalItem);
+          setDbProducts(newArrivals.length > 0 ? newArrivals : items);
+          setIsLoading(false);
         }
       } catch (err) {
         console.warn('Hero could not fetch DB products:', err);
+        if (isMounted) setIsLoading(false);
       }
     }
     fetchDbProducts();
@@ -77,25 +76,28 @@ export default function NewArrivalsHero({
     return () => {
       isMounted = false;
     };
-  }, [propProducts]);
+  }, [propProducts, propLoading]);
 
-  // Transform DB products into spotlight card model
+  // Transform DB products into spotlight card model (100% Real DB Data)
   const spotlightList = useMemo(() => {
     if (Array.isArray(dbProducts) && dbProducts.length > 0) {
       return dbProducts.map((p, idx) => {
-        const rawImg = (Array.isArray(p.images) && p.images[0]) || p.image || '/images/new-arrivals-hero/spotlight_forest_hoodie.jpg';
+        const rawImg =
+          (Array.isArray(p.images) && p.images[0]) ||
+          p.image ||
+          '/placeholder-product.png';
         return {
           id: p._id || p.id || `db-prod-${idx}`,
           rawProduct: p,
-          title: p.title || p.name || 'New Arrival Collection',
-          price: p.price || 1999,
+          title: p.name || p.title || 'New Arrival Collection',
+          price: p.price || 0,
           displayPrice: `₹${(p.price || 0).toLocaleString('en-IN')}`,
           image: rawImg,
-          isFeatured: idx % 4 === 2, // highlight every 3rd or 4th card with the signature purple border
+          isFeatured: idx % 3 === 1,
         };
       });
     }
-    return FALLBACK_SPOTLIGHT_PRODUCTS;
+    return [];
   }, [dbProducts]);
 
   // Duplicate for seamless 360-degree running marquee loop
@@ -111,23 +113,24 @@ export default function NewArrivalsHero({
   const handleBuyNow = (product, e) => {
     e.stopPropagation();
     try {
-      const itemToAdd = product.rawProduct || {
-        _id: product.id,
-        id: product.id,
-        title: product.title,
-        name: product.title,
-        price: product.price,
-        images: [product.image],
-        image: product.image,
-        inStock: true,
-      };
-
-      addItem(itemToAdd, 1);
-      if (showToast) {
-        showToast(`Added ${product.title} to your bag!`, 'success');
-      }
+      const raw = product.rawProduct || product;
+      const prodId = product.id || product._id || raw._id || raw.id;
+      setBuyNowItem({
+        _id: prodId,
+        id: prodId,
+        productId: prodId,
+        name: product.title || raw.name || 'New Arrival Item',
+        image: product.image || (Array.isArray(raw.images) ? raw.images[0] : raw.image) || '/placeholder-product.png',
+        images: Array.isArray(raw.images) ? raw.images : [product.image],
+        price: product.price || raw.discountPrice || raw.price || 0,
+        discountPrice: raw.discountPrice || product.price || 0,
+        originalPrice: raw.originalPrice || product.price || 0,
+        quantity: 1,
+        stock: typeof raw.stock === 'number' ? raw.stock : (typeof product.stock === 'number' ? product.stock : 10),
+      });
+      navigate('/checkout?buyNow=true');
     } catch (err) {
-      console.warn('Could not add to cart:', err);
+      console.warn('Could not proceed to direct checkout:', err);
     }
   };
 
@@ -155,75 +158,16 @@ export default function NewArrivalsHero({
             <span className={styles.capsuleText}>WINTER COLLECTION 2026</span>
           </div>
 
-          {/* Bold Display Headline with Luxury Serif Accent */}
-          <div className={styles.heroTitle}>
-            <div className={styles.titleLineNew}>
-              <span>NEW</span>
-              <span className={styles.titleStar}>✦</span>
-            </div>
-            <div className={styles.titleLineArrivals}>
-              <span className={styles.arrivalsText}>ARRIVALS</span>
-              <svg
-                className={styles.arrivalsSwoosh}
-                viewBox="0 0 280 18"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M2 13C65 18 195 18 278 4C210 11 90 11 2 13Z"
-                  fill="url(#swooshGradient)"
-                />
-                <defs>
-                  <linearGradient
-                    id="swooshGradient"
-                    x1="2"
-                    y1="13"
-                    x2="278"
-                    y2="13"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="#6D28D9" />
-                    <stop offset="0.5" stopColor="#9333EA" />
-                    <stop offset="1" stopColor="#C084FC" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-          </div>
+          {/* Unified Luxury Display Headline */}
+          <h1 className={styles.heroTitle}>
+            <span className={styles.titleWordNew}>NEW</span>
+            <span className={styles.titleWordArrivals}>ARRIVALS</span>
+          </h1>
 
           {/* Subtitle */}
           <p className={styles.heroSubtitle}>
             Trendy styles, everyday comfort made for your season.
           </p>
-
-          {/* Trust / Benefit Feature Highlights Card */}
-          <div className={styles.trustCard}>
-            <div className={styles.trustItem}>
-              <div className={styles.trustIconBox}>
-                <Package size={17} strokeWidth={2.2} />
-              </div>
-              <div className={styles.trustText}>
-                <span className={styles.trustTitle}>7 DAYS</span>
-                <span className={styles.trustSubtitle}>Easy Returns</span>
-              </div>
-            </div>
-
-            <div className={styles.trustDivider} aria-hidden="true" />
-
-            <div className={styles.trustItem}>
-              <div className={styles.trustIconBox}>
-                <BadgePercent size={17} strokeWidth={2.2} />
-              </div>
-              <div className={styles.trustText}>
-                <span className={styles.trustTitle}>
-                  Extra <span className={styles.trustHighlight}>10% OFF</span>
-                </span>
-                <span className={styles.trustSubtitle}>For New Users</span>
-              </div>
-            </div>
-          </div>
 
           {/* Call to Action Button */}
           <button
@@ -244,10 +188,6 @@ export default function NewArrivalsHero({
             <div className={styles.exploreTitleGroup}>
               <div className={styles.exploreHeadingRow}>
                 <h2 className={styles.exploreTitle}>Explore Collection</h2>
-                <span className={styles.liveDropPill}>
-                  <span className={styles.livePulseDot} />
-                  Live Drops ({spotlightList.length})
-                </span>
               </div>
               <p className={styles.exploreSubtitle}>
                 Warm, durable, and made for winter adventures.
@@ -303,7 +243,7 @@ export default function NewArrivalsHero({
                       loading="lazy"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = '/images/new-arrivals-hero/spotlight_green_hoodie.jpg';
+                        e.target.src = '/placeholder-product.png';
                       }}
                     />
                   </div>

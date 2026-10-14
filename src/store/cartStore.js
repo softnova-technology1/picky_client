@@ -14,8 +14,22 @@ export const useCartStore = create(
       total: 0,
       coupon: null,
       couponDiscount: 0,
+      buyNowItem: null, // express checkout item (never pollutes shopping cart)
 
       setCoupon: (code, discount) => set({ coupon: code, couponDiscount: discount }),
+      setBuyNowItem: (item) => set({ buyNowItem: item }),
+      clearBuyNowItem: () => set({ buyNowItem: null }),
+      updateBuyNowQty: (quantity) => {
+        const current = get().buyNowItem;
+        if (!current) return;
+        if (quantity <= 0) {
+          set({ buyNowItem: null });
+        } else {
+          const maxStock = typeof current.stock === 'number' ? current.stock : 99;
+          const cappedQty = Math.min(quantity, maxStock);
+          set({ buyNowItem: { ...current, quantity: cappedQty } });
+        }
+      },
 
       addItem: (product, quantity = 1) => {
         const items = get().items;
@@ -34,12 +48,18 @@ export const useCartStore = create(
             ? product.colors
             : [];
 
+        const stockLimit = typeof product.stock === 'number' ? product.stock : 10;
         const idx = items.findIndex((i) => getItemId(i) === prodId);
         let newItems;
         if (idx > -1) {
-          newItems = items.map((i, index) =>
-            index === idx ? { ...i, quantity: (i.quantity || 1) + quantity } : i
-          );
+          newItems = items.map((i, index) => {
+            if (index === idx) {
+              const currentStock = typeof i.stock === 'number' ? i.stock : stockLimit;
+              const nextQty = Math.min((i.quantity || 1) + quantity, currentStock);
+              return { ...i, quantity: nextQty, stock: currentStock };
+            }
+            return i;
+          });
         } else {
           newItems = [
             ...items,
@@ -59,7 +79,8 @@ export const useCartStore = create(
               availableSizes,
               availableColors,
               hasVariants: availableSizes.length > 0 || availableColors.length > 0,
-              quantity,
+              quantity: Math.min(quantity, stockLimit),
+              stock: stockLimit,
             },
           ];
         }
@@ -88,22 +109,43 @@ export const useCartStore = create(
         const targetId = String(getItemId(target));
         if (!targetId) return;
 
+        const currentBuyNow = get().buyNowItem;
+        if (currentBuyNow && String(getItemId(currentBuyNow)) === targetId) {
+          if (quantity <= 0) {
+            set({ buyNowItem: null });
+          } else {
+            const maxStock = typeof currentBuyNow.stock === 'number' ? currentBuyNow.stock : 99;
+            const cappedQty = Math.min(quantity, maxStock);
+            set({ buyNowItem: { ...currentBuyNow, quantity: cappedQty } });
+          }
+        }
+
         const currentItems = get().items;
         const newItems =
           quantity <= 0
             ? currentItems.filter((i) => String(getItemId(i)) !== targetId)
-            : currentItems.map((i) =>
-                String(getItemId(i)) === targetId ? { ...i, quantity } : i
-              );
-        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
+            : currentItems.map((i) => {
+                if (String(getItemId(i)) === targetId) {
+                  const maxStock = typeof i.stock === 'number' ? i.stock : 99;
+                  const cappedQty = Math.min(quantity, maxStock);
+                  return { ...i, quantity: cappedQty };
+                }
+                return i;
+              });
+        set({ items: newItems, total: calcTotal(newItems) });
       },
 
       removeItem: (target) => {
         const targetId = String(getItemId(target));
         if (!targetId) return;
 
+        const currentBuyNow = get().buyNowItem;
+        if (currentBuyNow && String(getItemId(currentBuyNow)) === targetId) {
+          set({ buyNowItem: null });
+        }
+
         const newItems = get().items.filter((i) => String(getItemId(i)) !== targetId);
-        set({ items: newItems, total: calcTotal(newItems), coupon: null, couponDiscount: 0 });
+        set({ items: newItems, total: calcTotal(newItems) });
       },
 
       clearCart: () => set({ items: [], total: 0, coupon: null, couponDiscount: 0 }),
@@ -133,7 +175,7 @@ export const useCartStore = create(
     }),
     {
       name: 'picky-cart',
-      partialize: (state) => ({ items: state.items, coupon: state.coupon, couponDiscount: state.couponDiscount }),
+      partialize: (state) => ({ items: state.items, coupon: state.coupon, couponDiscount: state.couponDiscount, buyNowItem: state.buyNowItem }),
     }
   )
 );

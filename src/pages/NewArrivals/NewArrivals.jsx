@@ -51,7 +51,9 @@ export default function NewArrivals() {
   const [discountFilter, setDiscountFilter] = useState('all'); // 'all' | '10' | '20' | '30' | '50'
   const [isFilterFolderOpen, setIsFilterFolderOpen] = useState(false);
   const [products, setProducts] = useState([]);
+  const [bestSellerProducts, setBestSellerProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const catalogRef = useRef(null);
 
   // Lock body scroll when drawer is open so the viewport stays stationary
@@ -86,30 +88,55 @@ export default function NewArrivals() {
     });
   };
 
-  // Fetch real newest products from database (strictly filtered by New Arrivals tag)
-  useEffect(() => {
-    let isMounted = true;
-    async function loadNewArrivals() {
-      try {
-        setLoading(true);
-        const res = await productService.list({ limit: 100, sort: 'newest' });
-        const data = res?.data || res;
-        const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-        if (isMounted) {
-          const newArrivalsOnly = items.filter(isNewArrivalProduct);
-          setProducts(newArrivalsOnly);
-        }
-      } catch (err) {
-        console.error('Failed to load new arrivals:', err);
-        if (isMounted) setProducts([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+  // Helper to filter for products with Best Sellers tag / flag (matches BestSellers page)
+  const isBestSellerProduct = (p) => {
+    if (!p) return false;
+    if (p.isBestSeller) return true;
+    if (typeof p.badge === 'string') {
+      const b = p.badge.toLowerCase();
+      if (b.includes('best') || b.includes('seller')) return true;
     }
-    loadNewArrivals();
-    return () => {
-      isMounted = false;
-    };
+    const rawTags = Array.isArray(p.tags)
+      ? p.tags
+      : typeof p.tags === 'string'
+      ? p.tags.split(',')
+      : [];
+    return rawTags.some((t) => {
+      if (!t) return false;
+      const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
+      return clean.includes('best') || clean.includes('seller');
+    });
+  };
+
+  // Fetch real products from database (New Arrivals for Catalog, Best Sellers for Marquee)
+  const loadNewArrivals = async (retryCount = 1) => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      const res = await productService.list({ limit: 100, sort: 'newest' });
+      const data = res?.data || res;
+      const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      const newArrivalsOnly = items.filter(isNewArrivalProduct);
+      setProducts(newArrivalsOnly.length > 0 ? newArrivalsOnly : items);
+
+      // Best sellers filtering for live running marquee section
+      const bestSellersOnly = items.filter(isBestSellerProduct);
+      setBestSellerProducts(bestSellersOnly.length > 0 ? bestSellersOnly : items);
+    } catch (err) {
+      console.error('Failed to load products:', err);
+      if (retryCount > 0) {
+        return loadNewArrivals(retryCount - 1);
+      }
+      setFetchError('Unable to load products. Please try again.');
+      setProducts([]);
+      setBestSellerProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNewArrivals(1);
   }, []);
 
   // Dynamic DB Categories + All New Arrivals as Circular Story Avatars (100% Radius)
@@ -364,9 +391,9 @@ export default function NewArrivals() {
     setDiscountFilter('all');
   };
 
-  // Continuous infinite running cards list
+  // Continuous infinite running cards list for Best Sellers
   const marqueeItems = useMemo(() => {
-    const baseList = products.length > 0 ? products : processedProducts;
+    const baseList = bestSellerProducts.length > 0 ? bestSellerProducts : products;
     if (!baseList.length) return [];
 
     let singleCycle = [...baseList];
@@ -375,7 +402,7 @@ export default function NewArrivals() {
     }
 
     return [...singleCycle, ...singleCycle];
-  }, [products, processedProducts]);
+  }, [bestSellerProducts, products]);
 
   const handleScrollToCatalog = () => {
     if (catalogRef.current) {
@@ -390,6 +417,7 @@ export default function NewArrivals() {
         <div style={{ position: 'relative' }}>
           <NewArrivalsHero
             products={products}
+            isLoading={loading}
             onExploreClick={handleScrollToCatalog}
             categories={categoryStories}
             activeCategory={activeCategory}
@@ -860,6 +888,42 @@ export default function NewArrivals() {
                 Loading fresh new arrivals...
               </p>
             </div>
+          ) : fetchError ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '4rem 2rem',
+                background: '#ffffff',
+                borderRadius: '24px',
+                border: '1.5px solid #ede9fe',
+                marginBottom: '4rem',
+              }}
+            >
+              <h3 style={{ color: '#1e1b4b', fontWeight: 800, marginBottom: '0.5rem' }}>
+                Unable to load fresh arrivals
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                {fetchError}
+              </p>
+              <button
+                onClick={() => loadNewArrivals(1)}
+                style={{
+                  background: '#7c3aed',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '9999px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <RotateCcw size={14} />
+                <span>Try Again</span>
+              </button>
+            </div>
           ) : processedProducts.length === 0 ? (
             <div
               style={{
@@ -900,19 +964,19 @@ export default function NewArrivals() {
             </div>
           )}
 
-          {/* ── 3. Continuous Running Showcase Section (Infinite Marquee) ── */}
+          {/* ── 3. Continuous Running Showcase Section (Infinite Marquee for Best Sellers) ── */}
           {marqueeItems.length > 0 && (
-            <section className="new-arrivals-marquee-section" aria-label="New Arrivals Live Showcase">
+            <section className="new-arrivals-marquee-section" aria-label="Best Sellers Live Showcase">
               <div className="new-arrivals-marquee-header-wrap">
                 <div className="marquee-badge-pill">
-                  <Sparkles size={14} className="marquee-sparkle-icon" />
-                  <span>Live Stream • Always In Motion</span>
+                  <Flame size={14} className="marquee-sparkle-icon" color="#f97316" />
+                  <span>Best Sellers • Top Customer Picks</span>
                 </div>
                 <h3 className="new-arrivals-marquee-title">
-                  All New Arrivals <span>Running Live</span>
+                  All Best Sellers <span>Running Live</span>
                 </h3>
                 <p className="new-arrivals-marquee-subtitle">
-                  Continuous live stream of our latest handpicked releases. Hover over any card to pause and explore.
+                  Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.
                 </p>
               </div>
 

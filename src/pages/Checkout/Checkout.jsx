@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Modal from '../../components/ui/Modal/Modal';
 import { useCartStore } from '../../store/cartStore';
@@ -55,7 +55,7 @@ export const calculateDeliveryByPincode = (pincodeStr) => {
 
   // Zone 1: Local / Nearby Area (Pattukkottai, Peravurani, Thanjavur district - 614xxx)
   if (pin.startsWith('614')) {
-    return { fee: 40, daysText: 'Delivery in 1–2 business days', zone: 'Local Fast Delivery' };
+    return { fee: 40, daysText: 'Delivery in 5–7 business days', zone: 'Local Fast Delivery' };
   }
 
   // Zone 2: Tamil Nadu & Pondicherry (60xxxx - 64xxxx)
@@ -87,7 +87,39 @@ export const calculateDeliveryByPincode = (pincodeStr) => {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, updateQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
+  const [searchParams] = useSearchParams();
+  const { items, buyNowItem, clearBuyNowItem, updateQty, updateBuyNowQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
+  const isBuyNow = searchParams.get('buyNow') === 'true' && Boolean(buyNowItem);
+  const checkoutItems = isBuyNow ? [buyNowItem] : items;
+
+  // Handle quantity changes cleanly in checkout (both Buy Now and regular bag items)
+  const handleUpdateItemQty = (item, newQty) => {
+    if (newQty < 1) return;
+    const maxStock = typeof item.stock === 'number' ? item.stock : (typeof item.countInStock === 'number' ? item.countInStock : 10);
+    if (newQty > maxStock) {
+      showToast(`Only ${maxStock} units available in stock for "${item.name}"`, 'warning');
+      return;
+    }
+    if (isBuyNow) {
+      if (updateBuyNowQty) {
+        updateBuyNowQty(newQty);
+      } else {
+        updateQty(item, newQty);
+      }
+    } else {
+      updateQty(item, newQty);
+    }
+  };
+
+  // Enforce stock ceiling on mount / loaded state
+  React.useEffect(() => {
+    if (isBuyNow && buyNowItem) {
+      const maxStock = typeof buyNowItem.stock === 'number' ? buyNowItem.stock : 10;
+      if ((buyNowItem.quantity || 1) > maxStock) {
+        updateBuyNowQty(maxStock);
+      }
+    }
+  }, [isBuyNow, buyNowItem?.stock]);
   const { user, updateUser } = useAuthStore();
   const { showToast } = useUiStore();
   const { coupons } = useCouponStore();
@@ -224,13 +256,13 @@ export default function Checkout() {
   };
 
   // Calculate pricing breakdown
-  const subtotal = items.reduce((sum, item) => {
+  const subtotal = checkoutItems.reduce((sum, item) => {
     const price = item.discountPrice || item.price || 0;
     return sum + price * (item.quantity || 1);
   }, 0);
 
   // Original total before discounts for strikethrough effect
-  const originalSubtotal = items.reduce((sum, item) => {
+  const originalSubtotal = checkoutItems.reduce((sum, item) => {
     const origPrice = item.price && item.discountPrice && item.price > item.discountPrice
       ? item.price
       : Math.round((item.discountPrice || item.price || 0) * 1.25);
@@ -243,7 +275,7 @@ export default function Checkout() {
   const deliveryFee = deliveryMode === 'pickup' ? 0 : deliveryInfo.fee;
   
   // Fixed Convenience Fee as shown in reference design: ₹2
-  const convenienceFee = items.length > 0 ? 2 : 0;
+  const convenienceFee = checkoutItems.length > 0 ? 2 : 0;
 
   // Final Payable
   const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee - (couponDiscount || 0));
@@ -307,6 +339,35 @@ export default function Checkout() {
     setCoupon(null, 0);
     showToast('Coupon code removed', 'info');
   };
+
+  // Recalculate applied coupon discount dynamically if quantity/subtotal changes
+  React.useEffect(() => {
+    if (!coupon) return;
+    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
+    const matched = availableCoupons.find(
+      (c) => c.code.toUpperCase() === coupon.toUpperCase() && c.isActive !== false
+    );
+    if (!matched) return;
+
+    if (matched.minOrderAmount && subtotal < matched.minOrderAmount) {
+      setCoupon(null, 0);
+      showToast(`Coupon "${coupon}" removed: order below min. ${formatPrice(matched.minOrderAmount)}`, 'info');
+      return;
+    }
+
+    let discount = 0;
+    if (matched.type === 'percentage') {
+      discount = Math.round((subtotal * matched.value) / 100);
+      if (matched.maxDiscountAmount) {
+        discount = Math.min(discount, matched.maxDiscountAmount);
+      }
+    } else {
+      discount = Math.min(subtotal, matched.value);
+    }
+    if (discount !== couponDiscount) {
+      setCoupon(coupon, discount);
+    }
+  }, [subtotal, coupon, coupons, couponDiscount]);
 
   // Step 1 Validation & Proceeding to Payment Step
   const handleConfirmDetails = async (e) => {
@@ -429,7 +490,7 @@ export default function Checkout() {
       const isLoaded = await loadRazorpayScript();
       if (isLoaded && window.Razorpay) {
         try {
-          const cartPayload = items.map((i) => ({
+          const cartPayload = checkoutItems.map((i) => ({
             productId: i.productId || i._id || i.id,
             name: i.name,
             image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
@@ -454,7 +515,7 @@ export default function Checkout() {
               amount: rzData.amount,
               currency: 'INR',
               name: 'Picky Store',
-              description: `Order Payment (${items.length} items)`,
+              description: `Order Payment (${checkoutItems.length} items)`,
               image: '/images/logo.png',
               order_id: rzData.razorpayOrderId,
               prefill: {
@@ -598,7 +659,7 @@ export default function Checkout() {
     let placedOrder = fallbackOrder;
     try {
       const payload = {
-        items: items.map((i) => ({
+        items: checkoutItems.map((i) => ({
           productId: i.productId || i._id || i.id,
           name: i.name,
           image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
@@ -640,14 +701,18 @@ export default function Checkout() {
       console.warn('Backend order save notice:', apiErr?.message || apiErr);
     }
 
-    clearCart();
+    if (isBuyNow) {
+      clearBuyNowItem();
+    } else {
+      clearCart();
+    }
     setLoading(false);
     showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');
     navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
   };
 
   // If cart is empty
-  if (items.length === 0) {
+  if (checkoutItems.length === 0) {
     return (
       <PageWrapper>
         <div className={styles['checkout-wrapper']}>
@@ -678,17 +743,30 @@ export default function Checkout() {
           {/* ── 4-STEP HIGH-VISIBILITY FLOATING STEPPER HEADER BAR ── */}
           <div className={styles['stepper-wrapper']}>
             <div className={styles['stepper-header']}>
-              {/* Step 1: BAG */}
-              <Link to="/cart" className={`${styles['step-item']} ${styles['completed']}`}>
-                <div className={styles['step-target-node']}>
-                  <div className={styles['target-ring']}>
-                    <div className={styles['target-dot']}>
-                      <Check size={11} strokeWidth={3.5} />
+              {/* Step 1: BAG or ITEM */}
+              {isBuyNow ? (
+                <div className={`${styles['step-item']} ${styles['completed']}`}>
+                  <div className={styles['step-target-node']}>
+                    <div className={styles['target-ring']}>
+                      <div className={styles['target-dot']}>
+                        <Check size={11} strokeWidth={3.5} />
+                      </div>
                     </div>
                   </div>
+                  <span className={styles['step-label']}>ITEM</span>
                 </div>
-                <span className={styles['step-label']}>BAG</span>
-              </Link>
+              ) : (
+                <Link to="/cart" className={`${styles['step-item']} ${styles['completed']}`}>
+                  <div className={styles['step-target-node']}>
+                    <div className={styles['target-ring']}>
+                      <div className={styles['target-dot']}>
+                        <Check size={11} strokeWidth={3.5} />
+                      </div>
+                    </div>
+                  </div>
+                  <span className={styles['step-label']}>BAG</span>
+                </Link>
+              )}
 
               <div className={`${styles['step-connector']} ${styles['active']}`} />
 
@@ -739,7 +817,7 @@ export default function Checkout() {
           </div>
 
           {/* ── CHECKOUT LAYOUT ── */}
-          <div className={checkoutStep === 1 ? styles['checkout-layout-single'] : styles['checkout-layout']}>
+          <div className={styles['checkout-layout']}>
 
             {/* ── LEFT PANEL CONTENT ── */}
             <div className={styles['left-panel']}>
@@ -1091,9 +1169,19 @@ export default function Checkout() {
 
                   {/* Form Action Row: Continue to Next Step */}
                   <div className={styles['step1-actions-row']}>
-                    <Link to="/cart" className={styles['btn-back-cart']}>
-                      <ArrowLeft size={16} /> Back to Bag
-                    </Link>
+                    {isBuyNow ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className={styles['btn-back-cart']}
+                      >
+                        <ArrowLeft size={16} /> Back
+                      </button>
+                    ) : (
+                      <Link to="/cart" className={styles['btn-back-cart']}>
+                        <ArrowLeft size={16} /> Back to Bag
+                      </Link>
+                    )}
                     <button
                       type="button"
                       disabled={isSavingAddress}
@@ -1206,16 +1294,15 @@ export default function Checkout() {
 
             </div>
 
-            {/* ── RIGHT PANEL: ORDER SUMMARY SIDEBAR ── */}
-            {checkoutStep === 2 && (
-              <div className={styles['right-panel']}>
-                <div className={styles['order-summary-card']}>
+            {/* ── RIGHT PANEL: ORDER SUMMARY SIDEBAR (Visible across all steps) ── */}
+            <div className={styles['right-panel']}>
+              <div className={styles['order-summary-card']}>
                   
                   <h3 className={styles['summary-title']}>Order Summary</h3>
 
                   {/* Cart Items List with Quantity Controls */}
                   <div className={styles['cart-items-wrapper']}>
-                    {items.map((item, index) => {
+                    {checkoutItems.map((item, index) => {
                       const price = item.discountPrice || item.price || 0;
                       const origPrice = item.price && item.discountPrice && item.price > item.discountPrice
                         ? item.price
@@ -1253,28 +1340,46 @@ export default function Checkout() {
                             )}
 
                             {/* Quantity Counter (- 1 +) */}
-                            <div className={styles['qty-counter-row']}>
-                              <span className={styles['qty-label']}>Qty:</span>
-                              <div className={styles['qty-btn-group']}>
-                                <button
-                                  type="button"
-                                  className={styles['qty-btn']}
-                                  onClick={() => updateQty(item, qty - 1)}
-                                  aria-label="Decrease quantity"
-                                >
-                                  <Minus size={12} />
-                                </button>
-                                <span className={styles['qty-num']}>{qty}</span>
-                                <button
-                                  type="button"
-                                  className={styles['qty-btn']}
-                                  onClick={() => updateQty(item, qty + 1)}
-                                  aria-label="Increase quantity"
-                                >
-                                  <Plus size={12} />
-                                </button>
-                              </div>
-                            </div>
+                            {(() => {
+                              const maxStock = typeof item.stock === 'number' ? item.stock : (typeof item.countInStock === 'number' ? item.countInStock : 10);
+                              const isMaxReached = qty >= maxStock;
+                              return (
+                                <div className={styles['qty-counter-row']}>
+                                  <span className={styles['qty-label']}>Qty:</span>
+                                  <div className={styles['qty-btn-group']}>
+                                    <button
+                                      type="button"
+                                      className={styles['qty-btn']}
+                                      disabled={qty <= 1}
+                                      onClick={() => handleUpdateItemQty(item, qty - 1)}
+                                      aria-label="Decrease quantity"
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className={styles['qty-num']}>{qty}</span>
+                                    <button
+                                      type="button"
+                                      className={`${styles['qty-btn']} ${isMaxReached ? styles['qty-btn-disabled'] : ''}`}
+                                      disabled={isMaxReached}
+                                      onClick={() => {
+                                        if (isMaxReached) {
+                                          showToast(`Max stock reached: Only ${maxStock} units available`, 'info');
+                                          return;
+                                        }
+                                        handleUpdateItemQty(item, qty + 1);
+                                      }}
+                                      aria-label="Increase quantity"
+                                      title={isMaxReached ? `Max stock available: ${maxStock}` : 'Increase quantity'}
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                  <span className={styles['stock-pill-badge']}>
+                                    {maxStock} in stock
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           {/* Prices: Strikethrough original price & current price */}
@@ -1320,7 +1425,7 @@ export default function Checkout() {
                             setPromoCodeInput(e.target.value);
                             setPromoError('');
                           }}
-                          placeholder="E.G. MAZHAI10"
+                          placeholder="ENTER PROMO CODE"
                           className={styles['promo-input']}
                         />
                         <button type="submit" className={styles['btn-apply-promo']}>
@@ -1380,15 +1485,20 @@ export default function Checkout() {
                     </span>
                   </div>
 
-                  {/* Complete Order Action Button */}
+                  {/* Complete Order / Confirm Details Action Button */}
                   <button
                     type="button"
-                    onClick={handleInitiatePayment}
-                    disabled={loading}
+                    onClick={checkoutStep === 1 ? handleConfirmDetails : handleInitiatePayment}
+                    disabled={loading || (checkoutStep === 1 && isSavingAddress)}
                     className={styles['btn-action-primary']}
                   >
                     {loading ? (
                       <span>Processing...</span>
+                    ) : checkoutStep === 1 ? (
+                      <>
+                        <span>{isSavingAddress ? 'SAVING DETAILS...' : 'CONFIRM DETAILS'}</span>
+                        <ArrowRight size={18} />
+                      </>
                     ) : (
                       <>
                         <span>COMPLETE ORDER</span>
@@ -1405,7 +1515,6 @@ export default function Checkout() {
 
                 </div>
               </div>
-            )}
 
           </div>
         </div>

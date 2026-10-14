@@ -11,7 +11,7 @@ import './ProductCard.css';
 
 export default function ProductCard({ product, actionText = 'Add to Cart', onAction, onRemoveWishlist, badgeText, hideBadge = false }) {
   const navigate = useNavigate();
-  const { addItem } = useCartStore();
+  const { addItem, setBuyNowItem } = useCartStore();
   const { isInWishlist, toggleItem } = useWishlistStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
@@ -53,8 +53,22 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   const handleBuyNow = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, 1);
-    navigate('/checkout');
+    const prodId = product._id || product.id || product.slug;
+    setBuyNowItem({
+      _id: prodId,
+      id: prodId,
+      productId: prodId,
+      slug: product.slug,
+      name: product.name,
+      image: product.images?.[0] || product.image || '/images/products/saree.png',
+      images: product.images || (product.image ? [product.image] : []),
+      price: product.discountPrice || product.price || 0,
+      discountPrice: product.discountPrice || product.price || 0,
+      originalPrice: product.originalPrice || product.price || 0,
+      quantity: 1,
+      stock: typeof product.stock === 'number' ? product.stock : 10,
+    });
+    navigate('/checkout?buyNow=true');
   };
 
   const handleToggleWishlist = async (e) => {

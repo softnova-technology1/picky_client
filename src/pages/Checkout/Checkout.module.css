@@ -758,9 +758,15 @@
   box-shadow: 0 2px 4px rgba(124, 58, 237, 0.05);
 }
 
-.qty-btn:hover {
+.qty-btn:hover:not(:disabled) {
   background: #7c3aed;
   color: #ffffff;
+}
+
+.qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .qty-num {
@@ -815,11 +821,13 @@
 
 .promo-form {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.5rem;
+  align-items: stretch;
 }
 
 .promo-input {
   flex: 1;
+  min-width: 0;
   padding: 0.55rem 0.85rem;
   border-radius: 10px;
   border: 1px solid rgba(124, 58, 237, 0.15);
@@ -838,6 +846,12 @@
 }
 
 .btn-apply-promo {
+  flex-shrink: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: #ffffff;
   border: none;
@@ -1130,4 +1144,82 @@
   border: 1px solid rgba(0, 0, 0, 0.15);
   display: inline-block;
 }
+
+/* ── Quantity Counter & Stock Limit Controls ── */
+.qty-counter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.qty-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.qty-btn-group {
+  display: inline-flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.qty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #ffffff;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+.qty-btn:disabled,
+.qty-btn-disabled {
+  background: #f1f5f9 !important;
+  color: #cbd5e1 !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.qty-num {
+  min-width: 28px;
+  padding: 0 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.stock-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  border: 1px solid #fde68a;
+}
+
 

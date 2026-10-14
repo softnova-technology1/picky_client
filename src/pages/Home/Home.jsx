@@ -20,7 +20,7 @@ import '../../styles/mobile-responsive.css';
 
 const FlashDealMiniCard = ({ product }) => {
   const navigate = useNavigate();
-  const { addItem } = useCartStore();
+  const { addItem, setBuyNowItem } = useCartStore();
   const { isInWishlist, toggleItem } = useWishlistStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
@@ -48,8 +48,21 @@ const FlashDealMiniCard = ({ product }) => {
   const handleBuyNow = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem(product, 1);
-    navigate('/checkout');
+    const prodId = product._id || product.id;
+    setBuyNowItem({
+      _id: prodId,
+      id: prodId,
+      productId: prodId,
+      name: product.name,
+      image: product.images?.[0] || product.image || null,
+      images: product.images || (product.image ? [product.image] : []),
+      price: product.discountPrice || product.price || 0,
+      discountPrice: product.discountPrice || product.price || 0,
+      originalPrice: product.originalPrice || product.price || 0,
+      quantity: 1,
+      stock: typeof product.stock === 'number' ? product.stock : 10,
+    });
+    navigate('/checkout?buyNow=true');
   };
 
   const discountPercent = product.discountPrice && product.discountPrice < product.price
@@ -183,7 +196,7 @@ export default function Home() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { addItem } = useCartStore();
+  const { addItem, setBuyNowItem } = useCartStore();
   const { isInWishlist, toggleItem } = useWishlistStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
@@ -413,8 +426,21 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
     if (!spotlightProduct) return;
-    addItem(spotlightProduct, 1);
-    navigate('/checkout');
+    const prodId = spotlightProduct._id || spotlightProduct.id;
+    setBuyNowItem({
+      _id: prodId,
+      id: prodId,
+      productId: prodId,
+      name: spotlightProduct.name,
+      image: spotlightProduct.images?.[0] || spotlightProduct.image || null,
+      images: spotlightProduct.images || (spotlightProduct.image ? [spotlightProduct.image] : []),
+      price: spotlightProduct.discountPrice || spotlightProduct.price || 0,
+      discountPrice: spotlightProduct.discountPrice || spotlightProduct.price || 0,
+      originalPrice: spotlightProduct.originalPrice || spotlightProduct.price || 0,
+      quantity: 1,
+      stock: typeof spotlightProduct.stock === 'number' ? spotlightProduct.stock : 10,
+    });
+    navigate('/checkout?buyNow=true');
   };
 
   const handleSpotlightAddToCart = (e) => {

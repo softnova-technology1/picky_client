@@ -41,7 +41,7 @@ export default function ProductDetail() {
 
   const productReviews = useMemo(() => getProductReviews(product), [product]);
 
-  const { addItem } = useCartStore();
+  const { addItem, setBuyNowItem } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
@@ -144,8 +144,25 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = () => {
-    addItem({ ...product, selectedVariant }, quantity);
-    navigate('/checkout');
+    const prodId = product._id || product.id || slug;
+    setBuyNowItem({
+      _id: prodId,
+      id: prodId,
+      productId: prodId,
+      slug: product.slug || slug,
+      name: product.name,
+      image: product.images?.[0] || product.image || null,
+      images: product.images || (product.image ? [product.image] : []),
+      price: product.discountPrice || product.price || 0,
+      discountPrice: product.discountPrice || product.price || 0,
+      originalPrice: product.originalPrice || product.price || 0,
+      selectedVariant,
+      selectedSize: product.selectedSize || selectedVariant || null,
+      selectedColor: product.selectedColor || null,
+      quantity,
+      stock: typeof product.stock === 'number' ? product.stock : 10,
+    });
+    navigate('/checkout?buyNow=true');
   };
 
   const currentPrice = product.discountPrice || product.price || 2499;
