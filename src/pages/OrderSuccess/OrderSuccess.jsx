@@ -158,13 +158,15 @@ export default function OrderSuccess() {
 
             {/* Action Buttons */}
             <div className={styles['actions-row']}>
-              <Link
-                to={`/track-order?id=${order?.orderNumber || id || order?._id}`}
-                className={`${styles['action-btn']} ${styles['primary']}`}
-              >
-                <span>Track Live Order Timeline</span>
-                <ArrowRight size={18} />
-              </Link>
+              {order?.orderNumber && (
+                <Link
+                  to={`/track-order?id=${order.orderNumber}`}
+                  className={`${styles['action-btn']} ${styles['primary']}`}
+                >
+                  <span>Track Live Order Timeline</span>
+                  <ArrowRight size={18} />
+                </Link>
+              )}
 
               <Link
                 to="/products"

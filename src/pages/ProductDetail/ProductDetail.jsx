@@ -9,22 +9,23 @@ import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
+import { useReviewStore } from '../../store/reviewStore';
 import { getProductReviews } from '../../data';
 import styles from './ProductDetail.module.css';
-import ProductCard from '../../components/product/ProductCard/ProductCard';
-import ProductVariantSelector from '../../components/product/ProductVariantSelector/ProductVariantSelector';
 import {
-  ArrowRight,
-  ShoppingCart,
-  Heart,
   Truck,
   RotateCcw,
   ShieldCheck,
   Star,
   Zap,
   CheckCircle2,
-  Info
+  ChevronRight,
+  ArrowRight,
+  Info,
+  Check
 } from 'lucide-react';
+
+const DEFAULT_CAPACITIES = ['128GB', '256GB', '512GB'];
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -33,22 +34,114 @@ export default function ProductDetail() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [activeDetailTab, setActiveDetailTab] = useState('description');
+  const [activeDetailTab, setActiveDetailTab] = useState('reviews'); // Default to 'reviews' matching reference image
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewAuthor, setReviewAuthor] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
 
-  // ── Category-aware variant state — derived from product.variants ──
+  // Variant & Color states: null by default, only set if configured in DB
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedCapacity, setSelectedCapacity] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
 
-  const productReviews = useMemo(() => getProductReviews(product), [product]);
-
+  const { reviews: storeReviews, addReview } = useReviewStore();
   const { addItem, setBuyNowItem } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, user } = useAuthStore();
   const { showToast } = useUiStore();
 
-  const categorySlug = product?.category?.slug;
-  const subCategorySlug = product?.subCategory?.slug;
   const pId = product?._id || product?.id || slug;
+
+  // Real reviews filtered for this product
+  const activeReviews = useMemo(() => {
+    if (!product) return [];
+    const prodId = String(product._id || product.id || slug);
+    const prodSlug = String(product.slug || slug).toLowerCase();
+    const prodName = String(product.name || '').toLowerCase();
+
+    const matched = (storeReviews || []).filter((r) => {
+      if (r.status !== 'published') return false;
+      const rProdId = String(r.product?.id || r.product?._id || '');
+      const rProdSlug = String(r.product?.slug || '').toLowerCase();
+      const rProdName = String(r.product?.name || '').toLowerCase();
+      return (
+        (rProdId && rProdId === prodId) ||
+        (rProdSlug && rProdSlug === prodSlug) ||
+        (rProdName && (rProdName === prodName || prodName.includes(rProdName) || rProdName.includes(prodName)))
+      );
+    });
+
+    if (matched.length > 0) return matched;
+
+    // Fallback: If no store reviews exist for this product yet, provide demo reviews if available
+    const fallbackReviews = getProductReviews(product) || [];
+    return fallbackReviews.map((r, i) => ({
+      id: r.id || `demo-rev-${i}`,
+      customer: {
+        name: r.author || r.customer?.name || (i === 0 ? 'Sarah L.' : 'Michael R.'),
+        city: r.city || 'Verified Buyer',
+        verified: true,
+      },
+      rating: r.rating || 5,
+      createdAt: r.date || r.createdAt || '2025-10-12',
+      comment: r.comment || r.body || 'A premium product through and through. The detailing is perfect.',
+      photos: r.photos || (product.images ? product.images.slice(0, 2) : []),
+      adminReply: r.adminReply || null,
+    }));
+  }, [product, storeReviews, slug]);
+
+  // Dynamic Rating Distribution calculation
+  const ratingDistribution = useMemo(() => {
+    const total = activeReviews.length;
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    if (total === 0) {
+      return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: 0, average: product?.rating || '4.9' };
+    }
+    let sum = 0;
+    activeReviews.forEach((r) => {
+      const star = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5)));
+      counts[star] = (counts[star] || 0) + 1;
+      sum += Number(r.rating) || 5;
+    });
+    return {
+      5: Math.round((counts[5] / total) * 100),
+      4: Math.round((counts[4] / total) * 100),
+      3: Math.round((counts[3] / total) * 100),
+      2: Math.round((counts[2] / total) * 100),
+      1: Math.round((counts[1] / total) * 100),
+      total,
+      average: (sum / total).toFixed(1),
+    };
+  }, [activeReviews, product]);
+
+  const handleReviewSubmit = (e) => {
+    e.preventDefault();
+    if (!reviewComment.trim()) {
+      showToast('Please enter your review comments', 'error');
+      return;
+    }
+    const authorName = reviewAuthor.trim() || user?.name || user?.email?.split('@')[0] || 'Verified Customer';
+    addReview({
+      productId: pId,
+      productName: product?.name || 'Product',
+      productSlug: product?.slug || slug,
+      productImage: product?.images?.[0] || product?.image || '',
+      category: typeof product?.category === 'object' ? product.category?.name : (product?.category || ''),
+      price: product?.discountPrice || product?.price || 0,
+      author: authorName,
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      status: 'published',
+    });
+    showToast('Thank you! Your review has been submitted and published.', 'success');
+    setShowWriteReviewModal(false);
+    setReviewComment('');
+    setReviewAuthor('');
+    setReviewRating(5);
+  };
 
   useEffect(() => {
     async function loadProduct() {
@@ -59,12 +152,25 @@ export default function ProductDetail() {
         const item = res?.data || res;
         if (item && item.name) {
           setProduct(item);
+          const stockVal = typeof item.stock === 'number' && !isNaN(item.stock) ? Math.max(0, item.stock) : 10;
+          setQuantity(stockVal > 0 ? 1 : 0);
+
           // Re-init variant when product loads
           const v = item.variants;
-          if (v && v.type !== 'none') {
-            setSelectedVariant(v.default || (v.options && v.options[0]) || null);
+          if (v && v.type !== 'none' && Array.isArray(v.options) && v.options.length > 0) {
+            const firstOpt = v.default || v.options[0];
+            setSelectedVariant(firstOpt);
+            setSelectedSize(firstOpt);
           } else {
             setSelectedVariant(null);
+            setSelectedSize(null);
+          }
+
+          if (v && Array.isArray(v.colors) && v.colors.length > 0) {
+            const firstCol = v.colors[0];
+            setSelectedColor(firstCol.id || firstCol.color || firstCol);
+          } else {
+            setSelectedColor(null);
           }
 
           // Fetch real related products from DB matching category
@@ -143,13 +249,40 @@ export default function ProductDetail() {
     }
   };
 
+  const maxStock = typeof product?.stock === 'number' && !isNaN(product.stock) ? Math.max(0, product.stock) : 10;
+  const isOutOfStock = maxStock <= 0;
+
   const handleAddToCart = () => {
-    const variantLabel = selectedVariant ? ` (${selectedVariant})` : '';
-    addItem({ ...product, selectedVariant }, quantity);
-    showToast(`Added ${quantity} × "${product.name}"${variantLabel} to your bag!`, 'success');
+    if (isOutOfStock) {
+      showToast('This item is currently out of stock', 'error');
+      return;
+    }
+    const finalQty = Math.min(Math.max(1, quantity), maxStock);
+    const variantLabel = selectedVariant
+      ? ` (${selectedVariant})`
+      : selectedSize
+      ? ` (${selectedSize})`
+      : selectedCapacity
+      ? ` (${selectedCapacity})`
+      : '';
+    addItem(
+      {
+        ...product,
+        selectedVariant: selectedVariant || selectedSize || selectedCapacity,
+        selectedSize: selectedSize || selectedVariant || null,
+        selectedColor,
+      },
+      finalQty
+    );
+    showToast(`Added ${finalQty} × "${product.name}"${variantLabel} to your bag!`, 'success');
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) {
+      showToast('This item is currently out of stock', 'error');
+      return;
+    }
+    const finalQty = Math.min(Math.max(1, quantity), maxStock);
     const prodId = product._id || product.id || slug;
     setBuyNowItem({
       _id: prodId,
@@ -162,634 +295,773 @@ export default function ProductDetail() {
       price: product.discountPrice || product.price || 0,
       discountPrice: product.discountPrice || product.price || 0,
       originalPrice: product.originalPrice || product.price || 0,
-      selectedVariant,
-      selectedSize: product.selectedSize || selectedVariant || null,
-      selectedColor: product.selectedColor || null,
-      quantity,
-      stock: typeof product.stock === 'number' ? product.stock : 10,
+      selectedVariant: selectedVariant || selectedCapacity,
+      selectedSize: product.selectedSize || selectedVariant || selectedCapacity || null,
+      selectedColor: selectedColor || null,
+      quantity: finalQty,
+      stock: maxStock,
     });
     navigate('/checkout?buyNow=true');
   };
 
-  const currentPrice = product.discountPrice || product.price || 2499;
-  const originalPrice = product.price ? product.price + 1000 : 3499;
-  const hasDiscount = true;
-  const percentageOff = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
-    : 20;
-  const savingsAmount = originalPrice - currentPrice;
+  const currentPrice = product.discountPrice || product.price || 231;
+  const originalPrice = product.price && product.discountPrice ? product.price : Math.round(currentPrice * 1.25);
+  const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
+
+  // Capacity / Variant options: only use what's configured in DB — NO mock fallbacks
+  const hasDbVariants = Boolean(
+    product?.variants?.type &&
+    product.variants.type !== 'none' &&
+    Array.isArray(product.variants.options) &&
+    product.variants.options.length > 0
+  );
+
+  const hasColorVariants = Boolean(
+    Array.isArray(product?.variants?.colors) &&
+    product.variants.colors.length > 0
+  );
+
+  const hasAnyVariants = hasColorVariants || hasDbVariants;
+
+  const availableColors = hasColorVariants ? product.variants.colors : [];
+  const availableSizes = hasDbVariants ? product.variants.options : [];
 
   return (
     <PageWrapper>
       <div className={styles['product-detail-wrapper']}>
         <div className={styles['container']}>
-          {/* Main Target Showcase Card */}
-          <div className={styles['showcase-card']}>
-            <div className={styles['showcase-grid']}>
-              {/* Left Column: Gallery with Floating Wishlist */}
-              <div>
-                <Gallery
-                  images={product.images || [product.image]}
-                  productName={product.name}
-                  inWishlist={inWishlist}
-                  onToggleWishlist={handleToggleWishlist}
-                />
-              </div>
 
-              {/* Right Column: Product Details & Controls */}
-              <div className={styles['details-col']}>
-                {/* ── Clickable Multi-Level Breadcrumb Nav (Item 9) ── */}
-                <nav className={styles['breadcrumb-nav']} aria-label="Breadcrumb">
-                  <Link to="/" className={styles['breadcrumb-link']}>Home</Link>
-                  <span className={styles['breadcrumb-sep']}>/</span>
-                  <Link to="/products" className={styles['breadcrumb-link']}>Products</Link>
-                  {product.category?.name && (
-                    <>
-                      <span className={styles['breadcrumb-sep']}>/</span>
-                      <Link
-                        to={`/products?category=${product.category?.slug || ''}`}
-                        className={styles['breadcrumb-link']}
-                      >
-                        {product.category.name}
-                      </Link>
-                    </>
-                  )}
-                  {product.subCategory?.name && (
-                    <>
-                      <span className={styles['breadcrumb-sep']}>/</span>
-                      <span className={styles['breadcrumb-sub']}>{product.subCategory.name}</span>
-                    </>
-                  )}
-                </nav>
+          {/* ═══════════════════════════════════════════════════════════════
+              1. MAIN TOP SECTION: Gallery (Left) + Product Info (Right)
+             ═══════════════════════════════════════════════════════════════ */}
+          <div className={styles['top-showcase-grid']}>
 
-                {/* Main Product Title */}
-                <h1 className={styles['product-title']}>
-                  {product.name || 'MUSTARD EMBROIDERED KURTA'}
-                </h1>
+            {/* Left Column: Gallery Card */}
+            <div>
+              <Gallery
+                images={product.images || [product.image]}
+                productName={product.name}
+                inWishlist={inWishlist}
+                onToggleWishlist={handleToggleWishlist}
+              />
+            </div>
 
-                {/* Subtitle / Tagline */}
-                <p className={styles['product-subtitle']}>
-                  A contemporary take on traditional craftsmanship.
-                </p>
-
-                {/* Product Metadata & Trust Bar (Rating, Urgency Stock, Clickable Authentic Tag) */}
-                <div className={styles['product-meta-bar']}>
-                  <div className={styles['rating-block']}>
-                    <div className={styles['stars']}>
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
-                      ))}
-                    </div>
-                    <span className={styles['rating-num']}>
-                      {product.rating ? Number(product.rating).toFixed(1) : '4.8'}
-                    </span>
+            {/* Right Column: 3 Bento Cards (Matching Reference Image Exactly) */}
+            <div className={styles['right-bento-column']}>
+              
+              {/* ── CARD 1: Top Hero Info Card ── */}
+              <div className={styles['bento-hero-card']}>
+                {/* Top Badge: In Stock & Ready to Ship / Low Stock / Out of Stock */}
+                {isOutOfStock ? (
+                  <div className={styles['top-stock-badge']} style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' }}>
+                    <span className={styles['green-dot']} style={{ background: '#dc2626' }} />
+                    <span>Out of Stock</span>
                   </div>
-
-                  {/* Scarcity Messaging (Item 4) */}
-                  {product.stock !== undefined ? (
-                    <span
-                      className={`${styles['stock-pill']} ${
-                        product.stock > 0
-                          ? product.stock <= 5
-                            ? styles['critical-stock']
-                            : product.stock <= 10
-                            ? styles['low-stock']
-                            : styles['in-stock']
-                          : styles['out-of-stock']
-                      }`}
-                    >
-                      <span
-                        className={`${styles['stock-dot']} ${
-                          product.stock > 0 && product.stock <= 10 ? styles['pulse'] : ''
-                        }`}
-                      />
-                      {product.stock > 0
-                        ? product.stock <= 5
-                          ? `Only ${product.stock} left in stock!`
-                          : product.stock <= 10
-                          ? `Only ${product.stock} left in stock`
-                          : 'In Stock'
-                        : 'Out of Stock'}
-                    </span>
-                  ) : (
-                    <span className={`${styles['stock-pill']} ${styles['in-stock']}`}>
-                      <span className={styles['stock-dot']} />
-                      In Stock
-                    </span>
-                  )}
-
-                  {/* Clickable 100% Authentic Badge (Item 8) */}
-                  <button
-                    type="button"
-                    onClick={() => setShowAuthModal(true)}
-                    className={styles['meta-tag-pill']}
-                    title="Click to view authenticity certification & guarantees"
-                  >
-                    <ShieldCheck size={14} color="#7c3aed" />
-                    <span>100% Authentic</span>
-                    <Info size={12} color="#7c3aed" />
-                  </button>
-                </div>
-
-                {/* Clean Dedicated Luxury Price Row with Concrete Savings (Item 1) */}
-                <div className={styles['price-row']}>
-                  <span className={styles['main-price']}>
-                    ₹{currentPrice.toLocaleString('en-IN')}
-                  </span>
-                  {hasDiscount && (
-                    <>
-                      <span className={styles['strike-price']}>
-                        ₹{originalPrice.toLocaleString('en-IN')}
-                      </span>
-                      <span className={styles['discount-pill']}>
-                        Save ₹{savingsAmount.toLocaleString('en-IN')} ({percentageOff}% OFF)
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <div className={styles['section-divider']} />
-
-                {/* ── Dynamic Variant Selector — category-aware ── */}
-                {product.variants && product.variants.type !== 'none' && (
-                  <div className={styles['size-section']}>
-                    <ProductVariantSelector
-                      variants={product.variants}
-                      selected={selectedVariant}
-                      onChange={setSelectedVariant}
-                      categorySlug={categorySlug}
-                      product={product}
-                    />
+                ) : maxStock <= 5 ? (
+                  <div className={styles['top-stock-badge']} style={{ background: '#fffbeb', color: '#b45309', borderColor: '#fde68a' }}>
+                    <span className={styles['green-dot']} style={{ background: '#f59e0b' }} />
+                    <span>Only {maxStock} Left in Stock</span>
+                  </div>
+                ) : (
+                  <div className={styles['top-stock-badge']}>
+                    <span className={styles['green-dot']} />
+                    <span>In Stock &amp; Ready to Ship</span>
                   </div>
                 )}
 
-                {/* Quantity Section */}
-                <div className={styles['quantity-section']}>
-                  <span className={styles['section-label']}>QUANTITY</span>
-                  <div className={styles['quantity-stepper']}>
-                    <button
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className={styles['stepper-btn']}
-                      title="Decrease quantity"
-                    >
-                      −
-                    </button>
-                    <span className={styles['stepper-val']}>{quantity}</span>
-                    <button
-                      onClick={() => setQuantity((q) => q + 1)}
-                      className={styles['stepper-btn']}
-                      title="Increase quantity"
-                    >
-                      +
-                    </button>
+                {/* Product Title */}
+                <h1 className={styles['product-main-title']}>
+                  {product.name || 'Origin Mobile Model-1'}
+                </h1>
+
+                {/* Price & Rating Row */}
+                <div className={styles['price-rating-row']}>
+                  <span className={styles['bold-price']}>
+                    {formattedPrice}
+                  </span>
+
+                  <div className={styles['rating-pill']}>
+                    <Star size={16} fill="#f59e0b" color="#f59e0b" />
+                    <span className={styles['rating-text']}>
+                      {ratingDistribution.average}
+                    </span>
+                    <span className={styles['reviews-count-text']}>
+                      ({activeReviews.length > 0 ? `${activeReviews.length} reviews` : '2.4k reviews'})
+                    </span>
                   </div>
                 </div>
-
-                {/* Action Buttons Row: [ ADD TO CART ] and [ BUY NOW ] Side-by-Side */}
-                <div className={styles['action-row']}>
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    className={styles['btn-add-cart-outline']}
-                    title="Add item to your shopping bag"
-                  >
-                    <ShoppingCart size={19} strokeWidth={2.2} />
-                    <span>ADD TO CART</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    className={styles['btn-buy-now-solid']}
-                    title="Proceed directly to checkout"
-                  >
-                    <span>BUY NOW</span>
-                  </button>
-                </div>
-
-                {/* Trust Features Strip */}
-                <div className={styles['trust-strip']}>
-                  <div className={styles['trust-col']}>
-                    <Truck size={22} className={styles['trust-icon']} />
-                    <span className={styles['trust-title']}>Free Shipping</span>
-                    <span className={styles['trust-desc']}>on orders above ₹999</span>
-                  </div>
-
-                  <div className={styles['trust-col']}>
-                    <RotateCcw size={22} className={styles['trust-icon']} />
-                    <span className={styles['trust-title']}>Easy Returns</span>
-                    <span className={styles['trust-desc']}>5-7 days</span>
-                  </div>
-
-                  <div className={styles['trust-col']}>
-                    <ShieldCheck size={22} className={styles['trust-icon']} />
-                    <span className={styles['trust-title']}>Secure Payment</span>
-                    <span className={styles['trust-desc']}>100% safe</span>
-                  </div>
-                </div>
-
               </div>
-            </div>
-          </div>
 
-          {/* Product Details & Specifications & Reviews Tabs Section (Matching Screenshots 2, 3, 4) */}
-          <div className={styles['tabs-section-wrapper']}>
-            <div className={styles['tabs-nav-bar-container']}>
-              <div className={styles['tabs-nav-bar']}>
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailTab('description')}
-                  className={`${styles['detail-tab-btn']} ${
-                    activeDetailTab === 'description' ? styles['active'] : ''
-                  }`}
-                >
-                  Description
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailTab('specs')}
-                  className={`${styles['detail-tab-btn']} ${
-                    activeDetailTab === 'specs' ? styles['active'] : ''
-                  }`}
-                >
-                  Specifications
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailTab('reviews')}
-                  className={`${styles['detail-tab-btn']} ${
-                    activeDetailTab === 'reviews' ? styles['active'] : ''
-                  }`}
-                >
-                  Rating &amp; Reviews
-                </button>
-              </div>
-            </div>
-
-            <div className={styles['tab-panel-content']}>
-              {/* Tab 1: Description Panel (Matching Image 4) */}
-              {activeDetailTab === 'description' && (
-                <div className={styles['description-panel-inner']}>
-                  <h2 className={styles['desc-hero-title']}>
-                    Unparalleled Design &amp; Quality
-                  </h2>
-                  <p className={styles['desc-hero-text']}>
-                    {product.description ||
-                      `This ${product.name || 'product'} is a premium piece from our catalog, designed with excellence in mind for the Picky platform. Engineered for maximum performance and reliability. Features durable build quality, premium material selection, and an intuitive user experience for everyday efficiency.`}
-                  </p>
-
-                  <div className={styles['features-grid']}>
-                    <div className={styles['feature-bubble-col']}>
-                      <div className={styles['feature-icon-circle']}>
-                        <ShieldCheck size={28} />
+              {/* ── CARD 2: Middle Grid with Standalone Cards ── */}
+              <div className={`${styles['bento-middle-grid']} ${!hasAnyVariants ? styles['single-col'] : ''}`}>
+                
+                {/* Card 2A: Select Color & Select Size — ONLY rendered if at least one variant option is ON */}
+                {hasAnyVariants && (
+                  <div className={styles['bento-options-card']}>
+                    {/* Select Color Variant (Only if color option is ON) */}
+                    {hasColorVariants && (
+                      <div className={styles['selector-group']}>
+                        <span className={styles['selector-label']}>SELECT COLOR VARIANT</span>
+                        <div className={styles['swatches-row']}>
+                          {availableColors.map((swatch) => {
+                            const swatchId = swatch.id || swatch.color || swatch;
+                            return (
+                              <button
+                                key={swatchId}
+                                type="button"
+                                onClick={() => setSelectedColor(swatchId)}
+                                className={`${styles['swatch-circle']} ${
+                                  selectedColor === swatchId ? styles['active-swatch'] : ''
+                                }`}
+                                style={{ backgroundColor: swatch.color || swatch }}
+                                title={swatch.name || swatch}
+                                aria-label={swatch.name || swatch}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                      <span className={styles['feature-bubble-title']}>
-                        Premium Authenticity
-                      </span>
-                    </div>
+                    )}
 
-                    <div className={styles['feature-bubble-col']}>
-                      <div className={styles['feature-icon-circle']}>
-                        <RotateCcw size={28} />
-                      </div>
-                      <span className={styles['feature-bubble-title']}>
-                        Sustainable Practices
-                      </span>
-                    </div>
+                    {/* Divider only if BOTH color and size options are ON */}
+                    {hasColorVariants && hasDbVariants && (
+                      <div className={styles['card-inner-divider']} />
+                    )}
 
-                    <div className={styles['feature-bubble-col']}>
-                      <div className={styles['feature-icon-circle']}>
-                        <Zap size={28} />
+                    {/* Select Size (Only if size option is ON) */}
+                    {hasDbVariants && (
+                      <div className={styles['selector-group']}>
+                        <span className={styles['selector-label']}>
+                          {product?.variants?.type === 'weight'
+                            ? 'SELECT WEIGHT'
+                            : product?.variants?.type === 'liquid' || product?.variants?.type === 'volume'
+                            ? 'SELECT VOLUME'
+                            : product?.variants?.type === 'storage'
+                            ? 'STORAGE CAPACITY'
+                            : 'SELECT SIZE'}
+                        </span>
+                        <div className={styles['size-pills-row']}>
+                          {availableSizes.map((size) => (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSize(size);
+                                setSelectedVariant(size);
+                              }}
+                              className={`${styles['size-pill-btn']} ${
+                                (selectedSize === size || selectedVariant === size)
+                                  ? styles['active-size-pill']
+                                  : ''
+                              }`}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <span className={styles['feature-bubble-title']}>
-                        Cutting-edge Utility
-                      </span>
-                    </div>
+                    )}
+                  </div>
+                )}
 
-                    <div className={styles['feature-bubble-col']}>
-                      <div className={styles['feature-icon-circle']}>
-                        <Truck size={28} />
-                      </div>
-                      <span className={styles['feature-bubble-title']}>
-                        Free Global Shipping
+                {/* Card 2B: Quantity Stepper & Buy Actions */}
+                <div className={styles['bento-purchase-card']}>
+                  <div className={styles['selector-group']}>
+                    <span className={styles['selector-label']}>QUANTITY</span>
+                    
+                    {/* Stepper Bar */}
+                    <div className={styles['quantity-stepper-bar']}>
+                      <button
+                        type="button"
+                        disabled={quantity <= 1 || isOutOfStock}
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        className={styles['stepper-action-btn']}
+                        title={quantity <= 1 ? 'Minimum quantity reached' : 'Decrease quantity'}
+                        aria-label="Decrease quantity"
+                      >
+                        —
+                      </button>
+                      <span className={styles['stepper-count-val']}>
+                        {isOutOfStock ? 0 : quantity}
                       </span>
+                      <button
+                        type="button"
+                        disabled={quantity >= maxStock || isOutOfStock}
+                        onClick={() => setQuantity((q) => Math.min(maxStock, q + 1))}
+                        className={styles['stepper-action-btn']}
+                        title={quantity >= maxStock ? `Maximum stock reached (${maxStock} available)` : 'Increase quantity'}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Tab 2: Specifications Panel (Matching Image 3) */}
-              {activeDetailTab === 'specs' && (
-                <div className={styles['specs-table-card']}>
-                  <div className={styles['specs-table-header']}>
-                    <span className={styles['specs-table-header-title']}>Technical Spec</span>
-                    <span className={styles['specs-table-header-title']}>Detail</span>
-                  </div>
-
-                  {product.characteristics && product.characteristics.length > 0 ? (
-                    product.characteristics.map((spec, i) => (
-                      <div key={i} className={styles['spec-table-list-row']}>
-                        <span className={styles['spec-table-list-label']}>{spec.key}</span>
-                        <strong className={styles['spec-table-list-value']}>{spec.value}</strong>
-                      </div>
-                    ))
-                  ) : (
-                    <>
-                      <div className={styles['spec-table-list-row']}>
-                        <span className={styles['spec-table-list-label']}>Connectivity</span>
-                        <strong className={styles['spec-table-list-value']}>Bluetooth 5.2, USB-C</strong>
-                      </div>
-                      <div className={styles['spec-table-list-row']}>
-                        <span className={styles['spec-table-list-label']}>Driver Type</span>
-                        <strong className={styles['spec-table-list-value']}>40mm Dynamic Drivers</strong>
-                      </div>
-                      <div className={styles['spec-table-list-row']}>
-                        <span className={styles['spec-table-list-label']}>Battery Life</span>
-                        <strong className={styles['spec-table-list-value']}>40 Hours (ANC On)</strong>
-                      </div>
-                      <div className={styles['spec-table-list-row']}>
-                        <span className={styles['spec-table-list-label']}>Frequency</span>
-                        <strong className={styles['spec-table-list-value']}>20Hz - 40,000Hz</strong>
-                      </div>
-                      <div className={styles['spec-table-list-row']}>
-                        <span className={styles['spec-table-list-label']}>Weight</span>
-                        <strong className={styles['spec-table-list-value']}>260g</strong>
-                      </div>
-                    </>
+                  {/* Stock helper status indicator */}
+                  {!isOutOfStock && quantity >= maxStock && (
+                    <span style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600, display: 'block', marginTop: '-0.3rem', marginBottom: '0.1rem' }}>
+                      Max stock reached ({maxStock} available)
+                    </span>
                   )}
-                </div>
-              )}
 
-              {/* Tab 3: Rating & Reviews Panel */}
-              {activeDetailTab === 'reviews' && (
-                <div style={{ maxWidth: '780px', margin: '0.5rem auto' }}>
-                  {/* Clean Top Rating Score Banner */}
-                  <div
+                  {/* Add to Bag Button */}
+                  <button
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={handleAddToCart}
+                    className={styles['btn-add-to-bag']}
                     style={{
-                      maxWidth: '380px',
-                      margin: '0 auto 2rem',
-                      textAlign: 'center',
-                      padding: '1.75rem 1.5rem',
-                      background: '#f8fafc',
-                      borderRadius: '16px',
-                      border: '1px solid #e2e8f0',
+                      opacity: isOutOfStock ? 0.5 : 1,
+                      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: '0.78rem',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        color: '#7c3aed',
-                        background: '#f3e8ff',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px',
-                        display: 'inline-block',
-                        marginBottom: '0.75rem',
-                      }}
-                    >
-                      Customer Rating
-                    </span>
+                    {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
+                  </button>
 
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        marginBottom: '0.5rem',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '3.4rem',
-                          fontWeight: 900,
-                          color: '#0f172a',
-                          lineHeight: 1,
-                          letterSpacing: '-0.03em',
-                        }}
-                      >
-                        {product.rating ? Number(product.rating).toFixed(1) : '4.8'}
-                      </span>
-                      <span style={{ fontSize: '1.35rem', fontWeight: 600, color: '#94a3b8' }}>
-                        / 5.0
-                      </span>
-                    </div>
+                  {/* Buy Now Button */}
+                  <button
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={handleBuyNow}
+                    className={styles['btn-buy-now']}
+                    style={{
+                      opacity: isOutOfStock ? 0.5 : 1,
+                      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isOutOfStock ? 'Out of Stock' : `Buy Now — ${formattedPrice}`}
+                  </button>
+                </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.35rem' }}>
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={20} fill="#f59e0b" color="#f59e0b" />
-                      ))}
-                    </div>
+              </div>
+
+              {/* ── CARD 3: Operation Briefing Card ── */}
+              <div className={styles['bento-briefing-card']}>
+                <span className={styles['selector-label']}>OPERATION BRIEFING</span>
+                <p className={styles['briefing-text']}>
+                  {product.shortDescription || product.description ||
+                    `This ${product.name} is a premium piece from our collection, designed with excellence in mind for the Picky platform. Crafted with premium materials for maximum comfort and durability. This statement piece integrates seamlessly into any modern wardrobe.`}
+                </p>
+
+                <div className={styles['card-inner-divider']} />
+
+                {/* Trust Badges Strip (Priority Freight, Authenticated, 30-Day Window) */}
+                <div className={styles['trust-pills-row']}>
+                  <div className={styles['trust-pill-tag']}>
+                    <Truck size={14} className={styles['trust-tag-icon']} />
+                    <span>Priority Freight</span>
                   </div>
 
-                  {/* Customer Reviews Section */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <h3
-                      style={{
-                        fontSize: '1.15rem',
-                        fontWeight: 800,
-                        color: '#0f172a',
-                        margin: '0 0 0.25rem 0',
-                        letterSpacing: '-0.01em',
-                      }}
-                    >
-                      Verified Customer Reviews
-                    </h3>
+                  <div className={styles['trust-pill-tag']}>
+                    <ShieldCheck size={14} className={styles['trust-tag-icon']} />
+                    <span>Authentified</span>
+                  </div>
 
-                    {productReviews.map((rev) => (
-                      <div
-                        key={rev.id}
-                        style={{
-                          background: '#ffffff',
-                          borderRadius: '16px',
-                          border: '1px solid #e2e8f0',
-                          padding: '1.4rem 1.6rem',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            marginBottom: '0.85rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                            {rev.avatar ? (
-                              <img
-                                src={rev.avatar}
-                                alt={rev.name}
-                                style={{
-                                  width: '42px',
-                                  height: '42px',
-                                  borderRadius: '50%',
-                                  objectFit: 'cover',
-                                  border: '1.5px solid #f1f5f9',
-                                }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: '42px',
-                                  height: '42px',
-                                  borderRadius: '50%',
-                                  background: '#f3e8ff',
-                                  color: '#7c3aed',
-                                  fontWeight: 800,
-                                  fontSize: '0.92rem',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                {rev.initials || rev.name.slice(0, 2).toUpperCase()}
-                              </div>
-                            )}
+                  <div className={styles['trust-pill-tag']}>
+                    <RotateCcw size={14} className={styles['trust-tag-icon']} />
+                    <span>30-Day Window</span>
+                  </div>
+                </div>
+              </div>
 
-                            <div>
-                              <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>
-                                {rev.name}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: '0.78rem',
-                                  color: '#64748b',
-                                  marginTop: '2px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.35rem',
-                                }}
-                              >
-                                {rev.verified && (
-                                  <span style={{ color: '#16a34a', fontWeight: 600 }}>
-                                    Verified Buyer
-                                  </span>
-                                )}
-                                {rev.city && <span>• {rev.city}</span>}
-                                {rev.date && <span>• {rev.date}</span>}
-                              </div>
-                            </div>
-                          </div>
+            </div>{/* end .right-bento-column */}
 
-                          <div style={{ display: 'flex', gap: '2px' }}>
-                            {[...Array(rev.rating || 5)].map((_, i) => (
-                              <Star key={i} size={15} fill="#f59e0b" color="#f59e0b" />
-                            ))}
-                          </div>
+          </div>{/* end .top-showcase-grid */}
+
+
+          {/* ═══════════════════════════════════════════════════════════════
+              2. MIDDLE SECTION: Tabs Card (Description, Specifications, Reviews)
+             ═══════════════════════════════════════════════════════════════ */}
+          <div className={styles['middle-tabs-card']}>
+            
+            {/* Top Navigation Bar: Description | Specifications | Reviews */}
+            <div className={styles['tabs-nav-bar']}>
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('description')}
+                className={`${styles['nav-tab-btn']} ${
+                  activeDetailTab === 'description' ? styles['active-tab-btn'] : ''
+                }`}
+              >
+                Description
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('specs')}
+                className={`${styles['nav-tab-btn']} ${
+                  activeDetailTab === 'specs' ? styles['active-tab-btn'] : ''
+                }`}
+              >
+                Specifications
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('reviews')}
+                className={`${styles['nav-tab-btn']} ${
+                  activeDetailTab === 'reviews' ? styles['active-tab-btn'] : ''
+                }`}
+              >
+                Reviews
+              </button>
+            </div>
+
+            {/* Tab 1: Description Panel */}
+            {activeDetailTab === 'description' && (
+              <div className={styles['desc-panel-wrap']}>
+                <h3 className={styles['desc-section-title']}>
+                  Unparalleled Design &amp; Craftsmanship
+                </h3>
+                <p className={styles['desc-paragraph']}>
+                  {product.description ||
+                    `This ${product.name} is a standout item on Picky, crafted with precision and authentic attention to detail. Every material is sustainably sourced and physically verified to deliver the ultimate luxury experience.`}
+                </p>
+
+                <div className={styles['desc-highlights-grid']}>
+                  <div className={styles['desc-highlight-card']}>
+                    <ShieldCheck size={26} color="#6d28d9" />
+                    <strong>100% Authenticity</strong>
+                    <span>Direct verified sourcing from certified manufacturer hubs.</span>
+                  </div>
+                  <div className={styles['desc-highlight-card']}>
+                    <Truck size={26} color="#6d28d9" />
+                    <strong>Express Delivery</strong>
+                    <span>Priority transit and tracking directly to your doorstep.</span>
+                  </div>
+                  <div className={styles['desc-highlight-card']}>
+                    <RotateCcw size={26} color="#6d28d9" />
+                    <strong>Doorstep Inspection</strong>
+                    <span>Full 30-day hassle-free window for exchange or return.</span>
+                  </div>
+                  <div className={styles['desc-highlight-card']}>
+                    <Zap size={26} color="#6d28d9" />
+                    <strong>Peak Performance</strong>
+                    <span>Built to withstand daily demands with maximum durability.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Specifications Panel */}
+            {activeDetailTab === 'specs' && (
+              <div className={styles['specs-panel-wrap']}>
+                {product.characteristics && product.characteristics.length > 0 ? (
+                  <table className={styles['specs-table']}>
+                    <thead>
+                      <tr>
+                        <th>Technical Spec</th>
+                        <th>Detail</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.characteristics.map((c, i) => (
+                        <tr key={i}>
+                          <td className={styles['spec-label-cell']}>{c.key || c.name || 'Specification'}</td>
+                          <td className={styles['spec-val-cell']}>
+                            {Array.isArray(c.value) ? c.value.join(', ') : String(c.value || '—')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                    <Info size={36} color="#94a3b8" style={{ marginBottom: '0.75rem' }} />
+                    <h4 style={{ margin: '0 0 0.35rem 0', color: '#1e293b', fontSize: '1rem', fontWeight: 600 }}>
+                      No Technical Specifications
+                    </h4>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                      Specifications have not been added for this item yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 3: Reviews Panel */}
+            {activeDetailTab === 'reviews' && (
+              <div className={styles['reviews-two-col-grid']}>
+                
+                {/* Left Column: Rating Details Breakdown */}
+                <div className={styles['rating-details-col']}>
+                  <h4 className={styles['col-block-heading']}>Rating Details</h4>
+
+                  <div className={styles['rating-bars-list']}>
+                    {[5, 4, 3, 2, 1].map((star) => (
+                      <div key={star} className={styles['bar-row-item']}>
+                        <span className={styles['star-num-label']}>{star}</span>
+                        <div className={styles['progress-track']}>
+                          <div
+                            className={styles['progress-fill']}
+                            style={{ width: `${ratingDistribution[star]}%` }}
+                          />
                         </div>
-
-                        <p
-                          style={{
-                            color: '#334155',
-                            fontSize: '0.92rem',
-                            lineHeight: 1.6,
-                            margin: '0',
-                            fontWeight: 400,
-                          }}
-                        >
-                          “{rev.comment}”
-                        </p>
+                        <span className={styles['pct-label']}>{ratingDistribution[star]}%</span>
                       </div>
                     ))}
                   </div>
+
+                  {/* Customer Experience CTA Box */}
+                  <div className={styles['review-cta-box']}>
+                    <p className={styles['review-cta-text']}>
+                      Are you a customer? Share your experience with Picky Premium Store.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowWriteReviewModal(true)}
+                      className={styles['btn-write-review']}
+                    >
+                      Write a Review
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {/* Right Column: Customer Reviews */}
+                <div className={styles['latest-reviews-col']}>
+                  <div className={styles['reviews-header-line']}>
+                    <h4 className={styles['col-block-heading']}>
+                      Customer Reviews ({activeReviews.length})
+                    </h4>
+                    <div className={styles['reviews-header-right']}>
+                      <span className={styles['sort-by-text']}>Sort by: <strong>Most Recent</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Reviews List */}
+                  <div className={styles['review-cards-stack']}>
+                    {activeReviews.length > 0 ? (
+                      activeReviews.map((rev) => {
+                        const custName = rev.customer?.name || 'Verified Customer';
+                        const initials = custName
+                          .split(' ')
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join('')
+                          .toUpperCase() || 'VC';
+                        const revStars = Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 5)));
+                        const dateFormatted = rev.createdAt
+                          ? new Date(rev.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })
+                          : 'Recent';
+
+                        return (
+                          <div key={rev.id || rev._id} className={styles['review-item-card']}>
+                            <div className={styles['review-top-bar']}>
+                              <div className={styles['author-info-group']}>
+                                <div className={styles['mint-avatar-circle']}>
+                                  <span>{initials}</span>
+                                </div>
+                                <div>
+                                  <span className={styles['author-name-text']}>{custName}</span>
+                                  <div className={styles['author-meta-sub']}>
+                                    <span className={styles['verified-buyer-tag']}>Verified Buyer</span>
+                                    <span>• {dateFormatted}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles['stars-gold-row']}>
+                                {[...Array(revStars)].map((_, i) => (
+                                  <Star key={i} size={15} fill="#f59e0b" color="#f59e0b" />
+                                ))}
+                              </div>
+                            </div>
+
+                            {rev.title && (
+                              <p style={{ margin: '0.4rem 0 0.2rem 0', fontWeight: 600, color: '#1e293b', fontSize: '0.92rem' }}>
+                                {rev.title}
+                              </p>
+                            )}
+
+                            <p className={styles['review-body-text']}>
+                              "{rev.comment}"
+                            </p>
+
+                            {/* Attached Review Photo Thumbnails */}
+                            {Array.isArray(rev.photos) && rev.photos.length > 0 && (
+                              <div className={styles['attached-photos-row']}>
+                                {rev.photos.map((photoUrl, pIdx) => (
+                                  <img
+                                    key={pIdx}
+                                    src={photoUrl}
+                                    alt={`Review photo ${pIdx + 1}`}
+                                    className={styles['attached-thumb-img']}
+                                  />
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Admin Reply */}
+                            {rev.adminReply && (
+                              <div style={{ marginTop: '0.75rem', padding: '0.65rem 0.85rem', background: '#f5f3ff', borderRadius: '10px', borderLeft: '3px solid #7c3aed' }}>
+                                <strong style={{ display: 'block', fontSize: '0.75rem', color: '#6d28d9', marginBottom: '0.2rem' }}>
+                                  Response from {rev.adminReply.author || 'Picky Store Manager'}:
+                                </strong>
+                                <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569', fontStyle: 'italic' }}>
+                                  "{rev.adminReply.text}"
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                        <Star size={36} color="#fbbf24" style={{ marginBottom: '0.75rem' }} />
+                        <h4 style={{ margin: '0 0 0.35rem 0', color: '#1e293b', fontSize: '1rem', fontWeight: 600 }}>
+                          Be the First to Review
+                        </h4>
+                        <p style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+                          Share your experience and help other shoppers make the best choice.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowWriteReviewModal(true)}
+                          className={styles['btn-write-review']}
+                          style={{ margin: '0 auto' }}
+                        >
+                          Write a Review
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </div>{/* end .middle-tabs-card */}
+
+
+          {/* ═══════════════════════════════════════════════════════════════
+              3. BOTTOM SECTION: "Expand Your Arsenal" (Related Products)
+             ═══════════════════════════════════════════════════════════════ */}
+          <div className={styles['arsenal-section']}>
+            <div className={styles['arsenal-header-row']}>
+              <h2 className={styles['arsenal-main-heading']}>Expand Your Arsenal</h2>
+              <Link to="/products" className={styles['access-db-link']}>
+                <span>Access Database</span>
+                <ChevronRight size={16} strokeWidth={2.5} />
+              </Link>
             </div>
+
+            {/* 4 Cards Grid Matching Reference Image */}
+            <div className={styles['arsenal-cards-grid']}>
+              {(relatedProducts.length > 0 ? relatedProducts : [
+                {
+                  id: 'rel-1',
+                  name: 'Vantage Mobile Model-2',
+                  price: 98,
+                  discountPrice: 78,
+                  saveAmount: 19.5,
+                  rating: 4.8,
+                  reviewsCount: 124,
+                  image: product.images?.[0] || product.image,
+                },
+                {
+                  id: 'rel-2',
+                  name: 'Vantage Mobile Model-3',
+                  price: 2450,
+                  discountPrice: 1960,
+                  saveAmount: 490,
+                  rating: 4.9,
+                  reviewsCount: 124,
+                  image: product.images?.[1] || product.images?.[0] || product.image,
+                },
+                {
+                  id: 'rel-3',
+                  name: 'Legacy Mobile Model-4',
+                  price: 1486,
+                  discountPrice: 1189,
+                  saveAmount: 297.25,
+                  rating: 4.7,
+                  reviewsCount: 124,
+                  image: product.images?.[2] || product.images?.[0] || product.image,
+                },
+                {
+                  id: 'rel-4',
+                  name: 'Vantage Mobile Model-5',
+                  price: 2077,
+                  discountPrice: 1662,
+                  saveAmount: 415.5,
+                  rating: 4.9,
+                  reviewsCount: 124,
+                  image: product.images?.[0] || product.image,
+                },
+              ]).slice(0, 4).map((item, idx) => {
+                const itemPrice = item.discountPrice || item.price || 999;
+                const itemOrigPrice = item.price && item.discountPrice ? item.price : Math.round(itemPrice * 1.25);
+                const itemSavings = item.saveAmount || (itemOrigPrice - itemPrice);
+                const itemImg = item.images?.[0] || item.image || product.images?.[0] || product.image;
+
+                return (
+                  <div key={item._id || item.id || idx} className={styles['arsenal-card']}>
+                    {/* Top Image Box with SAVE Pill */}
+                    <div className={styles['arsenal-img-box']}>
+                      <span className={styles['save-pill-badge']}>
+                        SAVE ₹{Number(itemSavings).toFixed(0)}
+                      </span>
+                      <img
+                        src={itemImg}
+                        alt={item.name}
+                        className={styles['arsenal-card-img']}
+                      />
+                    </div>
+
+                    {/* Card Content */}
+                    <div className={styles['arsenal-card-body']}>
+                      <h4 className={styles['arsenal-card-title']} title={item.name}>
+                        {item.name}
+                      </h4>
+
+                      {/* Rating & In-Stock */}
+                      <div className={styles['arsenal-rating-row']}>
+                        <div className={styles['stars-gold-row']}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={12} fill="#f59e0b" color="#f59e0b" />
+                          ))}
+                        </div>
+                        <span className={styles['card-reviews-count']}>
+                          ({item.reviewsCount || 124})
+                        </span>
+                      </div>
+
+                      <div className={styles['in-stock-line']}>
+                        <span className={styles['tiny-green-dot']} />
+                        <span>IN STOCK</span>
+                      </div>
+
+                      {/* Price Row */}
+                      <div className={styles['arsenal-price-row']}>
+                        <strong className={styles['arsenal-bold-price']}>
+                          ₹{itemPrice.toLocaleString('en-IN')}
+                        </strong>
+                        <span className={styles['arsenal-strike-price']}>
+                          ₹{itemOrigPrice.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      {/* SHOP NOW Button */}
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/products/${item.slug || item.id || slug}`)}
+                        className={styles['btn-shop-now']}
+                      >
+                        SHOP NOW
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>{/* end .arsenal-section */}
+
+        </div>{/* end .container */}
+      </div>{/* end .product-detail-wrapper */}
+
+      {/* ── Modal for Write a Review ── */}
+      {showWriteReviewModal && (
+        <div
+          className={styles['auth-modal-overlay']}
+          onClick={() => setShowWriteReviewModal(false)}
+        >
+          <div
+            className={styles['auth-modal-card']}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '480px' }}
+          >
+            <div className={styles['auth-modal-header']}>
+              <h3 className={styles['auth-modal-title']}>Share Your Experience</h3>
+              <button
+                type="button"
+                onClick={() => setShowWriteReviewModal(false)}
+                className={styles['auth-modal-close']}
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleReviewSubmit} style={{ padding: '1.25rem' }}>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+                How would you rate <strong>{product.name}</strong>?
+              </p>
+              
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    <Star
+                      size={28}
+                      fill={star <= reviewRating ? '#f59e0b' : 'transparent'}
+                      color={star <= reviewRating ? '#f59e0b' : '#cbd5e1'}
+                    />
+                  </button>
+                ))}
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.9rem', fontWeight: 600, color: '#475569', alignSelf: 'center' }}>
+                  {reviewRating} of 5 Stars
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                  Your Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your name (e.g. Ramesh Kumar)"
+                  value={reviewAuthor}
+                  onChange={(e) => setReviewAuthor(e.target.value)}
+                  style={{
+                    width: '100%',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    padding: '0.6rem 0.75rem',
+                    fontSize: '0.88rem',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                  Review Comments *
+                </label>
+                <textarea
+                  required
+                  placeholder="Share details of your experience with this item, build quality, fit, etc."
+                  rows={4}
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  style={{
+                    width: '100%',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    padding: '0.75rem',
+                    fontSize: '0.88rem',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={styles['btn-buy-now']}
+                style={{ width: '100%' }}
+              >
+                Submit Review
+              </button>
+            </form>
           </div>
         </div>
-
-        {/* ── You May Also Like Section ── */}
-        {relatedProducts.length > 0 && (
-          <div className={styles['related-section']}>
-            <div className={styles['related-inner']}>
-              <div className={styles['related-header']}>
-                <div className={styles['related-header-left']}>
-                  <span className={styles['related-eyebrow']}>Curated For You</span>
-                  <h2 className={styles['related-title']}>You May Also Like</h2>
-                </div>
-                <Link to="/products" className={styles['related-view-all']}>
-                  View All
-                  <ArrowRight size={15} strokeWidth={2.5} />
-                </Link>
-              </div>
-              <div className={styles['related-grid']}>
-                {relatedProducts.map((p) => (
-                  <ProductCard key={p._id || p.id || p.slug} product={p} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── 100% Authenticity Guarantee Modal (Item 8) ── */}
-        {showAuthModal && (
-          <div className={styles['auth-modal-overlay']} onClick={() => setShowAuthModal(false)}>
-            <div className={styles['auth-modal-card']} onClick={(e) => e.stopPropagation()}>
-              <div className={styles['auth-modal-header']}>
-                <div className={styles['auth-modal-title-wrap']}>
-                  <ShieldCheck size={26} color="#7c3aed" />
-                  <h3 className={styles['auth-modal-title']}>100% Authenticity Guarantee</h3>
-                </div>
-                <button
-                  onClick={() => setShowAuthModal(false)}
-                  className={styles['auth-modal-close']}
-                  title="Close"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className={styles['auth-modal-body']}>
-                <div className={styles['auth-feature-item']}>
-                  <div className={styles['auth-feature-badge']}>✓</div>
-                  <div className={styles['auth-feature-content']}>
-                    <strong>Direct Artisan & Certified Brand Sourcing</strong>
-                    <p>Every product is sourced directly from verified master weavers, registered artisans, and authorized manufacturer hubs across India.</p>
-                  </div>
-                </div>
-
-                <div className={styles['auth-feature-item']}>
-                  <div className={styles['auth-feature-badge']}>✓</div>
-                  <div className={styles['auth-feature-content']}>
-                    <strong>3-Tier Quality Inspection</strong>
-                    <p>Rigorous physical verification of raw materials, weave strength, stitching, color-fastness, and finishing standards before packaging.</p>
-                  </div>
-                </div>
-
-                <div className={styles['auth-feature-item']}>
-                  <div className={styles['auth-feature-badge']}>✓</div>
-                  <div className={styles['auth-feature-content']}>
-                    <strong>Tamper-Evident Packaging</strong>
-                    <p>Packaged in specialized security-sealed bags with unique QC batch seals to ensure zero transit tampering.</p>
-                  </div>
-                </div>
-
-                <div className={styles['auth-feature-item']}>
-                  <div className={styles['auth-feature-badge']}>✓</div>
-                  <div className={styles['auth-feature-content']}>
-                    <strong>7-Day Doorstep Replacement / Refund</strong>
-                    <p>If you find any deviation from the promised quality or authenticity, claim an instant doorstep pickup with 100% full refund.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles['auth-modal-footer']}>
-                <button
-                  onClick={() => setShowAuthModal(false)}
-                  className={styles['auth-modal-btn']}
-                >
-                  Close & Continue Shopping
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>{/* end .product-detail-wrapper */}
+      )}
     </PageWrapper>
   );
 }

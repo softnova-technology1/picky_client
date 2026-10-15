@@ -15,9 +15,15 @@ import {
   Eye,
   Download,
   Search,
+  MessageSquare,
+  Ruler,
+  Palette,
+  Scale,
+  Droplet,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
+import ProductCard from '../../../components/product/ProductCard/ProductCard';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -26,6 +32,7 @@ import { productService } from '../../../services/product.service';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
+import { useReviewStore } from '../../../store/reviewStore';
 import { formatPrice } from '../../../utils/formatPrice';
 
 const PREDEFINED_TAGS = [
@@ -33,6 +40,30 @@ const PREDEFINED_TAGS = [
   'Trending Now',
   'New Arrivals',
   'Best Sellers',
+];
+
+const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const STANDARD_WEIGHTS = ['25g', '50g', '100g', '200g', '250g', '500g', '1kg', '2kg', '5kg'];
+const STANDARD_LIQUIDS = ['30ml', '50ml', '100ml', '200ml', '250ml', '500ml', '750ml', '1L', '2L', '5L'];
+
+const DEFAULT_ADMIN_COLORS = [
+  { id: 'navy', name: 'Dark Navy', color: '#1e2238' },
+  { id: 'red', name: 'Coral Red', color: '#ef4444' },
+  { id: 'blue', name: 'Vibrant Blue', color: '#3b82f6' },
+  { id: 'green', name: 'Emerald Green', color: '#22c55e' },
+];
+
+const PRESET_COLOR_PALETTE = [
+  { id: 'black', name: 'Pitch Black', color: '#09090b' },
+  { id: 'white', name: 'Cloud White', color: '#ffffff' },
+  { id: 'navy', name: 'Dark Navy', color: '#1e2238' },
+  { id: 'red', name: 'Coral Red', color: '#ef4444' },
+  { id: 'blue', name: 'Vibrant Blue', color: '#3b82f6' },
+  { id: 'green', name: 'Emerald Green', color: '#22c55e' },
+  { id: 'gray', name: 'Slate Gray', color: '#64748b' },
+  { id: 'amber', name: 'Amber Gold', color: '#f59e0b' },
+  { id: 'purple', name: 'Royal Purple', color: '#7c3aed' },
+  { id: 'pink', name: 'Rose Pink', color: '#ec4899' },
 ];
 
 export default function AdminProducts() {
@@ -49,6 +80,7 @@ export default function AdminProducts() {
   const [modalLoading, setModalLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [viewingProduct, setViewingProduct] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -70,6 +102,7 @@ export default function AdminProducts() {
     sku: '',
     price: '',
     discountPrice: '',
+    shortDescription: '',
     description: '',
     tags: '',
     stock: '',
@@ -78,10 +111,136 @@ export default function AdminProducts() {
   });
 
   const [charValues, setCharValues] = useState({});
+  const [customSpecs, setCustomSpecs] = useState([]);
+  const [hasSizes, setHasSizes] = useState(false);
+  const [selectedSizes, setSelectedSizes] = useState(['S', 'M', 'L', 'XL', 'XXL']);
+  const [customSizeInput, setCustomSizeInput] = useState('');
+
+  // Product Weight Options state (Disabled by default - starts from grams)
+  const [hasWeights, setHasWeights] = useState(false);
+  const [selectedWeights, setSelectedWeights] = useState(['50g', '100g', '250g', '500g', '1kg']);
+  const [customWeightInput, setCustomWeightInput] = useState('');
+
+  // Product Liquid / Volume Options state (Disabled by default - starts from milliliters)
+  const [hasLiquids, setHasLiquids] = useState(false);
+  const [selectedLiquids, setSelectedLiquids] = useState(['50ml', '100ml', '250ml', '500ml', '1L']);
+  const [customLiquidInput, setCustomLiquidInput] = useState('');
+  
+  // Product Color Options state (Disabled by default)
+  const [hasColors, setHasColors] = useState(false);
+  const [selectedColors, setSelectedColors] = useState(DEFAULT_ADMIN_COLORS);
+  const [newColorName, setNewColorName] = useState('');
+  const [newColorHex, setNewColorHex] = useState('#1e2238');
+  const [editingColorIndex, setEditingColorIndex] = useState(null);
+  const [showAddReviewModal, setShowAddReviewModal] = useState(false);
+  const [reviewSeedForm, setReviewSeedForm] = useState({ author: '', rating: 5, comment: '' });
+  const { reviews: allStoreReviews, addReview: addStoreReview } = useReviewStore();
   const [primaryFile, setPrimaryFile] = useState(null);
   const [secondaryFiles, setSecondaryFiles] = useState([]);
   const [primaryPreview, setPrimaryPreview] = useState(null);
   const [secondaryPreviews, setSecondaryPreviews] = useState([]);
+
+  // Reviews matching the product currently being edited
+  const currentProductReviews = useMemo(() => {
+    if (!editingProduct) return [];
+    const epId = String(editingProduct._id || editingProduct.id || '');
+    const epSlug = String(editingProduct.slug || '').toLowerCase();
+    const epName = String(editingProduct.name || '').toLowerCase();
+
+    return (allStoreReviews || []).filter((r) => {
+      const rId = String(r.product?.id || r.product?._id || '');
+      const rSlug = String(r.product?.slug || '').toLowerCase();
+      const rName = String(r.product?.name || '').toLowerCase();
+      return (
+        (rId && rId === epId) ||
+        (rSlug && rSlug === epSlug) ||
+        (rName && (rName === epName || epName.includes(rName) || rName.includes(epName)))
+      );
+    });
+  }, [editingProduct, allStoreReviews]);
+
+  const handleAddCustomSpec = () => {
+    setCustomSpecs((prev) => [...prev, { key: '', value: '' }]);
+  };
+
+  const handleCustomSpecChange = (index, field, val) => {
+    setCustomSpecs((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: val };
+      return next;
+    });
+  };
+
+  const handleRemoveCustomSpec = (index) => {
+    setCustomSpecs((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSeedReviewSubmit = (e) => {
+    e.preventDefault();
+    if (!reviewSeedForm.comment.trim()) {
+      showToast('Please enter a review comment', 'error');
+      return;
+    }
+    addStoreReview({
+      productId: editingProduct?._id || editingProduct?.id || 'prod-custom',
+      productName: formData.name || editingProduct?.name || 'Product',
+      productSlug: editingProduct?.slug || '',
+      productImage: primaryPreview || editingProduct?.images?.[0] || '',
+      category: typeof formData.category === 'object' ? formData.category?.name : (formData.category || ''),
+      price: Number(formData.discountPrice) || Number(formData.price) || 0,
+      author: reviewSeedForm.author.trim() || 'Verified Buyer',
+      rating: Number(reviewSeedForm.rating) || 5,
+      comment: reviewSeedForm.comment.trim(),
+      status: 'published',
+    });
+    showToast('Verified customer review added successfully!', 'success');
+    setShowAddReviewModal(false);
+    setReviewSeedForm({ author: '', rating: 5, comment: '' });
+  };
+
+  // Live Card Preview Data computed from current form inputs
+  const previewProductData = useMemo(() => {
+    const catObj = categories.find((c) => c._id === formData.category || c.name === formData.category);
+    const catName = catObj?.name || formData.category || 'Category';
+    const numPrice = Number(formData.price) || 0;
+    const numDiscount = Number(formData.discountPrice) || 0;
+
+    const finalOriginalPrice = numPrice > 0 ? numPrice : (numDiscount > 0 ? numDiscount : 0);
+    const finalSellingPrice = numDiscount > 0 ? numDiscount : (numPrice > 0 ? numPrice : 0);
+
+    const imageList = primaryPreview
+      ? [primaryPreview, ...secondaryPreviews]
+      : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'];
+
+    const combinedCharacteristics = [
+      ...Object.entries(charValues)
+        .filter(([_, v]) => v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0))
+        .map(([k, v]) => ({ key: k, value: Array.isArray(v) ? v.join(', ') : String(v) })),
+      ...customSpecs
+        .filter((s) => s.key && s.key.trim() && s.value && s.value.trim())
+        .map((s) => ({ key: s.key.trim(), value: s.value.trim() })),
+    ];
+
+    return {
+      _id: editingProduct?._id || 'preview-temp-id',
+      id: editingProduct?._id || 'preview-temp-id',
+      slug: editingProduct?.slug || 'preview-slug',
+      name: formData.name.trim() || 'Product Name Preview',
+      images: imageList,
+      image: imageList[0],
+      price: finalOriginalPrice,
+      discountPrice: finalSellingPrice > 0 && finalSellingPrice < finalOriginalPrice ? finalSellingPrice : (finalSellingPrice || finalOriginalPrice),
+      originalPrice: finalOriginalPrice,
+      stock: formData.stock !== '' ? Number(formData.stock) : 10,
+      tags: formData.tags ? [formData.tags] : [],
+      category: catName,
+      subCategory: formData.subCategory,
+      characteristics: combinedCharacteristics,
+      rating: editingProduct?.rating || 4.9,
+      numReviews: currentProductReviews.length || editingProduct?.numReviews || 8,
+      sku: formData.sku || 'SKU-PREVIEW',
+    };
+  }, [formData, primaryPreview, secondaryPreviews, categories, editingProduct, charValues, customSpecs, currentProductReviews]);
 
   async function loadData() {
     const startTime = Date.now();
@@ -167,6 +326,7 @@ export default function AdminProducts() {
       sku: defaultSku,
       price: '',
       discountPrice: '',
+      shortDescription: '',
       description: '',
       tags: '',
       stock: '',
@@ -174,6 +334,21 @@ export default function AdminProducts() {
       isActive: true,
     });
     setCharValues({});
+    setCustomSpecs([]);
+    setHasSizes(false);
+    setSelectedSizes(['S', 'M', 'L', 'XL', 'XXL']);
+    setCustomSizeInput('');
+    setHasWeights(false);
+    setSelectedWeights(['50g', '100g', '250g', '500g', '1kg']);
+    setCustomWeightInput('');
+    setHasLiquids(false);
+    setSelectedLiquids(['50ml', '100ml', '250ml', '500ml', '1L']);
+    setCustomLiquidInput('');
+    setHasColors(false);
+    setSelectedColors(DEFAULT_ADMIN_COLORS);
+    setNewColorName('');
+    setNewColorHex('#1e2238');
+    setEditingColorIndex(null);
     setPrimaryFile(null);
     setSecondaryFiles([]);
     setPrimaryPreview(null);
@@ -192,6 +367,7 @@ export default function AdminProducts() {
       sku: p.sku || generateSku(catId, subName),
       price: p.price ? String(p.price) : '',
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
+      shortDescription: p.shortDescription || '',
       description: p.description || '',
       tags: Array.isArray(p.tags) && p.tags.length > 0 ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : ''),
       stock: p.stock !== undefined ? String(p.stock) : '',
@@ -199,14 +375,66 @@ export default function AdminProducts() {
       isActive: true,
     });
 
-    // Populate characteristics
+    // Populate characteristics (Preset vs Custom)
     const initialChars = {};
+    const initialCustom = [];
+    const catObj = categories.find((c) => c._id === catId);
+    const catSpecs = catObj?.characteristics || [];
+    const catSpecNames = new Set(catSpecs.map((s) => s.name || s.key));
+
     if (Array.isArray(p.characteristics)) {
       p.characteristics.forEach((item) => {
-        if (item.key) initialChars[item.key] = item.value;
+        if (item.key) {
+          if (catSpecNames.has(item.key)) {
+            initialChars[item.key] = item.value;
+          } else {
+            initialCustom.push({ key: item.key, value: item.value });
+          }
+        }
       });
     }
     setCharValues(initialChars);
+    setCustomSpecs(initialCustom);
+
+    // Populate variants (Clothing Sizes)
+    const pVariants = p.variants;
+    const vType = pVariants?.type;
+    const vOptions = Array.isArray(pVariants?.options) ? pVariants.options : [];
+
+    const hasClothingSizes = vType === 'clothing-size' && vOptions.length > 0;
+    setHasSizes(hasClothingSizes);
+    setSelectedSizes(hasClothingSizes ? [...vOptions] : ['S', 'M', 'L', 'XL', 'XXL']);
+    setCustomSizeInput('');
+
+    // Populate variants (Weight Options - starting from grams)
+    const hasWeightVariants = vType === 'weight' && vOptions.length > 0;
+    setHasWeights(hasWeightVariants);
+    setSelectedWeights(hasWeightVariants ? [...vOptions] : ['50g', '100g', '250g', '500g', '1kg']);
+    setCustomWeightInput('');
+
+    // Populate variants (Liquid Options - starting from milliliters)
+    const hasLiquidVariants = (vType === 'liquid' || vType === 'volume') && vOptions.length > 0;
+    setHasLiquids(hasLiquidVariants);
+    setSelectedLiquids(hasLiquidVariants ? [...vOptions] : ['50ml', '100ml', '250ml', '500ml', '1L']);
+    setCustomLiquidInput('');
+
+    // Populate variants (Color Options)
+    const hasProductColors =
+      Array.isArray(pVariants?.colors) &&
+      pVariants.colors.length > 0;
+    setHasColors(hasProductColors);
+    setSelectedColors(
+      hasProductColors
+        ? pVariants.colors.map((c, i) =>
+            typeof c === 'string'
+              ? { id: `col-${i}`, name: c, color: '#3b82f6' }
+              : { id: c.id || `col-${i}`, name: c.name || 'Color', color: c.color || '#3b82f6' }
+          )
+        : DEFAULT_ADMIN_COLORS
+    );
+    setNewColorName('');
+    setNewColorHex('#1e2238');
+    setEditingColorIndex(null);
 
     // Set image previews
     const imgs = p.images || (p.image ? [p.image] : []);
@@ -299,7 +527,13 @@ export default function AdminProducts() {
       return;
     }
     if (!formData.name.trim() || !formData.price || !formData.category) {
-      showToast('Please fill in required product fields', 'error');
+      showToast('Please fill in required product fields (Name, Price, Category)', 'error');
+      return;
+    }
+
+    const hasImage = primaryPreview || primaryFile || (editingProduct && editingProduct.images && editingProduct.images.length > 0);
+    if (!hasImage) {
+      showToast('Please upload at least 1 primary product image! Products cannot be added without an image.', 'error');
       return;
     }
 
@@ -311,6 +545,7 @@ export default function AdminProducts() {
     payload.append('price', Number(formData.price));
     if (formData.discountPrice) payload.append('discountPrice', Number(formData.discountPrice));
     payload.append('stock', Number(formData.stock) || 0);
+    payload.append('shortDescription', (formData.shortDescription || '').trim());
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
 
@@ -319,17 +554,52 @@ export default function AdminProducts() {
     payload.append('tags', singleTag);
     tagsArray.forEach((t) => payload.append('tags[]', t));
 
-    // Serialize category characteristics
-    const characteristicsList = Object.entries(charValues)
+    // Serialize category preset characteristics + dynamic custom specifications
+    const presetList = Object.entries(charValues)
       .filter(([_, v]) => v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0))
       .map(([k, v]) => ({
         key: k,
         value: Array.isArray(v) ? v.join(', ') : String(v),
       }));
 
+    const customList = customSpecs
+      .filter((s) => s.key && s.key.trim() && s.value && s.value.trim())
+      .map((s) => ({
+        key: s.key.trim(),
+        value: s.value.trim(),
+      }));
+
+    const characteristicsList = [...presetList, ...customList];
+
     if (characteristicsList.length > 0) {
       payload.append('characteristics', JSON.stringify(characteristicsList));
     }
+
+    // Determine active primary unit variant type
+    let variantType = 'none';
+    let variantOptions = [];
+
+    if (hasWeights && selectedWeights.length > 0) {
+      variantType = 'weight';
+      variantOptions = selectedWeights;
+    } else if (hasLiquids && selectedLiquids.length > 0) {
+      variantType = 'liquid';
+      variantOptions = selectedLiquids;
+    } else if (hasSizes && selectedSizes.length > 0) {
+      variantType = 'clothing-size';
+      variantOptions = selectedSizes;
+    } else if (hasColors && selectedColors.length > 0) {
+      variantType = 'color';
+    }
+
+    // Serialize variants (Clothing Sizes, Weights, Liquids & Colors - all turned off by default)
+    const variantsData = {
+      type: variantType,
+      options: variantOptions,
+      default: variantOptions[0] || (hasColors && selectedColors.length > 0 ? (selectedColors[0]?.name || '') : ''),
+      colors: hasColors && selectedColors.length > 0 ? selectedColors : [],
+    };
+    payload.append('variants', JSON.stringify(variantsData));
 
     // Combine and send files
     const allSelectedFiles = [];
@@ -381,6 +651,7 @@ export default function AdminProducts() {
                   images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : p.images,
                   category: categories.find((c) => c._id === formData.category) || p.category,
                   subCategory: { name: formData.subCategory || 'General' },
+                  variants: variantsData,
                 }
               : p
           )
@@ -402,7 +673,8 @@ export default function AdminProducts() {
           isFeatured: formData.isFeatured,
           category: categories.find((c) => c._id === formData.category) || { name: 'General' },
           subCategory: { name: formData.subCategory || 'General' },
-          images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300'],
+          images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : [],
+          variants: variantsData,
         };
         setProducts((prev) => [newProduct, ...prev]);
         showToast('Product created successfully', 'success');
@@ -434,16 +706,11 @@ export default function AdminProducts() {
 
   const availableSubCategories = useMemo(() => {
     if (!formData.category) return [];
-    const selectedCat = categories.find(c => c._id === formData.category);
     return subcategories.filter((s) => {
       if (s.categoryId === formData.category || s.categoryId?._id === formData.category) return true;
-      if (selectedCat && selectedCat.slug && typeof s.categoryId === 'string' && s.categoryId.startsWith('cat-')) {
-        const mockCat = MOCK_CATEGORIES.find(mc => mc._id === s.categoryId);
-        if (mockCat && mockCat.slug === selectedCat.slug) return true;
-      }
       return false;
     });
-  }, [formData.category, subcategories, categories]);
+  }, [formData.category, subcategories]);
 
   const toggleMultiSelect = (charName, val) => {
     const current = Array.isArray(charValues[charName]) ? charValues[charName] : [];
@@ -532,7 +799,7 @@ export default function AdminProducts() {
     () => products.filter((p) => {
       const tags = Array.isArray(p.tags) ? p.tags.join(', ').toLowerCase() : typeof p.tags === 'string' ? p.tags.toLowerCase() : '';
       return tags.includes('new');
-    }).length || Math.min(totalProducts, 5),
+    }).length,
     [products]
   );
 
@@ -652,11 +919,16 @@ export default function AdminProducts() {
                   {/* Primary Cover Image Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                     <label style={{ fontSize: '0.74rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: 0 }}>
-                      <span style={{ color: '#7c3aed' }}>★</span> PRIMARY COVER IMAGE
+                      <span style={{ color: '#7c3aed' }}>★</span> PRIMARY COVER IMAGE <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#7c3aed', background: '#f3e8ff', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
-                      3:4 Ratio
-                    </span>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#dc2626', background: '#fee2e2', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
+                        Required
+                      </span>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#7c3aed', background: '#f3e8ff', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
+                        3:4 Ratio
+                      </span>
+                    </div>
                   </div>
 
                   {/* Primary Image Dropzone Box */}
@@ -988,7 +1260,46 @@ export default function AdminProducts() {
                   />
                 </div>
 
-                {/* 2. Detailed Description */}
+                {/* 2. Short Description / Operation Briefing */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      SHORT DESCRIPTION (OPERATION BRIEFING)
+                    </label>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Appears in the Operation Briefing highlight box</span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    placeholder="Brief highlights of this product (e.g. Crafted with precision for the Picky platform. Authenticated and verified for exceptional durability...)"
+                    value={formData.shortDescription}
+                    onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.72rem 1rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '0.85rem',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      lineHeight: 1.5,
+                      resize: 'vertical',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#7c3aed';
+                      e.target.style.background = '#ffffff';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e2e8f0';
+                      e.target.style.background = '#f8fafc';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+
+                {/* 3. Detailed Description */}
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.45rem' }}>
                     DETAILED DESCRIPTION <span style={{ color: '#ef4444' }}>*</span>
@@ -1250,132 +1561,1448 @@ export default function AdminProducts() {
                   </div>
                 </div>
 
-                {/* 5. Dynamic Product Specifications */}
-                {currentCategorySpecs.length > 0 && (
-                  <div
-                    style={{
-                      background: '#f8fafc',
-                      padding: '1.1rem 1.25rem',
-                      borderRadius: '14px',
-                      border: '1px solid #e2e8f0',
-                      marginTop: '0.3rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                      <strong style={{ fontSize: '0.78rem', color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
-                        {currentCategoryObj?.name} SPECIFICATIONS
-                      </strong>
-                      <span style={{ fontSize: '0.71rem', color: '#64748b' }}>
-                        Auto-loaded from category configuration
-                      </span>
+                {/* 5. Clothing Sizes / Variants (Optional & Toggleable - Turned OFF by default) */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: hasSizes ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
+                    marginTop: '0.3rem',
+                    transition: 'all 0.25s ease',
+                    boxShadow: hasSizes ? '0 4px 18px rgba(124, 58, 237, 0.06)' : 'none',
+                  }}
+                >
+                  {/* Header Row with Toggle Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: hasSizes ? '#ede9fe' : '#f1f5f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: hasSizes ? '#7c3aed' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Ruler size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.84rem', color: hasSizes ? '#5b21b6' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            CLOTHING SIZES / VARIANTS
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '9999px',
+                              background: hasSizes ? '#dcfce7' : '#f1f5f9',
+                              color: hasSizes ? '#15803d' : '#64748b',
+                            }}
+                          >
+                            {hasSizes ? 'Enabled' : 'Disabled (Default)'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                          Enable for apparel or products with sizes like S, M, L, XL, XXL.
+                        </p>
+                      </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
-                      {currentCategorySpecs.map((char, idx) => (
-                        <div key={idx} style={{ background: '#ffffff', padding: '0.7rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                          <label style={{ fontSize: '0.74rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem', color: '#334155' }}>
-                            {char.name} {char.required && <span style={{ color: '#ef4444' }}>*</span>}
-                          </label>
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !hasSizes;
+                        setHasSizes(next);
+                        if (next) {
+                          setHasWeights(false);
+                          setHasLiquids(false);
+                        }
+                      }}
+                      style={{
+                        width: '48px',
+                        height: '26px',
+                        borderRadius: '9999px',
+                        background: hasSizes ? '#7c3aed' : '#cbd5e1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'background-color 0.2s ease',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={hasSizes ? 'Click to disable sizes' : 'Click to enable sizes'}
+                    >
+                      <span
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transform: hasSizes ? 'translateX(22px)' : 'translateX(0px)',
+                          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                      />
+                    </button>
+                  </div>
 
-                          {char.type === 'select' && (
-                            <select
-                              style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }}
-                              value={charValues[char.name] || ''}
-                              onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
-                              required={char.required}
+                  {/* Expanded Size Configuration Panel (Only shown when turned ON) */}
+                  {hasSizes && (
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px solid #f1f5f9' }}>
+                      {/* Presets Row */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.04em' }}>
+                          Quick-Select Standard Sizes
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                          {STANDARD_SIZES.map((sz) => {
+                            const isSelected = selectedSizes.includes(sz);
+                            return (
+                              <button
+                                key={sz}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedSizes(selectedSizes.filter((s) => s !== sz));
+                                  } else {
+                                    setSelectedSizes([...selectedSizes, sz]);
+                                  }
+                                }}
+                                style={{
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  border: '1.5px solid',
+                                  borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                                  background: isSelected ? '#f5f3ff' : '#ffffff',
+                                  color: isSelected ? '#6d28d9' : '#475569',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                {isSelected ? `✓ ${sz}` : `+ ${sz}`}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Active Sizes List */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Configured Sizes ({selectedSizes.length})
+                          </span>
+                          {selectedSizes.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSizes([])}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
                             >
-                              <option value="">Select {char.name}...</option>
-                              {char.values?.map((v, i) => (
-                                <option key={i} value={v}>{v}</option>
-                              ))}
-                            </select>
-                          )}
-
-                          {char.type === 'multi_select' && (
-                            <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                              {char.values?.map((v, i) => {
-                                const current = Array.isArray(charValues[char.name]) ? charValues[char.name] : [];
-                                const isSelected = current.includes(v);
-                                return (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => toggleMultiSelect(char.name, v)}
-                                    style={{
-                                      fontSize: '0.72rem',
-                                      padding: '0.2rem 0.5rem',
-                                      borderRadius: '9999px',
-                                      border: '1px solid',
-                                      borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
-                                      background: isSelected ? '#f3e8ff' : '#ffffff',
-                                      color: isSelected ? '#6d28d9' : '#475569',
-                                      cursor: 'pointer',
-                                      fontWeight: isSelected ? 600 : 400,
-                                    }}
-                                  >
-                                    {isSelected ? `✓ ${v}` : v}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {(char.type === 'text' || char.type === 'number') && (
-                            <input
-                              type={char.type}
-                              placeholder={`e.g. ${char.name}...`}
-                              style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box' }}
-                              value={charValues[char.name] || ''}
-                              onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
-                              required={char.required}
-                            />
-                          )}
-
-                          {char.type === 'boolean' && (
-                            <div style={{ display: 'flex', gap: '0.4rem' }}>
-                              <button
-                                type="button"
-                                onClick={() => setCharValues({ ...charValues, [char.name]: 'Yes' })}
-                                style={{
-                                  flex: 1,
-                                  fontSize: '0.75rem',
-                                  padding: '0.3rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid',
-                                  borderColor: charValues[char.name] === 'Yes' ? '#16a34a' : '#cbd5e1',
-                                  background: charValues[char.name] === 'Yes' ? '#dcfce7' : '#fff',
-                                  color: charValues[char.name] === 'Yes' ? '#15803d' : '#475569',
-                                  cursor: 'pointer',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setCharValues({ ...charValues, [char.name]: 'No' })}
-                                style={{
-                                  flex: 1,
-                                  fontSize: '0.75rem',
-                                  padding: '0.3rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid',
-                                  borderColor: charValues[char.name] === 'No' ? '#ef4444' : '#cbd5e1',
-                                  background: charValues[char.name] === 'No' ? '#fff1f2' : '#fff',
-                                  color: charValues[char.name] === 'No' ? '#be123c' : '#475569',
-                                  cursor: 'pointer',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                No
-                              </button>
-                            </div>
+                              Clear All
+                            </button>
                           )}
                         </div>
-                      ))}
+
+                        {selectedSizes.length > 0 ? (
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            {selectedSizes.map((sz, idx) => (
+                              <div
+                                key={idx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  background: '#ffffff',
+                                  padding: '0.3rem 0.65rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid #c4b5fd',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  color: '#5b21b6',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                }}
+                              >
+                                <span>{sz}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedSizes(selectedSizes.filter((_, i) => i !== idx))}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: '#94a3b8',
+                                    cursor: 'pointer',
+                                    padding: '0 2px',
+                                    fontSize: '0.85rem',
+                                    lineHeight: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                  }}
+                                  title="Remove size"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '0.75rem', background: '#fff1f2', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#be123c', fontSize: '0.76rem' }}>
+                            ⚠️ At least one size must be added when sizes option is enabled.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Custom Size Input */}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="Add custom size (e.g. 28, 30, 32, 4XL, Free Size)"
+                          value={customSizeInput}
+                          onChange={(e) => setCustomSizeInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const val = customSizeInput.trim().toUpperCase();
+                              if (val && !selectedSizes.includes(val)) {
+                                setSelectedSizes([...selectedSizes, val]);
+                                setCustomSizeInput('');
+                              }
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '0.55rem 0.8rem',
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            color: '#0f172a',
+                            outline: 'none',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = customSizeInput.trim().toUpperCase();
+                            if (val && !selectedSizes.includes(val)) {
+                              setSelectedSizes([...selectedSizes, val]);
+                              setCustomSizeInput('');
+                            }
+                          }}
+                          style={{
+                            padding: '0.55rem 0.95rem',
+                            background: '#7c3aed',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          + Add Size
+                        </button>
+                      </div>
                     </div>
+                  )}
+                </div>
+
+                {/* 5B. Product Weight Options / Variants (Starting from Grams - Disabled by default) */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: hasWeights ? '1.5px solid #059669' : '1px solid #e2e8f0',
+                    marginTop: '0.85rem',
+                    transition: 'all 0.25s ease',
+                    boxShadow: hasWeights ? '0 4px 18px rgba(5, 150, 105, 0.08)' : 'none',
+                  }}
+                >
+                  {/* Header Row with Toggle Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: hasWeights ? '#d1fae5' : '#f1f5f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: hasWeights ? '#059669' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Scale size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.84rem', color: hasWeights ? '#065f46' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            PRODUCT WEIGHT OPTIONS (GRAMS / KG)
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '9999px',
+                              background: hasWeights ? '#d1fae5' : '#f1f5f9',
+                              color: hasWeights ? '#047857' : '#64748b',
+                            }}
+                          >
+                            {hasWeights ? 'Enabled' : 'Disabled (Default)'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                          Enable for food, grocery, or products sold by weight (e.g. 50g, 100g, 250g, 500g, 1kg).
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !hasWeights;
+                        setHasWeights(next);
+                        if (next) {
+                          setHasSizes(false);
+                          setHasLiquids(false);
+                        }
+                      }}
+                      style={{
+                        width: '48px',
+                        height: '26px',
+                        borderRadius: '9999px',
+                        background: hasWeights ? '#059669' : '#cbd5e1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'background-color 0.2s ease',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={hasWeights ? 'Click to disable weight options' : 'Click to enable weight options'}
+                    >
+                      <span
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transform: hasWeights ? 'translateX(22px)' : 'translateX(0px)',
+                          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                      />
+                    </button>
                   </div>
-                )}
+
+                  {/* Expanded Weight Configuration Panel */}
+                  {hasWeights && (
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px solid #f1f5f9' }}>
+                      {/* Presets Row */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.04em' }}>
+                          Quick-Select Standard Weights
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                          {STANDARD_WEIGHTS.map((wt) => {
+                            const isSelected = selectedWeights.includes(wt);
+                            return (
+                              <button
+                                key={wt}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedWeights(selectedWeights.filter((w) => w !== wt));
+                                  } else {
+                                    setSelectedWeights([...selectedWeights, wt]);
+                                  }
+                                }}
+                                style={{
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  border: '1.5px solid',
+                                  borderColor: isSelected ? '#059669' : '#cbd5e1',
+                                  background: isSelected ? '#ecfdf5' : '#ffffff',
+                                  color: isSelected ? '#047857' : '#475569',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                {isSelected ? `✓ ${wt}` : `+ ${wt}`}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Configured Weights List */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Configured Weights ({selectedWeights.length})
+                          </span>
+                          {selectedWeights.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedWeights([])}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
+
+                        {selectedWeights.length > 0 ? (
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            {selectedWeights.map((wt, idx) => (
+                              <div
+                                key={idx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  background: '#ffffff',
+                                  padding: '0.3rem 0.65rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid #a7f3d0',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  color: '#047857',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                }}
+                              >
+                                <span>{wt}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedWeights(selectedWeights.filter((_, i) => i !== idx))}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: '#94a3b8',
+                                    cursor: 'pointer',
+                                    padding: '0 2px',
+                                    fontSize: '0.85rem',
+                                    lineHeight: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                  }}
+                                  title="Remove weight"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '0.75rem', background: '#fff1f2', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#be123c', fontSize: '0.76rem' }}>
+                            ⚠️ At least one weight option must be added when weight options are enabled.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Custom Weight Input */}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="Add custom weight (e.g. 75g, 150g, 750g, 10kg)"
+                          value={customWeightInput}
+                          onChange={(e) => setCustomWeightInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const val = customWeightInput.trim();
+                              if (val && !selectedWeights.includes(val)) {
+                                setSelectedWeights([...selectedWeights, val]);
+                                setCustomWeightInput('');
+                              }
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '0.55rem 0.8rem',
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            color: '#0f172a',
+                            outline: 'none',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = customWeightInput.trim();
+                            if (val && !selectedWeights.includes(val)) {
+                              setSelectedWeights([...selectedWeights, val]);
+                              setCustomWeightInput('');
+                            }
+                          }}
+                          style={{
+                            padding: '0.55rem 0.95rem',
+                            background: '#059669',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          + Add Weight
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 5C. Product Liquid / Volume Options (Starting from Milliliters - Disabled by default) */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: hasLiquids ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                    marginTop: '0.85rem',
+                    transition: 'all 0.25s ease',
+                    boxShadow: hasLiquids ? '0 4px 18px rgba(2, 132, 199, 0.08)' : 'none',
+                  }}
+                >
+                  {/* Header Row with Toggle Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: hasLiquids ? '#e0f2fe' : '#f1f5f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: hasLiquids ? '#0284c7' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Droplet size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.84rem', color: hasLiquids ? '#0369a1' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            LIQUID / VOLUME OPTIONS (ML / LITER)
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '9999px',
+                              background: hasLiquids ? '#e0f2fe' : '#f1f5f9',
+                              color: hasLiquids ? '#0369a1' : '#64748b',
+                            }}
+                          >
+                            {hasLiquids ? 'Enabled' : 'Disabled (Default)'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                          Enable for liquid goods, oils, cosmetics, or drinks (e.g. 50ml, 100ml, 250ml, 500ml, 1L).
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !hasLiquids;
+                        setHasLiquids(next);
+                        if (next) {
+                          setHasSizes(false);
+                          setHasWeights(false);
+                        }
+                      }}
+                      style={{
+                        width: '48px',
+                        height: '26px',
+                        borderRadius: '9999px',
+                        background: hasLiquids ? '#0284c7' : '#cbd5e1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'background-color 0.2s ease',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={hasLiquids ? 'Click to disable liquid options' : 'Click to enable liquid options'}
+                    >
+                      <span
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transform: hasLiquids ? 'translateX(22px)' : 'translateX(0px)',
+                          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Expanded Liquid Configuration Panel */}
+                  {hasLiquids && (
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px solid #f1f5f9' }}>
+                      {/* Presets Row */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.04em' }}>
+                          Quick-Select Standard Liquid Volumes
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                          {STANDARD_LIQUIDS.map((liq) => {
+                            const isSelected = selectedLiquids.includes(liq);
+                            return (
+                              <button
+                                key={liq}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedLiquids(selectedLiquids.filter((l) => l !== liq));
+                                  } else {
+                                    setSelectedLiquids([...selectedLiquids, liq]);
+                                  }
+                                }}
+                                style={{
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  border: '1.5px solid',
+                                  borderColor: isSelected ? '#0284c7' : '#cbd5e1',
+                                  background: isSelected ? '#f0f9ff' : '#ffffff',
+                                  color: isSelected ? '#0369a1' : '#475569',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                {isSelected ? `✓ ${liq}` : `+ ${liq}`}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Configured Liquids List */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Configured Volumes ({selectedLiquids.length})
+                          </span>
+                          {selectedLiquids.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLiquids([])}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
+
+                        {selectedLiquids.length > 0 ? (
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            {selectedLiquids.map((liq, idx) => (
+                              <div
+                                key={idx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  background: '#ffffff',
+                                  padding: '0.3rem 0.65rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid #7dd3fc',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  color: '#0369a1',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                }}
+                              >
+                                <span>{liq}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedLiquids(selectedLiquids.filter((_, i) => i !== idx))}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: '#94a3b8',
+                                    cursor: 'pointer',
+                                    padding: '0 2px',
+                                    fontSize: '0.85rem',
+                                    lineHeight: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                  }}
+                                  title="Remove liquid volume"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '0.75rem', background: '#fff1f2', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#be123c', fontSize: '0.76rem' }}>
+                            ⚠️ At least one volume option must be added when liquid options are enabled.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Custom Liquid Input */}
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="Add custom volume (e.g. 150ml, 350ml, 1.5L, 5L)"
+                          value={customLiquidInput}
+                          onChange={(e) => setCustomLiquidInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const val = customLiquidInput.trim();
+                              if (val && !selectedLiquids.includes(val)) {
+                                setSelectedLiquids([...selectedLiquids, val]);
+                                setCustomLiquidInput('');
+                              }
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '0.55rem 0.8rem',
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            color: '#0f172a',
+                            outline: 'none',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = customLiquidInput.trim();
+                            if (val && !selectedLiquids.includes(val)) {
+                              setSelectedLiquids([...selectedLiquids, val]);
+                              setCustomLiquidInput('');
+                            }
+                          }}
+                          style={{
+                            padding: '0.55rem 0.95rem',
+                            background: '#0284c7',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          + Add Volume
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 6. Product Color Options / Variants (Optional & Toggleable - Turned OFF by default) */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: hasColors ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
+                    marginTop: '0.85rem',
+                    transition: 'all 0.25s ease',
+                    boxShadow: hasColors ? '0 4px 18px rgba(124, 58, 237, 0.06)' : 'none',
+                  }}
+                >
+                  {/* Header Row with Toggle Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: hasColors ? '#ede9fe' : '#f1f5f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: hasColors ? '#7c3aed' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Palette size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.84rem', color: hasColors ? '#5b21b6' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            COLOR OPTIONS / VARIANTS
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '9999px',
+                              background: hasColors ? '#dcfce7' : '#f1f5f9',
+                              color: hasColors ? '#15803d' : '#64748b',
+                            }}
+                          >
+                            {hasColors ? 'Enabled' : 'Disabled (Default)'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                          Enable for products with multiple color choices. Edit shades, names, hex codes, or pick from presets.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => setHasColors(!hasColors)}
+                      style={{
+                        width: '48px',
+                        height: '26px',
+                        borderRadius: '9999px',
+                        background: hasColors ? '#7c3aed' : '#cbd5e1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'background-color 0.2s ease',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={hasColors ? 'Click to disable color options' : 'Click to enable color options'}
+                    >
+                      <span
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transform: hasColors ? 'translateX(22px)' : 'translateX(0px)',
+                          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Expanded Color Configuration Panel (Only shown when turned ON) */}
+                  {hasColors && (
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px solid #f1f5f9' }}>
+                      
+                      {/* Presets Row */}
+                      <div style={{ marginBottom: '1.1rem' }}>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.04em' }}>
+                          Quick-Add Preset Colors
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          {PRESET_COLOR_PALETTE.map((preset) => {
+                            const isAlreadyAdded = selectedColors.some(
+                              (c) => c.name.toLowerCase() === preset.name.toLowerCase() || c.color.toLowerCase() === preset.color.toLowerCase()
+                            );
+                            return (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => {
+                                  if (isAlreadyAdded) {
+                                    setSelectedColors(selectedColors.filter((c) => c.name.toLowerCase() !== preset.name.toLowerCase()));
+                                  } else {
+                                    setSelectedColors([
+                                      ...selectedColors,
+                                      { id: preset.id, name: preset.name, color: preset.color }
+                                    ]);
+                                  }
+                                }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: '1.5px solid',
+                                  borderColor: isAlreadyAdded ? '#7c3aed' : '#e2e8f0',
+                                  background: isAlreadyAdded ? '#f5f3ff' : '#ffffff',
+                                  color: isAlreadyAdded ? '#6d28d9' : '#475569',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    background: preset.color,
+                                    border: '1px solid rgba(0,0,0,0.15)',
+                                    display: 'inline-block',
+                                  }}
+                                />
+                                <span>{isAlreadyAdded ? `✓ ${preset.name}` : `+ ${preset.name}`}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Configured Colors List */}
+                      <div style={{ marginBottom: '1.1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Configured Colors ({selectedColors.length})
+                          </span>
+                          {selectedColors.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedColors([]);
+                                setEditingColorIndex(null);
+                              }}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
+
+                        {selectedColors.length > 0 ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '0.6rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            {selectedColors.map((col, idx) => {
+                              const isBeingEdited = editingColorIndex === idx;
+                              return (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '0.5rem',
+                                    background: isBeingEdited ? '#ede9fe' : '#ffffff',
+                                    padding: '0.45rem 0.65rem',
+                                    borderRadius: '8px',
+                                    border: isBeingEdited ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, overflow: 'hidden' }}>
+                                    <span
+                                      style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        borderRadius: '50%',
+                                        background: col.color || '#000000',
+                                        border: '1.5px solid rgba(0,0,0,0.12)',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <div style={{ minWidth: 0 }}>
+                                      <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {col.name}
+                                      </span>
+                                      <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                        {col.color}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (isBeingEdited) {
+                                          setEditingColorIndex(null);
+                                          setNewColorName('');
+                                          setNewColorHex('#1e2238');
+                                        } else {
+                                          setEditingColorIndex(idx);
+                                          setNewColorName(col.name);
+                                          setNewColorHex(col.color || '#1e2238');
+                                        }
+                                      }}
+                                      style={{
+                                        border: 'none',
+                                        background: isBeingEdited ? '#7c3aed' : '#f1f5f9',
+                                        color: isBeingEdited ? '#ffffff' : '#64748b',
+                                        borderRadius: '6px',
+                                        padding: '0.25rem 0.45rem',
+                                        fontSize: '0.72rem',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                      }}
+                                      title="Edit this color"
+                                    >
+                                      {isBeingEdited ? 'Editing' : 'Edit'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (editingColorIndex === idx) {
+                                          setEditingColorIndex(null);
+                                        }
+                                        setSelectedColors(selectedColors.filter((_, i) => i !== idx));
+                                      }}
+                                      style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        color: '#94a3b8',
+                                        cursor: 'pointer',
+                                        padding: '0.2rem 0.35rem',
+                                        fontSize: '0.85rem',
+                                        borderRadius: '4px',
+                                      }}
+                                      title="Remove color"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '0.75rem', background: '#fff1f2', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#be123c', fontSize: '0.76rem' }}>
+                            ⚠️ At least one color must be added when color options are enabled.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add / Edit Color Form Bar */}
+                      <div
+                        style={{
+                          background: editingColorIndex !== null ? '#faf5ff' : '#f8fafc',
+                          padding: '0.85rem',
+                          borderRadius: '10px',
+                          border: editingColorIndex !== null ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
+                        }}
+                      >
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: editingColorIndex !== null ? '#6d28d9' : '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
+                          {editingColorIndex !== null ? `Editing Color #${editingColorIndex + 1}: ${selectedColors[editingColorIndex]?.name}` : 'Add / Custom Color Editor'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          {/* Native HTML Color Picker */}
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <input
+                              type="color"
+                              value={newColorHex}
+                              onChange={(e) => setNewColorHex(e.target.value)}
+                              style={{
+                                width: '38px',
+                                height: '38px',
+                                padding: '0',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                background: 'transparent',
+                              }}
+                              title="Pick a color from wheel"
+                            />
+                          </div>
+
+                          {/* Hex Input */}
+                          <input
+                            type="text"
+                            placeholder="#1E2238"
+                            value={newColorHex}
+                            onChange={(e) => setNewColorHex(e.target.value)}
+                            style={{
+                              width: '95px',
+                              padding: '0.55rem 0.65rem',
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              fontSize: '0.82rem',
+                              fontFamily: 'monospace',
+                              color: '#0f172a',
+                              outline: 'none',
+                            }}
+                          />
+
+                          {/* Color Name Input */}
+                          <input
+                            type="text"
+                            placeholder="Color Name (e.g. Royal Navy, Olive Green, Wine Red)"
+                            value={newColorName}
+                            onChange={(e) => setNewColorName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const name = newColorName.trim();
+                                if (!name) {
+                                  showToast('Please enter a color name', 'error');
+                                  return;
+                                }
+                                const hex = newColorHex.trim() || '#1e2238';
+                                const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                                if (editingColorIndex !== null) {
+                                  setSelectedColors((prev) =>
+                                    prev.map((c, i) => (i === editingColorIndex ? { ...c, name, color: hex, id: c.id || id } : c))
+                                  );
+                                  setEditingColorIndex(null);
+                                  showToast(`Updated color "${name}"`, 'success');
+                                } else {
+                                  setSelectedColors((prev) => [...prev, { id, name, color: hex }]);
+                                  showToast(`Added color "${name}"`, 'success');
+                                }
+                                setNewColorName('');
+                                setNewColorHex('#1e2238');
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              minWidth: '180px',
+                              padding: '0.55rem 0.8rem',
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              fontSize: '0.82rem',
+                              color: '#0f172a',
+                              outline: 'none',
+                            }}
+                          />
+
+                          {/* Save / Add Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const name = newColorName.trim();
+                              if (!name) {
+                                showToast('Please enter a color name', 'error');
+                                return;
+                              }
+                              const hex = newColorHex.trim() || '#1e2238';
+                              const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                              if (editingColorIndex !== null) {
+                                setSelectedColors((prev) =>
+                                  prev.map((c, i) => (i === editingColorIndex ? { ...c, name, color: hex, id: c.id || id } : c))
+                                );
+                                setEditingColorIndex(null);
+                                showToast(`Updated color "${name}"`, 'success');
+                              } else {
+                                setSelectedColors((prev) => [...prev, { id, name, color: hex }]);
+                                showToast(`Added color "${name}"`, 'success');
+                              }
+                              setNewColorName('');
+                              setNewColorHex('#1e2238');
+                            }}
+                            style={{
+                              padding: '0.55rem 1rem',
+                              background: '#7c3aed',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+                            }}
+                          >
+                            {editingColorIndex !== null ? 'Save Changes' : '+ Add Color'}
+                          </button>
+
+                          {editingColorIndex !== null && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingColorIndex(null);
+                                setNewColorName('');
+                                setNewColorHex('#1e2238');
+                              }}
+                              style={{
+                                padding: '0.55rem 0.8rem',
+                                background: '#ffffff',
+                                color: '#64748b',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '8px',
+                                fontSize: '0.78rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+
+                {/* 6. Product Technical Specifications Builder */}
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: '1px solid #e2e8f0',
+                    marginTop: '0.3rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div>
+                      <strong style={{ fontSize: '0.82rem', color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                        PRODUCT TECHNICAL SPECIFICATIONS
+                      </strong>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                        Configure specifications to display in the customer Product Detail Specifications tab.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddCustomSpec}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.4rem 0.85rem',
+                        borderRadius: '8px',
+                        background: '#7c3aed',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                      }}
+                    >
+                      <Plus size={14} />
+                      <span>Add Specification</span>
+                    </button>
+                  </div>
+
+                  {/* Category-defined Preset Specs (if any configured on category) */}
+                  {currentCategorySpecs.length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+                        Category Presets ({currentCategoryObj?.name})
+                      </span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+                        {currentCategorySpecs.map((char, idx) => (
+                          <div key={idx} style={{ background: '#ffffff', padding: '0.7rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            <label style={{ fontSize: '0.74rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem', color: '#334155' }}>
+                              {char.name} {char.required && <span style={{ color: '#ef4444' }}>*</span>}
+                            </label>
+
+                            {char.type === 'select' && (
+                              <select
+                                style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }}
+                                value={charValues[char.name] || ''}
+                                onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                                required={char.required}
+                              >
+                                <option value="">Select {char.name}...</option>
+                                {char.values?.map((v, i) => (
+                                  <option key={i} value={v}>{v}</option>
+                                ))}
+                              </select>
+                            )}
+
+                            {char.type === 'multi_select' && (
+                              <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                {char.values?.map((v, i) => {
+                                  const current = Array.isArray(charValues[char.name]) ? charValues[char.name] : [];
+                                  const isSelected = current.includes(v);
+                                  return (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => toggleMultiSelect(char.name, v)}
+                                      style={{
+                                        fontSize: '0.72rem',
+                                        padding: '0.2rem 0.5rem',
+                                        borderRadius: '9999px',
+                                        border: '1px solid',
+                                        borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                                        background: isSelected ? '#f3e8ff' : '#ffffff',
+                                        color: isSelected ? '#6d28d9' : '#475569',
+                                        cursor: 'pointer',
+                                        fontWeight: isSelected ? 600 : 400,
+                                      }}
+                                    >
+                                      {isSelected ? `✓ ${v}` : v}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {(char.type === 'text' || char.type === 'number') && (
+                              <input
+                                type={char.type}
+                                placeholder={`e.g. ${char.name}...`}
+                                style={{ width: '100%', fontSize: '0.82rem', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none', boxSizing: 'border-box' }}
+                                value={charValues[char.name] || ''}
+                                onChange={(e) => setCharValues({ ...charValues, [char.name]: e.target.value })}
+                                required={char.required}
+                              />
+                            )}
+
+                            {char.type === 'boolean' && (
+                              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setCharValues({ ...charValues, [char.name]: 'Yes' })}
+                                  style={{
+                                    flex: 1,
+                                    fontSize: '0.75rem',
+                                    padding: '0.3rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid',
+                                    borderColor: charValues[char.name] === 'Yes' ? '#16a34a' : '#cbd5e1',
+                                    background: charValues[char.name] === 'Yes' ? '#dcfce7' : '#fff',
+                                    color: charValues[char.name] === 'Yes' ? '#15803d' : '#475569',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setCharValues({ ...charValues, [char.name]: 'No' })}
+                                  style={{
+                                    flex: 1,
+                                    fontSize: '0.75rem',
+                                    padding: '0.3rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid',
+                                    borderColor: charValues[char.name] === 'No' ? '#ef4444' : '#cbd5e1',
+                                    background: charValues[char.name] === 'No' ? '#fff1f2' : '#fff',
+                                    color: charValues[char.name] === 'No' ? '#be123c' : '#475569',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  No
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Custom Specifications Rows */}
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.72rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+                      Custom Specifications ({customSpecs.length})
+                    </span>
+
+                    {customSpecs.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {customSpecs.map((spec, sIdx) => (
+                          <div
+                            key={sIdx}
+                            style={{
+                              display: 'flex',
+                              gap: '0.75rem',
+                              alignItems: 'center',
+                              background: '#ffffff',
+                              padding: '0.6rem 0.85rem',
+                              borderRadius: '10px',
+                              border: '1px solid #e2e8f0',
+                            }}
+                          >
+                            <div style={{ flex: '0 0 40%' }}>
+                              <input
+                                type="text"
+                                placeholder="Spec Name (e.g. Strap Material, Battery Life)"
+                                value={spec.key}
+                                onChange={(e) => handleCustomSpecChange(sIdx, 'key', e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.82rem',
+                                  outline: 'none',
+                                }}
+                              />
+                            </div>
+                            <div style={{ flex: '1' }}>
+                              <input
+                                type="text"
+                                placeholder="Value (e.g. Silicone & Titanium, 48 Hours)"
+                                value={spec.value}
+                                onChange={(e) => handleCustomSpecChange(sIdx, 'value', e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem 0.65rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.82rem',
+                                  outline: 'none',
+                                }}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCustomSpec(sIdx)}
+                              style={{
+                                background: '#fee2e2',
+                                color: '#ef4444',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '0.45rem 0.6rem',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                              title="Delete Specification"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '10px', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
+                          No custom specifications added. Click <strong>+ Add Specification</strong> above to add custom specs like Battery Life, Material, Water Resistance, etc.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* 6. Tags & Options (Single Tag Only) */}
                 <div>
@@ -1475,6 +3102,120 @@ export default function AdminProducts() {
                     ✅ Active Status
                   </label>
                 </div>
+
+                {/* 7. Customer Reviews & Ratings Management Card */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div>
+                      <strong style={{ fontSize: '0.82rem', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <MessageSquare size={16} color="#7c3aed" />
+                        Customer Reviews &amp; Ratings ({currentProductReviews.length})
+                      </strong>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                        View, seed initial verified reviews, or jump to moderation for this product.
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddReviewModal(true)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '8px',
+                          background: '#f5f3ff',
+                          color: '#6d28d9',
+                          border: '1px solid #ddd6fe',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Plus size={14} />
+                        <span>Add Verified Review</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate('/softpicky-sn2026/reviews')}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '8px',
+                          background: '#f8fafc',
+                          color: '#475569',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Moderate All Reviews →
+                      </button>
+                    </div>
+                  </div>
+
+                  {currentProductReviews.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      {currentProductReviews.slice(0, 3).map((r, rIdx) => (
+                        <div
+                          key={rIdx}
+                          style={{
+                            background: '#f8fafc',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '10px',
+                            border: '1px solid #e2e8f0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: '1rem',
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.84rem', color: '#0f172a' }}>
+                                {r.customer?.name || 'Verified Customer'}
+                              </span>
+                              <div style={{ display: 'flex', gap: '2px' }}>
+                                {[...Array(Number(r.rating) || 5)].map((_, i) => (
+                                  <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', borderRadius: '9999px', background: r.status === 'published' ? '#dcfce7' : '#fef3c7', color: r.status === 'published' ? '#15803d' : '#b45309', fontWeight: 600 }}>
+                                {r.status}
+                              </span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569' }}>
+                              "{r.comment}"
+                            </p>
+                          </div>
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+                            {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recent'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                        No customer reviews logged yet for this product. Click <strong>+ Add Verified Review</strong> to seed an initial testimonial.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1497,7 +3238,7 @@ export default function AdminProducts() {
             >
               <button
                 type="button"
-                onClick={() => showToast(`Preview: ${formData.name || 'Product'} (₹${formData.discountPrice || formData.price || 0})`, 'info')}
+                onClick={() => setShowPreviewModal(true)}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2082,12 +3823,106 @@ export default function AdminProducts() {
                   {renderStockBadge(viewingProduct.stock)}
                 </div>
 
+                {viewingProduct.shortDescription && (
+                  <div style={{ marginBottom: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '0.75rem 1rem', borderRadius: '10px' }}>
+                    <h4 style={{ margin: '0 0 0.25rem 0', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                      Short Description (Operation Briefing)
+                    </h4>
+                    <p style={{ color: '#0f172a', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>
+                      {viewingProduct.shortDescription}
+                    </p>
+                  </div>
+                )}
+
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#334155', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</h4>
                   <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
                     {viewingProduct.description || 'No description available for this product.'}
                   </p>
                 </div>
+
+                {viewingProduct.variants?.type === 'clothing-size' && Array.isArray(viewingProduct.variants?.options) && viewingProduct.variants.options.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem', background: '#faf5ff', border: '1px solid #e9d5ff', padding: '0.75rem 1rem', borderRadius: '10px' }}>
+                    <h4 style={{ margin: '0 0 0.35rem 0', color: '#6d28d9', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                      Available Clothing Sizes
+                    </h4>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {viewingProduct.variants.options.map((sz) => (
+                        <span key={sz} style={{ background: '#ffffff', border: '1px solid #c4b5fd', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>
+                          {sz}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {viewingProduct.variants?.type === 'weight' && Array.isArray(viewingProduct.variants?.options) && viewingProduct.variants.options.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.75rem 1rem', borderRadius: '10px' }}>
+                    <h4 style={{ margin: '0 0 0.35rem 0', color: '#047857', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                      Available Weight Variants (Grams / Kg)
+                    </h4>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {viewingProduct.variants.options.map((wt) => (
+                        <span key={wt} style={{ background: '#ffffff', border: '1px solid #6ee7b7', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#065f46' }}>
+                          {wt}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(viewingProduct.variants?.type === 'liquid' || viewingProduct.variants?.type === 'volume') && Array.isArray(viewingProduct.variants?.options) && viewingProduct.variants.options.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '0.75rem 1rem', borderRadius: '10px' }}>
+                    <h4 style={{ margin: '0 0 0.35rem 0', color: '#0369a1', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                      Available Liquid / Volume Variants (ml / L)
+                    </h4>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {viewingProduct.variants.options.map((liq) => (
+                        <span key={liq} style={{ background: '#ffffff', border: '1px solid #7dd3fc', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#0284c7' }}>
+                          {liq}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(viewingProduct.variants?.colors) && viewingProduct.variants.colors.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '0.75rem 1rem', borderRadius: '10px' }}>
+                    <h4 style={{ margin: '0 0 0.45rem 0', color: '#6d28d9', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                      Configured Color Variants
+                    </h4>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {viewingProduct.variants.colors.map((col, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            background: '#ffffff',
+                            border: '1px solid #c4b5fd',
+                            borderRadius: '6px',
+                            padding: '0.2rem 0.55rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            color: '#4c1d95',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '10px',
+                              height: '10px',
+                              borderRadius: '50%',
+                              background: col.color || '#000',
+                              border: '1px solid rgba(0,0,0,0.15)',
+                            }}
+                          />
+                          <span>{col.name || (typeof col === 'string' ? col : 'Color')}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {viewingProduct.characteristics && Object.keys(viewingProduct.characteristics).length > 0 && (
                   <div>
@@ -2108,6 +3943,265 @@ export default function AdminProducts() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Live Storefront Card Preview Modal */}
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title="Live Storefront Card Preview"
+        maxWidth={720}
+      >
+        <div style={{ padding: '0.5rem 1rem 1.5rem', width: '100%' }}>
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #ede9fe 100%)',
+              padding: '1rem 1.25rem',
+              borderRadius: '12px',
+              marginBottom: '1.5rem',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, color: '#4c1d95', fontSize: '0.95rem' }}>
+                Customer Storefront Appearance
+              </p>
+              <p style={{ margin: '0.2rem 0 0 0', color: '#64748b', fontSize: '0.8rem' }}>
+                This is exactly how customers see this product card in the Shop grid and carousels.
+              </p>
+            </div>
+            <span
+              style={{
+                background: '#7c3aed',
+                color: '#fff',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '0.3rem 0.75rem',
+                borderRadius: '9999px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Live Card
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '2rem',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            {/* The Actual ProductCard Component */}
+            <div
+              onClickCapture={(e) => {
+                const link = e.target.closest('a');
+                if (link) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+              style={{ width: '100%', maxWidth: '280px', flex: '0 0 280px' }}
+            >
+              <ProductCard
+                product={previewProductData}
+                onAction={() => showToast('Preview mode: "Add to Cart" clicked', 'info')}
+              />
+            </div>
+
+            {/* Quick Details breakdown */}
+            <div style={{ flex: '1', minWidth: '260px' }}>
+              <h4 style={{ margin: '0 0 0.85rem 0', color: '#0f172a', fontSize: '1rem', fontWeight: 700 }}>
+                Live Card Attributes
+              </h4>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Selling Price</span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#15803d' }}>
+                    {formatPrice(previewProductData.discountPrice || previewProductData.price)}
+                  </span>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>M.R.P</span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#64748b', textDecoration: previewProductData.discountPrice && previewProductData.discountPrice < previewProductData.price ? 'line-through' : 'none' }}>
+                    {formatPrice(previewProductData.price)}
+                  </span>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Active Tag / Badge</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#7c3aed' }}>
+                    {previewProductData.tags?.[0] || 'None'}
+                  </span>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Stock Status</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: previewProductData.stock > 0 ? '#15803d' : '#dc2626' }}>
+                    {previewProductData.stock > 0 ? `${previewProductData.stock} in stock` : 'Out of Stock'}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ background: '#faf5ff', border: '1px dashed #c084fc', borderRadius: '10px', padding: '0.85rem', marginBottom: '1.25rem' }}>
+                <span style={{ display: 'block', fontSize: '0.72rem', color: '#7e22ce', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                  Category & SKU
+                </span>
+                <span style={{ fontSize: '0.85rem', color: '#3b0764', fontWeight: 600 }}>
+                  {previewProductData.category} {previewProductData.subCategory ? `› ${previewProductData.subCategory}` : ''} • SKU: {previewProductData.sku}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(false)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  background: '#f1f5f9',
+                  color: '#334155',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  border: '1px solid #cbd5e1',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = '#e2e8f0')}
+                onMouseOut={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Add Verified Customer Review Modal */}
+      <Modal
+        isOpen={showAddReviewModal}
+        onClose={() => setShowAddReviewModal(false)}
+        title="Add Verified Customer Review"
+        maxWidth={500}
+      >
+        <form onSubmit={handleSeedReviewSubmit} style={{ padding: '0.5rem 1rem 1.5rem' }}>
+          <p style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+            Add an authentic, verified review for <strong>{formData.name || 'this product'}</strong>. It will be published immediately to the customer storefront.
+          </p>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+              Rating
+            </label>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setReviewSeedForm((prev) => ({ ...prev, rating: s }))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  <Star
+                    size={26}
+                    fill={s <= reviewSeedForm.rating ? '#f59e0b' : 'transparent'}
+                    color={s <= reviewSeedForm.rating ? '#f59e0b' : '#cbd5e1'}
+                  />
+                </button>
+              ))}
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginLeft: '0.5rem' }}>
+                {reviewSeedForm.rating} / 5 Stars
+              </span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+              Customer Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Ananya S., Chennai"
+              value={reviewSeedForm.author}
+              onChange={(e) => setReviewSeedForm((prev) => ({ ...prev, author: e.target.value }))}
+              style={{
+                width: '100%',
+                padding: '0.55rem 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+              Review Comment *
+            </label>
+            <textarea
+              required
+              rows={4}
+              placeholder="Write customer feedback (e.g. Loved the design, premium finish, fast delivery)..."
+              value={reviewSeedForm.comment}
+              onChange={(e) => setReviewSeedForm((prev) => ({ ...prev, comment: e.target.value }))}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => setShowAddReviewModal(false)}
+              style={{
+                padding: '0.55rem 1.1rem',
+                borderRadius: '8px',
+                background: '#f1f5f9',
+                color: '#475569',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{
+                padding: '0.55rem 1.25rem',
+                borderRadius: '8px',
+                background: '#7c3aed',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+              }}
+            >
+              Publish Review
+            </button>
+          </div>
+        </form>
       </Modal>
     </AdminLayout>
   );

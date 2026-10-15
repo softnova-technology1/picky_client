@@ -4,14 +4,12 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
-import { useOrderStore } from '../../store/orderStore';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import { Package, Search, ArrowRight, Filter } from 'lucide-react';
 import styles from './Orders.module.css';
 
 export default function Orders() {
-  const { orders: mockOrders } = useOrderStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderFilter, setOrderFilter] = useState('all');
@@ -23,14 +21,10 @@ export default function Orders() {
         setLoading(true);
         const res = await orderService.list();
         const apiOrders = res?.data?.data || res?.data || [];
-        if (apiOrders.length > 0) {
-          setOrders(apiOrders);
-        } else {
-          setOrders(mockOrders);
-        }
+        setOrders(apiOrders);
       } catch (err) {
         console.error('Failed to load orders:', err);
-        setOrders(mockOrders);
+        setOrders([]);
       } finally {
         const elapsed = Date.now() - startTime;
         const remainingDelay = Math.max(0, 2000 - elapsed);
@@ -41,7 +35,7 @@ export default function Orders() {
       }
     }
     loadOrders();
-  }, [mockOrders]);
+  }, []);
 
   const filterOptions = [
     { key: 'all', label: 'All Orders', color: '#7c3aed', bg: '#ede9fe', activeBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', activeColor: '#fff' },

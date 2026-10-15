@@ -95,7 +95,42 @@ export const useReviewStore = create(
         }));
       },
 
-      // 10. Reset Store to Default Sample Data
+      // 10. Add New Review (Customer Storefront or Admin Seed)
+      addReview: (reviewData) => {
+        const newReview = {
+          id: `REV-${Date.now().toString(36).toUpperCase()}`,
+          customer: {
+            name: reviewData.author || reviewData.customerName || 'Verified Customer',
+            email: reviewData.email || 'customer@example.com',
+            city: reviewData.city || 'Tamil Nadu',
+            verified: reviewData.verified !== false,
+            avatar: reviewData.avatar || null,
+          },
+          product: {
+            id: reviewData.productId || 'prod-custom',
+            name: reviewData.productName || 'Product',
+            slug: reviewData.productSlug || '',
+            image: reviewData.productImage || '',
+            category: reviewData.category || '',
+            price: reviewData.price || 0,
+          },
+          rating: Number(reviewData.rating) || 5,
+          title: reviewData.title || (reviewData.comment ? reviewData.comment.slice(0, 45) + '...' : 'Great product!'),
+          comment: reviewData.comment || '',
+          photos: reviewData.photos || [],
+          status: reviewData.status || 'published',
+          isFeatured: !!reviewData.isFeatured,
+          helpfulVotes: 0,
+          createdAt: new Date().toISOString(),
+          adminReply: null,
+        };
+        set((state) => ({
+          reviews: [newReview, ...state.reviews],
+        }));
+        return newReview;
+      },
+
+      // 11. Reset Store to Default Sample Data
       resetToDefault: () => set({ reviews: INITIAL_REVIEWS_MODERATION_DATA }),
     }),
     {

@@ -389,7 +389,7 @@ export default function Navbar() {
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Heart size={15} />
-                      <span>Wishlist ({totalWishlistCount})</span>
+                      <span>Wishlist</span>
                     </Link>
                     <div className="nav-user-menu-divider" />
                     <button
@@ -733,7 +733,7 @@ export default function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Heart size={16} style={{ color: '#e11d48' }} />
-                  <span>Wishlist ({totalWishlistCount})</span>
+                  <span>Wishlist</span>
                 </Link>
                 <Link
                   to="/cart"
