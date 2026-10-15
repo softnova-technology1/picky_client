@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { ChevronRight, Layers, ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper/PageWrapper';
 import ProductCard from '../../components/product/ProductCard/ProductCard';
-import { getCategoryBySlug, getProducts } from '../../data';
+import { getCategoryBySlug } from '../../data';
+import { productService } from '../../services/product.service';
 import { useCategoryStore } from '../../store/categoryStore';
 import styles from './CategorySubcategories.module.css';
 
@@ -55,11 +56,11 @@ const HORIZONTAL_CAPSULE_THEMES = [
 const CategoryHeroBanner = ({ category, categorySlug }) => {
   const normalizedSlug = (categorySlug || category?.slug || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
   const mockCat = getCategoryBySlug(normalizedSlug) || getCategoryBySlug(categorySlug) || category;
-  const heroBadge = mockCat?.heroBadge || category?.heroBadge || 'New Collection';
-  const heroTitle = mockCat?.heroTitle || category?.heroTitle || 'Find Your Style,\nLove Your Look';
-  const heroSubtitle = mockCat?.heroSubtitle || category?.heroSubtitle || 'Discover the latest trends in fashion, beauty, and lifestyle.';
-  const heroImage = mockCat?.heroImage || category?.heroImage || '/images/category_hero_fashion.png';
-  const heroCta = mockCat?.heroCta || category?.heroCta || 'Shop Now';
+  const heroBadge = category?.heroBadge || mockCat?.heroBadge || 'New Collection';
+  const heroTitle = category?.heroTitle || mockCat?.heroTitle || 'Find Your Style,\nLove Your Look';
+  const heroSubtitle = category?.heroSubtitle || mockCat?.heroSubtitle || 'Discover the latest trends in fashion, beauty, and lifestyle.';
+  const heroImage = category?.heroImage || mockCat?.heroImage || '/images/category_hero_fashion.png';
+  const heroCta = category?.heroCta || mockCat?.heroCta || 'Shop Now';
   const rawTitle = typeof heroTitle === 'string' ? heroTitle : 'Find Your Style,\nLove Your Look';
   const titleText = rawTitle.replace(/✨/g, '').trim();
   const heroImageSrc = heroImage ? `${heroImage}${heroImage.includes('?') ? '&' : '?'}v=cleanpng` : '/images/category_hero_fashion.png';
@@ -108,121 +109,6 @@ const CategoryHeroBanner = ({ category, categorySlug }) => {
   );
 };
 
-// High-definition diverse gallery images for subcategory showcases
-const SUBCAT_GALLERY_IMAGES = {
-  'hair-accessories': [
-    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500',
-    'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500',
-    'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=500',
-    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
-  ],
-  'skincare': [
-    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500',
-    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
-    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
-    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=500',
-  ],
-  'herbal-products': [
-    'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=500',
-    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
-    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
-    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500',
-  ],
-  'sarees': [
-    'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500',
-    'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500',
-    'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500',
-    'https://images.unsplash.com/photo-1610030469857-897dbfcbebf6?w=500',
-  ],
-  'kurtis': [
-    'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500',
-    'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500',
-    'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500',
-    'https://images.unsplash.com/photo-1608248597359-59754f9a37e9?w=500',
-  ],
-  'dresses': [
-    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500',
-    'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500',
-    'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500',
-    'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=500',
-  ],
-  'tops': [
-    'https://images.unsplash.com/photo-1564257631407-4deb129965a2?w=500',
-    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500',
-    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500',
-    'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=500',
-  ],
-  't-shirts': [
-    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500',
-    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500',
-    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500',
-    'https://images.unsplash.com/photo-1527719327859-c6ce80353573?w=500',
-  ],
-  'pants': [
-    'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500',
-    'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=500',
-    'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500',
-    'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=500',
-  ],
-  'pant': [
-    'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500',
-    'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=500',
-    'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500',
-    'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=500',
-  ],
-};
-
-const SUBCAT_SAMPLE_NAMES = {
-  'hair-accessories': [
-    'Silk Satin Scrunchie Pack',
-    'Pearl Encrusted Hair Claw',
-    'Velvet Bow Hair Barrette',
-    'Crystal Embellished Headband'
-  ],
-  'skincare': [
-    'Luminous Hydrating Face Serum',
-    'Rejuvenating Night Repair Cream',
-    'Gentle Rosewater Purifying Foam',
-    'Botanical Glow Radiance Oil'
-  ],
-  'herbal-products': [
-    'Ayurvedic Hair Scalp Elixir',
-    'Organic Neem Clarifying Gel',
-    'Herbal Ubtan Glow Clay Mask',
-    'Pure Cold-Pressed Almond Oil'
-  ],
-  'pants': [
-    'Cotton Straight Fit Cigarette Pant',
-    'Lycra Ankle-Length Stretchable Pant',
-    'Ethnic Solid Rayon Palazzo Pant',
-    'Casual Formal High-Waist Pant'
-  ],
-  'pant': [
-    'Cotton Straight Fit Cigarette Pant',
-    'Lycra Ankle-Length Stretchable Pant',
-    'Ethnic Solid Rayon Palazzo Pant',
-    'Casual Formal High-Waist Pant'
-  ],
-};
-
-// Helper to reliably retrieve 4 mock products for any subcategory
-const getProductsForSubcategory = (cat, sub) => {
-  const catSlug = (cat?.slug || '').toLowerCase();
-  const subSlug = (sub?.slug || '').toLowerCase();
-
-  const matches = getProducts({
-    category: catSlug,
-    subCategory: subSlug,
-  });
-
-  if (matches && matches.length >= 4) {
-    return matches.slice(0, 4);
-  }
-
-  const existing = matches || [];
-  return existing;
-};
-
 export default function CategorySubcategories() {
   const { slug } = useParams();
   
@@ -237,14 +123,24 @@ export default function CategorySubcategories() {
     ? allSubcategories.filter(s => s.categoryId === category._id || s.categoryId?._id === category._id)
     : [];
     
-  const [categoryProducts, setCategoryProducts] = useState(() => getProducts({ category: slug, limit: 4 }));
+  const [dbProducts, setDbProducts] = useState([]);
 
   useEffect(() => {
-    // If you want to dynamically fetch products based on category ID, you could do it here.
-    // For now, we leave the mock fallback products for subcategories so the UI doesn't crash completely
-    // but the user only wanted NO dummy data on homepage categories.
-    // If they want NO dummy products here either, set categoryProducts to [].
-  }, [slug]);
+    async function loadCategoryProducts() {
+      if (!category) return;
+      try {
+        const res = await productService.list({
+          category: category._id || category.slug,
+          limit: 100,
+        });
+        const items = res?.data?.data || res?.data || [];
+        setDbProducts(Array.isArray(items) ? items : []);
+      } catch (err) {
+        setDbProducts([]);
+      }
+    }
+    loadCategoryProducts();
+  }, [category, slug]);
 
   if (!category) {
     return (
@@ -358,9 +254,15 @@ export default function CategorySubcategories() {
             )}
           </div>
 
-          {/* Subcategory Showcase Rows: Each Subcategory has 4 Products + 1 View All Card */}
+          {/* Subcategory Showcase Rows: Each Subcategory has 4 Real DB Products + 1 View All Card */}
           {(subcategories || []).map((sub) => {
-            const subProducts = getProductsForSubcategory(category, sub);
+            const subProducts = dbProducts.filter((p) => {
+              const pSub = p.subCategory?._id || p.subCategory?.id || p.subCategory?.slug || p.subCategory;
+              return pSub && (pSub === sub._id || pSub === sub.id || pSub === sub.slug);
+            }).slice(0, 4);
+
+            if (subProducts.length === 0) return null;
+
             const targetSubUrl = `/products?category=${category.slug || category._id}&subCategory=${sub.slug || sub._id}`;
 
             return (

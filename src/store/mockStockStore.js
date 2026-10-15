@@ -44,14 +44,12 @@ export const useMockStockStore = create((set, get) => ({
   // ── Get all as inventory-ready array (mirrors MOCK_INVENTORY shape) ──────────
   getInventoryList: () => {
     const map = get().stockMap;
-    return MOCK_PRODUCTS.map((p, idx) => {
-      const catCode = p.category?.slug ? p.category.slug.split('-').map(s => s[0]).join('').toUpperCase() : 'GEN';
-      const fallbackSku = `${catCode}-${String(idx + 1).padStart(3, '0')}`;
+    return MOCK_PRODUCTS.map((p) => {
       return {
         _id: `inv_${p._id}`,
         productId: p._id,
         productName: p.name,
-        sku: p.sku || fallbackSku,
+        sku: p.sku || '',
         slug: p.slug,
         category: p.category?.name || 'General',
         categoryId: p.category?._id || '',

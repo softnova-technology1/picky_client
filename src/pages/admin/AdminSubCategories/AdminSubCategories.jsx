@@ -33,6 +33,7 @@ import {
   Folder,
   Tag,
   ChevronDown,
+  ImageOff,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -94,11 +95,6 @@ export default function AdminSubCategories() {
     } catch (err) {
       console.error('Failed to load subcategories:', err);
     } finally {
-      const elapsed = Date.now() - startTime;
-      const remainingDelay = Math.max(0, 2000 - elapsed);
-      if (remainingDelay > 0) {
-        await new Promise((r) => setTimeout(r, remainingDelay));
-      }
       setLoading(false);
     }
   }
@@ -1109,27 +1105,44 @@ export default function AdminSubCategories() {
                               borderRadius: '10px',
                               overflow: 'hidden',
                               flexShrink: 0,
-                              border: '1.5px solid #e2e8f0',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                              border: sub.image ? '1.5px solid #e2e8f0' : '1.5px dashed #cbd5e1',
+                              boxShadow: sub.image ? '0 2px 6px rgba(0,0,0,0.04)' : 'none',
                               background: '#f8fafc',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
                           >
-                            <img
-                              src={
-                                sub.image ||
-                                'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100'
-                              }
-                              alt={sub.name}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                display: 'block',
-                                transition: 'transform 0.2s ease',
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-                              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
-                            />
+                            {sub.image ? (
+                              <img
+                                src={sub.image}
+                                alt={sub.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  display: 'block',
+                                  transition: 'transform 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#94a3b8',
+                                  gap: '2px',
+                                }}
+                                title="No image in database"
+                              >
+                                <ImageOff size={16} strokeWidth={1.8} />
+                                <span style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase' }}>No Image</span>
+                              </div>
+                            )}
                           </div>
                           <div>
                             <strong
@@ -2552,24 +2565,41 @@ export default function AdminSubCategories() {
                     borderRadius: '14px',
                     overflow: 'hidden',
                     flexShrink: 0,
-                    border: '2px solid #ffffff',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                    background: '#ffffff',
+                    border: viewingItem.image ? '2px solid #ffffff' : '1.5px dashed #cbd5e1',
+                    boxShadow: viewingItem.image ? '0 4px 12px rgba(0, 0, 0, 0.08)' : 'none',
+                    background: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <img
-                    src={
-                      viewingItem.image ||
-                      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400'
-                    }
-                    alt={viewingItem.name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
+                  {viewingItem.image ? (
+                    <img
+                      src={viewingItem.image}
+                      alt={viewingItem.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#94a3b8',
+                        gap: '3px',
+                      }}
+                      title="No image in database"
+                    >
+                      <ImageOff size={24} strokeWidth={1.8} />
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase' }}>No Image</span>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>

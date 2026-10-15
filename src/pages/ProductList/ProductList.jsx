@@ -9,7 +9,7 @@ import ShopInFeedBanner from '../../components/shop/ShopInFeedBanner';
 import ShopSubcategoryCards from '../../components/shop/ShopSubcategoryCards';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
-import { getProducts, categories as defaultCategories, searchProducts } from '../../data';
+import { categories as defaultCategories } from '../../data';
 import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 export default function ProductList() {
@@ -101,29 +101,15 @@ export default function ProductList() {
             items = res?.data?.data || res?.data || [];
           }
         } catch (_) {
-          // fallback
+          items = [];
         }
 
-        if (Array.isArray(items) && items.length > 0) {
-          if (isMounted) setAllProducts(items);
-        } else {
-          if (isMounted) {
-            if (searchQuery.trim()) {
-              setAllProducts(searchProducts(searchQuery, params));
-            } else {
-              setAllProducts(getProducts(params));
-            }
-          }
+        if (isMounted) {
+          setAllProducts(Array.isArray(items) ? items : []);
         }
-
-
       } catch (err) {
         if (isMounted) {
-          if (searchQuery.trim()) {
-            setAllProducts(searchProducts(searchQuery, { sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
-          } else {
-            setAllProducts(getProducts({ sort: sort === 'all' ? 'newest' : sort, category: selectedCategory, subCategory: selectedSubCategory }));
-          }
+          setAllProducts([]);
         }
       } finally {
         const elapsed = Date.now() - startTime;

@@ -548,64 +548,20 @@ export default function Checkout() {
                     razorpaySignature: response.razorpay_signature,
                   };
 
-                  const verifyRes = await orderService.verifyRazorpayPayment(verifyPayload);
                   const placedOrder = verifyRes?.data?.data || verifyRes?.data;
-
-                  const finalOrder = {
-                    ...(placedOrder || {}),
-                    _id: placedOrder?._id || placedOrder?.id || 'ord_' + Date.now(),
-                    id: placedOrder?._id || placedOrder?.id || 'ord_' + Date.now(),
-                    orderNumber: placedOrder?.orderNumber || ('ORD-2026-' + Math.floor(10000 + Math.random() * 90000)),
-                    customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
-                    shippingAddress: formData,
-                    deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-                    paymentMethod: 'razorpay',
-                    items: [...items],
-                    subtotal,
-                    deliveryFee,
-                    convenienceFee,
-                    discountAmount: couponDiscount || 0,
-                    totalAmount: finalPayable,
-                    total: finalPayable,
-                    status: 'confirmed',
-                    razorpayPaymentId: response.razorpay_payment_id,
-                    razorpayOrderId: response.razorpay_order_id,
-                    courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
-                    createdAt: new Date().toISOString(),
-                  };
+                  if (!placedOrder || (!placedOrder._id && !placedOrder.id)) {
+                    throw new Error('Payment verification failed to return valid order');
+                  }
 
                   clearCart();
                   setLoading(false);
                   showToast('🎉 Payment Successful! Order placed successfully.', 'success');
-                  navigate(`/order-success/${finalOrder._id || finalOrder.id}`);
+                  navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
                   return;
                 } catch (verifyErr) {
                   console.error('Razorpay verification error:', verifyErr);
-                  const fallbackOrder = {
-                    _id: 'ord_' + Date.now(),
-                    id: 'ord_' + Date.now(),
-                    orderNumber: 'ORD-2026-' + Math.floor(10000 + Math.random() * 90000),
-                    customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
-                    shippingAddress: formData,
-                    deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-                    paymentMethod: 'razorpay',
-                    items: [...items],
-                    subtotal,
-                    deliveryFee,
-                    convenienceFee,
-                    discountAmount: couponDiscount || 0,
-                    totalAmount: finalPayable,
-                    total: finalPayable,
-                    status: 'confirmed',
-                    razorpayPaymentId: response.razorpay_payment_id,
-                    razorpayOrderId: response.razorpay_order_id,
-                    courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
-                    createdAt: new Date().toISOString(),
-                  };
-                  clearCart();
                   setLoading(false);
-                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
-                  navigate(`/order-success/${fallbackOrder._id || fallbackOrder.id}`);
+                  showToast(verifyErr?.response?.data?.message || verifyErr?.message || 'Payment verification failed. Please try again.', 'error');
                 }
               },
               modal: { ondismiss: () => setLoading(false) },
@@ -622,42 +578,18 @@ export default function Checkout() {
       console.warn('Script load notice:', e);
     }
 
-    // Fallback: Simulated Test Payment Modal
+    // Direct / Test Payment Modal
     setLoading(false);
     setRzTab(paymentMethod);
     setShowRzModal(true);
   };
 
-  // Confirm Simulated Payment in Modal
+  // Confirm Payment in Modal
   const handleConfirmSimulatedPayment = async () => {
     setShowRzModal(false);
     const startTime = Date.now();
     setLoading(true);
 
-    const orderId = 'ord_' + Date.now();
-    const fallbackOrder = {
-      _id: orderId,
-      id: orderId,
-      orderNumber: 'ORD-2026-' + Math.floor(10000 + Math.random() * 90000),
-      customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
-      shippingAddress: formData,
-      deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-      paymentMethod: paymentMethod,
-      items: [...items],
-      subtotal,
-      deliveryFee,
-      convenienceFee,
-      discountAmount: couponDiscount || 0,
-      totalAmount: finalPayable,
-      total: finalPayable,
-      status: 'confirmed',
-      razorpayPaymentId: 'pay_' + Math.random().toString(36).substring(2, 12),
-      razorpayOrderId: 'rzp_order_' + Math.random().toString(36).substring(2, 10),
-      courier: deliveryMode === 'pickup' ? 'Self Store Pickup' : 'Standard Surface Delivery',
-      createdAt: new Date().toISOString(),
-    };
-
-    let placedOrder = fallbackOrder;
     try {
       const payload = {
         items: checkoutItems.map((i) => ({
@@ -683,38 +615,32 @@ export default function Checkout() {
         totalAmount: finalPayable,
         paymentMethod,
         deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-        razorpayPaymentId: fallbackOrder.razorpayPaymentId,
-        razorpayOrderId: fallbackOrder.razorpayOrderId,
       };
 
       const res = await orderService.create(payload);
       const apiOrder = res?.data?.data || res?.data;
-      if (apiOrder && (apiOrder._id || apiOrder.id)) {
-        placedOrder = {
-          ...fallbackOrder,
-          ...apiOrder,
-          _id: apiOrder._id || apiOrder.id,
-          id: apiOrder._id || apiOrder.id,
-          customer: { name: formData.fullName, phone: formData.phone, email: formData.email },
-        };
+      if (!apiOrder || (!apiOrder._id && !apiOrder.id)) {
+        throw new Error('Order could not be saved to database');
       }
-    } catch (apiErr) {
-      console.warn('Backend order save notice:', apiErr?.message || apiErr);
-    }
 
-    if (isBuyNow) {
-      clearBuyNowItem();
-    } else {
-      clearCart();
+      if (isBuyNow) {
+        clearBuyNowItem();
+      } else {
+        clearCart();
+      }
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 1000 - elapsed);
+      if (remainingDelay > 0) {
+        await new Promise((r) => setTimeout(r, remainingDelay));
+      }
+      setLoading(false);
+      showToast('🎉 Order placed successfully!', 'success');
+      navigate(`/order-success/${apiOrder._id || apiOrder.id}`);
+    } catch (apiErr) {
+      console.error('Backend order save error:', apiErr);
+      setLoading(false);
+      showToast(apiErr?.response?.data?.message || apiErr?.message || 'Failed to place order. Please try again.', 'error');
     }
-    const elapsed = Date.now() - startTime;
-    const remainingDelay = Math.max(0, 2000 - elapsed);
-    if (remainingDelay > 0) {
-      await new Promise((r) => setTimeout(r, remainingDelay));
-    }
-    setLoading(false);
-    showToast('🎉 Payment Confirmed! Order placed successfully.', 'success');
-    navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
   };
 
   // If cart is empty

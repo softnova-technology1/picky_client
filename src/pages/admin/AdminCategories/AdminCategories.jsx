@@ -52,11 +52,6 @@ export default function AdminCategories() {
       console.error('Failed to load categories:', err);
       setCategories([]);
     } finally {
-      const elapsed = Date.now() - startTime;
-      const remainingDelay = Math.max(0, 2000 - elapsed);
-      if (remainingDelay > 0) {
-        await new Promise((r) => setTimeout(r, remainingDelay));
-      }
       setLoading(false);
     }
   }

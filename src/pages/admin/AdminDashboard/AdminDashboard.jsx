@@ -16,12 +16,6 @@ import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
-import {
-  MOCK_SALES_SUMMARY,
-  MOCK_ORDERS,
-  MOCK_ORDERS_EXTENDED,
-  MOCK_TOP_PRODUCTS_REPORT,
-} from '../../../data/adminMockData';
 import styles from './AdminDashboard.module.css';
 
 const ADMIN = '/softpicky-sn2026';
@@ -649,8 +643,8 @@ export default function AdminDashboard() {
   const [activeBarIndex, setActiveBarIndex] = useState(3);
   const [timeframe, setTimeframe] = useState('Week');
 
-  const [recentOrders, setRecentOrders] = useState(() => (MOCK_ORDERS_EXTENDED?.length >= 5 ? MOCK_ORDERS_EXTENDED : MOCK_ORDERS).slice(0, 5));
-  const [topProducts, setTopProducts] = useState(() => MOCK_TOP_PRODUCTS_REPORT.slice(0, 5));
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
 
   // Fetch live statistics seamlessly
   useEffect(() => {
@@ -666,20 +660,26 @@ export default function AdminDashboard() {
         if (data && data.totalOrders !== undefined) {
           setSummary(data);
         } else {
-          setSummary(MOCK_SALES_SUMMARY);
+          setSummary({ totalRevenue: 0, totalOrders: 0, confirmedOrders: 0, totalCustomers: 0, totalProducts: 0, dailySales: [] });
         }
 
         const tpList = topRes?.data?.data || topRes?.data || topRes;
         if (Array.isArray(tpList)) {
           setTopProducts(tpList);
+        } else {
+          setTopProducts([]);
         }
 
         const ordList = ordRes?.data?.data || ordRes?.data?.orders || ordRes?.data || ordRes;
         if (Array.isArray(ordList)) {
           setRecentOrders(ordList.slice(0, 5));
+        } else {
+          setRecentOrders([]);
         }
       } catch (err) {
-        // Leave summary as 0
+        setSummary({ totalRevenue: 0, totalOrders: 0, confirmedOrders: 0, totalCustomers: 0, totalProducts: 0, dailySales: [] });
+        setRecentOrders([]);
+        setTopProducts([]);
       }
     }
     fetchStats();
@@ -993,25 +993,39 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order) => {
+                {recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#64748b' }}>
+                      No recent orders found
+                    </td>
+                  </tr>
+                ) : (
+                  recentOrders.map((order) => {
                   let statusClass = styles.statusDelivered;
                   if (order.status === 'shipped') statusClass = styles.statusShipped;
                   else if (order.status === 'confirmed') statusClass = styles.statusConfirmed;
                   else if (order.status === 'cancelled') statusClass = styles.statusCancelled;
 
-                  const customerInitials = order.customer?.name
-                    ? order.customer.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .toUpperCase()
-                      .slice(0, 2)
-                    : 'CU';
+                  const customerName =
+                    order.user?.name ||
+                    order.shippingAddress?.fullName ||
+                    order.customer?.name ||
+                    'Customer';
+
+                  const customerInitials = customerName
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2) || 'C';
 
                   const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                   });
+
+                  const orderTotalAmount = order.total ?? order.totalAmount ?? 0;
 
                   return (
                     <tr key={order._id}>
@@ -1021,13 +1035,13 @@ export default function AdminDashboard() {
                         </strong>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span className={styles.customerAvatarBadge}>{customerInitials}</span>
-                          <span style={{ fontWeight: 600, color: '#1e1b4b' }}>{order.customer?.name}</span>
+                          <span style={{ fontWeight: 600, color: '#1e1b4b' }}>{customerName}</span>
                         </div>
                       </td>
                       <td>
-                        <strong style={{ color: '#0f172a' }}>{formatPrice(order.totalAmount)}</strong>
+                        <strong style={{ color: '#0f172a' }}>{formatPrice(orderTotalAmount)}</strong>
                       </td>
                       <td>
                         <span className={`${styles.statusPill} ${statusClass}`}>
@@ -1038,7 +1052,7 @@ export default function AdminDashboard() {
                       <td style={{ color: '#64748b', fontSize: '0.78rem' }}>{orderDate}</td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>
@@ -1054,7 +1068,12 @@ export default function AdminDashboard() {
             </div>
 
             <div className={styles.topProductsList}>
-              {topProducts.map((prod, idx) => (
+              {topProducts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#64748b', fontSize: '0.9rem' }}>
+                  No top products found
+                </div>
+              ) : (
+                topProducts.map((prod, idx) => (
                 <div key={prod._id || prod.id} className={styles.topProductRow}>
                   <div className={styles.topProductLeft}>
                     <span
@@ -1082,18 +1101,18 @@ export default function AdminDashboard() {
                     <div>
                       <span className={styles.topProductName}>{prod.name}</span>
                       <span className={styles.topProductCat}>
-                        {prod.category?.name || "Women's Fashion"}
+                        {prod.category?.name || (typeof prod.category === 'string' ? prod.category : '') || 'General'}
                       </span>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0f172a' }}>
-                      {formatPrice(prod.discountPrice || prod.price)}
+                      {formatPrice(prod.totalRevenue ?? prod.discountPrice ?? prod.price ?? 0)}
                     </div>
                     <span className={styles.topProductSales}>{prod.unitsSold} sold</span>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         </div>

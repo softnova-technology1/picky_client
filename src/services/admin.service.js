@@ -55,6 +55,7 @@ export const adminService = {
   // Inventory
   getInventory: (params) => api.get('/inventory', { params }),
   updateInventoryStock: (productId, data) => api.patch(`/inventory/${productId}`, data),
+  deleteInventory: (productId) => api.delete(`/inventory/${productId}`),
 
   // Customization
   getCustomizations: () => api.get('/customization'),

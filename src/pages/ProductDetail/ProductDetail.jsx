@@ -74,23 +74,7 @@ export default function ProductDetail() {
       );
     });
 
-    if (matched.length > 0) return matched;
-
-    // Fallback: If no store reviews exist for this product yet, provide demo reviews if available
-    const fallbackReviews = getProductReviews(product) || [];
-    return fallbackReviews.map((r, i) => ({
-      id: r.id || `demo-rev-${i}`,
-      customer: {
-        name: r.author || r.customer?.name || (i === 0 ? 'Sarah L.' : 'Michael R.'),
-        city: r.city || 'Verified Buyer',
-        verified: true,
-      },
-      rating: r.rating || 5,
-      createdAt: r.date || r.createdAt || '2025-10-12',
-      comment: r.comment || r.body || 'A premium product through and through. The detailing is perfect.',
-      photos: r.photos || (product.images ? product.images.slice(0, 2) : []),
-      adminReply: r.adminReply || null,
-    }));
+    return matched;
   }, [product, storeReviews, slug]);
 
   // Dynamic Rating Distribution calculation
@@ -98,7 +82,7 @@ export default function ProductDetail() {
     const total = activeReviews.length;
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     if (total === 0) {
-      return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: 0, average: product?.rating || '4.9' };
+      return { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: 0, average: product?.rating || 0 };
     }
     let sum = 0;
     activeReviews.forEach((r) => {

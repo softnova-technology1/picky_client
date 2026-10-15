@@ -587,18 +587,11 @@ export default function AdminOrders() {
       showToast(`Order #${orderNum} deleted successfully`, 'success');
       setOrderToDelete(null);
     } catch (err) {
-      console.warn('Backend delete order notice:', err?.message || err);
-      // Fallback update store in case of network/mock state
-      if (storeDeleteOrder) {
-        storeDeleteOrder(id);
-      }
-      if (expandedId === id) {
-        setExpandedId(null);
-      }
-      showToast(`Order #${orderNum} removed`, 'info');
-      setOrderToDelete(null);
+      console.error('Backend delete order error:', err);
+      showToast(err?.response?.data?.message || err?.message || `Failed to delete Order #${orderNum}`, 'error');
     } finally {
       setIsDeleting(false);
+      setOrderToDelete(null);
     }
   };
 

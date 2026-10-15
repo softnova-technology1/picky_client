@@ -148,15 +148,13 @@ export default function BestSellers() {
         const res = await productService.list({ limit: 100, sort: 'rating' });
         if (isMounted) {
           const items = res?.data?.data || res?.data || [];
-          const sourceList = Array.isArray(items) && items.length > 0 ? items : (getProducts() || MOCK_PRODUCTS || []);
+          const sourceList = Array.isArray(items) ? items : [];
           const bestSellersOnly = sourceList.filter(isBestSellerProduct);
           setAllProducts(bestSellersOnly);
         }
       } catch (err) {
         if (isMounted) {
-          const fallback = getProducts() || MOCK_PRODUCTS || [];
-          const bestSellersOnly = fallback.filter(isBestSellerProduct);
-          setAllProducts(bestSellersOnly);
+          setAllProducts([]);
         }
       } finally {
         const elapsed = Date.now() - startTime;

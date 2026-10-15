@@ -34,7 +34,6 @@ import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
-import { MOCK_COUPONS, MOCK_DISCOUNTS } from '../../../data/adminMockData';
 import {
   useCouponStore,
   formatValidityDate,
@@ -133,9 +132,8 @@ export default function AdminCoupons() {
     deleteDiscount: storeDeleteDiscount,
   } = useCouponStore();
 
-  // Ensure default mock data fallback is available throughout the entire page
-  const effectiveCoupons = (coupons && coupons.length > 0) ? coupons : MOCK_COUPONS;
-  const effectiveDiscounts = (discounts && discounts.length > 0) ? discounts : MOCK_DISCOUNTS;
+  const effectiveCoupons = Array.isArray(coupons) ? coupons : [];
+  const effectiveDiscounts = Array.isArray(discounts) ? discounts : [];
 
   // Highlight parameter support from Reports page link
   const highlightCode = searchParams.get('highlight');
@@ -241,42 +239,35 @@ export default function AdminCoupons() {
             applicableOn: c.applicableOn || 'All Products',
           }))
         );
-      } else if (!coupons || coupons.length === 0) {
-        setCoupons([...MOCK_COUPONS]);
+      } else {
+        setCoupons([]);
       }
 
       if (Array.isArray(dList) && dList.length > 0) {
         setDiscounts(
-          dList.map((d, index) => {
-            const fallback = discounts[index] || {};
+          dList.map((d) => {
             return {
-              ...fallback,
               ...d,
-              benefitType: d.benefitType || d.type || fallback.benefitType || 'flat',
-              condition: d.condition || fallback.condition || 'Order cart criteria met',
-              priority: d.priority !== undefined ? d.priority : (fallback.priority || 1),
-              stackable: d.stackable !== undefined ? d.stackable : (fallback.stackable || false),
-              validFrom: d.validFrom !== undefined ? d.validFrom : (fallback.validFrom || null),
-              validTill: d.validTill !== undefined ? d.validTill : (fallback.validTill || null),
-              totalUses: d.totalUses !== undefined ? d.totalUses : (fallback.totalUses || 0),
-              applicableOn: d.applicableOn || fallback.applicableOn || 'All Products',
-              maxDiscountAmount: d.maxDiscountAmount !== undefined ? d.maxDiscountAmount : fallback.maxDiscountAmount,
+              benefitType: d.benefitType || d.type || 'flat',
+              condition: d.condition || 'Order cart criteria met',
+              priority: d.priority !== undefined ? d.priority : 1,
+              stackable: d.stackable !== undefined ? d.stackable : false,
+              validFrom: d.validFrom !== undefined ? d.validFrom : null,
+              validTill: d.validTill !== undefined ? d.validTill : null,
+              totalUses: d.totalUses !== undefined ? d.totalUses : 0,
+              applicableOn: d.applicableOn || 'All Products',
+              maxDiscountAmount: d.maxDiscountAmount !== undefined ? d.maxDiscountAmount : null,
             };
           })
         );
-      } else if (!discounts || discounts.length === 0) {
-        setDiscounts([...MOCK_DISCOUNTS]);
+      } else {
+        setDiscounts([]);
       }
     } catch (err) {
       console.error('Failed to load promotional data from server:', err);
-      if (!coupons || coupons.length === 0) setCoupons([...MOCK_COUPONS]);
-      if (!discounts || discounts.length === 0) setDiscounts([...MOCK_DISCOUNTS]);
+      setCoupons([]);
+      setDiscounts([]);
     } finally {
-      const elapsed = Date.now() - startTime;
-      const remainingDelay = Math.max(0, 2000 - elapsed);
-      if (remainingDelay > 0) {
-        await new Promise((r) => setTimeout(r, remainingDelay));
-      }
       setLoading(false);
     }
   }

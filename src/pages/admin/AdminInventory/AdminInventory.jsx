@@ -87,11 +87,6 @@ export default function AdminInventory() {
         console.warn('Could not load live inventory:', err);
         setInventoryList([]);
       } finally {
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((r) => setTimeout(r, remainingDelay));
-        }
         setIsLoading(false);
       }
     }
@@ -132,6 +127,7 @@ export default function AdminInventory() {
   // Bulk Delete Confirmation Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Loading Skeleton State
   const [isLoading, setIsLoading] = useState(false);
@@ -344,14 +340,20 @@ export default function AdminInventory() {
     });
   };
 
-  // ─── Bulk Delete Flow ──────────────────────────────────────────────────────
+  // ─── Bulk & Single Delete Flow ─────────────────────────────────────────────
   const handleOpenDeleteModal = () => {
     if (selectedIds.length === 0) return;
     setDeleteConfirmInput('');
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleOpenRowDelete = (item) => {
+    setSelectedIds([item._id]);
+    setDeleteConfirmInput('');
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
     const count = selectedIds.length;
     if (count === 0) return;
 
@@ -360,11 +362,34 @@ export default function AdminInventory() {
       return;
     }
 
-    setInventoryList((prev) => prev.filter((item) => !selectedIds.includes(item._id)));
-    setSelectedIds([]);
-    setIsAllFilteredSelected(false);
-    setIsDeleteModalOpen(false);
-    showToast(`${count} product${count > 1 ? 's' : ''} deleted`, 'success');
+    setIsDeleting(true);
+    try {
+      const itemsToDelete = inventoryList.filter((item) => selectedIds.includes(item._id));
+
+      // Call backend API to permanently delete each product from MongoDB Atlas
+      await Promise.all(
+        itemsToDelete.map(async (item) => {
+          const prodId = item.productId || item._id;
+          try {
+            await adminService.deleteProduct(prodId);
+          } catch (delErr) {
+            console.warn('Product delete notice:', prodId, delErr?.message);
+            await adminService.deleteInventory(item._id).catch(() => null);
+          }
+        })
+      );
+
+      setInventoryList((prev) => prev.filter((item) => !selectedIds.includes(item._id)));
+      setSelectedIds([]);
+      setIsAllFilteredSelected(false);
+      setIsDeleteModalOpen(false);
+      showToast(`${count} product${count > 1 ? 's' : ''} permanently deleted`, 'success');
+    } catch (err) {
+      console.error('Delete products error:', err);
+      showToast('Failed to delete selected products from database', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // ─── Adjust Stock & Restock Flow ───────────────────────────────────────────
@@ -1120,8 +1145,8 @@ export default function AdminInventory() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     background: '#f5f0fe',
-                    width: '200px',
-                    minWidth: '200px',
+                    width: '240px',
+                    minWidth: '240px',
                   }}
                 >
                   Action
@@ -1407,8 +1432,8 @@ export default function AdminInventory() {
                           padding: '0.95rem 1.5rem 0.95rem 0.85rem',
                           verticalAlign: 'middle',
                           whiteSpace: 'nowrap',
-                          width: '200px',
-                          minWidth: '200px',
+                          width: '240px',
+                          minWidth: '240px',
                           textAlign: 'right',
                         }}
                       >
@@ -1508,6 +1533,33 @@ export default function AdminInventory() {
                               <span>Adjust Stock</span>
                             </button>
                           )}
+
+                          {/* Row Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRowDelete(item)}
+                            style={{
+                              width: '32px',
+                              minWidth: '32px',
+                              height: '32px',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '8px',
+                              border: '1px solid #fee2e2',
+                              background: '#ffffff',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              flexShrink: 0,
+                              transition: 'all 0.15s ease',
+                            }}
+                            title={`Delete ${item.productName}`}
+                            aria-label={`Delete ${item.productName}`}
+                          >
+                            <Trash2 size={13} color="#ef4444" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1797,37 +1849,37 @@ export default function AdminInventory() {
 
             {/* Modal Actions */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <Button type="button" variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
+              <Button type="button" variant="secondary" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>
                 Cancel
               </Button>
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                disabled={selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE'}
+                disabled={isDeleting || (selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE')}
                 style={{
                   height: '42px',
                   padding: '0 1.25rem',
                   borderRadius: '10px',
-                  background: '#dc2626',
+                  background: isDeleting ? '#94a3b8' : '#dc2626',
                   border: 'none',
                   color: '#ffffff',
                   fontWeight: 700,
                   fontSize: '0.85rem',
                   cursor:
-                    selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE'
+                    isDeleting || (selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE')
                       ? 'not-allowed'
                       : 'pointer',
                   opacity:
-                    selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE' ? 0.45 : 1,
+                    isDeleting || (selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE') ? 0.6 : 1,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.45rem',
                   transition: 'all 0.15s ease',
-                  boxShadow: '0 2px 8px rgba(220, 38, 38, 0.25)',
+                  boxShadow: isDeleting ? 'none' : '0 2px 8px rgba(220, 38, 38, 0.25)',
                 }}
               >
                 <Trash2 size={15} />
-                <span>Delete</span>
+                <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
               </button>
             </div>
           </div>

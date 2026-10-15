@@ -4,24 +4,15 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import ProductGrid from '../../components/product/ProductGrid';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
-import { getCategoryBySlug, getSubcategoryBySlug, getProducts } from '../../data';
 import { ChevronRight, Sparkles, FolderTree, ArrowLeft } from 'lucide-react';
 
 export default function CategoryProducts() {
   const { slug, subSlug } = useParams();
   const [sort, setSort] = useState('newest');
 
-  const [category, setCategory] = useState(() => getCategoryBySlug(slug));
-  const [subCategory, setSubCategory] = useState(() => (subSlug ? getSubcategoryBySlug(slug, subSlug) : null));
-  const [products, setProducts] = useState(() => {
-    const cat = getCategoryBySlug(slug);
-    const sub = subSlug ? getSubcategoryBySlug(slug, subSlug) : null;
-    return getProducts({
-      category: cat?._id || slug,
-      subCategory: sub?._id || subSlug,
-      sort: 'newest',
-    });
-  });
+  const [category, setCategory] = useState(null);
+  const [subCategory, setSubCategory] = useState(null);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,17 +22,18 @@ export default function CategoryProducts() {
         setLoading(true);
         const catRes = await categoryService.getBySlug(slug);
         const catData = catRes?.data || catRes;
-        if (catData) setCategory(catData);
-
-        if (subSlug) {
-          const foundSub = getSubcategoryBySlug(slug, subSlug);
-          if (foundSub) setSubCategory(foundSub);
-        } else {
-          setSubCategory(null);
+        if (catData) {
+          setCategory(catData);
+          if (subSlug && Array.isArray(catData.subcategories)) {
+            const foundSub = catData.subcategories.find(s => s.slug === subSlug || s._id === subSlug);
+            setSubCategory(foundSub || null);
+          } else {
+            setSubCategory(null);
+          }
         }
 
         const catId = catData?._id || slug;
-        const subId = subSlug ? (getSubcategoryBySlug(slug, subSlug)?._id || subSlug) : undefined;
+        const subId = subSlug || undefined;
 
         const prodRes = await productService.list({
           category: catId,
@@ -51,22 +43,12 @@ export default function CategoryProducts() {
         const items = prodRes?.data?.data || prodRes?.data;
         if (Array.isArray(items)) {
           setProducts(items);
+        } else {
+          setProducts([]);
         }
       } catch (err) {
         console.error('Failed to load category products:', err);
-        const fallbackCat = getCategoryBySlug(slug);
-        const fallbackSub = subSlug ? getSubcategoryBySlug(slug, subSlug) : null;
-        if (fallbackCat) {
-          setCategory(fallbackCat);
-          setSubCategory(fallbackSub);
-          setProducts(
-            getProducts({
-              category: fallbackCat._id,
-              subCategory: fallbackSub?._id,
-              sort,
-            })
-          );
-        }
+        setProducts([]);
       } finally {
         const elapsed = Date.now() - startTime;
         const remainingDelay = Math.max(0, 2000 - elapsed);

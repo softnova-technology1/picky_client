@@ -2,12 +2,12 @@
 export const PICKY_CATEGORIES = [
   {
     _id: 'cat-1',
-    name: "Fashion",
-    slug: 'fashion',
-    subtext: 'mens ladies kids..',
+    name: "Women's Fashion",
+    slug: 'womens-fashion',
+    subtext: 'Sarees, Kurtis, Leggings, Nightwear, Dupattas',
     icon: '👗',
     badge: 'Popular',
-    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&auto=format&fit=crop&q=80',
+    image: '',
     itemCount: 142,
   },
   {

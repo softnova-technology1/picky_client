@@ -7,13 +7,12 @@ import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
-import { getOrderById } from '../../data';
 import { ArrowLeft, ShoppingBag, MapPin, CreditCard, MessageCircle, FileText, ChevronRight } from 'lucide-react';
 import styles from './OrderDetail.module.css';
 
 export default function OrderDetail() {
   const { id } = useParams();
-  const [order, setOrder] = useState(() => getOrderById(id));
+  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,14 +21,15 @@ export default function OrderDetail() {
       try {
         setLoading(true);
         const res = await orderService.getById(id);
-        const item = res?.data || res;
-        if (item && item.orderNumber) {
+        const item = res?.data?.data || res?.data || res;
+        if (item && (item.orderNumber || item._id)) {
           setOrder(item);
+        } else {
+          setOrder(null);
         }
       } catch (err) {
         console.error('Failed to load order:', err);
-        const fallback = getOrderById(id);
-        if (fallback) setOrder(fallback);
+        setOrder(null);
       } finally {
         const elapsed = Date.now() - startTime;
         const remainingDelay = Math.max(0, 2000 - elapsed);
