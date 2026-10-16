@@ -28,7 +28,6 @@ import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDateShort } from '../../../utils/formatDate';
-import { MOCK_CUSTOMERS, MOCK_SALES_SUMMARY } from '../../../data/adminMockData';
 
 // ─── Customer Tier Classification Constant ──────────────────────────────────
 export const CUSTOMER_TIERS = {
@@ -136,19 +135,19 @@ export default function AdminCustomers() {
         if (sumData && sumData.totalCustomers > 0) {
           setSummary(sumData);
         } else {
-          setSummary(MOCK_SALES_SUMMARY);
+          setSummary({});
         }
 
         const custList = Array.isArray(custRes?.data) ? custRes.data : (Array.isArray(custRes?.data?.data) ? custRes.data.data : (Array.isArray(custRes) ? custRes : []));
         if (custList.length > 0) {
           setCustomers(custList);
         } else {
-          setCustomers(MOCK_CUSTOMERS);
+          setCustomers([]);
         }
       } catch (err) {
         console.error('Failed to load customers info:', err);
-        setSummary(MOCK_SALES_SUMMARY);
-        setCustomers(MOCK_CUSTOMERS);
+        setSummary({});
+        setCustomers([]);
       } finally {
         setLoading(false);
       }

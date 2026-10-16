@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { MOCK_COUPONS, MOCK_DISCOUNTS } from '../data/adminMockData';
 
 // ─── Date Helpers ─────────────────────────────────────────────────────────────
 
@@ -119,7 +118,7 @@ export const useCouponStore = create(
   persist(
     (set, get) => ({
       coupons: [...DEFAULT_COUPONS],
-      discounts: [...MOCK_DISCOUNTS],
+      discounts: [],
 
       setCoupons: (coupons) => set({ coupons }),
       setDiscounts: (discounts) => set({ discounts }),

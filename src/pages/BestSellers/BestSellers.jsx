@@ -4,7 +4,6 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import BestSellersHeroSection from '../../components/bestseller/BestSellersHeroSection';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
-import { MOCK_PRODUCTS } from '../../data/adminMockData';
 import { getProducts, SLUG_ALIAS_MAP } from '../../data';
 import '../../styles/home-premium.css';
 import {

@@ -20,6 +20,8 @@ import {
   ChevronsRight,
   Trash2,
   RotateCcw,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -31,12 +33,49 @@ import { adminService } from '../../../services/admin.service';
 import { categoryService } from '../../../services/category.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
-import {
-  STOCK_ADJUST_REASONS,
-  calculateInventoryKPIs,
-  LOW_STOCK_THRESHOLD,
-} from '../../../data/inventoryMockData';
 import { useMockStockStore } from '../../../store/mockStockStore';
+import styles from './AdminInventory.module.css';
+
+// ─── Inventory Constants & Calculations ──────────────────────────────────────
+export const LOW_STOCK_THRESHOLD = 5;
+export const STOCK_ADJUST_REASONS = ['Restock', 'Damage', 'Loss', 'Correction', 'Return'];
+
+export function calculateInventoryKPIs(list = []) {
+  const data = Array.isArray(list) ? list : [];
+  let totalStockUnits = 0;
+  let inStock = 0;
+  let lowStock = 0;
+  let outOfStock = 0;
+  let deactivated = 0;
+  let totalSold = 0;
+  let totalReserved = 0;
+
+  data.forEach((item) => {
+    const qty = Number(item.currentStock) || 0;
+    const threshold = Number(item.lowStockThreshold) || LOW_STOCK_THRESHOLD;
+    totalStockUnits += qty;
+    totalSold += Number(item.sold) || 0;
+    totalReserved += Number(item.reserved) || 0;
+
+    if (item.isActive === false) {
+      deactivated++;
+    }
+
+    if (qty <= 0) outOfStock++;
+    else if (qty <= threshold) lowStock++;
+    else inStock++;
+  });
+
+  return {
+    totalStockUnits,
+    inStock,
+    lowStock,
+    outOfStock,
+    deactivated,
+    totalSold,
+    totalReserved,
+  };
+}
 
 export default function AdminInventory() {
   const { showToast } = useUiStore();
@@ -69,6 +108,9 @@ export default function AdminInventory() {
               categoryId: typeof p.category === 'object' ? (p.category?._id || p.category?.id) : (p.category || 'all'),
               subCategory: p.subCategory || '',
               currentStock: inv.quantity ?? 10,
+              reserved: inv.reserved ?? 0,
+              sold: inv.sold ?? 0,
+              isActive: p.isActive !== undefined ? p.isActive : (inv.isActive !== undefined ? inv.isActive : true),
               lowStockThreshold: inv.lowStockThreshold ?? LOW_STOCK_THRESHOLD,
               price: p.discountPrice || p.price || 999,
               images: p.images || [],
@@ -215,18 +257,21 @@ export default function AdminInventory() {
         (item.category && item.category.toLowerCase() === selectedCategory.toLowerCase());
 
       // Stock status filter
-      const stock = Number(item.currentStock) || 0;
-      const threshold = Number(item.lowStockThreshold) || LOW_STOCK_THRESHOLD;
-      let statusKey = 'in_stock';
-      if (stock <= 0) {
-        statusKey = 'out_of_stock';
-      } else if (stock <= threshold) {
-        statusKey = 'low_stock';
+      if (selectedStatus === 'deactivated') {
+        if (item.isActive !== false) return false;
+      } else if (selectedStatus !== 'all') {
+        const stock = Number(item.currentStock) || 0;
+        const threshold = Number(item.lowStockThreshold) || LOW_STOCK_THRESHOLD;
+        let statusKey = 'in_stock';
+        if (stock <= 0) {
+          statusKey = 'out_of_stock';
+        } else if (stock <= threshold) {
+          statusKey = 'low_stock';
+        }
+        if (statusKey !== selectedStatus) return false;
       }
 
-      const matchStatus = selectedStatus === 'all' || statusKey === selectedStatus;
-
-      return matchSearch && matchCategory && matchStatus;
+      return matchSearch && matchCategory;
     });
   }, [inventoryList, debouncedSearch, selectedCategory, selectedStatus]);
 
@@ -244,6 +289,10 @@ export default function AdminInventory() {
         comparison = (a.category || '').localeCompare(b.category || '', undefined, { sensitivity: 'base' });
       } else if (sortConfig.key === 'stock') {
         comparison = (Number(a.currentStock) || 0) - (Number(b.currentStock) || 0);
+      } else if (sortConfig.key === 'reserved') {
+        comparison = (Number(a.reserved) || 0) - (Number(b.reserved) || 0);
+      } else if (sortConfig.key === 'sold') {
+        comparison = (Number(a.sold) || 0) - (Number(b.sold) || 0);
       }
       return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
@@ -510,67 +559,64 @@ export default function AdminInventory() {
     setIsAllFilteredSelected(false);
   };
 
+  // ─── Toggle Product Active/Deactivate (Hide/Show on Client Store) ────────
+  const [togglingId, setTogglingId] = useState(null);
+
+  const handleToggleProductStatus = async (item) => {
+    const targetId = item.productId || item._id;
+    const newStatus = item.isActive === false ? true : false;
+    setTogglingId(item._id);
+
+    // Optimistic UI update
+    setInventoryList((prev) =>
+      prev.map((it) => (it._id === item._id ? { ...it, isActive: newStatus } : it))
+    );
+
+    try {
+      await adminService.toggleProductStatus(targetId);
+      showToast(
+        newStatus
+          ? `"${item.productName}" activated & now visible on store`
+          : `"${item.productName}" deactivated & hidden from client store`,
+        'success'
+      );
+    } catch (err) {
+      // Revert optimistic update
+      setInventoryList((prev) =>
+        prev.map((it) => (it._id === item._id ? { ...it, isActive: !newStatus } : it))
+      );
+      showToast(err.response?.data?.message || 'Failed to update product status', 'error');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   // ─── Render Stock Status Badge ─────────────────────────────────────────────
-  const renderStockStatusBadge = (stock, threshold = LOW_STOCK_THRESHOLD) => {
+  const renderStockStatusBadge = (stock, threshold = LOW_STOCK_THRESHOLD, isActive = true) => {
+    if (isActive === false) {
+      return (
+        <span className={styles.badgeDeactivated} title="Product is deactivated and hidden from client store">
+          <EyeOff size={12} /> Deactivated
+        </span>
+      );
+    }
     const qty = Number(stock);
     if (isNaN(qty) || qty <= 0) {
       return (
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.22rem 0.65rem',
-            borderRadius: '9999px',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            background: '#fee2e2',
-            color: '#dc2626',
-            border: '1px solid #fecaca',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <span className={styles.badgeOutOfStock}>
           <XCircle size={12} /> Out of Stock
         </span>
       );
     }
     if (qty <= threshold) {
       return (
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            padding: '0.22rem 0.65rem',
-            borderRadius: '9999px',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            background: '#fef3c7',
-            color: '#d97706',
-            border: '1px solid #fde68a',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <span className={styles.badgeLowStock}>
           <AlertTriangle size={12} /> {qty} Left (Low)
         </span>
       );
     }
     return (
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-          padding: '0.22rem 0.65rem',
-          borderRadius: '9999px',
-          fontSize: '0.78rem',
-          fontWeight: 700,
-          background: '#dcfce7',
-          color: '#15803d',
-          border: '1px solid #bbf7d0',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <span className={styles.badgeInStock}>
         <CheckCircle2 size={12} /> {qty} In Stock
       </span>
     );
@@ -590,6 +636,7 @@ export default function AdminInventory() {
       { value: 'in_stock', label: 'In Stock' },
       { value: 'low_stock', label: `Low Stock (≤ ${LOW_STOCK_THRESHOLD})` },
       { value: 'out_of_stock', label: 'Out of Stock (0)' },
+      { value: 'deactivated', label: 'Deactivated (Hidden)' },
     ];
   }, []);
 
@@ -613,40 +660,24 @@ export default function AdminInventory() {
     return [1, '...', current - 1, current, current + 1, '...', total];
   };
 
+  const totalItemsCount = inventoryList.length || 1;
+  const inStockRate = Math.round((kpis.inStock / totalItemsCount) * 100);
+  const lowStockRate = Math.round((kpis.lowStock / totalItemsCount) * 100);
+  const outOfStockRate = Math.round((kpis.outOfStock / totalItemsCount) * 100);
+  const deactivatedRate = Math.round(((kpis.deactivated || 0) / totalItemsCount) * 100);
+
   return (
     <AdminLayout title="Inventory & Stock Management">
-      <style>{`
-        .inventory-kpi-card {
-          background: #ffffff;
-          border-radius: 16px;
-          border: 1.5px solid #e2e8f0;
-          padding: 1.25rem 1.4rem;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          cursor: pointer;
-          user-select: none;
-          outline: none;
-        }
-        .inventory-kpi-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08);
-          border-color: #cbd5e1;
-        }
-      `}</style>
-
-      {/* ─── 4 Clickable Top KPI Cards ──────── */}
+      {/* ─── 5 Clickable Top KPI Cards (Matching SubCategories Progress Blueprint) ──────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard
           title="TOTAL PRODUCT UNITS"
-          value={`${kpis.totalStockUnits.toLocaleString()} Units`}
+          value={kpis.totalStockUnits.toLocaleString()}
           icon={<Boxes size={22} />}
           variant="purple"
-          showProgress={false}
+          footerLabel="All Store"
+          footerValue="100%"
+          progress={100}
           isActive={selectedStatus === 'all'}
           onClick={() => setSelectedStatus('all')}
         />
@@ -655,7 +686,9 @@ export default function AdminInventory() {
           value={kpis.inStock}
           icon={<CheckCircle2 size={22} />}
           variant="green"
-          showProgress={false}
+          footerLabel="Healthy Stock"
+          footerValue={`${inStockRate}%`}
+          progress={inStockRate}
           isActive={selectedStatus === 'in_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'in_stock' ? 'all' : 'in_stock'))}
         />
@@ -664,7 +697,9 @@ export default function AdminInventory() {
           value={kpis.lowStock}
           icon={<AlertTriangle size={22} />}
           variant="amber"
-          showProgress={false}
+          footerLabel={`Threshold ≤ ${LOW_STOCK_THRESHOLD}`}
+          footerValue={kpis.lowStock > 0 ? `${lowStockRate}%` : 'Healthy'}
+          progress={kpis.lowStock > 0 ? lowStockRate : 0}
           isActive={selectedStatus === 'low_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'low_stock' ? 'all' : 'low_stock'))}
         />
@@ -673,85 +708,47 @@ export default function AdminInventory() {
           value={kpis.outOfStock}
           icon={<XCircle size={22} />}
           variant="red"
-          showProgress={false}
+          footerLabel="Zero Inventory"
+          footerValue={kpis.outOfStock > 0 ? `${outOfStockRate}%` : '0%'}
+          progress={kpis.outOfStock > 0 ? outOfStockRate : 0}
           isActive={selectedStatus === 'out_of_stock'}
           onClick={() => setSelectedStatus((prev) => (prev === 'out_of_stock' ? 'all' : 'out_of_stock'))}
+        />
+        <AdminStatCard
+          title="DEACTIVATED ITEMS"
+          value={kpis.deactivated || 0}
+          icon={<EyeOff size={22} />}
+          variant="slate"
+          footerLabel="Hidden from Store"
+          footerValue={kpis.deactivated > 0 ? `${deactivatedRate}%` : '0%'}
+          progress={kpis.deactivated > 0 ? deactivatedRate : 0}
+          isActive={selectedStatus === 'deactivated'}
+          onClick={() => setSelectedStatus((prev) => (prev === 'deactivated' ? 'all' : 'deactivated'))}
         />
       </div>
 
       {/* ─── Controls & Filter Bar ────────────────────────────────────────── */}
-      <div
-        className="card"
-        style={{
-          position: 'relative',
-          zIndex: 40,
-          marginBottom: '1rem',
-          padding: '1rem 1.25rem',
-          background: '#ffffff',
-          borderRadius: '16px',
-          border: '1.5px solid #ede8f8',
-          boxShadow: '0 2px 12px rgba(124, 58, 237, 0.04)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
+      <div className={styles.filterCard}>
+        <div className={styles.filterRow}>
           {/* Search Input (White background with purple focus ring) */}
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              flex: '1',
-              minWidth: '280px',
-            }}
-          >
-            <Search
-              size={16}
-              style={{ position: 'absolute', left: '1rem', color: '#8a7ca6', pointerEvents: 'none' }}
-            />
+          <div className={styles.searchWrap}>
+            <Search size={16} className={styles.searchIcon} />
             <input
               type="text"
               placeholder="Search by Product name or SKU (e.g. WF-001)..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              style={{
-                width: '100%',
-                height: '42px',
-                padding: '0 1rem 0 2.6rem',
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '12px',
-                fontSize: '0.85rem',
-                color: '#1e1b4b',
-                outline: 'none',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                transition: 'all 0.18s ease',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#7c3aed';
-                e.target.style.boxShadow = '0 0 0 3.5px rgba(124, 58, 237, 0.16)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)';
-              }}
+              className={styles.searchInput}
             />
           </div>
 
           {/* Filters Group (Category + Stock Status Custom Dropdowns) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className={styles.filterGroup}>
             {/* Custom Category Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className={styles.filterItem}>
               <label
                 htmlFor="inv-category-select"
-                style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}
+                className={styles.filterLabel}
               >
                 Category:
               </label>
@@ -766,10 +763,10 @@ export default function AdminInventory() {
             </div>
 
             {/* Custom Stock Status Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className={styles.filterItem}>
               <label
                 htmlFor="inv-status-select"
-                style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}
+                className={styles.filterLabel}
               >
                 Stock Status:
               </label>
@@ -786,45 +783,21 @@ export default function AdminInventory() {
 
             {/* Selection Bar & Delete Selected Button */}
             {selectedIds.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#5b13df' }}>
+              <div className={styles.selectionGroup}>
+                <span className={styles.selectedCount}>
                   {selectedIds.length} selected
                 </span>
                 <button
                   type="button"
                   onClick={handleClearSelection}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#64748b',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    padding: '0 0.2rem',
-                  }}
+                  className={styles.clearBtn}
                 >
                   Clear
                 </button>
                 <button
                   type="button"
                   onClick={handleOpenDeleteModal}
-                  style={{
-                    height: '42px',
-                    padding: '0 1rem',
-                    borderRadius: '12px',
-                    background: '#dc2626',
-                    border: '1.5px solid #b91c1c',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.82rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.2)',
-                  }}
+                  className={styles.deleteSelectedBtn}
                   title="Open bulk delete confirmation"
                 >
                   <Trash2 size={15} />
@@ -838,36 +811,12 @@ export default function AdminInventory() {
 
       {/* ─── Scope Clarity Banner Above Table ─────────────────────────────── */}
       {isAllOnPageSelected && sortedItems.length > itemsPerPage && !isAllFilteredSelected && (
-        <div
-          style={{
-            marginBottom: '0.85rem',
-            padding: '0.65rem 1.15rem',
-            background: '#faf5ff',
-            border: '1.5px solid #dcd0fa',
-            borderRadius: '12px',
-            fontSize: '0.84rem',
-            color: '#4c1d95',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.4rem',
-            animation: 'fadeIn 0.2s ease',
-          }}
-        >
+        <div className={styles.scopeBanner}>
           <span>All {paginatedItems.length} products on this page are selected.</span>
           <button
             type="button"
             onClick={handleSelectAllFiltered}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#7c3aed',
-              fontWeight: 800,
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontSize: '0.84rem',
-              padding: 0,
-            }}
+            className={styles.scopeSelectAllBtn}
           >
             Select all {sortedItems.length} products
           </button>
@@ -875,36 +824,12 @@ export default function AdminInventory() {
       )}
 
       {isAllFilteredSelected && sortedItems.length > 0 && (
-        <div
-          style={{
-            marginBottom: '0.85rem',
-            padding: '0.65rem 1.15rem',
-            background: '#faf5ff',
-            border: '1.5px solid #dcd0fa',
-            borderRadius: '12px',
-            fontSize: '0.84rem',
-            color: '#4c1d95',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.4rem',
-            animation: 'fadeIn 0.2s ease',
-          }}
-        >
+        <div className={styles.scopeBanner}>
           <span>All {sortedItems.length} products are selected.</span>
           <button
             type="button"
             onClick={handleClearSelection}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#dc2626',
-              fontWeight: 800,
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontSize: '0.84rem',
-              padding: 0,
-            }}
+            className={styles.scopeClearBtn}
           >
             Clear selection
           </button>
@@ -912,101 +837,36 @@ export default function AdminInventory() {
       )}
 
       {/* ─── Inventory Table ──────────────────────────────────────────────── */}
-      <div
-        ref={tableTopRef}
-        className="table-container"
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          borderRadius: '18px',
-          border: '1.5px solid #ede8f8',
-          boxShadow: '0 4px 24px rgba(124, 58, 237, 0.05)',
-          background: '#ffffff',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{ overflowX: 'auto', width: '100%', maxHeight: '620px', overflowY: 'auto' }}>
-          <table
-            className="admin-table"
-            style={{
-              borderCollapse: 'collapse',
-              width: '100%',
-              minWidth: '1040px',
-            }}
-          >
+      <div ref={tableTopRef} className={styles.tableCard}>
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
             <thead>
-              <tr
-                style={{
-                  background: '#f5f0fe',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 10,
-                  boxShadow: '0 1px 0 #ede8f8',
-                }}
-              >
+              <tr className={styles.tableHeaderRow}>
                 {/* Select All Checkbox */}
-                <th
-                  style={{
-                    width: '44px',
-                    padding: '1rem 0.6rem 1rem 1.1rem',
-                    textAlign: 'center',
-                    verticalAlign: 'middle',
-                    background: '#f5f0fe',
-                  }}
-                >
+                <th className={styles.thCheckbox}>
                   <input
                     ref={headerCheckboxRef}
                     type="checkbox"
                     checked={isAllOnPageSelected}
                     onChange={handleSelectPageToggle}
-                    style={{
-                      cursor: 'pointer',
-                      width: '16px',
-                      height: '16px',
-                      accentColor: '#7c3aed',
-                    }}
+                    className={styles.checkboxInput}
                     title="Select all rows on this page"
                     aria-label="Select all rows on this page"
                   />
                 </th>
 
                 {/* S.NO */}
-                <th
-                  style={{
-                    width: '56px',
-                    padding: '1rem 0.5rem',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    background: '#f5f0fe',
-                  }}
-                >
+                <th className={styles.thSno}>
                   S.NO
                 </th>
 
                 {/* PRODUCT (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('product')}
-                  style={{
-                    padding: '1rem 1.25rem',
-                    textAlign: 'left',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: sortConfig.key === 'product' ? '#7c3aed' : '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    background: '#f5f0fe',
-                  }}
+                  className={`${styles.thProduct} ${sortConfig.key === 'product' ? styles.thSortActive : ''}`}
                   title="Click to sort by Product name"
                 >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <div className={styles.thSortContent}>
                     <span>Product</span>
                     {sortConfig.key === 'product' ? (
                       sortConfig.direction === 'asc' ? (
@@ -1023,22 +883,10 @@ export default function AdminInventory() {
                 {/* SKU (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('sku')}
-                  style={{
-                    padding: '1rem 0.85rem',
-                    textAlign: 'left',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: sortConfig.key === 'sku' ? '#7c3aed' : '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    background: '#f5f0fe',
-                  }}
+                  className={`${styles.thSortable} ${sortConfig.key === 'sku' ? styles.thSortActive : ''}`}
                   title="Click to sort by SKU"
                 >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <div className={styles.thSortContent}>
                     <span>SKU</span>
                     {sortConfig.key === 'sku' ? (
                       sortConfig.direction === 'asc' ? (
@@ -1055,22 +903,10 @@ export default function AdminInventory() {
                 {/* CATEGORY (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('category')}
-                  style={{
-                    padding: '1rem 0.85rem',
-                    textAlign: 'left',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: sortConfig.key === 'category' ? '#7c3aed' : '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    background: '#f5f0fe',
-                  }}
+                  className={`${styles.thSortable} ${sortConfig.key === 'category' ? styles.thSortActive : ''}`}
                   title="Click to sort by Category"
                 >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <div className={styles.thSortContent}>
                     <span>Category</span>
                     {sortConfig.key === 'category' ? (
                       sortConfig.direction === 'asc' ? (
@@ -1087,22 +923,10 @@ export default function AdminInventory() {
                 {/* CURRENT STOCK (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('stock')}
-                  style={{
-                    padding: '1rem 0.85rem',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: sortConfig.key === 'stock' ? '#7c3aed' : '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    background: '#f5f0fe',
-                  }}
+                  className={`${styles.thSortableCenter} ${sortConfig.key === 'stock' ? styles.thSortActive : ''}`}
                   title="Click to sort by Current Stock"
                 >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                  <div className={styles.thSortContentCenter}>
                     <span>Current Stock</span>
                     {sortConfig.key === 'stock' ? (
                       sortConfig.direction === 'asc' ? (
@@ -1116,39 +940,53 @@ export default function AdminInventory() {
                   </div>
                 </th>
 
-                {/* STOCK STATUS */}
+                {/* RESERVED (Clickable Sort) */}
                 <th
-                  style={{
-                    padding: '1rem 0.85rem',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    background: '#f5f0fe',
-                  }}
+                  onClick={() => handleSort('reserved')}
+                  className={`${styles.thSortableCenter} ${sortConfig.key === 'reserved' ? styles.thSortActive : ''}`}
+                  title="Click to sort by Reserved orders"
                 >
+                  <div className={styles.thSortContentCenter}>
+                    <span>Reserved</span>
+                    {sortConfig.key === 'reserved' ? (
+                      sortConfig.direction === 'asc' ? (
+                        <ArrowUp size={14} color="#7c3aed" />
+                      ) : (
+                        <ArrowDown size={14} color="#7c3aed" />
+                      )
+                    ) : (
+                      <ArrowUpDown size={13} color="#94a3b8" style={{ opacity: 0.6 }} />
+                    )}
+                  </div>
+                </th>
+
+                {/* SOLD (Clickable Sort) */}
+                <th
+                  onClick={() => handleSort('sold')}
+                  className={`${styles.thSortableCenter} ${sortConfig.key === 'sold' ? styles.thSortActive : ''}`}
+                  title="Click to sort by Sold units"
+                >
+                  <div className={styles.thSortContentCenter}>
+                    <span>Sold</span>
+                    {sortConfig.key === 'sold' ? (
+                      sortConfig.direction === 'asc' ? (
+                        <ArrowUp size={14} color="#7c3aed" />
+                      ) : (
+                        <ArrowDown size={14} color="#7c3aed" />
+                      )
+                    ) : (
+                      <ArrowUpDown size={13} color="#94a3b8" style={{ opacity: 0.6 }} />
+                    )}
+                  </div>
+                </th>
+
+                {/* STOCK STATUS */}
+                <th className={styles.thStatus}>
                   Stock Status
                 </th>
 
                 {/* ACTION */}
-                <th
-                  style={{
-                    padding: '1rem 1.5rem 1rem 0.85rem',
-                    textAlign: 'right',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: '#5b21b6',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    background: '#f5f0fe',
-                    width: '240px',
-                    minWidth: '240px',
-                  }}
-                >
+                <th className={styles.thAction}>
                   Action
                 </th>
               </tr>
@@ -1157,82 +995,63 @@ export default function AdminInventory() {
               {/* Loading Skeleton */}
               {isLoading ? (
                 Array.from({ length: Math.min(itemsPerPage, 8) }).map((_, idx) => (
-                  <tr key={`skeleton-${idx}`} style={{ borderBottom: '1px solid #f1eafa' }}>
-                    <td style={{ padding: '1rem 0.6rem 1rem 1.1rem', textAlign: 'center' }}>
-                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#ede8f8', margin: '0 auto' }} />
+                  <tr key={`skeleton-${idx}`} className={styles.skeletonTr}>
+                    <td className={styles.tdCheckbox}>
+                      <div className={styles.skeletonBox} style={{ width: '16px', height: '16px', margin: '0 auto' }} />
                     </td>
-                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                      <div style={{ width: '20px', height: '14px', borderRadius: '4px', background: '#ede8f8', margin: '0 auto' }} />
+                    <td className={styles.tdSno}>
+                      <div className={styles.skeletonBox} style={{ width: '20px', height: '14px', margin: '0 auto' }} />
                     </td>
-                    <td style={{ padding: '1rem 1.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#ede8f8', flexShrink: 0 }} />
+                    <td className={styles.tdProduct}>
+                      <div className={styles.productWrap}>
+                        <div className={styles.skeletonBox} style={{ width: '44px', height: '44px', flexShrink: 0, borderRadius: '10px' }} />
                         <div style={{ flex: 1 }}>
-                          <div style={{ width: '180px', height: '14px', borderRadius: '4px', background: '#ede8f8', marginBottom: '6px' }} />
-                          <div style={{ width: '70px', height: '12px', borderRadius: '4px', background: '#f5f0fe' }} />
+                          <div className={styles.skeletonBox} style={{ width: '180px', height: '14px', marginBottom: '6px' }} />
+                          <div className={styles.skeletonBoxSubtle} style={{ width: '70px', height: '12px' }} />
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '1rem 0.85rem' }}>
-                      <div style={{ width: '70px', height: '22px', borderRadius: '6px', background: '#ede8f8' }} />
+                    <td className={styles.tdSku}>
+                      <div className={styles.skeletonBox} style={{ width: '70px', height: '22px', borderRadius: '6px' }} />
                     </td>
-                    <td style={{ padding: '1rem 0.85rem' }}>
-                      <div style={{ width: '100px', height: '22px', borderRadius: '6px', background: '#f5f0fe' }} />
+                    <td className={styles.tdCategory}>
+                      <div className={styles.skeletonBoxSubtle} style={{ width: '100px', height: '22px', borderRadius: '6px' }} />
                     </td>
-                    <td style={{ padding: '1rem 0.85rem', textAlign: 'center' }}>
-                      <div style={{ width: '60px', height: '16px', borderRadius: '4px', background: '#ede8f8', margin: '0 auto' }} />
+                    <td className={styles.tdStock}>
+                      <div className={styles.skeletonBox} style={{ width: '60px', height: '16px', margin: '0 auto' }} />
                     </td>
-                    <td style={{ padding: '1rem 0.85rem', textAlign: 'center' }}>
-                      <div style={{ width: '90px', height: '24px', borderRadius: '9999px', background: '#ede8f8', margin: '0 auto' }} />
+                    <td className={styles.tdReserved}>
+                      <div className={styles.skeletonBoxSubtle} style={{ width: '45px', height: '20px', borderRadius: '6px', margin: '0 auto' }} />
                     </td>
-                    <td style={{ padding: '1rem 1.5rem 1rem 0.85rem', textAlign: 'right' }}>
-                      <div style={{ width: '110px', height: '32px', borderRadius: '8px', background: '#ede8f8', marginLeft: 'auto' }} />
+                    <td className={styles.tdSold}>
+                      <div className={styles.skeletonBoxSubtle} style={{ width: '45px', height: '20px', borderRadius: '6px', margin: '0 auto' }} />
+                    </td>
+                    <td className={styles.tdStatus}>
+                      <div className={styles.skeletonBox} style={{ width: '90px', height: '24px', borderRadius: '9999px', margin: '0 auto' }} />
+                    </td>
+                    <td className={styles.tdAction}>
+                      <div className={styles.skeletonBox} style={{ width: '110px', height: '32px', borderRadius: '8px', marginLeft: 'auto' }} />
                     </td>
                   </tr>
                 ))
               ) : sortedItems.length === 0 ? (
                 /* Empty State */
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '4.5rem 1.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
-                      <div
-                        style={{
-                          width: '58px',
-                          height: '58px',
-                          borderRadius: '50%',
-                          background: '#f5f0fe',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#7c3aed',
-                        }}
-                      >
+                  <td colSpan={10} className={styles.emptyTd}>
+                    <div className={styles.emptyWrap}>
+                      <div className={styles.emptyIconCircle}>
                         <Package size={30} />
                       </div>
-                      <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1e1b4b' }}>
+                      <h4 className={styles.emptyTitle}>
                         No products found
                       </h4>
-                      <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748b', maxWidth: '340px' }}>
+                      <p className={styles.emptyDesc}>
                         We couldn't find any inventory products matching your search query or filter selection.
                       </p>
                       <button
                         type="button"
                         onClick={handleClearFilters}
-                        style={{
-                          marginTop: '0.5rem',
-                          padding: '0.55rem 1.25rem',
-                          borderRadius: '10px',
-                          background: '#ede8f8',
-                          border: '1px solid #dcd0fa',
-                          color: '#5b13df',
-                          fontWeight: 700,
-                          fontSize: '0.82rem',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          transition: 'all 0.15s ease',
-                        }}
+                        className={styles.clearFiltersBtn}
                       >
                         <RotateCcw size={14} />
                         <span>Clear filters</span>
@@ -1244,101 +1063,63 @@ export default function AdminInventory() {
                 /* Table Rows */
                 paginatedItems.map((item, index) => {
                   const isChecked = selectedIds.includes(item._id);
+                  const isDeactivated = item.isActive === false;
                   const isOutOfStock = Number(item.currentStock) <= 0;
                   const isLowStock =
                     Number(item.currentStock) > 0 &&
                     Number(item.currentStock) <= (Number(item.lowStockThreshold) || LOW_STOCK_THRESHOLD);
 
-                  // Row background: Selected (light purple) > Out of Stock (very light red) > Alternating (white / soft lavender)
-                  const rowBg = isChecked ? '#faf5ff' : isOutOfStock ? '#fef2f2' : index % 2 === 0 ? '#ffffff' : '#faf7ff';
+                  const rowClass = isChecked
+                    ? styles.rowSelected
+                    : isDeactivated
+                    ? styles.rowDeactivated
+                    : isOutOfStock
+                    ? styles.rowOutOfStock
+                    : index % 2 === 0
+                    ? styles.rowWhite
+                    : styles.rowSoftLavender;
 
                   return (
                     <tr
                       key={item._id}
-                      style={{
-                        borderBottom: '1px solid #f1eafa',
-                        background: rowBg,
-                        transition: 'background 0.15s ease',
-                      }}
+                      className={`${styles.tableRow} ${rowClass}`}
                     >
                       {/* Row Checkbox */}
-                      <td
-                        style={{
-                          padding: '0.95rem 0.6rem 0.95rem 1.1rem',
-                          textAlign: 'center',
-                          verticalAlign: 'middle',
-                        }}
-                      >
+                      <td className={styles.tdCheckbox}>
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => handleToggleRow(item._id)}
-                          style={{
-                            cursor: 'pointer',
-                            width: '16px',
-                            height: '16px',
-                            accentColor: '#7c3aed',
-                          }}
+                          className={styles.checkboxInput}
                           aria-label={`Select ${item.productName}`}
                         />
                       </td>
 
                       {/* S.NO */}
-                      <td
-                        style={{
-                          padding: '0.95rem 0.5rem',
-                          textAlign: 'center',
-                          verticalAlign: 'middle',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
+                      <td className={styles.tdSno}>
+                        <span className={styles.snoText}>
                           {startIndex + index + 1}
                         </span>
                       </td>
 
                       {/* Product (1-line clamp with full title tooltip) */}
-                      <td style={{ padding: '0.95rem 1.25rem', verticalAlign: 'middle' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <td className={styles.tdProduct}>
+                        <div className={styles.productWrap}>
                           <img
                             src={item.image || (item.images && item.images[0]) || ''}
                             alt={item.productName}
-                            style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '10px',
-                              objectFit: 'cover',
-                              border: '1.5px solid #ede8f8',
-                              flexShrink: 0,
-                            }}
+                            className={styles.productThumb}
                           />
-                          <div style={{ minWidth: 0, maxWidth: '280px' }}>
+                          <div className={styles.productDetails}>
                             <strong
                               title={item.productName}
                               tabIndex={0}
                               aria-label={item.productName}
-                              style={{
-                                fontSize: '0.88rem',
-                                color: '#1e1b4b',
-                                display: 'block',
-                                lineHeight: 1.35,
-                                marginBottom: '2px',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                cursor: 'default',
-                                outline: 'none',
-                              }}
-                              onFocus={(e) => {
-                                e.currentTarget.style.color = '#7c3aed';
-                              }}
-                              onBlur={(e) => {
-                                e.currentTarget.style.color = '#1e1b4b';
-                              }}
+                              className={styles.productName}
                             >
                               {item.productName}
                             </strong>
-                            <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 600 }}>
+                            <span className={styles.productPrice}>
                               {formatPrice(item.sellingPrice || item.price)}
                             </span>
                           </div>
@@ -1346,128 +1127,63 @@ export default function AdminInventory() {
                       </td>
 
                       {/* SKU */}
-                      <td style={{ padding: '0.95rem 0.85rem', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                        <span
-                          style={{
-                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                            fontWeight: 700,
-                            fontSize: '0.82rem',
-                            color: '#5b13df',
-                            background: '#ede8f8',
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            letterSpacing: '0.03em',
-                            border: '1px solid #dfd5f5',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                      <td className={styles.tdSku}>
+                        <span className={styles.skuPill}>
                           {item.sku}
                         </span>
                       </td>
 
                       {/* Category */}
-                      <td style={{ padding: '0.95rem 0.85rem', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                        <span
-                          style={{
-                            background: '#f8fafc',
-                            border: '1px solid #e2e8f0',
-                            color: '#334155',
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '6px',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                      <td className={styles.tdCategory}>
+                        <span className={styles.categoryPill}>
                           {item.category}
                         </span>
                       </td>
 
                       {/* Current Stock */}
-                      <td
-                        style={{
-                          padding: '0.95rem 0.85rem',
-                          textAlign: 'center',
-                          verticalAlign: 'middle',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <td className={styles.tdStock}>
                         <strong
-                          style={{
-                            fontSize: '0.95rem',
-                            color:
-                              item.currentStock <= 0
-                                ? '#dc2626'
-                                : item.currentStock <= LOW_STOCK_THRESHOLD
-                                ? '#d97706'
-                                : '#1e1b4b',
-                            display: 'inline-block',
-                          }}
+                          className={`${styles.stockUnits} ${
+                            item.currentStock <= 0
+                              ? styles.stockZero
+                              : item.currentStock <= LOW_STOCK_THRESHOLD
+                              ? styles.stockLow
+                              : styles.stockNormal
+                          }`}
                         >
                           {item.currentStock} units
                         </strong>
                       </td>
 
+                      {/* Reserved Stock */}
+                      <td className={styles.tdReserved}>
+                        <span className={styles.reservedPill} title={`${item.reserved || 0} units reserved in orders`}>
+                          {item.reserved || 0}
+                        </span>
+                      </td>
+
+                      {/* Sold Stock */}
+                      <td className={styles.tdSold}>
+                        <span className={styles.soldPill} title={`${item.sold || 0} units sold & fulfilled`}>
+                          {item.sold || 0}
+                        </span>
+                      </td>
+
                       {/* Stock Status */}
-                      <td
-                        style={{
-                          padding: '0.95rem 0.85rem',
-                          textAlign: 'center',
-                          verticalAlign: 'middle',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <div style={{ display: 'inline-flex', justifyContent: 'center' }}>
-                          {renderStockStatusBadge(item.currentStock, item.lowStockThreshold)}
+                      <td className={styles.tdStatus}>
+                        <div className={styles.statusCenter}>
+                          {renderStockStatusBadge(item.currentStock, item.lowStockThreshold, item.isActive)}
                         </div>
                       </td>
 
                       {/* Action Buttons */}
-                      <td
-                        style={{
-                          padding: '0.95rem 1.5rem 0.95rem 0.85rem',
-                          verticalAlign: 'middle',
-                          whiteSpace: 'nowrap',
-                          width: '240px',
-                          minWidth: '240px',
-                          textAlign: 'right',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: '0.5rem',
-                            width: '100%',
-                          }}
-                        >
+                      <td className={styles.tdAction}>
+                        <div className={styles.actionRow}>
                           {/* Icon-Only View Button with Tooltip */}
                           <button
                             type="button"
                             onClick={() => handleOpenView(item)}
-                            className="admin-period-select-btn"
-                            style={{
-                              width: '32px',
-                              minWidth: '32px',
-                              height: '32px',
-                              padding: 0,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '8px',
-                              border: '1px solid #e2e8f0',
-                              background: '#ffffff',
-                              color: '#475569',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              flexShrink: 0,
-                              transition: 'all 0.15s ease',
-                            }}
+                            className={styles.btnActionView}
                             title={`View ${item.productName} overview`}
                             aria-label={`View ${item.productName} overview`}
                           >
@@ -1479,25 +1195,7 @@ export default function AdminInventory() {
                             <button
                               type="button"
                               onClick={() => handleOpenRestock(item)}
-                              style={{
-                                width: '116px',
-                                minWidth: '116px',
-                                height: '32px',
-                                padding: '0.4rem 0.5rem',
-                                fontSize: '0.78rem',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.35rem',
-                                borderRadius: '8px',
-                                background: isOutOfStock ? '#fee2e2' : '#fef3c7',
-                                border: isOutOfStock ? '1px solid #fecaca' : '1px solid #fde68a',
-                                color: isOutOfStock ? '#b91c1c' : '#b45309',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                flexShrink: 0,
-                                transition: 'all 0.15s ease',
-                              }}
+                              className={isOutOfStock ? styles.btnRestockOutOfStock : styles.btnRestockLowStock}
                               title="Quick Restock (Add Stock)"
                             >
                               <Plus size={13} />
@@ -1507,26 +1205,7 @@ export default function AdminInventory() {
                             <button
                               type="button"
                               onClick={() => handleOpenAdjust(item)}
-                              className="admin-period-select-btn"
-                              style={{
-                                width: '116px',
-                                minWidth: '116px',
-                                height: '32px',
-                                padding: '0.4rem 0.5rem',
-                                fontSize: '0.78rem',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.35rem',
-                                borderRadius: '8px',
-                                background: '#ede8f8',
-                                border: '1px solid #dcd0fa',
-                                color: '#5b13df',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                flexShrink: 0,
-                                transition: 'all 0.15s ease',
-                              }}
+                              className={styles.btnAdjustStock}
                               title="Adjust Stock Quantity"
                             >
                               <Edit3 size={13} color="#5b13df" />
@@ -1534,27 +1213,37 @@ export default function AdminInventory() {
                             </button>
                           )}
 
+                          {/* Toggle Active / Deactivate (Hide/Show on Client Store) */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleProductStatus(item)}
+                            disabled={togglingId === item._id}
+                            className={`${styles.btnToggleStatus} ${
+                              item.isActive === false ? styles.btnStatusInactive : styles.btnStatusActive
+                            }`}
+                            title={
+                              item.isActive === false
+                                ? `Activate "${item.productName}" (Make visible on client store)`
+                                : `Deactivate "${item.productName}" (Hide from client store)`
+                            }
+                            aria-label={
+                              item.isActive === false
+                                ? `Activate ${item.productName}`
+                                : `Deactivate ${item.productName}`
+                            }
+                          >
+                            {item.isActive === false ? (
+                              <Eye size={14} color="#16a34a" />
+                            ) : (
+                              <EyeOff size={14} color="#64748b" />
+                            )}
+                          </button>
+
                           {/* Row Delete Button */}
                           <button
                             type="button"
                             onClick={() => handleOpenRowDelete(item)}
-                            style={{
-                              width: '32px',
-                              minWidth: '32px',
-                              height: '32px',
-                              padding: 0,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '8px',
-                              border: '1px solid #fee2e2',
-                              background: '#ffffff',
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              flexShrink: 0,
-                              transition: 'all 0.15s ease',
-                            }}
+                            className={styles.btnRowDelete}
                             title={`Delete ${item.productName}`}
                             aria-label={`Delete ${item.productName}`}
                           >
@@ -1572,28 +1261,9 @@ export default function AdminInventory() {
 
         {/* ─── Pagination Footer ────────────────────────────────────────────── */}
         {sortedItems.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0.9rem 1.4rem',
-              borderTop: '1px solid #f1eafa',
-              background: '#fcfbfe',
-              flexWrap: 'wrap',
-              gap: '1rem',
-            }}
-          >
+          <div className={styles.paginationBar}>
             {/* Pagination Controls (First, Prev, 1 2 3 ... N, Next, Last) */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.3rem',
-                flexWrap: 'wrap',
-              }}
-            >
+            <div className={styles.paginationControls}>
               {/* First Page Button */}
               <button
                 type="button"
@@ -1601,21 +1271,7 @@ export default function AdminInventory() {
                 onClick={() => handlePageChange(1)}
                 title="First Page"
                 aria-label="Go to first page"
-                style={{
-                  height: '32px',
-                  padding: '0 0.55rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: safeCurrentPage <= 1 ? '#f8fafc' : '#ffffff',
-                  color: safeCurrentPage <= 1 ? '#94a3b8' : '#334155',
-                  cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
-                  fontSize: '0.76rem',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  transition: 'all 0.15s ease',
-                }}
+                className={styles.pageNavBtn}
               >
                 <ChevronsLeft size={14} />
                 <span>First</span>
@@ -1628,21 +1284,7 @@ export default function AdminInventory() {
                 onClick={() => handlePageChange(safeCurrentPage - 1)}
                 title="Previous Page"
                 aria-label="Go to previous page"
-                style={{
-                  height: '32px',
-                  padding: '0 0.65rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: safeCurrentPage <= 1 ? '#f8fafc' : '#ffffff',
-                  color: safeCurrentPage <= 1 ? '#94a3b8' : '#334155',
-                  cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
-                  fontSize: '0.76rem',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  transition: 'all 0.15s ease',
-                }}
+                className={styles.pageNavBtn}
               >
                 <ChevronLeft size={14} />
                 <span>Prev</span>
@@ -1652,16 +1294,7 @@ export default function AdminInventory() {
               {getPaginationItems(safeCurrentPage, totalPages).map((pItem, idx) => {
                 if (pItem === '...') {
                   return (
-                    <span
-                      key={`ellipsis-${idx}`}
-                      style={{
-                        padding: '0 0.4rem',
-                        color: '#94a3b8',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        userSelect: 'none',
-                      }}
-                    >
+                    <span key={`ellipsis-${idx}`} className={styles.pageEllipsis}>
                       ...
                     </span>
                   );
@@ -1675,23 +1308,7 @@ export default function AdminInventory() {
                     onClick={() => handlePageChange(pItem)}
                     aria-label={`Go to page ${pItem}`}
                     aria-current={isActive ? 'page' : undefined}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      border: '1px solid',
-                      borderColor: isActive ? '#7c3aed' : '#e2e8f0',
-                      background: isActive ? '#7c3aed' : '#ffffff',
-                      color: isActive ? '#ffffff' : '#334155',
-                      fontSize: '0.8rem',
-                      fontWeight: isActive ? 700 : 600,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isActive ? '0 2px 8px rgba(124, 58, 237, 0.25)' : 'none',
-                    }}
+                    className={`${styles.pageBtnNumber} ${isActive ? styles.pageBtnActive : ''}`}
                   >
                     {pItem}
                   </button>
@@ -1705,21 +1322,7 @@ export default function AdminInventory() {
                 onClick={() => handlePageChange(safeCurrentPage + 1)}
                 title="Next Page"
                 aria-label="Go to next page"
-                style={{
-                  height: '32px',
-                  padding: '0 0.65rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: safeCurrentPage >= totalPages ? '#f8fafc' : '#ffffff',
-                  color: safeCurrentPage >= totalPages ? '#94a3b8' : '#334155',
-                  cursor: safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
-                  fontSize: '0.76rem',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  transition: 'all 0.15s ease',
-                }}
+                className={styles.pageNavBtn}
               >
                 <span>Next</span>
                 <ChevronRight size={14} />
@@ -1732,21 +1335,7 @@ export default function AdminInventory() {
                 onClick={() => handlePageChange(totalPages)}
                 title="Last Page"
                 aria-label="Go to last page"
-                style={{
-                  height: '32px',
-                  padding: '0 0.55rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: safeCurrentPage >= totalPages ? '#f8fafc' : '#ffffff',
-                  color: safeCurrentPage >= totalPages ? '#94a3b8' : '#334155',
-                  cursor: safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
-                  fontSize: '0.76rem',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  transition: 'all 0.15s ease',
-                }}
+                className={styles.pageNavBtn}
               >
                 <span>Last</span>
                 <ChevronsRight size={14} />
@@ -1764,38 +1353,16 @@ export default function AdminInventory() {
           title={`Delete ${selectedIds.length} ${selectedIds.length === 1 ? 'product' : 'products'}?`}
           maxWidth={480}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '0.85rem',
-                background: '#fee2e2',
-                padding: '0.85rem 1rem',
-                borderRadius: '12px',
-                border: '1px solid #fecaca',
-              }}
-            >
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#dc2626',
-                  flexShrink: 0,
-                }}
-              >
+          <div className={styles.modalStack}>
+            <div className={styles.dangerAlert}>
+              <div className={styles.dangerAlertIcon}>
                 <Trash2 size={18} />
               </div>
               <div>
-                <strong style={{ fontSize: '0.9rem', color: '#991b1b', display: 'block', marginBottom: '2px' }}>
+                <strong className={styles.dangerAlertTitle}>
                   This action cannot be undone.
                 </strong>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#b91c1c', lineHeight: 1.4 }}>
+                <p className={styles.dangerAlertText}>
                   You are about to remove <strong>{selectedIds.length}</strong> selected product
                   {selectedIds.length > 1 ? 's' : ''} from the active inventory catalog.
                 </p>
@@ -1804,18 +1371,12 @@ export default function AdminInventory() {
 
             {/* If more than 5 products are selected, ask user to type DELETE */}
             {selectedIds.length > 5 && (
-              <div style={{ background: '#faf5ff', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #ede8f8' }}>
+              <div className={styles.confirmInputCard}>
                 <label
                   htmlFor="delete-confirm-input"
-                  style={{
-                    fontSize: '0.84rem',
-                    fontWeight: 700,
-                    color: '#1e1b4b',
-                    display: 'block',
-                    marginBottom: '0.45rem',
-                  }}
+                  className={styles.confirmInputLabel}
                 >
-                  To confirm bulk deletion, please type <code style={{ color: '#dc2626', background: '#fee2e2', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>DELETE</code> below:
+                  To confirm bulk deletion, please type <code className={styles.confirmCodeSnippet}>DELETE</code> below:
                 </label>
                 <input
                   id="delete-confirm-input"
@@ -1824,31 +1385,13 @@ export default function AdminInventory() {
                   placeholder="Type DELETE to confirm"
                   value={deleteConfirmInput}
                   onChange={(e) => setDeleteConfirmInput(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    padding: '0 0.85rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid #dfd5f5',
-                    fontSize: '0.88rem',
-                    color: '#1e1b4b',
-                    outline: 'none',
-                    transition: 'border-color 0.18s ease',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#7c3aed';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#dfd5f5';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  className={styles.confirmTextInput}
                 />
               </div>
             )}
 
             {/* Modal Actions */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <div className={styles.modalFooterActions}>
               <Button type="button" variant="secondary" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeleting}>
                 Cancel
               </Button>
@@ -1856,27 +1399,7 @@ export default function AdminInventory() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting || (selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE')}
-                style={{
-                  height: '42px',
-                  padding: '0 1.25rem',
-                  borderRadius: '10px',
-                  background: isDeleting ? '#94a3b8' : '#dc2626',
-                  border: 'none',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  cursor:
-                    isDeleting || (selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE')
-                      ? 'not-allowed'
-                      : 'pointer',
-                  opacity:
-                    isDeleting || (selectedIds.length > 5 && deleteConfirmInput.trim() !== 'DELETE') ? 0.6 : 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  transition: 'all 0.15s ease',
-                  boxShadow: isDeleting ? 'none' : '0 2px 8px rgba(220, 38, 38, 0.25)',
-                }}
+                className={styles.btnConfirmDelete}
               >
                 <Trash2 size={15} />
                 <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
@@ -1893,58 +1416,33 @@ export default function AdminInventory() {
           onClose={() => setIsAdjustModalOpen(false)}
           title={`Adjust Stock — ${selectedItem.sku}`}
         >
-          <form onSubmit={handleSaveAdjustment} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.85rem',
-                background: '#faf8fe',
-                padding: '0.85rem',
-                borderRadius: '12px',
-                border: '1px solid #ede8f8',
-              }}
-            >
+          <form onSubmit={handleSaveAdjustment} className={styles.adjustForm}>
+            <div className={styles.adjustProductHero}>
               <img
                 src={selectedItem.image || (selectedItem.images && selectedItem.images[0]) || ''}
                 alt={selectedItem.productName}
-                style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
+                className={styles.adjustProductImage}
               />
               <div>
-                <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>
+                <strong className={styles.adjustProductTitle}>
                   {selectedItem.productName}
                 </strong>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  Current Stock Level: <strong style={{ color: '#7c3aed' }}>{selectedItem.currentStock} units</strong>
+                <span className={styles.adjustProductMeta}>
+                  Current Stock Level: <strong className={styles.adjustCurrentQty}>{selectedItem.currentStock} units</strong>
                 </span>
               </div>
             </div>
 
             {/* Adjustment Type Toggle */}
             <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
+              <label className={styles.adjustFieldLabel}>
                 Adjustment Type
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className={styles.adjustTypeGrid}>
                 <button
                   type="button"
                   onClick={() => setAdjustType('add')}
-                  style={{
-                    padding: '0.65rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    transition: 'all 0.2s ease',
-                    background: adjustType === 'add' ? '#dcfce7' : '#ffffff',
-                    color: adjustType === 'add' ? '#15803d' : '#64748b',
-                    borderColor: adjustType === 'add' ? '#22c55e' : '#e2e8f0',
-                  }}
+                  className={`${styles.adjustTypeBtn} ${adjustType === 'add' ? styles.adjustTypeBtnAddActive : ''}`}
                 >
                   <Plus size={16} />
                   <span>Add Stock (Restock)</span>
@@ -1953,22 +1451,7 @@ export default function AdminInventory() {
                 <button
                   type="button"
                   onClick={() => setAdjustType('remove')}
-                  style={{
-                    padding: '0.65rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    transition: 'all 0.2s ease',
-                    background: adjustType === 'remove' ? '#fee2e2' : '#ffffff',
-                    color: adjustType === 'remove' ? '#b91c1c' : '#64748b',
-                    borderColor: adjustType === 'remove' ? '#ef4444' : '#e2e8f0',
-                  }}
+                  className={`${styles.adjustTypeBtn} ${adjustType === 'remove' ? styles.adjustTypeBtnRemoveActive : ''}`}
                 >
                   <Minus size={16} />
                   <span>Remove Stock (Deduct)</span>
@@ -1980,9 +1463,9 @@ export default function AdminInventory() {
             <div>
               <label
                 htmlFor="adjust-qty-input"
-                style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}
+                className={styles.adjustFieldLabel}
               >
-                Quantity to Adjust <span style={{ color: '#ef4444' }}>*</span>
+                Quantity to Adjust <span className={styles.requiredAsterisk}>*</span>
               </label>
               <input
                 id="adjust-qty-input"
@@ -1993,38 +1476,19 @@ export default function AdminInventory() {
                 value={adjustQuantity}
                 onChange={(e) => setAdjustQuantity(e.target.value)}
                 placeholder="e.g. 10"
-                style={{
-                  width: '100%',
-                  height: '42px',
-                  padding: '0 0.85rem',
-                  borderRadius: '10px',
-                  border: '1.5px solid #dfd5f5',
-                  fontSize: '0.88rem',
-                  color: '#1e1b4b',
-                  outline: 'none',
-                }}
+                className={styles.adjustInput}
               />
             </div>
 
             {/* Reason */}
             <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
-                Reason for Adjustment <span style={{ color: '#ef4444' }}>*</span>
+              <label className={styles.adjustFieldLabel}>
+                Reason for Adjustment <span className={styles.requiredAsterisk}>*</span>
               </label>
               <select
                 value={adjustReason}
                 onChange={(e) => setAdjustReason(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: '10px',
-                  border: '1px solid #dfd5f5',
-                  background: '#ffffff',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  color: '#1e1b4b',
-                  outline: 'none',
-                }}
+                className={styles.adjustSelect}
               >
                 {STOCK_ADJUST_REASONS.map((reason) => (
                   <option key={reason} value={reason}>
@@ -2036,7 +1500,7 @@ export default function AdminInventory() {
 
             {/* Optional Notes */}
             <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
+              <label className={styles.adjustFieldLabel}>
                 Internal Audit Note (Optional)
               </label>
               <textarea
@@ -2044,22 +1508,11 @@ export default function AdminInventory() {
                 onChange={(e) => setAdjustNote(e.target.value)}
                 placeholder="e.g. Received new shipment lot from Nachiarkoil workshop"
                 rows={2}
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 0.85rem',
-                  borderRadius: '10px',
-                  border: '1px solid #dfd5f5',
-                  background: '#ffffff',
-                  fontSize: '0.85rem',
-                  color: '#1e1b4b',
-                  fontFamily: 'inherit',
-                  outline: 'none',
-                  resize: 'none',
-                }}
+                className={styles.adjustTextarea}
               />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <div className={styles.modalFooterActions}>
               <Button type="button" variant="secondary" onClick={() => setIsAdjustModalOpen(false)}>
                 Cancel
               </Button>
@@ -2078,69 +1531,56 @@ export default function AdminInventory() {
           onClose={() => setIsViewModalOpen(false)}
           title={`Product Overview — ${viewProductItem.sku}`}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+          <div className={styles.viewModalContent}>
+            <div className={styles.viewHeaderWrap}>
               <img
                 src={viewProductItem.image || (viewProductItem.images && viewProductItem.images[0]) || ''}
                 alt={viewProductItem.productName}
-                style={{
-                  width: '100px',
-                  height: '100px',
-                  borderRadius: '12px',
-                  objectFit: 'cover',
-                  border: '1px solid #ede8f8',
-                }}
+                className={styles.viewProductImage}
               />
               <div>
-                <h4 style={{ margin: '0 0 0.35rem', fontSize: '1.05rem', color: '#1e1b4b' }}>
+                <h4 className={styles.viewProductTitle}>
                   {viewProductItem.productName}
                 </h4>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ background: '#ede8f8', color: '#5b13df', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                <div className={styles.viewPillRow}>
+                  <span className={styles.viewSkuPill}>
                     SKU: {viewProductItem.sku}
                   </span>
-                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                  <span className={styles.viewCategoryPill}>
                     {viewProductItem.category}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.88rem' }}>
-                  Selling Price: <strong style={{ color: '#16a34a' }}>{formatPrice(viewProductItem.sellingPrice)}</strong>{' '}
-                  <span style={{ color: '#94a3b8', textDecoration: 'line-through', fontSize: '0.8rem' }}>
+                <div className={styles.viewPriceRow}>
+                  Selling Price: <strong className={styles.viewSellingPrice}>{formatPrice(viewProductItem.sellingPrice)}</strong>{' '}
+                  <span className={styles.viewRegularPrice}>
                     {formatPrice(viewProductItem.price)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '0.75rem',
-                background: '#faf8fe',
-                padding: '0.85rem',
-                borderRadius: '12px',
-                border: '1px solid #ede8f8',
-                textAlign: 'center',
-              }}
-            >
+            <div className={styles.viewStatsGrid}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>Current Stock</span>
-                <strong style={{ fontSize: '1.1rem', color: '#1e1b4b' }}>{viewProductItem.currentStock}</strong>
+                <span className={styles.viewStatLabel}>Current Stock</span>
+                <strong className={styles.viewStatValPrimary}>{viewProductItem.currentStock}</strong>
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>Low Threshold</span>
-                <strong style={{ fontSize: '1.1rem', color: '#d97706' }}>{viewProductItem.lowStockThreshold || LOW_STOCK_THRESHOLD}</strong>
+                <span className={styles.viewStatLabel}>Reserved</span>
+                <strong className={styles.viewStatValWarning}>{viewProductItem.reserved || 0}</strong>
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>Stock Status</span>
-                <div style={{ marginTop: '0.2rem' }}>
-                  {renderStockStatusBadge(viewProductItem.currentStock, viewProductItem.lowStockThreshold)}
+                <span className={styles.viewStatLabel}>Total Sold</span>
+                <strong style={{ color: '#15803d', fontWeight: 800 }}>{viewProductItem.sold || 0}</strong>
+              </div>
+              <div>
+                <span className={styles.viewStatLabel}>Store Visibility</span>
+                <div className={styles.viewBadgeWrapper}>
+                  {renderStockStatusBadge(viewProductItem.currentStock, viewProductItem.lowStockThreshold, viewProductItem.isActive)}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <div className={styles.viewCloseRow}>
               <Button type="button" onClick={() => setIsViewModalOpen(false)}>
                 Close
               </Button>
