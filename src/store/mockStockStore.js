@@ -1,23 +1,14 @@
 import { create } from 'zustand';
-import { MOCK_PRODUCTS } from '../data/adminMockData';
-import { LOW_STOCK_THRESHOLD } from '../data/inventoryMockData';
+
+export const LOW_STOCK_THRESHOLD = 5;
 
 // ─── Picky Shared Mock Stock Store ───────────────────────────────────────────
 // Single source of truth for product stock levels in mock mode.
 // AdminInventory adjustments here reflect in ProductCard / ProductDetail stock badges.
 
-// Build initial stock map from MOCK_PRODUCTS (productId → stock)
-const buildStockMap = (products) => {
-  const map = {};
-  products.forEach((p) => {
-    map[p._id] = typeof p.stock === 'number' ? p.stock : 0;
-  });
-  return map;
-};
-
 export const useMockStockStore = create((set, get) => ({
   // { productId: stockNumber }
-  stockMap: buildStockMap(MOCK_PRODUCTS),
+  stockMap: {},
 
   // ── Get stock for a single product ───────────────────────────────────────────
   getStock: (productId) => {
@@ -41,27 +32,5 @@ export const useMockStockStore = create((set, get) => ({
     }));
   },
 
-  // ── Get all as inventory-ready array (mirrors MOCK_INVENTORY shape) ──────────
-  getInventoryList: () => {
-    const map = get().stockMap;
-    return MOCK_PRODUCTS.map((p) => {
-      return {
-        _id: `inv_${p._id}`,
-        productId: p._id,
-        productName: p.name,
-        sku: p.sku || '',
-        slug: p.slug,
-        category: p.category?.name || 'General',
-        categoryId: p.category?._id || '',
-        subCategory: p.subCategory?.name || 'General',
-        image: p.images?.[0] || p.image || '',
-        currentStock: map[p._id] ?? p.stock ?? 0,
-        lowStockThreshold: LOW_STOCK_THRESHOLD,
-        price: p.price,
-        sellingPrice: p.discountPrice || p.price,
-        lastUpdated: new Date().toLocaleDateString('en-IN'),
-        lastReason: 'Initial Load',
-      };
-    });
-  },
+  getInventoryList: () => [],
 }));

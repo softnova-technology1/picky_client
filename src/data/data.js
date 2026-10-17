@@ -1,20 +1,15 @@
 // ─── Picky Customer Store Main Data Layer ─────────────────────────────────────
-// Centralized mock data seamlessly shared with Admin Portal via adminMockData.
+// Centralized store collections with categories and real API synchronization.
 
-import {
-  MOCK_CATEGORIES,
-  MOCK_PRODUCTS,
-  MOCK_ORDERS,
-  MOCK_COUPONS,
-} from './adminMockData';
+import { MOCK_CATEGORIES } from './categoryMockData';
 
 export * from './reviewsData';
 
-// Re-export synchronized collections
+// Synchronized collections
 export const categories = MOCK_CATEGORIES;
-export const products = MOCK_PRODUCTS;
-export const mockOrders = MOCK_ORDERS;
-export const coupons = MOCK_COUPONS;
+export const products = [];
+export const mockOrders = [];
+export const coupons = [];
 
 export const heroSlides = [
   {
