@@ -5,7 +5,7 @@ import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
-import { CheckCircle2, Package, Truck, ArrowRight, ShoppingBag, ShieldCheck, Sparkles, Check } from 'lucide-react';
+import { CheckCircle2, Package, Truck, ArrowRight, ShoppingBag, ShieldCheck, Sparkles, Check, Gift } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
 
 export default function OrderSuccess() {
@@ -147,6 +147,17 @@ export default function OrderSuccess() {
                     <Truck size={16} color="#656d4a" /> {order.courier || 'Standard Courier Dispatch'}
                   </span>
                 </div>
+
+                {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                  <div className={styles['info-row']} style={{ background: '#fff1f2', padding: '0.65rem 0.85rem', borderRadius: '8px' }}>
+                    <span className={styles['info-label']} style={{ color: '#be123c', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Gift size={15} /> Gift Wrapping
+                    </span>
+                    <span className={styles['info-val']} style={{ color: '#881337', fontWeight: 600 }}>
+                      Included {order.giftWrap?.fee ? `(+₹${order.giftWrap.fee})` : ''}
+                    </span>
+                  </div>
+                )}
 
                 <div className={styles['info-row-last']}>
                   <span className={styles['info-label']}>Total Paid</span>

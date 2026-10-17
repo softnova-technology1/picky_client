@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Sliders, Layers, ImageOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, Sliders, Layers, ImageOff, CheckCircle2, XCircle } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
@@ -9,6 +9,7 @@ import Spinner from '../../../components/ui/Spinner';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
+import { useCategoryStore } from '../../../store/categoryStore';
 
 export default function AdminCategories() {
   const { showToast } = useUiStore();
@@ -45,7 +46,7 @@ export default function AdminCategories() {
     const startTime = Date.now();
     try {
       setLoading(true);
-      const res = await categoryService.list().catch(() => null);
+      const res = await categoryService.list({ all: true }).catch(() => null);
       const list = res ? res.data || [] : [];
       setCategories(list);
     } catch (err) {
@@ -88,6 +89,37 @@ export default function AdminCategories() {
     setNewChar({ name: '', type: 'select', valuesInput: '', required: false });
     setPreviewValues({});
     setIsCharModalOpen(true);
+  };
+
+  const handleToggleActive = async (c) => {
+    const currentActive = c.isActive !== false;
+    const newStatus = !currentActive;
+
+    // Optimistic UI update
+    setCategories((prev) =>
+      prev.map((item) => (item._id === c._id ? { ...item, isActive: newStatus } : item))
+    );
+
+    try {
+      const payload = new FormData();
+      payload.append('name', c.name);
+      payload.append('isActive', newStatus);
+
+      await adminService.updateCategory(c._id, payload);
+
+      // Invalidate and refresh client category store so site reflects change immediately
+      useCategoryStore.setState({ fetched: false });
+      useCategoryStore.getState().fetchCategories();
+
+      showToast(`Category "${c.name}" is now ${newStatus ? 'Active' : 'Inactive'}`, 'success');
+    } catch (err) {
+      console.error('Failed to toggle category active status:', err);
+      // Revert optimistic update on failure
+      setCategories((prev) =>
+        prev.map((item) => (item._id === c._id ? { ...item, isActive: currentActive } : item))
+      );
+      showToast('Failed to update category status', 'error');
+    }
   };
 
   const handleSubmitCategory = async (e) => {
@@ -351,20 +383,32 @@ export default function AdminCategories() {
                   <span>Edit</span>
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleOpenCharacteristics(c); }}
+                  onClick={(e) => { e.stopPropagation(); handleToggleActive(c); }}
                   className="admin-period-select-btn"
                   style={{
                     flex: 1,
                     padding: '0.4rem',
                     fontSize: '0.78rem',
-                    background: '#dcd0fa',
-                    color: '#2e1065',
-                    borderColor: '#c4b5fd',
-                    justifyContent: 'center'
+                    background: c.isActive !== false ? '#dcfce7' : '#fee2e2',
+                    color: c.isActive !== false ? '#15803d' : '#b91c1c',
+                    borderColor: c.isActive !== false ? '#bbf7d0' : '#fecaca',
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                    transition: 'all 0.15s ease',
                   }}
+                  title={c.isActive !== false ? 'Click to make Inactive' : 'Click to make Active'}
                 >
-                  <Sliders size={13} color="#5b21b6" />
-                  <span>Specs</span>
+                  {c.isActive !== false ? (
+                    <>
+                      <CheckCircle2 size={13} color="#16a34a" />
+                      <span>Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={13} color="#dc2626" />
+                      <span>Inactive</span>
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}

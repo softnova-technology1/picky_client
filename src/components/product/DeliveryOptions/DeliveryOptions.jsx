@@ -1,5 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Truck, CheckCircle2, Banknote, RotateCcw, X } from 'lucide-react';
+import { settingsService } from '../../../services/settings.service';
+import { calculateShippingFee } from '../../../utils/shippingCalculator';
 import styles from './DeliveryOptions.module.css';
 
 export default function DeliveryOptions() {
@@ -10,7 +12,19 @@ export default function DeliveryOptions() {
     return Boolean(localStorage.getItem('picky_delivery_pincode'));
   });
   const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [shippingSettings, setShippingSettings] = useState(() => settingsService.getCachedShippingSettings());
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    settingsService.getSettings().then((res) => {
+      const data = res?.data || res;
+      if (isMounted && data?.shipping) setShippingSettings(data.shipping);
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
+  const deliveryCalc = calculateShippingFee(pincode, shippingSettings);
 
   // Dynamic delivery date calculation (3-4 days from today)
   const getEstimatedDate = () => {
@@ -94,7 +108,7 @@ export default function DeliveryOptions() {
                   <Truck size={19} color="#1e293b" strokeWidth={2} />
                 </div>
                 <span className={styles['feature-text']}>
-                  Get it by {getEstimatedDate()}
+                  Get it by {getEstimatedDate()} • <strong>₹{deliveryCalc.fee}</strong> ({deliveryCalc.zone})
                 </span>
               </div>
             </div>

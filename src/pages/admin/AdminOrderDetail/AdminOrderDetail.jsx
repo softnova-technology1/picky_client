@@ -12,6 +12,7 @@ import {
   Mail,
   Send,
   ExternalLink,
+  Gift,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Input from '../../../components/ui/Input';
@@ -327,6 +328,35 @@ export default function AdminOrderDetail() {
               ))}
             </div>
 
+            {/* Gift Message Box (ONLY shown when order was placed with Gift Wrap) */}
+            {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+              <div
+                style={{
+                  marginTop: '1.25rem',
+                  padding: '0.85rem 1.15rem',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
+                  border: '1.5px solid #fecdd3',
+                  boxShadow: '0 2px 6px rgba(225, 29, 72, 0.05)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#be123c', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Gift size={16} /> Gift Wrapping Service {order.giftWrap?.fee ? `(+₹${order.giftWrap.fee})` : ''}
+                  </span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.15rem 0.55rem', borderRadius: '9999px' }}>
+                    Gift Order
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.85rem', color: '#881337', lineHeight: 1.5 }}>
+                  <strong>Gift Message: </strong>
+                  <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239' }}>
+                    {(order.giftWrap?.message && order.giftWrap.message.trim()) ? `"${order.giftWrap.message.trim()}"` : 'No message'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div style={{ borderTop: '1px solid #ede8f8', marginTop: '1.5rem', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>Subtotal</span>
@@ -336,6 +366,14 @@ export default function AdminOrderDetail() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontWeight: 600 }}>
                   <span>Promotional Discount</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
+                </div>
+              )}
+              {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#be123c', fontWeight: 600 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Gift size={13} /> Gift Wrapping
+                  </span>
+                  <span>+{formatPrice(order.giftWrap?.fee || order.giftWrapFee || 30)}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, color: '#1e1b4b', borderTop: '1px solid #ede8f8', paddingTop: '0.75rem' }}>

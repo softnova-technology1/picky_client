@@ -1533,3 +1533,249 @@ input:checked + .slider:before {
   background: #5e19e0;
 }
 
+/* ─── Dynamic Shipping & Pincodes Control Panel ─── */
+.shippingCard {
+  background: #ffffff;
+  border: 1.5px solid #ede8f8;
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.03);
+}
+
+.shippingCardHighlight {
+  border-color: #d8b4fe;
+  background: linear-gradient(180deg, #fdfaff 0%, #ffffff 100%);
+}
+
+.shippingCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.shippingCardTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.shippingCardTitle {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin: 0;
+}
+
+.shippingBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: #f3e8ff;
+  color: #7025fb;
+  border: 1px solid #e9d5ff;
+}
+
+.shippingCountBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.pincodeAddBar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.pincodeInput {
+  flex: 1;
+  padding: 0.65rem 0.9rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.pincodeInput:focus {
+  border-color: #7025fb;
+  box-shadow: 0 0 0 3px rgba(112, 37, 251, 0.1);
+}
+
+.pincodeAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.15rem;
+  background: #7025fb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.pincodeAddBtn:hover {
+  background: #5e19e0;
+  transform: translateY(-1px);
+}
+
+.pincodeChipsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.pincodeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.pincodeChipDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.pincodeChipDelete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.stateCard {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.stateCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.stateCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stateNameInput {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  background: #f8fafc;
+}
+
+.stateNameInput:focus {
+  border-color: #7025fb;
+  background: #ffffff;
+  outline: none;
+}
+
+.deleteStateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.deleteStateBtn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.addStateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  background: #fbf9fe;
+  color: #7025fb;
+  border: 1.5px dashed #d8b4fe;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addStateBtn:hover {
+  background: #f3e8ff;
+  border-color: #7025fb;
+}
+
+.searchPincodeBox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.searchPincodeInput {
+  border: none;
+  outline: none;
+  font-size: 0.8rem;
+  color: #334155;
+  width: 140px;
+}
+
+

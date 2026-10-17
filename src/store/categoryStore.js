@@ -19,15 +19,17 @@ export const useCategoryStore = create((set, get) => ({
       ]);
       const dbCategories = catRes?.data?.data || catRes?.data || [];
       
-      // Merge DB categories - STRICTLY use real DB image only (no mock images)
-      const cList = dbCategories.map(dbCat => {
-        const mockCat = PICKY_CATEGORIES.find(mc => mc.slug === dbCat.slug);
-        return {
-          ...mockCat, // Fallback non-image properties (icon, bgGradient)
-          ...dbCat,   // Override with DB real data (name, slug, _id, isActive)
-          image: dbCat.image || null, // STRICTLY REAL DB image only! No mock image fallback
-        };
-      });
+      // Merge DB categories - filter only active categories for customer-facing site
+      const cList = dbCategories
+        .filter((dbCat) => dbCat.isActive !== false)
+        .map((dbCat) => {
+          const mockCat = PICKY_CATEGORIES.find((mc) => mc.slug === dbCat.slug);
+          return {
+            ...mockCat, // Fallback non-image properties (icon, bgGradient)
+            ...dbCat,   // Override with DB real data (name, slug, _id, isActive)
+            image: dbCat.image || null, // STRICTLY REAL DB image only! No mock image fallback
+          };
+        });
 
       const sList = subRes?.data?.data || subRes?.data || [];
       
