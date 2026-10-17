@@ -1,0 +1,1508 @@
+/* ─── AdminInventory Module CSS (Picky Luxury Admin Standard) ─── */
+/* Scoped exclusively to AdminInventory component */
+
+/* ─── Filter & Control Card ─── */
+.filterCard {
+  position: relative;
+  z-index: 40;
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #ede8f8;
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.filterCard:hover {
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.08);
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ─── Search Bar ─── */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 280px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  color: #8a7ca6;
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.searchInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 1rem 0 2.6rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #1e1b4b;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.searchInput:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3.5px rgba(124, 58, 237, 0.16);
+}
+
+.searchWrap:focus-within .searchIcon {
+  color: #7c3aed;
+}
+
+/* ─── Filter Controls & Selection ─── */
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* Selection Actions */
+.selectionGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.selectedCount {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5b13df;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  transition: color 0.15s ease;
+}
+
+.clearBtn:hover {
+  color: #1e1b4b;
+}
+
+.deleteSelectedBtn {
+  height: 42px;
+  padding: 0 1rem;
+  border-radius: 12px;
+  background: #dc2626;
+  border: 1.5px solid #b91c1c;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+.deleteSelectedBtn:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ─── Scope Clarity Banner ─── */
+.scopeBanner {
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 1.15rem;
+  background: #faf5ff;
+  border: 1.5px solid #dcd0fa;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  color: #4c1d95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.scopeSelectAllBtn {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.84rem;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.scopeSelectAllBtn:hover {
+  opacity: 0.8;
+}
+
+.scopeClearBtn {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.84rem;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.scopeClearBtn:hover {
+  opacity: 0.8;
+}
+
+/* ─── Table Container & Structure ─── */
+.tableCard {
+  position: relative;
+  z-index: 1;
+  border-radius: 18px;
+  border: 1.5px solid #ede8f8;
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.05);
+  background: #ffffff;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.tableCard:hover {
+  box-shadow: 0 6px 28px rgba(124, 58, 237, 0.08);
+}
+
+.tableScroll {
+  overflow-x: auto;
+  width: 100%;
+  max-height: 620px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.tableScroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tableScroll::-webkit-scrollbar-thumb {
+  background: #dcd0fa;
+  border-radius: 4px;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 1180px;
+}
+
+/* ─── Table Header ─── */
+.tableHeaderRow {
+  background: #f5f0fe;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 0 #ede8f8;
+}
+
+.thCheckbox {
+  width: 44px;
+  padding: 1rem 0.6rem 1rem 1.1rem;
+  text-align: center;
+  vertical-align: middle;
+  background: #f5f0fe;
+}
+
+.checkboxInput {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #7c3aed;
+}
+
+.thSno {
+  width: 56px;
+  padding: 1rem 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f5f0fe;
+}
+
+.thProduct {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+  background: #f5f0fe;
+  transition: color 0.15s ease;
+}
+
+.thProduct:hover,
+.thSortable:hover {
+  color: #7c3aed;
+}
+
+.thSortable {
+  padding: 1rem 0.85rem;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+  background: #f5f0fe;
+  transition: color 0.15s ease;
+}
+
+.thSortableCenter {
+  composes: thSortable;
+  text-align: center;
+}
+
+.thSortActive {
+  color: #7c3aed !important;
+}
+
+.thSortContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.thSortContentCenter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.thReserved {
+  padding: 1rem 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f5f0fe;
+}
+
+.thSold {
+  padding: 1rem 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f5f0fe;
+}
+
+.thStatus {
+  padding: 1rem 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f5f0fe;
+}
+
+.thAction {
+  padding: 1rem 1.5rem 1rem 0.85rem;
+  text-align: right;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #5b21b6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f5f0fe;
+  width: 275px;
+  min-width: 275px;
+}
+
+/* ─── Skeleton Loading ─── */
+.skeletonTr {
+  border-bottom: 1px solid #f1eafa;
+}
+
+.skeletonBox {
+  border-radius: 4px;
+  background: #ede8f8;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeletonBoxSubtle {
+  border-radius: 4px;
+  background: #f5f0fe;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ─── Empty State ─── */
+.emptyTd {
+  text-align: center;
+  padding: 4.5rem 1.5rem;
+}
+
+.emptyWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.emptyIconCircle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #f5f0fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c3aed;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.emptyDesc {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #64748b;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.clearFiltersBtn {
+  margin-top: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 10px;
+  background: #ede8f8;
+  border: 1px solid #dcd0fa;
+  color: #5b13df;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+}
+
+.clearFiltersBtn:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+}
+
+/* ─── Table Rows & Cells ─── */
+.tableRow {
+  border-bottom: 1px solid #f1eafa;
+  transition: background 0.15s ease;
+}
+
+.tableRow:hover {
+  background: #f6f1fd !important;
+}
+
+.rowWhite {
+  background: #ffffff;
+}
+
+.rowSoftLavender {
+  background: #faf7ff;
+}
+
+.rowSelected {
+  background: #faf5ff !important;
+}
+
+.rowOutOfStock {
+  background: #fef2f2 !important;
+}
+
+.tdCheckbox {
+  padding: 0.95rem 0.6rem 0.95rem 1.1rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.tdSno {
+  padding: 0.95rem 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.snoText {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.tdProduct {
+  padding: 0.95rem 1.25rem;
+  vertical-align: middle;
+}
+
+.productWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.productThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1.5px solid #ede8f8;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+
+.productDetails {
+  min-width: 0;
+  max-width: 280px;
+}
+
+.productName {
+  font-size: 0.88rem;
+  color: #1e1b4b;
+  display: block;
+  line-height: 1.35;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+  outline: none;
+  font-weight: 700;
+  transition: color 0.15s ease;
+}
+
+.productName:focus,
+.productName:hover {
+  color: #7c3aed;
+}
+
+.productPrice {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.tdSku {
+  padding: 0.95rem 0.85rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.skuPill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #5b13df;
+  background: #ede8f8;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.03em;
+  border: 1px solid #dfd5f5;
+  white-space: nowrap;
+}
+
+.tdCategory {
+  padding: 0.95rem 0.85rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.categoryPill {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.categoryCellWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.subCategoryPill {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.subCategoryDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7c3aed;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.tdStock {
+  padding: 0.95rem 0.85rem;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.stockUnits {
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.stockZero {
+  color: #dc2626;
+}
+
+.stockLow {
+  color: #d97706;
+}
+
+.stockNormal {
+  color: #1e1b4b;
+}
+
+.tdReserved {
+  padding: 0.95rem 0.85rem;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.reservedPill {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #fde68a;
+  letter-spacing: 0.02em;
+}
+
+.tdSold {
+  padding: 0.95rem 0.85rem;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.soldPill {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bbf7d0;
+  letter-spacing: 0.02em;
+}
+
+.tdStatus {
+  padding: 0.95rem 0.85rem;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.statusCenter {
+  display: inline-flex;
+  justify-content: center;
+}
+
+/* ─── Status Badges ─── */
+.badgeOutOfStock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  white-space: nowrap;
+}
+
+.badgeLowStock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  white-space: nowrap;
+}
+
+.badgeInStock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  white-space: nowrap;
+}
+
+.badgeDeactivated {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+}
+
+/* ─── Row Actions ─── */
+.tdAction {
+  padding: 0.95rem 1.5rem 0.95rem 0.85rem;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: 275px;
+  min-width: 275px;
+  text-align: right;
+}
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.btnActionView {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnActionView:hover {
+  background: #ede8f8;
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.btnRestockOutOfStock {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnRestockOutOfStock:hover {
+  background: #fca5a5;
+  border-color: #f87171;
+}
+
+.btnRestockLowStock {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnRestockLowStock:hover {
+  background: #fde047;
+  border-color: #facc15;
+}
+
+.btnAdjustStock {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #ede8f8;
+  border: 1px solid #dcd0fa;
+  color: #5b13df;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnAdjustStock:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+.btnAdjustStock:hover svg {
+  stroke: #ffffff;
+}
+
+.btnRowDelete {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #fee2e2;
+  background: #ffffff;
+  color: #ef4444;
+  cursor: pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnRowDelete:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.btnToggleStatus {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btnStatusActive {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.btnStatusActive:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #ef4444;
+}
+
+.btnStatusInactive {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+}
+
+.btnStatusInactive:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #16a34a;
+}
+
+.rowDeactivated {
+  background: #f8fafc !important;
+  opacity: 0.88;
+}
+
+/* ─── Pagination Footer ─── */
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.4rem;
+  border-top: 1px solid #f1eafa;
+  background: #fcfbfe;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.pageNavBtn {
+  height: 32px;
+  padding: 0 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  transition: all 0.15s ease;
+}
+
+.pageNavBtn:hover:not(:disabled) {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #faf5ff;
+}
+
+.pageNavBtn:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.pageBtnNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.pageBtnNumber:hover:not(.pageBtnActive) {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #faf5ff;
+}
+
+.pageBtnActive {
+  border-color: #7c3aed !important;
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+}
+
+.pageEllipsis {
+  padding: 0 0.4rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  user-select: none;
+}
+
+/* ─── Modals: Bulk Delete, Adjust Stock, View Product ─── */
+.modalStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.dangerAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  background: #fee2e2;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+}
+
+.dangerAlertIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.dangerAlertTitle {
+  font-size: 0.9rem;
+  color: #991b1b;
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+
+.dangerAlertText {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #b91c1c;
+  line-height: 1.4;
+}
+
+.confirmInputCard {
+  background: #faf5ff;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #ede8f8;
+}
+
+.confirmInputLabel {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.confirmCodeSnippet {
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.confirmTextInput {
+  width: 100%;
+  height: 40px;
+  padding: 0 0.85rem;
+  border-radius: 10px;
+  border: 1.5px solid #dfd5f5;
+  font-size: 0.88rem;
+  color: #1e1b4b;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.confirmTextInput:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.modalFooterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btnConfirmDelete {
+  height: 42px;
+  padding: 0 1.25rem;
+  border-radius: 10px;
+  background: #dc2626;
+  border: none;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+.btnConfirmDelete:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+.btnConfirmDelete:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Adjust Stock Modal */
+.adjustForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.adjustProductHero {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: #faf8fe;
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: 1px solid #ede8f8;
+}
+
+.adjustProductImage {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f8fafc;
+}
+
+.adjustProductTitle {
+  font-size: 0.92rem;
+  color: #1e1b4b;
+  display: block;
+  font-weight: 700;
+}
+
+.adjustProductMeta {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.adjustCurrentQty {
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.adjustFieldLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.requiredAsterisk {
+  color: #ef4444;
+}
+
+.adjustTypeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.adjustTypeBtn {
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  color: #64748b;
+  font-family: inherit;
+}
+
+.adjustTypeBtnAddActive {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #22c55e !important;
+}
+
+.adjustTypeBtnRemoveActive {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border-color: #ef4444 !important;
+}
+
+.adjustInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 10px;
+  border: 1.5px solid #dfd5f5;
+  font-size: 0.88rem;
+  color: #1e1b4b;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.18s ease;
+}
+
+.adjustInput:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.adjustSelect {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #dfd5f5;
+  background: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e1b4b;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.adjustSelect:focus {
+  border-color: #7c3aed;
+}
+
+.adjustTextarea {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #dfd5f5;
+  background: #ffffff;
+  font-size: 0.85rem;
+  color: #1e1b4b;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.adjustTextarea:focus {
+  border-color: #7c3aed;
+}
+
+/* View Product Overview Modal */
+.viewModalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.viewHeaderWrap {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.viewProductImage {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #ede8f8;
+  background: #f8fafc;
+}
+
+.viewProductTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  color: #1e1b4b;
+  font-weight: 700;
+}
+
+.viewPillRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.viewSkuPill {
+  background: #ede8f8;
+  color: #5b13df;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.viewCategoryPill {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.viewPriceRow {
+  font-size: 0.88rem;
+}
+
+.viewSellingPrice {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.viewRegularPrice {
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-size: 0.8rem;
+}
+
+.viewStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  background: #faf8fe;
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: 1px solid #ede8f8;
+  text-align: center;
+}
+
+.viewStatLabel {
+  font-size: 0.75rem;
+  color: #64748b;
+  display: block;
+}
+
+.viewStatValPrimary {
+  font-size: 1.1rem;
+  color: #1e1b4b;
+  font-weight: 700;
+}
+
+.viewStatValWarning {
+  font-size: 1.1rem;
+  color: #d97706;
+  font-weight: 700;
+}
+
+.viewBadgeWrapper {
+  margin-top: 0.2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.viewCloseRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+/* ─── Reserved Pill Interactive Button ─── */
+.reservedPillBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  border-radius: 6px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.reservedPillBtn:hover {
+  transform: scale(1.08);
+  filter: brightness(0.96);
+}
+
+/* ─── Adjust Stock Modal Enhancements ─── */
+.adjustHeroBadges {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.adjustBadgeAvailable {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.adjustBadgeReserved {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.adjustTargetTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.adjustTargetTab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.adjustTargetTabActive {
+  background: #ffffff;
+  color: #7c3aed;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+.adjustTargetTabReservedActive {
+  background: #ffffff;
+  color: #d97706;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.12);
+  font-weight: 700;
+}
+
+.adjustTypeBtnReservedAddActive {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.15);
+}
+
+.adjustHelperText {
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+.adjustQtyMeta {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+

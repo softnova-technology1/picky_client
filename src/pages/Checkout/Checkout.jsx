@@ -6,8 +6,10 @@ import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { orderService } from '../../services/order.service';
+import { settingsService } from '../../services/settings.service';
 import { authService } from '../../services/auth.service';
 import { formatPrice } from '../../utils/formatPrice';
+import { calculateShippingFee, isTamilNaduPincode } from '../../utils/shippingCalculator';
 import { useCouponStore } from '../../store/couponStore';
 import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
@@ -32,7 +34,8 @@ import {
   Tag,
   Minus,
   Plus,
-  Edit3
+  Edit3,
+  Gift,
 } from 'lucide-react';
 
 const loadRazorpayScript = () => {
@@ -47,42 +50,8 @@ const loadRazorpayScript = () => {
 };
 
 // Dynamic delivery fee and duration calculator based on PIN Code zones
-export const calculateDeliveryByPincode = (pincodeStr) => {
-  const pin = (pincodeStr || '').toString().trim().replace(/\D/g, '');
-  if (!pin || pin.length < 2) {
-    return { fee: 60, daysText: 'Delivery in 5–7 business days', zone: 'Standard' };
-  }
-
-  // Zone 1: Local / Nearby Area (Pattukkottai, Peravurani, Thanjavur district - 614xxx)
-  if (pin.startsWith('614')) {
-    return { fee: 40, daysText: 'Delivery in 5–7 business days', zone: 'Local Fast Delivery' };
-  }
-
-  // Zone 2: Tamil Nadu & Pondicherry (60xxxx - 64xxxx)
-  const firstTwo = parseInt(pin.slice(0, 2), 10);
-  if (firstTwo >= 60 && firstTwo <= 64) {
-    return { fee: 60, daysText: 'Delivery in 2–3 business days', zone: 'Tamil Nadu & Pondy' };
-  }
-
-  // Zone 3: South India States (AP/Telangana 50-53, Karnataka 56-59, Kerala 67-69)
-  if (
-    (firstTwo >= 50 && firstTwo <= 53) ||
-    (firstTwo >= 56 && firstTwo <= 59) ||
-    (firstTwo >= 67 && firstTwo <= 69)
-  ) {
-    return { fee: 80, daysText: 'Delivery in 3–5 business days', zone: 'South India' };
-  }
-
-  // Zone 4: Rest of India / Metros (Delhi NCR 11-13, Maharashtra/Mumbai 40-44, Central/West 20-49)
-  if (
-    (firstTwo >= 11 && firstTwo <= 13) ||
-    (firstTwo >= 20 && firstTwo <= 49)
-  ) {
-    return { fee: 100, daysText: 'Delivery in 4–6 business days', zone: 'National Delivery' };
-  }
-
-  // Zone 5: East, North-East, Remote (70-79, 18-19, etc.)
-  return { fee: 120, daysText: 'Delivery in 5–7 business days', zone: 'Special Express' };
+export const calculateDeliveryByPincode = (pincodeStr, customSettings = null) => {
+  return calculateShippingFee(pincodeStr, customSettings);
 };
 
 export default function Checkout() {
@@ -92,12 +61,72 @@ export default function Checkout() {
   const isBuyNow = searchParams.get('buyNow') === 'true' && Boolean(buyNowItem);
   const checkoutItems = isBuyNow ? [buyNowItem] : items;
 
+  // ─── Auto Stock Reservation for Checkout Lifecycle ───
+  // Immediately reserve stock whenever customer enters checkout with products!
+  const sessionIdRef = React.useRef(
+    `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  );
+  const orderCompletedRef = React.useRef(false);
+  const lastReservedKeyRef = React.useRef('');
+
+  // 1. Auto-reserve stock on mount and on item/quantity change in checkout
+  React.useEffect(() => {
+    if (checkoutItems.length === 0 || orderCompletedRef.current) return;
+
+    const payloadItems = checkoutItems.map((i) => ({
+      productId: i.productId || i._id || i.id,
+      quantity: i.quantity || 1,
+    }));
+
+    const key = JSON.stringify(payloadItems);
+    if (lastReservedKeyRef.current === key) return;
+    lastReservedKeyRef.current = key;
+
+    orderService
+      .reserveCheckout({
+        sessionId: sessionIdRef.current,
+        items: payloadItems,
+      })
+      .then(() => {
+        // Reserved in DB
+      })
+      .catch((err) => {
+        console.warn('Checkout auto-reserve notice:', err?.response?.data?.message || err?.message);
+      });
+  }, [checkoutItems]);
+
+  // 2. Release reserved stock when customer leaves / unmounts Checkout without completing order
+  React.useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!orderCompletedRef.current && sessionIdRef.current) {
+        try {
+          const payload = JSON.stringify({ sessionId: sessionIdRef.current });
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon('/api/v1/orders/checkout/release', blob);
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (!orderCompletedRef.current && sessionIdRef.current) {
+        orderService
+          .releaseCheckout({
+            sessionId: sessionIdRef.current,
+          })
+          .catch((err) => console.warn('Checkout release on unmount notice:', err));
+      }
+    };
+  }, []);
+
   // Handle quantity changes cleanly in checkout (both Buy Now and regular bag items)
   const handleUpdateItemQty = (item, newQty) => {
     if (newQty < 1) return;
     const maxStock = typeof item.stock === 'number' ? item.stock : (typeof item.countInStock === 'number' ? item.countInStock : 10);
     if (newQty > maxStock) {
-      showToast(`Only ${maxStock} units available in stock for "${item.name}"`, 'warning');
+      showToast(`Maximum available quantity reached for "${item.name}"`, 'warning');
       return;
     }
     if (isBuyNow) {
@@ -124,24 +153,92 @@ export default function Checkout() {
   const { showToast } = useUiStore();
   const { coupons } = useCouponStore();
 
+  // Live Shipping Rules State loaded from MongoDB Database with instant synchronous cache hydration
+  const [shippingSettings, setShippingSettings] = useState(() => {
+    return settingsService.getCachedShippingSettings();
+  });
+
+  // Fetch live shipping & pincode rules from MongoDB on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadShippingRules() {
+      try {
+        const res = await settingsService.getSettings();
+        const data = res?.data || res;
+        if (isMounted && data?.shipping) {
+          setShippingSettings(data.shipping);
+        }
+      } catch (err) {
+        console.warn('Live shipping rules fetch notice:', err);
+      }
+    }
+    loadShippingRules();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Workflow step: 1 = 'checkout' (Shipping & Delivery Form), 2 = 'payment' (Payment Method & Order Summary)
   const [checkoutStep, setCheckoutStep] = useState(1);
 
-  // Customer Contact & Shipping Address Form State
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    pincode: '',
-    street: '',
-    city: '',
-    state: '',
-    landmark: '',
+  // Saved Addresses State loaded from MongoDB Database with instant cache fallback on page reload
+  const [savedAddresses, setSavedAddresses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('picky_user_addresses');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
   });
 
-  // Saved Addresses State loaded directly from MongoDB Database (NO local storage)
-  const [savedAddresses, setSavedAddresses] = useState([]);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [selectedAddressId, setSelectedAddressId] = useState(() => {
+    try {
+      const cachedId = localStorage.getItem('picky_selected_address_id');
+      if (cachedId) return cachedId;
+      const cached = localStorage.getItem('picky_user_addresses');
+      if (cached) {
+        const list = JSON.parse(cached);
+        const def = list.find((a) => a.isDefault) || list[0];
+        return def?.id || null;
+      }
+    } catch {}
+    return null;
+  });
+
+  // Customer Contact & Shipping Address Form State with instant hydration
+  const [formData, setFormData] = useState(() => {
+    try {
+      const cached = localStorage.getItem('picky_user_addresses');
+      const cachedId = localStorage.getItem('picky_selected_address_id');
+      if (cached) {
+        const list = JSON.parse(cached);
+        const matched = list.find((a) => a.id === cachedId) || list.find((a) => a.isDefault) || list[0];
+        if (matched) {
+          return {
+            fullName: matched.fullName || '',
+            email: matched.email || '',
+            phone: matched.phone || '',
+            pincode: matched.pincode || '',
+            street: matched.street || '',
+            landmark: matched.landmark || '',
+            city: matched.city || '',
+            state: matched.state || '',
+          };
+        }
+      }
+    } catch {}
+    return {
+      fullName: '',
+      email: '',
+      phone: '',
+      pincode: '',
+      street: '',
+      city: '',
+      state: '',
+      landmark: '',
+    };
+  });
+
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
@@ -164,18 +261,31 @@ export default function Checkout() {
 
         if (normList.length > 0) {
           setSavedAddresses(normList);
+          try {
+            localStorage.setItem('picky_user_addresses', JSON.stringify(normList));
+          } catch (_) {}
           const defaultAddr = normList.find((a) => a.isDefault) || normList[0];
-          setSelectedAddressId(defaultAddr.id);
+          setSelectedAddressId((prevId) => {
+            const stillExists = prevId && normList.some((a) => a.id === prevId);
+            const activeId = stillExists ? prevId : defaultAddr.id;
+            try {
+              localStorage.setItem('picky_selected_address_id', activeId);
+            } catch (_) {}
+            return activeId;
+          });
           setIsAddingNewAddress(false);
-          setFormData({
-            fullName: defaultAddr.fullName || user?.name || '',
-            email: defaultAddr.email || user?.email || '',
-            phone: defaultAddr.phone || user?.phone || '',
-            pincode: defaultAddr.pincode || '',
-            street: defaultAddr.street || '',
-            landmark: defaultAddr.landmark || '',
-            city: defaultAddr.city || '',
-            state: defaultAddr.state || '',
+          setFormData((prev) => {
+            if (prev.pincode) return prev;
+            return {
+              fullName: defaultAddr.fullName || user?.name || '',
+              email: defaultAddr.email || user?.email || '',
+              phone: defaultAddr.phone || user?.phone || '',
+              pincode: defaultAddr.pincode || '',
+              street: defaultAddr.street || '',
+              landmark: defaultAddr.landmark || '',
+              city: defaultAddr.city || '',
+              state: defaultAddr.state || '',
+            };
           });
         } else {
           // First time user / no address saved in MongoDB: show direct form fields
@@ -217,6 +327,9 @@ export default function Checkout() {
   // Sync formData with selected address on selection change
   React.useEffect(() => {
     if (savedAddresses.length > 0 && selectedAddressId && !isAddingNewAddress) {
+      try {
+        localStorage.setItem('picky_selected_address_id', selectedAddressId);
+      } catch (_) {}
       const matched = savedAddresses.find((a) => a.id === selectedAddressId);
       if (matched) {
         setFormData({
@@ -239,6 +352,10 @@ export default function Checkout() {
   // Selected Payment Method: 'card' | 'upi' | 'netbanking'
   const [paymentMethod, setPaymentMethod] = useState('card');
 
+  // Gift Wrapping Selection & Custom Message State
+  const [isGiftWrap, setIsGiftWrap] = useState(false);
+  const [giftMessage, setGiftMessage] = useState('');
+
   // Promo Code Input
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoError, setPromoError] = useState('');
@@ -246,13 +363,24 @@ export default function Checkout() {
   // Payment processing & Razorpay Modal state
   const [loading, setLoading] = useState(false);
   const [showRzModal, setShowRzModal] = useState(false);
+  const [rzSessionId, setRzSessionId] = useState(null);
   const [rzTab, setRzTab] = useState('card');
   const [upiId, setUpiId] = useState('');
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [showCancelPaymentConfirm, setShowCancelPaymentConfirm] = useState(false);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'pincode') {
+      const cleanPin = value.replace(/\D/g, '').slice(0, 6);
+      setFormData((prev) => ({
+        ...prev,
+        pincode: cleanPin,
+        state: isTamilNaduPincode(cleanPin) && !prev.state ? 'Tamil Nadu' : prev.state,
+      }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Calculate pricing breakdown
@@ -269,16 +397,22 @@ export default function Checkout() {
     return sum + origPrice * (item.quantity || 1);
   }, 0);
 
-  // Dynamic Pincode-based Delivery Calculation (Zone-based)
+  // Dynamic Pincode-based Delivery Calculation (retrieved from live MongoDB database settings)
   const activePincode = (formData.pincode || (savedAddresses.find((a) => a.id === selectedAddressId)?.pincode) || '').toString().trim();
-  const deliveryInfo = calculateDeliveryByPincode(activePincode);
-  const deliveryFee = deliveryMode === 'pickup' ? 0 : deliveryInfo.fee;
+  const deliveryInfo = calculateShippingFee(activePincode, shippingSettings, deliveryMode);
+  const deliveryFee = deliveryInfo.fee;
   
   // Fixed Convenience Fee as shown in reference design: ₹2
   const convenienceFee = checkoutItems.length > 0 ? 2 : 0;
 
-  // Final Payable
-  const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee - (couponDiscount || 0));
+  // Live Gift Wrap Configuration from MongoDB Settings
+  const giftWrapConfig = shippingSettings?.giftWrap || { enabled: true, fee: 30 };
+  const giftWrapFee = (isGiftWrap && giftWrapConfig?.enabled !== false)
+    ? Number(giftWrapConfig.fee !== undefined ? giftWrapConfig.fee : 30)
+    : 0;
+
+  // Final Payable (including items subtotal, delivery fee, convenience fee, and optional gift wrap fee)
+  const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee + giftWrapFee - (couponDiscount || 0));
 
   // Handle Promo Code Application — validated against centralized MOCK_COUPONS
   const handleApplyPromo = (e) => {
@@ -505,6 +639,12 @@ export default function Checkout() {
             totalAmount: finalPayable,
             subtotal,
             discountAmount: couponDiscount || 0,
+            giftWrapFee,
+            giftWrap: {
+              isGiftWrapped: isGiftWrap,
+              fee: giftWrapFee,
+              message: isGiftWrap ? giftMessage.trim() : '',
+            },
           });
 
           const rzData = rzInitRes?.data?.data || rzInitRes?.data;
@@ -516,7 +656,9 @@ export default function Checkout() {
               currency: 'INR',
               name: 'Picky Store',
               description: `Order Payment (${checkoutItems.length} items)`,
-              image: '/images/logo.png',
+              image: (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+                ? undefined
+                : `${window.location.origin}/images/logo.png`,
               order_id: rzData.razorpayOrderId,
               prefill: {
                 name: formData.fullName,
@@ -540,33 +682,61 @@ export default function Checkout() {
                     items: cartPayload,
                     subtotal,
                     shippingFee: deliveryFee,
+                    deliveryFee,
+                    convenienceFee: 2,
+                    giftWrapFee,
+                    giftWrap: {
+                      isGiftWrapped: isGiftWrap,
+                      fee: giftWrapFee,
+                      message: isGiftWrap ? giftMessage.trim() : '',
+                    },
                     discountAmount: couponDiscount || 0,
                     total: finalPayable,
                     totalAmount: finalPayable,
                     razorpayOrderId: response.razorpay_order_id,
                     razorpayPaymentId: response.razorpay_payment_id,
                     razorpaySignature: response.razorpay_signature,
+                    deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
                   };
 
-                  const placedOrder = verifyRes?.data?.data || verifyRes?.data;
+                  const verifyRes = await orderService.verifyRazorpayPayment(verifyPayload);
+
+                  const placedOrder = verifyRes?.data?.data || verifyRes?.data || verifyRes;
                   if (!placedOrder || (!placedOrder._id && !placedOrder.id)) {
                     throw new Error('Payment verification failed to return valid order');
                   }
 
-                  clearCart();
+                  if (isBuyNow) {
+                    clearBuyNowItem();
+                  } else {
+                    clearCart();
+                  }
                   setLoading(false);
-                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
+                  showToast('🎉 Payment Successful! Order placed and marked as Sold.', 'success');
                   navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
                   return;
                 } catch (verifyErr) {
                   console.error('Razorpay verification error:', verifyErr);
+                  // Payment verification failed: Release reserved items back to available stock
+                  await orderService.releaseCheckout({
+                    sessionId: rzData.razorpayOrderId || sessionIdRef.current,
+                    items: cartPayload,
+                  }).catch(() => null);
                   setLoading(false);
-                  showToast(verifyErr?.response?.data?.message || verifyErr?.message || 'Payment verification failed. Please try again.', 'error');
+                  showToast(verifyErr?.response?.data?.message || verifyErr?.message || 'Payment verification failed. Reserved stock has been restored.', 'error');
                 }
               },
-              modal: { ondismiss: () => setLoading(false) },
+              modal: {
+                ondismiss: async () => {
+                  setLoading(false);
+                },
+              },
             };
             const rzInstance = new window.Razorpay(options);
+            rzInstance.on('payment.failed', async (failResp) => {
+              setLoading(false);
+              showToast(failResp?.error?.description || 'Payment failed.', 'error');
+            });
             rzInstance.open();
             return;
           }
@@ -578,20 +748,43 @@ export default function Checkout() {
       console.warn('Script load notice:', e);
     }
 
-    // Direct / Test Payment Modal
+    // Direct / Test Payment Modal with Checkout Stock Reservation
+    const activeSessionId = sessionIdRef.current;
+    setRzSessionId(activeSessionId);
+    try {
+      const cartPayload = checkoutItems.map((i) => ({
+        productId: i.productId || i._id || i.id,
+        quantity: i.quantity || 1,
+      }));
+      await orderService.reserveCheckout({
+        sessionId: activeSessionId,
+        items: cartPayload,
+      });
+    } catch (simResErr) {
+      console.warn('Simulated reserve notice:', simResErr?.message);
+    }
+
     setLoading(false);
     setRzTab(paymentMethod);
     setShowRzModal(true);
   };
 
+  // Cancel simulated payment modal
+  const handleCancelPayment = () => {
+    setShowRzModal(false);
+    setShowCancelPaymentConfirm(false);
+  };
+
   // Confirm Payment in Modal
   const handleConfirmSimulatedPayment = async () => {
     setShowRzModal(false);
+    const currentSessionId = rzSessionId || sessionIdRef.current;
     const startTime = Date.now();
     setLoading(true);
 
     try {
       const payload = {
+        sessionId: currentSessionId,
         items: checkoutItems.map((i) => ({
           productId: i.productId || i._id || i.id,
           name: i.name,
@@ -610,6 +803,13 @@ export default function Checkout() {
         },
         subtotal,
         shippingFee: deliveryFee,
+        convenienceFee: 2,
+        giftWrapFee,
+        giftWrap: {
+          isGiftWrapped: isGiftWrap,
+          fee: giftWrapFee,
+          message: isGiftWrap ? giftMessage.trim() : '',
+        },
         discountAmount: couponDiscount || 0,
         total: finalPayable,
         totalAmount: finalPayable,
@@ -617,6 +817,7 @@ export default function Checkout() {
         deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
       };
 
+      orderCompletedRef.current = true;
       const res = await orderService.create(payload);
       const apiOrder = res?.data?.data || res?.data;
       if (!apiOrder || (!apiOrder._id && !apiOrder.id)) {
@@ -634,12 +835,17 @@ export default function Checkout() {
         await new Promise((r) => setTimeout(r, remainingDelay));
       }
       setLoading(false);
-      showToast('🎉 Order placed successfully!', 'success');
+      showToast('🎉 Order placed successfully! Marked as Sold.', 'success');
       navigate(`/order-success/${apiOrder._id || apiOrder.id}`);
     } catch (apiErr) {
+      orderCompletedRef.current = false;
       console.error('Backend order save error:', apiErr);
+      if (currentSessionId) {
+        // Payment failed: release reserved items
+        orderService.releaseCheckout({ sessionId: currentSessionId }).catch(() => null);
+      }
       setLoading(false);
-      showToast(apiErr?.response?.data?.message || apiErr?.message || 'Failed to place order. Please try again.', 'error');
+      showToast(apiErr?.response?.data?.message || apiErr?.message || 'Failed to place order. Reserved stock restored.', 'error');
     }
   };
 
@@ -1094,9 +1300,168 @@ export default function Checkout() {
                         <div className={styles['mode-price']}>₹{deliveryFee}</div>
                       </div>
 
-
-
                     </div>
+
+                    {/* Option 2: Gift Wrapping Service (Controlled from Admin Settings) */}
+                    {giftWrapConfig?.enabled !== false && (
+                      <div
+                        style={{
+                          marginTop: '1.25rem',
+                          padding: '1.15rem 1.25rem',
+                          borderRadius: '16px',
+                          border: isGiftWrap ? '2px solid #e11d48' : '1.5px solid #e2e8f0',
+                          background: isGiftWrap
+                            ? 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #ffffff 100%)'
+                            : '#ffffff',
+                          boxShadow: isGiftWrap
+                            ? '0 8px 24px rgba(225, 29, 72, 0.08)'
+                            : '0 2px 8px rgba(0, 0, 0, 0.02)',
+                          transition: 'all 0.25s ease',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '1rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flex: 1, minWidth: '240px' }}>
+                            <div
+                              style={{
+                                width: '44px',
+                                height: '44px',
+                                borderRadius: '12px',
+                                background: isGiftWrap ? '#e11d48' : '#fdf2f8',
+                                color: isGiftWrap ? '#ffffff' : '#e11d48',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.25s ease',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Gift size={22} />
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#1e293b', letterSpacing: '0.01em' }}>
+                                  GIFT WRAP OPTION
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: '0.74rem',
+                                    fontWeight: 700,
+                                    padding: '0.15rem 0.55rem',
+                                    borderRadius: '9999px',
+                                    background: isGiftWrap ? '#fecdd3' : '#f1f5f9',
+                                    color: isGiftWrap ? '#9f1239' : '#64748b',
+                                  }}
+                                >
+                                  ₹{giftWrapConfig.fee || 30}
+                                </span>
+                              </div>
+                              <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748b', lineHeight: 1.4 }}>
+                                Add premium gift box packaging and a personalized greeting card.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* ON / OFF Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={() => setIsGiftWrap((prev) => !prev)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              padding: '0.45rem 0.95rem',
+                              borderRadius: '9999px',
+                              border: isGiftWrap ? '1px solid #be123c' : '1px solid #cbd5e1',
+                              cursor: 'pointer',
+                              background: isGiftWrap ? '#e11d48' : '#f1f5f9',
+                              color: isGiftWrap ? '#ffffff' : '#475569',
+                              fontWeight: 700,
+                              fontSize: '0.82rem',
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                width: '9px',
+                                height: '9px',
+                                borderRadius: '50%',
+                                background: isGiftWrap ? '#ffffff' : '#94a3b8',
+                              }}
+                            />
+                            {isGiftWrap ? 'ON' : 'OFF'}
+                          </button>
+                        </div>
+
+                        {/* Expandable Gift Message Box when Gift Wrap is ON */}
+                        {isGiftWrap && (
+                          <div
+                            style={{
+                              marginTop: '1.15rem',
+                              paddingTop: '1rem',
+                              borderTop: '1px dashed #fecdd3',
+                            }}
+                          >
+                            <label
+                              htmlFor="giftMessageInput"
+                              style={{
+                                display: 'block',
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#9f1239',
+                                marginBottom: '0.4rem',
+                              }}
+                            >
+                              Personalized Gift Message (Optional)
+                            </label>
+                            <textarea
+                              id="giftMessageInput"
+                              rows={3}
+                              maxLength={200}
+                              value={giftMessage}
+                              onChange={(e) => setGiftMessage(e.target.value)}
+                              placeholder="Type your gift message here (e.g. Wishing you a happy birthday with lots of love!)..."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1.5px solid #fda4af',
+                                background: '#ffffff',
+                                fontSize: '0.85rem',
+                                color: '#1e293b',
+                                resize: 'none',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                transition: 'border-color 0.2s ease',
+                              }}
+                              onFocus={(e) => (e.target.style.borderColor = '#e11d48')}
+                              onBlur={(e) => (e.target.style.borderColor = '#fda4af')}
+                            />
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginTop: '0.35rem',
+                                fontSize: '0.72rem',
+                                color: '#9f1239',
+                              }}
+                            >
+                              <span>Printed on a luxury greeting card placed inside the package</span>
+                              <span>{giftMessage.length}/200</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Form Action Row: Back to Cart / Shop */}
@@ -1170,6 +1535,17 @@ export default function Checkout() {
                           {formData.street}{formData.landmark ? `, Landmark: ${formData.landmark}` : ''}, {formData.city}, {formData.state} - {formData.pincode}
                         </span>
                       </div>
+
+                      {isGiftWrap && (
+                        <div className={`${styles['detail-col']} ${styles['full-row']}`} style={{ background: '#fff1f2', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #fecdd3' }}>
+                          <span className={styles['detail-label']} style={{ color: '#e11d48', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Gift size={13} /> Gift Wrapping Service (+₹{giftWrapFee})
+                          </span>
+                          <span className={styles['detail-value']} style={{ color: '#4c0519', marginTop: '0.2rem' }}>
+                            {giftMessage.trim() ? `Message: "${giftMessage.trim()}"` : 'No custom message entered'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1286,20 +1662,17 @@ export default function Checkout() {
                                       disabled={isMaxReached}
                                       onClick={() => {
                                         if (isMaxReached) {
-                                          showToast(`Max stock reached: Only ${maxStock} units available`, 'info');
+                                          showToast('Maximum available quantity reached for this item', 'info');
                                           return;
                                         }
                                         handleUpdateItemQty(item, qty + 1);
                                       }}
                                       aria-label="Increase quantity"
-                                      title={isMaxReached ? `Max stock available: ${maxStock}` : 'Increase quantity'}
+                                      title={isMaxReached ? 'Maximum available limit reached' : 'Increase quantity'}
                                     >
                                       <Plus size={12} />
                                     </button>
                                   </div>
-                                  <span className={styles['stock-pill-badge']}>
-                                    {maxStock} in stock
-                                  </span>
                                 </div>
                               );
                             })()}
@@ -1390,6 +1763,18 @@ export default function Checkout() {
                       <span className={styles['breakdown-label']}>Convenience Fee</span>
                       <span className={styles['breakdown-val']}>₹{convenienceFee}</span>
                     </div>
+
+                    {/* Gift Wrapping Fee */}
+                    {isGiftWrap && giftWrapFee > 0 && (
+                      <div className={styles['breakdown-row']} style={{ color: '#db2777' }}>
+                        <span className={styles['breakdown-label']} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#db2777', fontWeight: 600 }}>
+                          <Gift size={14} /> Gift Wrapping
+                        </span>
+                        <span className={styles['breakdown-val']} style={{ color: '#db2777', fontWeight: 700 }}>
+                          +{formatPrice(giftWrapFee)}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Coupon Discount */}
                     {couponDiscount > 0 && (
@@ -1603,7 +1988,7 @@ export default function Checkout() {
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
           <button onClick={() => setShowCancelPaymentConfirm(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Continue Payment</button>
-          <button onClick={() => { setShowRzModal(false); setShowCancelPaymentConfirm(false); }} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Cancel Payment</button>
+          <button onClick={handleCancelPayment} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Cancel Payment</button>
         </div>
       </Modal>
     </PageWrapper>

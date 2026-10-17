@@ -1,7 +1,7 @@
 import api from './api';
 
 export const categoryService = {
-  list: () => api.get('/categories'),
+  list: (params) => api.get('/categories', { params }),
   getBySlug: (slug) => api.get(`/categories/${slug}`),
 
   // Admin

@@ -40,6 +40,7 @@ import {
   X,
   RotateCcw,
   Trash2,
+  Gift,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -1286,10 +1287,32 @@ export default function AdminOrders() {
 
                       {/* Items count */}
                       <td style={{ padding: '1rem 1rem', textAlign: 'left' }}>
-                        <span style={{ fontWeight: 500, color: '#475569', fontSize: '0.83rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <ShoppingBag size={13} color="#7c3aed" />
-                          {order.items?.length || order.itemsCount || 1} item{(order.items?.length || 1) !== 1 ? 's' : ''}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'flex-start' }}>
+                          <span style={{ fontWeight: 500, color: '#475569', fontSize: '0.83rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <ShoppingBag size={13} color="#7c3aed" />
+                            {order.items?.length || order.itemsCount || 1} item{(order.items?.length || 1) !== 1 ? 's' : ''}
+                          </span>
+                          {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: '#e11d48',
+                                background: '#ffe4e6',
+                                border: '1px solid #fecdd3',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '6px',
+                                letterSpacing: '0.01em',
+                              }}
+                              title={order.giftWrap?.message ? `Gift Message: "${order.giftWrap.message}"` : 'Gift Wrap Included'}
+                            >
+                              🎁 Gift
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Total Paid (Right-aligned to match header) */}
@@ -1533,6 +1556,35 @@ export default function AdminOrders() {
                                       </div>
                                     ))}
                                   </div>
+
+                                  {/* Gift Message Box (ONLY shown when order was placed with Gift Wrap) */}
+                                  {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                                    <div
+                                      style={{
+                                        marginTop: '0.85rem',
+                                        padding: '0.85rem 1rem',
+                                        borderRadius: '12px',
+                                        background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
+                                        border: '1.5px solid #fecdd3',
+                                        boxShadow: '0 2px 6px rgba(225, 29, 72, 0.05)',
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#be123c', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                                          🎁 Gift Wrapping Service {order.giftWrap?.fee ? `(+₹${order.giftWrap.fee})` : ''}
+                                        </span>
+                                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                                          Gift Order
+                                        </span>
+                                      </div>
+                                      <div style={{ fontSize: '0.82rem', color: '#881337', lineHeight: 1.5 }}>
+                                        <strong>Gift Message: </strong>
+                                        <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239' }}>
+                                          {(order.giftWrap?.message && order.giftWrap.message.trim()) ? `"${order.giftWrap.message.trim()}"` : 'No message'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Order Financial Breakdown anchored to bottom */}
@@ -1565,6 +1617,16 @@ export default function AdminOrders() {
                                           : 'FREE')}
                                     </span>
                                   </div>
+                                  {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.79rem', color: '#be123c' }}>
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        🎁 Gift Wrapping
+                                      </span>
+                                      <span style={{ fontWeight: 700, color: '#be123c' }}>
+                                        +{formatPrice(order.giftWrap?.fee || order.giftWrapFee || 30)}
+                                      </span>
+                                    </div>
+                                  )}
                                   <div
                                     style={{
                                       marginTop: '0.4rem',

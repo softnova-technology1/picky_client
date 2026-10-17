@@ -40,6 +40,8 @@ import {
   Eye,
   Paperclip,
   User,
+  Plus,
+  Gift,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
@@ -62,8 +64,19 @@ const DEFAULT_SETTINGS = {
   maintenanceMode: false,
 
   // Shipping
-  standardShippingFee: '49',
-  estimatedDeliveryDays: '3-5 Business Days',
+  freeShippingThreshold: '999',
+  tamilNadu: {
+    shippingFee: '40',
+    estimatedDays: '2-3 Business Days',
+  },
+  allIndia: {
+    shippingFee: '70',
+    estimatedDays: '4-6 Business Days',
+  },
+  giftWrap: {
+    enabled: true,
+    fee: '30',
+  },
 
   // Notifications
   orderEmailAlerts: true,
@@ -485,10 +498,27 @@ export default function AdminSettings() {
         const res = await adminService.getSettings().catch(() => null);
         const data = res?.data || res;
         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          const shippingData = data.shipping || {};
           setSettings((prev) => ({
             ...prev,
             ...data,
-            standardShippingFee: data.standardShippingFee !== undefined ? String(data.standardShippingFee) : prev.standardShippingFee,
+            freeShippingThreshold: shippingData.freeShippingThreshold !== undefined ? String(shippingData.freeShippingThreshold) : prev.freeShippingThreshold,
+            tamilNadu: {
+              shippingFee: shippingData.tamilNadu?.shippingFee !== undefined
+                ? String(shippingData.tamilNadu.shippingFee)
+                : (prev.tamilNadu?.shippingFee || '40'),
+              estimatedDays: shippingData.tamilNadu?.estimatedDays || prev.tamilNadu?.estimatedDays || '2-3 Business Days',
+            },
+            allIndia: {
+              shippingFee: shippingData.allIndia?.shippingFee !== undefined
+                ? String(shippingData.allIndia.shippingFee)
+                : (shippingData.standardShippingFee !== undefined ? String(shippingData.standardShippingFee) : (prev.allIndia?.shippingFee || '70')),
+              estimatedDays: shippingData.allIndia?.estimatedDays || shippingData.estimatedDeliveryDays || prev.allIndia?.estimatedDays || '4-6 Business Days',
+            },
+            giftWrap: {
+              enabled: shippingData.giftWrap?.enabled !== undefined ? Boolean(shippingData.giftWrap.enabled) : true,
+              fee: shippingData.giftWrap?.fee !== undefined ? String(shippingData.giftWrap.fee) : (prev.giftWrap?.fee || '30'),
+            },
             sessionTimeoutMinutes: data.sessionTimeoutMinutes !== undefined ? String(data.sessionTimeoutMinutes) : prev.sessionTimeoutMinutes,
           }));
         }
@@ -512,12 +542,35 @@ export default function AdminSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      localStorage.setItem('picky_admin_settings', JSON.stringify(settings));
+      const payload = {
+        ...settings,
+        shipping: {
+          freeShippingThreshold: Number(settings.freeShippingThreshold) || 999,
+          tamilNadu: {
+            shippingFee: Number(settings.tamilNadu?.shippingFee) || 40,
+            estimatedDays: settings.tamilNadu?.estimatedDays || '2-3 Business Days',
+          },
+          allIndia: {
+            shippingFee: Number(settings.allIndia?.shippingFee) || 70,
+            estimatedDays: settings.allIndia?.estimatedDays || '4-6 Business Days',
+          },
+          standardShippingFee: Number(settings.allIndia?.shippingFee) || 70,
+          estimatedDeliveryDays: settings.allIndia?.estimatedDays || '4-6 Business Days',
+          giftWrap: {
+            enabled: settings.giftWrap?.enabled !== undefined ? Boolean(settings.giftWrap.enabled) : true,
+            fee: Number(settings.giftWrap?.fee) || 30,
+          },
+        },
+      };
+
+      localStorage.setItem('picky_admin_settings', JSON.stringify(payload));
+      localStorage.setItem('picky_shipping_settings', JSON.stringify(payload.shipping));
       localStorage.setItem('picky_admin_notifications', JSON.stringify(notifications));
-      await adminService.updateSettings(settings).catch((err) => console.warn('Could not sync settings to DB:', err));
-      showToast('Settings saved successfully!', 'success');
-    } catch {
-      showToast('Failed to save settings', 'error');
+      await adminService.updateSettings(payload);
+      showToast('Shipping settings saved to database successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      showToast('Failed to save settings to database', 'error');
     } finally {
       setSaving(false);
     }
@@ -704,24 +757,192 @@ export default function AdminSettings() {
           {/* 3. SHIPPING & LOGISTICS */}
           {activeTab === 'shipping' && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <Truck size={20} className={styles.sectionIcon} /> Shipping Rates & Logistics Rules
-              </h2>
-              <div className={styles.grid2}>
-                <Input
-                  label="Standard Shipping Fee (₹)"
-                  type="number"
-                  value={settings.standardShippingFee}
-                  onChange={(e) => handleChange('standardShippingFee', e.target.value)}
-                />
-                <Input
-                  label="Estimated Delivery Window"
-                  value={settings.estimatedDeliveryDays}
-                  onChange={(e) => handleChange('estimatedDeliveryDays', e.target.value)}
-                />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px dashed var(--border-color, #e2e8f0)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <h2 className={styles.sectionTitle} style={{ borderBottom: 'none', paddingBottom: 0, margin: 0 }}>
+                    <Truck size={20} className={styles.sectionIcon} /> Shipping Rates & Logistics
+                  </h2>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                    Set shipping charges for Tamil Nadu and All India. The system automatically classifies orders based on customer pincode.
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="md"
+                  type="button"
+                  onClick={handleSave}
+                  loading={saving}
+                >
+                  Save Changes
+                </Button>
               </div>
 
-              <div className={styles.sectionFooter}>
+              {/* CARD 1: ALL OVER TAMIL NADU */}
+              <div className={`${styles.shippingCard} ${styles.shippingCardHighlight}`}>
+                <div className={styles.shippingCardHeader}>
+                  <div className={styles.shippingCardTitleWrap}>
+                    <MapPin size={18} color="#7025fb" />
+                    <div>
+                      <h3 className={styles.shippingCardTitle}>All Over Tamil Nadu</h3>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                        Automatically applies to all Tamil Nadu postal codes (starting with 60xxxx to 64xxxx).
+                      </p>
+                    </div>
+                  </div>
+                  <span className={styles.shippingBadge}>Tamil Nadu Orders</span>
+                </div>
+
+                <div className={styles.grid2}>
+                  <Input
+                    label="Tamil Nadu Shipping Amount (₹)"
+                    type="number"
+                    placeholder="e.g. 40"
+                    value={settings.tamilNadu?.shippingFee !== undefined ? settings.tamilNadu.shippingFee : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettings((prev) => ({
+                        ...prev,
+                        tamilNadu: {
+                          ...(prev.tamilNadu || {}),
+                          shippingFee: val,
+                        },
+                      }));
+                    }}
+                  />
+                  <Input
+                    label="Estimated Delivery Window"
+                    placeholder="e.g. 2-3 Business Days"
+                    value={settings.tamilNadu?.estimatedDays || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettings((prev) => ({
+                        ...prev,
+                        tamilNadu: {
+                          ...(prev.tamilNadu || {}),
+                          estimatedDays: val,
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* CARD 2: ALL OVER INDIA */}
+              <div className={styles.shippingCard}>
+                <div className={styles.shippingCardHeader}>
+                  <div className={styles.shippingCardTitleWrap}>
+                    <Globe size={18} color="#7025fb" />
+                    <div>
+                      <h3 className={styles.shippingCardTitle}>All Over India</h3>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                        Automatically applies to all non-Tamil Nadu postal codes across India.
+                      </p>
+                    </div>
+                  </div>
+                  <span className={styles.shippingBadge}>All Other States</span>
+                </div>
+
+                <div className={styles.grid2}>
+                  <Input
+                    label="All India Shipping Amount (₹)"
+                    type="number"
+                    placeholder="e.g. 70"
+                    value={settings.allIndia?.shippingFee !== undefined ? settings.allIndia.shippingFee : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettings((prev) => ({
+                        ...prev,
+                        allIndia: {
+                          ...(prev.allIndia || {}),
+                          shippingFee: val,
+                        },
+                      }));
+                    }}
+                  />
+                  <Input
+                    label="Estimated Delivery Window"
+                    placeholder="e.g. 4-6 Business Days"
+                    value={settings.allIndia?.estimatedDays || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettings((prev) => ({
+                        ...prev,
+                        allIndia: {
+                          ...(prev.allIndia || {}),
+                          estimatedDays: val,
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* CARD 3: GIFT WRAPPING SERVICE */}
+              <div className={styles.shippingCard}>
+                <div className={styles.shippingCardHeader}>
+                  <div className={styles.shippingCardTitleWrap}>
+                    <Gift size={18} color="#e11d48" />
+                    <div>
+                      <h3 className={styles.shippingCardTitle}>Gift Wrapping & Packaging</h3>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                        Configure gift wrap pricing and availability for customer checkout orders.
+                      </p>
+                    </div>
+                  </div>
+                  <span className={styles.shippingBadge} style={{ background: '#fdf2f8', color: '#db2777', borderColor: '#fbcfe8' }}>
+                    Optional Add-on
+                  </span>
+                </div>
+
+                <div className={styles.grid2}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>
+                      Gift Wrapping Status
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginTop: '0.35rem' }}>
+                      <input
+                        type="checkbox"
+                        id="giftWrapToggle"
+                        checked={settings.giftWrap?.enabled !== false}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setSettings((prev) => ({
+                            ...prev,
+                            giftWrap: {
+                              ...(prev.giftWrap || {}),
+                              enabled: checked,
+                            },
+                          }));
+                        }}
+                        style={{ width: '18px', height: '18px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                      />
+                      <label htmlFor="giftWrapToggle" style={{ fontSize: '0.85rem', color: settings.giftWrap?.enabled !== false ? '#047857' : '#64748b', fontWeight: 600, cursor: 'pointer' }}>
+                        {settings.giftWrap?.enabled !== false ? '✓ Enabled at Checkout' : '✕ Disabled at Checkout'}
+                      </label>
+                    </div>
+                  </div>
+
+                  <Input
+                    label="Gift Wrapping Fee (₹)"
+                    type="number"
+                    placeholder="e.g. 30"
+                    value={settings.giftWrap?.fee !== undefined ? settings.giftWrap.fee : ''}
+                    disabled={settings.giftWrap?.enabled === false}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettings((prev) => ({
+                        ...prev,
+                        giftWrap: {
+                          ...(prev.giftWrap || {}),
+                          fee: val,
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.sectionFooter} style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
                 <Button
                   variant="primary"
                   size="md"
@@ -979,6 +1200,27 @@ export default function AdminSettings() {
                             {(notif.hasAttachment || notif.metadata?.hasAttachment || notif.attachmentUrl || notif.metadata?.fileUrl) && (
                               <span className={styles.attachmentBadge} title="File attachment included">
                                 <Paperclip size={12} /> File
+                              </span>
+                            )}
+                            {(notif.metadata?.isGiftWrapped || notif.title?.includes('[GIFT WRAP]')) && (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.2rem',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  color: '#e11d48',
+                                  background: '#fff1f2',
+                                  border: '1px solid #fecdd3',
+                                  padding: '0.1rem 0.45rem',
+                                  borderRadius: '9999px',
+                                  marginLeft: '0.45rem',
+                                  marginRight: '0.35rem',
+                                }}
+                                title={notif.metadata?.giftMessage ? `Gift Message: "${notif.metadata.giftMessage}"` : 'Gift Wrap Included'}
+                              >
+                                🎁 Gift Wrap
                               </span>
                             )}
                             <span className={styles.emailSeparator}>-</span>

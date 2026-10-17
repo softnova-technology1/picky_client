@@ -7,7 +7,7 @@ import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
-import { ArrowLeft, ShoppingBag, MapPin, CreditCard, MessageCircle, FileText, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, MapPin, CreditCard, MessageCircle, FileText, ChevronRight, Gift } from 'lucide-react';
 import styles from './OrderDetail.module.css';
 
 export default function OrderDetail() {
@@ -151,6 +151,35 @@ export default function OrderDetail() {
                 ))}
               </div>
 
+              {/* Gift Message Box (ONLY shown when order was placed with Gift Wrap) */}
+              {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                <div
+                  style={{
+                    margin: '1.25rem 1.5rem 0',
+                    padding: '0.95rem 1.15rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
+                    border: '1.5px solid #fecdd3',
+                    boxShadow: '0 2px 8px rgba(225, 29, 72, 0.05)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#be123c', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Gift size={16} /> Gift Wrapping Included {order.giftWrap?.fee ? `(+₹${order.giftWrap.fee})` : ''}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.15rem 0.55rem', borderRadius: '9999px' }}>
+                      Gift Order
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#881337', lineHeight: 1.5 }}>
+                    <strong>Personalized Gift Message: </strong>
+                    <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239' }}>
+                      {(order.giftWrap?.message && order.giftWrap.message.trim()) ? `"${order.giftWrap.message.trim()}"` : 'No message'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Financial Invoice Breakdown */}
               <div className={styles.invoiceBox}>
                 <div className={styles.invoiceRow}>
@@ -191,6 +220,17 @@ export default function OrderDetail() {
                   }
                   return null;
                 })()}
+
+                {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                  <div className={styles.invoiceRow} style={{ color: '#be123c' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Gift size={13} /> Gift Wrapping Service
+                    </span>
+                    <span className={styles.invoiceValue} style={{ color: '#be123c', fontWeight: 700 }}>
+                      +{formatPrice(order.giftWrap?.fee || order.giftWrapFee || 30)}
+                    </span>
+                  </div>
+                )}
 
                 <div className={styles.totalRow}>
                   <span className={styles.totalLabel}>Grand Total</span>

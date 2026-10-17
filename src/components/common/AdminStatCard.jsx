@@ -64,6 +64,15 @@ const COLOR_MAP = {
     barBg: 'linear-gradient(90deg, #f43f5e, #be123c)',
     footerVal: '#e11d48',
   },
+  slate: {
+    label: '#475569',
+    value: '#334155',
+    iconBg: 'linear-gradient(135deg, #64748b, #475569)',
+    iconShadow: '0 2px 10px rgba(100, 116, 139, 0.25)',
+    trackBg: '#f1f5f9',
+    barBg: 'linear-gradient(90deg, #94a3b8, #64748b)',
+    footerVal: '#64748b',
+  },
 };
 
 /**
