@@ -2,26 +2,34 @@ import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './ShopSubcategoryCards.module.css';
 
-// Fallback high-resolution catalog images for common subcategory keywords
-const SUBCAT_KEYWORD_IMAGES = {
-  mens: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=300',
-  womens: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300',
-  kids: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=300',
-  ethnic: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=300',
-  accessories: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=300',
-  sarees: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300',
-  kurtis: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=300',
-  earrings: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300',
-  cookware: 'https://images.unsplash.com/photo-1584990347449-39906666798e?w=300',
+const FALLBACK_CATEGORY_IMAGES = {
+  'mobile-accessories': '/images/dept_electronics.jpg',
+  'womens-fashion': '/images/dept_fashion.jpg',
+  'fashion': '/images/dept_fashion.jpg',
+  'beauty-personal-care': '/images/dept_beauty.jpg',
+  'home-kitchen': '/images/dept_home.jpg',
+  'artificial-jewellery': '/images/dept_jewellery.jpg',
+  'snacks-foods': '/images/dept_snacks.jpg',
+  'traditional-tamil-products': '/images/dept_jewellery.jpg',
+  'home-decor': '/images/dept_home.jpg',
+  'kids-products': '/images/dept_fashion.jpg',
+  'fitness-products': '/images/dept_electronics.jpg',
 };
 
 function formatSubName(name = '') {
   if (!name) return '';
-  // Capitalize words cleanly (e.g. "mens" -> "Mens", "ethnic wear" -> "Ethnic Wear")
   return name
     .split(/[-_\s]+/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+// Resolve genuine image for a subcategory item from database
+function getSubImage(sub) {
+  if (sub && typeof sub.image === 'string' && sub.image.trim() !== '') {
+    return sub.image.trim();
+  }
+  return null;
 }
 
 export default function ShopSubcategoryCards({
@@ -50,43 +58,10 @@ export default function ShopSubcategoryCards({
     }
   };
 
-  // Resolve image for a subcategory item
-  const getSubImage = (sub) => {
-    if (sub.image && typeof sub.image === 'string' && sub.image.trim() !== '') {
-      return sub.image;
-    }
-    const cleanKey = (sub.slug || sub.name || '').toLowerCase().replace(/[^a-z]/g, '');
-    for (const [k, url] of Object.entries(SUBCAT_KEYWORD_IMAGES)) {
-      if (cleanKey.includes(k)) return url;
-    }
-    return currentCategoryObj.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300';
-  };
-
-  // Count items for each subcategory dynamically
-  const getSubItemCount = (sub) => {
-    if (!Array.isArray(allProducts) || allProducts.length === 0) {
-      return sub.itemCount || 0;
-    }
-    const targetSlug = String(sub.slug || '').toLowerCase();
-    const targetId = String(sub._id || '').toLowerCase();
-    const targetName = String(sub.name || '').toLowerCase();
-
-    const count = allProducts.filter((p) => {
-      if (!p.subCategory) return false;
-      if (typeof p.subCategory === 'object') {
-        const pSlug = String(p.subCategory.slug || '').toLowerCase();
-        const pId = String(p.subCategory._id || '').toLowerCase();
-        const pName = String(p.subCategory.name || '').toLowerCase();
-        return pSlug === targetSlug || pId === targetId || pName === targetName;
-      }
-      const pStr = String(p.subCategory).toLowerCase();
-      return pStr === targetSlug || pStr === targetId || pStr === targetName;
-    }).length;
-
-    return count > 0 ? count : sub.itemCount || 0;
-  };
-
   const isAllActive = !selectedSubCategory;
+  const categoryDefaultImage =
+    FALLBACK_CATEGORY_IMAGES[currentCategoryObj.slug] || '/images/dept_fashion.jpg';
+  const categoryImage = currentCategoryObj.image || categoryDefaultImage;
 
   return (
     <div className={styles['container-card']}>
@@ -127,13 +102,14 @@ export default function ShopSubcategoryCards({
         >
           <div className={styles['image-wrap']}>
             <img
-              src={
-                currentCategoryObj.image ||
-                'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300'
-              }
+              src={categoryImage}
               alt={`All ${currentCategoryObj.name}`}
               className={styles['img']}
               loading="lazy"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = categoryDefaultImage;
+              }}
             />
           </div>
           <span className={styles['title']} title={`All ${currentCategoryObj.name}`}>
@@ -149,6 +125,8 @@ export default function ShopSubcategoryCards({
               String(selectedSubCategory) === String(sub._id || '') ||
               String(selectedSubCategory).toLowerCase() === String(sub.name || '').toLowerCase());
 
+          const subImg = getSubImage(sub);
+
           return (
             <button
               key={sub._id || sub.slug || sub.name}
@@ -157,12 +135,28 @@ export default function ShopSubcategoryCards({
               onClick={() => onSelectSubCategory(sub.slug || sub._id)}
             >
               <div className={styles['image-wrap']}>
-                <img
-                  src={getSubImage(sub)}
-                  alt={sub.name}
-                  className={styles['img']}
-                  loading="lazy"
-                />
+                {subImg ? (
+                  <img
+                    src={subImg}
+                    alt={sub.name}
+                    className={styles['img']}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.nextSibling) {
+                        e.currentTarget.nextSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={styles['avatar-fallback']}
+                  style={{ display: subImg ? 'none' : 'flex' }}
+                >
+                  <span className={styles['avatar-initial']}>
+                    {(sub.name || 'S').trim().charAt(0).toUpperCase()}
+                  </span>
+                </div>
               </div>
               <span className={styles['title']} title={sub.name}>
                 {formatSubName(sub.name)}

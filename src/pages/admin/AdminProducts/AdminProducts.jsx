@@ -40,6 +40,7 @@ const PREDEFINED_TAGS = [
   'Trending Now',
   'New Arrivals',
   'Best Sellers',
+  'Top Product',
 ];
 
 const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
@@ -88,12 +89,14 @@ export default function AdminProducts() {
   // Filters and Tabs State
   const [activeTab, setActiveTab] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
+  const [filterSubcategory, setFilterSubcategory] = useState('All');
+  const [filterTag, setFilterTag] = useState('All');
   const [filterStock, setFilterStock] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, filterCategory, filterStock, searchQuery]);
+  }, [activeTab, filterCategory, filterSubcategory, filterTag, filterStock, searchQuery]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -364,7 +367,11 @@ export default function AdminProducts() {
       discountPrice: p.discountPrice ? String(p.discountPrice) : '',
       shortDescription: p.shortDescription || '',
       description: p.description || '',
-      tags: Array.isArray(p.tags) && p.tags.length > 0 ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : ''),
+      tags: (() => {
+        const rawTag = Array.isArray(p.tags) && p.tags.length > 0 ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : '');
+        const matched = PREDEFINED_TAGS.find((t) => t.toLowerCase() === rawTag.toLowerCase());
+        return matched || rawTag;
+      })(),
       stock: p.stock !== undefined ? String(p.stock) : '',
       isFeatured: !!p.isFeatured,
       isActive: true,
@@ -803,6 +810,81 @@ export default function AdminProducts() {
     [products]
   );
 
+  // ─── Dynamic Filter Options ──────────────────────────────────────
+  const filterAvailableTags = useMemo(() => {
+    const tagSet = new Set(PREDEFINED_TAGS);
+    products.forEach((p) => {
+      if (Array.isArray(p.tags)) {
+        p.tags.forEach((t) => {
+          if (t && typeof t === 'string' && t.trim()) {
+            const matched = PREDEFINED_TAGS.find((pt) => pt.toLowerCase() === t.trim().toLowerCase());
+            tagSet.add(matched || t.trim());
+          }
+        });
+      } else if (typeof p.tags === 'string' && p.tags.trim()) {
+        p.tags.split(',').forEach((t) => {
+          if (t.trim()) {
+            const matched = PREDEFINED_TAGS.find((pt) => pt.toLowerCase() === t.trim().toLowerCase());
+            tagSet.add(matched || t.trim());
+          }
+        });
+      }
+    });
+    return Array.from(tagSet);
+  }, [products]);
+
+  const filterAvailableSubcategories = useMemo(() => {
+    let list = [];
+    if (filterCategory !== 'All') {
+      const selectedCat = categories.find(
+        (c) => c.name?.toLowerCase() === filterCategory.toLowerCase() || c._id === filterCategory
+      );
+      const catId = selectedCat?._id;
+      list = subcategories.filter((s) => {
+        if (!s) return false;
+        if (catId && (s.categoryId === catId || s.categoryId?._id === catId)) return true;
+        if (s.categoryId?.name && s.categoryId.name.toLowerCase() === filterCategory.toLowerCase()) return true;
+        return false;
+      });
+      // Also include any subcategories on existing products in this category
+      products.forEach((p) => {
+        const pCatName = p.category?.name || (typeof p.category === 'string' ? p.category : '');
+        const pCatId = p.category?._id || p.category;
+        if (
+          pCatName?.toLowerCase() === filterCategory.toLowerCase() ||
+          pCatId === catId
+        ) {
+          const sName = p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '');
+          if (sName && !list.some((item) => (item.name || item).toLowerCase() === sName.toLowerCase())) {
+            list.push({ _id: sName, name: sName });
+          }
+        }
+      });
+    } else {
+      list = [...subcategories];
+      // Include any from products as well
+      products.forEach((p) => {
+        const sName = p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '');
+        if (sName && !list.some((item) => (item.name || item).toLowerCase() === sName.toLowerCase())) {
+          list.push({ _id: sName, name: sName });
+        }
+      });
+    }
+
+    const uniqueMap = new Map();
+    list.forEach((item) => {
+      const name = typeof item === 'string' ? item : item?.name;
+      if (name && typeof name === 'string' && name.trim()) {
+        const trimmed = name.trim();
+        if (!uniqueMap.has(trimmed.toLowerCase())) {
+          uniqueMap.set(trimmed.toLowerCase(), trimmed);
+        }
+      }
+    });
+
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b));
+  }, [filterCategory, categories, subcategories, products]);
+
   // ─── Filter & Tab Logic ─────────────────────────────────────────
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -815,15 +897,50 @@ export default function AdminProducts() {
 
     // 2. Category Filter
     if (filterCategory !== 'All') {
-      result = result.filter((p) => p.category?.name === filterCategory || p.category?._id === filterCategory || p.category === filterCategory);
+      result = result.filter(
+        (p) =>
+          p.category?.name?.toLowerCase() === filterCategory.toLowerCase() ||
+          p.category?._id === filterCategory ||
+          (typeof p.category === 'string' && p.category.toLowerCase() === filterCategory.toLowerCase())
+      );
     }
 
-    // 3. Stock Filter
+    // 3. Subcategory Filter
+    if (filterSubcategory !== 'All') {
+      const targetSub = filterSubcategory.toLowerCase().trim();
+      result = result.filter((p) => {
+        const pSub = p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '');
+        const pSubId = p.subCategory?._id;
+        return (
+          (pSub && pSub.toLowerCase().trim() === targetSub) ||
+          pSubId === filterSubcategory
+        );
+      });
+    }
+
+    // 4. Tag Filter
+    if (filterTag !== 'All') {
+      const targetTag = filterTag.toLowerCase().trim();
+      result = result.filter((p) => {
+        if (Array.isArray(p.tags)) {
+          return p.tags.some((t) => typeof t === 'string' && t.toLowerCase().trim() === targetTag);
+        }
+        if (typeof p.tags === 'string' && p.tags.trim()) {
+          return p.tags
+            .split(',')
+            .map((t) => t.toLowerCase().trim())
+            .includes(targetTag);
+        }
+        return false;
+      });
+    }
+
+    // 5. Stock Filter
     if (filterStock === 'In Stock') result = result.filter((p) => (Number(p.stock) || 0) > 5);
     if (filterStock === 'Low Stock') result = result.filter((p) => (Number(p.stock) || 0) >= 1 && (Number(p.stock) || 0) <= 5);
     if (filterStock === 'Out of Stock') result = result.filter((p) => (Number(p.stock) || 0) <= 0);
 
-    // 4. Search Filter
+    // 6. Search Filter
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       result = result.filter((p) => {
@@ -831,12 +948,13 @@ export default function AdminProducts() {
         const skuMatch = p.sku?.toLowerCase().includes(q);
         const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
         const tagMatch = tagsStr.toLowerCase().includes(q);
-        return nameMatch || skuMatch || tagMatch;
+        const subCatMatch = (p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '')).toLowerCase().includes(q);
+        return nameMatch || skuMatch || tagMatch || subCatMatch;
       });
     }
 
     return result;
-  }, [products, activeTab, filterCategory, filterStock, searchQuery]);
+  }, [products, activeTab, filterCategory, filterSubcategory, filterTag, filterStock, searchQuery]);
 
   // Pagination Logic
   const indexOfLastProduct = currentPage * itemsPerPage;
@@ -3025,7 +3143,7 @@ export default function AdminProducts() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Select or enter 1 tag (e.g. Limited Deals, Trending Now, New Arrivals, Best Sellers)"
+                    placeholder="Select or enter 1 tag (e.g. Limited Deals, Trending Now, New Arrivals, Best Sellers, Top Product)"
                     value={formData.tags}
                     onChange={(e) => {
                       const val = e.target.value.split(',')[0].trim();
@@ -3442,12 +3560,35 @@ export default function AdminProducts() {
                   </div>
                   <select
                     value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
+                    onChange={(e) => {
+                      setFilterCategory(e.target.value);
+                      setFilterSubcategory('All');
+                    }}
                     style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', outline: 'none' }}
                   >
                     <option value="All">All Categories</option>
                     {categories.map((c) => (
                       <option key={c._id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterSubcategory}
+                    onChange={(e) => setFilterSubcategory(e.target.value)}
+                    style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', outline: 'none' }}
+                  >
+                    <option value="All">All Subcategories</option>
+                    {filterAvailableSubcategories.map((subName) => (
+                      <option key={subName} value={subName}>{subName}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterTag}
+                    onChange={(e) => setFilterTag(e.target.value)}
+                    style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155', cursor: 'pointer', outline: 'none' }}
+                  >
+                    <option value="All">All Tags</option>
+                    {filterAvailableTags.map((tagName) => (
+                      <option key={tagName} value={tagName}>{tagName}</option>
                     ))}
                   </select>
                   <select
@@ -3460,6 +3601,32 @@ export default function AdminProducts() {
                     <option value="Low Stock">Low Stock (1-5)</option>
                     <option value="Out of Stock">Out of Stock</option>
                   </select>
+                  {(filterCategory !== 'All' || filterSubcategory !== 'All' || filterTag !== 'All' || filterStock !== 'All' || searchQuery.trim() !== '') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterCategory('All');
+                        setFilterSubcategory('All');
+                        setFilterTag('All');
+                        setFilterStock('All');
+                        setSearchQuery('');
+                      }}
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        border: '1px solid #fecdd3',
+                        background: '#fff1f2',
+                        color: '#e11d48',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="Clear all filters"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -3487,7 +3654,18 @@ export default function AdminProducts() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentProducts.map((p, index) => {
+                  {currentProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                          <Package size={38} color="#cbd5e1" strokeWidth={1.5} />
+                          <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#334155' }}>No products found</span>
+                          <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Try adjusting your search, category, subcategory, or tag filters.</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentProducts.map((p, index) => {
                     const subCatName =
                       p.subCategory?.name ||
                       (typeof p.subCategory === 'string' ? p.subCategory : null) ||
@@ -3733,7 +3911,7 @@ export default function AdminProducts() {
                         </td>
                       </tr>
                     );
-                  })}
+                  }))}
                 </tbody>
               </table>
 

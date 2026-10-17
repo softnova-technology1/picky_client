@@ -108,7 +108,7 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     }
 
     if (!customBadge && Array.isArray(product.tags) && product.tags.length > 0) {
-      const priorityTags = ['limited deals', 'trending now', 'new arrivals', 'best sellers'];
+      const priorityTags = ['top product', 'limited deals', 'trending now', 'new arrivals', 'best sellers'];
       const matched = product.tags.find((t) =>
         priorityTags.some((pt) => t.toLowerCase().includes(pt) || pt.includes(t.toLowerCase()))
       );
