@@ -64,10 +64,7 @@ export default function Categories() {
           {/* ── 2. Top Categories: live from DB (name, image, description, stats, subcategories) ── */}
           <CategoryBudgetStore categories={featuredCategories} />
 
-          {/* ── 3. Most Recommended Products: High-Rated Customer Favorites ── */}
-          <CategoryRecommendedDrops />
-
-          {/* ── 4. Explore More Categories Section ── */}
+          {/* ── 3. Explore All Categories Section (Moved right below Top Categories) ── */}
           <section className="explore-more-categories-section" style={{ marginBottom: '4.5rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <h2
@@ -101,8 +98,11 @@ export default function Categories() {
               </div>
             </div>
 
-            <GlamicsCategoryPills categories={balance6Categories} />
+            <GlamicsCategoryPills categories={orderedCategories} />
           </section>
+
+          {/* ── 4. Trending Products: High-Demand Curated Drops based on Tag ── */}
+          <CategoryRecommendedDrops />
 
           {/* ── 5. Top Products: Freshly Stocked Flagship Drops ── */}
           <CategoryFeaturedDrops />

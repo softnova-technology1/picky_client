@@ -326,19 +326,22 @@ export default function AdminSubCategories() {
     setIsSpecsModalOpen(true);
   };
 
-  // Auto-generate slug when name changes in Add mode
+  // Helper to slugify a string
+  const slugify = (text) =>
+    (text || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+/, '');
+
+  // Auto-generate slug when name changes in both Add and Edit mode
   const handleNameChange = (e) => {
     const val = e.target.value;
-    const generatedSlug = val
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const generatedSlug = slugify(val);
 
     setFormData((prev) => ({
       ...prev,
       name: val,
-      slug: !editingItem ? generatedSlug : prev.slug,
+      slug: generatedSlug,
     }));
   };
 
@@ -1594,10 +1597,31 @@ export default function AdminSubCategories() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.55rem', letterSpacing: '0.02em' }}>
-                <span>Slug / URL Key</span>
-                <span style={{ color: '#ef4444' }}>*</span>
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.55rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', letterSpacing: '0.02em', margin: 0 }}>
+                  <span>Slug / URL Key</span>
+                  <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, slug: slugify(prev.name) }))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#7c3aed',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.2rem',
+                  }}
+                  title="Auto-fill slug from name"
+                >
+                  <RotateCcw size={11} /> Auto-fill
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="e.g. sarees or wireless-chargers"
@@ -1633,7 +1657,7 @@ export default function AdminSubCategories() {
           </div>
 
           {/* Description */}
-          <div>
+          <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
             <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.55rem', letterSpacing: '0.02em' }}>
               <span>Description</span>
               <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '0.74rem' }}>(Optional)</span>
@@ -1643,6 +1667,8 @@ export default function AdminSubCategories() {
               placeholder="Brief description for collection banners, SEO, and storefront browsing..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
                 padding: '0.8rem 1rem',
@@ -2540,7 +2566,7 @@ export default function AdminSubCategories() {
       >
         {viewingItem && (() => {
           const parent = categories.find((c) => c._id === viewingItem.categoryId);
-          const parentSlug = parent?.slug || 'womens-fashion';
+          const parentSlug = parent?.slug || 'fashion';
           const fullPath = `/${parentSlug}/${viewingItem.slug}`;
 
           return (

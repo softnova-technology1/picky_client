@@ -47,6 +47,8 @@ export const adminService = {
   // Customers
   getCustomers: (params) => api.get('/customers', { params }),
   getCustomerDetail: (id) => api.get(`/customers/${id}`),
+  deleteCustomer: (id) => api.delete(`/customers/${id}`),
+  bulkDeleteCustomers: (ids) => api.post('/customers/bulk-delete', { ids }),
 
   // Settings
   getSettings: () => api.get('/settings'),

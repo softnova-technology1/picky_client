@@ -21,11 +21,13 @@ import {
   X,
   Calendar,
   CreditCard,
+  Trash2,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
 import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
+import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDateShort } from '../../../utils/formatDate';
 
@@ -77,13 +79,18 @@ export default function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const { showToast } = useUiStore();
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [singleDeleteId, setSingleDeleteId] = useState(null);
+
   // URL Query Sync
   const [searchParams, setSearchParams] = useSearchParams();
 
   const urlPage = parseInt(searchParams.get('page') || '1', 10);
   const urlLimit = parseInt(searchParams.get('limit') || '10', 10);
   const urlQ = searchParams.get('q') || '';
-  const urlCity = searchParams.get('city') || 'all';
   const urlOrders = searchParams.get('orders') || 'all';
   const urlDate = searchParams.get('date') || 'all';
   const urlStartDate = searchParams.get('startDate') || '';
@@ -96,7 +103,6 @@ export default function AdminCustomers() {
   // Filter States
   const [searchInput, setSearchInput] = useState(urlQ);
   const [debouncedSearch, setDebouncedSearch] = useState(urlQ);
-  const [selectedCity, setSelectedCity] = useState(urlCity);
   const [selectedOrders, setSelectedOrders] = useState(urlOrders);
   const [selectedDate, setSelectedDate] = useState(urlDate);
   const [startDate, setStartDate] = useState(urlStartDate);
@@ -166,7 +172,7 @@ export default function AdminCustomers() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, selectedCity, selectedOrders, selectedDate, startDate, endDate, activeCardFilter]);
+  }, [debouncedSearch, selectedOrders, selectedDate, startDate, endDate, activeCardFilter]);
 
   // Sync state to URL Query Params
   useEffect(() => {
@@ -174,7 +180,6 @@ export default function AdminCustomers() {
     if (currentPage > 1) params.page = String(currentPage);
     if (itemsPerPage !== 10) params.limit = String(itemsPerPage);
     if (debouncedSearch.trim()) params.q = debouncedSearch.trim();
-    if (selectedCity !== 'all') params.city = selectedCity;
     if (selectedOrders !== 'all') params.orders = selectedOrders;
     if (selectedDate !== 'all') params.date = selectedDate;
     if (selectedDate === 'custom') {
@@ -196,7 +201,6 @@ export default function AdminCustomers() {
     currentPage,
     itemsPerPage,
     debouncedSearch,
-    selectedCity,
     selectedOrders,
     selectedDate,
     startDate,
@@ -292,11 +296,6 @@ export default function AdminCustomers() {
     [customers]
   );
 
-  // Dynamic Unique City Options
-  const cityOptions = useMemo(() => {
-    const cities = Array.from(new Set(customers.map((c) => c.city).filter(Boolean))).sort();
-    return [{ value: 'all', label: 'All Cities' }, ...cities.map((city) => ({ value: city, label: city }))];
-  }, [customers]);
 
   const ordersRangeOptions = [
     { value: 'all', label: 'All Orders' },
@@ -326,10 +325,7 @@ export default function AdminCustomers() {
         (c.name && c.name.toLowerCase().includes(term)) ||
         (c.phone && c.phone.toLowerCase().includes(term)) ||
         (c.email && c.email.toLowerCase().includes(term)) ||
-        (c.city && c.city.toLowerCase().includes(term));
-
-      const matchCity =
-        selectedCity === 'all' || (c.city && c.city.toLowerCase() === selectedCity.toLowerCase());
+        (c.dob && c.dob.toLowerCase().includes(term));
 
       const orderCount = Number(c.totalOrders || c.ordersCount) || 0;
       let matchOrders = true;
@@ -410,9 +406,9 @@ export default function AdminCustomers() {
         matchCard = orderCount === 1;
       }
 
-      return matchSearch && matchCity && matchOrders && matchDate && matchCard;
+      return matchSearch && matchOrders && matchDate && matchCard;
     });
-  }, [customers, debouncedSearch, selectedCity, selectedOrders, selectedDate, startDate, endDate, activeCardFilter]);
+  }, [customers, debouncedSearch, selectedOrders, selectedDate, startDate, endDate, activeCardFilter]);
 
   // Sort Customers
   const sortedCustomers = useMemo(() => {
@@ -476,7 +472,6 @@ export default function AdminCustomers() {
   const handleClearFilters = () => {
     setSearchInput('');
     setDebouncedSearch('');
-    setSelectedCity('all');
     setSelectedOrders('all');
     setSelectedDate('all');
     setStartDate('');
@@ -484,6 +479,32 @@ export default function AdminCustomers() {
     setActiveCardFilter('all');
     setSortConfig({ key: null, direction: null });
     setCurrentPage(1);
+  };
+
+  // Bulk and Single Delete Handler
+  const handleConfirmDelete = async () => {
+    try {
+      setDeleteLoading(true);
+      if (singleDeleteId) {
+        await adminService.deleteCustomer(singleDeleteId);
+        setCustomers((prev) => prev.filter((c) => c._id !== singleDeleteId));
+        setSelectedIds((prev) => prev.filter((id) => id !== singleDeleteId));
+        showToast('Customer deleted successfully', 'success');
+      } else {
+        await adminService.bulkDeleteCustomers(selectedIds);
+        setCustomers((prev) => prev.filter((c) => !selectedIds.includes(c._id)));
+        showToast(`${selectedIds.length} customer(s) deleted successfully`, 'success');
+        setSelectedIds([]);
+      }
+      setShowDeleteModal(false);
+      setSingleDeleteId(null);
+    } catch (err) {
+      console.error('Delete customer error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete customer(s)';
+      showToast(msg, 'error');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   // Card KPI Click Handler: Filters and sorts the table dynamically
@@ -508,12 +529,12 @@ export default function AdminCustomers() {
   // Export Filtered & Sorted Customers to CSV
   const handleExportCSV = () => {
     if (sortedCustomers.length === 0) return;
-    const headers = ['Name', 'Phone', 'Email', 'City', 'Orders', 'Lifetime Value', 'Joined'];
+    const headers = ['Name', 'Phone', 'Email', 'Date of Birth', 'Orders', 'Lifetime Value', 'Joined'];
     const rows = sortedCustomers.map((c) => [
       `"${(c.name || '').replace(/"/g, '""')}"`,
       `"${(c.phone || '').replace(/"/g, '""')}"`,
       `"${(c.email || '').replace(/"/g, '""')}"`,
-      `"${(c.city || '').replace(/"/g, '""')}"`,
+      `"${c.dob ? formatDateShort(c.dob) : 'N/A'}"`,
       c.totalOrders || c.ordersCount || 0,
       c.totalSpent || 0,
       `"${formatDateShort(c.joinedDate)}"`,
@@ -772,7 +793,7 @@ export default function AdminCustomers() {
             <Search size={15} style={{ position: 'absolute', left: '1rem', color: '#8a7ca6', pointerEvents: 'none' }} />
             <input
               type="text"
-              placeholder="Filter customers by name, phone, city..."
+              placeholder="Filter customers by name, phone, email..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               style={{
@@ -799,22 +820,8 @@ export default function AdminCustomers() {
             />
           </div>
 
-          {/* Filters Group (City + Orders Range + Date Filter + Clear) */}
+          {/* Filters Group (Orders Range + Date Filter + Clear) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {/* City Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}>
-                City:
-              </label>
-              <Select
-                value={selectedCity}
-                onChange={(val) => setSelectedCity(val)}
-                options={cityOptions}
-                minWidth="135px"
-                ariaLabel="Filter customers by city"
-              />
-            </div>
-
             {/* Orders Range Dropdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}>
@@ -897,7 +904,7 @@ export default function AdminCustomers() {
             )}
 
             {/* Clear Filters Button */}
-            {(debouncedSearch || selectedCity !== 'all' || selectedOrders !== 'all' || selectedDate !== 'all' || startDate || endDate || activeCardFilter !== 'all' || sortConfig.key) && (
+            {(debouncedSearch || selectedOrders !== 'all' || selectedDate !== 'all' || startDate || endDate || activeCardFilter !== 'all' || sortConfig.key) && (
               <button
                 type="button"
                 onClick={handleClearFilters}
@@ -924,6 +931,94 @@ export default function AdminCustomers() {
           </div>
         </div>
 
+        {/* Bulk Actions Banner */}
+        {selectedIds.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.8rem 1.25rem',
+              background: 'linear-gradient(135deg, #ede8f8 0%, #f5f0fe 100%)',
+              border: '1.5px solid #dcd0fa',
+              borderRadius: '14px',
+              marginBottom: '1.25rem',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#7c3aed',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  minWidth: '26px',
+                  height: '26px',
+                  padding: '0 6px',
+                  borderRadius: '9999px',
+                }}
+              >
+                {selectedIds.length}
+              </span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e1b4b' }}>
+                {selectedIds.length === 1 ? '1 customer selected' : `${selectedIds.length} customers selected`}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Deselect All
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSingleDeleteId(null);
+                  setShowDeleteModal(true);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.45rem 1.1rem',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Trash2 size={15} />
+                <span>Delete Selected ({selectedIds.length})</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Table Container */}
         <div
           ref={tableTopRef}
@@ -939,6 +1034,37 @@ export default function AdminCustomers() {
             <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%', minWidth: '980px' }}>
               <thead>
                 <tr style={{ background: '#f5f0fe' }}>
+                  {/* Select All Checkbox */}
+                  <th style={{ width: '42px', padding: '1rem 0.5rem 1rem 1rem', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedCustomers.length > 0 &&
+                        paginatedCustomers.every((c) => selectedIds.includes(c._id))
+                      }
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate =
+                            paginatedCustomers.some((c) => selectedIds.includes(c._id)) &&
+                            !paginatedCustomers.every((c) => selectedIds.includes(c._id));
+                        }
+                      }}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newIds = Array.from(
+                            new Set([...selectedIds, ...paginatedCustomers.map((c) => c._id)])
+                          );
+                          setSelectedIds(newIds);
+                        } else {
+                          const pageIds = new Set(paginatedCustomers.map((c) => c._id));
+                          setSelectedIds(selectedIds.filter((id) => !pageIds.has(id)));
+                        }
+                      }}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#7c3aed' }}
+                      title="Select all customers on current page"
+                    />
+                  </th>
+
                   {/* S.NO Column */}
                   <th
                     style={{
@@ -989,7 +1115,22 @@ export default function AdminCustomers() {
 
                   <th>Mobile Number</th>
                   <th>Email</th>
-                  <th>Location</th>
+
+                  {/* Date of Birth Header */}
+                  <th
+                    style={{
+                      padding: '1rem 1.25rem',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: '#5b21b6',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Date of Birth
+                  </th>
 
                   {/* Orders Header (Right-Aligned & Sortable) */}
                   <th
@@ -1092,6 +1233,9 @@ export default function AdminCustomers() {
                 {loading ? (
                   Array.from({ length: Math.min(itemsPerPage, 8) }).map((_, idx) => (
                     <tr key={`skeleton-${idx}`} style={{ borderBottom: '1px solid #f1eafa' }}>
+                      <td style={{ padding: '1rem 0.5rem 1rem 1rem', textAlign: 'center' }}>
+                        <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#ede8f8', margin: '0 auto' }} />
+                      </td>
                       <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                         <div style={{ width: '20px', height: '14px', borderRadius: '4px', background: '#ede8f8', margin: '0 auto' }} />
                       </td>
@@ -1127,7 +1271,7 @@ export default function AdminCustomers() {
                 ) : sortedCustomers.length === 0 ? (
                   /* Empty State */
                   <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '4.5rem 1.5rem' }}>
+                    <td colSpan={10} style={{ textAlign: 'center', padding: '4.5rem 1.5rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
                         <div
                           style={{
@@ -1196,6 +1340,31 @@ export default function AdminCustomers() {
                         }}
                         title="Click row to open customer profile drawer"
                       >
+                      {/* Bulk Select Checkbox */}
+                      <td
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          width: '42px',
+                          padding: '0.95rem 0.5rem 0.95rem 1rem',
+                          textAlign: 'center',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(c._id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            if (selectedIds.includes(c._id)) {
+                              setSelectedIds(selectedIds.filter((id) => id !== c._id));
+                            } else {
+                              setSelectedIds([...selectedIds, c._id]);
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#7c3aed' }}
+                        />
+                      </td>
+
                       {/* S.NO */}
                       <td
                         style={{
@@ -1288,20 +1457,40 @@ export default function AdminCustomers() {
                         </a>
                       </td>
 
-                      {/* Location */}
+                      {/* Date of Birth */}
                       <td>
-                        <span
-                          style={{
-                            background: '#ede8f8',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: '#5b21b6',
-                          }}
-                        >
-                          {c.city}
-                        </span>
+                        {c.dob ? (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              background: '#ede8f8',
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              color: '#5b21b6',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <Calendar size={12} color="#7c3aed" />
+                            {formatDateShort(c.dob)}
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              background: '#f1f5f9',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#94a3b8',
+                            }}
+                          >
+                            N/A
+                          </span>
+                        )}
                       </td>
 
                       {/* Orders (Right-Aligned) */}
@@ -1324,42 +1513,78 @@ export default function AdminCustomers() {
                         </span>
                       </td>
 
-                      {/* Action: Green Outline "Chat WhatsApp" Button (with stopPropagation) */}
+                      {/* Action: WhatsApp & Delete Button */}
                       <td style={{ textAlign: 'center' }}>
-                        <a
-                          href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(
-                            c.name
-                          )},%20from%20Picky%20Store!`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.38rem 0.8rem',
-                            borderRadius: '8px',
-                            border: '1.5px solid #22c55e',
-                            background: '#ffffff',
-                            color: '#16a34a',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            textDecoration: 'none',
-                            transition: 'all 0.15s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#f0fdf4';
-                            e.currentTarget.style.borderColor = '#16a34a';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = '#ffffff';
-                            e.currentTarget.style.borderColor = '#22c55e';
-                          }}
-                          title={`Chat with ${c.name} on WhatsApp`}
-                        >
-                          <MessageCircle size={14} color="#16a34a" />
-                          <span>Chat WhatsApp</span>
-                        </a>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <a
+                            href={`https://wa.me/${(c.phone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(
+                              c.name
+                            )},%20from%20Picky%20Store!`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.38rem 0.8rem',
+                              borderRadius: '8px',
+                              border: '1.5px solid #22c55e',
+                              background: '#ffffff',
+                              color: '#16a34a',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              textDecoration: 'none',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#f0fdf4';
+                              e.currentTarget.style.borderColor = '#16a34a';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#ffffff';
+                              e.currentTarget.style.borderColor = '#22c55e';
+                            }}
+                            title={`Chat with ${c.name} on WhatsApp`}
+                          >
+                            <MessageCircle size={14} color="#16a34a" />
+                            <span>Chat WhatsApp</span>
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSingleDeleteId(c._id);
+                              setShowDeleteModal(true);
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              border: '1.5px solid #fee2e2',
+                              background: '#ffffff',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              padding: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#fef2f2';
+                              e.currentTarget.style.borderColor = '#dc2626';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#ffffff';
+                              e.currentTarget.style.borderColor = '#fee2e2';
+                            }}
+                            title={`Delete customer ${c.name}`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1767,11 +1992,13 @@ export default function AdminCustomers() {
                       flexShrink: 0,
                     }}
                   >
-                    <MapPin size={15} />
+                    <Calendar size={15} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Location / City</span>
-                    <strong style={{ fontSize: '0.86rem', color: '#1e1b4b' }}>{selectedCustomer.city}</strong>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Date of Birth</span>
+                    <strong style={{ fontSize: '0.86rem', color: '#1e1b4b' }}>
+                      {selectedCustomer.dob ? formatDateShort(selectedCustomer.dob) : 'N/A'}
+                    </strong>
                   </div>
                 </div>
 
@@ -1969,6 +2196,124 @@ export default function AdminCustomers() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.18s ease',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deleteLoading) {
+              setShowDeleteModal(false);
+              setSingleDeleteId(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '440px',
+              width: '100%',
+              padding: '2rem 1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              textAlign: 'center',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: '#fee2e2',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.25rem',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)',
+              }}
+            >
+              <Trash2 size={28} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>
+              {singleDeleteId ? 'Delete Customer?' : `Delete ${selectedIds.length} Customer${selectedIds.length > 1 ? 's' : ''}?`}
+            </h3>
+
+            <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.55, margin: '0 0 1.75rem' }}>
+              {singleDeleteId
+                ? 'Are you sure you want to permanently delete this customer account? All associated profile records will be removed. This action cannot be undone.'
+                : `Are you sure you want to permanently delete the ${selectedIds.length} selected customer account${selectedIds.length > 1 ? 's' : ''}? All associated profile records will be removed. This action cannot be undone.`}
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSingleDeleteId(null);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid #e2e8f0',
+                  background: '#ffffff',
+                  color: '#475569',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleConfirmDelete}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                  opacity: deleteLoading ? 0.7 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Trash2 size={16} />
+                <span>{deleteLoading ? 'Deleting...' : 'Yes, Delete'}</span>
+              </button>
             </div>
           </div>
         </div>

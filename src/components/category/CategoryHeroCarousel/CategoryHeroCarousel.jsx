@@ -34,10 +34,10 @@ const FALLBACK_CATEGORY_IMAGES = {
   'home-kitchen': '/images/dept_home.jpg',
   'artificial-jewellery': '/images/dept_jewellery.jpg',
   'snacks-foods': '/images/dept_snacks.jpg',
-  'traditional-tamil-products': '/images/dept_jewellery.jpg',
-  'home-decor': '/images/dept_home.jpg',
-  'kids-products': '/images/dept_fashion.jpg',
-  'fitness-products': '/images/dept_electronics.jpg',
+  'traditional-tamil-products': '/images/dept_traditional_tamil.jpg',
+  'home-decor': '/images/dept_home_decor.jpg',
+  'kids-products': '/images/dept_kids.jpg',
+  'fitness-products': '/images/dept_fitness.jpg',
 };
 
 export default function CategoryHeroCarousel({ categories = [] }) {

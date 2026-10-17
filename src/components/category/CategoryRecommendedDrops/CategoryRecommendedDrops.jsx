@@ -1,9 +1,42 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Award, Sparkles } from 'lucide-react';
+import { ArrowRight, Flame, TrendingUp } from 'lucide-react';
 import ProductCard from '../../product/ProductCard';
 import { productService } from '../../../services/product.service';
 import styles from './CategoryRecommendedDrops.module.css';
+
+/**
+ * Checks if a product qualifies as "Trending" based on product tags or explicit trending flag.
+ * Tags can be an array of strings (e.g. ['trending', 'fashion']) or a comma-separated string.
+ *
+ * @param {Object} product
+ * @returns {boolean}
+ */
+export const isTrendingProduct = (product) => {
+  if (!product) return false;
+
+  // Explicit boolean flag check
+  if (product.isTrending === true) return true;
+
+  // Normalize tags array or string
+  const tagList = Array.isArray(product.tags)
+    ? product.tags
+    : typeof product.tags === 'string'
+    ? product.tags.split(',')
+    : [];
+
+  return tagList.some((tag) => {
+    if (!tag) return false;
+    const normalized = String(tag).toLowerCase().trim();
+    return (
+      normalized === 'trending' ||
+      normalized === 'trend' ||
+      normalized === 'trending product' ||
+      normalized === 'trending products' ||
+      normalized.includes('trend')
+    );
+  });
+};
 
 export default function CategoryRecommendedDrops() {
   const [displayProducts, setDisplayProducts] = useState([]);
@@ -14,42 +47,22 @@ export default function CategoryRecommendedDrops() {
     const startTime = Date.now();
     setLoading(true);
 
-    // Fetch products from database and strictly filter for TOP PRODUCTS
+    // Fetch products and filter strictly for trending items based on tags
     productService
-      .list({ limit: 50, sort: 'featured' })
+      .list({ limit: 50 })
       .then((res) => {
         if (!alive) return;
         const items = res?.data?.data || res?.data || [];
         const rawList = Array.isArray(items) ? items : [];
 
-        // STRICT WORKFLOW:
-        // 1. ONLY Top Products are shown (isFeatured === true or tags containing 'top')
-        // 2. NO Trending products (exclude tags containing 'trend' or isTrending)
-        // 3. NO other tags products (exclude 'deal', 'limited', 'arrival')
-        const topProductsOnly = rawList.filter((p) => {
-          const tagStrings = Array.isArray(p.tags) ? p.tags.map((t) => String(t).toLowerCase().trim()) : [];
+        // Dedicated tag-based filtering function for trending products
+        const trendingOnly = rawList.filter(isTrendingProduct);
 
-          const isTrending = tagStrings.some((t) => t.includes('trend')) || Boolean(p.isTrending);
-          if (isTrending) return false;
-
-          const hasOtherDisqualifyingTags = tagStrings.some(
-            (t) => (t.includes('deal') || t.includes('limited') || t.includes('arrival')) && !t.includes('top')
-          );
-          if (hasOtherDisqualifyingTags) return false;
-
-          const hasTopTag = tagStrings.some(
-            (t) => t === 'top' || t === 'top product' || t === 'top products' || t.includes('top product') || t === 'featured'
-          );
-          const isTop = Boolean(p.isFeatured || hasTopTag);
-
-          return isTop;
-        });
-
-        setDisplayProducts(topProductsOnly);
+        setDisplayProducts(trendingOnly);
       })
       .catch((err) => {
         if (!alive) return;
-        console.error('Failed to load top products drops', err);
+        console.error('Failed to load trending products', err);
         setDisplayProducts([]);
       })
       .finally(async () => {
@@ -81,20 +94,20 @@ export default function CategoryRecommendedDrops() {
   }, [displayProducts]);
 
   return (
-    <section className={styles.section} aria-label="Top Products Showcase">
+    <section className={styles.section} aria-label="Trending Products Showcase">
       {/* ── Section Header ── */}
       <div className={styles.headerWrapper}>
         <div className={styles.badgePill}>
-          <Award size={13} className={styles.badgeIcon} />
-          <span>Top Verified Drops • Curated Flagship Selection</span>
+          <Flame size={13} className={styles.badgeIcon} />
+          <span>Trending Now • Popular Demand Selections</span>
         </div>
 
         <h2 className={styles.sectionTitle}>
-          Top Products <span className={styles.accentText}>Showcase</span>
+          Trending Products <span className={styles.accentText}>Showcase</span>
         </h2>
 
         <p className={styles.sectionSubtitle}>
-          Verified flagship products across our curated departments. Auto-streaming live drops • Hover over any product to pause.
+          Most loved and trending products across our curated departments. Auto-streaming live drops • Hover over any product to pause.
         </p>
 
         {/* Decorative Diamond Ornament Divider */}
@@ -122,10 +135,10 @@ export default function CategoryRecommendedDrops() {
           <div className={styles.marqueeTrack}>
             {marqueeItems.map((prod, idx) => (
               <div
-                key={`top-marquee-${prod._id || prod.id || 'p'}-${idx}`}
+                key={`trending-marquee-${prod._id || prod.id || 'p'}-${idx}`}
                 className={styles.marqueeCardItem}
               >
-                <ProductCard product={prod} badgeText="TOP PRODUCT" />
+                <ProductCard product={prod} badgeText="TRENDING" />
               </div>
             ))}
           </div>
@@ -133,19 +146,19 @@ export default function CategoryRecommendedDrops() {
       ) : (
         <div className={styles.emptyStateContainer}>
           <div className={styles.emptyIconBadge}>
-            <Award size={26} color="#7c3aed" />
+            <TrendingUp size={26} color="#7c3aed" />
           </div>
-          <h4 className={styles.emptyTitle}>Curating Top Flagship Products</h4>
+          <h4 className={styles.emptyTitle}>Curating Trending Products</h4>
           <p className={styles.emptySubtitle}>
-            Our curators are currently selecting verified top products for this showcase. No trending or untagged products appear in this section.
+            Our curators are currently selecting verified trending items for this showcase. Products tagged with "trending" will automatically appear here.
           </p>
         </div>
       )}
 
-      {/* ── Centered View Best Rated CTA ── */}
+      {/* ── Centered View All Trending Products CTA ── */}
       <div className={styles.footerAction}>
-        <Link to="/products?sort=featured" className={styles.viewAllBtn}>
-          <span>View All Top Products</span>
+        <Link to="/products?tag=trending" className={styles.viewAllBtn}>
+          <span>View All Trending Products</span>
           <ArrowRight size={15} className={styles.arrowIcon} />
         </Link>
       </div>

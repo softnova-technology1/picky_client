@@ -7,7 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useUiStore } from '../../store/uiStore';
-import { X, Phone, Lock, Mail, User, ArrowRight, Eye, EyeOff, Zap } from 'lucide-react';
+import { X, Phone, Lock, Mail, User, ArrowRight, Eye, EyeOff, Zap, Calendar } from 'lucide-react';
 import Home from '../Home';
 
 const WhatsAppIcon = ({ size = 18, color = 'currentColor', className = '' }) => (
@@ -48,6 +48,7 @@ export default function Login({ initialTab = 'login' }) {
   const [signupName, setSignupName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
+  const [signupDob, setSignupDob] = useState('');
 
   // Optional Admin Email mode
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -185,6 +186,7 @@ export default function Login({ initialTab = 'login' }) {
         try {
           const updatePayload = { name: signupName.trim() };
           if (signupEmail.trim()) updatePayload.email = signupEmail.trim();
+          if (signupDob) updatePayload.dob = signupDob;
           const profileRes = await authService.updateProfile(updatePayload);
           const updatedUser = profileRes?.data || profileRes;
           if (updatedUser) {
@@ -515,6 +517,21 @@ export default function Login({ initialTab = 'login' }) {
                           value={signupEmail}
                           onChange={(e) => setSignupEmail(e.target.value)}
                           autoComplete="email"
+                        />
+                      </div>
+
+                      <div className="picky-input-group">
+                        <span className="picky-input-icon">
+                          <Calendar size={18} />
+                        </span>
+                        <input
+                          type="date"
+                          className="picky-pill-input"
+                          placeholder="Date of Birth (Optional)"
+                          value={signupDob}
+                          max={new Date().toISOString().split('T')[0]}
+                          onChange={(e) => setSignupDob(e.target.value)}
+                          title="Date of Birth"
                         />
                       </div>
 

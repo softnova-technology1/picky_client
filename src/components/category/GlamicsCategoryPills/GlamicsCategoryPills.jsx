@@ -2,14 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
-// Curated high-resolution photographic images for the 6 departments
+// Curated high-resolution photographic images for all departments
 const CATEGORY_IMAGES = {
-  'beauty-personal-care': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&auto=format&fit=crop&q=80',
-  'traditional-tamil-products': 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&auto=format&fit=crop&q=80',
-  'snacks-foods': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80',
-  'home-decor': 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400&auto=format&fit=crop&q=80',
-  'kids-products': 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&auto=format&fit=crop&q=80',
-  'fitness-products': 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80',
+  'fashion': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/womens-fashion.webp',
+  'womens-fashion': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/womens-fashion.webp',
+  'home-kitchen': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/home-kitchen.webp',
+  'artificial-jewellery': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/artificial-jewellery.webp',
+  'beauty-personal-care': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/beauty-personal-care.webp',
+  'mobile-accessories': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/mobile-accessories.webp',
+  'traditional-tamil-products': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/traditional-tamil-products.webp',
+  'snacks-foods': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/snacks-foods.webp',
+  'home-decor': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/home-decor.webp',
+  'kids-products': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/kids-products.webp',
+  'fitness-products': 'https://picky-media-bucket.s3.ap-south-1.amazonaws.com/picky/categories/fitness-products.webp',
 };
 
 export default function GlamicsCategoryPills({ categories = [] }) {
@@ -17,7 +22,7 @@ export default function GlamicsCategoryPills({ categories = [] }) {
 
   return (
     <div className="glamics-pills-section" style={{ marginBottom: '2.5rem' }}>
-      {/* 2-Row Balanced Responsive Pill Grid (3x2 on desktop) */}
+      {/* Balanced Responsive Pill Grid (3 columns on desktop) */}
       <div
         className="glamics-pills-grid"
         style={{
@@ -27,7 +32,7 @@ export default function GlamicsCategoryPills({ categories = [] }) {
         }}
       >
         {categories.map((cat) => {
-          const imgSrc = cat.image || null;
+          const imgSrc = cat.image || CATEGORY_IMAGES[cat.slug] || null;
 
           return (
             <Link

@@ -23,11 +23,21 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 540
   if (!isOpen) return null;
 
   const modalElement = (
-    <div className={styles.overlay} onClick={onClose} aria-modal="true" role="dialog">
+    <div
+      className={styles.overlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      aria-modal="true"
+      role="dialog"
+    >
       <div
         className={styles.card}
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           {title && <h3 className={styles.title}>{title}</h3>}

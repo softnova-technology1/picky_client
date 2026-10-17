@@ -313,6 +313,25 @@ export default function AdminCategories() {
                   <img
                     src={c.image}
                     alt={c.name}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      const fallbackMap = {
+                        'traditional-tamil-products': '/images/dept_traditional_tamil.jpg',
+                        'home-decor': '/images/dept_home_decor.jpg',
+                        'kids-products': '/images/dept_kids.jpg',
+                        'fitness-products': '/images/dept_fitness.jpg',
+                        'fashion': '/images/dept_fashion.jpg',
+                        'womens-fashion': '/images/dept_fashion.jpg',
+                        'home-kitchen': '/images/dept_home.jpg',
+                        'artificial-jewellery': '/images/dept_jewellery.jpg',
+                        'beauty-personal-care': '/images/dept_beauty.jpg',
+                        'mobile-accessories': '/images/dept_electronics.jpg',
+                        'snacks-foods': '/images/dept_snacks.jpg',
+                      };
+                      if (fallbackMap[c.slug]) {
+                        e.currentTarget.src = fallbackMap[c.slug];
+                      }
+                    }}
                     style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
                   />
                 ) : (
