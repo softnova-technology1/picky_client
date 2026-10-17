@@ -1,158 +1,155 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight, Award } from 'lucide-react';
+import { ArrowRight, Award, Sparkles } from 'lucide-react';
 import ProductCard from '../../product/ProductCard';
 import { productService } from '../../../services/product.service';
+import styles from './CategoryRecommendedDrops.module.css';
 
 export default function CategoryRecommendedDrops() {
   const [displayProducts, setDisplayProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let alive = true;
     const startTime = Date.now();
     setLoading(true);
-    // Fetch top 10 recommended products (or fallback to latest 10)
-    productService.list({ limit: 10, sort: '-rating' })
+
+    // Fetch products from database and strictly filter for TOP PRODUCTS
+    productService
+      .list({ limit: 50, sort: 'featured' })
       .then((res) => {
-        setDisplayProducts(res.data || []);
+        if (!alive) return;
+        const items = res?.data?.data || res?.data || [];
+        const rawList = Array.isArray(items) ? items : [];
+
+        // STRICT WORKFLOW:
+        // 1. ONLY Top Products are shown (isFeatured === true or tags containing 'top')
+        // 2. NO Trending products (exclude tags containing 'trend' or isTrending)
+        // 3. NO other tags products (exclude 'deal', 'limited', 'arrival')
+        const topProductsOnly = rawList.filter((p) => {
+          const tagStrings = Array.isArray(p.tags) ? p.tags.map((t) => String(t).toLowerCase().trim()) : [];
+
+          const isTrending = tagStrings.some((t) => t.includes('trend')) || Boolean(p.isTrending);
+          if (isTrending) return false;
+
+          const hasOtherDisqualifyingTags = tagStrings.some(
+            (t) => (t.includes('deal') || t.includes('limited') || t.includes('arrival')) && !t.includes('top')
+          );
+          if (hasOtherDisqualifyingTags) return false;
+
+          const hasTopTag = tagStrings.some(
+            (t) => t === 'top' || t === 'top product' || t === 'top products' || t.includes('top product') || t === 'featured'
+          );
+          const isTop = Boolean(p.isFeatured || hasTopTag);
+
+          return isTop;
+        });
+
+        setDisplayProducts(topProductsOnly);
       })
-      .catch((err) => console.error('Failed to load recommended drops', err))
+      .catch((err) => {
+        if (!alive) return;
+        console.error('Failed to load top products drops', err);
+        setDisplayProducts([]);
+      })
       .finally(async () => {
         const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
+        const remainingDelay = Math.max(0, 800 - elapsed);
         if (remainingDelay > 0) {
           await new Promise((r) => setTimeout(r, remainingDelay));
         }
-        setLoading(false);
+        if (alive) setLoading(false);
       });
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
+  // Guarantee an infinite seamless marquee ribbon with ZERO design collapse even with 1 or 2 items
+  const marqueeItems = useMemo(() => {
+    if (!displayProducts || !displayProducts.length) return [];
+
+    let singleCycle = [...displayProducts];
+    // Ensure single cycle has at least 6 cards so it spans past viewports
+    while (singleCycle.length < 6) {
+      singleCycle = [...singleCycle, ...displayProducts];
+    }
+
+    // Double for mathematically seamless -50% translateX loop
+    return [...singleCycle, ...singleCycle];
+  }, [displayProducts]);
+
   return (
-    <section className="category-recommended-drops-section" style={{ marginBottom: '4.5rem' }}>
-      {/* ── Section Header (Centered) ── */}
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.32rem 0.95rem',
-            borderRadius: '9999px',
-            background: '#ecfdf5',
-            border: '1px solid #a7f3d0',
-            color: '#059669',
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            marginBottom: '0.85rem',
-          }}
-        >
-          <Award size={13} />
-          <span>Customer Choice • 10 Verified Favorites</span>
+    <section className={styles.section} aria-label="Top Products Showcase">
+      {/* ── Section Header ── */}
+      <div className={styles.headerWrapper}>
+        <div className={styles.badgePill}>
+          <Award size={13} className={styles.badgeIcon} />
+          <span>Top Verified Drops • Curated Flagship Selection</span>
         </div>
 
-        <h2
-          style={{
-            fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
-            fontWeight: 900,
-            color: '#1e1b4b',
-            margin: '0 0 0.35rem',
-            letterSpacing: '-0.025em',
-          }}
-        >
-          Most Recommended Products
+        <h2 className={styles.sectionTitle}>
+          Top Products <span className={styles.accentText}>Showcase</span>
         </h2>
 
-        <p
-          style={{
-            fontSize: '0.92rem',
-            color: '#64748b',
-            margin: '0 0 0.85rem',
-            fontWeight: 500,
-          }}
-        >
-          Top customer favorites with 4.8+ ratings & verified reviews across 10 departments
+        <p className={styles.sectionSubtitle}>
+          Verified flagship products across our curated departments. Auto-streaming live drops • Hover over any product to pause.
         </p>
 
         {/* Decorative Diamond Ornament Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-          <div style={{ width: '45px', height: '1.5px', background: 'linear-gradient(90deg, transparent, #34d399)' }} />
-          <span style={{ color: '#059669', fontSize: '0.75rem' }}>✦ ❖ ✦</span>
-          <div style={{ width: '45px', height: '1.5px', background: 'linear-gradient(90deg, #34d399, transparent)' }} />
+        <div className={styles.diamondDivider}>
+          <div className={styles.dividerLineLeft} />
+          <span className={styles.dividerDiamonds}>✦ ❖ ✦</span>
+          <div className={styles.dividerLineRight} />
+        </div>
+
+        <div className={styles.marqueeLiveIndicator}>
+          <span className={styles.livePulseDot} />
+          <span>Auto-Running Live Stream • Hover to Explore</span>
         </div>
       </div>
 
-      {/* ── 10 Cards in 2 Rows (5 columns × 2 rows on desktop) ── */}
-      <div
-        className="category-recommended-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '2.5rem',
-        }}
-      >
-        {loading ? (
-          <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>Loading recommended products...</div>
-        ) : displayProducts.length > 0 ? (
-          displayProducts.map((prod, idx) => (
-            <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
-          ))
-        ) : (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-            No recommended products found.
+      {/* ── Continuous Running Infinite Marquee Ribbon ── */}
+      {loading ? (
+        <div className={styles.skeletonTrack}>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className={styles.skeletonCard} />
+          ))}
+        </div>
+      ) : marqueeItems.length > 0 ? (
+        <div className={styles.marqueeViewport}>
+          <div className={styles.marqueeTrack}>
+            {marqueeItems.map((prod, idx) => (
+              <div
+                key={`top-marquee-${prod._id || prod.id || 'p'}-${idx}`}
+                className={styles.marqueeCardItem}
+              >
+                <ProductCard product={prod} badgeText="TOP PRODUCT" />
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className={styles.emptyStateContainer}>
+          <div className={styles.emptyIconBadge}>
+            <Award size={26} color="#7c3aed" />
+          </div>
+          <h4 className={styles.emptyTitle}>Curating Top Flagship Products</h4>
+          <p className={styles.emptySubtitle}>
+            Our curators are currently selecting verified top products for this showcase. No trending or untagged products appear in this section.
+          </p>
+        </div>
+      )}
 
-      {/* Centered View Best Rated CTA */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <Link
-          to="/best-sellers"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.65rem 1.6rem',
-            borderRadius: '9999px',
-            background: '#ffffff',
-            color: '#059669',
-            fontWeight: 800,
-            fontSize: '0.84rem',
-            textDecoration: 'none',
-            border: '1.5px solid #d1fae5',
-            boxShadow: '0 4px 14px rgba(5, 150, 105, 0.08)',
-            transition: 'all 0.2s ease',
-          }}
-          className="recommended-view-all-link"
-        >
-          <span>View All Recommended</span>
-          <ArrowRight size={15} />
+      {/* ── Centered View Best Rated CTA ── */}
+      <div className={styles.footerAction}>
+        <Link to="/products?sort=featured" className={styles.viewAllBtn}>
+          <span>View All Top Products</span>
+          <ArrowRight size={15} className={styles.arrowIcon} />
         </Link>
       </div>
-
-      <style>{`
-        .recommended-view-all-link:hover {
-          background: #059669 !important;
-          color: #ffffff !important;
-          border-color: #059669 !important;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(5, 150, 105, 0.28) !important;
-        }
-        @media (max-width: 1100px) {
-          .category-recommended-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: 1rem !important;
-          }
-        }
-        @media (max-width: 768px) {
-          .category-recommended-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 0.75rem !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }
+

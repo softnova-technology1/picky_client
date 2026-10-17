@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import CategoryHeroCarousel from '../../components/category/CategoryHeroCarousel';
 import WomensPillShowcase from '../../components/category/WomensPillShowcase';
@@ -12,34 +12,46 @@ import { Sparkles } from 'lucide-react';
 
 export default function Categories() {
   const categories = useCategoryStore((state) => state.categories);
+  const fetchCategories = useCategoryStore((state) => state.fetchCategories);
 
-  // Top 4 categories are featured in the top pill showcase
-  const top4Slugs = useMemo(
-    () => ['fashion', 'artificial-jewellery', 'mobile-accessories', 'home-kitchen'],
-    []
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Active DB categories ordered by the admin-defined sortOrder
+  const orderedCategories = useMemo(
+    () =>
+      categories
+        .filter((cat) => cat.isActive !== false)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [categories]
   );
 
-  // Remaining 6 categories for the quick access section below
-  const balance6Categories = useMemo(() => {
-    return categories.filter((cat) => !top4Slugs.includes(cat.slug));
-  }, [categories, top4Slugs]);
+  // First 5 DB categories are featured in the Top Categories section
+  const featuredCategories = useMemo(() => orderedCategories.slice(0, 5), [orderedCategories]);
+
+  // Remaining DB categories for the quick access section below
+  const balance6Categories = useMemo(() => orderedCategories.slice(5), [orderedCategories]);
 
   return (
     <PageWrapper>
       <div
         style={{
-          background: 'radial-gradient(ellipse 90% 45% at 50% 10%, rgba(245, 238, 255, 0.75) 0%, rgba(255, 255, 255, 0) 100%), #ffffff',
+          background: 'linear-gradient(180deg, #f7f4fc 0%, #f9f7fd 50%, #ffffff 100%)',
           minHeight: '100vh',
           paddingBottom: '6rem',
         }}
       >
-        {/* ── 1. Full-Width Glamics-Style Master Hero Section ── */}
+        {/* ── 1. Reference Everything Store Master Hero Section (100vh & Full Width) ── */}
         <section
           aria-label="Categories Hero Showcase"
           style={{
             width: '100%',
-            padding: '1rem clamp(1rem, 2.5vw, 2.5rem) 2.5rem',
-            marginBottom: '2rem',
+            height: 'calc(100vh - 90px)',
+            minHeight: '620px',
+            padding: '0.75rem clamp(1rem, 2.5vw, 2.5rem) 1.25rem',
+            marginBottom: '2.5rem',
+            boxSizing: 'border-box',
           }}
         >
           <CategoryHeroCarousel categories={categories} />
@@ -49,8 +61,8 @@ export default function Categories() {
           {/* ── 1. Shop By Budget: 4 Capsule Pill Stores (Under ₹199, ₹499, ₹799, ₹1,099+ Luxe) ── */}
           <WomensPillShowcase />
 
-          {/* ── 2. Top Categories: 4 Cinematic Flagship Bento Cards ── */}
-          <CategoryBudgetStore />
+          {/* ── 2. Top Categories: live from DB (name, image, description, stats, subcategories) ── */}
+          <CategoryBudgetStore categories={featuredCategories} />
 
           {/* ── 3. Most Recommended Products: High-Rated Customer Favorites ── */}
           <CategoryRecommendedDrops />

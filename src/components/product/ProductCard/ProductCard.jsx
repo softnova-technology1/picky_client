@@ -17,20 +17,18 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   const { showToast } = useUiStore();
 
   const [justAdded, setJustAdded] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
 
   if (!product) return null;
 
   const inWishlist = isInWishlist(product._id || product.id || product.slug);
 
-  const carouselImages = useMemo(() => {
-    if (Array.isArray(product.images) && product.images.length > 1) {
-      const validUniqueImages = Array.from(new Set(product.images.filter(Boolean)));
-      if (validUniqueImages.length > 1) {
-        return validUniqueImages.slice(0, 4);
-      }
+  const primaryImage = useMemo(() => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      const valid = product.images.find(Boolean);
+      if (valid) return valid;
     }
-    const baseImg = product.images?.[0] || product.image || '/images/products/saree.png';
-    return [baseImg];
+    return product.image || '';
   }, [product.images, product.image]);
 
   const handleQuickAdd = (e) => {
@@ -60,8 +58,8 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
       productId: prodId,
       slug: product.slug,
       name: product.name,
-      image: product.images?.[0] || product.image || '/images/products/saree.png',
-      images: product.images || (product.image ? [product.image] : []),
+      image: primaryImage || '',
+      images: product.images || (primaryImage ? [primaryImage] : []),
       price: product.discountPrice || product.price || 0,
       discountPrice: product.discountPrice || product.price || 0,
       originalPrice: product.originalPrice || product.price || 0,
@@ -104,6 +102,11 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   const getBadgeInfo = () => {
     let customBadge = badgeText || product.badge;
 
+    // Prioritize top product badge if featured or tagged with top
+    if (!customBadge && (product.isFeatured || product.tags?.some((t) => t.toLowerCase().includes('top')))) {
+      customBadge = 'TOP PRODUCT';
+    }
+
     if (!customBadge && Array.isArray(product.tags) && product.tags.length > 0) {
       const priorityTags = ['limited deals', 'trending now', 'new arrivals', 'best sellers'];
       const matched = product.tags.find((t) =>
@@ -117,6 +120,9 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     if (!customBadge) return null;
 
     const upper = customBadge.toUpperCase().trim();
+    if (upper.includes('TOP')) {
+      return { text: 'TOP PRODUCT', icon: Award, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+    }
     if (upper.includes('LIMITED') || upper.includes('DEAL')) {
       return { text: 'LIMITED DEALS', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
     }
@@ -170,7 +176,23 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         </div>
 
         <Link to={`/products/${product.slug}`} className="ref-img-wrapper">
-          <img src={carouselImages[0]} alt={product.name} className="ref-product-img" />
+          {primaryImage && !imgFailed ? (
+            <img
+              src={primaryImage}
+              alt={product.name}
+              className="ref-product-img"
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+            />
+          ) : (
+            <div className="ref-product-placeholder">
+              <div className="ref-placeholder-icon">
+                <Sparkles size={22} color="#7c3aed" />
+              </div>
+              <span className="ref-placeholder-brand">PICKY</span>
+              <span className="ref-placeholder-sub">{product.category?.name || product.subCategory || 'Curated'}</span>
+            </div>
+          )}
         </Link>
       </div>
 

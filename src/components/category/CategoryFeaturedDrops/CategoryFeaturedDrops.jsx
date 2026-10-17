@@ -56,7 +56,20 @@ export default function CategoryFeaturedDrops() {
     productService.list(params)
       .then((res) => {
         // ApiResponse.paginated returns { success: true, data: [...], pagination: {...} }
-        setDisplayProducts(res.data || []);
+        const raw = res.data || [];
+        // Strict workflow: only top products on categories page, no trending or other tags
+        const topOnly = raw.filter((p) => {
+          const tags = Array.isArray(p.tags) ? p.tags.map((t) => String(t).toLowerCase().trim()) : [];
+          const isTrending = tags.some((t) => t.includes('trend')) || Boolean(p.isTrending);
+          if (isTrending) return false;
+          const hasOtherTags = tags.some(
+            (t) => (t.includes('deal') || t.includes('limited') || t.includes('arrival')) && !t.includes('top')
+          );
+          if (hasOtherTags) return false;
+          const hasTopTag = tags.some((t) => t === 'top' || t.includes('top product') || t === 'featured');
+          return Boolean(p.isFeatured || hasTopTag);
+        });
+        setDisplayProducts(topOnly);
       })
       .catch((err) => console.error('Failed to load featured drops', err))
       .finally(async () => {
@@ -297,20 +310,59 @@ export default function CategoryFeaturedDrops() {
       </div>
 
       {/* ── 10 Cards in 2 Rows (5 columns × 2 rows on desktop) ── */}
-      <div
-        key={activeTab}
-        className="category-featured-grid tab-fade-in"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '2.5rem',
-        }}
-      >
-        {displayProducts.map((prod, idx) => (
-          <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
-        ))}
-      </div>
+      {displayProducts.length > 0 ? (
+        <div
+          key={activeTab}
+          className="category-featured-grid tab-fade-in"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+            gap: '1.25rem',
+            marginBottom: '2.5rem',
+          }}
+        >
+          {displayProducts.map((prod, idx) => (
+            <ProductCard key={prod._id || prod.id} product={prod} index={idx} badgeText="TOP PRODUCT" />
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '3rem 1.5rem',
+            background: '#ffffff',
+            borderRadius: '20px',
+            border: '1.5px solid #ede9fe',
+            maxWidth: '560px',
+            margin: '0 auto 2.5rem',
+            boxShadow: '0 8px 24px rgba(124, 58, 237, 0.06)',
+          }}
+        >
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: '#f5f3ff',
+              border: '1px solid #ddd6fe',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 0.75rem',
+              color: '#7c3aed',
+              fontWeight: 800,
+            }}
+          >
+            ★
+          </div>
+          <h4 style={{ margin: '0 0 0.35rem', color: '#1e1b4b', fontSize: '1.15rem', fontWeight: 800 }}>
+            Curating Top Flagship Products
+          </h4>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', lineHeight: 1.5 }}>
+            New flagship selections are being verified for this department. No trending products appear on this page.
+          </p>
+        </div>
+      )}
 
       {/* Centered View All CTA */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>

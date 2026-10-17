@@ -1,29 +1,61 @@
-/* ─── Featured Departments Bento Grid CSS Module ─────────────────────────── */
+/* ─── Top Categories — Luxury Editorial Bento Grid CSS Module ───────────── */
 
 .departmentsSection {
-  margin-bottom: 4.5rem;
+  margin-bottom: 5.5rem;
   position: relative;
 }
 
 /* ── Section Header ── */
 .headerWrapper {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.headerEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.eyebrowLine {
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c084fc);
+}
+
+.eyebrowText {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #7c3aed;
+  text-transform: uppercase;
 }
 
 .sectionTitle {
-  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
   font-weight: 900;
-  color: #1e1b4b;
-  margin: 0 0 0.35rem;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
   letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.titleGradient {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #c026d3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sectionSubtitle {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: #64748b;
-  margin: 0 0 0.85rem;
-  font-weight: 500;
+  margin: 0 auto 1.15rem;
+  max-width: 620px;
+  line-height: 1.55;
+  font-weight: 450;
 }
 
 .diamondDivider {
@@ -34,61 +66,92 @@
 }
 
 .dividerLineLeft {
-  width: 45px;
+  width: 50px;
   height: 1.5px;
   background: linear-gradient(90deg, transparent, #c084fc);
 }
 
 .dividerDiamonds {
   color: #7c3aed;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
 }
 
 .dividerLineRight {
-  width: 45px;
+  width: 50px;
   height: 1.5px;
   background: linear-gradient(90deg, #c084fc, transparent);
 }
 
-/* ── Bento Grid: Row 1 = 2fr + 1fr, Row 2 = 1fr + 2fr ── */
-.bentoGrid {
+/* ── Luxury Master Bento Grid Layout (Hero Left + 2x2 Right) ── */
+.layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 1.82fr);
+  gap: 1.65rem;
+  align-items: stretch;
 }
 
-.bentoWide {
-  grid-column: span 2;
-}
-
-.bentoCompact {
-  grid-column: span 1;
-}
-
-.bentoCard {
+/* ── 01. HERO FEATURED SHOWCASE CARD ── */
+.featuredCard {
   position: relative;
-  border-radius: 26px;
+  border-radius: 28px;
   overflow: hidden;
-  text-decoration: none;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 350px;
-  padding: 1.65rem 1.85rem;
+  min-height: 680px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.22),
+              0 0 0 1px rgba(124, 58, 237, 0.08);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.45s ease;
   box-sizing: border-box;
-  box-shadow: 0 14px 34px -10px rgba(15, 23, 42, 0.28), 0 3px 10px rgba(0, 0, 0, 0.06);
+  padding: 1.35rem;
+}
+
+.featuredCard:hover {
+  transform: translateY(-7px);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 32px 70px -15px var(--theme-glow, rgba(168, 85, 247, 0.35)),
+              0 12px 28px -6px rgba(0, 0, 0, 0.15);
+}
+
+/* ── 02-05. COMPANION 2x2 GRID ── */
+.companionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.companionCard {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 325px;
+  background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  cursor: pointer;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.18);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.45s ease;
+  box-sizing: border-box;
+  padding: 1.15rem;
 }
 
-.bentoCard:hover {
+.companionCard:hover {
   transform: translateY(-6px);
-  box-shadow: 0 24px 48px -10px rgba(15, 23, 42, 0.42), 0 6px 16px rgba(0, 0, 0, 0.12);
+  border-color: var(--theme-accent, #a855f7);
+  box-shadow: 0 24px 50px -12px var(--theme-glow, rgba(139, 92, 246, 0.3));
 }
 
-/* Photo Background Wrapper */
-.photoWrapper {
+/* ── Full-Bleed Media Canvas ── */
+.mediaContainer {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -97,116 +160,589 @@
   z-index: 1;
 }
 
-.bgPhoto {
+.mediaPhoto {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  object-position: center 20%;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: brightness(0.96);
 }
 
-.bentoCard:hover .bgPhoto {
-  transform: scale(1.06);
+.featuredCard:hover .mediaPhoto,
+.companionCard:hover .mediaPhoto {
+  transform: scale(1.08);
 }
 
-.scrimOverlay {
+.mediaFallback {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.3s ease;
-}
-
-/* Top Row: Floating Frosted Pill Badge */
-.topRow {
-  position: relative;
-  z-index: 3;
-}
-
-.frostedBadge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  padding: 0.32rem 0.85rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid transparent;
+  justify-content: center;
+  background: linear-gradient(135deg, #2d1052 0%, #1e1b4b 100%);
+  color: #c4b5fd;
 }
 
-/* Bottom Content Area */
-.bottomContent {
+/* Cinematic Contrast Vignette Overlay */
+.cinematicVignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.42) 0%,
+    rgba(15, 23, 42, 0.15) 30%,
+    rgba(15, 23, 42, 0.75) 75%,
+    rgba(15, 23, 42, 0.94) 100%
+  );
+  pointer-events: none;
+}
+
+.companionVignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.38) 0%,
+    rgba(15, 23, 42, 0.12) 35%,
+    rgba(15, 23, 42, 0.8) 80%,
+    rgba(15, 23, 42, 0.95) 100%
+  );
+  pointer-events: none;
+}
+
+/* Diagonal Luxury Shimmer Sweep */
+.shimmerSweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.featuredCard:hover .shimmerSweep,
+.companionCard:hover .shimmerSweep {
+  transform: translateX(100%);
+}
+
+/* ── Top Floating Overlaid Bar ── */
+.cardTopBar {
   position: relative;
   z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.cardTitle {
-  font-size: clamp(1.35rem, 1.8vw, 1.7rem);
-  font-weight: 900;
-  color: #ffffff;
-  margin: 0 0 0.5rem;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-}
-
-.cardSubtext {
-  font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.86);
-  line-height: 1.45;
-  margin: 0 0 1.25rem;
-  font-weight: 450;
-  max-width: 520px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-}
-
-/* White Signature Button */
-.whiteBtn {
+.frostedIndexBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.55rem 1.25rem;
+  padding: 0.42rem 0.95rem;
   border-radius: 9999px;
-  background: #ffffff;
-  color: #0f172a;
-  font-weight: 800;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-  transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-.bentoCard:hover .whiteBtn {
+.frostedIndexBadgeSmall {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.indexNum {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #c4b5fd;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.04em;
+}
+
+.indexSep {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+}
+
+.indexName {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+/* Tactile Circular Arrow Action Button */
+.tactileArrowBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1e1b4b;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.tactileArrowBtn:hover {
   background: #7c3aed;
   color: #ffffff;
-  transform: translateY(-2px);
+  transform: scale(1.08) rotate(45deg);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.45);
 }
 
-.btnArrow {
+.tactileArrowBtnSmall {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1e1b4b;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.tactileArrowBtnSmall:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  transform: scale(1.08) rotate(45deg);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.arrowIcon {
   transition: transform 0.25s ease;
 }
 
-.bentoCard:hover .btnArrow {
-  transform: translate(2px, -2px);
+/* ── 01. FLOATING GLASSMORPHIC ATELIER PLINTH (Featured Card) ── */
+.floatingGlassPlinth {
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1.5px solid rgba(255, 255, 255, 0.98);
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.28),
+              0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease;
 }
 
-/* ── Responsive Media Queries ── */
-@media (max-width: 992px) {
-  .bentoGrid {
+.featuredCard:hover .floatingGlassPlinth {
+  transform: translateY(-3px);
+  box-shadow: 0 26px 55px -12px rgba(15, 23, 42, 0.34);
+}
+
+.plinthHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.titleStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.categorySuper {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7c3aed;
+}
+
+.featuredTitle {
+  margin: 0;
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(1.65rem, 2.2vw, 2.15rem);
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.titleLink:hover {
+  color: #7c3aed;
+}
+
+.featuredStatsBox {
+  display: flex;
+  align-items: center;
+}
+
+.featuredDesc {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #475569;
+  line-height: 1.5;
+  font-weight: 450;
+}
+
+/* Couture Subcategory Tags */
+.coutureTagsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  padding-top: 0.25rem;
+}
+
+.tagsLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.tagsScroll {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.coutureTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.8rem;
+  border-radius: 9999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.coutureTag:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(124, 58, 237, 0.3);
+}
+
+/* Plinth Footer & Magnetic CTA Button */
+.plinthFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.luxuryCtaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.68rem 1.45rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -6px rgba(30, 27, 75, 0.45);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxuryCtaBtn:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(124, 58, 237, 0.5);
+}
+
+.ctaArrow {
+  transition: transform 0.25s ease;
+}
+
+.luxuryCtaBtn:hover .ctaArrow {
+  transform: translateX(3px);
+}
+
+.curatedGuarantee {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #059669;
+  letter-spacing: 0.02em;
+}
+
+/* ── 02-05. FLOATING GLASS DOCKS (Companion Cards) ── */
+.companionGlassDock {
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 34px -8px rgba(15, 23, 42, 0.22);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease;
+}
+
+.companionCard:hover .companionGlassDock {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px -10px rgba(15, 23, 42, 0.28);
+}
+
+.companionDockTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.companionTitle {
+  margin: 0;
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(1.2rem, 1.45vw, 1.4rem);
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.companionStats {
+  display: flex;
+  align-items: center;
+}
+
+.companionDesc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.45;
+  font-weight: 450;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.companionFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.quickExploreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #7c3aed;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.quickExploreLink:hover {
+  color: #581c87;
+  transform: translateX(2px);
+}
+
+.subCountIndicator {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* ── Live Stock Badges & Pulsating Beacon ── */
+.stockPillGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.badgeInStock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.24rem 0.65rem;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.livePulseDot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: liveBeacon 1.8s infinite;
+}
+
+@keyframes liveBeacon {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.badgePriceTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.24rem 0.65rem;
+  border-radius: 9999px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.badgeComingSoon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.24rem 0.65rem;
+  border-radius: 9999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.statSkeleton {
+  display: inline-block;
+  width: 100px;
+  height: 22px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmerAnim 1.4s infinite linear;
+}
+
+@keyframes shimmerAnim {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Responsive Adaptations ── */
+@media (max-width: 1180px) {
+  .layout {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 
-  .bentoWide,
-  .bentoCompact {
-    grid-column: span 1;
+  .featuredCard {
+    min-height: 520px;
   }
 
-  .bentoCard {
-    min-height: 310px;
-    padding: 1.5rem;
+  .companionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .companionGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .featuredCard {
+    min-height: 480px;
+    padding: 1rem;
+  }
+
+  .floatingGlassPlinth {
+    padding: 1.15rem 1.25rem;
+  }
+
+  .featuredTitle {
+    font-size: 1.6rem;
+  }
+
+  .plinthFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .luxuryCtaBtn {
+    justify-content: center;
+  }
+
+  .curatedGuarantee {
+    text-align: center;
   }
 }

@@ -23,6 +23,7 @@ export default function ProductList() {
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
   const sort = searchParams.get('sort') || 'all';
   const urlMaxPrice = searchParams.get('maxPrice') || '';
+  const urlMinPrice = searchParams.get('minPrice') || '';
   const urlMinDiscount = searchParams.get('discount') || '';
 
   // Local state
@@ -40,6 +41,15 @@ export default function ProductList() {
   useEffect(() => {
     setMobileSearchQuery(searchQuery);
   }, [searchQuery]);
+
+  // Human readable label for the active price filter chip
+  const getPriceChipLabel = () => {
+    if (urlMinPrice && !urlMaxPrice) return `₹${Number(urlMinPrice).toLocaleString('en-IN')}+`;
+    if (urlMaxPrice === '2500' || urlMaxPrice === '1000-2500') return '₹1,000 - ₹2,500';
+    if (urlMaxPrice === '5000' || urlMaxPrice === '2500+' || urlMaxPrice === 'above_2500') return '₹2,500+ Luxe';
+    if (urlMinPrice && urlMaxPrice) return `₹${urlMinPrice} - ₹${urlMaxPrice}`;
+    return `Under ₹${urlMaxPrice}`;
+  };
 
   const getSortLabel = (s) => {
     switch (s) {
@@ -91,14 +101,25 @@ export default function ProductList() {
         if (selectedCategory) params.category = selectedCategory;
         if (selectedSubCategory) params.subCategory = selectedSubCategory;
 
+        // The API paginates (max 50 per page) while price/budget filters are applied
+        // client-side, so load every page to make sure no matching product is missed.
+        const fetchAllPages = async (fetcher) => {
+          const all = [];
+          for (let page = 1; page <= 20; page++) {
+            const res = await fetcher({ ...params, page, limit: 50 });
+            const pageItems = res?.data?.data || res?.data || [];
+            if (Array.isArray(pageItems)) all.push(...pageItems);
+            if (!res?.pagination?.hasNextPage) break;
+          }
+          return all;
+        };
+
         let items = [];
         try {
           if (searchQuery.trim()) {
-            const res = await productService.search(searchQuery.trim(), params);
-            items = res?.data?.data || res?.data || [];
+            items = await fetchAllPages((p) => productService.search(searchQuery.trim(), p));
           } else {
-            const res = await productService.list(params);
-            items = res?.data?.data || res?.data || [];
+            items = await fetchAllPages((p) => productService.list(p));
           }
         } catch (_) {
           items = [];
@@ -209,6 +230,14 @@ export default function ProductList() {
       );
     }
 
+    // Min Price Filter (e.g. ₹1,099+ Luxe tier)
+    if (urlMinPrice) {
+      const minP = Number(urlMinPrice);
+      if (!isNaN(minP) && minP > 0) {
+        result = result.filter((p) => Number(p.discountPrice || p.price || 0) >= minP);
+      }
+    }
+
     // Price Filter
     if (urlMaxPrice) {
       result = result.filter((p) => {
@@ -272,7 +301,7 @@ export default function ProductList() {
     }
 
     return result;
-  }, [allProducts, quickFilters, urlMaxPrice, urlMinDiscount, selectedCategory, selectedSubCategory, searchQuery, sort]);
+  }, [allProducts, quickFilters, urlMaxPrice, urlMinPrice, urlMinDiscount, selectedCategory, selectedSubCategory, searchQuery, sort]);
 
   // Handle Category Selection
   const handleCategoryChange = (catSlug) => {
@@ -305,6 +334,20 @@ export default function ProductList() {
     } else {
       next.delete('maxPrice');
     }
+    // Max-price tiers and the "X+" tier are mutually exclusive
+    next.delete('minPrice');
+    setSearchParams(next);
+  };
+
+  // Handle Min Price Selection (e.g. ₹1,099+ Luxe)
+  const handleMinPriceChange = (minP) => {
+    const next = new URLSearchParams(searchParams);
+    if (minP) {
+      next.set('minPrice', minP);
+    } else {
+      next.delete('minPrice');
+    }
+    next.delete('maxPrice');
     setSearchParams(next);
   };
 
@@ -362,7 +405,7 @@ export default function ProductList() {
     (selectedCategory ? 1 : 0) +
     (selectedSubCategory ? 1 : 0) +
     (searchQuery ? 1 : 0) +
-    (urlMaxPrice ? 1 : 0) +
+    (urlMaxPrice || urlMinPrice ? 1 : 0) +
     (urlMinDiscount || quickFilters.discount40 ? 1 : 0);
 
   // Pagination slice
@@ -543,10 +586,10 @@ export default function ProductList() {
                     </button>
                   </div>
                 )}
-                {urlMaxPrice && (
+                {(urlMaxPrice || urlMinPrice) && (
                   <div className="shop-mobile-chip">
-                    <span>Under ₹{urlMaxPrice}</span>
-                    <button type="button" onClick={() => handleMaxPriceChange('')}>
+                    <span>{getPriceChipLabel()}</span>
+                    <button type="button" onClick={() => (urlMinPrice ? handleMinPriceChange('') : handleMaxPriceChange(''))}>
                       <X size={12} />
                     </button>
                   </div>
@@ -588,6 +631,8 @@ export default function ProductList() {
               onSelectSubCategory={handleSubCategoryChange}
               urlMaxPrice={urlMaxPrice}
               onSelectMaxPrice={handleMaxPriceChange}
+              urlMinPrice={urlMinPrice}
+              onSelectMinPrice={handleMinPriceChange}
               urlMinDiscount={urlMinDiscount}
               onSelectDiscount={handleDiscountChange}
               quickFilters={quickFilters}
@@ -861,12 +906,14 @@ export default function ProductList() {
         filterState={{
           category: selectedCategory,
           maxPrice: urlMaxPrice,
+          minPrice: urlMinPrice,
           minRating: quickFilters.rating4Plus ? '4.5' : '',
           minDiscount: urlMinDiscount || (quickFilters.discount40 ? '40' : ''),
         }}
         onUpdateFilter={(key, val) => {
           if (key === 'category') handleCategoryChange(val);
           if (key === 'maxPrice') handleMaxPriceChange(val);
+          if (key === 'minPrice') handleMinPriceChange(val);
           if (key === 'minRating') setQuickFilters((p) => ({ ...p, rating4Plus: val === '4.5' }));
           if (key === 'minDiscount') handleDiscountChange(val);
         }}

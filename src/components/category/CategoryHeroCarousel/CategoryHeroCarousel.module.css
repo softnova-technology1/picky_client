@@ -1,1 +1,592 @@
-/* CategoryHeroCarousel CSS Module */
+/* CategoryHeroCarousel CSS Module - Full Width & 100vh with Playfair Display & Inter */
+
+.heroWrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+/* ── Top Header Navigation Bar (Arrows & See All) ── */
+.topHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin-bottom: 0.85rem;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+.navControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.arrowBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #1e1b4b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  background: #f8f6fc;
+  border-color: #c4b5fd;
+  color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.12);
+}
+
+.arrowBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.seeAllLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.seeAllLink:hover {
+  color: #7c3aed;
+  transform: translateX(2px);
+}
+
+.seeAllLink svg {
+  transition: transform 0.2s ease;
+}
+
+.seeAllLink:hover svg {
+  transform: translateX(3px);
+}
+
+/* ── Main Hero Layout Grid ── */
+.heroGrid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(420px, 44vw) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  position: relative;
+  width: 100%;
+}
+
+/* ── Left "Everything Store" Hero Card (Clean Luxury UI with Texture) ── */
+.everythingCard {
+  background: linear-gradient(135deg, #ffffff 0%, #faf8fd 50%, #f4ecfb 100%);
+  border-radius: 32px;
+  box-shadow: 0 24px 60px -12px rgba(124, 58, 237, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(216, 195, 246, 0.85);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2.2rem, 3.8vw, 3.4rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 95%;
+}
+
+/* Subtle luxury micro-dot grid and atmospheric radiant glow texture */
+.everythingCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle, rgba(124, 58, 237, 0.12) 1.2px, transparent 1.2px),
+    radial-gradient(ellipse 70% 60% at 85% 20%, rgba(192, 132, 252, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 15% 85%, rgba(147, 51, 234, 0.08) 0%, transparent 60%);
+  background-size: 24px 24px, 100% 100%, 100% 100%;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.everythingContent {
+  position: relative;
+  z-index: 3;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.heroHeading {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: clamp(2.7rem, 4vw, 4rem) !important;
+  font-weight: 900 !important;
+  color: #17112b;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin: 0 0 1.15rem;
+  text-transform: uppercase;
+}
+
+.heroSubheading {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 1.12rem;
+  font-weight: 500;
+  color: #4b455c;
+  line-height: 1.45;
+  margin: 0 0 2rem;
+}
+
+.featurePills {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2.2rem;
+}
+
+.startingPricePill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  background: #f8f6fc;
+  border: 1px solid #ede8f5;
+  border-radius: 9999px;
+  padding: 0.55rem 1.35rem;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.05);
+  font-family: 'Inter', sans-serif !important;
+}
+
+.startingLabel {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #64748b;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.startingAmount {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #7c3aed;
+  letter-spacing: -0.02em;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.shopNowBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background: #12101a;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1rem 2.4rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 10px 25px rgba(18, 16, 26, 0.22);
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  align-self: flex-start;
+}
+
+.shopNowBtn:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(124, 58, 237, 0.35);
+}
+
+/* ── 3D Composition Right Graphic in Everything Card (Seamless Blend) ── */
+.compositionVisual {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 58%;
+  height: 94%;
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.compositionImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+}
+
+/* ── Carousel Track Column ── */
+.carouselSection {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  height: 100%;
+}
+
+.carouselTrackContainer {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.cardsTrack {
+  display: flex;
+  gap: 1.2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.25rem 0.5rem 0.75rem 0.25rem;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+  cursor: grab;
+}
+
+.cardsTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.cardsTrack.isDragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+  user-select: none;
+}
+
+/* ── Individual Department Card ── */
+.departmentCard {
+  flex: 0 0 clamp(225px, 15vw, 270px);
+  width: clamp(225px, 15vw, 270px);
+  height: 100%;
+  border-radius: 28px;
+  padding: 1.6rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.04);
+}
+
+.departmentCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 36px -8px rgba(30, 27, 75, 0.12);
+}
+
+/* Card Top Info */
+.cardTopInfo {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0.25rem;
+}
+
+.cardMetaNumber {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.cardTitle {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 1.28rem !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.3em;
+}
+
+.cardSubtitle {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.35;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Card Center Product Image */
+.cardImageContainer {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.65rem 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 20px;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.departmentCard:hover .cardImg {
+  transform: scale(1.08);
+}
+
+/* Card Bottom Info */
+.cardBottomInfo {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardBottomTitle {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.2rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardBottomSub {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #64748b;
+  margin: 0 0 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.exploreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.35rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: all 0.22s ease;
+  align-self: flex-start;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.exploreBtnDark {
+  background: #111115;
+  color: #ffffff;
+}
+
+.exploreBtnDark:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+}
+
+.exploreBtnLight {
+  background: #ffffff;
+  color: #111115;
+}
+
+.exploreBtnLight:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+}
+
+/* ── Floating Next Arrow on Right Edge of Track ── */
+.floatingNextBtn {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 6px 20px rgba(30, 27, 75, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1e1b4b;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.22s ease;
+  padding: 0;
+}
+
+.floatingNextBtn:hover {
+  background: #ffffff;
+  color: #7c3aed;
+  border-color: #c4b5fd;
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.24);
+}
+
+/* ── Bottom Progress Dots Tracker ── */
+.dotsTracker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  padding: 0.2rem 0;
+  flex-shrink: 0;
+}
+
+.dotIndicator {
+  height: 4px;
+  width: 5px;
+  border-radius: 50%;
+  background: #d8d3e5;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dotIndicator:hover {
+  background: #a78bfa;
+}
+
+.dotIndicator.activeDot {
+  width: 42px;
+  border-radius: 9999px;
+  background: #7c3aed;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.45);
+}
+
+/* ── Responsive Breakpoints ── */
+@media (max-width: 1200px) {
+  .heroGrid {
+    grid-template-columns: minmax(360px, 44vw) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .heroWrapper {
+    height: auto;
+    min-height: auto;
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    height: auto;
+  }
+
+  .everythingCard {
+    min-height: 480px;
+    height: auto;
+  }
+
+  .compositionVisual {
+    width: 60%;
+    right: 0;
+  }
+
+  .departmentCard {
+    flex: 0 0 210px;
+    width: 210px;
+    min-height: 480px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topHeaderBar {
+    justify-content: space-between;
+  }
+
+  .heroHeading {
+    font-size: 2.3rem !important;
+  }
+
+  .everythingCard {
+    padding: 1.5rem;
+    min-height: 440px;
+  }
+
+  .compositionVisual {
+    width: 68%;
+    opacity: 0.85;
+  }
+
+  .verticalChevronPill {
+    display: none;
+  }
+
+  .departmentCard {
+    flex: 0 0 195px;
+    width: 195px;
+    min-height: 440px;
+    padding: 1.2rem 1rem;
+  }
+
+  .cardImageContainer {
+    min-height: 140px;
+  }
+}

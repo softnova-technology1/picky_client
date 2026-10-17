@@ -45,6 +45,8 @@ export default function ShopSidebarFilter({
   onSelectSubCategory,
   urlMaxPrice = '',
   onSelectMaxPrice,
+  urlMinPrice = '',
+  onSelectMinPrice,
   urlMinDiscount = '',
   onSelectDiscount,
   quickFilters = {},
@@ -77,12 +79,22 @@ export default function ShopSidebarFilter({
 
   const budgetOptions = [
     { label: 'All Prices', val: '', min: 0 },
+    { label: 'Under ₹199', subtext: 'Pocket Bazaar', val: '199' },
     { label: 'Under ₹299', subtext: 'Pocket Finds', val: '299' },
     { label: 'Under ₹499', subtext: 'Daily Bazaar', val: '499' },
+    { label: 'Under ₹799', subtext: 'Style Picks', val: '799' },
     { label: 'Under ₹999', subtext: 'Festive Ethnic', val: '999' },
     { label: '₹1,000 - ₹2,500', subtext: 'Premium Picks', val: '2500' },
-    { label: '₹2,500+ Luxe', subtext: 'Heritage Special', val: '5000' },
+    { label: '₹1,099+ Luxe', subtext: 'Heritage Special', minVal: '1099' },
+    { label: '₹2,500+ Luxe', subtext: 'Ultra Premium', val: '5000' },
   ];
+
+  // Active label shown when the price section is collapsed
+  const activePriceLabel = urlMinPrice
+    ? `₹${Number(urlMinPrice).toLocaleString('en-IN')}+`
+    : urlMaxPrice
+      ? (budgetOptions.find((o) => o.val === urlMaxPrice)?.label || `Under ₹${urlMaxPrice}`)
+      : '';
 
   const discountOptions = [
     { label: '50% or more', badge: 'Mega Deal', val: '50' },
@@ -204,9 +216,9 @@ export default function ShopSidebarFilter({
                 <Coins size={12} strokeWidth={2.3} />
               </div>
               <span className="sidebar-section-title">Price & Budget</span>
-              {!openSections.price && urlMaxPrice && (
+              {!openSections.price && activePriceLabel && (
                 <span className="section-active-indicator" style={{ background: '#ecfdf5', color: '#059669' }}>
-                  Under ₹{urlMaxPrice}
+                  {activePriceLabel}
                 </span>
               )}
             </div>
@@ -218,12 +230,21 @@ export default function ShopSidebarFilter({
           {openSections.price && (
             <div className="sidebar-content-body">
               {budgetOptions.map((opt) => {
-                const isSelected = urlMaxPrice === opt.val;
+                const isMinOption = Boolean(opt.minVal);
+                const isSelected = isMinOption
+                  ? urlMinPrice === opt.minVal && !urlMaxPrice
+                  : !urlMinPrice && urlMaxPrice === opt.val;
                 return (
                   <button
                     key={opt.label}
                     type="button"
-                    onClick={() => onSelectMaxPrice(urlMaxPrice === opt.val ? '' : opt.val)}
+                    onClick={() => {
+                      if (isMinOption) {
+                        onSelectMinPrice && onSelectMinPrice(isSelected ? '' : opt.minVal);
+                      } else {
+                        onSelectMaxPrice(isSelected ? '' : opt.val);
+                      }
+                    }}
                     className={`sidebar-budget-row ${isSelected ? 'active' : ''}`}
                   >
                     <div className="budget-bullet">

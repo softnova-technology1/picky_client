@@ -62,10 +62,13 @@ export default function ShopFilterDrawer({
 
   const budgetBuckets = [
     { label: 'All Prices', val: '' },
+    { label: 'Under ₹199', val: '199' },
     { label: 'Under ₹299', val: '299' },
     { label: 'Under ₹499', val: '499' },
+    { label: 'Under ₹799', val: '799' },
     { label: 'Under ₹999', val: '999' },
     { label: '₹1,000 - ₹2,500', val: '2500' },
+    { label: '₹1,099+ Luxe', minVal: '1099' },
     { label: '₹2,500+ Luxe', val: '5000' },
   ];
 
@@ -192,12 +195,19 @@ export default function ShopFilterDrawer({
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {budgetBuckets.map((bucket) => {
-                const isSelected = filterState.maxPrice === bucket.val;
+                const isMinBucket = Boolean(bucket.minVal);
+                const isSelected = isMinBucket
+                  ? filterState.minPrice === bucket.minVal && !filterState.maxPrice
+                  : !filterState.minPrice && (filterState.maxPrice || '') === bucket.val;
                 return (
                   <button
                     key={bucket.label}
                     type="button"
-                    onClick={() => onUpdateFilter('maxPrice', bucket.val)}
+                    onClick={() =>
+                      isMinBucket
+                        ? onUpdateFilter('minPrice', isSelected ? '' : bucket.minVal)
+                        : onUpdateFilter('maxPrice', bucket.val)
+                    }
                     style={{
                       padding: '0.45rem 0.85rem',
                       borderRadius: '10px',
