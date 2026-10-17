@@ -22,6 +22,7 @@ import {
   RotateCcw,
   Eye,
   EyeOff,
+  Download,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -494,33 +495,18 @@ export default function AdminInventory() {
   };
 
   // ─── Adjust Stock & Restock Flow ───────────────────────────────────────────
+  // ─── Adjust Stock & Restock Flow (Simplified Increase / Decrease) ─────────
   const handleOpenAdjust = (item) => {
     setSelectedItem(item);
-    setAdjustTarget('available');
     setAdjustType('add');
-    setAdjustQuantity('10');
-    setAdjustReason('Restock');
-    setAdjustNote('');
+    setAdjustQuantity('5');
     setIsAdjustModalOpen(true);
   };
 
   const handleOpenRestock = (item) => {
     setSelectedItem(item);
-    setAdjustTarget('available');
     setAdjustType('add');
-    setAdjustQuantity('25');
-    setAdjustReason('Restock');
-    setAdjustNote('Quick Restock replenishment');
-    setIsAdjustModalOpen(true);
-  };
-
-  const handleOpenReserve = (item) => {
-    setSelectedItem(item);
-    setAdjustTarget('reserved');
-    setAdjustType('add');
-    setAdjustQuantity('5');
-    setAdjustReason('VIP Customer Hold');
-    setAdjustNote('');
+    setAdjustQuantity('10');
     setIsAdjustModalOpen(true);
   };
 
@@ -543,7 +529,7 @@ export default function AdminInventory() {
     setIsViewModalOpen(true);
   };
 
-  // Save Stock Adjustment
+  // Save Stock Adjustment (Simple Increase / Decrease)
   const handleSaveAdjustment = (e) => {
     e.preventDefault();
     if (!selectedItem) return;
@@ -554,94 +540,145 @@ export default function AdminInventory() {
       return;
     }
 
+    const currentAvailable = Number(selectedItem.currentStock) || 0;
+    const currentReserved = Number(selectedItem.reserved) || 0;
+    let updatedAvailable = currentAvailable;
+
+    if (adjustType === 'add') {
+      updatedAvailable = currentAvailable + qty;
+    } else {
+      if (qty > currentAvailable) {
+        showToast(`Cannot deduct ${qty} units. Current stock is only ${currentAvailable}.`, 'error');
+        return;
+      }
+      updatedAvailable = Math.max(0, currentAvailable - qty);
+    }
+
     setAdjustLoading(true);
 
-    setTimeout(() => {
-      const currentAvailable = Number(selectedItem.currentStock) || 0;
-      const currentReserved = Number(selectedItem.reserved) || 0;
-      let updatedAvailable = currentAvailable;
-      let updatedReserved = currentReserved;
+    const now = new Date();
+    const timestamp =
+      now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+      ' ' +
+      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-      if (adjustTarget === 'available') {
-        if (adjustType === 'add') {
-          updatedAvailable = currentAvailable + qty;
-        } else {
-          if (qty > currentAvailable) {
-            showToast(`Cannot remove ${qty} units. Current stock is only ${currentAvailable}.`, 'error');
-            setAdjustLoading(false);
-            return;
-          }
-          updatedAvailable = Math.max(0, currentAvailable - qty);
-        }
-      } else {
-        // adjustTarget === 'reserved'
-        if (adjustType === 'add') {
-          // Holding/reserving units from available stock
-          if (qty > currentAvailable) {
-            showToast(`Cannot reserve ${qty} units. Only ${currentAvailable} available in stock.`, 'error');
-            setAdjustLoading(false);
-            return;
-          }
-          updatedAvailable = Math.max(0, currentAvailable - qty);
-          updatedReserved = currentReserved + qty;
-        } else {
-          // Releasing held reserved units back to available stock
-          if (qty > currentReserved) {
-            showToast(`Cannot release ${qty} units. Only ${currentReserved} units currently reserved.`, 'error');
-            setAdjustLoading(false);
-            return;
-          }
-          updatedAvailable = currentAvailable + qty;
-          updatedReserved = Math.max(0, currentReserved - qty);
-        }
-      }
+    setInventoryList((prev) =>
+      prev.map((item) =>
+        item._id === selectedItem._id
+          ? {
+              ...item,
+              currentStock: updatedAvailable,
+              lastUpdated: timestamp,
+              lastReason: adjustType === 'add' ? 'Stock Added' : 'Stock Deducted',
+            }
+          : item
+      )
+    );
 
-      const now = new Date();
-      const timestamp =
-        now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
-        ' ' +
-        now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    // Update shared stock store and live backend
+    const delta = updatedAvailable - currentAvailable;
+    if (delta !== 0) {
+      storeAdjustStock(selectedItem.productId, delta);
+    }
 
-      setInventoryList((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id
-            ? {
-                ...item,
-                currentStock: updatedAvailable,
-                reserved: updatedReserved,
-                lastUpdated: timestamp,
-                lastReason: adjustReason,
-              }
-            : item
-        )
-      );
+    if (selectedItem.productId) {
+      adminService.updateInventoryStock(selectedItem.productId, {
+        quantity: updatedAvailable,
+        reserved: currentReserved,
+        reason: adjustType === 'add' ? 'Stock Restock / Increase' : 'Stock Deduction',
+      }).catch((err) => console.warn('Could not sync stock to server:', err));
+    }
 
-      // Update shared stock store and live backend
-      const delta = updatedAvailable - currentAvailable;
-      if (delta !== 0) {
-        storeAdjustStock(selectedItem.productId, delta);
-      }
+    showToast(
+      adjustType === 'add'
+        ? `Added ${qty} units to stock! New Stock: ${updatedAvailable} units`
+        : `Deducted ${qty} units from stock! New Stock: ${updatedAvailable} units`,
+      'success'
+    );
+    setAdjustLoading(false);
+    setIsAdjustModalOpen(false);
+  };
 
-      if (selectedItem.productId) {
-        adminService.updateInventoryStock(selectedItem.productId, {
-          quantity: updatedAvailable,
-          reserved: updatedReserved,
-          reason: adjustReason,
-        }).catch((err) => console.warn('Could not sync stock to server:', err));
-      }
+  // ─── Export to CSV Handler (Selected rows or All rows) ─────────────────────
+  const handleExportCSV = () => {
+    // If items are selected via checkboxes, export ONLY selected items; otherwise, export all filtered/sorted items
+    const itemsToExport = selectedIds.length > 0
+      ? inventoryList.filter((item) => selectedIds.includes(item._id))
+      : sortedItems;
 
-      const actionMsg =
-        adjustTarget === 'available'
-          ? (adjustType === 'add' ? `Added ${qty} units to available stock!` : `Removed ${qty} units from stock!`)
-          : (adjustType === 'add' ? `Reserved ${qty} units (Held for ${adjustReason})!` : `Released ${qty} reserved units back to available stock!`);
+    if (!itemsToExport || itemsToExport.length === 0) {
+      showToast('No products available to export', 'error');
+      return;
+    }
 
-      showToast(
-        `${actionMsg} Available: ${updatedAvailable}, Reserved: ${updatedReserved}`,
-        'success'
-      );
-      setAdjustLoading(false);
-      setIsAdjustModalOpen(false);
-    }, 200);
+    // CSV Headers
+    const headers = [
+      'S.No',
+      'Product Name',
+      'SKU',
+      'Category',
+      'Sub-Category',
+      'Price (INR)',
+      'Current Stock',
+      'Reserved Stock',
+      'Sold Units',
+      'Total Stock',
+      'Stock Status',
+    ];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = itemsToExport.map((item, idx) => {
+      const currentStock = Number(item.currentStock) || 0;
+      const reserved = Number(item.reserved) || 0;
+      const sold = Number(item.sold) || 0;
+      const total = currentStock + reserved + sold;
+      const status = item.isActive === false
+        ? 'Deactivated'
+        : currentStock <= 0
+        ? 'Out of Stock'
+        : currentStock <= (item.lowStockThreshold || LOW_STOCK_THRESHOLD)
+        ? 'Low Stock'
+        : 'In Stock';
+
+      return [
+        idx + 1,
+        escapeCsv(item.productName),
+        escapeCsv(item.sku),
+        escapeCsv(item.category || ''),
+        escapeCsv(item.subCategory || ''),
+        item.sellingPrice || item.price || 0,
+        currentStock,
+        reserved,
+        sold,
+        total,
+        escapeCsv(status),
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `picky_inventory_${selectedIds.length > 0 ? 'selected' : 'all'}_${dateStr}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(
+      `Exported ${itemsToExport.length} product${itemsToExport.length > 1 ? 's' : ''} to CSV!`,
+      'success'
+    );
   };
 
   // Reset all active filters
@@ -886,8 +923,8 @@ export default function AdminInventory() {
 
       {/* ─── Controls & Filter Bar ────────────────────────────────────────── */}
       <div className={styles.filterCard}>
-        <div className={styles.filterRow}>
-          {/* Search Input (White background with purple focus ring) */}
+        {/* Top Control Row: Search Input + Export / Selection Actions */}
+        <div className={styles.filterTopRow}>
           <div className={styles.searchWrap}>
             <Search size={16} className={styles.searchIcon} />
             <input
@@ -899,84 +936,7 @@ export default function AdminInventory() {
             />
           </div>
 
-          {/* Filters Group (Category + Stock Status Custom Dropdowns) */}
-          <div className={styles.filterGroup}>
-            {/* Custom Category Dropdown */}
-            <div className={styles.filterItem}>
-              <label
-                htmlFor="inv-category-select"
-                className={styles.filterLabel}
-              >
-                Category:
-              </label>
-              <Select
-                id="inv-category-select"
-                ariaLabel="Filter products by Category"
-                value={selectedCategory}
-                onChange={(val) => {
-                  setSelectedCategory(val);
-                  setSelectedSubCategory('all');
-                }}
-                options={categoryOptions}
-                minWidth="160px"
-              />
-            </div>
-
-            {/* Custom Sub-Category Dropdown */}
-            <div className={styles.filterItem}>
-              <label
-                htmlFor="inv-subcategory-select"
-                className={styles.filterLabel}
-              >
-                Sub-Category:
-              </label>
-              <Select
-                id="inv-subcategory-select"
-                ariaLabel="Filter products by Sub-Category"
-                value={selectedSubCategory}
-                onChange={(val) => setSelectedSubCategory(val)}
-                options={subCategoryOptions}
-                minWidth="170px"
-              />
-            </div>
-
-            {/* Custom Tag Dropdown */}
-            <div className={styles.filterItem}>
-              <label
-                htmlFor="inv-tag-select"
-                className={styles.filterLabel}
-              >
-                Tag:
-              </label>
-              <Select
-                id="inv-tag-select"
-                ariaLabel="Filter products by Tag"
-                value={selectedTag}
-                onChange={(val) => setSelectedTag(val)}
-                options={tagOptions}
-                minWidth="150px"
-              />
-            </div>
-
-            {/* Custom Stock Status Dropdown */}
-            <div className={styles.filterItem}>
-              <label
-                htmlFor="inv-status-select"
-                className={styles.filterLabel}
-              >
-                Stock Status:
-              </label>
-              <Select
-                id="inv-status-select"
-                ariaLabel="Filter products by Stock Status"
-                value={selectedStatus}
-                onChange={(val) => setSelectedStatus(val)}
-                options={statusOptions}
-                minWidth="175px"
-                align="right"
-              />
-            </div>
-
+          <div className={styles.filterActions}>
             {/* Selection Bar & Delete Selected Button */}
             {selectedIds.length > 0 && (
               <div className={styles.selectionGroup}>
@@ -1001,6 +961,103 @@ export default function AdminInventory() {
                 </button>
               </div>
             )}
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className={styles.btnExport}
+              title={
+                selectedIds.length > 0
+                  ? `Export ${selectedIds.length} selected product${selectedIds.length > 1 ? 's' : ''} to CSV`
+                  : 'Export all products to CSV'
+              }
+            >
+              <Download size={15} />
+              <span>
+                {selectedIds.length > 0
+                  ? `Export Selected (${selectedIds.length})`
+                  : 'Export CSV'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Filter Row: Category, Sub-Category, Tag, Stock Status */}
+        <div className={styles.filterBottomRow}>
+          {/* Custom Category Dropdown */}
+          <div className={styles.filterItem}>
+            <label
+              htmlFor="inv-category-select"
+              className={styles.filterLabel}
+            >
+              Category:
+            </label>
+            <Select
+              id="inv-category-select"
+              ariaLabel="Filter products by Category"
+              value={selectedCategory}
+              onChange={(val) => {
+                setSelectedCategory(val);
+                setSelectedSubCategory('all');
+              }}
+              options={categoryOptions}
+              minWidth="150px"
+            />
+          </div>
+
+          {/* Custom Sub-Category Dropdown */}
+          <div className={styles.filterItem}>
+            <label
+              htmlFor="inv-subcategory-select"
+              className={styles.filterLabel}
+            >
+              Sub-Category:
+            </label>
+            <Select
+              id="inv-subcategory-select"
+              ariaLabel="Filter products by Sub-Category"
+              value={selectedSubCategory}
+              onChange={(val) => setSelectedSubCategory(val)}
+              options={subCategoryOptions}
+              minWidth="160px"
+            />
+          </div>
+
+          {/* Custom Tag Dropdown */}
+          <div className={styles.filterItem}>
+            <label
+              htmlFor="inv-tag-select"
+              className={styles.filterLabel}
+            >
+              Tag:
+            </label>
+            <Select
+              id="inv-tag-select"
+              ariaLabel="Filter products by Tag"
+              value={selectedTag}
+              onChange={(val) => setSelectedTag(val)}
+              options={tagOptions}
+              minWidth="140px"
+            />
+          </div>
+
+          {/* Custom Stock Status Dropdown */}
+          <div className={styles.filterItem}>
+            <label
+              htmlFor="inv-status-select"
+              className={styles.filterLabel}
+            >
+              Stock Status:
+            </label>
+            <Select
+              id="inv-status-select"
+              ariaLabel="Filter products by Stock Status"
+              value={selectedStatus}
+              onChange={(val) => setSelectedStatus(val)}
+              options={statusOptions}
+              minWidth="160px"
+            />
           </div>
         </div>
       </div>
@@ -1079,7 +1136,7 @@ export default function AdminInventory() {
                 {/* SKU (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('sku')}
-                  className={`${styles.thSortable} ${sortConfig.key === 'sku' ? styles.thSortActive : ''}`}
+                  className={`${styles.thSku} ${styles.thSortable} ${sortConfig.key === 'sku' ? styles.thSortActive : ''}`}
                   title="Click to sort by SKU"
                 >
                   <div className={styles.thSortContent}>
@@ -1099,7 +1156,7 @@ export default function AdminInventory() {
                 {/* CATEGORY & SUB-CATEGORY (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('category')}
-                  className={`${styles.thSortable} ${sortConfig.key === 'category' ? styles.thSortActive : ''}`}
+                  className={`${styles.thCategory} ${styles.thSortable} ${sortConfig.key === 'category' ? styles.thSortActive : ''}`}
                   title="Click to sort by Category and Sub-Category"
                 >
                   <div className={styles.thSortContent}>
@@ -1119,7 +1176,7 @@ export default function AdminInventory() {
                 {/* CURRENT STOCK (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('stock')}
-                  className={`${styles.thSortableCenter} ${sortConfig.key === 'stock' ? styles.thSortActive : ''}`}
+                  className={`${styles.thStock} ${styles.thSortableCenter} ${sortConfig.key === 'stock' ? styles.thSortActive : ''}`}
                   title="Click to sort by Current Stock"
                 >
                   <div className={styles.thSortContentCenter}>
@@ -1139,7 +1196,7 @@ export default function AdminInventory() {
                 {/* RESERVED (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('reserved')}
-                  className={`${styles.thSortableCenter} ${sortConfig.key === 'reserved' ? styles.thSortActive : ''}`}
+                  className={`${styles.thReserved} ${styles.thSortableCenter} ${sortConfig.key === 'reserved' ? styles.thSortActive : ''}`}
                   title="Click to sort by Reserved orders"
                 >
                   <div className={styles.thSortContentCenter}>
@@ -1159,7 +1216,7 @@ export default function AdminInventory() {
                 {/* SOLD (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('sold')}
-                  className={`${styles.thSortableCenter} ${sortConfig.key === 'sold' ? styles.thSortActive : ''}`}
+                  className={`${styles.thSold} ${styles.thSortableCenter} ${sortConfig.key === 'sold' ? styles.thSortActive : ''}`}
                   title="Click to sort by Sold units"
                 >
                   <div className={styles.thSortContentCenter}>
@@ -1624,175 +1681,197 @@ export default function AdminInventory() {
       )}
 
       {/* ─── Adjust Stock Modal ───────────────────────────────────────────── */}
-      {isAdjustModalOpen && selectedItem && (
-        <Modal
-          isOpen={isAdjustModalOpen}
-          onClose={() => setIsAdjustModalOpen(false)}
-          title={`Adjust Stock — ${selectedItem.sku}`}
-        >
-          <form onSubmit={handleSaveAdjustment} className={styles.adjustForm}>
-            <div className={styles.adjustProductHero}>
-              <img
-                src={selectedItem.image || (selectedItem.images && selectedItem.images[0]) || ''}
-                alt={selectedItem.productName}
-                className={styles.adjustProductImage}
-              />
-              <div style={{ flex: 1 }}>
-                <strong className={styles.adjustProductTitle}>
-                  {selectedItem.productName}
-                </strong>
-                <div className={styles.adjustHeroBadges}>
-                  <span className={styles.adjustBadgeAvailable}>
-                    Available: <strong>{selectedItem.currentStock} units</strong>
-                  </span>
-                  <span className={styles.adjustBadgeReserved}>
-                    Reserved: <strong>{selectedItem.reserved || 0} units</strong>
-                  </span>
+      {/* ─── Adjust Stock Modal ───────────────────────────────────────────── */}
+      {isAdjustModalOpen && selectedItem && (() => {
+        const currentStock = Number(selectedItem.currentStock) || 0;
+        const soldCount = Number(selectedItem.sold) || 0;
+        const reservedCount = Number(selectedItem.reserved) || 0;
+        const totalStockUnits = currentStock + soldCount + reservedCount;
+        const parsedQty = parseInt(adjustQuantity, 10) || 0;
+        const previewNewStock = adjustType === 'add' ? (currentStock + parsedQty) : Math.max(0, currentStock - parsedQty);
+
+        return (
+          <Modal
+            isOpen={isAdjustModalOpen}
+            onClose={() => setIsAdjustModalOpen(false)}
+            title={`Adjust Stock — ${selectedItem.sku}`}
+            maxWidth={540}
+          >
+            <form onSubmit={handleSaveAdjustment} className={styles.adjustForm}>
+              {/* Product Hero Info */}
+              <div className={styles.adjustProductHero}>
+                <img
+                  src={selectedItem.image || (selectedItem.images && selectedItem.images[0]) || ''}
+                  alt={selectedItem.productName}
+                  className={styles.adjustProductImage}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <strong className={styles.adjustProductTitle}>
+                    {selectedItem.productName}
+                  </strong>
+                  <div className={styles.adjustProductMetaRow}>
+                    <span className={styles.adjustSkuTag}>SKU: {selectedItem.sku}</span>
+                    {selectedItem.category && (
+                      <span className={styles.adjustCatTag}>
+                        {selectedItem.category}{selectedItem.subCategory ? ` • ${selectedItem.subCategory}` : ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Target Selector: Available vs Reserved */}
-            <div>
-              <label className={styles.adjustFieldLabel}>
-                Stock Target to Adjust
-              </label>
-              <div className={styles.adjustTargetTabs}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAdjustTarget('available');
-                    setAdjustReason('Restock');
-                  }}
-                  className={`${styles.adjustTargetTab} ${adjustTarget === 'available' ? styles.adjustTargetTabActive : ''}`}
-                >
-                  <Package size={15} />
-                  <span>Available Stock (Warehouse)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAdjustTarget('reserved');
-                    setAdjustReason('VIP Customer Hold');
-                  }}
-                  className={`${styles.adjustTargetTab} ${adjustTarget === 'reserved' ? styles.adjustTargetTabReservedActive : ''}`}
-                >
-                  <Boxes size={15} />
-                  <span>Reserved Stock (Hold / Lock)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Action Type Toggle */}
-            <div>
-              <label className={styles.adjustFieldLabel}>
-                {adjustTarget === 'available' ? 'Available Stock Action' : 'Reserved Allocation Action'}
-              </label>
-              <div className={styles.adjustTypeGrid}>
-                <button
-                  type="button"
-                  onClick={() => setAdjustType('add')}
-                  className={`${styles.adjustTypeBtn} ${adjustType === 'add' ? (adjustTarget === 'reserved' ? styles.adjustTypeBtnReservedAddActive : styles.adjustTypeBtnAddActive) : ''}`}
-                >
-                  <Plus size={16} />
-                  <span>{adjustTarget === 'available' ? 'Add Stock (Restock)' : 'Hold / Reserve Units'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAdjustType('remove')}
-                  className={`${styles.adjustTypeBtn} ${adjustType === 'remove' ? styles.adjustTypeBtnRemoveActive : ''}`}
-                >
-                  <Minus size={16} />
-                  <span>{adjustTarget === 'available' ? 'Remove Stock (Deduct)' : 'Release Reserved Units'}</span>
-                </button>
-              </div>
-              <p className={styles.adjustHelperText}>
-                {adjustTarget === 'available'
-                  ? (adjustType === 'add'
-                      ? 'Adds warehouse stock available for store customers.'
-                      : 'Deducts damaged, lost, or written-off units from available stock.')
-                  : (adjustType === 'add'
-                      ? `Holds units for offline/VIP orders. Will deduct from available stock (Max available: ${selectedItem.currentStock}).`
-                      : `Releases held units back to available online store stock (Currently reserved: ${selectedItem.reserved || 0}).`)}
-              </p>
-            </div>
-
-            {/* Quantity */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label
-                  htmlFor="adjust-qty-input"
-                  className={styles.adjustFieldLabel}
-                >
-                  Quantity <span className={styles.requiredAsterisk}>*</span>
+              {/* Product Stock & Sales Overview Grid */}
+              <div>
+                <label className={styles.adjustSectionHeading}>
+                  Product Stock & Sales Overview
                 </label>
-                <span className={styles.adjustQtyMeta}>
-                  {adjustTarget === 'reserved' && adjustType === 'add'
-                    ? `Max hold: ${selectedItem.currentStock} units`
-                    : adjustTarget === 'reserved' && adjustType === 'remove'
-                    ? `Max release: ${selectedItem.reserved || 0} units`
-                    : `Current stock: ${selectedItem.currentStock} units`}
-                </span>
+                <div className={styles.productMetricsGrid}>
+                  <div className={styles.metricCardAvailable}>
+                    <span className={styles.metricCardLabel}>Available Stock</span>
+                    <strong className={styles.metricCardValAvailable}>
+                      {currentStock} <small>units</small>
+                    </strong>
+                  </div>
+                  <div className={styles.metricCardSold}>
+                    <span className={styles.metricCardLabel}>Total Sold</span>
+                    <strong className={styles.metricCardValSold}>
+                      {soldCount} <small>units</small>
+                    </strong>
+                  </div>
+                  <div className={styles.metricCardReserved}>
+                    <span className={styles.metricCardLabel}>Reserved</span>
+                    <strong className={styles.metricCardValReserved}>
+                      {reservedCount} <small>units</small>
+                    </strong>
+                  </div>
+                  <div className={styles.metricCardTotal}>
+                    <span className={styles.metricCardLabel}>Total Stock Units</span>
+                    <strong className={styles.metricCardValTotal}>
+                      {totalStockUnits} <small>units</small>
+                    </strong>
+                  </div>
+                </div>
               </div>
-              <input
-                id="adjust-qty-input"
-                ref={quantityInputRef}
-                type="number"
-                min="1"
-                required
-                value={adjustQuantity}
-                onChange={(e) => setAdjustQuantity(e.target.value)}
-                placeholder="e.g. 5"
-                className={styles.adjustInput}
-              />
-            </div>
 
-            {/* Reason */}
-            <div>
-              <label className={styles.adjustFieldLabel}>
-                Reason for Adjustment <span className={styles.requiredAsterisk}>*</span>
-              </label>
-              <select
-                value={adjustReason}
-                onChange={(e) => setAdjustReason(e.target.value)}
-                className={styles.adjustSelect}
-              >
-                {(adjustTarget === 'available' ? STOCK_ADJUST_REASONS : RESERVED_ADJUST_REASONS).map((reason) => (
-                  <option key={reason} value={reason}>
-                    {reason}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {/* Action Type Toggle: Increase vs Decrease */}
+              <div>
+                <label className={styles.adjustSectionHeading}>
+                  Adjustment Action
+                </label>
+                <div className={styles.adjustTypeGrid}>
+                  <button
+                    type="button"
+                    onClick={() => setAdjustType('add')}
+                    className={`${styles.adjustTypeBtn} ${adjustType === 'add' ? styles.adjustTypeBtnAddActive : ''}`}
+                  >
+                    <Plus size={16} />
+                    <span>Increase Stock (+ Add)</span>
+                  </button>
 
-            {/* Optional Notes */}
-            <div>
-              <label className={styles.adjustFieldLabel}>
-                Internal Audit Note (Optional)
-              </label>
-              <textarea
-                value={adjustNote}
-                onChange={(e) => setAdjustNote(e.target.value)}
-                placeholder="e.g. Held for VIP client offline collection on Saturday"
-                rows={2}
-                className={styles.adjustTextarea}
-              />
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdjustType('remove')}
+                    className={`${styles.adjustTypeBtn} ${adjustType === 'remove' ? styles.adjustTypeBtnRemoveActive : ''}`}
+                  >
+                    <Minus size={16} />
+                    <span>Decrease Stock (- Deduct)</span>
+                  </button>
+                </div>
+              </div>
 
-            <div className={styles.modalFooterActions}>
-              <Button type="button" variant="secondary" onClick={() => setIsAdjustModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" loading={adjustLoading}>
-                {adjustTarget === 'available'
-                  ? (adjustType === 'add' ? 'Add Stock' : 'Deduct Stock')
-                  : (adjustType === 'add' ? 'Confirm Reserve Hold' : 'Release Reserved')}
-              </Button>
-            </div>
-          </form>
-        </Modal>
-      )}
+              {/* Stepper Quantity & Quick Chips */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label htmlFor="adjust-qty-input" className={styles.adjustSectionHeading} style={{ margin: 0 }}>
+                    {adjustType === 'add' ? 'Units to Add' : 'Units to Deduct'}
+                  </label>
+                  <span className={styles.adjustQtyMeta}>
+                    {adjustType === 'remove' ? `Max deduct: ${currentStock} units` : `Current available: ${currentStock} units`}
+                  </span>
+                </div>
+
+                <div className={styles.stepperWrap}>
+                  <button
+                    type="button"
+                    onClick={() => setAdjustQuantity((prev) => String(Math.max(1, (parseInt(prev, 10) || 1) - 1)))}
+                    className={styles.stepperBtn}
+                    title="Decrease by 1"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <input
+                    id="adjust-qty-input"
+                    ref={quantityInputRef}
+                    type="number"
+                    min="1"
+                    max={adjustType === 'remove' ? currentStock : undefined}
+                    required
+                    value={adjustQuantity}
+                    onChange={(e) => setAdjustQuantity(e.target.value)}
+                    placeholder="Enter quantity"
+                    className={styles.stepperInput}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAdjustQuantity((prev) => String((parseInt(prev, 10) || 0) + 1))}
+                    className={styles.stepperBtn}
+                    title="Increase by 1"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                {/* Quick Increment Chips */}
+                <div className={styles.quickChipsRow}>
+                  <span className={styles.quickChipsLabel}>Quick Select:</span>
+                  {[1, 5, 10, 25, 50].map((chipVal) => (
+                    <button
+                      key={chipVal}
+                      type="button"
+                      onClick={() => setAdjustQuantity(String(chipVal))}
+                      className={`${styles.quickChipBtn} ${parseInt(adjustQuantity, 10) === chipVal ? styles.quickChipBtnActive : ''}`}
+                    >
+                      +{chipVal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Preview Calculation */}
+              <div className={`${styles.calculationPreviewCard} ${adjustType === 'add' ? styles.calcAdd : styles.calcRemove}`}>
+                <div className={styles.calcRow}>
+                  <span>Current: <strong>{currentStock} units</strong></span>
+                  <span className={styles.calcOperator}>{adjustType === 'add' ? '+' : '−'}</span>
+                  <span>{adjustType === 'add' ? 'Add' : 'Deduct'}: <strong>{parsedQty} units</strong></span>
+                  <span className={styles.calcOperator}>=</span>
+                  <span className={styles.calcResult}>
+                    New Stock: <strong>{previewNewStock} units</strong>
+                  </span>
+                </div>
+                {adjustType === 'remove' && parsedQty > currentStock && (
+                  <p className={styles.calcError}>
+                    ⚠️ Cannot deduct more units than currently available in stock ({currentStock} units).
+                  </p>
+                )}
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className={styles.modalFooterActions}>
+                <Button type="button" variant="secondary" onClick={() => setIsAdjustModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={adjustLoading}
+                  disabled={adjustType === 'remove' && parsedQty > currentStock}
+                >
+                  {adjustType === 'add' ? `Add ${parsedQty || ''} Units to Stock` : `Deduct ${parsedQty || ''} Units from Stock`}
+                </Button>
+              </div>
+            </form>
+          </Modal>
+        );
+      })()}
 
       {/* ─── View Product Overview Modal ─────────────────────────────────── */}
       {isViewModalOpen && viewProductItem && (

@@ -12,18 +12,22 @@
   border: 1.5px solid #ede8f8;
   box-shadow: 0 2px 12px rgba(124, 58, 237, 0.04);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .filterCard:hover {
   box-shadow: 0 4px 16px rgba(124, 58, 237, 0.08);
 }
 
-.filterRow {
+/* ─── Top Control Row: Search + Actions ─── */
+.filterTopRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 1rem;
+  width: 100%;
 }
 
 /* ─── Search Bar ─── */
@@ -32,7 +36,6 @@
   display: flex;
   align-items: center;
   flex: 1;
-  min-width: 280px;
 }
 
 .searchIcon {
@@ -71,18 +74,27 @@
   color: #7c3aed;
 }
 
-/* ─── Filter Controls & Selection ─── */
-.filterGroup {
+/* ─── Top Row Actions (Export + Selection Bar) ─── */
+.filterActions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ─── Bottom Filter Row: 4 Filter Dropdowns ─── */
+.filterBottomRow {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .filterItem {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .filterLabel {
@@ -141,6 +153,33 @@
 .deleteSelectedBtn:hover {
   background: #b91c1c;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ─── Export CSV Button ─── */
+.btnExport {
+  height: 42px;
+  padding: 0 1.1rem;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid #dcd0fa;
+  color: #6b21a8;
+  font-weight: 700;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.08);
+  white-space: nowrap;
+}
+
+.btnExport:hover {
+  background: #f5f0fe;
+  border-color: #7c3aed;
+  color: #5b21b6;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.16);
   transform: translateY(-1px);
 }
 
@@ -229,7 +268,6 @@
 .table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 1180px;
 }
 
 /* ─── Table Header ─── */
@@ -243,6 +281,7 @@
 
 .thCheckbox {
   width: 44px;
+  min-width: 44px;
   padding: 1rem 0.6rem 1rem 1.1rem;
   text-align: center;
   vertical-align: middle;
@@ -258,8 +297,10 @@
 
 .thSno {
   width: 56px;
+  min-width: 56px;
   padding: 1rem 0.5rem;
   text-align: center;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 0.74rem;
   font-weight: 700;
@@ -272,6 +313,7 @@
 .thProduct {
   padding: 1rem 1.25rem;
   text-align: left;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 0.74rem;
   font-weight: 700;
@@ -282,6 +324,7 @@
   user-select: none;
   background: #f5f0fe;
   transition: color 0.15s ease;
+  min-width: 220px;
 }
 
 .thProduct:hover,
@@ -292,6 +335,7 @@
 .thSortable {
   padding: 1rem 0.85rem;
   text-align: left;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 0.74rem;
   font-weight: 700;
@@ -304,9 +348,39 @@
   transition: color 0.15s ease;
 }
 
+.thSku {
+  composes: thSortable;
+  width: 130px;
+  min-width: 110px;
+}
+
+.thCategory {
+  composes: thSortable;
+  width: 200px;
+  min-width: 170px;
+}
+
 .thSortableCenter {
   composes: thSortable;
   text-align: center;
+}
+
+.thStock {
+  composes: thSortableCenter;
+  width: 130px;
+  min-width: 120px;
+}
+
+.thReserved {
+  composes: thSortableCenter;
+  width: 95px;
+  min-width: 85px;
+}
+
+.thSold {
+  composes: thSortableCenter;
+  width: 85px;
+  min-width: 75px;
 }
 
 .thSortActive {
@@ -326,33 +400,10 @@
   gap: 0.35rem;
 }
 
-.thReserved {
-  padding: 1rem 0.85rem;
-  text-align: center;
-  white-space: nowrap;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #5b21b6;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: #f5f0fe;
-}
-
-.thSold {
-  padding: 1rem 0.85rem;
-  text-align: center;
-  white-space: nowrap;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #5b21b6;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: #f5f0fe;
-}
-
 .thStatus {
   padding: 1rem 0.85rem;
   text-align: center;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 0.74rem;
   font-weight: 700;
@@ -360,11 +411,14 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   background: #f5f0fe;
+  width: 140px;
+  min-width: 130px;
 }
 
 .thAction {
-  padding: 1rem 1.5rem 1rem 0.85rem;
+  padding: 1rem 1.25rem 1rem 0.85rem;
   text-align: right;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 0.74rem;
   font-weight: 700;
@@ -372,8 +426,8 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   background: #f5f0fe;
-  width: 275px;
-  min-width: 275px;
+  width: 120px;
+  min-width: 110px;
 }
 
 /* ─── Skeleton Loading ─── */
@@ -560,6 +614,8 @@
   padding: 0.95rem 0.85rem;
   vertical-align: middle;
   white-space: nowrap;
+  width: 130px;
+  min-width: 110px;
 }
 
 .skuPill {
@@ -581,6 +637,8 @@
   padding: 0.95rem 0.85rem;
   vertical-align: middle;
   white-space: nowrap;
+  width: 200px;
+  min-width: 170px;
 }
 
 .categoryPill {
@@ -597,19 +655,21 @@
 }
 
 .categoryCellWrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
 }
 
 .subCategoryPill {
   background: #f5f3ff;
   border: 1px solid #ddd6fe;
   color: #6d28d9;
-  padding: 0.15rem 0.5rem;
-  border-radius: 5px;
-  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -631,6 +691,8 @@
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
+  width: 130px;
+  min-width: 120px;
 }
 
 .stockUnits {
@@ -652,10 +714,27 @@
 }
 
 .tdReserved {
-  padding: 0.95rem 0.85rem;
+  padding: 0.95rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
+  width: 95px;
+  min-width: 85px;
+}
+
+.reservedPillBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.reservedPillBtn:hover {
+  transform: scale(1.08);
 }
 
 .reservedPill {
@@ -672,10 +751,12 @@
 }
 
 .tdSold {
-  padding: 0.95rem 0.85rem;
+  padding: 0.95rem 0.75rem;
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
+  width: 85px;
+  min-width: 75px;
 }
 
 .soldPill {
@@ -696,6 +777,8 @@
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
+  width: 140px;
+  min-width: 130px;
 }
 
 .statusCenter {
@@ -762,11 +845,11 @@
 
 /* ─── Row Actions ─── */
 .tdAction {
-  padding: 0.95rem 1.5rem 0.95rem 0.85rem;
+  padding: 0.95rem 1.25rem 0.95rem 0.85rem;
   vertical-align: middle;
   white-space: nowrap;
-  width: 275px;
-  min-width: 275px;
+  width: 120px;
+  min-width: 110px;
   text-align: right;
 }
 
@@ -1505,4 +1588,271 @@
   color: #64748b;
   font-weight: 500;
 }
+
+/* Simplified Adjust Stock Modal Styles */
+.adjustSectionHeading {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.adjustProductMetaRow {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.adjustSkuTag {
+  background: #ede8f8;
+  color: #5b13df;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+.adjustCatTag {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+.productMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.55rem;
+}
+
+@media (max-width: 520px) {
+  .productMetricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metricCardAvailable,
+.metricCardSold,
+.metricCardReserved,
+.metricCardTotal {
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid;
+  transition: transform 0.15s ease;
+}
+
+.metricCardAvailable {
+  background: #fbf9ff;
+  border-color: #e9d5ff;
+}
+
+.metricCardSold {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.metricCardReserved {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.metricCardTotal {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.metricCardLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+}
+
+.metricCardValAvailable {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #6b21a8;
+}
+
+.metricCardValAvailable small,
+.metricCardValSold small,
+.metricCardValReserved small,
+.metricCardValTotal small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.metricCardValSold {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.metricCardValReserved {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.metricCardValTotal {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+/* Stepper Input */
+.stepperWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stepperBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid #dfd5f5;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.stepperBtn:hover {
+  background: #f3e8ff;
+  border-color: #7c3aed;
+  color: #5b13df;
+}
+
+.stepperInput {
+  flex: 1;
+  height: 44px;
+  padding: 0 0.85rem;
+  border-radius: 10px;
+  border: 1.5px solid #dfd5f5;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.stepperInput:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+/* Quick Chips */
+.quickChipsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quickChipsLabel {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 700;
+  margin-right: 0.2rem;
+}
+
+.quickChipBtn {
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.quickChipBtn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.quickChipBtnActive {
+  background: #ede8f8 !important;
+  border-color: #7c3aed !important;
+  color: #5b13df !important;
+}
+
+/* Calculation Preview Box */
+.calculationPreviewCard {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.calcAdd {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.calcRemove {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.calcRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.calcOperator {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.calcResult {
+  font-size: 0.95rem;
+}
+
+.calcResult strong {
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.calcError {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #dc2626;
+  margin: 0;
+}
+
 
