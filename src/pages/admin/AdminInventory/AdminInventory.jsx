@@ -38,6 +38,13 @@ import styles from './AdminInventory.module.css';
 
 // ─── Inventory Constants & Calculations ──────────────────────────────────────
 export const LOW_STOCK_THRESHOLD = 5;
+export const PREDEFINED_TAGS = [
+  'Limited Deals',
+  'Trending Now',
+  'New Arrivals',
+  'Best Sellers',
+  'Top Product',
+];
 export const STOCK_ADJUST_REASONS = ['Restock', 'Damage', 'Loss', 'Correction', 'Return'];
 export const RESERVED_ADJUST_REASONS = [
   'VIP Customer Hold',
@@ -123,6 +130,7 @@ export default function AdminInventory() {
               isActive: p.isActive !== undefined ? p.isActive : (inv.isActive !== undefined ? inv.isActive : true),
               lowStockThreshold: inv.lowStockThreshold ?? LOW_STOCK_THRESHOLD,
               price: p.discountPrice || p.price || 999,
+              tags: p.tags || [],
               images: p.images || [],
               image: (Array.isArray(p.images) && p.images[0]) || p.image || '',
               lastUpdated: inv.updatedAt ? new Date(inv.updatedAt).toLocaleDateString('en-GB') : 'Recently',
@@ -157,6 +165,7 @@ export default function AdminInventory() {
   const urlQ = searchParams.get('q') || '';
   const urlCategory = searchParams.get('category') || 'all';
   const urlSubCategory = searchParams.get('subCategory') || 'all';
+  const urlTag = searchParams.get('tag') || 'all';
   const urlStatus = searchParams.get('status') || 'all';
   const urlSort = searchParams.get('sort') || null;
   const urlOrder = searchParams.get('order') || null;
@@ -166,6 +175,7 @@ export default function AdminInventory() {
   const [debouncedSearch, setDebouncedSearch] = useState(urlQ);
   const [selectedCategory, setSelectedCategory] = useState(urlCategory);
   const [selectedSubCategory, setSelectedSubCategory] = useState(urlSubCategory);
+  const [selectedTag, setSelectedTag] = useState(urlTag);
   const [selectedStatus, setSelectedStatus] = useState(urlStatus); // 'all' | 'in_stock' | 'low_stock' | 'out_of_stock'
 
   // Sorting State
@@ -208,7 +218,7 @@ export default function AdminInventory() {
   const headerCheckboxRef = useRef(null);
   const tableTopRef = useRef(null);
   const quantityInputRef = useRef(null);
-  const prevFilterRef = useRef({ search: debouncedSearch, cat: selectedCategory, subCat: selectedSubCategory, status: selectedStatus });
+  const prevFilterRef = useRef({ search: debouncedSearch, cat: selectedCategory, subCat: selectedSubCategory, tag: selectedTag, status: selectedStatus });
 
   // ─── Debounce Search Input (300ms) ──────────────────────────────────────────
   useEffect(() => {
@@ -225,9 +235,10 @@ export default function AdminInventory() {
       prev.search !== debouncedSearch ||
       prev.cat !== selectedCategory ||
       prev.subCat !== selectedSubCategory ||
+      prev.tag !== selectedTag ||
       prev.status !== selectedStatus
     ) {
-      prevFilterRef.current = { search: debouncedSearch, cat: selectedCategory, subCat: selectedSubCategory, status: selectedStatus };
+      prevFilterRef.current = { search: debouncedSearch, cat: selectedCategory, subCat: selectedSubCategory, tag: selectedTag, status: selectedStatus };
       setSelectedIds([]);
       setIsAllFilteredSelected(false);
       setCurrentPage(1);
@@ -237,7 +248,7 @@ export default function AdminInventory() {
       const loadTimer = setTimeout(() => setIsLoading(false), 120);
       return () => clearTimeout(loadTimer);
     }
-  }, [debouncedSearch, selectedCategory, selectedSubCategory, selectedStatus]);
+  }, [debouncedSearch, selectedCategory, selectedSubCategory, selectedTag, selectedStatus]);
 
   // ─── Sync State with URL Query Params ──────────────────────────────────────
   useEffect(() => {
@@ -247,13 +258,14 @@ export default function AdminInventory() {
     if (debouncedSearch.trim()) params.q = debouncedSearch.trim();
     if (selectedCategory !== 'all') params.category = selectedCategory;
     if (selectedSubCategory !== 'all') params.subCategory = selectedSubCategory;
+    if (selectedTag !== 'all') params.tag = selectedTag;
     if (selectedStatus !== 'all') params.status = selectedStatus;
     if (sortConfig.key && sortConfig.direction) {
       params.sort = sortConfig.key;
       params.order = sortConfig.direction;
     }
     setSearchParams(params, { replace: true });
-  }, [currentPage, itemsPerPage, debouncedSearch, selectedCategory, selectedSubCategory, selectedStatus, sortConfig, setSearchParams]);
+  }, [currentPage, itemsPerPage, debouncedSearch, selectedCategory, selectedSubCategory, selectedTag, selectedStatus, sortConfig, setSearchParams]);
 
   // ─── Dynamically Compute KPIs from Current Inventory ───────────────────────
   const kpis = useMemo(() => calculateInventoryKPIs(inventoryList), [inventoryList]);
@@ -280,6 +292,22 @@ export default function AdminInventory() {
         selectedSubCategory === 'all' ||
         (item.subCategory && item.subCategory.toLowerCase() === selectedSubCategory.toLowerCase());
 
+      // Tag filter
+      let matchTag = true;
+      if (selectedTag !== 'all') {
+        const target = selectedTag.toLowerCase().trim();
+        if (Array.isArray(item.tags)) {
+          matchTag = item.tags.some((t) => typeof t === 'string' && t.toLowerCase().trim() === target);
+        } else if (typeof item.tags === 'string' && item.tags.trim()) {
+          matchTag = item.tags
+            .split(',')
+            .map((t) => t.toLowerCase().trim())
+            .includes(target);
+        } else {
+          matchTag = false;
+        }
+      }
+
       // Stock status filter
       if (selectedStatus === 'deactivated') {
         if (item.isActive !== false) return false;
@@ -295,9 +323,9 @@ export default function AdminInventory() {
         if (statusKey !== selectedStatus) return false;
       }
 
-      return matchSearch && matchCategory && matchSubCategory;
+      return matchSearch && matchCategory && matchSubCategory && matchTag;
     });
-  }, [inventoryList, debouncedSearch, selectedCategory, selectedSubCategory, selectedStatus]);
+  }, [inventoryList, debouncedSearch, selectedCategory, selectedSubCategory, selectedTag, selectedStatus]);
 
   // ─── Sorting Logic (Applied to full filtered list before pagination) ────────
   const sortedItems = useMemo(() => {
@@ -622,6 +650,7 @@ export default function AdminInventory() {
     setDebouncedSearch('');
     setSelectedCategory('all');
     setSelectedSubCategory('all');
+    setSelectedTag('all');
     setSelectedStatus('all');
     setSortConfig({ key: null, direction: null });
     setCurrentPage(1);
@@ -731,6 +760,32 @@ export default function AdminInventory() {
       ...allNames.map((name) => ({ value: name, label: name })),
     ];
   }, [subCategories, inventoryList, selectedCategory]);
+
+  const tagOptions = useMemo(() => {
+    const tagSet = new Set(PREDEFINED_TAGS);
+    inventoryList.forEach((item) => {
+      if (Array.isArray(item.tags)) {
+        item.tags.forEach((t) => {
+          if (t && typeof t === 'string' && t.trim()) {
+            const matched = PREDEFINED_TAGS.find((pt) => pt.toLowerCase() === t.trim().toLowerCase());
+            tagSet.add(matched || t.trim());
+          }
+        });
+      } else if (typeof item.tags === 'string' && item.tags.trim()) {
+        item.tags.split(',').forEach((t) => {
+          if (t.trim()) {
+            const matched = PREDEFINED_TAGS.find((pt) => pt.toLowerCase() === t.trim().toLowerCase());
+            tagSet.add(matched || t.trim());
+          }
+        });
+      }
+    });
+
+    return [
+      { value: 'all', label: 'All Tags' },
+      ...Array.from(tagSet).map((tagName) => ({ value: tagName, label: tagName })),
+    ];
+  }, [inventoryList]);
 
   const statusOptions = useMemo(() => {
     return [
@@ -882,6 +937,24 @@ export default function AdminInventory() {
                 onChange={(val) => setSelectedSubCategory(val)}
                 options={subCategoryOptions}
                 minWidth="170px"
+              />
+            </div>
+
+            {/* Custom Tag Dropdown */}
+            <div className={styles.filterItem}>
+              <label
+                htmlFor="inv-tag-select"
+                className={styles.filterLabel}
+              >
+                Tag:
+              </label>
+              <Select
+                id="inv-tag-select"
+                ariaLabel="Filter products by Tag"
+                value={selectedTag}
+                onChange={(val) => setSelectedTag(val)}
+                options={tagOptions}
+                minWidth="150px"
               />
             </div>
 
