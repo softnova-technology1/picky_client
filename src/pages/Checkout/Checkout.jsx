@@ -92,12 +92,72 @@ export default function Checkout() {
   const isBuyNow = searchParams.get('buyNow') === 'true' && Boolean(buyNowItem);
   const checkoutItems = isBuyNow ? [buyNowItem] : items;
 
+  // ─── Auto Stock Reservation for Checkout Lifecycle ───
+  // Immediately reserve stock whenever customer enters checkout with products!
+  const sessionIdRef = React.useRef(
+    `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  );
+  const orderCompletedRef = React.useRef(false);
+  const lastReservedKeyRef = React.useRef('');
+
+  // 1. Auto-reserve stock on mount and on item/quantity change in checkout
+  React.useEffect(() => {
+    if (checkoutItems.length === 0 || orderCompletedRef.current) return;
+
+    const payloadItems = checkoutItems.map((i) => ({
+      productId: i.productId || i._id || i.id,
+      quantity: i.quantity || 1,
+    }));
+
+    const key = JSON.stringify(payloadItems);
+    if (lastReservedKeyRef.current === key) return;
+    lastReservedKeyRef.current = key;
+
+    orderService
+      .reserveCheckout({
+        sessionId: sessionIdRef.current,
+        items: payloadItems,
+      })
+      .then(() => {
+        // Reserved in DB
+      })
+      .catch((err) => {
+        console.warn('Checkout auto-reserve notice:', err?.response?.data?.message || err?.message);
+      });
+  }, [checkoutItems]);
+
+  // 2. Release reserved stock when customer leaves / unmounts Checkout without completing order
+  React.useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!orderCompletedRef.current && sessionIdRef.current) {
+        try {
+          const payload = JSON.stringify({ sessionId: sessionIdRef.current });
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon('/api/v1/orders/checkout/release', blob);
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (!orderCompletedRef.current && sessionIdRef.current) {
+        orderService
+          .releaseCheckout({
+            sessionId: sessionIdRef.current,
+          })
+          .catch((err) => console.warn('Checkout release on unmount notice:', err));
+      }
+    };
+  }, []);
+
   // Handle quantity changes cleanly in checkout (both Buy Now and regular bag items)
   const handleUpdateItemQty = (item, newQty) => {
     if (newQty < 1) return;
     const maxStock = typeof item.stock === 'number' ? item.stock : (typeof item.countInStock === 'number' ? item.countInStock : 10);
     if (newQty > maxStock) {
-      showToast(`Only ${maxStock} units available in stock for "${item.name}"`, 'warning');
+      showToast(`Maximum available quantity reached for "${item.name}"`, 'warning');
       return;
     }
     if (isBuyNow) {
@@ -246,6 +306,7 @@ export default function Checkout() {
   // Payment processing & Razorpay Modal state
   const [loading, setLoading] = useState(false);
   const [showRzModal, setShowRzModal] = useState(false);
+  const [rzSessionId, setRzSessionId] = useState(null);
   const [rzTab, setRzTab] = useState('card');
   const [upiId, setUpiId] = useState('');
   const [showBackConfirm, setShowBackConfirm] = useState(false);
@@ -505,6 +566,7 @@ export default function Checkout() {
             totalAmount: finalPayable,
             subtotal,
             discountAmount: couponDiscount || 0,
+            sessionId: sessionIdRef.current,
           });
 
           const rzData = rzInitRes?.data?.data || rzInitRes?.data;
@@ -546,27 +608,43 @@ export default function Checkout() {
                     razorpayOrderId: response.razorpay_order_id,
                     razorpayPaymentId: response.razorpay_payment_id,
                     razorpaySignature: response.razorpay_signature,
+                    sessionId: sessionIdRef.current,
                   };
 
+                  const verifyRes = await orderService.verifyRazorpayOrder(verifyPayload);
                   const placedOrder = verifyRes?.data?.data || verifyRes?.data;
                   if (!placedOrder || (!placedOrder._id && !placedOrder.id)) {
                     throw new Error('Payment verification failed to return valid order');
                   }
 
+                  orderCompletedRef.current = true;
                   clearCart();
                   setLoading(false);
-                  showToast('🎉 Payment Successful! Order placed successfully.', 'success');
+                  showToast('🎉 Payment Successful! Order placed and marked as Sold.', 'success');
                   navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
                   return;
                 } catch (verifyErr) {
                   console.error('Razorpay verification error:', verifyErr);
+                  // Payment verification failed: Release reserved items back to available stock
+                  await orderService.releaseCheckout({
+                    sessionId: rzData.razorpayOrderId || sessionIdRef.current,
+                    items: cartPayload,
+                  }).catch(() => null);
                   setLoading(false);
-                  showToast(verifyErr?.response?.data?.message || verifyErr?.message || 'Payment verification failed. Please try again.', 'error');
+                  showToast(verifyErr?.response?.data?.message || verifyErr?.message || 'Payment verification failed. Reserved stock has been restored.', 'error');
                 }
               },
-              modal: { ondismiss: () => setLoading(false) },
+              modal: {
+                ondismiss: async () => {
+                  setLoading(false);
+                },
+              },
             };
             const rzInstance = new window.Razorpay(options);
+            rzInstance.on('payment.failed', async (failResp) => {
+              setLoading(false);
+              showToast(failResp?.error?.description || 'Payment failed.', 'error');
+            });
             rzInstance.open();
             return;
           }
@@ -578,20 +656,43 @@ export default function Checkout() {
       console.warn('Script load notice:', e);
     }
 
-    // Direct / Test Payment Modal
+    // Direct / Test Payment Modal with Checkout Stock Reservation
+    const activeSessionId = sessionIdRef.current;
+    setRzSessionId(activeSessionId);
+    try {
+      const cartPayload = checkoutItems.map((i) => ({
+        productId: i.productId || i._id || i.id,
+        quantity: i.quantity || 1,
+      }));
+      await orderService.reserveCheckout({
+        sessionId: activeSessionId,
+        items: cartPayload,
+      });
+    } catch (simResErr) {
+      console.warn('Simulated reserve notice:', simResErr?.message);
+    }
+
     setLoading(false);
     setRzTab(paymentMethod);
     setShowRzModal(true);
   };
 
+  // Cancel simulated payment modal
+  const handleCancelPayment = () => {
+    setShowRzModal(false);
+    setShowCancelPaymentConfirm(false);
+  };
+
   // Confirm Payment in Modal
   const handleConfirmSimulatedPayment = async () => {
     setShowRzModal(false);
+    const currentSessionId = rzSessionId || sessionIdRef.current;
     const startTime = Date.now();
     setLoading(true);
 
     try {
       const payload = {
+        sessionId: currentSessionId,
         items: checkoutItems.map((i) => ({
           productId: i.productId || i._id || i.id,
           name: i.name,
@@ -617,6 +718,7 @@ export default function Checkout() {
         deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
       };
 
+      orderCompletedRef.current = true;
       const res = await orderService.create(payload);
       const apiOrder = res?.data?.data || res?.data;
       if (!apiOrder || (!apiOrder._id && !apiOrder.id)) {
@@ -634,12 +736,17 @@ export default function Checkout() {
         await new Promise((r) => setTimeout(r, remainingDelay));
       }
       setLoading(false);
-      showToast('🎉 Order placed successfully!', 'success');
+      showToast('🎉 Order placed successfully! Marked as Sold.', 'success');
       navigate(`/order-success/${apiOrder._id || apiOrder.id}`);
     } catch (apiErr) {
+      orderCompletedRef.current = false;
       console.error('Backend order save error:', apiErr);
+      if (currentSessionId) {
+        // Payment failed: release reserved items
+        orderService.releaseCheckout({ sessionId: currentSessionId }).catch(() => null);
+      }
       setLoading(false);
-      showToast(apiErr?.response?.data?.message || apiErr?.message || 'Failed to place order. Please try again.', 'error');
+      showToast(apiErr?.response?.data?.message || apiErr?.message || 'Failed to place order. Reserved stock restored.', 'error');
     }
   };
 
@@ -1286,20 +1393,17 @@ export default function Checkout() {
                                       disabled={isMaxReached}
                                       onClick={() => {
                                         if (isMaxReached) {
-                                          showToast(`Max stock reached: Only ${maxStock} units available`, 'info');
+                                          showToast('Maximum available quantity reached for this item', 'info');
                                           return;
                                         }
                                         handleUpdateItemQty(item, qty + 1);
                                       }}
                                       aria-label="Increase quantity"
-                                      title={isMaxReached ? `Max stock available: ${maxStock}` : 'Increase quantity'}
+                                      title={isMaxReached ? 'Maximum available limit reached' : 'Increase quantity'}
                                     >
                                       <Plus size={12} />
                                     </button>
                                   </div>
-                                  <span className={styles['stock-pill-badge']}>
-                                    {maxStock} in stock
-                                  </span>
                                 </div>
                               );
                             })()}
@@ -1603,7 +1707,7 @@ export default function Checkout() {
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
           <button onClick={() => setShowCancelPaymentConfirm(false)} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>Continue Payment</button>
-          <button onClick={() => { setShowRzModal(false); setShowCancelPaymentConfirm(false); }} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Cancel Payment</button>
+          <button onClick={handleCancelPayment} style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Cancel Payment</button>
         </div>
       </Modal>
     </PageWrapper>

@@ -39,6 +39,14 @@ import styles from './AdminInventory.module.css';
 // ─── Inventory Constants & Calculations ──────────────────────────────────────
 export const LOW_STOCK_THRESHOLD = 5;
 export const STOCK_ADJUST_REASONS = ['Restock', 'Damage', 'Loss', 'Correction', 'Return'];
+export const RESERVED_ADJUST_REASONS = [
+  'VIP Customer Hold',
+  'Offline Order Hold',
+  'Store Display Hold',
+  'Pre-order Allocation',
+  'Release to Available Stock',
+  'Stock Audit Correction',
+];
 
 export function calculateInventoryKPIs(list = []) {
   const data = Array.isArray(list) ? list : [];
@@ -81,19 +89,21 @@ export default function AdminInventory() {
   const { showToast } = useUiStore();
   const { getInventoryList, adjustStock: storeAdjustStock } = useMockStockStore();
 
-  // Inventory list and DB categories
+  // Inventory list, DB categories and subcategories
   const [inventoryList, setInventoryList] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
 
-  // Load live inventory and categories from backend
+  // Load live inventory, categories, and subcategories from backend
   useEffect(() => {
     async function loadLiveInventory() {
       const startTime = Date.now();
       try {
         setIsLoading(true);
-        const [invRes, catRes] = await Promise.all([
+        const [invRes, catRes, subCatRes] = await Promise.all([
           adminService.getInventory({ limit: 100 }).catch(() => null),
           categoryService.list().catch(() => null),
+          categoryService.getSubCategories().catch(() => null),
         ]);
         const items = invRes ? (invRes.data?.items || invRes.data?.data || invRes.data) : [];
         if (Array.isArray(items)) {
@@ -125,6 +135,10 @@ export default function AdminInventory() {
         if (Array.isArray(cItems)) {
           setCategories(cItems);
         }
+        const sItems = subCatRes?.data || [];
+        if (Array.isArray(sItems)) {
+          setSubCategories(sItems);
+        }
       } catch (err) {
         console.warn('Could not load live inventory:', err);
         setInventoryList([]);
@@ -142,6 +156,7 @@ export default function AdminInventory() {
   const urlLimit = parseInt(searchParams.get('limit') || '10', 10);
   const urlQ = searchParams.get('q') || '';
   const urlCategory = searchParams.get('category') || 'all';
+  const urlSubCategory = searchParams.get('subCategory') || 'all';
   const urlStatus = searchParams.get('status') || 'all';
   const urlSort = searchParams.get('sort') || null;
   const urlOrder = searchParams.get('order') || null;
@@ -150,6 +165,7 @@ export default function AdminInventory() {
   const [searchInput, setSearchInput] = useState(urlQ);
   const [debouncedSearch, setDebouncedSearch] = useState(urlQ);
   const [selectedCategory, setSelectedCategory] = useState(urlCategory);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(urlSubCategory);
   const [selectedStatus, setSelectedStatus] = useState(urlStatus); // 'all' | 'in_stock' | 'low_stock' | 'out_of_stock'
 
   // Sorting State
@@ -177,6 +193,7 @@ export default function AdminInventory() {
   // Adjust Stock Modal State
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [adjustTarget, setAdjustTarget] = useState('available'); // 'available' | 'reserved'
   const [adjustType, setAdjustType] = useState('add'); // 'add' | 'remove'
   const [adjustQuantity, setAdjustQuantity] = useState('10');
   const [adjustReason, setAdjustReason] = useState('Restock');
@@ -191,7 +208,7 @@ export default function AdminInventory() {
   const headerCheckboxRef = useRef(null);
   const tableTopRef = useRef(null);
   const quantityInputRef = useRef(null);
-  const prevFilterRef = useRef({ search: debouncedSearch, cat: selectedCategory, status: selectedStatus });
+  const prevFilterRef = useRef({ search: debouncedSearch, cat: selectedCategory, subCat: selectedSubCategory, status: selectedStatus });
 
   // ─── Debounce Search Input (300ms) ──────────────────────────────────────────
   useEffect(() => {
@@ -207,9 +224,10 @@ export default function AdminInventory() {
     if (
       prev.search !== debouncedSearch ||
       prev.cat !== selectedCategory ||
+      prev.subCat !== selectedSubCategory ||
       prev.status !== selectedStatus
     ) {
-      prevFilterRef.current = { search: debouncedSearch, cat: selectedCategory, status: selectedStatus };
+      prevFilterRef.current = { search: debouncedSearch, cat: selectedCategory, subCat: selectedSubCategory, status: selectedStatus };
       setSelectedIds([]);
       setIsAllFilteredSelected(false);
       setCurrentPage(1);
@@ -219,7 +237,7 @@ export default function AdminInventory() {
       const loadTimer = setTimeout(() => setIsLoading(false), 120);
       return () => clearTimeout(loadTimer);
     }
-  }, [debouncedSearch, selectedCategory, selectedStatus]);
+  }, [debouncedSearch, selectedCategory, selectedSubCategory, selectedStatus]);
 
   // ─── Sync State with URL Query Params ──────────────────────────────────────
   useEffect(() => {
@@ -228,13 +246,14 @@ export default function AdminInventory() {
     if (itemsPerPage !== 10) params.limit = String(itemsPerPage);
     if (debouncedSearch.trim()) params.q = debouncedSearch.trim();
     if (selectedCategory !== 'all') params.category = selectedCategory;
+    if (selectedSubCategory !== 'all') params.subCategory = selectedSubCategory;
     if (selectedStatus !== 'all') params.status = selectedStatus;
     if (sortConfig.key && sortConfig.direction) {
       params.sort = sortConfig.key;
       params.order = sortConfig.direction;
     }
     setSearchParams(params, { replace: true });
-  }, [currentPage, itemsPerPage, debouncedSearch, selectedCategory, selectedStatus, sortConfig, setSearchParams]);
+  }, [currentPage, itemsPerPage, debouncedSearch, selectedCategory, selectedSubCategory, selectedStatus, sortConfig, setSearchParams]);
 
   // ─── Dynamically Compute KPIs from Current Inventory ───────────────────────
   const kpis = useMemo(() => calculateInventoryKPIs(inventoryList), [inventoryList]);
@@ -242,7 +261,7 @@ export default function AdminInventory() {
   // ─── Filter Inventory Items ────────────────────────────────────────────────
   const filteredItems = useMemo(() => {
     return inventoryList.filter((item) => {
-      // Search by Product name or SKU (case-insensitive)
+      // Search by Product name or SKU or subCategory (case-insensitive)
       const search = debouncedSearch.toLowerCase().trim();
       const matchSearch =
         !search ||
@@ -255,6 +274,11 @@ export default function AdminInventory() {
         selectedCategory === 'all' ||
         String(item.categoryId) === String(selectedCategory) ||
         (item.category && item.category.toLowerCase() === selectedCategory.toLowerCase());
+
+      // Sub-category filter
+      const matchSubCategory =
+        selectedSubCategory === 'all' ||
+        (item.subCategory && item.subCategory.toLowerCase() === selectedSubCategory.toLowerCase());
 
       // Stock status filter
       if (selectedStatus === 'deactivated') {
@@ -271,9 +295,9 @@ export default function AdminInventory() {
         if (statusKey !== selectedStatus) return false;
       }
 
-      return matchSearch && matchCategory;
+      return matchSearch && matchCategory && matchSubCategory;
     });
-  }, [inventoryList, debouncedSearch, selectedCategory, selectedStatus]);
+  }, [inventoryList, debouncedSearch, selectedCategory, selectedSubCategory, selectedStatus]);
 
   // ─── Sorting Logic (Applied to full filtered list before pagination) ────────
   const sortedItems = useMemo(() => {
@@ -444,6 +468,7 @@ export default function AdminInventory() {
   // ─── Adjust Stock & Restock Flow ───────────────────────────────────────────
   const handleOpenAdjust = (item) => {
     setSelectedItem(item);
+    setAdjustTarget('available');
     setAdjustType('add');
     setAdjustQuantity('10');
     setAdjustReason('Restock');
@@ -453,10 +478,21 @@ export default function AdminInventory() {
 
   const handleOpenRestock = (item) => {
     setSelectedItem(item);
+    setAdjustTarget('available');
     setAdjustType('add');
     setAdjustQuantity('25');
     setAdjustReason('Restock');
     setAdjustNote('Quick Restock replenishment');
+    setIsAdjustModalOpen(true);
+  };
+
+  const handleOpenReserve = (item) => {
+    setSelectedItem(item);
+    setAdjustTarget('reserved');
+    setAdjustType('add');
+    setAdjustQuantity('5');
+    setAdjustReason('VIP Customer Hold');
+    setAdjustNote('');
     setIsAdjustModalOpen(true);
   };
 
@@ -493,18 +529,43 @@ export default function AdminInventory() {
     setAdjustLoading(true);
 
     setTimeout(() => {
-      const current = Number(selectedItem.currentStock) || 0;
-      let updatedStock = current;
+      const currentAvailable = Number(selectedItem.currentStock) || 0;
+      const currentReserved = Number(selectedItem.reserved) || 0;
+      let updatedAvailable = currentAvailable;
+      let updatedReserved = currentReserved;
 
-      if (adjustType === 'add') {
-        updatedStock = current + qty;
-      } else {
-        if (qty > current) {
-          showToast(`Cannot remove ${qty} units. Current stock is only ${current}.`, 'error');
-          setAdjustLoading(false);
-          return;
+      if (adjustTarget === 'available') {
+        if (adjustType === 'add') {
+          updatedAvailable = currentAvailable + qty;
+        } else {
+          if (qty > currentAvailable) {
+            showToast(`Cannot remove ${qty} units. Current stock is only ${currentAvailable}.`, 'error');
+            setAdjustLoading(false);
+            return;
+          }
+          updatedAvailable = Math.max(0, currentAvailable - qty);
         }
-        updatedStock = Math.max(0, current - qty);
+      } else {
+        // adjustTarget === 'reserved'
+        if (adjustType === 'add') {
+          // Holding/reserving units from available stock
+          if (qty > currentAvailable) {
+            showToast(`Cannot reserve ${qty} units. Only ${currentAvailable} available in stock.`, 'error');
+            setAdjustLoading(false);
+            return;
+          }
+          updatedAvailable = Math.max(0, currentAvailable - qty);
+          updatedReserved = currentReserved + qty;
+        } else {
+          // Releasing held reserved units back to available stock
+          if (qty > currentReserved) {
+            showToast(`Cannot release ${qty} units. Only ${currentReserved} units currently reserved.`, 'error');
+            setAdjustLoading(false);
+            return;
+          }
+          updatedAvailable = currentAvailable + qty;
+          updatedReserved = Math.max(0, currentReserved - qty);
+        }
       }
 
       const now = new Date();
@@ -518,7 +579,8 @@ export default function AdminInventory() {
           item._id === selectedItem._id
             ? {
                 ...item,
-                currentStock: updatedStock,
+                currentStock: updatedAvailable,
+                reserved: updatedReserved,
                 lastUpdated: timestamp,
                 lastReason: adjustReason,
               }
@@ -527,19 +589,26 @@ export default function AdminInventory() {
       );
 
       // Update shared stock store and live backend
-      const delta = adjustType === 'add' ? qty : -qty;
-      storeAdjustStock(selectedItem.productId, delta);
+      const delta = updatedAvailable - currentAvailable;
+      if (delta !== 0) {
+        storeAdjustStock(selectedItem.productId, delta);
+      }
 
       if (selectedItem.productId) {
         adminService.updateInventoryStock(selectedItem.productId, {
-          quantity: updatedStock,
+          quantity: updatedAvailable,
+          reserved: updatedReserved,
           reason: adjustReason,
         }).catch((err) => console.warn('Could not sync stock to server:', err));
       }
 
-      const actionWord = adjustType === 'add' ? 'added to' : 'removed from';
+      const actionMsg =
+        adjustTarget === 'available'
+          ? (adjustType === 'add' ? `Added ${qty} units to available stock!` : `Removed ${qty} units from stock!`)
+          : (adjustType === 'add' ? `Reserved ${qty} units (Held for ${adjustReason})!` : `Released ${qty} reserved units back to available stock!`);
+
       showToast(
-        `Successfully ${actionWord} ${selectedItem.productName}! New stock: ${updatedStock}`,
+        `${actionMsg} Available: ${updatedAvailable}, Reserved: ${updatedReserved}`,
         'success'
       );
       setAdjustLoading(false);
@@ -552,6 +621,7 @@ export default function AdminInventory() {
     setSearchInput('');
     setDebouncedSearch('');
     setSelectedCategory('all');
+    setSelectedSubCategory('all');
     setSelectedStatus('all');
     setSortConfig({ key: null, direction: null });
     setCurrentPage(1);
@@ -629,6 +699,38 @@ export default function AdminInventory() {
       ...categories.map((c) => ({ value: c._id, label: c.name })),
     ];
   }, [categories]);
+
+  const subCategoryOptions = useMemo(() => {
+    let availableSubs = [];
+    if (selectedCategory !== 'all') {
+      availableSubs = subCategories.filter(
+        (s) => String(s.categoryId?._id || s.categoryId) === String(selectedCategory)
+      );
+      const invSubs = inventoryList
+        .filter((item) => String(item.categoryId) === String(selectedCategory) && item.subCategory)
+        .map((item) => item.subCategory);
+
+      const allNames = Array.from(new Set([
+        ...availableSubs.map((s) => s.name),
+        ...invSubs,
+      ])).filter(Boolean).sort();
+
+      return [
+        { value: 'all', label: 'All Sub-Categories' },
+        ...allNames.map((name) => ({ value: name, label: name })),
+      ];
+    }
+
+    const allNames = Array.from(new Set([
+      ...subCategories.map((s) => s.name),
+      ...inventoryList.map((item) => item.subCategory),
+    ])).filter(Boolean).sort();
+
+    return [
+      { value: 'all', label: 'All Sub-Categories' },
+      ...allNames.map((name) => ({ value: name, label: name })),
+    ];
+  }, [subCategories, inventoryList, selectedCategory]);
 
   const statusOptions = useMemo(() => {
     return [
@@ -756,9 +858,30 @@ export default function AdminInventory() {
                 id="inv-category-select"
                 ariaLabel="Filter products by Category"
                 value={selectedCategory}
-                onChange={(val) => setSelectedCategory(val)}
+                onChange={(val) => {
+                  setSelectedCategory(val);
+                  setSelectedSubCategory('all');
+                }}
                 options={categoryOptions}
-                minWidth="175px"
+                minWidth="160px"
+              />
+            </div>
+
+            {/* Custom Sub-Category Dropdown */}
+            <div className={styles.filterItem}>
+              <label
+                htmlFor="inv-subcategory-select"
+                className={styles.filterLabel}
+              >
+                Sub-Category:
+              </label>
+              <Select
+                id="inv-subcategory-select"
+                ariaLabel="Filter products by Sub-Category"
+                value={selectedSubCategory}
+                onChange={(val) => setSelectedSubCategory(val)}
+                options={subCategoryOptions}
+                minWidth="170px"
               />
             </div>
 
@@ -776,7 +899,7 @@ export default function AdminInventory() {
                 value={selectedStatus}
                 onChange={(val) => setSelectedStatus(val)}
                 options={statusOptions}
-                minWidth="185px"
+                minWidth="175px"
                 align="right"
               />
             </div>
@@ -900,14 +1023,14 @@ export default function AdminInventory() {
                   </div>
                 </th>
 
-                {/* CATEGORY (Clickable Sort) */}
+                {/* CATEGORY & SUB-CATEGORY (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('category')}
                   className={`${styles.thSortable} ${sortConfig.key === 'category' ? styles.thSortActive : ''}`}
-                  title="Click to sort by Category"
+                  title="Click to sort by Category and Sub-Category"
                 >
                   <div className={styles.thSortContent}>
-                    <span>Category</span>
+                    <span>Category / Sub-Cat</span>
                     {sortConfig.key === 'category' ? (
                       sortConfig.direction === 'asc' ? (
                         <ArrowUp size={14} color="#7c3aed" />
@@ -1133,11 +1256,22 @@ export default function AdminInventory() {
                         </span>
                       </td>
 
-                      {/* Category */}
+                      {/* Category & Sub-Category */}
                       <td className={styles.tdCategory}>
-                        <span className={styles.categoryPill}>
-                          {item.category}
-                        </span>
+                        <div className={styles.categoryCellWrap}>
+                          <span className={styles.categoryPill}>
+                            {item.category}
+                          </span>
+                          {item.subCategory && (
+                            <span
+                              className={styles.subCategoryPill}
+                              title={`Sub-Category: ${item.subCategory}`}
+                            >
+                              <span className={styles.subCategoryDot} />
+                              {item.subCategory}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Current Stock */}
@@ -1157,9 +1291,16 @@ export default function AdminInventory() {
 
                       {/* Reserved Stock */}
                       <td className={styles.tdReserved}>
-                        <span className={styles.reservedPill} title={`${item.reserved || 0} units reserved in orders`}>
-                          {item.reserved || 0}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReserve(item)}
+                          className={styles.reservedPillBtn}
+                          title={`Click to adjust/manage reserved stock (${item.reserved || 0} units currently reserved)`}
+                        >
+                          <span className={styles.reservedPill}>
+                            {item.reserved || 0}
+                          </span>
+                        </button>
                       </td>
 
                       {/* Sold Stock */}
@@ -1197,9 +1338,9 @@ export default function AdminInventory() {
                               onClick={() => handleOpenRestock(item)}
                               className={isOutOfStock ? styles.btnRestockOutOfStock : styles.btnRestockLowStock}
                               title="Quick Restock (Add Stock)"
+                              aria-label="Quick Restock"
                             >
-                              <Plus size={13} />
-                              <span>Restock</span>
+                              <Plus size={14} />
                             </button>
                           ) : (
                             <button
@@ -1207,9 +1348,9 @@ export default function AdminInventory() {
                               onClick={() => handleOpenAdjust(item)}
                               className={styles.btnAdjustStock}
                               title="Adjust Stock Quantity"
+                              aria-label="Adjust Stock Quantity"
                             >
-                              <Edit3 size={13} color="#5b13df" />
-                              <span>Adjust Stock</span>
+                              <Edit3 size={14} color="#5b13df" />
                             </button>
                           )}
 
@@ -1423,29 +1564,65 @@ export default function AdminInventory() {
                 alt={selectedItem.productName}
                 className={styles.adjustProductImage}
               />
-              <div>
+              <div style={{ flex: 1 }}>
                 <strong className={styles.adjustProductTitle}>
                   {selectedItem.productName}
                 </strong>
-                <span className={styles.adjustProductMeta}>
-                  Current Stock Level: <strong className={styles.adjustCurrentQty}>{selectedItem.currentStock} units</strong>
-                </span>
+                <div className={styles.adjustHeroBadges}>
+                  <span className={styles.adjustBadgeAvailable}>
+                    Available: <strong>{selectedItem.currentStock} units</strong>
+                  </span>
+                  <span className={styles.adjustBadgeReserved}>
+                    Reserved: <strong>{selectedItem.reserved || 0} units</strong>
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Adjustment Type Toggle */}
+            {/* Target Selector: Available vs Reserved */}
             <div>
               <label className={styles.adjustFieldLabel}>
-                Adjustment Type
+                Stock Target to Adjust
+              </label>
+              <div className={styles.adjustTargetTabs}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdjustTarget('available');
+                    setAdjustReason('Restock');
+                  }}
+                  className={`${styles.adjustTargetTab} ${adjustTarget === 'available' ? styles.adjustTargetTabActive : ''}`}
+                >
+                  <Package size={15} />
+                  <span>Available Stock (Warehouse)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdjustTarget('reserved');
+                    setAdjustReason('VIP Customer Hold');
+                  }}
+                  className={`${styles.adjustTargetTab} ${adjustTarget === 'reserved' ? styles.adjustTargetTabReservedActive : ''}`}
+                >
+                  <Boxes size={15} />
+                  <span>Reserved Stock (Hold / Lock)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Type Toggle */}
+            <div>
+              <label className={styles.adjustFieldLabel}>
+                {adjustTarget === 'available' ? 'Available Stock Action' : 'Reserved Allocation Action'}
               </label>
               <div className={styles.adjustTypeGrid}>
                 <button
                   type="button"
                   onClick={() => setAdjustType('add')}
-                  className={`${styles.adjustTypeBtn} ${adjustType === 'add' ? styles.adjustTypeBtnAddActive : ''}`}
+                  className={`${styles.adjustTypeBtn} ${adjustType === 'add' ? (adjustTarget === 'reserved' ? styles.adjustTypeBtnReservedAddActive : styles.adjustTypeBtnAddActive) : ''}`}
                 >
                   <Plus size={16} />
-                  <span>Add Stock (Restock)</span>
+                  <span>{adjustTarget === 'available' ? 'Add Stock (Restock)' : 'Hold / Reserve Units'}</span>
                 </button>
 
                 <button
@@ -1454,19 +1631,37 @@ export default function AdminInventory() {
                   className={`${styles.adjustTypeBtn} ${adjustType === 'remove' ? styles.adjustTypeBtnRemoveActive : ''}`}
                 >
                   <Minus size={16} />
-                  <span>Remove Stock (Deduct)</span>
+                  <span>{adjustTarget === 'available' ? 'Remove Stock (Deduct)' : 'Release Reserved Units'}</span>
                 </button>
               </div>
+              <p className={styles.adjustHelperText}>
+                {adjustTarget === 'available'
+                  ? (adjustType === 'add'
+                      ? 'Adds warehouse stock available for store customers.'
+                      : 'Deducts damaged, lost, or written-off units from available stock.')
+                  : (adjustType === 'add'
+                      ? `Holds units for offline/VIP orders. Will deduct from available stock (Max available: ${selectedItem.currentStock}).`
+                      : `Releases held units back to available online store stock (Currently reserved: ${selectedItem.reserved || 0}).`)}
+              </p>
             </div>
 
-            {/* Quantity with autofocus ref */}
+            {/* Quantity */}
             <div>
-              <label
-                htmlFor="adjust-qty-input"
-                className={styles.adjustFieldLabel}
-              >
-                Quantity to Adjust <span className={styles.requiredAsterisk}>*</span>
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label
+                  htmlFor="adjust-qty-input"
+                  className={styles.adjustFieldLabel}
+                >
+                  Quantity <span className={styles.requiredAsterisk}>*</span>
+                </label>
+                <span className={styles.adjustQtyMeta}>
+                  {adjustTarget === 'reserved' && adjustType === 'add'
+                    ? `Max hold: ${selectedItem.currentStock} units`
+                    : adjustTarget === 'reserved' && adjustType === 'remove'
+                    ? `Max release: ${selectedItem.reserved || 0} units`
+                    : `Current stock: ${selectedItem.currentStock} units`}
+                </span>
+              </div>
               <input
                 id="adjust-qty-input"
                 ref={quantityInputRef}
@@ -1475,7 +1670,7 @@ export default function AdminInventory() {
                 required
                 value={adjustQuantity}
                 onChange={(e) => setAdjustQuantity(e.target.value)}
-                placeholder="e.g. 10"
+                placeholder="e.g. 5"
                 className={styles.adjustInput}
               />
             </div>
@@ -1490,7 +1685,7 @@ export default function AdminInventory() {
                 onChange={(e) => setAdjustReason(e.target.value)}
                 className={styles.adjustSelect}
               >
-                {STOCK_ADJUST_REASONS.map((reason) => (
+                {(adjustTarget === 'available' ? STOCK_ADJUST_REASONS : RESERVED_ADJUST_REASONS).map((reason) => (
                   <option key={reason} value={reason}>
                     {reason}
                   </option>
@@ -1506,7 +1701,7 @@ export default function AdminInventory() {
               <textarea
                 value={adjustNote}
                 onChange={(e) => setAdjustNote(e.target.value)}
-                placeholder="e.g. Received new shipment lot from Nachiarkoil workshop"
+                placeholder="e.g. Held for VIP client offline collection on Saturday"
                 rows={2}
                 className={styles.adjustTextarea}
               />
@@ -1517,7 +1712,9 @@ export default function AdminInventory() {
                 Cancel
               </Button>
               <Button type="submit" loading={adjustLoading}>
-                Save Adjustment
+                {adjustTarget === 'available'
+                  ? (adjustType === 'add' ? 'Add Stock' : 'Deduct Stock')
+                  : (adjustType === 'add' ? 'Confirm Reserve Hold' : 'Release Reserved')}
               </Button>
             </div>
           </form>
