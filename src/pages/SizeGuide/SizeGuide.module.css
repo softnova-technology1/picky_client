@@ -1,0 +1,383 @@
+/* ─── Picky Luxury Size & Measurement Guide Styles ─── */
+
+.pageWrapper {
+  min-height: 100vh;
+  background: #fdfcfe;
+  padding-bottom: 5rem;
+}
+
+/* Hero Section */
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #0c051a 0%, #1e0938 40%, #3b0764 80%, #581c87 100%);
+  padding: 5rem 1.5rem 5.5rem;
+  text-align: center;
+  overflow: hidden;
+  color: #fff;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 2;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(216, 180, 254, 0.35);
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f3e8ff;
+  margin-bottom: 1.25rem;
+  backdrop-filter: blur(8px);
+}
+
+.title {
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.titleHighlight {
+  background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  color: #d8b4fe;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* Main Container */
+.container {
+  max-width: 1080px;
+  margin: -2rem auto 0;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 5;
+}
+
+/* Category Navigation Bar */
+.categoryBar {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.08);
+  border: 1px solid #ede9fe;
+  margin-bottom: 2.25rem;
+  scrollbar-width: thin;
+}
+
+.categoryTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.35rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.categoryTab:hover {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.categoryTabActive {
+  background: #7c3aed;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
+}
+
+/* Section Card */
+.contentCard {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #ede9fe;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.cardHeader {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #f3f0ff;
+  padding-bottom: 1.25rem;
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.cardSubtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Unit Toggle */
+.unitToggleWrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.unitToggle {
+  display: inline-flex;
+  background: #f3f0ff;
+  padding: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid #ddd6fe;
+}
+
+.unitBtn {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unitBtnActive {
+  background: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+}
+
+/* Modern Data Table */
+.tableContainer {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1.5px solid #ede9fe;
+  margin-bottom: 2rem;
+}
+
+.sizeTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.sizeTable th {
+  background: #f8f6ff;
+  color: #4c1d95;
+  font-weight: 700;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #ede9fe;
+  white-space: nowrap;
+}
+
+.sizeTable td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f0fb;
+  color: #374151;
+}
+
+.sizeTable tr:last-child td {
+  border-bottom: none;
+}
+
+.sizeTable tr:hover td {
+  background: #faf8ff;
+}
+
+.sizeBadge {
+  display: inline-block;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+/* Feature Grid for Saree / Brass Info */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.infoBox {
+  background: #fcfaff;
+  border: 1.5px solid #ede9fe;
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.infoBox:hover {
+  border-color: #c4b5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.06);
+}
+
+.infoBoxIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f3e8ff;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.infoBoxTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin-bottom: 0.5rem;
+}
+
+.infoBoxText {
+  color: #4b5563;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.infoBoxHighlight {
+  margin-top: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Measurement Instructions Guide */
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.stepCard {
+  background: #fbf9ff;
+  border: 1px solid #ede9fe;
+  border-radius: 14px;
+  padding: 1.25rem;
+  position: relative;
+}
+
+.stepNum {
+  width: 28px;
+  height: 28px;
+  background: #7c3aed;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.stepTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin-bottom: 0.35rem;
+}
+
+.stepDesc {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Care Banner */
+.careCard {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.careIcon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.careTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 0.35rem 0;
+}
+
+.careText {
+  font-size: 0.9rem;
+  color: #78350f;
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 3.5rem 1rem 4rem;
+  }
+  .container {
+    margin-top: -1.5rem;
+  }
+  .contentCard {
+    padding: 1.5rem;
+  }
+  .sizeTable th, .sizeTable td {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.85rem;
+  }
+}

@@ -11,6 +11,7 @@ import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
+import { useReviewStore } from '../../store/reviewStore';
 import { REVIEWS_DATA } from '../../data/reviewsData';
 import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye, Zap, Layers } from 'lucide-react';
 import '../../styles/home-premium.css';
@@ -201,6 +202,74 @@ export default function Home() {
   const { isLoggedIn } = useAuthStore();
   const { showToast } = useUiStore();
   const categories = useCategoryStore((state) => state.categories);
+  const storeReviews = useReviewStore((state) => state.reviews);
+  const fetchReviews = useReviewStore((state) => state.fetchReviews);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  // Dynamic vibrant gradient palette for authentic customer initial badges
+  const BADGE_GRADIENTS = useMemo(
+    () => [
+      'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+      'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)',
+      'linear-gradient(135deg, #059669 0%, #0d9488 100%)',
+      'linear-gradient(135deg, #d97706 0%, #ea580c 100%)',
+      'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+      'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)',
+    ],
+    []
+  );
+
+  // Featured reviews from admin moderation dynamically injected at top of home marquee
+  const displayReviews = useMemo(() => {
+    const featured = (storeReviews || [])
+      .filter((r) => r.isFeatured && r.status === 'published')
+      .map((r, idx) => {
+        const prodSlug =
+          r.product?.slug ||
+          r.productSlug ||
+          (typeof r.product === 'string' && r.product.length > 0 ? r.product : '') ||
+          r.product?._id ||
+          r.product?.id ||
+          '';
+
+        return {
+          id: r.id || r._id || `feat-${idx}`,
+          name: r.customer?.name || 'Verified Customer',
+          city: r.customer?.location || r.customer?.city || 'Tamil Nadu',
+          rating: Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5))),
+          comment: r.comment,
+          badgeColor: BADGE_GRADIENTS[idx % BADGE_GRADIENTS.length],
+          photos: Array.isArray(r.photos) ? r.photos.filter(Boolean) : [],
+          productSlug: prodSlug || null,
+          isRealReview: true,
+        };
+      });
+
+    const dummyReviews = REVIEWS_DATA.slice(0, 7).map((r) => ({
+      ...r,
+      photos: Array.isArray(r.photos) ? r.photos.filter(Boolean) : [],
+      isRealReview: false,
+    }));
+
+    if (featured.length > 0) {
+      return [...featured, ...dummyReviews.slice(0, Math.max(0, 8 - featured.length))];
+    }
+    return dummyReviews;
+  }, [storeReviews, BADGE_GRADIENTS]);
+
+  // Handle Review Card Click:
+  // Real customer review -> navigates to the specific product page (/products/:slug)
+  // Dummy / curated review -> navigates to Shop / Products page (/products)
+  const handleReviewClick = (rev) => {
+    if (rev?.isRealReview && rev.productSlug) {
+      navigate(`/products/${rev.productSlug}`);
+    } else {
+      navigate('/products');
+    }
+  };
 
   // Scroll ref & auto-scroll state for horizontal trending products carousel
   const trendingScrollRef = useRef(null);
@@ -899,11 +968,23 @@ export default function Home() {
         {/* Smooth Continuous Running Marquee Carousel (Full Width Edge-to-Edge) */}
         <div className="hp-reviews-carousel-wrap">
           <div className="hp-reviews-marquee-track">
-            {/* Group 1: 7 authentic Tamil Nadu style cards */}
+            {/* Group 1: Live Featured + authentic Tamil Nadu style cards */}
             <div className="hp-reviews-marquee-group">
-              {REVIEWS_DATA.slice(0, 7).map((rev, idx) => (
+              {displayReviews.map((rev, idx) => (
                 <div key={`rev-g1-${rev.id || idx}`} className="hp-review-slide-item">
-                  <div className="hp-review-card">
+                  <div
+                    className="hp-review-card"
+                    onClick={() => handleReviewClick(rev)}
+                    style={{ cursor: 'pointer' }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleReviewClick(rev);
+                      }
+                    }}
+                  >
                     <div className="hp-review-watermark">“</div>
                     
                     <div className="hp-review-card-top">
@@ -919,12 +1000,35 @@ export default function Home() {
 
                     <p className="hp-review-text">"{rev.comment}"</p>
 
+                    {/* Customer Review Attached Photos Thumbnail Row */}
+                    {Array.isArray(rev.photos) && rev.photos.length > 0 && (
+                      <div className="hp-review-photos-wrap">
+                        {rev.photos.slice(0, 3).map((imgUrl, pIdx) => (
+                          <img
+                            key={pIdx}
+                            src={imgUrl}
+                            alt={`Review attachment ${pIdx + 1}`}
+                            className="hp-review-photo-thumb"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ))}
+                        {rev.photos.length > 3 && (
+                          <span className="hp-review-photos-more">+{rev.photos.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="hp-review-footer">
                       <div
                         className="hp-review-initial-badge"
-                        style={{ background: rev.badgeColor }}
+                        style={{
+                          background: rev.badgeColor || 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+                        }}
                       >
-                        {rev.name.charAt(0).toUpperCase()}
+                        {(rev.name || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div className="hp-review-user-info">
                         <h4 className="hp-review-user-name">{rev.name}</h4>
@@ -938,9 +1042,21 @@ export default function Home() {
 
             {/* Group 2: Seamless Duplicate for Infinite Marquee */}
             <div className="hp-reviews-marquee-group" aria-hidden="true">
-              {REVIEWS_DATA.slice(0, 7).map((rev, idx) => (
+              {displayReviews.map((rev, idx) => (
                 <div key={`rev-g2-${rev.id || idx}`} className="hp-review-slide-item">
-                  <div className="hp-review-card">
+                  <div
+                    className="hp-review-card"
+                    onClick={() => handleReviewClick(rev)}
+                    style={{ cursor: 'pointer' }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleReviewClick(rev);
+                      }
+                    }}
+                  >
                     <div className="hp-review-watermark">“</div>
                     
                     <div className="hp-review-card-top">
@@ -956,12 +1072,35 @@ export default function Home() {
 
                     <p className="hp-review-text">"{rev.comment}"</p>
 
+                    {/* Customer Review Attached Photos Thumbnail Row */}
+                    {Array.isArray(rev.photos) && rev.photos.length > 0 && (
+                      <div className="hp-review-photos-wrap">
+                        {rev.photos.slice(0, 3).map((imgUrl, pIdx) => (
+                          <img
+                            key={pIdx}
+                            src={imgUrl}
+                            alt={`Review attachment ${pIdx + 1}`}
+                            className="hp-review-photo-thumb"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ))}
+                        {rev.photos.length > 3 && (
+                          <span className="hp-review-photos-more">+{rev.photos.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="hp-review-footer">
                       <div
                         className="hp-review-initial-badge"
-                        style={{ background: rev.badgeColor }}
+                        style={{
+                          background: rev.badgeColor || 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+                        }}
                       >
-                        {rev.name.charAt(0).toUpperCase()}
+                        {(rev.name || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div className="hp-review-user-info">
                         <h4 className="hp-review-user-name">{rev.name}</h4>

@@ -138,7 +138,14 @@ export const useReturnStore = create(
         });
       },
 
-      // 6. Reset or Add Return
+      // 6. Customer Self-Service Return Request
+      createReturnRequest: (newReturn) => {
+        set((state) => ({
+          returns: [newReturn, ...state.returns],
+        }));
+      },
+
+      // 7. Reset to default
       resetToDefault: () => set({ returns: INITIAL_RETURNS_DATA }),
     }),
     {

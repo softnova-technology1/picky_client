@@ -273,12 +273,6 @@ export default function AdminCoupons() {
   }
 
   useEffect(() => {
-    if (!coupons || coupons.length === 0) {
-      setCoupons([...MOCK_COUPONS]);
-    }
-    if (!discounts || discounts.length === 0) {
-      setDiscounts([...MOCK_DISCOUNTS]);
-    }
     loadData();
   }, []);
 

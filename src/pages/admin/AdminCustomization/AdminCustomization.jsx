@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Save,
   CheckCircle2,
@@ -27,17 +27,35 @@ import {
   MessageCircle,
   HelpCircle,
   Compass,
+  LayoutGrid,
+  Info,
+  PhoneCall,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Palette,
+  Type,
+  RotateCw,
+  Tag,
+  Gift,
+  Percent,
+  Megaphone,
+  RotateCcw,
+  Play,
+  Pause,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Modal from '../../../components/ui/Modal';
 import { useUiStore } from '../../../store/uiStore';
-import { useCustomizationStore } from '../../../store/customizationStore';
+import { useCustomizationStore, broadcastLivePreview } from '../../../store/customizationStore';
+import { adminService } from '../../../services/admin.service';
 import {
   MOCK_CUSTOMIZATION_PAGES,
   MOCK_PAGE_SECTIONS,
 } from '../../../data/customizationMockData';
+import './AdminCustomization.css';
 
 // ─── Icon Mapper for Pages ───────────────────────────────────────────────────
 function getPageIcon(iconName, size = 18) {
@@ -48,12 +66,24 @@ function getPageIcon(iconName, size = 18) {
       return <Home size={size} />;
     case 'ShoppingBag':
       return <ShoppingBag size={size} />;
+    case 'LayoutGrid':
+      return <LayoutGrid size={size} />;
+    case 'Sparkles':
+      return <Sparkles size={size} />;
+    case 'Flame':
+      return <Flame size={size} />;
     case 'Package':
       return <Package size={size} />;
     case 'ShoppingCart':
       return <ShoppingCart size={size} />;
     case 'Footprints':
       return <Footprints size={size} />;
+    case 'Info':
+      return <Info size={size} />;
+    case 'PhoneCall':
+      return <PhoneCall size={size} />;
+    case 'BookOpen':
+      return <BookOpen size={size} />;
     case 'FileText':
       return <FileText size={size} />;
     default:
@@ -451,84 +481,213 @@ function ImageUploadControl({ label, value, onChange }) {
 }
 
 // ─── Live Visual Section Preview Component (Shopify Style) ───────────────────
-function LiveSectionPreview({ section }) {
+function LiveSectionPreview({ section, activeLineIdx, onSelectLine }) {
   if (!section || !section.id) return null;
   const s = section.settings || {};
+  const [internalLineIdx, setInternalLineIdx] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Helper for real vector icons inside preview (supports 'none' to hide icon)
+  const renderPreviewRealIcon = (iconName) => {
+    if (!iconName || iconName === 'none' || iconName === 'None') return null;
+    const iconMap = {
+      Tag: <Tag size={13} />,
+      Truck: <Truck size={13} />,
+      Sparkles: <Sparkles size={13} />,
+      ShieldCheck: <ShieldCheck size={13} />,
+      Gift: <Gift size={13} />,
+      Flame: <Flame size={13} />,
+      Percent: <Percent size={13} />,
+      Megaphone: <Megaphone size={13} />,
+      RotateCcw: <RotateCcw size={13} />,
+      ShoppingBag: <ShoppingBag size={13} />,
+    };
+    return iconMap[iconName] || null;
+  };
+
+  // Derive announcement lines (strictly filters enabled lines)
+  const announcementLines = useMemo(() => {
+    if (section.id !== 'announcement_bar') return [];
+    if (Array.isArray(s.lines) && s.lines.length > 0) {
+      const active = s.lines.filter((l) => l && l.enabled !== false);
+      if (active.length > 0) return active;
+      return s.lines;
+    }
+    return [
+      {
+        id: 1,
+        enabled: true,
+        icon: 'Tag',
+        text: s.text || 'Flat 15% OFF on orders above ₹1,499 | Use Code: PICKY15',
+        linkText: s.linkText || 'Shop Sale',
+        linkUrl: s.linkUrl || '/shop',
+        badge: s.badge || 'FESTIVE OFFER',
+      },
+    ];
+  }, [section.id, s.lines, s.text, s.linkText, s.linkUrl, s.badge]);
+
+  // Autoplay preview rotation timer: automatically advances line every speed interval
+  useEffect(() => {
+    if (section.id !== 'announcement_bar' || announcementLines.length <= 1 || !isAutoPlaying) return;
+    const speed = Math.max(2500, s.autoplaySpeed || 4000);
+    const timer = setInterval(() => {
+      setInternalLineIdx((prev) => (prev + 1) % announcementLines.length);
+    }, speed);
+    return () => clearInterval(timer);
+  }, [section.id, announcementLines.length, s.autoplaySpeed, isAutoPlaying]);
+
+  // When a specific tab index is selected and autoplay is paused, pin to that line.
+  // Otherwise, follow the auto-advancing line index.
+  const isLinePinned = typeof activeLineIdx === 'number' && !isAutoPlaying;
+  const safeLineCount = announcementLines.length || 1;
+  const previewLineIdx = isLinePinned
+    ? activeLineIdx % safeLineCount
+    : internalLineIdx % safeLineCount;
+
+  const currentPreviewLine =
+    announcementLines[previewLineIdx] || announcementLines[0] || {};
+
+  const previewIconElement = renderPreviewRealIcon(currentPreviewLine.icon);
+
+  const handleManualLineSelect = (target) => {
+    setIsAutoPlaying(false);
+    if (typeof target === 'function') {
+      setInternalLineIdx((prev) => {
+        const nextVal = target(prev);
+        if (onSelectLine) onSelectLine(nextVal);
+        return nextVal;
+      });
+    } else {
+      setInternalLineIdx(target);
+      if (onSelectLine) onSelectLine(target);
+    }
+  };
 
   return (
-    <div
-      style={{
-        background: '#fcfaff',
-        border: '1.5px dashed #dfd5f5',
-        borderRadius: '12px',
-        padding: '1rem',
-        marginBottom: '1.25rem',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '0.75rem',
-          borderBottom: '1px solid #ede8f8',
-          paddingBottom: '0.45rem',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            color: '#7c3aed',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-          }}
-        >
+    <div className="adm-cust-preview-box">
+      <div className="adm-cust-preview-header">
+        <span className="adm-cust-preview-badge">
           <Eye size={13} /> Live Storefront Visual Preview
         </span>
-        <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-          Real-time customer view simulation
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {section.id === 'announcement_bar' && announcementLines.length > 1 && (
+            <button
+              type="button"
+              className={`adm-cust-preview-auto-btn no-hover-fx ${isAutoPlaying ? 'active' : ''}`}
+              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+              title={isAutoPlaying ? 'Pause automatic preview' : 'Resume automatic preview'}
+            >
+              {isAutoPlaying ? <Pause size={10} /> : <Play size={10} />}
+              <span>{isAutoPlaying ? 'Auto Rotating' : 'Rotate Paused'}</span>
+            </button>
+          )}
+          <span className="adm-cust-preview-subtitle">
+            Real-time customer view simulation
+          </span>
+        </div>
       </div>
 
       {/* 1. Announcement Bar Preview */}
       {section.id === 'announcement_bar' && (
-        <div
-          style={{
-            background: s.bgColor || '#7c3aed',
-            color: s.textColor || '#ffffff',
-            padding: '0.6rem 1rem',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.65rem',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            flexWrap: 'wrap',
-          }}
-        >
-          {s.badge && (
-            <span
-              style={{
-                background: 'rgba(255,255,255,0.22)',
-                padding: '1px 6px',
-                borderRadius: '4px',
-                fontSize: '0.68rem',
-                fontWeight: 800,
-              }}
-            >
-              {s.badge}
+        <div className="adm-cust-announcement-preview-wrap">
+          <div
+            className="adm-cust-announcement-preview-bar"
+            style={{
+              background: s.bgColor || '#7c3aed',
+              color: s.textColor || '#ffffff',
+              fontSize: s.fontSize || '13px',
+            }}
+          >
+            {announcementLines.length > 1 && (
+              <button
+                type="button"
+                className="adm-cust-preview-nav-btn prev no-hover-fx"
+                onClick={() =>
+                  handleManualLineSelect(
+                    (prev) => (prev - 1 + announcementLines.length) % announcementLines.length
+                  )
+                }
+                title="Preview previous line"
+                style={{ color: s.textColor || '#ffffff' }}
+              >
+                <ChevronLeft size={13} />
+              </button>
+            )}
+
+            {/* Real Lucide Icon (hidden if none) */}
+            {previewIconElement && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', opacity: 0.95 }} aria-hidden="true">
+                {previewIconElement}
+              </span>
+            )}
+
+            {currentPreviewLine.badge && (
+              <span
+                style={{
+                  background: 'rgba(255,255,255,0.22)',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {currentPreviewLine.badge}
+              </span>
+            )}
+
+            <span>
+              {currentPreviewLine.text ||
+                `Line ${(previewLineIdx % announcementLines.length) + 1} message empty`}
             </span>
-          )}
-          <span>{s.text || 'Announcement message preview'}</span>
-          {s.linkText && (
-            <span style={{ textDecoration: 'underline', fontWeight: 800 }}>
-              {s.linkText} →
-            </span>
+
+            {currentPreviewLine.linkText && (
+              <span style={{ textDecoration: 'underline', fontWeight: 800 }}>
+                {currentPreviewLine.linkText} →
+              </span>
+            )}
+
+            {announcementLines.length > 1 && (
+              <button
+                type="button"
+                className="adm-cust-preview-nav-btn next no-hover-fx"
+                onClick={() =>
+                  handleManualLineSelect(
+                    (prev) => (prev + 1) % announcementLines.length
+                  )
+                }
+                title="Preview next line"
+                style={{ color: s.textColor || '#ffffff' }}
+              >
+                <ChevronRight size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Sleek Line Indicator Dots */}
+          {announcementLines.length > 1 && (
+            <div className="adm-cust-preview-dots-row">
+              <span className="adm-cust-preview-dots-label">
+                Previewing <strong>Line {(previewLineIdx % announcementLines.length) + 1}</strong> of{' '}
+                <strong>{announcementLines.length}</strong> {isAutoPlaying ? `(Auto: ${Math.round((s.autoplaySpeed || 4000) / 1000)}s)` : '(Paused)'}
+              </span>
+              <div className="adm-cust-preview-dots-container">
+                {announcementLines.map((_, idx) => {
+                  const isActive = (previewLineIdx % announcementLines.length) === idx;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`adm-cust-preview-dot-btn no-hover-fx ${isActive ? 'active' : 'inactive'}`}
+                      onClick={() => handleManualLineSelect(idx)}
+                      title={`Jump to Line ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -767,8 +926,11 @@ export default function AdminCustomization() {
     setPageSections: storeSavePageSections,
   } = useCustomizationStore();
 
-  // Active Selected Page (Header, Home, Shop, PDP, Cart, Footer, Content)
-  const [activePageId, setActivePageId] = useState('home');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Valid page IDs from configuration
+  const validPageIds = useMemo(() => MOCK_CUSTOMIZATION_PAGES.map((p) => p.id), []);
+  const firstPageId = MOCK_CUSTOMIZATION_PAGES[0]?.id || 'global_header';
 
   // Baseline and Working copies of all page sections
   const [allPageSections, setAllPageSections] = useState(() => {
@@ -776,6 +938,19 @@ export default function AdminCustomization() {
   });
   const [savedPageSections, setSavedPageSections] = useState(() => {
     return storePageSections || MOCK_PAGE_SECTIONS;
+  });
+
+  // Active Selected Page (Header, Home, Shop, PDP, Cart, Footer, Content)
+  // Initializes to the page from URL query string if present, otherwise defaults to the first page (global_header)
+  const [activePageId, setActivePageId] = useState(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramPage = urlParams.get('page');
+      if (paramPage && MOCK_CUSTOMIZATION_PAGES.some((p) => p.id === paramPage)) {
+        return paramPage;
+      }
+    } catch (e) {}
+    return firstPageId;
   });
 
   // Current active page's section list
@@ -788,10 +963,89 @@ export default function AdminCustomization() {
   }, [savedPageSections, activePageId]);
 
   // Active Section Selection within the active page
+  // Initializes to the section from URL query string if present and valid, otherwise defaults to the first section of activePageId
   const [activeSectionId, setActiveSectionId] = useState(() => {
-    const list = (storePageSections || MOCK_PAGE_SECTIONS)['home'] || [];
-    return list[0]?.id || 'hero_banner';
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramPage = urlParams.get('page');
+      const initialPage = (paramPage && MOCK_CUSTOMIZATION_PAGES.some((p) => p.id === paramPage))
+        ? paramPage
+        : firstPageId;
+      const list = (storePageSections || MOCK_PAGE_SECTIONS)[initialPage] || [];
+      const paramSec = urlParams.get('section');
+      if (paramSec && list.some((s) => s.id === paramSec)) {
+        return paramSec;
+      }
+      return list[0]?.id || 'announcement_bar';
+    } catch (e) {}
+    const initialList = (storePageSections || MOCK_PAGE_SECTIONS)[firstPageId] || [];
+    return initialList[0]?.id || 'announcement_bar';
   });
+
+  // Keep URL search parameters synchronized with active page and section
+  useEffect(() => {
+    const urlPage = searchParams.get('page');
+    const urlSec = searchParams.get('section');
+    if (urlPage !== activePageId || urlSec !== activeSectionId) {
+      setSearchParams({ page: activePageId, section: activeSectionId }, { replace: true });
+    }
+  }, [activePageId, activeSectionId, searchParams, setSearchParams]);
+
+  // Handle direct sidebar clicks or browser back/forward navigation
+  useEffect(() => {
+    const urlPage = searchParams.get('page');
+    const urlSec = searchParams.get('section');
+
+    if (!urlPage) {
+      // Sidebar clicked / navigated to /admin/customization without query params
+      const firstSec = (allPageSections[firstPageId] || [])[0]?.id || 'announcement_bar';
+      if (activePageId !== firstPageId) {
+        setActivePageId(firstPageId);
+      }
+      if (activeSectionId !== firstSec) {
+        setActiveSectionId(firstSec);
+      }
+      setSearchParams({ page: firstPageId, section: firstSec }, { replace: true });
+    } else if (urlPage !== activePageId && validPageIds.includes(urlPage)) {
+      setActivePageId(urlPage);
+      const pageSecs = allPageSections[urlPage] || [];
+      const targetSec = (urlSec && pageSecs.some((s) => s.id === urlSec)) ? urlSec : (pageSecs[0]?.id || '');
+      if (targetSec && targetSec !== activeSectionId) {
+        setActiveSectionId(targetSec);
+      }
+    } else if (urlSec && urlSec !== activeSectionId) {
+      const pageSecs = allPageSections[activePageId] || [];
+      if (pageSecs.some((s) => s.id === urlSec)) {
+        setActiveSectionId(urlSec);
+      }
+    }
+  }, [searchParams, activePageId, activeSectionId, allPageSections, firstPageId, validPageIds, setSearchParams]);
+
+  // Fetch customizations from server if available on mount
+  useEffect(() => {
+    let mounted = true;
+    adminService
+      .getCustomizations()
+      .then((res) => {
+        if (!mounted) return;
+        const data = res?.data || res;
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          setAllPageSections((prev) => ({ ...prev, ...data }));
+          setSavedPageSections((prev) => ({ ...prev, ...data }));
+          Object.entries(data).forEach(([pId, secs]) => {
+            if (Array.isArray(secs) && secs.length > 0) {
+              storeSavePageSections(pId, secs);
+            }
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend customizations fetch note (using local cache):', err?.message || err);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Saving states
   const [isSavingOrder, setIsSavingOrder] = useState(false);
@@ -816,6 +1070,9 @@ export default function AdminCustomization() {
   // Drag and drop state
   const [draggedIdx, setDraggedIdx] = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  // Active Announcement Bar line tab (0, 1, 2, or 3)
+  const [activeAnnouncementLineIdx, setActiveAnnouncementLineIdx] = useState(0);
 
   // Active section objects
   const currentSection = currentSections.find((s) => s.id === activeSectionId) || currentSections[0] || {};
@@ -907,6 +1164,14 @@ export default function AdminCustomization() {
       [activePageId]: updated,
     }));
 
+    // Immediately propagate to persistent store so client storefront toggles in real-time
+    storeSavePageSections(activePageId, updated);
+
+    // Sync to backend DB in background
+    adminService.updateCustomization(activePageId, updated).catch((err) => {
+      console.warn('Background toggle sync note:', err?.message || err);
+    });
+
     if (toggledName) {
       showToast(`${toggledName} is now ${nextState ? 'Enabled' : 'Hidden'}`, 'info');
     }
@@ -938,7 +1203,187 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
+    // Instant live preview broadcast to all open storefront tabs
+    broadcastLivePreview(activePageId, updated);
   };
+
+
+  // Route URL format validator
+  const validateRouteUrl = (url) => {
+    if (!url || !url.trim()) return null;
+    const trimmed = url.trim();
+    if (trimmed.startsWith('/') || trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('#')) {
+      return null;
+    }
+    return 'URL should begin with "/" (e.g. /shop) or "https://" for external link';
+  };
+
+  // Helper for updating 4 individual lines of the Announcement Bar
+  const handleUpdateAnnouncementLine = (lineIdx, field, val) => {
+    setLastSavedSectionTimeMap((prev) => {
+      if (!prev[activeSectionId]) return prev;
+      const copy = { ...prev };
+      delete copy[activeSectionId];
+      return copy;
+    });
+
+    const defaultLines = [
+      {
+        id: 1,
+        enabled: true,
+        icon: 'Tag',
+        text: 'Flat 15% OFF on orders above ₹1,499 | Use Code: PICKY15',
+        linkText: 'Shop Sale',
+        linkUrl: '/shop',
+        badge: 'FESTIVE OFFER',
+      },
+      {
+        id: 2,
+        enabled: true,
+        icon: 'Truck',
+        text: 'Free Express Shipping across Tamil Nadu on orders above ₹999',
+        linkText: 'Shipping Info',
+        linkUrl: '/shipping-policy',
+        badge: 'FREE DELIVERY',
+      },
+      {
+        id: 3,
+        enabled: true,
+        icon: 'Sparkles',
+        text: 'Swamimalai Pure Brass Vilakku & Handloom Madurai Sungudi Drops',
+        linkText: 'Explore New',
+        linkUrl: '/new-arrivals',
+        badge: 'NEW ARRIVALS',
+      },
+      {
+        id: 4,
+        enabled: true,
+        icon: 'ShieldCheck',
+        text: '7-Day Easy Doorstep Replacement Guarantee on all handlooms',
+        linkText: 'Know More',
+        linkUrl: '/returns',
+        badge: 'EASY RETURNS',
+      },
+    ];
+
+    const currentLines =
+      Array.isArray(currentSection.settings?.lines) && currentSection.settings.lines.length > 0
+        ? currentSection.settings.lines
+        : defaultLines;
+
+    const updatedLines = [0, 1, 2, 3].map((idx) => {
+      const existing = currentLines[idx] || defaultLines[idx] || { id: idx + 1, enabled: true, text: '', linkText: '', linkUrl: '', badge: '' };
+      if (idx === lineIdx) {
+        return { ...existing, [field]: val };
+      }
+      return existing;
+    });
+
+    const updated = currentSections.map((s) => {
+      if (s.id === activeSectionId) {
+        return {
+          ...s,
+          settings: {
+            ...s.settings,
+            lines: updatedLines,
+            // Keep backwards-compatibility fields synchronized with Line 1
+            ...(lineIdx === 0 ? { [field]: val } : {}),
+          },
+        };
+      }
+      return s;
+    });
+
+    setAllPageSections((prev) => ({
+      ...prev,
+      [activePageId]: updated,
+    }));
+    // Instant live preview broadcast to all open storefront tabs
+    broadcastLivePreview(activePageId, updated);
+  };
+
+  // Helper for quick-setting 1, 2, 3, or 4 active announcement lines on storefront
+  const handleQuickSetLineCount = (targetCount) => {
+    setLastSavedSectionTimeMap((prev) => {
+      if (!prev[activeSectionId]) return prev;
+      const copy = { ...prev };
+      delete copy[activeSectionId];
+      return copy;
+    });
+
+    const defaultLines = [
+      {
+        id: 1,
+        enabled: true,
+        icon: 'Tag',
+        text: 'Flat 15% OFF on orders above ₹1,499 | Use Code: PICKY15',
+        linkText: 'Shop Sale',
+        linkUrl: '/shop',
+        badge: 'FESTIVE OFFER',
+      },
+      {
+        id: 2,
+        enabled: true,
+        icon: 'Truck',
+        text: 'Free Express Shipping across Tamil Nadu on orders above ₹999',
+        linkText: 'Shipping Info',
+        linkUrl: '/shipping-policy',
+        badge: 'FREE DELIVERY',
+      },
+      {
+        id: 3,
+        enabled: true,
+        icon: 'Sparkles',
+        text: 'Swamimalai Pure Brass Vilakku & Handloom Madurai Sungudi Drops',
+        linkText: 'Explore New',
+        linkUrl: '/new-arrivals',
+        badge: 'NEW ARRIVALS',
+      },
+      {
+        id: 4,
+        enabled: true,
+        icon: 'ShieldCheck',
+        text: '7-Day Easy Doorstep Replacement Guarantee on all handlooms',
+        linkText: 'Know More',
+        linkUrl: '/returns',
+        badge: 'EASY RETURNS',
+      },
+    ];
+
+    const currentLines =
+      Array.isArray(currentSection.settings?.lines) && currentSection.settings.lines.length > 0
+        ? currentSection.settings.lines
+        : defaultLines;
+
+    const updatedLines = [0, 1, 2, 3].map((idx) => {
+      const existing = currentLines[idx] || defaultLines[idx] || { id: idx + 1, enabled: true, text: '', linkText: '', linkUrl: '', badge: '' };
+      return {
+        ...existing,
+        enabled: idx < targetCount,
+      };
+    });
+
+    const updated = currentSections.map((s) => {
+      if (s.id === activeSectionId) {
+        return {
+          ...s,
+          settings: {
+            ...s.settings,
+            lines: updatedLines,
+          },
+        };
+      }
+      return s;
+    });
+
+    setAllPageSections((prev) => ({
+      ...prev,
+      [activePageId]: updated,
+    }));
+    broadcastLivePreview(activePageId, updated);
+    showToast(`Showing ${targetCount} active line${targetCount > 1 ? 's' : ''} on storefront`, 'info');
+  };
+
 
   // Switch Page Guard
   const handleSelectPage = (pageId) => {
@@ -950,8 +1395,12 @@ export default function AdminCustomization() {
     } else {
       setActivePageId(pageId);
       const pageSectionsList = allPageSections[pageId] || [];
-      if (pageSectionsList.length > 0) {
-        setActiveSectionId(pageSectionsList[0].id);
+      const nextSec = pageSectionsList.length > 0 ? pageSectionsList[0].id : '';
+      if (nextSec) {
+        setActiveSectionId(nextSec);
+        setSearchParams({ page: pageId, section: nextSec }, { replace: true });
+      } else {
+        setSearchParams({ page: pageId }, { replace: true });
       }
     }
   };
@@ -965,6 +1414,7 @@ export default function AdminCustomization() {
       setIsConfirmModalOpen(true);
     } else {
       setActiveSectionId(sectionId);
+      setSearchParams({ page: activePageId, section: sectionId }, { replace: true });
     }
   };
 
@@ -978,16 +1428,25 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: reverted,
     }));
+    storeSavePageSections(activePageId, reverted);
+
 
     if (pendingAction) {
       if (pendingAction.type === 'page') {
-        setActivePageId(pendingAction.targetId);
-        const nextList = allPageSections[pendingAction.targetId] || [];
-        if (nextList.length > 0) {
-          setActiveSectionId(nextList[0].id);
+        const targetPage = pendingAction.targetId;
+        setActivePageId(targetPage);
+        const nextList = allPageSections[targetPage] || [];
+        const nextSec = nextList.length > 0 ? nextList[0].id : '';
+        if (nextSec) {
+          setActiveSectionId(nextSec);
+          setSearchParams({ page: targetPage, section: nextSec }, { replace: true });
+        } else {
+          setSearchParams({ page: targetPage }, { replace: true });
         }
       } else if (pendingAction.type === 'section') {
-        setActiveSectionId(pendingAction.targetId);
+        const targetSec = pendingAction.targetId;
+        setActiveSectionId(targetSec);
+        setSearchParams({ page: activePageId, section: targetSec }, { replace: true });
       }
     }
 
@@ -1000,7 +1459,12 @@ export default function AdminCustomization() {
   const handleSaveOrderAndVisibility = async () => {
     setIsSavingOrder(true);
     try {
-      await adminService.updateCustomization(activePageId, currentSections);
+      try {
+        await adminService.updateCustomization(activePageId, currentSections);
+      } catch (apiErr) {
+        console.warn('Backend customization sync warning (saved locally to store):', apiErr);
+      }
+
       setSavedPageSections((prev) => ({
         ...prev,
         [activePageId]: [...currentSections],
@@ -1013,6 +1477,7 @@ export default function AdminCustomization() {
       }));
       showToast('🎉 Section order & visibility saved!', 'success');
     } catch (err) {
+      console.error('Save order and visibility error:', err);
       showToast('Failed to save customization', 'error');
     } finally {
       setIsSavingOrder(false);
@@ -1029,7 +1494,11 @@ export default function AdminCustomization() {
         s.id === activeSectionId ? { ...s, settings: { ...currentSection.settings } } : s
       );
 
-      await adminService.updateCustomization(activePageId, updatedSaved);
+      try {
+        await adminService.updateCustomization(activePageId, updatedSaved);
+      } catch (apiErr) {
+        console.warn('Backend customization sync warning (saved locally to store):', apiErr);
+      }
 
       setSavedPageSections((prev) => ({
         ...prev,
@@ -1043,6 +1512,7 @@ export default function AdminCustomization() {
       }));
       showToast(`🎉 Changes to ${currentSection.name} saved!`, 'success');
     } catch (err) {
+      console.error('Save section error:', err);
       showToast('Failed to save section changes', 'error');
     } finally {
       setIsSavingSection(false);
@@ -1065,7 +1535,7 @@ export default function AdminCustomization() {
     return validateCtaLink(currentSection.settings?.linkUrl);
   }, [currentSection]);
 
-  const activePageMeta = MOCK_CUSTOMIZATION_PAGES.find((p) => p.id === activePageId) || MOCK_CUSTOMIZATION_PAGES[1];
+  const activePageMeta = MOCK_CUSTOMIZATION_PAGES.find((p) => p.id === activePageId) || MOCK_CUSTOMIZATION_PAGES[0];
 
   const globalPages = MOCK_CUSTOMIZATION_PAGES.filter((p) => p.group === 'GLOBAL');
   const storefrontPages = MOCK_CUSTOMIZATION_PAGES.filter((p) => p.group === 'STOREFRONT');
@@ -1073,118 +1543,59 @@ export default function AdminCustomization() {
 
   return (
     <AdminLayout title="Store Customization">
-      {/* ─── Top Control Header ───────────────────────────────────────────── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.25rem',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '1px solid #f1f5f9',
-        }}
-      >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+      <div className="admin-customization-container">
+        {/* ─── Top Control Header ───────────────────────────────────────────── */}
+        <div className="adm-cust-header">
+        <div className="adm-cust-header-text">
+          <div className="adm-cust-header-title-row">
+            <h2 className="adm-cust-header-title">
               Storefront Customization & Visual Editor
             </h2>
-            <span
-              style={{
-                background: '#ede8f8',
-                color: '#7c3aed',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                padding: '2px 8px',
-                borderRadius: '6px',
-                border: '1px solid #dfd5f5',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <span className="adm-cust-header-badge">
               <Sparkles size={12} /> PICKY THEME ENGINE
             </span>
           </div>
-          <span style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '3px', display: 'block' }}>
+          <span className="adm-cust-header-subtitle">
             Customize global store branding, homepage sections, catalog layout, product details, and store policies
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="adm-cust-header-actions">
           {lastSavedOrderTimeMap[activePageId] && (
-            <span
-              style={{
-                fontSize: '0.78rem',
-                color: '#16a34a',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#f0fdf4',
-                padding: '5px 12px',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0',
-              }}
-            >
+            <span className="adm-cust-saved-indicator">
               <CheckCircle2 size={14} color="#16a34a" />
-              {formatRelativeTime(lastSavedOrderTimeMap[activePageId], clockTick)}
+              <span>{formatRelativeTime(lastSavedOrderTimeMap[activePageId], clockTick)}</span>
             </span>
           )}
 
           <Link
             to="/"
             target="_blank"
-            className="admin-period-select-btn"
-            style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', textDecoration: 'none', fontWeight: 600 }}
+            className="adm-cust-btn-preview no-hover-fx"
             title="Open customer storefront in a new tab"
           >
             <ExternalLink size={14} />
             <span>Preview Store</span>
           </Link>
 
-          <Button
+          <button
+            type="button"
+            className="adm-cust-btn-save-order no-hover-fx"
             onClick={handleSaveOrderAndVisibility}
-            loading={isSavingOrder}
-            style={{
-              padding: '0.52rem 1.35rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
-            }}
+            disabled={isSavingOrder}
+            title="Save Section Order & Visibility for this page"
           >
             <Save size={15} />
-            <span>Save Section Order & Visibility</span>
-          </Button>
+            <span>{isSavingOrder ? 'Saving...' : 'Save Section Order & Visibility'}</span>
+          </button>
         </div>
       </div>
 
-      {/* ─── 3-Panel Unified Grid Layout (Height-Matched & Balanced) ───────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '280px 380px 1fr',
-          gap: '1.25rem',
-          alignItems: 'stretch',
-          minHeight: 'calc(100vh - 175px)',
-        }}
-      >
+      {/* ─── 3-Panel Unified Grid Layout ────────────────────────────────────── */}
+      <div className="adm-cust-3panel-grid">
         {/* ── PANEL 1: Store Area Selector (Left Nav) ── */}
-        <div
-          className="card"
-          style={{
-            padding: '1.15rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '1.25rem',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="card adm-cust-panel-nav">
+          <div className="adm-cust-nav-groups">
             {/* Global Store */}
             <div>
               <span
@@ -1411,6 +1822,7 @@ export default function AdminCustomization() {
           {/* Quick Info Box at bottom of Panel 1 */}
           <div
             style={{
+              marginTop: 'auto',
               background: '#faf8fe',
               border: '1px solid #ede8f8',
               borderRadius: '10px',
@@ -1432,12 +1844,15 @@ export default function AdminCustomization() {
 
         {/* ── PANEL 2: Page Sections List (Middle Panel) ── */}
         <div
-          className="card"
+          className="card adm-cust-panel-sections"
           style={{
             padding: '1.25rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            height: '100%',
+            marginBottom: 0,
+            boxSizing: 'border-box',
           }}
         >
           <div>
@@ -1577,7 +1992,7 @@ export default function AdminCustomization() {
 
           <div
             style={{
-              marginTop: '1.25rem',
+              marginTop: 'auto',
               paddingTop: '0.75rem',
               borderTop: '1px solid #f1f5f9',
               display: 'flex',
@@ -1599,16 +2014,29 @@ export default function AdminCustomization() {
 
         {/* ── PANEL 3: Live Customizer & Form (Right Panel) ── */}
         <div
-          className="card"
+          className="card adm-cust-panel-editor"
           style={{
             padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%',
+            marginBottom: 0,
+            boxSizing: 'border-box',
           }}
         >
           {currentSection.id ? (
-            <>
-              {/* Header */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                flex: 1,
+                minHeight: '100%',
+              }}
+            >
+              <div>
+                {/* Header */}
               <div
                 style={{
                   display: 'flex',
@@ -1671,52 +2099,582 @@ export default function AdminCustomization() {
               </div>
 
               {/* Real-time Visual Preview Mockup Box */}
-              <LiveSectionPreview section={currentSection} />
+              <LiveSectionPreview
+                section={currentSection}
+                activeLineIdx={activeAnnouncementLineIdx}
+                onSelectLine={setActiveAnnouncementLineIdx}
+              />
 
               {/* Dynamic Form Controls */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {/* 1. Announcement Bar */}
-                {currentSection.id === 'announcement_bar' && (
-                  <>
-                    <Input
-                      label="Announcement Message"
-                      value={currentSection.settings?.text || ''}
-                      onChange={(e) => handleUpdateSetting('text', e.target.value)}
-                      placeholder="e.g. Free Shipping across Tamil Nadu on orders above ₹1,499"
-                    />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Action Button Label"
-                        value={currentSection.settings?.linkText || ''}
-                        onChange={(e) => handleUpdateSetting('linkText', e.target.value)}
-                        placeholder="e.g. Shop Sale"
-                      />
-                      <div>
+                {/* 1. Announcement Bar Form Controls (Clean Luxury Layout) */}
+                {currentSection.id === 'announcement_bar' && (() => {
+                  const defaultLines = [
+                    {
+                      id: 1,
+                      icon: 'Tag',
+                      text: 'Flat 15% OFF on orders above ₹1,499 | Use Code: PICKY15',
+                      linkText: 'Shop Sale',
+                      linkUrl: '/shop',
+                      badge: 'FESTIVE OFFER',
+                    },
+                    {
+                      id: 2,
+                      icon: 'Truck',
+                      text: 'Free Express Shipping across Tamil Nadu on orders above ₹999',
+                      linkText: 'Shipping Info',
+                      linkUrl: '/shipping-policy',
+                      badge: 'FREE DELIVERY',
+                    },
+                    {
+                      id: 3,
+                      icon: 'Sparkles',
+                      text: 'Swamimalai Pure Brass Vilakku & Handloom Madurai Sungudi Drops',
+                      linkText: 'Explore New',
+                      linkUrl: '/new-arrivals',
+                      badge: 'NEW ARRIVALS',
+                    },
+                    {
+                      id: 4,
+                      icon: 'ShieldCheck',
+                      text: '7-Day Easy Doorstep Replacement Guarantee on all handlooms',
+                      linkText: 'Know More',
+                      linkUrl: '/returns',
+                      badge: 'EASY RETURNS',
+                    },
+                  ];
+
+                  const rawLines =
+                    Array.isArray(currentSection.settings?.lines) && currentSection.settings.lines.length > 0
+                      ? currentSection.settings.lines
+                      : defaultLines;
+
+                  const linesList = [0, 1, 2, 3].map(
+                    (i) => rawLines[i] || defaultLines[i] || { id: i + 1, enabled: true, text: '', linkText: '', linkUrl: '', badge: '' }
+                  );
+                  const curLine = (typeof activeAnnouncementLineIdx === 'number' && linesList[activeAnnouncementLineIdx])
+                    ? linesList[activeAnnouncementLineIdx]
+                    : linesList[0];
+
+                  const activeLinesCount = linesList.filter((l) => l.enabled !== false).length;
+
+                  const availableIcons = [
+                    { id: 'none', label: 'None (No Icon)', icon: <span style={{ fontSize: '11px', opacity: 0.7 }}>🚫</span> },
+                    { id: 'Tag', label: 'Offer', icon: <Tag size={13} /> },
+                    { id: 'Truck', label: 'Shipping', icon: <Truck size={13} /> },
+                    { id: 'Sparkles', label: 'New / Drops', icon: <Sparkles size={13} /> },
+                    { id: 'ShieldCheck', label: 'Guarantee', icon: <ShieldCheck size={13} /> },
+                    { id: 'Gift', label: 'Gift', icon: <Gift size={13} /> },
+                    { id: 'Flame', label: 'Trending', icon: <Flame size={13} /> },
+                    { id: 'Percent', label: 'Discount', icon: <Percent size={13} /> },
+                    { id: 'Megaphone', label: 'Alert', icon: <Megaphone size={13} /> },
+                    { id: 'RotateCcw', label: 'Returns', icon: <RotateCcw size={13} /> },
+                    { id: 'ShoppingBag', label: 'Shop', icon: <ShoppingBag size={13} /> },
+                  ];
+
+                  const colorPresets = [
+                    { label: 'Royal Purple', hex: '#7c3aed' },
+                    { label: 'Deep Indigo', hex: '#4c1d95' },
+                    { label: 'Midnight Navy', hex: '#1e1b4b' },
+                    { label: 'Obsidian Slate', hex: '#0f172a' },
+                    { label: 'Festive Crimson', hex: '#be123c' },
+                    { label: 'Forest Emerald', hex: '#059669' },
+                    { label: 'Warm Amber', hex: '#b45309' },
+                    { label: 'Ruby Red', hex: '#e11d48' },
+                  ];
+
+                  const textPresets = [
+                    { label: 'Crisp White', hex: '#ffffff' },
+                    { label: 'Soft Gold', hex: '#fef08a' },
+                    { label: 'Lavender Tint', hex: '#e9d5ff' },
+                    { label: 'Warm Peach', hex: '#fed7aa' },
+                    { label: 'Mint Glow', hex: '#a7f3d0' },
+                  ];
+
+                  const fontSizeOptions = [
+                    { label: '11px (Tiny)', value: '11px' },
+                    { label: '12px (Compact)', value: '12px' },
+                    { label: '13px (Default)', value: '13px' },
+                    { label: '14px (Medium)', value: '14px' },
+                    { label: '15px (Large)', value: '15px' },
+                  ];
+
+                  const speedOptions = [
+                    { label: '3s (Fast)', value: 3000 },
+                    { label: '4s (Default)', value: 4000 },
+                    { label: '5s (Relaxed)', value: 5000 },
+                    { label: '6s (Slow)', value: 6000 },
+                  ];
+
+                  const quickRoutes = [
+                    { label: '🛍️ All Products (/shop)', url: '/shop' },
+                    { label: '✨ New Arrivals (/new-arrivals)', url: '/new-arrivals' },
+                    { label: '🔥 Best Sellers (/best-sellers)', url: '/best-sellers' },
+                    { label: '📦 Categories (/categories)', url: '/categories' },
+                    { label: '🚚 Shipping Policy (/shipping-policy)', url: '/shipping-policy' },
+                    { label: '🔄 Returns (/returns)', url: '/returns' },
+                    { label: '📞 Contact Us (/contact-us)', url: '/contact-us' },
+                    { label: '📖 Artisan Blog (/blog)', url: '/blog' },
+                  ];
+
+                  const quickBadges = [
+                    'None',
+                    'FESTIVE OFFER',
+                    'FREE DELIVERY',
+                    'NEW ARRIVALS',
+                    'EASY RETURNS',
+                    'LIMITED DROP',
+                    'TODAY ONLY',
+                  ];
+
+                  const renderLineFields = (lineItem, lineIdx, isStacked = false) => {
+                    const isLineOn = lineItem.enabled !== false;
+                    return (
+                      <div
+                        key={lineIdx}
+                        className={isStacked ? `adm-cust-line-card-stacked ${!isLineOn ? 'is-disabled' : ''}` : ''}
+                        style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', paddingTop: isStacked ? '0' : '0.2rem' }}
+                      >
+                        {/* Line Header & Enable/Disable Toggle Switch (Answers Point 1) */}
+                        <div className={`adm-cust-line-status-banner ${isLineOn ? 'is-on' : 'is-off'}`}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className={`adm-cust-tab-status-dot ${isLineOn ? 'on' : 'off'}`} />
+                            <div>
+                              <strong style={{ fontSize: '0.82rem', color: isLineOn ? '#15803d' : '#64748b' }}>
+                                Line {lineIdx + 1} Status: {isLineOn ? 'ACTIVE (Visible in Ticker)' : 'HIDDEN (Paused)'}
+                              </strong>
+                              <span style={{ fontSize: '0.71rem', color: '#64748b', display: 'block' }}>
+                                {isLineOn
+                                  ? 'This message is currently running on the customer announcement bar.'
+                                  : 'This message is disabled and will not show on the customer website.'}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className={`adm-cust-line-toggle-btn no-hover-fx ${isLineOn ? 'active' : ''}`}
+                            onClick={() => handleUpdateAnnouncementLine(lineIdx, 'enabled', !isLineOn)}
+                            title={isLineOn ? 'Click to disable this line' : 'Click to enable this line'}
+                          >
+                            {isLineOn ? '✓ Line is ON' : '✕ Line is OFF'}
+                          </button>
+                        </div>
+
+                        {/* Vector Icon Row with 'none' option (Answers Point 2) */}
+                        <div className="adm-cust-icons-container">
+                          <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span>✨</span> Line Icon (Lucide Vector):
+                          </label>
+                          <div className="adm-cust-icons-row">
+                            {availableIcons.map((ic) => {
+                              const isSelected =
+                                ic.id === 'none'
+                                  ? (lineItem.icon === 'none' || !lineItem.icon)
+                                  : lineItem.icon === ic.id;
+                              return (
+                                <button
+                                  key={ic.id}
+                                  type="button"
+                                  className={`adm-cust-icon-pill-btn no-hover-fx ${isSelected ? 'active' : ''}`}
+                                  onClick={() =>
+                                    handleUpdateAnnouncementLine(lineIdx, 'icon', ic.id)
+                                  }
+                                >
+                                  {ic.icon}
+                                  <span>{ic.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Announcement Text Input (Answers Point 3) */}
                         <Input
-                          label="Destination URL"
-                          value={currentSection.settings?.linkUrl || ''}
-                          onChange={(e) => handleUpdateSetting('linkUrl', e.target.value)}
-                          placeholder="e.g. /shop"
-                          error={announcementLinkError}
+                          label={`Announcement Message (Line ${lineIdx + 1})`}
+                          value={lineItem.text || ''}
+                          onChange={(e) =>
+                            handleUpdateAnnouncementLine(lineIdx, 'text', e.target.value)
+                          }
+                          placeholder={`e.g. Line ${lineIdx + 1} promotional announcement message`}
                         />
+
+                        {/* Action Button & Destination URL */}
+                        <div className="adm-cust-two-col-grid">
+                          <Input
+                            label="Action Button Label"
+                            value={lineItem.linkText || ''}
+                            onChange={(e) =>
+                              handleUpdateAnnouncementLine(lineIdx, 'linkText', e.target.value)
+                            }
+                            placeholder="e.g. Shop Sale / Know More"
+                          />
+                          <div>
+                            <Input
+                              label="Destination Page URL"
+                              value={lineItem.linkUrl || ''}
+                              onChange={(e) =>
+                                handleUpdateAnnouncementLine(lineIdx, 'linkUrl', e.target.value)
+                              }
+                              placeholder="e.g. /shop, /shipping-policy, /returns"
+                              error={validateRouteUrl(lineItem.linkUrl)}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Quick Route Selector Dropdown */}
+                        <div className="adm-cust-quick-route-row">
+                          <span className="adm-cust-quick-route-label">
+                            ⚡ Quick Set Store URL:
+                          </span>
+                          <select
+                            className="adm-cust-quick-route-select"
+                            value={quickRoutes.some((r) => r.url === lineItem.linkUrl) ? lineItem.linkUrl : ''}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleUpdateAnnouncementLine(lineIdx, 'linkUrl', e.target.value);
+                              }
+                            }}
+                          >
+                            <option value="">Choose a store page from list...</option>
+                            {quickRoutes.map((rt) => (
+                              <option key={rt.url} value={rt.url}>
+                                {rt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Promotional Badge & Presets with Aligned Clear Button (Answers Point 4) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingTop: '0.4rem', borderTop: '1px solid #f1f5f9' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155' }}>
+                              Promotional Badge Tag (Optional)
+                            </label>
+                            {lineItem.badge ? (
+                              <button
+                                type="button"
+                                className="adm-cust-clear-badge-btn-aligned no-hover-fx"
+                                onClick={() => handleUpdateAnnouncementLine(lineIdx, 'badge', '')}
+                                title="Remove badge"
+                              >
+                                ✕ Clear Badge
+                              </button>
+                            ) : null}
+                          </div>
+
+                          <div style={{ position: 'relative', width: '100%' }}>
+                            <input
+                              type="text"
+                              className="form-input"
+                              value={lineItem.badge || ''}
+                              onChange={(e) =>
+                                handleUpdateAnnouncementLine(lineIdx, 'badge', e.target.value)
+                              }
+                              placeholder="e.g. FESTIVE OFFER, FREE DELIVERY (or select None below)"
+                              style={{ width: '100%', paddingRight: lineItem.badge ? '32px' : '12px' }}
+                            />
+                            {lineItem.badge && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateAnnouncementLine(lineIdx, 'badge', '')}
+                                title="Clear badge"
+                                style={{
+                                  position: 'absolute',
+                                  right: '8px',
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#94a3b8',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 700,
+                                  padding: '2px 4px',
+                                  lineHeight: 1,
+                                }}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Quick Badge Chips + Subtle Tip */}
+                          <div className="adm-cust-badge-presets-container">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.69rem', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                              {quickBadges.map((badgeTxt) => {
+                                const isBadgeActive = badgeTxt === 'None' ? (!lineItem.badge || lineItem.badge === 'None') : lineItem.badge === badgeTxt;
+                                return (
+                                  <button
+                                    key={badgeTxt}
+                                    type="button"
+                                    className={`adm-cust-badge-preset-btn no-hover-fx ${isBadgeActive ? 'active' : ''}`}
+                                    onClick={() =>
+                                      handleUpdateAnnouncementLine(lineIdx, 'badge', badgeTxt === 'None' ? '' : badgeTxt)
+                                    }
+                                  >
+                                    {badgeTxt === 'None' ? '🚫 None' : badgeTxt}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <span style={{ fontSize: '0.69rem', color: '#94a3b8' }}>
+                              Eye-catching pill tag shown before text (select None or clear to hide).
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                      {/* ── CARD 1: Announcement Messages (4 Lines) ── */}
+                      <div className="adm-cust-form-card">
+                        {/* Header & Status */}
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <div className="adm-cust-form-card-title">
+                              <Megaphone size={16} color="#7c3aed" />
+                              <span>Announcement Messages (4 Lines)</span>
+                            </div>
+                            <span className="adm-cust-form-card-subtitle">
+                              Configure up to 4 promotional ticker messages. Toggle each line ON or OFF to choose which lines scroll on the customer storefront.
+                            </span>
+                          </div>
+                          <span className="adm-cust-active-line-tag">
+                            {activeAnnouncementLineIdx === 'all'
+                              ? `Viewing All 4 Lines (${activeLinesCount} Active)`
+                              : `Active: Line ${activeAnnouncementLineIdx + 1} of 4 (${linesList[activeAnnouncementLineIdx]?.enabled !== false ? 'ON' : 'OFF'})`}
+                          </span>
+                        </div>
+
+                        {/* Quick Active Line Count Selector (Answers Point 1) */}
+                        <div className="adm-cust-line-count-bar">
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Sparkles size={14} color="#7c3aed" /> Display on Storefront:
+                          </span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {[1, 2, 3, 4].map((count) => {
+                              const isActive = activeLinesCount === count;
+                              return (
+                                <button
+                                  key={count}
+                                  type="button"
+                                  className={`adm-cust-line-count-btn no-hover-fx ${isActive ? 'active' : ''}`}
+                                  onClick={() => handleQuickSetLineCount(count)}
+                                  title={`Display only ${count} line${count > 1 ? 's' : ''} on client storefront`}
+                                >
+                                  {count} {count === 1 ? 'Line' : 'Lines'}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: 'auto' }}>
+                            Currently showing: <strong style={{ color: '#7c3aed' }}>{activeLinesCount} of 4</strong> lines
+                          </span>
+                        </div>
+
+                        {/* Segmented Line Switcher Tabs (Answers Point 3: All 4 Lines accessible) */}
+                        <div className="adm-cust-line-tabs-grid">
+                          {linesList.map((line, idx) => {
+                            const isSelected = activeAnnouncementLineIdx === idx;
+                            const isLineOn = line.enabled !== false;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                className={`adm-cust-line-tab-btn no-hover-fx ${isSelected ? 'active' : ''}`}
+                                onClick={() => setActiveAnnouncementLineIdx(idx)}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                  <span className={`adm-cust-tab-status-dot ${isLineOn ? 'on' : 'off'}`} />
+                                  <span>Line {idx + 1}</span>
+                                  <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isLineOn ? '#15803d' : '#94a3b8' }}>
+                                    {isLineOn ? 'ON' : 'OFF'}
+                                  </span>
+                                </div>
+                                {line.badge && (
+                                  <span className="adm-cust-line-badge-pill">
+                                    {line.badge.length > 7 ? line.badge.substring(0, 7) + '..' : line.badge}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            className={`adm-cust-line-tab-btn no-hover-fx ${activeAnnouncementLineIdx === 'all' ? 'active' : ''}`}
+                            onClick={() => setActiveAnnouncementLineIdx('all')}
+                            style={{ fontWeight: 800 }}
+                          >
+                            <span>📋 All 4 Lines</span>
+                          </button>
+                        </div>
+
+                        {/* Render Fields: Either selected line or all 4 lines stacked */}
+                        {activeAnnouncementLineIdx === 'all' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingTop: '0.5rem' }}>
+                            {linesList.map((line, idx) => renderLineFields(line, idx, true))}
+                          </div>
+                        ) : (
+                          renderLineFields(curLine, typeof activeAnnouncementLineIdx === 'number' ? activeAnnouncementLineIdx : 0, false)
+                        )}
+                      </div>
+
+
+                      {/* ── CARD 2: Bar Appearance, Colors & Typography ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-title">
+                          <Palette size={16} color="#7c3aed" />
+                          <span>Bar Styling, Colors & Timing</span>
+                        </div>
+
+                        {/* Background & Text Colors */}
+                        <div className="adm-cust-two-col-grid">
+                          {/* Background Color */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155' }}>
+                              Bar Background Color
+                            </label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <input
+                                type="color"
+                                value={currentSection.settings?.bgColor || '#7c3aed'}
+                                onChange={(e) => handleUpdateSetting('bgColor', e.target.value)}
+                                style={{
+                                  width: '38px',
+                                  height: '36px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #cbd5e1',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  background: '#ffffff',
+                                  flexShrink: 0,
+                                }}
+                                title="Pick custom background color"
+                              />
+                              <Input
+                                value={currentSection.settings?.bgColor || '#7c3aed'}
+                                onChange={(e) => handleUpdateSetting('bgColor', e.target.value)}
+                                placeholder="#7c3aed"
+                                style={{ fontFamily: 'monospace', fontWeight: 600 }}
+                              />
+                            </div>
+                            <div className="adm-cust-color-row">
+                              {colorPresets.map((preset) => {
+                                const isCurrent = (currentSection.settings?.bgColor || '#7c3aed').toLowerCase() === preset.hex.toLowerCase();
+                                return (
+                                  <button
+                                    key={preset.hex}
+                                    type="button"
+                                    className={`adm-cust-color-dot-btn no-hover-fx ${isCurrent ? 'active' : ''}`}
+                                    style={{ background: preset.hex }}
+                                    onClick={() => handleUpdateSetting('bgColor', preset.hex)}
+                                    title={preset.label}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Text Color */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155' }}>
+                              Text & Action Button Color
+                            </label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <input
+                                type="color"
+                                value={currentSection.settings?.textColor || '#ffffff'}
+                                onChange={(e) => handleUpdateSetting('textColor', e.target.value)}
+                                style={{
+                                  width: '38px',
+                                  height: '36px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #cbd5e1',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  background: '#ffffff',
+                                  flexShrink: 0,
+                                }}
+                                title="Pick custom text color"
+                              />
+                              <Input
+                                value={currentSection.settings?.textColor || '#ffffff'}
+                                onChange={(e) => handleUpdateSetting('textColor', e.target.value)}
+                                placeholder="#ffffff"
+                                style={{ fontFamily: 'monospace', fontWeight: 600 }}
+                              />
+                            </div>
+                            <div className="adm-cust-color-row">
+                              {textPresets.map((preset) => {
+                                const isCurrent = (currentSection.settings?.textColor || '#ffffff').toLowerCase() === preset.hex.toLowerCase();
+                                return (
+                                  <button
+                                    key={preset.hex}
+                                    type="button"
+                                    className={`adm-cust-color-dot-btn no-hover-fx ${isCurrent ? 'active' : ''}`}
+                                    style={{ background: preset.hex }}
+                                    onClick={() => handleUpdateSetting('textColor', preset.hex)}
+                                    title={preset.label}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Font Size & Rotation Speed */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9' }}>
+                          {/* Font Size */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <Type size={14} /> Text Font Size
+                            </label>
+                            <div className="adm-cust-pills-row">
+                              {fontSizeOptions.map((opt) => {
+                                const isCurrent = (currentSection.settings?.fontSize || '13px') === opt.value;
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    className={`adm-cust-option-pill-btn no-hover-fx ${isCurrent ? 'active' : ''}`}
+                                    onClick={() => handleUpdateSetting('fontSize', opt.value)}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Autoplay Speed */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <RotateCw size={14} /> Rotation Speed
+                            </label>
+                            <div className="adm-cust-pills-row">
+                              {speedOptions.map((opt) => {
+                                const isCurrent = (currentSection.settings?.autoplaySpeed || 4000) === opt.value;
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    className={`adm-cust-option-pill-btn no-hover-fx ${isCurrent ? 'active' : ''}`}
+                                    onClick={() => handleUpdateSetting('autoplaySpeed', opt.value)}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Promotional Badge Text"
-                        value={currentSection.settings?.badge || ''}
-                        onChange={(e) => handleUpdateSetting('badge', e.target.value)}
-                        placeholder="e.g. FESTIVE OFFER"
-                      />
-                      <Input
-                        label="Bar Background Color"
-                        value={currentSection.settings?.bgColor || '#7c3aed'}
-                        onChange={(e) => handleUpdateSetting('bgColor', e.target.value)}
-                        placeholder="#7c3aed"
-                      />
-                    </div>
-                  </>
-                )}
+                  );
+                })()}
 
                 {/* 2. Main Navigation Header */}
                 {currentSection.id === 'main_header_nav' && (
@@ -2484,51 +3442,180 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {/* Section-level Save Button */}
-                <div
+                {/* 15. Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, About Us, Contact Us, Blog & others */}
+                {![
+                  'announcement_bar',
+                  'main_header_nav',
+                  'sticky_action_bar',
+                  'hero_banner',
+                  'flash_deals',
+                  'categories_showcase',
+                  'trending_picks',
+                  'best_sellers_preview',
+                  'why_picky',
+                  'newsletter_popup',
+                  'shop_catalog_layout',
+                  'shop_filters',
+                  'shop_sorting',
+                  'shop_product_card',
+                  'pdp_image_gallery',
+                  'pdp_delivery_estimator',
+                  'pdp_stock_urgency',
+                  'pdp_trust_guarantee',
+                  'free_shipping_goal_bar',
+                  'cart_coupons_strip',
+                  'cart_trust_security',
+                  'cart_upsell_carousel',
+                  'footer_config',
+                  'about_us_content',
+                  'contact_support_content',
+                  'policies_terms_content',
+                ].includes(currentSection.id) && currentSection.settings && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {Object.entries(currentSection.settings).map(([key, val]) => {
+                      const label = key
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/_/g, ' ')
+                        .replace(/^./, (str) => str.toUpperCase());
+
+                      if (typeof val === 'boolean') {
+                        return (
+                          <div
+                            key={key}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.65rem 0.85rem',
+                              background: '#faf8fe',
+                              borderRadius: '10px',
+                              border: '1px solid #ede8f8',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#1e1b4b' }}>
+                              {label}
+                            </span>
+                            <AccessibleToggleSwitch
+                              enabled={val}
+                              onToggle={() => handleUpdateSetting(key, !val)}
+                              label={label}
+                              id={`dyn_${key}`}
+                            />
+                          </div>
+                        );
+                      }
+
+                      if (typeof val === 'number') {
+                        return (
+                          <Input
+                            key={key}
+                            label={label}
+                            type="number"
+                            value={val}
+                            onChange={(e) => handleUpdateSetting(key, Number(e.target.value))}
+                          />
+                        );
+                      }
+
+                      if (
+                        typeof val === 'string' &&
+                        (val.length > 50 ||
+                          key.toLowerCase().includes('body') ||
+                          key.toLowerCase().includes('story') ||
+                          key.toLowerCase().includes('quote') ||
+                          key.toLowerCase().includes('desc') ||
+                          key.toLowerCase().includes('subheading') ||
+                          key.toLowerCase().includes('subtitle'))
+                      ) {
+                        return (
+                          <div key={key}>
+                            <label
+                              style={{
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#1e1b4b',
+                                display: 'block',
+                                marginBottom: '0.4rem',
+                              }}
+                            >
+                              {label}
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={val}
+                              onChange={(e) => handleUpdateSetting(key, e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1px solid #dfd5f5',
+                                fontSize: '0.88rem',
+                                fontFamily: 'inherit',
+                                outline: 'none',
+                              }}
+                            />
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Input
+                          key={key}
+                          label={label}
+                          value={val || ''}
+                          onChange={(e) => handleUpdateSetting(key, e.target.value)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Section-level Save Button (pinned cleanly to bottom) */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                marginTop: 'auto',
+                gap: '0.75rem',
+                borderTop: '1px solid #f1f5f9',
+                paddingTop: '1.25rem',
+              }}
+            >
+              {lastSavedSectionTimeMap[activeSectionId] && !hasCurrentSectionEdits && (
+                <span
                   style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
+                    fontSize: '0.78rem',
+                    color: '#16a34a',
+                    fontWeight: 600,
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    marginTop: '1.25rem',
-                    gap: '0.75rem',
-                    borderTop: '1px solid #f1f5f9',
-                    paddingTop: '1rem',
+                    gap: '4px',
                   }}
                 >
-                  {lastSavedSectionTimeMap[activeSectionId] && !hasCurrentSectionEdits && (
-                    <span
-                      style={{
-                        fontSize: '0.78rem',
-                        color: '#16a34a',
-                        fontWeight: 600,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <CheckCircle2 size={13} color="#16a34a" />
-                      {formatRelativeTime(lastSavedSectionTimeMap[activeSectionId], clockTick)}
-                    </span>
-                  )}
+                  <CheckCircle2 size={13} color="#16a34a" />
+                  {formatRelativeTime(lastSavedSectionTimeMap[activeSectionId], clockTick)}
+                </span>
+              )}
 
-                  <Button
-                    onClick={handleSaveCurrentSection}
-                    disabled={!hasCurrentSectionEdits || isSavingSection}
-                    loading={isSavingSection}
-                    style={{
-                      fontWeight: 700,
-                      opacity: !hasCurrentSectionEdits ? 0.6 : 1,
-                      cursor: !hasCurrentSectionEdits ? 'not-allowed' : 'pointer',
-                      padding: '0.55rem 1.4rem',
-                    }}
-                  >
-                    Save Changes to {currentSection.name}
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
+              <Button
+                onClick={handleSaveCurrentSection}
+                disabled={!hasCurrentSectionEdits || isSavingSection}
+                loading={isSavingSection}
+                style={{
+                  fontWeight: 700,
+                  opacity: !hasCurrentSectionEdits ? 0.6 : 1,
+                  cursor: !hasCurrentSectionEdits ? 'not-allowed' : 'pointer',
+                  padding: '0.55rem 1.4rem',
+                }}
+              >
+                Save Changes to {currentSection.name}
+              </Button>
+            </div>
+          </div>
+        ) : (
             <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#94a3b8', margin: 'auto' }}>
               <Compass size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.5, color: '#7c3aed' }} />
               <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: '#475569' }}>
@@ -2576,6 +3663,7 @@ export default function AdminCustomization() {
           </div>
         </div>
       </Modal>
+      </div>
     </AdminLayout>
   );
 }

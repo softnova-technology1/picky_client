@@ -1,7 +1,53 @@
 /* ─── AdminReviews Module CSS (Matching Picky Admin Luxury Standard) ─── */
 /* Scoped exclusively to AdminReviews component */
 
-/* ─── 0. Hero Header Section ─── */
+/* ─── 0. Hero & Top Controls Section ─── */
+.topControlBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.liveStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.livePulseDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseLive 2s infinite;
+}
+
+@keyframes pulseLive {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
 .heroRow {
   display: flex;
   justify-content: space-between;
@@ -349,9 +395,43 @@
   white-space: nowrap;
 }
 
+.thCheckbox {
+  padding: 0.85rem 0.4rem 0.85rem 0.85rem;
+  text-align: center;
+  width: 44px;
+  vertical-align: middle;
+}
+
+.tdCheckbox {
+  padding: 0.85rem 0.4rem 0.85rem 0.85rem;
+  text-align: center;
+  vertical-align: middle;
+  width: 44px;
+}
+
+.headerCheckbox,
+.rowCheckbox {
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  cursor: pointer;
+  accent-color: #7c3aed;
+  vertical-align: middle;
+  transition: transform 0.15s ease;
+}
+
+.rowCheckbox:hover,
+.headerCheckbox:hover {
+  transform: scale(1.1);
+}
+
 .trRow {
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.15s ease;
+}
+
+.trRowSelected {
+  background: #f5f3ff !important;
 }
 
 .trRow:hover {
@@ -1008,3 +1088,213 @@
   color: #64748b;
   margin-top: 0.25rem;
 }
+
+/* ─── 5. Top Multi-Select Batch Action Bar (Light Theme) ─── */
+.topBatchActionBar {
+  background: #ffffff;
+  border: 1.5px solid #e9d5ff;
+  border-radius: 14px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  animation: batchSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes batchSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.batchLeftGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.batchCountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #6d28d9;
+  background: #f5f3ff;
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  border: 1.5px solid #ddd6fe;
+}
+
+.batchQuickHint {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.batchActionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.batchBtnApprove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1.5px solid #a7f3d0;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.batchBtnApprove:hover {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.22);
+}
+
+.batchBtnReject {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.batchBtnReject:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.22);
+}
+
+.batchBtnFlag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fffbeb;
+  color: #d97706;
+  border: 1.5px solid #fde68a;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.batchBtnFlag:hover {
+  background: #d97706;
+  color: #ffffff;
+  border-color: #d97706;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.22);
+}
+
+.batchBtnExport {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #f8fafc;
+  color: #334155;
+  border: 1.5px solid #cbd5e1;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.batchBtnExport:hover {
+  background: #334155;
+  color: #ffffff;
+  border-color: #334155;
+  box-shadow: 0 4px 12px rgba(51, 65, 85, 0.18);
+}
+
+.batchBtnDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1.5px solid #fecdd3;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.batchBtnDelete:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.22);
+}
+
+.batchBtnClear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.batchBtnClear:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .topBatchActionBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .batchActionsGroup {
+    justify-content: flex-start;
+  }
+}
+

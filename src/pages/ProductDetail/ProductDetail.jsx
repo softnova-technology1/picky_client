@@ -11,6 +11,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { useReviewStore } from '../../store/reviewStore';
 import { getProductReviews } from '../../data';
+import { reviewService } from '../../services/review.service';
 import styles from './ProductDetail.module.css';
 import {
   Truck,
@@ -22,7 +23,11 @@ import {
   ChevronRight,
   ArrowRight,
   Info,
-  Check
+  Check,
+  Camera,
+  UploadCloud,
+  X,
+  Loader2,
 } from 'lucide-react';
 
 const DEFAULT_CAPACITIES = ['128GB', '256GB', '512GB'];
@@ -40,6 +45,11 @@ export default function ProductDetail() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewAuthor, setReviewAuthor] = useState('');
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewPhotos, setReviewPhotos] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [apiReviews, setApiReviews] = useState([]);
+  const [activeReviewLightbox, setActiveReviewLightbox] = useState(null);
 
   // Variant & Color states: null by default, only set if configured in DB
   const [selectedColor, setSelectedColor] = useState(null);
@@ -47,16 +57,39 @@ export default function ProductDetail() {
   const [selectedCapacity, setSelectedCapacity] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
 
-  const { reviews: storeReviews, addReview } = useReviewStore();
+  const { reviews: storeReviews } = useReviewStore();
   const { addItem, setBuyNowItem } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
   const { isLoggedIn, user } = useAuthStore();
   const { showToast } = useUiStore();
 
+  // Auto-fill user profile name when Write a Review modal opens
+  useEffect(() => {
+    if (showWriteReviewModal && user) {
+      const profileName = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || user.email?.split('@')[0] || '';
+      if (profileName) {
+        setReviewAuthor(profileName);
+      }
+    }
+  }, [showWriteReviewModal, user]);
+
   const pId = product?._id || product?.id || slug;
+
+  // Fetch real-time reviews from MongoDB backend for this product
+  const fetchProductReviews = async (productId) => {
+    if (!productId) return;
+    try {
+      const res = await reviewService.getByProduct(productId);
+      const list = res?.reviews || [];
+      setApiReviews(list);
+    } catch (err) {
+      console.error('Failed to load product reviews:', err);
+    }
+  };
 
   // Real reviews filtered for this product
   const activeReviews = useMemo(() => {
+    if (apiReviews && apiReviews.length > 0) return apiReviews;
     if (!product) return [];
     const prodId = String(product._id || product.id || slug);
     const prodSlug = String(product.slug || slug).toLowerCase();
@@ -75,7 +108,7 @@ export default function ProductDetail() {
     });
 
     return matched;
-  }, [product, storeReviews, slug]);
+  }, [apiReviews, product, storeReviews, slug]);
 
   // Dynamic Rating Distribution calculation
   const ratingDistribution = useMemo(() => {
@@ -101,30 +134,73 @@ export default function ProductDetail() {
     };
   }, [activeReviews, product]);
 
-  const handleReviewSubmit = (e) => {
+  // Handle Review Photo Upload directly to AWS S3 (compressed via Sharp)
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    if (reviewPhotos.length + files.length > 5) {
+      showToast('Maximum 5 photos allowed per review', 'warning');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast(`"${file.name}" exceeds 5MB limit. Please choose an image under 5MB.`, 'error');
+          continue;
+        }
+        const uploadedUrl = await reviewService.uploadPhoto(file);
+        if (uploadedUrl) {
+          setReviewPhotos((prev) => [...prev, uploadedUrl]);
+        }
+      }
+      showToast('Photo uploaded to S3 successfully!', 'success');
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      showToast(err?.response?.data?.message || err?.message || 'Failed to upload photo to S3', 'error');
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewComment.trim()) {
       showToast('Please enter your review comments', 'error');
       return;
     }
     const authorName = reviewAuthor.trim() || user?.name || user?.email?.split('@')[0] || 'Verified Customer';
-    addReview({
-      productId: pId,
-      productName: product?.name || 'Product',
-      productSlug: product?.slug || slug,
-      productImage: product?.images?.[0] || product?.image || '',
-      category: typeof product?.category === 'object' ? product.category?.name : (product?.category || ''),
-      price: product?.discountPrice || product?.price || 0,
-      author: authorName,
-      rating: reviewRating,
-      comment: reviewComment.trim(),
-      status: 'published',
-    });
-    showToast('Thank you! Your review has been submitted and published.', 'success');
-    setShowWriteReviewModal(false);
-    setReviewComment('');
-    setReviewAuthor('');
-    setReviewRating(5);
+    setSubmittingReview(true);
+    try {
+      await reviewService.create({
+        productId: product?._id || product?.id || slug,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        photos: reviewPhotos,
+        customer: {
+          name: authorName,
+          email: user?.email || '',
+          location: user?.defaultAddress?.city ? `${user.defaultAddress.city}, Tamil Nadu` : 'Tamil Nadu, India',
+          avatar: user?.avatar || user?.profilePic || user?.photo || '',
+        },
+      });
+
+      showToast('🎉 Thank you! Your review has been submitted.', 'success');
+      setShowWriteReviewModal(false);
+      setReviewComment('');
+      setReviewAuthor('');
+      setReviewRating(5);
+      setReviewPhotos([]);
+      // Reload reviews for this product
+      fetchProductReviews(product?._id || product?.id || slug);
+    } catch (err) {
+      console.error('Review submit error:', err);
+      showToast(err?.response?.data?.message || err?.message || 'Failed to submit review', 'error');
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   useEffect(() => {
@@ -138,6 +214,7 @@ export default function ProductDetail() {
           setProduct(item);
           const stockVal = typeof item.stock === 'number' && !isNaN(item.stock) ? Math.max(0, item.stock) : 10;
           setQuantity(stockVal > 0 ? 1 : 0);
+          fetchProductReviews(item._id || item.id || slug);
 
           // Re-init variant when product loads
           const v = item.variants;
@@ -693,7 +770,13 @@ export default function ProductDetail() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => setShowWriteReviewModal(true)}
+                      onClick={() => {
+                        const profileName = user?.name || user?.firstName || user?.email?.split('@')[0] || '';
+                        if (profileName) {
+                          setReviewAuthor(profileName);
+                        }
+                        setShowWriteReviewModal(true);
+                      }}
                       className={styles['btn-write-review']}
                     >
                       Write a Review
@@ -736,7 +819,23 @@ export default function ProductDetail() {
                           <div key={rev.id || rev._id} className={styles['review-item-card']}>
                             <div className={styles['review-top-bar']}>
                               <div className={styles['author-info-group']}>
-                                <div className={styles['mint-avatar-circle']}>
+                                {rev.customer?.avatar ? (
+                                  <img
+                                    src={rev.customer.avatar}
+                                    alt={custName}
+                                    className={styles['customer-photo-avatar']}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      if (e.target.nextSibling) {
+                                        e.target.nextSibling.style.display = 'flex';
+                                      }
+                                    }}
+                                  />
+                                ) : null}
+                                <div
+                                  className={styles['mint-avatar-circle']}
+                                  style={{ display: rev.customer?.avatar ? 'none' : 'flex' }}
+                                >
                                   <span>{initials}</span>
                                 </div>
                                 <div>
@@ -774,6 +873,9 @@ export default function ProductDetail() {
                                     src={photoUrl}
                                     alt={`Review photo ${pIdx + 1}`}
                                     className={styles['attached-thumb-img']}
+                                    style={{ cursor: 'pointer', transition: 'transform 0.15s ease' }}
+                                    onClick={() => setActiveReviewLightbox(photoUrl)}
+                                    title="Click to zoom photo"
                                   />
                                 ))}
                               </div>
@@ -995,11 +1097,11 @@ export default function ProductDetail() {
 
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
-                  Your Name (Optional)
+                  Your Name
                 </label>
                 <input
                   type="text"
-                  placeholder="Enter your name (e.g. Ramesh Kumar)"
+                  placeholder="Enter your name"
                   value={reviewAuthor}
                   onChange={(e) => setReviewAuthor(e.target.value)}
                   style={{
@@ -1035,14 +1137,172 @@ export default function ProductDetail() {
                 />
               </div>
 
+              {/* Optional Review Photos Upload to AWS S3 (Max 5 photos, max 5MB) */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#334155' }}>
+                    Add Photos (Optional)
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    {reviewPhotos.length}/5 photos (Max 5MB each)
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center' }}>
+                  {reviewPhotos.map((url, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        position: 'relative',
+                        width: '68px',
+                        height: '68px',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        border: '1px solid #cbd5e1',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt={`Upload preview ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setReviewPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                        style={{
+                          position: 'absolute',
+                          top: 3,
+                          right: 3,
+                          background: 'rgba(15, 23, 42, 0.75)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                        title="Remove photo"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {reviewPhotos.length < 5 && (
+                    <label
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '68px',
+                        height: '68px',
+                        borderRadius: '10px',
+                        border: '2px dashed #a855f7',
+                        background: '#faf5ff',
+                        cursor: uploadingPhoto ? 'wait' : 'pointer',
+                        color: '#7c3aed',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="Upload photo from device"
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        disabled={uploadingPhoto || submittingReview}
+                        onChange={handlePhotoUpload}
+                        style={{ display: 'none' }}
+                      />
+                      {uploadingPhoto ? (
+                        <Loader2 size={20} className={styles.spinning} color="#7c3aed" />
+                      ) : (
+                        <>
+                          <Camera size={20} color="#7c3aed" />
+                          <span style={{ fontSize: '0.65rem', fontWeight: 600, marginTop: '3px' }}>Upload</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+
+                {uploadingPhoto && (
+                  <p style={{ margin: '0.4rem 0 0', fontSize: '0.74rem', color: '#7c3aed', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Loader2 size={12} className={styles.spinning} /> Compressing & uploading to S3...
+                  </p>
+                )}
+              </div>
+
               <button
                 type="submit"
+                disabled={uploadingPhoto || submittingReview}
                 className={styles['btn-buy-now']}
-                style={{ width: '100%' }}
+                style={{ width: '100%', opacity: (uploadingPhoto || submittingReview) ? 0.7 : 1 }}
               >
-                Submit Review
+                {submittingReview ? 'Submitting Review...' : 'Submit Review'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Lightbox Zoom Modal for Review Photos ── */}
+      {activeReviewLightbox && (
+        <div
+          className={styles['auth-modal-overlay']}
+          onClick={() => setActiveReviewLightbox(null)}
+          style={{ zIndex: 9999, background: 'rgba(0,0,0,0.85)' }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activeReviewLightbox}
+              alt="Review full preview"
+              style={{
+                maxWidth: '85vw',
+                maxHeight: '85vh',
+                borderRadius: '12px',
+                objectFit: 'contain',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setActiveReviewLightbox(null)}
+              style={{
+                position: 'absolute',
+                top: '-15px',
+                right: '-15px',
+                background: '#fff',
+                color: '#0f172a',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+              }}
+              title="Close image"
+            >
+              <X size={18} />
+            </button>
           </div>
         </div>
       )}

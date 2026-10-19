@@ -12,6 +12,7 @@ export const orderService = {
   getById: (id) => api.get(`/orders/${id}`),
   getTracking: (id) => api.get(`/orders/${id}/tracking`),
   trackByOrderNumber: (orderNumber) => api.get(`/orders/track/${encodeURIComponent(orderNumber)}`),
+  cancelOrder: (id, body) => api.patch(`/orders/${id}/cancel`, body),
 
   // Admin
   adminList: (params) => api.get('/orders/admin/list', { params }),

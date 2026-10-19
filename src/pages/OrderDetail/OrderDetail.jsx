@@ -5,15 +5,80 @@ import OrderTracker from '../../components/order/OrderTracker';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
+import { useReturnStore } from '../../store/returnStore';
+import { useAuthStore } from '../../store/authStore';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
-import { ArrowLeft, ShoppingBag, MapPin, CreditCard, MessageCircle, FileText, ChevronRight, Gift } from 'lucide-react';
+import {
+  ArrowLeft,
+  ShoppingBag,
+  MapPin,
+  CreditCard,
+  MessageCircle,
+  FileText,
+  ChevronRight,
+  Gift,
+  XCircle,
+  RotateCcw,
+  Printer,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+  Package,
+  ShieldCheck,
+  Building2,
+  Calendar
+} from 'lucide-react';
 import styles from './OrderDetail.module.css';
+
+const CANCEL_REASONS = [
+  'Ordered by mistake',
+  'Found better price elsewhere',
+  'Need to change shipping address or phone',
+  'Delivery timeline is too long',
+  'Payment/Discount issue',
+  'Customer changed mind',
+  'Other reason'
+];
+
+const RETURN_REASONS = [
+  'Wrong Size / Fit Issue',
+  'Fabric Defective / Damaged Piece',
+  'Different from Product Image',
+  'Color Mismatch',
+  'Quality Unsatisfactory',
+  'Customer Changed Mind',
+  'Received Wrong Item'
+];
 
 export default function OrderDetail() {
   const { id } = useParams();
+  const { user } = useAuthStore();
+  const { createReturnRequest, returns } = useReturnStore();
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Self-Service Cancel State
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
+  const [cancelNote, setCancelNote] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState(null);
+
+  // Self-Service Return / Replacement State
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [selectedItemIdx, setSelectedItemIdx] = useState(0);
+  const [returnResolution, setReturnResolution] = useState('refund'); // 'refund' | 'replacement'
+  const [returnReason, setReturnReason] = useState(RETURN_REASONS[0]);
+  const [returnNote, setReturnNote] = useState('');
+  const [returnProofUrl, setReturnProofUrl] = useState('');
+  const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [returnSuccessTicket, setReturnSuccessTicket] = useState(null);
+
+  // GST Tax Invoice Modal State
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -32,7 +97,7 @@ export default function OrderDetail() {
         setOrder(null);
       } finally {
         const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
+        const remainingDelay = Math.max(0, 500 - elapsed);
         if (remainingDelay > 0) {
           await new Promise((r) => setTimeout(r, remainingDelay));
         }
@@ -41,6 +106,90 @@ export default function OrderDetail() {
     }
     fetchOrder();
   }, [id]);
+
+  // Check if this order already has an active return ticket
+  const existingReturnTicket = React.useMemo(() => {
+    if (!order?.orderNumber || !Array.isArray(returns)) return null;
+    return returns.find((r) => r.orderNumber === order.orderNumber);
+  }, [order, returns]);
+
+  // Handle Customer Cancel Order
+  const handleCancelOrder = async (e) => {
+    e.preventDefault();
+    if (!order) return;
+    try {
+      setCancelling(true);
+      setCancelError(null);
+      const combinedReason = cancelNote.trim()
+        ? `${cancelReason} - ${cancelNote.trim()}`
+        : cancelReason;
+
+      const res = await orderService.cancelOrder(order._id, { reason: combinedReason });
+      const updated = res?.data?.data || res?.data || { ...order, status: 'cancelled' };
+      setOrder({ ...order, status: 'cancelled', cancelReason: combinedReason });
+      setCancelSuccessMsg('Order has been cancelled successfully. Refund will be credited within 24-48 hours.');
+      setTimeout(() => {
+        setShowCancelModal(false);
+      }, 1500);
+    } catch (err) {
+      console.error('Cancel order failed:', err);
+      setCancelError(
+        err?.response?.data?.message ||
+        'Failed to cancel order. It may have already been dispatched. Please contact support.'
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  // Handle Customer Return / Replacement Submit
+  const handleReturnSubmit = (e) => {
+    e.preventDefault();
+    if (!order || !order.items?.length) return;
+
+    setReturnSubmitting(true);
+    const chosenItem = order.items[selectedItemIdx] || order.items[0];
+    const ticketId = `RET-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newReturnRecord = {
+      id: ticketId,
+      orderNumber: order.orderNumber,
+      createdAt: new Date().toISOString(),
+      customer: {
+        name: order.shippingAddress?.name || user?.name || 'Valued Customer',
+        phone: order.shippingAddress?.phone || user?.phone || '+91 98765 43210',
+        email: user?.email || 'customer@picky.com',
+        address: `${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}`,
+      },
+      item: {
+        name: chosenItem.name,
+        image: chosenItem.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300',
+        sku: chosenItem.sku || `SKU-${order.orderNumber.slice(-6)}`,
+        variant: chosenItem.variant || 'Standard',
+        quantity: chosenItem.quantity || 1,
+        price: chosenItem.price || 0,
+        refundAmount: chosenItem.price * (chosenItem.quantity || 1),
+      },
+      resolution: returnResolution,
+      reason: returnReason,
+      customerNote: returnNote.trim() || 'Requested via customer self-service order portal.',
+      proofImages: returnProofUrl.trim() ? [returnProofUrl.trim()] : [chosenItem.image || ''],
+      status: 'pending',
+      refundMethod: 'Original Payment Method (Razorpay Instant)',
+      refundStatus: 'pending',
+      timeline: [
+        {
+          status: 'pending',
+          note: `Customer requested ${returnResolution === 'replacement' ? 'Replacement' : 'Refund'} for item: ${chosenItem.name}. Reason: ${returnReason}.`,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    };
+
+    createReturnRequest(newReturnRecord);
+    setReturnSuccessTicket(newReturnRecord);
+    setReturnSubmitting(false);
+  };
 
   if (loading) {
     return (
@@ -55,7 +204,7 @@ export default function OrderDetail() {
       <PageWrapper>
         <div className="section container" style={{ textAlign: 'center', padding: '4rem 0' }}>
           <h2>Order Not Found</h2>
-          <Link to="/profile?tab=orders" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+          <Link to="/orders" className="btn btn-primary" style={{ marginTop: '1rem' }}>
             Back to My Orders
           </Link>
         </div>
@@ -63,18 +212,98 @@ export default function OrderDetail() {
     );
   }
 
+  // Financial calculations for GST breakdown
+  const grandTotal = Number(order.total || 0);
+  const subtotal = Number(order.subtotal || 0);
+  const discountAmount = Number(order.discountAmount || 0);
+  const taxableGoods = Math.max(0, subtotal - discountAmount);
+  // GST calculation (Assuming 5% GST inclusive on Handlooms/Apparel: 2.5% CGST + 2.5% SGST)
+  const gstRate = 0.05;
+  const taxableBase = (taxableGoods / (1 + gstRate));
+  const totalGst = taxableGoods - taxableBase;
+  const halfGst = totalGst / 2;
+
   return (
     <PageWrapper>
       <div className="section">
         <div className={styles.pageContainer}>
-          {/* Animated Breadcrumb Nav */}
-          <div className={styles.breadcrumbNav}>
-            <Link to="/profile?tab=orders" className={styles.breadcrumbLink}>
+          {/* Breadcrumb Nav */}
+          <div className={`${styles.breadcrumbNav} noPrint`}>
+            <Link to="/orders" className={styles.breadcrumbLink}>
               <ArrowLeft size={16} /> My Orders
             </Link>
             <ChevronRight size={14} />
             <span className={styles.breadcrumbCurrent}>Order #{order.orderNumber}</span>
           </div>
+
+          {/* Cancellation Alert Banner */}
+          {order.status === 'cancelled' && (
+            <div
+              style={{
+                background: '#fef2f2',
+                border: '1.5px solid #fecaca',
+                borderRadius: '16px',
+                padding: '1.25rem 1.5rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                color: '#991b1b',
+              }}
+            >
+              <XCircle size={24} style={{ flexShrink: 0, color: '#dc2626' }} />
+              <div>
+                <strong style={{ fontSize: '1rem', display: 'block', marginBottom: '0.2rem' }}>
+                  This order has been cancelled
+                </strong>
+                <span style={{ fontSize: '0.88rem', color: '#b91c1c' }}>
+                  {order.cancelReason || 'Cancelled by customer.'} If any online payment was deducted, an instant refund will be credited back to your original source account within 24 to 48 hours.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Active Return Ticket Alert Banner */}
+          {existingReturnTicket && (
+            <div
+              style={{
+                background: '#fffbeb',
+                border: '1.5px solid #fde68a',
+                borderRadius: '16px',
+                padding: '1.25rem 1.5rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                flexWrap: 'wrap',
+                color: '#92400e',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                <RotateCcw size={22} style={{ flexShrink: 0, color: '#d97706' }} />
+                <div>
+                  <strong style={{ fontSize: '0.95rem', display: 'block' }}>
+                    Return / Replacement Request Active: {existingReturnTicket.id}
+                  </strong>
+                  <span style={{ fontSize: '0.85rem', color: '#b45309' }}>
+                    Status: <strong style={{ textTransform: 'uppercase' }}>{existingReturnTicket.status}</strong> • Resolution: {existingReturnTicket.resolution || 'Refund'}
+                  </span>
+                </div>
+              </div>
+              <Link
+                to="/returns"
+                style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#7c3aed',
+                  textDecoration: 'underline',
+                }}
+              >
+                View Return Policy
+              </Link>
+            </div>
+          )}
 
           {/* Hero Order Header Card */}
           <div className={styles.headerCard}>
@@ -87,7 +316,7 @@ export default function OrderDetail() {
                 <span>Placed on {formatDate(order.createdAt)}</span>
                 <span>•</span>
                 <span className={styles.paymentPill}>
-                  <CreditCard size={14} /> Paid via Razorpay
+                  <CreditCard size={14} /> Paid via Razorpay / Online
                 </span>
                 {order.razorpayPaymentId && (
                   <span className={styles.razorpayIdTag}>
@@ -97,23 +326,50 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            <div className={styles.headerActions}>
-              <button 
-                onClick={() => window.print()}
-                className={styles.actionBtn}
-                title="Print or Save Invoice PDF"
+            {/* Self-Service Action Buttons */}
+            <div className={`${styles.headerActions} noPrint`}>
+              {/* 1. Cancel Order Button (Available when pending or confirmed) */}
+              {['pending', 'confirmed'].includes(order.status) && (
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(true)}
+                  className={styles.cancelBtn}
+                  title="Cancel this order before it ships"
+                >
+                  <XCircle size={16} /> Cancel Order
+                </button>
+              )}
+
+              {/* 2. Request Return / Replacement Button (Available when delivered) */}
+              {order.status === 'delivered' && (
+                <button
+                  type="button"
+                  onClick={() => setShowReturnModal(true)}
+                  className={styles.returnBtn}
+                  title="7-Day Hassle-Free Return or Replacement"
+                >
+                  <RotateCcw size={16} /> Request Return / Exchange
+                </button>
+              )}
+
+              {/* 3. Official GST Tax Invoice Button */}
+              <button
+                type="button"
+                onClick={() => setShowInvoiceModal(true)}
+                className={styles.invoiceBtn}
+                title="View & Download Official GST Tax Invoice"
               >
-                <FileText size={16} /> Print Receipt
+                <FileText size={16} /> GST Tax Invoice
               </button>
             </div>
           </div>
 
-          {/* Live Order Tracker - ALWAYS EXPANDED */}
-          <div className={styles.trackerSectionWrapper}>
+          {/* Live Order Tracker */}
+          <div className={`${styles.trackerSectionWrapper} noPrint`}>
             <OrderTracker orderId={order._id} initialData={order} />
           </div>
 
-          {/* Main Details Grid - ALWAYS EXPANDED, NO COLLAPSED WORKFLOWS */}
+          {/* Main Details Grid */}
           <div className={styles.mainGrid}>
             {/* Items & Invoice Breakdown Card */}
             <div className={styles.glassCard}>
@@ -151,7 +407,7 @@ export default function OrderDetail() {
                 ))}
               </div>
 
-              {/* Gift Message Box (ONLY shown when order was placed with Gift Wrap) */}
+              {/* Gift Message Box */}
               {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
                 <div
                   style={{
@@ -207,20 +463,6 @@ export default function OrderDetail() {
                   })()}
                 </div>
 
-                {(() => {
-                  const diff = Math.max(0, Number(order.total || 0) - (Number(order.subtotal || 0) - Number(order.discountAmount || 0)));
-                  const convFee = Number(order.convenienceFee) > 0 ? Number(order.convenienceFee) : (diff === 42 ? 2 : 0);
-                  if (convFee > 0) {
-                    return (
-                      <div className={styles.invoiceRow}>
-                        <span>Convenience Fee</span>
-                        <span className={styles.invoiceValue}>{formatPrice(convFee)}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-
                 {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
                   <div className={styles.invoiceRow} style={{ color: '#be123c' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -253,6 +495,9 @@ export default function OrderDetail() {
                 </div>
 
                 <div className={styles.addressDetails}>
+                  <div style={{ fontWeight: 700, color: '#1e1b4b', marginBottom: '0.35rem' }}>
+                    {order.shippingAddress?.name || user?.name || 'Customer'}
+                  </div>
                   <span className={styles.addressStreet}>
                     {order.shippingAddress?.street}
                   </span>
@@ -264,6 +509,29 @@ export default function OrderDetail() {
                   <div className={styles.cityStateZip}>
                     {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}
                   </div>
+                  {order.shippingAddress?.phone && (
+                    <div style={{ marginTop: '0.45rem', fontSize: '0.85rem', color: '#64748b' }}>
+                      📞 Phone: {order.shippingAddress.phone}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Policy Quick Links */}
+              <div className={styles.glassCard} style={{ padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e1b4b', marginBottom: '0.75rem' }}>
+                  Customer Care & Policies
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
+                  <Link to="/returns" style={{ color: '#7c3aed', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <RotateCcw size={14} /> 7-Day Replacement & Return Policy
+                  </Link>
+                  <Link to="/shipping-policy" style={{ color: '#7c3aed', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Package size={14} /> Shipping & Delivery Information
+                  </Link>
+                  <Link to="/faq" style={{ color: '#7c3aed', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <MessageCircle size={14} /> Help Center & Frequently Asked Questions
+                  </Link>
                 </div>
               </div>
 
@@ -281,6 +549,516 @@ export default function OrderDetail() {
               </div>
             </div>
           </div>
+
+          {/* ══════════════════════════════════════════════════════════════════
+              MODAL 1: CUSTOMER CANCEL ORDER MODAL
+             ══════════════════════════════════════════════════════════════════ */}
+          {showCancelModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modalContent}>
+                <div className={styles.modalHeader}>
+                  <h3 className={styles.modalTitle}>
+                    <XCircle size={22} color="#dc2626" /> Cancel Order #{order.orderNumber}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelModal(false)}
+                    className={styles.modalCloseBtn}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {cancelSuccessMsg ? (
+                  <div className={styles.modalInfo}>
+                    <CheckCircle2 size={20} color="#16a34a" style={{ marginBottom: '0.5rem' }} />
+                    <p style={{ margin: 0, fontWeight: 700 }}>{cancelSuccessMsg}</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleCancelOrder}>
+                    <div className={styles.modalBody}>
+                      <div className={styles.modalWarning}>
+                        <strong>Please Note:</strong> Cancelling this order will release the reserved inventory. If you already completed payment, your refund of <strong>{formatPrice(order.total)}</strong> will be credited to your original payment method in 24 to 48 hours.
+                      </div>
+
+                      {cancelError && (
+                        <div style={{ color: '#dc2626', fontSize: '0.88rem', background: '#fee2e2', padding: '0.75rem', borderRadius: '8px' }}>
+                          {cancelError}
+                        </div>
+                      )}
+
+                      <div>
+                        <label className={styles.formLabel}>Reason for Cancellation *</label>
+                        <select
+                          value={cancelReason}
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          className={styles.formSelect}
+                          required
+                        >
+                          {CANCEL_REASONS.map((r, i) => (
+                            <option key={i} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className={styles.formLabel}>Additional Comments (Optional)</label>
+                        <textarea
+                          rows={3}
+                          value={cancelNote}
+                          onChange={(e) => setCancelNote(e.target.value)}
+                          placeholder="Tell us what went wrong so we can improve..."
+                          className={styles.formTextarea}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.modalActions}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelModal(false)}
+                        className="btn btn-secondary"
+                        style={{ borderRadius: '10px' }}
+                        disabled={cancelling}
+                      >
+                        Keep Order
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-danger"
+                        style={{
+                          borderRadius: '10px',
+                          background: '#dc2626',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '0.65rem 1.25rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                        disabled={cancelling}
+                      >
+                        {cancelling ? 'Cancelling...' : 'Confirm Cancellation'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              MODAL 2: CUSTOMER RETURN / REPLACEMENT MODAL
+             ══════════════════════════════════════════════════════════════════ */}
+          {showReturnModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modalContent}>
+                <div className={styles.modalHeader}>
+                  <h3 className={styles.modalTitle}>
+                    <RotateCcw size={22} color="#7c3aed" /> 7-Day Return / Replacement Request
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReturnModal(false);
+                      setReturnSuccessTicket(null);
+                    }}
+                    className={styles.modalCloseBtn}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {returnSuccessTicket ? (
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <div
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        background: '#dcfce7',
+                        color: '#16a34a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1rem',
+                      }}
+                    >
+                      <CheckCircle2 size={32} />
+                    </div>
+                    <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#166534', marginBottom: '0.4rem' }}>
+                      Return Request Submitted!
+                    </h3>
+                    <p style={{ color: '#4b5563', fontSize: '0.92rem', marginBottom: '1.25rem' }}>
+                      Ticket ID: <strong style={{ color: '#7c3aed' }}>{returnSuccessTicket.id}</strong>
+                    </p>
+                    <div className={styles.modalInfo} style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+                      Our quality inspection team has received your request. A reverse pickup courier partner will be assigned within 24 to 48 hours. Please keep the item packed in original condition with tags intact.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowReturnModal(false);
+                        setReturnSuccessTicket(null);
+                      }}
+                      className="btn btn-primary"
+                      style={{ borderRadius: '10px' }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReturnSubmit}>
+                    <div className={styles.modalBody}>
+                      <div className={styles.modalInfo}>
+                        <strong>Picky Buyer Guarantee:</strong> You can request a 100% free doorstep replacement or direct source refund within 7 days of delivery.
+                      </div>
+
+                      {/* Select Item */}
+                      <div>
+                        <label className={styles.formLabel}>Select Item to Return / Replace *</label>
+                        <select
+                          value={selectedItemIdx}
+                          onChange={(e) => setSelectedItemIdx(Number(e.target.value))}
+                          className={styles.formSelect}
+                          required
+                        >
+                          {order.items?.map((item, idx) => (
+                            <option key={idx} value={idx}>
+                              {item.name} (Qty: {item.quantity}) - {formatPrice(item.price)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Resolution Choice */}
+                      <div>
+                        <label className={styles.formLabel}>Preferred Resolution *</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                          <label
+                            style={{
+                              border: `1.5px solid ${returnResolution === 'replacement' ? '#7c3aed' : '#d1d5db'}`,
+                              background: returnResolution === 'replacement' ? '#f5f3ff' : '#fff',
+                              borderRadius: '10px',
+                              padding: '0.75rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              fontSize: '0.88rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="resolution"
+                              value="replacement"
+                              checked={returnResolution === 'replacement'}
+                              onChange={() => setReturnResolution('replacement')}
+                            />
+                            Replacement (Exchange)
+                          </label>
+
+                          <label
+                            style={{
+                              border: `1.5px solid ${returnResolution === 'refund' ? '#7c3aed' : '#d1d5db'}`,
+                              background: returnResolution === 'refund' ? '#f5f3ff' : '#fff',
+                              borderRadius: '10px',
+                              padding: '0.75rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              fontSize: '0.88rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="resolution"
+                              value="refund"
+                              checked={returnResolution === 'refund'}
+                              onChange={() => setReturnResolution('refund')}
+                            />
+                            Full Source Refund
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Reason */}
+                      <div>
+                        <label className={styles.formLabel}>Reason for Return *</label>
+                        <select
+                          value={returnReason}
+                          onChange={(e) => setReturnReason(e.target.value)}
+                          className={styles.formSelect}
+                          required
+                        >
+                          {RETURN_REASONS.map((r, i) => (
+                            <option key={i} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Note */}
+                      <div>
+                        <label className={styles.formLabel}>Details / Defect Description *</label>
+                        <textarea
+                          rows={3}
+                          value={returnNote}
+                          onChange={(e) => setReturnNote(e.target.value)}
+                          placeholder="Describe the issue (e.g. saree border damaged in transit, wrong color sent)..."
+                          className={styles.formTextarea}
+                          required
+                        />
+                      </div>
+
+                      {/* Optional Photo URL */}
+                      <div>
+                        <label className={styles.formLabel}>Damage Photo Image URL (Optional)</label>
+                        <input
+                          type="url"
+                          value={returnProofUrl}
+                          onChange={(e) => setReturnProofUrl(e.target.value)}
+                          placeholder="Paste image link if available (e.g. Imgur, cloud link)"
+                          className={styles.formInput}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.modalActions}>
+                      <button
+                        type="button"
+                        onClick={() => setShowReturnModal(false)}
+                        className="btn btn-secondary"
+                        style={{ borderRadius: '10px' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        style={{ borderRadius: '10px' }}
+                        disabled={returnSubmitting}
+                      >
+                        {returnSubmitting ? 'Submitting...' : 'Submit Return Request'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              MODAL 3: OFFICIAL GST TAX INVOICE (PDF DOWNLOAD / PRINT VIEW)
+             ══════════════════════════════════════════════════════════════════ */}
+          {showInvoiceModal && (
+            <div className={`${styles.modalOverlay} printableInvoiceArea`}>
+              <div className={`${styles.modalContent} ${styles.invoiceModalContent}`}>
+                {/* Modal Top Bar - Hidden during print */}
+                <div className={`${styles.modalHeader} noPrint`}>
+                  <h3 className={styles.modalTitle}>
+                    <FileText size={22} color="#7c3aed" /> Official GST Tax Invoice
+                  </h3>
+                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="btn btn-primary"
+                      style={{
+                        borderRadius: '10px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.55rem 1rem',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      <Printer size={16} /> Print / Save as PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowInvoiceModal(false)}
+                      className={styles.modalCloseBtn}
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Official Tax Invoice Printable Body */}
+                <div className={styles.taxInvoiceWrapper}>
+                  {/* Header Row: Seller & Invoice Meta */}
+                  <div className={styles.invoiceHeaderRow}>
+                    <div>
+                      <div className={styles.sellerBrand}>PICKY CRAFTS & TEXTILES PVT. LTD.</div>
+                      <div className={styles.sellerMeta}>
+                        Registered Office: 42, Heritage Weavers Street, Madurai, Tamil Nadu - 625001<br />
+                        <strong>GSTIN:</strong> 33AABCP1234F1Z5 | <strong>PAN:</strong> AABCP1234F<br />
+                        <strong>State:</strong> 33 - Tamil Nadu | <strong>CIN:</strong> U52100TN2024PTC123456<br />
+                        <strong>Support Email:</strong> care@picky.in | <strong>Phone:</strong> +91 98765 43210
+                      </div>
+                    </div>
+                    <div className={styles.invoiceMetaBox}>
+                      <div className={styles.taxInvoiceTitle}>TAX INVOICE</div>
+                      <div><strong>Invoice No:</strong> INV-{order.orderNumber}</div>
+                      <div><strong>Invoice Date:</strong> {formatDate(order.createdAt)}</div>
+                      <div><strong>Order Ref:</strong> {order.orderNumber}</div>
+                      <div><strong>Place of Supply:</strong> {order.shippingAddress?.state || 'Tamil Nadu'} (Code: 33)</div>
+                    </div>
+                  </div>
+
+                  {/* Customer Billing & Shipping Address */}
+                  <div className={styles.invoiceAddressesGrid}>
+                    <div>
+                      <div className={styles.addressColTitle}>Billed To (Customer Details)</div>
+                      <strong>{order.shippingAddress?.name || user?.name || 'Customer'}</strong>
+                      <div>{order.shippingAddress?.street}</div>
+                      <div>{order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}</div>
+                      <div>Phone: {order.shippingAddress?.phone || user?.phone || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div className={styles.addressColTitle}>Shipped To (Delivery Destination)</div>
+                      <strong>{order.shippingAddress?.name || user?.name || 'Customer'}</strong>
+                      <div>{order.shippingAddress?.street}</div>
+                      <div>{order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}</div>
+                      <div>Country: India</div>
+                    </div>
+                  </div>
+
+                  {/* Itemized Table */}
+                  <table className={styles.invoiceTable}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: '40px', textAlign: 'center' }}>#</th>
+                        <th>Description of Goods / Services</th>
+                        <th style={{ width: '80px', textAlign: 'center' }}>HSN / SAC</th>
+                        <th style={{ width: '40px', textAlign: 'center' }}>Qty</th>
+                        <th style={{ width: '85px', textAlign: 'right' }}>Unit Rate (₹)</th>
+                        <th style={{ width: '90px', textAlign: 'right' }}>Taxable Value (₹)</th>
+                        <th style={{ width: '85px', textAlign: 'right' }}>CGST (2.5%)</th>
+                        <th style={{ width: '85px', textAlign: 'right' }}>SGST (2.5%)</th>
+                        <th style={{ width: '95px', textAlign: 'right' }}>Total (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {order.items?.map((item, idx) => {
+                        const itemGross = item.price * item.quantity;
+                        const itemBase = itemGross / 1.05;
+                        const itemGst = itemGross - itemBase;
+                        const itemHalfGst = itemGst / 2;
+                        return (
+                          <tr key={idx}>
+                            <td style={{ textAlign: 'center' }}>{idx + 1}</td>
+                            <td>
+                              <strong>{item.name}</strong>
+                              <div style={{ fontSize: '10.5px', color: '#64748b' }}>
+                                SKU: {item.sku || `PKY-TEX-${idx + 101}`}
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>5208</td>
+                            <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                            <td style={{ textAlign: 'right' }}>{formatPrice(item.price)}</td>
+                            <td style={{ textAlign: 'right' }}>{itemBase.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right' }}>{itemHalfGst.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right' }}>{itemHalfGst.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right' }}><strong>{formatPrice(itemGross)}</strong></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Summary Breakdown Grid */}
+                  <div className={styles.invoiceSummaryGrid}>
+                    <div className={styles.invoiceSummaryBox}>
+                      <div className={styles.summaryRow}>
+                        <span>Subtotal (Gross):</span>
+                        <span>{formatPrice(order.subtotal)}</span>
+                      </div>
+                      {order.discountAmount > 0 && (
+                        <div className={styles.summaryRow} style={{ color: '#16a34a' }}>
+                          <span>Coupon Discount:</span>
+                          <span>-{formatPrice(order.discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className={styles.summaryRow}>
+                        <span>Taxable Amount:</span>
+                        <span>₹{taxableBase.toFixed(2)}</span>
+                      </div>
+                      <div className={styles.summaryRow}>
+                        <span>CGST (2.5%):</span>
+                        <span>₹{halfGst.toFixed(2)}</span>
+                      </div>
+                      <div className={styles.summaryRow}>
+                        <span>SGST (2.5%):</span>
+                        <span>₹{halfGst.toFixed(2)}</span>
+                      </div>
+                      <div className={styles.summaryRow}>
+                        <span>Delivery Charges:</span>
+                        <span>
+                          {Number(order.shippingFee) > 0 ? formatPrice(order.shippingFee) : 'FREE'}
+                        </span>
+                      </div>
+                      {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
+                        <div className={styles.summaryRow}>
+                          <span>Gift Wrapping Fee:</span>
+                          <span>{formatPrice(order.giftWrap?.fee || order.giftWrapFee || 30)}</span>
+                        </div>
+                      )}
+                      <div className={styles.summaryTotalRow}>
+                        <span>Grand Total (INR):</span>
+                        <span>{formatPrice(order.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Info & Signatory */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
+                    <div style={{ fontSize: '11px', color: '#475569', maxWidth: '420px' }}>
+                      <strong>Payment Information:</strong><br />
+                      Mode: Online Payment (Razorpay Payment Gateway)<br />
+                      Status: Completed • Transaction Verified<br />
+                      Goods once sold are covered under Picky's 7-Day Replacement Policy.
+                    </div>
+                    <div style={{ textAlign: 'center', minWidth: '180px' }}>
+                      <div style={{ fontStyle: 'italic', color: '#7c3aed', fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
+                        Picky Crafts Pvt. Ltd.
+                      </div>
+                      <div style={{ borderTop: '1px solid #94a3b8', paddingTop: '4px', fontSize: '10.5px', color: '#64748b' }}>
+                        Authorized Signatory (Digital)
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Note */}
+                  <div className={styles.invoiceFooterNote}>
+                    This is a computer generated invoice and requires no physical ink signature. Registered under the Goods and Services Tax Act 2017.
+                  </div>
+                </div>
+
+                {/* Print button at bottom */}
+                <div className={`${styles.modalActions} noPrint`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowInvoiceModal(false)}
+                    className="btn btn-secondary"
+                    style={{ borderRadius: '10px' }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="btn btn-primary"
+                    style={{ borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    <Printer size={16} /> Print / Save as PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </PageWrapper>

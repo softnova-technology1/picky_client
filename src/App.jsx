@@ -28,6 +28,10 @@ import About from './pages/About';
 import Blog from './pages/Blog';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import ReturnPolicy from './pages/ReturnPolicy/ReturnPolicy';
+import ShippingPolicy from './pages/ShippingPolicy/ShippingPolicy';
+import Faq from './pages/Faq/Faq';
+import SizeGuide from './pages/SizeGuide/SizeGuide';
 import NotFound from './pages/NotFound';
 
 // Admin Pages
@@ -61,17 +65,53 @@ export default function App() {
   const { setSections, setPageSections } = useCustomizationStore();
 
   useEffect(() => {
-    adminService.getCustomizations().then(res => {
-      if (res && res.data && Object.keys(res.data).length > 0) {
-        for (const [pageId, sections] of Object.entries(res.data)) {
-          setPageSections(pageId, sections);
-        }
-      }
-    }).catch(console.error);
+    const fetchLatestCustomizations = () => {
+      adminService
+        .getCustomizations()
+        .then((res) => {
+          const data = res?.data || res;
+          if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+            for (const [pageId, sections] of Object.entries(data)) {
+              if (Array.isArray(sections) && sections.length > 0) {
+                setPageSections(pageId, sections, false);
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    };
 
-    // Fetch real DB categories for frontend navigation
+    // 1. Initial fetch on mount
+    fetchLatestCustomizations();
+
+    // 2. Fetch real DB categories for frontend navigation
     useCategoryStore.getState().fetchCategories();
-  }, []);
+
+    // 3. Tab visibility / Window focus revalidation:
+    // When switching from Admin tab back to Storefront tab, instantly revalidate
+    const handleRevalidate = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLatestCustomizations();
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleRevalidate);
+    window.addEventListener('focus', handleRevalidate);
+
+    // 4. Lightweight background sync poll (every 4 seconds when tab is active)
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchLatestCustomizations();
+      }
+    }, 4000);
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleRevalidate);
+      window.removeEventListener('focus', handleRevalidate);
+      clearInterval(pollInterval);
+    };
+  }, [setPageSections]);
+
 
   return (
     <QueryClientProvider client={qc}>
@@ -89,6 +129,7 @@ export default function App() {
           <Route path="/shop" element={<ProductList />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
+          <Route path="/product/:slug" element={<ProductDetail />} />
           <Route path="/search" element={<ProductList />} />
 
           {/* ── Customer Shopping Funnel ─────────────── */}
@@ -105,7 +146,7 @@ export default function App() {
           <Route path="/profile" element={<ProtectedRoute><Account /></ProtectedRoute>} />
           <Route path="/profile/*" element={<ProtectedRoute><Account /></ProtectedRoute>} />
           <Route path="/account" element={<Navigate to="/profile" replace />} />
-          <Route path="/orders" element={<TrackOrder />} />
+          <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
           <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
 
@@ -115,6 +156,13 @@ export default function App() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/returns" element={<ReturnPolicy />} />
+          <Route path="/return-policy" element={<ReturnPolicy />} />
+          <Route path="/shipping-policy" element={<ShippingPolicy />} />
+          <Route path="/shipping" element={<Navigate to="/shipping-policy" replace />} />
+          <Route path="/faq" element={<Faq />} />
+          <Route path="/help" element={<Faq />} />
+          <Route path="/size-guide" element={<SizeGuide />} />
 
           {/* ── Admin Protected Portal ───────────────── */}
           <Route path={ADMIN} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />

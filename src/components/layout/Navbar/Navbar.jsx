@@ -22,7 +22,7 @@ import { useCartStore } from '../../../store/cartStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
 import { useCategoryStore } from '../../../store/categoryStore';
 import CategoryIcon from '../../common/CategoryIcon';
-import GlamicsMarqueeTicker from '../../category/GlamicsMarqueeTicker';
+import AnnouncementBar from '../../common/AnnouncementBar';
 import Modal from '../../ui/Modal/Modal';
 
 export default function Navbar() {
@@ -173,8 +173,8 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ── 1. Top Running Marquee Announcement Bar (Replaces Static Row) ── */}
-      <GlamicsMarqueeTicker />
+      {/* ── 1. Top Announcement Bar (Configured via Admin Customization CMS) ── */}
+      <AnnouncementBar />
 
       {/* ── 2. Floating Pill Navbar (Desktop Only: > 768px) ────────────── */}
       <header className={`floating-nav-container desktop-nav-only ${isScrolled ? 'is-scrolled' : ''}`}>
