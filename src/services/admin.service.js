@@ -22,6 +22,7 @@ export const adminService = {
   // Categories
   createCategory: (formData) => api.post('/categories', formData),
   updateCategory: (id, formData) => api.put(`/categories/${id}`, formData),
+  uploadCategoryImage: (formData) => api.post('/categories/upload-image', formData),
   updateCategoryCharacteristics: (id, characteristics) => api.patch(`/categories/${id}/characteristics`, { characteristics }),
   deleteCategory: (id) => api.delete(`/categories/${id}`),
 
@@ -30,6 +31,8 @@ export const adminService = {
   createSubCategory: (data) => api.post('/subcategories', data),
   updateSubCategory: (id, data) => api.put(`/subcategories/${id}`, data),
   deleteSubCategory: (id) => api.delete(`/subcategories/${id}`),
+  bulkDeleteSubCategories: (ids) => api.post('/subcategories/bulk-delete', { ids }),
+  uploadSubCategoryImage: (formData) => api.post('/subcategories/upload-image', formData),
 
   // Coupons
   getCoupons: () => api.get('/coupons'),

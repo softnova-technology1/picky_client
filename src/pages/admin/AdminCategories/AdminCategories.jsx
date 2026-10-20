@@ -1,6 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Sliders, Layers, ImageOff, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Layers,
+  ImageOff,
+  CheckCircle2,
+  XCircle,
+  UploadCloud,
+  Copy,
+  Check,
+  ExternalLink,
+} from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
@@ -15,43 +27,36 @@ export default function AdminCategories() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Add / Edit Basic Category Modal
+  // Add / Edit Category Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({ name: '', description: '' });
-  const [imageFile, setImageFile] = useState(null);
+  const [formData, setFormData] = useState({ name: '', description: '', image: '' });
 
-  // Manage Characteristics Modal
-  const [isCharModalOpen, setIsCharModalOpen] = useState(false);
-  const [charModalLoading, setCharModalLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [characteristics, setCharacteristics] = useState([]);
-
-  // New Characteristic sub-form state
-  const [newChar, setNewChar] = useState({
-    name: '',
-    type: 'select',
-    valuesInput: '',
-    required: false,
-  });
-
-  // Live preview test values
-  const [previewValues, setPreviewValues] = useState({});
+  // Direct S3 Image Upload State
+  const [imageUploading, setImageUploading] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   async function loadData() {
-    const startTime = Date.now();
     try {
       setLoading(true);
-      const res = await categoryService.list({ all: true }).catch(() => null);
-      const list = res ? res.data || [] : [];
+      const [catRes, subRes] = await Promise.all([
+        categoryService.list({ all: true }).catch(() => null),
+        adminService.getSubCategories().catch(() => null),
+      ]);
+      const list = catRes ? catRes.data || [] : [];
+      const subs = subRes ? subRes.data || [] : [];
       setCategories(list);
+      setSubcategories(subs);
     } catch (err) {
       console.error('Failed to load categories:', err);
       setCategories([]);
+      setSubcategories([]);
     } finally {
       setLoading(false);
     }
@@ -60,6 +65,18 @@ export default function AdminCategories() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Compute subcategory count per category ID
+  const subCountMap = useMemo(() => {
+    const map = {};
+    (subcategories || []).forEach((s) => {
+      const cId = String(s.categoryId?._id || s.categoryId || '');
+      if (cId) {
+        map[cId] = (map[cId] || 0) + 1;
+      }
+    });
+    return map;
+  }, [subcategories]);
 
   // Auto-open modal if triggered via Quick Actions ?action=add
   useEffect(() => {
@@ -71,24 +88,58 @@ export default function AdminCategories() {
 
   const handleOpenAdd = () => {
     setEditingCategory(null);
-    setFormData({ name: '', description: '' });
-    setImageFile(null);
+    setFormData({ name: '', description: '', image: '' });
+    setImageUploading(false);
+    setCopiedUrl(false);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (c) => {
     setEditingCategory(c);
-    setFormData({ name: c.name || '', description: c.description || '' });
-    setImageFile(null);
+    setFormData({
+      name: c.name || '',
+      description: c.description || '',
+      image: c.image || '',
+    });
+    setImageUploading(false);
+    setCopiedUrl(false);
     setIsModalOpen(true);
   };
 
-  const handleOpenCharacteristics = (c) => {
-    setSelectedCategory(c);
-    setCharacteristics(c.characteristics ? [...c.characteristics] : []);
-    setNewChar({ name: '', type: 'select', valuesInput: '', required: false });
-    setPreviewValues({});
-    setIsCharModalOpen(true);
+  // Direct S3 Upload Handler for Category Image
+  const handleImageFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadPayload = new FormData();
+    uploadPayload.append('image', file);
+
+    try {
+      setImageUploading(true);
+      const res = await adminService.uploadCategoryImage(uploadPayload);
+      const uploadedUrl = res?.data?.url || res?.url;
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+        showToast('Image uploaded directly to S3 (picky/category)!', 'success');
+      } else {
+        showToast('Failed to retrieve uploaded image URL', 'error');
+      }
+    } catch (err) {
+      console.error('Direct S3 upload failed:', err);
+      showToast(err.message || 'Failed to upload image directly to S3', 'error');
+    } finally {
+      setImageUploading(false);
+      // Reset input value so same file can be re-selected if needed
+      e.target.value = '';
+    }
+  };
+
+  const handleCopyUrl = () => {
+    if (!formData.image) return;
+    navigator.clipboard.writeText(formData.image);
+    setCopiedUrl(true);
+    showToast('S3 URL copied to clipboard!', 'info');
+    setTimeout(() => setCopiedUrl(false), 2000);
   };
 
   const handleToggleActive = async (c) => {
@@ -101,9 +152,10 @@ export default function AdminCategories() {
     );
 
     try {
-      const payload = new FormData();
-      payload.append('name', c.name);
-      payload.append('isActive', newStatus);
+      const payload = {
+        name: c.name,
+        isActive: newStatus,
+      };
 
       await adminService.updateCategory(c._id, payload);
 
@@ -129,10 +181,11 @@ export default function AdminCategories() {
       return;
     }
 
-    const payload = new FormData();
-    payload.append('name', formData.name.trim());
-    payload.append('description', formData.description.trim());
-    if (imageFile) payload.append('image', imageFile);
+    const payload = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      image: formData.image.trim(),
+    };
 
     try {
       setModalLoading(true);
@@ -154,7 +207,6 @@ export default function AdminCategories() {
         showToast('Category created successfully', 'success');
       }
       setIsModalOpen(false);
-      setImageFile(null);
       await loadData();
     } catch (err) {
       showToast(err.message || 'Failed to save category', 'error');
@@ -175,86 +227,24 @@ export default function AdminCategories() {
     }
   };
 
-  // Add characteristic to category's list
-  const handleAddCharacteristic = (e) => {
-    e.preventDefault();
-    if (!newChar.name.trim()) {
-      showToast('Please enter characteristic name', 'error');
-      return;
-    }
-
-    let parsedValues = [];
-    if (newChar.type === 'select' || newChar.type === 'multi_select') {
-      parsedValues = newChar.valuesInput
-        .split(',')
-        .map((v) => v.trim())
-        .filter(Boolean);
-      if (parsedValues.length === 0) {
-        showToast('Please provide at least one option value (e.g. S, M, L)', 'error');
-        return;
-      }
-    }
-
-    const item = {
-      name: newChar.name.trim(),
-      type: newChar.type,
-      values: parsedValues,
-      required: !!newChar.required,
-    };
-
-    setCharacteristics([...characteristics, item]);
-    setNewChar({ name: '', type: 'select', valuesInput: '', required: false });
-    showToast(`Added "${item.name}" spec to list`, 'success');
-  };
-
-  const handleRemoveCharacteristic = (index) => {
-    const updated = characteristics.filter((_, i) => i !== index);
-    setCharacteristics(updated);
-  };
-
-  const handleSaveCharacteristics = async () => {
-    if (!selectedCategory) return;
-    try {
-      setCharModalLoading(true);
-      await adminService.updateCategoryCharacteristics(selectedCategory._id, characteristics).catch(() => null);
-      setCategories((prev) =>
-        prev.map((c) =>
-          c._id === selectedCategory._id ? { ...c, characteristics: [...characteristics] } : c
-        )
-      );
-      showToast(`Saved ${characteristics.length} characteristics for ${selectedCategory.name}!`, 'success');
-      setIsCharModalOpen(false);
-    } catch (err) {
-      setCategories((prev) =>
-        prev.map((c) =>
-          c._id === selectedCategory._id ? { ...c, characteristics: [...characteristics] } : c
-        )
-      );
-      showToast(`Saved ${characteristics.length} characteristics!`, 'success');
-      setIsCharModalOpen(false);
-    } finally {
-      setCharModalLoading(false);
-    }
-  };
-
-  const togglePreviewMulti = (charName, val) => {
-    const current = previewValues[charName] || [];
-    const exists = current.includes(val);
-    setPreviewValues({
-      ...previewValues,
-      [charName]: exists ? current.filter((x) => x !== val) : [...current, val],
-    });
-  };
-
   return (
     <AdminLayout title="Category Management">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
         <div>
           <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-            Store Categories & Specs
+            Store Categories
           </h2>
           <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-            Organize catalog groupings and define dynamic attribute templates
+            Organize catalog groupings and departments
           </span>
         </div>
         <button
@@ -275,174 +265,247 @@ export default function AdminCategories() {
       {loading ? (
         <Spinner size={36} />
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: '1.5rem',
-        }}>
-          {categories.map((c) => (
-            <div 
-              key={c._id}
-              onClick={() => navigate(`/softpicky-sn2026/subcategories?category=${c._id}`)}
-              style={{
-                background: '#fff',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                padding: '1.25rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.12)';
-                e.currentTarget.style.borderColor = '#c4b5fd';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
-                e.currentTarget.style.borderColor = '#e2e8f0';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                {c.image ? (
-                  <img
-                    src={c.image}
-                    alt={c.name}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      const fallbackMap = {
-                        'traditional-tamil-products': '/images/dept_traditional_tamil.jpg',
-                        'home-decor': '/images/dept_home_decor.jpg',
-                        'kids-products': '/images/dept_kids.jpg',
-                        'fitness-products': '/images/dept_fitness.jpg',
-                        'fashion': '/images/dept_fashion.jpg',
-                        'womens-fashion': '/images/dept_fashion.jpg',
-                        'home-kitchen': '/images/dept_home.jpg',
-                        'artificial-jewellery': '/images/dept_jewellery.jpg',
-                        'beauty-personal-care': '/images/dept_beauty.jpg',
-                        'mobile-accessories': '/images/dept_electronics.jpg',
-                        'snacks-foods': '/images/dept_snacks.jpg',
-                      };
-                      if (fallbackMap[c.slug]) {
-                        e.currentTarget.src = fallbackMap[c.slug];
-                      }
-                    }}
-                    style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '10px',
-                      background: '#f8fafc',
-                      border: '1.5px dashed #cbd5e1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#94a3b8',
-                      flexShrink: 0,
-                      gap: '3px',
-                    }}
-                    title="No image in database"
-                  >
-                    <ImageOff size={18} strokeWidth={1.8} />
-                    <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.02em' }}>No Image</span>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '1.5rem',
+          }}
+        >
+          {categories.map((c) => {
+            const subCount = subCountMap[c._id] || 0;
+            return (
+              <div
+                key={c._id}
+                onClick={() => navigate(`/softpicky-sn2026/subcategories?category=${c._id}`)}
+                style={{
+                  background: '#fff',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  padding: '1.25rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  position: 'relative',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.12)';
+                  e.currentTarget.style.borderColor = '#c4b5fd';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                  {c.image ? (
+                    <img
+                      src={c.image}
+                      alt={c.name}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        const fallbackMap = {
+                          'traditional-tamil-products': '/images/dept_traditional_tamil.jpg',
+                          'home-decor': '/images/dept_home_decor.jpg',
+                          'kids-products': '/images/dept_kids.jpg',
+                          'fitness-products': '/images/dept_fitness.jpg',
+                          'fashion': '/images/dept_fashion.jpg',
+                          'womens-fashion': '/images/dept_fashion.jpg',
+                          'home-kitchen': '/images/dept_home.jpg',
+                          'artificial-jewellery': '/images/dept_jewellery.jpg',
+                          'beauty-personal-care': '/images/dept_beauty.jpg',
+                          'mobile-accessories': '/images/dept_electronics.jpg',
+                          'snacks-foods': '/images/dept_snacks.jpg',
+                        };
+                        if (fallbackMap[c.slug]) {
+                          e.currentTarget.src = fallbackMap[c.slug];
+                        }
+                      }}
+                      style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '10px',
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '10px',
+                        background: '#f8fafc',
+                        border: '1.5px dashed #cbd5e1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#94a3b8',
+                        flexShrink: 0,
+                        gap: '3px',
+                      }}
+                      title="No image in database"
+                    >
+                      <ImageOff size={18} strokeWidth={1.8} />
+                      <span
+                        style={{
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        No Image
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <h3
+                      style={{
+                        margin: '0 0 0.25rem',
+                        fontSize: '1.1rem',
+                        color: '#1e1b4b',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {c.name}
+                    </h3>
+                    <code
+                      style={{
+                        fontSize: '0.75rem',
+                        color: '#64748b',
+                        background: '#f1f5f9',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      /{c.slug}
+                    </code>
+                    <p
+                      style={{
+                        margin: '0.5rem 0 0',
+                        fontSize: '0.82rem',
+                        color: '#475569',
+                        lineHeight: '1.4',
+                      }}
+                    >
+                      {c.description
+                        ? c.description.length > 60
+                          ? c.description.substring(0, 60) + '...'
+                          : c.description
+                        : 'No description provided.'}
+                    </p>
                   </div>
-                )}
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', color: '#1e1b4b', fontWeight: 800 }}>{c.name}</h3>
-                  <code style={{ fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>/{c.slug}</code>
-                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.82rem', color: '#475569', lineHeight: '1.4' }}>
-                    {c.description ? (c.description.length > 60 ? c.description.substring(0, 60) + '...' : c.description) : 'No description provided.'}
-                  </p>
+                </div>
+
+                {/* Card Footer: Subcategories Count and Status */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderTop: '1px solid #f1f5f9',
+                    paddingTop: '0.85rem',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      fontSize: '0.76rem',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: '999px',
+                      background: subCount > 0 ? '#f3e8ff' : '#f1f5f9',
+                      color: subCount > 0 ? '#7c3aed' : '#64748b',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Layers size={13} style={{ color: subCount > 0 ? '#7c3aed' : '#94a3b8' }} />
+                    {subCount} {subCount === 1 ? 'Subcategory' : 'Subcategories'}
+                  </span>
+
+                  <span
+                    className={`adm-status-pill ${
+                      c.isActive !== false ? 'adm-status-delivered' : 'adm-status-cancelled'
+                    }`}
+                    style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}
+                  >
+                    {c.isActive !== false ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenEdit(c);
+                    }}
+                    className="admin-period-select-btn"
+                    style={{
+                      flex: 1,
+                      padding: '0.4rem',
+                      fontSize: '0.78rem',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Edit2 size={13} color="#7c3aed" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleActive(c);
+                    }}
+                    className="admin-period-select-btn"
+                    style={{
+                      flex: 1,
+                      padding: '0.4rem',
+                      fontSize: '0.78rem',
+                      background: c.isActive !== false ? '#dcfce7' : '#fee2e2',
+                      color: c.isActive !== false ? '#15803d' : '#b91c1c',
+                      borderColor: c.isActive !== false ? '#bbf7d0' : '#fecaca',
+                      justifyContent: 'center',
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease',
+                    }}
+                    title={c.isActive !== false ? 'Click to make Inactive' : 'Click to make Active'}
+                  >
+                    {c.isActive !== false ? (
+                      <>
+                        <CheckCircle2 size={13} color="#16a34a" />
+                        <span>Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={13} color="#dc2626" />
+                        <span>Inactive</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(c._id);
+                    }}
+                    className="admin-period-select-btn"
+                    style={{ padding: '0.4rem', fontSize: '0.78rem', color: '#dc2626' }}
+                  >
+                    <Trash2 size={13} color="#dc2626" />
+                  </button>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '1rem' }}>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    fontSize: '0.75rem',
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '999px',
-                    background: c.characteristics?.length ? '#ede8f8' : '#f1f5f9',
-                    color: c.characteristics?.length ? '#5b21b6' : '#64748b',
-                    fontWeight: 700,
-                  }}
-                >
-                  🏷️ {c.characteristics?.length || 0} Specs
-                </span>
-                
-                <span
-                  className={`adm-status-pill ${
-                    c.isActive !== false ? 'adm-status-delivered' : 'adm-status-cancelled'
-                  }`}
-                  style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}
-                >
-                  {c.isActive !== false ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }}
-                  className="admin-period-select-btn"
-                  style={{ flex: 1, padding: '0.4rem', fontSize: '0.78rem', justifyContent: 'center' }}
-                >
-                  <Edit2 size={13} color="#7c3aed" />
-                  <span>Edit</span>
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleToggleActive(c); }}
-                  className="admin-period-select-btn"
-                  style={{
-                    flex: 1,
-                    padding: '0.4rem',
-                    fontSize: '0.78rem',
-                    background: c.isActive !== false ? '#dcfce7' : '#fee2e2',
-                    color: c.isActive !== false ? '#15803d' : '#b91c1c',
-                    borderColor: c.isActive !== false ? '#bbf7d0' : '#fecaca',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    transition: 'all 0.15s ease',
-                  }}
-                  title={c.isActive !== false ? 'Click to make Inactive' : 'Click to make Active'}
-                >
-                  {c.isActive !== false ? (
-                    <>
-                      <CheckCircle2 size={13} color="#16a34a" />
-                      <span>Active</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={13} color="#dc2626" />
-                      <span>Inactive</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
-                  className="admin-period-select-btn"
-                  style={{ padding: '0.4rem', fontSize: '0.78rem', color: '#dc2626' }}
-                >
-                  <Trash2 size={13} color="#dc2626" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* 1. Add / Edit Basic Category Modal (Clean & Simple) */}
+      {/* Add / Edit Category Modal with Direct S3 Upload */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -451,13 +514,13 @@ export default function AdminCategories() {
         <form onSubmit={handleSubmitCategory}>
           <Input
             label="Category Name"
-            placeholder="e.g. T-Shirts or Smart Electronics"
+            placeholder="e.g. Traditional Products or Fashion"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
           />
 
-          <div className="form-group">
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
             <label className="form-label">Description</label>
             <textarea
               rows={3}
@@ -468,350 +531,215 @@ export default function AdminCategories() {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Category Banner Image</label>
-            {(imageFile || editingCategory?.image) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <img
-                  src={imageFile ? URL.createObjectURL(imageFile) : editingCategory.image}
-                  alt="Category Banner Preview"
-                  style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+          {/* S3 Image Direct Upload Section */}
+          <div
+            className="form-group"
+            style={{
+              background: '#f8fafc',
+              border: '1.5px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '1rem',
+              marginBottom: '1.25rem',
+            }}
+          >
+            <label
+              className="form-label"
+              style={{
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                color: '#1e293b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                marginBottom: '0.85rem',
+              }}
+            >
+              <UploadCloud size={16} color="#7c3aed" />
+              <span>Category Banner Image (Direct S3 Upload)</span>
+            </label>
+
+            {/* Direct Upload Trigger */}
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <label
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.55rem 1rem',
+                  borderRadius: '8px',
+                  background: imageUploading ? '#cbd5e1' : '#7c3aed',
+                  color: '#ffffff',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  cursor: imageUploading ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+                }}
+              >
+                {imageUploading ? (
+                  <>
+                    <Spinner size={16} color="#ffffff" />
+                    <span>Uploading directly to S3...</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud size={16} />
+                    <span>Choose Image & Upload to S3</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={imageUploading}
+                  onChange={handleImageFileSelect}
+                  style={{ display: 'none' }}
                 />
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                  {imageFile ? 'Selected new image' : 'Current saved image'}
-                </span>
+              </label>
+
+              {formData.image && (
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, image: '' })}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.85rem',
+                    fontSize: '0.8rem',
+                    color: '#dc2626',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear Image
+                </button>
+              )}
+            </div>
+
+            {/* S3 URL Display Input */}
+            <div style={{ marginBottom: '0.85rem' }}>
+              <label
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  display: 'block',
+                  marginBottom: '0.35rem',
+                }}
+              >
+                S3 Image URL:
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="https://picky-e-com.s3.ap-southeast-1.amazonaws.com/picky/category/..."
+                  className="form-input"
+                  style={{
+                    fontSize: '0.82rem',
+                    fontFamily: 'monospace',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    flex: 1,
+                  }}
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                />
+                {formData.image && (
+                  <button
+                    type="button"
+                    onClick={handleCopyUrl}
+                    className="admin-period-select-btn"
+                    style={{
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.78rem',
+                      flexShrink: 0,
+                    }}
+                    title="Copy S3 URL"
+                  >
+                    {copiedUrl ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                    <span>{copiedUrl ? 'Copied' : 'Copy'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Image Preview if URL is available */}
+            {formData.image && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  marginTop: '0.5rem',
+                }}
+              >
+                <img
+                  src={formData.image}
+                  alt="Category Banner Preview"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                  style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    border: '1px solid #cbd5e1',
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                    <CheckCircle2 size={14} color="#16a34a" />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534' }}>
+                      Active S3 Image Loaded
+                    </span>
+                  </div>
+                  <a
+                    href={formData.image}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#7c3aed',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    <span>View uploaded image</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
               </div>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files[0] || null)}
-              className="form-input"
-            />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-            <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary">
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '0.75rem',
+              marginTop: '1.5rem',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="btn btn-secondary"
+            >
               Cancel
             </button>
-            <Button type="submit" variant="primary" loading={modalLoading}>
+            <Button type="submit" variant="primary" loading={modalLoading || imageUploading}>
               {editingCategory ? 'Save Changes' : 'Create Category'}
             </Button>
           </div>
         </form>
-      </Modal>
-
-      {/* 2. Manage Characteristics Modal with Live Interactive Preview */}
-      <Modal
-        isOpen={isCharModalOpen}
-        onClose={() => setIsCharModalOpen(false)}
-        title={`Category Specifications: ${selectedCategory?.name || ''}`}
-      >
-        <div style={{ maxHeight: '75vh', overflowY: 'auto', paddingRight: '0.35rem' }}>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: 0, marginBottom: '1.25rem' }}>
-            Configure the attributes (e.g. Size, Color, Fabric, Battery) for products in this category. These fields will automatically load on the Add Product form.
-          </p>
-
-          {/* Current Characteristics Table */}
-          <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.92rem', color: '#1e293b' }}>
-              Configured Specifications ({characteristics.length})
-            </h4>
-
-            {characteristics.length === 0 ? (
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                No characteristics defined yet. Use the form below to add attributes.
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {characteristics.map((char, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      background: 'white',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '6px',
-                      border: '1px solid #e2e8f0',
-                      gap: '0.75rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                      <strong style={{ fontSize: '0.88rem' }}>{char.name}</strong>
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          textTransform: 'uppercase',
-                          fontWeight: 700,
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: '4px',
-                          background: '#e0e7ff',
-                          color: '#3730a3',
-                        }}
-                      >
-                        {char.type.replace('_', ' ')}
-                      </span>
-                      {char.required && (
-                        <span style={{ fontSize: '0.7rem', color: '#dc2626', fontWeight: 600 }}>*Required</span>
-                      )}
-                      {char.values && char.values.length > 0 && (
-                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                          {char.values.map((v, vIdx) => (
-                            <span
-                              key={vIdx}
-                              style={{
-                                fontSize: '0.72rem',
-                                background: '#f1f5f9',
-                                color: '#475569',
-                                padding: '0.1rem 0.35rem',
-                                borderRadius: '3px',
-                                border: '1px solid #cbd5e1',
-                              }}
-                            >
-                              {v}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCharacteristic(idx)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                        padding: '0.2rem',
-                      }}
-                      title="Remove"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Add New Characteristic Sub-Form */}
-          <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
-            <h4 style={{ margin: '0 0 0.85rem', fontSize: '0.92rem', color: '#0f172a' }}>
-              + Add New Characteristic
-            </h4>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div>
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>Name *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Size, Color, Fabric"
-                  className="form-input"
-                  value={newChar.name}
-                  onChange={(e) => setNewChar({ ...newChar, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>Type *</label>
-                <select
-                  className="form-input"
-                  value={newChar.type}
-                  onChange={(e) => setNewChar({ ...newChar, type: e.target.value })}
-                >
-                  <option value="select">Dropdown (Single Select)</option>
-                  <option value="multi_select">Multi Select (Pill Tags)</option>
-                  <option value="text">Text Input</option>
-                  <option value="number">Number</option>
-                  <option value="boolean">Yes / No Toggle</option>
-                </select>
-              </div>
-            </div>
-
-            {(newChar.type === 'select' || newChar.type === 'multi_select') && (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label className="form-label" style={{ fontSize: '0.8rem' }}>
-                  Options / Values (Comma-separated) *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. S, M, L, XL, XXL or Black, White, Navy"
-                  className="form-input"
-                  value={newChar.valuesInput}
-                  onChange={(e) => setNewChar({ ...newChar, valuesInput: e.target.value })}
-                />
-                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Separate choices with commas.</span>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.85rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', cursor: 'pointer', userSelect: 'none' }}>
-                <input
-                  type="checkbox"
-                  checked={newChar.required}
-                  onChange={(e) => setNewChar({ ...newChar, required: e.target.checked })}
-                />
-                <span>Mandatory / Required for product</span>
-              </label>
-
-              <button
-                type="button"
-                onClick={handleAddCharacteristic}
-                className="btn btn-secondary btn-sm"
-                style={{ background: '#0f172a', color: '#fff' }}
-              >
-                + Add to List
-              </button>
-            </div>
-          </div>
-
-          {/* 🌟 LIVE INTERACTIVE FORM PREVIEW */}
-          <div style={{ background: '#f8fafc', border: '1.5px dashed #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '1.1rem' }}>👁️</span>
-              <strong style={{ fontSize: '0.88rem', color: '#334155' }}>Live Form Preview</strong>
-              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>(How this will appear on Add Product modal)</span>
-            </div>
-
-            {characteristics.length === 0 ? (
-              <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0, fontStyle: 'italic' }}>
-                Add characteristics above to preview the interactive fields live!
-              </p>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                {characteristics.map((char, idx) => (
-                  <div key={idx} style={{ background: '#ffffff', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem', color: '#1e293b' }}>
-                      {char.name} {char.required && <span style={{ color: '#ef4444' }}>*</span>}
-                    </label>
-
-                    {char.type === 'select' && (
-                      <select
-                        className="form-input"
-                        style={{ fontSize: '0.82rem', padding: '0.4rem' }}
-                        value={previewValues[char.name] || ''}
-                        onChange={(e) => setPreviewValues({ ...previewValues, [char.name]: e.target.value })}
-                      >
-                        <option value="">Select {char.name}...</option>
-                        {char.values?.map((v, i) => (
-                          <option key={i} value={v}>{v}</option>
-                        ))}
-                      </select>
-                    )}
-
-                    {char.type === 'multi_select' && (
-                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                        {char.values?.map((v, i) => {
-                          const isChecked = (previewValues[char.name] || []).includes(v);
-                          return (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => togglePreviewMulti(char.name, v)}
-                              style={{
-                                fontSize: '0.75rem',
-                                padding: '0.2rem 0.5rem',
-                                borderRadius: '4px',
-                                border: '1px solid',
-                                borderColor: isChecked ? '#6366f1' : '#cbd5e1',
-                                background: isChecked ? '#e0e7ff' : '#f8fafc',
-                                color: isChecked ? '#3730a3' : '#475569',
-                                cursor: 'pointer',
-                                fontWeight: isChecked ? 600 : 400,
-                              }}
-                            >
-                              {isChecked ? `✓ ${v}` : v}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {char.type === 'text' && (
-                      <input
-                        type="text"
-                        placeholder={`Enter ${char.name}...`}
-                        className="form-input"
-                        style={{ fontSize: '0.82rem', padding: '0.4rem' }}
-                        value={previewValues[char.name] || ''}
-                        onChange={(e) => setPreviewValues({ ...previewValues, [char.name]: e.target.value })}
-                      />
-                    )}
-
-                    {char.type === 'number' && (
-                      <input
-                        type="number"
-                        placeholder={`e.g. 50`}
-                        className="form-input"
-                        style={{ fontSize: '0.82rem', padding: '0.4rem' }}
-                        value={previewValues[char.name] || ''}
-                        onChange={(e) => setPreviewValues({ ...previewValues, [char.name]: e.target.value })}
-                      />
-                    )}
-
-                    {char.type === 'boolean' && (
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewValues({ ...previewValues, [char.name]: 'Yes' })}
-                          style={{
-                            flex: 1,
-                            fontSize: '0.75rem',
-                            padding: '0.3rem',
-                            borderRadius: '4px',
-                            border: '1px solid',
-                            borderColor: previewValues[char.name] === 'Yes' ? '#16a34a' : '#cbd5e1',
-                            background: previewValues[char.name] === 'Yes' ? '#dcfce7' : '#fff',
-                            color: previewValues[char.name] === 'Yes' ? '#166534' : '#475569',
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                          }}
-                        >
-                          Yes
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewValues({ ...previewValues, [char.name]: 'No' })}
-                          style={{
-                            flex: 1,
-                            fontSize: '0.75rem',
-                            padding: '0.3rem',
-                            borderRadius: '4px',
-                            border: '1px solid',
-                            borderColor: previewValues[char.name] === 'No' ? '#ef4444' : '#cbd5e1',
-                            background: previewValues[char.name] === 'No' ? '#fee2e2' : '#fff',
-                            color: previewValues[char.name] === 'No' ? '#991b1b' : '#475569',
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                          }}
-                        >
-                          No
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-            <button type="button" onClick={() => setIsCharModalOpen(false)} className="btn btn-secondary">
-              Cancel
-            </button>
-            <Button
-              type="button"
-              variant="primary"
-              loading={charModalLoading}
-              onClick={handleSaveCharacteristics}
-            >
-              Save Characteristics
-            </Button>
-          </div>
-        </div>
       </Modal>
     </AdminLayout>
   );

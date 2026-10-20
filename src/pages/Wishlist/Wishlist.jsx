@@ -542,6 +542,14 @@ export default function Wishlist() {
                               {product.name}
                             </h3>
                           </Link>
+                          {(product.shortDescription || product.description) && (
+                            <p
+                              className={styles['ref-product-desc']}
+                              title={product.shortDescription || product.description}
+                            >
+                              {product.shortDescription || product.description}
+                            </p>
+                          )}
                         </div>
                       </div>
 

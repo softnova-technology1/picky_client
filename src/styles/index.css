@@ -396,7 +396,7 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
   border-color: #c084fc;
 }
 .product-card-image {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
   width: 100%;
   object-fit: cover;
   background: #f8fafc;

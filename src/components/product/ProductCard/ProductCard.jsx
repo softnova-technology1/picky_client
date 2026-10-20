@@ -99,6 +99,12 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
+  const shortDesc = useMemo(() => {
+    const raw = product.shortDescription || product.description || '';
+    if (!raw) return '';
+    return typeof raw === 'string' ? raw.replace(/<[^>]*>/g, '').trim() : '';
+  }, [product.shortDescription, product.description]);
+
   const getBadgeInfo = () => {
     let customBadge = badgeText || product.badge;
 
@@ -202,8 +208,13 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         <div className="ref-title-rating">
           <div className="ref-title-section">
             <Link to={`/products/${product.slug}`} className="ref-title-link">
-              <h3 className="ref-product-title" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
+              <h3 className="ref-product-title">{product.name}</h3>
             </Link>
+            {shortDesc && (
+              <p className="ref-product-desc" title={shortDesc}>
+                {shortDesc}
+              </p>
+            )}
           </div>
         </div>
 

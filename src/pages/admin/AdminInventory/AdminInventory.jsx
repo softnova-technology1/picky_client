@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff,
   Download,
+  Tag,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -91,6 +92,19 @@ export function calculateInventoryKPIs(list = []) {
     totalSold,
     totalReserved,
   };
+}
+
+export function getTagsArray(rawTags) {
+  if (Array.isArray(rawTags)) {
+    return rawTags.map((t) => (typeof t === 'string' ? t.trim() : String(t))).filter(Boolean);
+  }
+  if (typeof rawTags === 'string' && rawTags.trim()) {
+    return rawTags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 export default function AdminInventory() {
@@ -340,6 +354,10 @@ export default function AdminInventory() {
         comparison = a.sku.localeCompare(b.sku, undefined, { sensitivity: 'base' });
       } else if (sortConfig.key === 'category') {
         comparison = (a.category || '').localeCompare(b.category || '', undefined, { sensitivity: 'base' });
+      } else if (sortConfig.key === 'tags') {
+        const tagA = getTagsArray(a.tags).join(', ');
+        const tagB = getTagsArray(b.tags).join(', ');
+        comparison = tagA.localeCompare(tagB, undefined, { sensitivity: 'base' });
       } else if (sortConfig.key === 'stock') {
         comparison = (Number(a.currentStock) || 0) - (Number(b.currentStock) || 0);
       } else if (sortConfig.key === 'reserved') {
@@ -618,6 +636,7 @@ export default function AdminInventory() {
       'SKU',
       'Category',
       'Sub-Category',
+      'Tags',
       'Price (INR)',
       'Current Stock',
       'Reserved Stock',
@@ -645,12 +664,15 @@ export default function AdminInventory() {
         ? 'Low Stock'
         : 'In Stock';
 
+      const tagsStr = getTagsArray(item.tags).join(', ');
+
       return [
         idx + 1,
         escapeCsv(item.productName),
         escapeCsv(item.sku),
         escapeCsv(item.category || ''),
         escapeCsv(item.subCategory || ''),
+        escapeCsv(tagsStr),
         item.sellingPrice || item.price || 0,
         currentStock,
         reserved,
@@ -1173,6 +1195,26 @@ export default function AdminInventory() {
                   </div>
                 </th>
 
+                {/* TAGS (Clickable Sort) */}
+                <th
+                  onClick={() => handleSort('tags')}
+                  className={`${styles.thTags} ${styles.thSortable} ${sortConfig.key === 'tags' ? styles.thSortActive : ''}`}
+                  title="Click to sort by Tags"
+                >
+                  <div className={styles.thSortContent}>
+                    <span>Tags</span>
+                    {sortConfig.key === 'tags' ? (
+                      sortConfig.direction === 'asc' ? (
+                        <ArrowUp size={14} color="#7c3aed" />
+                      ) : (
+                        <ArrowDown size={14} color="#7c3aed" />
+                      )
+                    ) : (
+                      <ArrowUpDown size={13} color="#94a3b8" style={{ opacity: 0.6 }} />
+                    )}
+                  </div>
+                </th>
+
                 {/* CURRENT STOCK (Clickable Sort) */}
                 <th
                   onClick={() => handleSort('stock')}
@@ -1270,6 +1312,9 @@ export default function AdminInventory() {
                     <td className={styles.tdCategory}>
                       <div className={styles.skeletonBoxSubtle} style={{ width: '100px', height: '22px', borderRadius: '6px' }} />
                     </td>
+                    <td className={styles.tdTags}>
+                      <div className={styles.skeletonBoxSubtle} style={{ width: '80px', height: '22px', borderRadius: '9999px' }} />
+                    </td>
                     <td className={styles.tdStock}>
                       <div className={styles.skeletonBox} style={{ width: '60px', height: '16px', margin: '0 auto' }} />
                     </td>
@@ -1290,7 +1335,7 @@ export default function AdminInventory() {
               ) : sortedItems.length === 0 ? (
                 /* Empty State */
                 <tr>
-                  <td colSpan={10} className={styles.emptyTd}>
+                  <td colSpan={11} className={styles.emptyTd}>
                     <div className={styles.emptyWrap}>
                       <div className={styles.emptyIconCircle}>
                         <Package size={30} />
@@ -1401,6 +1446,40 @@ export default function AdminInventory() {
                               {item.subCategory}
                             </span>
                           )}
+                        </div>
+                      </td>
+
+                      {/* Tags */}
+                      <td className={styles.tdTags}>
+                        <div className={styles.tagsCellWrap}>
+                          {(() => {
+                            const tags = getTagsArray(item.tags);
+                            if (tags.length === 0) {
+                              return <span className={styles.emptyTags}>—</span>;
+                            }
+                            return tags.map((tag, tIdx) => {
+                              const isTagSelected =
+                                selectedTag !== 'all' &&
+                                selectedTag.toLowerCase().trim() === tag.toLowerCase().trim();
+                              return (
+                                <span
+                                  key={tIdx}
+                                  onClick={() =>
+                                    setSelectedTag(isTagSelected ? 'all' : tag)
+                                  }
+                                  className={`${styles.tagPill} ${
+                                    isTagSelected ? styles.tagPillActive : ''
+                                  }`}
+                                  title={`Tag: ${tag} (Click to ${
+                                    isTagSelected ? 'clear filter' : 'filter by this tag'
+                                  })`}
+                                >
+                                  <Tag size={10} className={styles.tagIcon} />
+                                  {tag}
+                                </span>
+                              );
+                            });
+                          })()}
                         </div>
                       </td>
 
@@ -1898,6 +1977,18 @@ export default function AdminInventory() {
                   <span className={styles.viewCategoryPill}>
                     {viewProductItem.category}
                   </span>
+                  {viewProductItem.subCategory && (
+                    <span className={styles.subCategoryPill} title={`Sub-Category: ${viewProductItem.subCategory}`}>
+                      <span className={styles.subCategoryDot} />
+                      {viewProductItem.subCategory}
+                    </span>
+                  )}
+                  {getTagsArray(viewProductItem.tags).map((tg, i) => (
+                    <span key={i} className={styles.viewTagPill} title={`Tag: ${tg}`}>
+                      <Tag size={10} className={styles.tagIcon} />
+                      {tg}
+                    </span>
+                  ))}
                 </div>
                 <div className={styles.viewPriceRow}>
                   Selling Price: <strong className={styles.viewSellingPrice}>{formatPrice(viewProductItem.sellingPrice)}</strong>{' '}

@@ -34,15 +34,19 @@ import {
   Tag,
   ChevronDown,
   ImageOff,
+  Download,
+  UploadCloud,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import Spinner from '../../../components/ui/Spinner';
 import { useUiStore } from '../../../store/uiStore';
 import { adminService } from '../../../services/admin.service';
 import { categoryService } from '../../../services/category.service';
+import { productService } from '../../../services/product.service';
 
 // ─── Department Lucide Icon Mapping ───────────────────────────────────────────
 const CATEGORY_LUCIDE_ICONS = {
@@ -71,8 +75,9 @@ export default function AdminSubCategories() {
   // Categories list state (10 fixed categories, can have specs edited)
   const [categories, setCategories] = useState([]);
 
-  // Master list of subcategories
+  // Master list of subcategories & products
   const [subcategories, setSubcategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState(searchParams.get('category') || 'all'); // 'all' or 'cat-1', 'cat-2', etc.
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
@@ -80,24 +85,55 @@ export default function AdminSubCategories() {
   const deptDropdownRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
+  // Bulk Selection & Deletion State
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Direct S3 Image Upload State
+  const [imageUploading, setImageUploading] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+
   async function loadData() {
     const startTime = Date.now();
     try {
       setLoading(true);
-      const [catRes, subRes] = await Promise.all([
+      const [catRes, subRes, prodRes] = await Promise.all([
         categoryService.list().catch(() => null),
         adminService.getSubCategories().catch(() => null),
+        productService.list({ limit: 1000 }).catch(() => null),
       ]);
       const cList = catRes ? catRes.data || [] : [];
       const sList = subRes ? subRes.data || [] : [];
+      const pList = prodRes ? (Array.isArray(prodRes) ? prodRes : prodRes.data?.products || prodRes.data || []) : [];
       setCategories(cList);
       setSubcategories(sList);
+      setProducts(pList);
     } catch (err) {
       console.error('Failed to load subcategories:', err);
     } finally {
       setLoading(false);
     }
   }
+
+  // Calculate product count for each subcategory
+  const getSubProductCount = (sub) => {
+    if (typeof sub.itemCount === 'number' && sub.itemCount > 0) return sub.itemCount;
+    if (typeof sub.productCount === 'number' && sub.productCount > 0) return sub.productCount;
+    if (!products || products.length === 0) return sub.itemCount || sub.productCount || 0;
+
+    const sId = String(sub._id || '');
+    const sSlug = String(sub.slug || '').trim().toLowerCase();
+    const sName = String(sub.name || '').trim().toLowerCase();
+    const cId = String(typeof sub.categoryId === 'object' ? sub.categoryId?._id : sub.categoryId || '');
+
+    return products.filter((p) => {
+      if (!p.subCategory) return false;
+      const pSub = String(p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '')).trim().toLowerCase();
+      const pCatId = String(p.category?._id || p.category || '');
+      if (cId && pCatId && pCatId !== cId) return false;
+      return pSub === sId || pSub === sSlug || pSub === sName;
+    }).length;
+  };
 
   useEffect(() => {
     loadData();
@@ -185,7 +221,7 @@ export default function AdminSubCategories() {
     const distinctCategories = new Set(subcategories.map((s) => {
       return typeof s.categoryId === 'string' ? s.categoryId : (s.categoryId?._id || '');
     })).size;
-    const totalProducts = subcategories.reduce((acc, curr) => acc + (Number(curr.itemCount) || 0), 0);
+    const totalProducts = subcategories.reduce((acc, curr) => acc + (getSubProductCount(curr) || 0), 0);
 
     // Subcategory counts mapped per parent department
     const catCounts = categories.map((cat) => {
@@ -207,7 +243,7 @@ export default function AdminSubCategories() {
     const newCount = subcategories.filter(s => new Date(s.createdAt || Date.now()) >= thirtyDaysAgo).length;
 
     return { total, active, distinctCategories, totalProducts, mostCategory, leastCategory, newCount };
-  }, [subcategories, categories]);
+  }, [subcategories, categories, products]);
 
   // Active Category Object (when a specific tab is selected)
   const currentCategoryObj = useMemo(() => {
@@ -264,18 +300,45 @@ export default function AdminSubCategories() {
       status: 'active',
     });
     setImageFile(null);
+    setImageUploading(false);
+    setCopiedUrl(false);
     setIsModalOpen(true);
   };
 
-  // Handle local image file upload
-  const handleImageFileSelect = (e) => {
+  // Direct S3 Upload Handler for Sub-Category Image
+  const handleImageFileSelect = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setImageFile(file);
-      setFormData((prev) => ({ ...prev, image: previewUrl }));
-      showToast('Cover image selected!', 'success');
+    if (!file) return;
+
+    const uploadPayload = new FormData();
+    uploadPayload.append('image', file);
+
+    try {
+      setImageUploading(true);
+      const res = await adminService.uploadSubCategoryImage(uploadPayload);
+      const uploadedUrl = res?.data?.url || res?.url;
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+        setImageFile(null);
+        showToast('Image uploaded directly to S3 (picky/sub-category)!', 'success');
+      } else {
+        showToast('Failed to retrieve uploaded image URL', 'error');
+      }
+    } catch (err) {
+      console.error('Direct S3 upload failed:', err);
+      showToast(err.message || 'Failed to upload image directly to S3', 'error');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
     }
+  };
+
+  const handleCopyUrl = () => {
+    if (!formData.image) return;
+    navigator.clipboard.writeText(formData.image);
+    setCopiedUrl(true);
+    showToast('S3 URL copied to clipboard!', 'info');
+    setTimeout(() => setCopiedUrl(false), 2000);
   };
 
   // Remove selected image
@@ -298,6 +361,8 @@ export default function AdminSubCategories() {
       status: item.status || 'active',
     });
     setImageFile(null);
+    setImageUploading(false);
+    setCopiedUrl(false);
     setIsModalOpen(true);
   };
 
@@ -356,15 +421,15 @@ export default function AdminSubCategories() {
     setModalLoading(true);
 
     try {
-      let finalImageUrl = formData.image;
-      if (imageFile) {
-        const uploadData = new FormData();
-        uploadData.append('image', imageFile);
-        const res = await adminService.uploadImage(uploadData);
-        finalImageUrl = res.data?.url || res.url || formData.image;
-      }
-      
-      const payload = { ...formData, image: finalImageUrl };
+      const payload = {
+        name: formData.name.trim(),
+        slug: formData.slug.trim(),
+        categoryId: formData.categoryId,
+        description: (formData.description || '').trim(),
+        image: formData.image ? formData.image.trim() : '',
+        displayOrder: Number(formData.displayOrder) || 1,
+        status: formData.status || 'active',
+      };
 
       if (editingItem) {
         const res = await adminService.updateSubCategory(editingItem._id, payload).catch(() => null);
@@ -402,17 +467,139 @@ export default function AdminSubCategories() {
     }
   };
 
-  // Delete / Remove
+  // Delete / Remove Single Sub-category
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to remove the sub-category "${name}"?`)) {
       try {
         await adminService.deleteSubCategory(id).catch(() => null);
         setSubcategories((prev) => prev.filter((s) => s._id !== id));
+        setSelectedIds((prev) => prev.filter((item) => item !== id));
         showToast(`Removed sub-category "${name}"`, 'info');
       } catch (err) {
         showToast('Failed to delete sub-category', 'error');
       }
     }
+  };
+
+  // Toggle selection for single item
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // Toggle selection for all visible items on current page
+  const isAllCurrentPageSelected =
+    paginatedSubcategories.length > 0 &&
+    paginatedSubcategories.every((sub) => selectedIds.includes(sub._id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllCurrentPageSelected) {
+      const pageIds = paginatedSubcategories.map((sub) => sub._id);
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    } else {
+      const pageIds = paginatedSubcategories.map((sub) => sub._id);
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  // Bulk Delete Handler
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmMsg = `Are you sure you want to delete ${selectedIds.length} selected sub-categor${selectedIds.length === 1 ? 'y' : 'ies'}? This action cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setBulkDeleting(true);
+      if (adminService.bulkDeleteSubCategories) {
+        await adminService.bulkDeleteSubCategories(selectedIds);
+      } else {
+        await Promise.all(selectedIds.map((id) => adminService.deleteSubCategory(id)));
+      }
+      setSubcategories((prev) => prev.filter((s) => !selectedIds.includes(s._id)));
+      showToast(`Successfully deleted ${selectedIds.length} sub-categories`, 'success');
+      setSelectedIds([]);
+    } catch (err) {
+      console.error('Bulk delete failed:', err);
+      try {
+        await Promise.all(selectedIds.map((id) => adminService.deleteSubCategory(id).catch(() => null)));
+        setSubcategories((prev) => prev.filter((s) => !selectedIds.includes(s._id)));
+        showToast(`Deleted ${selectedIds.length} sub-categories`, 'success');
+        setSelectedIds([]);
+      } catch (e) {
+        showToast('Failed to delete selected sub-categories', 'error');
+      }
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  // Export Sub-Categories to CSV
+  const handleExportCSV = (onlySelected = false) => {
+    const listToExport = onlySelected
+      ? subcategories.filter((s) => selectedIds.includes(s._id))
+      : filteredSubcategories.length > 0
+      ? filteredSubcategories
+      : subcategories;
+
+    if (listToExport.length === 0) {
+      showToast('No sub-categories found to export', 'error');
+      return;
+    }
+
+    const headers = [
+      'Sub-Category Name',
+      'Parent Category',
+      'Slug',
+      'Full Path',
+      'Products Count',
+      'Display Order',
+      'Status',
+      'Description',
+      'Image URL',
+      'Created Date',
+    ];
+
+    const rows = listToExport.map((sub) => {
+      const catIdStr = typeof sub.categoryId === 'object' ? sub.categoryId?._id : sub.categoryId;
+      const parent = categories.find((c) => c._id === catIdStr);
+      const parentName = parent?.name || (typeof sub.categoryId === 'object' ? sub.categoryId?.name : sub.categoryName) || 'Unassigned';
+      const parentSlug = parent?.slug || (typeof sub.categoryId === 'object' ? sub.categoryId?.slug : 'category');
+      const fullSlug = `/${parentSlug}/${sub.slug}`;
+      const prodCount = getSubProductCount(sub);
+
+      return [
+        `"${(sub.name || '').replace(/"/g, '""')}"`,
+        `"${parentName.replace(/"/g, '""')}"`,
+        `"${(sub.slug || '').replace(/"/g, '""')}"`,
+        `"${fullSlug}"`,
+        prodCount,
+        sub.displayOrder || 1,
+        `"${(sub.status || 'active').toUpperCase()}"`,
+        `"${(sub.description || '').replace(/"/g, '""')}"`,
+        `"${sub.image || ''}"`,
+        sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : '',
+      ];
+    });
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,\uFEFF' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `picky_subcategories_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`📥 Exported ${listToExport.length} sub-categories to CSV`, 'success');
   };
 
   // Add Spec to category's list
@@ -587,6 +774,31 @@ export default function AdminSubCategories() {
               <span>Specs: {currentCategoryObj.name} ({currentCategoryObj.characteristics?.length || 0})</span>
             </button>
           )}
+
+          {/* Export CSV Button */}
+          <button
+            onClick={() => handleExportCSV(false)}
+            className="subcat-action-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '10px',
+              border: '1.5px solid #cbd5e1',
+              background: '#ffffff',
+              color: '#334155',
+              fontWeight: 700,
+              fontSize: '0.86rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+              transition: 'all 0.15s ease',
+            }}
+            title="Export filtered sub-categories to CSV"
+          >
+            <Download size={15} color="#475569" />
+            <span>Export CSV</span>
+          </button>
 
           {/* Add Sub-Category Button */}
           <button
@@ -1024,6 +1236,115 @@ export default function AdminSubCategories() {
         </div>
       </div>
 
+      {/* ─── Bulk Selection Actions Banner ─────────────────────────────────── */}
+      {selectedIds.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.85rem 1.25rem',
+            background: 'linear-gradient(135deg, #ede8f8 0%, #f5f0fe 100%)',
+            border: '1.5px solid #dcd0fa',
+            borderRadius: '12px',
+            marginBottom: '1rem',
+            boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#7c3aed',
+                color: '#ffffff',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                minWidth: '26px',
+                height: '26px',
+                padding: '0 6px',
+                borderRadius: '9999px',
+              }}
+            >
+              {selectedIds.length}
+            </span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e1b4b' }}>
+              {selectedIds.length === 1
+                ? '1 sub-category selected'
+                : `${selectedIds.length} sub-categories selected`}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => handleExportCSV(true)}
+              className="subcat-action-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#334155',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Download size={14} color="#64748b" />
+              <span>Export Selected ({selectedIds.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="subcat-action-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.45rem 0.95rem',
+                borderRadius: '8px',
+                border: '1px solid #fecaca',
+                background: '#dc2626',
+                color: '#ffffff',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: bulkDeleting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)',
+              }}
+            >
+              <Trash2 size={14} />
+              <span>{bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedIds.length})`}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClearSelection}
+              className="subcat-action-btn"
+              style={{
+                padding: '0.45rem 0.75rem',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                background: 'transparent',
+                color: '#64748b',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ─── Ultra-Neat Sub-Categories Table ───────────────────────────────── */}
       <div
         style={{
@@ -1045,6 +1366,21 @@ export default function AdminSubCategories() {
           >
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ width: '40px', padding: '0.85rem 0.75rem 0.85rem 1.25rem', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={isAllCurrentPageSelected}
+                    onChange={handleToggleSelectAll}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      cursor: 'pointer',
+                      accentColor: '#7c3aed',
+                      borderRadius: '4px',
+                    }}
+                    title="Select all on this page"
+                  />
+                </th>
                 <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   SUB-CATEGORY
                 </th>
@@ -1072,7 +1408,7 @@ export default function AdminSubCategories() {
               {paginatedSubcategories.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     style={{ textAlign: 'center', padding: '4rem 1rem', color: '#64748b' }}
                   >
                     <FolderTree size={38} style={{ margin: '0 auto 0.6rem', color: '#cbd5e1' }} />
@@ -1098,6 +1434,22 @@ export default function AdminSubCategories() {
                         borderBottom: index !== paginatedSubcategories.length - 1 ? '1px solid #f1f5f9' : 'none',
                       }}
                     >
+                      {/* Checkbox */}
+                      <td style={{ width: '40px', padding: '0.9rem 0.75rem 0.9rem 1.25rem', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(sub._id)}
+                          onChange={() => handleToggleSelect(sub._id)}
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            cursor: 'pointer',
+                            accentColor: '#7c3aed',
+                            borderRadius: '4px',
+                          }}
+                        />
+                      </td>
+
                       {/* 1. Sub-Category Name & Image */}
                       <td style={{ padding: '0.9rem 1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
@@ -1255,7 +1607,7 @@ export default function AdminSubCategories() {
                           }}
                         >
                           <Package size={13} color="#7c3aed" />
-                          {sub.itemCount || 0} Products
+                          {getSubProductCount(sub)} Products
                         </span>
                       </td>
 
@@ -1696,236 +2048,282 @@ export default function AdminSubCategories() {
             />
           </div>
 
-          {/* ── Side-by-Side: Compact Cover Image (Left) + Display Order & Status (Right) ── */}
+          {/* S3 Image Direct Upload Section */}
           <div
+            className="form-group"
             style={{
-              background: '#faf5ff',
-              borderRadius: '16px',
-              border: '1.5px solid #ede9fe',
-              padding: '1.2rem',
-              display: 'grid',
-              gridTemplateColumns: '150px 1fr',
-              gap: '1.5rem',
-              alignItems: 'center',
+              background: '#f8fafc',
+              border: '1.5px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '1.1rem',
             }}
           >
-            {/* Left: Compact Cover Image Dropzone (Exact 150px x 145px) */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                  Cover Image
-                </label>
-              </div>
+            <label
+              style={{
+                fontSize: '0.86rem',
+                fontWeight: 700,
+                color: '#1e293b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                marginBottom: '0.75rem',
+              }}
+            >
+              <UploadCloud size={16} color="#7c3aed" />
+              <span>Sub-Category Image (Direct S3 Upload)</span>
+            </label>
 
+            {/* Direct Upload Trigger */}
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.85rem' }}>
               <label
                 style={{
-                  width: '150px',
-                  height: '145px',
-                  borderRadius: '14px',
-                  border: formData.image ? '1.5px solid #ddd6fe' : '2px dashed #cbd5e1',
-                  background: '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  transition: 'all 0.2s ease',
-                  boxShadow: formData.image ? '0 4px 14px rgba(124, 58, 237, 0.08)' : 'none',
-                  boxSizing: 'border-box',
-                }}
-                onMouseEnter={(e) => {
-                  if (!formData.image) {
-                    e.currentTarget.style.borderColor = '#7c3aed';
-                    e.currentTarget.style.background = '#f5f3ff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!formData.image) {
-                    e.currentTarget.style.borderColor = '#cbd5e1';
-                    e.currentTarget.style.background = '#ffffff';
-                  }
+                  gap: '0.5rem',
+                  padding: '0.55rem 1rem',
+                  borderRadius: '8px',
+                  background: imageUploading ? '#cbd5e1' : '#7c3aed',
+                  color: '#ffffff',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  cursor: imageUploading ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
                 }}
               >
-                <input type="file" accept="image/*" onChange={handleImageFileSelect} style={{ display: 'none' }} />
-
-                {formData.image ? (
-                  <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                    <img
-                      src={formData.image}
-                      alt="Subcategory Cover"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-
-                    {/* Top-Left Cover Badge */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '7px',
-                        left: '7px',
-                        background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                        color: '#ffffff',
-                        fontSize: '0.62rem',
-                        fontWeight: 800,
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '9999px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                        zIndex: 2,
-                        letterSpacing: '0.02em',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
-                    >
-                      <Sparkles size={10} /> COVER
-                    </div>
-
-                    {/* Hover Overlay with Change & Remove options */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'rgba(15, 23, 42, 0.72)',
-                        backdropFilter: 'blur(2px)',
-                        color: '#ffffff',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        opacity: 0,
-                        transition: 'opacity 0.2s ease',
-                        zIndex: 3,
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
-                    >
-                      <span style={{ fontSize: '0.76rem', fontWeight: 700, letterSpacing: '0.01em' }}>Change Image</span>
-                      <button
-                        type="button"
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          handleRemoveImage();
-                        }}
-                        style={{
-                          background: '#ef4444',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '0.28rem 0.65rem',
-                          borderRadius: '8px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                        }}
-                      >
-                        <Trash2 size={12} /> Remove
-                      </button>
-                    </div>
-                  </div>
+                {imageUploading ? (
+                  <>
+                    <Spinner size={16} color="#ffffff" />
+                    <span>Uploading directly to S3...</span>
+                  </>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '0.75rem', color: '#64748b' }}>
-                    <div
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-                        color: '#7c3aed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 0.45rem',
-                        border: '1px solid #ddd6fe',
-                      }}
-                    >
-                      <Sparkles size={18} />
-                    </div>
-                    <strong style={{ fontSize: '0.82rem', color: '#0f172a', display: 'block', fontWeight: 700, marginBottom: '0.2rem' }}>
-                      Upload Photo
-                    </strong>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', fontWeight: 500 }}>
-                      PNG, JPG up to 5MB
-                    </span>
-                  </div>
+                  <>
+                    <UploadCloud size={16} />
+                    <span>Choose Image & Upload to S3</span>
+                  </>
                 )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={imageUploading}
+                  onChange={handleImageFileSelect}
+                  style={{ display: 'none' }}
+                />
               </label>
+
+              {formData.image && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '0.55rem 0.85rem',
+                    fontSize: '0.8rem',
+                    color: '#dc2626',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear Image
+                </button>
+              )}
             </div>
 
-            {/* Right: Stacked Display Order & Publishing Status Inputs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center' }}>
-              {/* Display Order */}
-              <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'block', marginBottom: '0.45rem' }}>
-                  Display Order
-                </label>
+            {/* S3 URL Display Input */}
+            <div style={{ marginBottom: '0.85rem' }}>
+              <label
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  display: 'block',
+                  marginBottom: '0.35rem',
+                }}
+              >
+                S3 Image URL:
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input
-                  type="number"
-                  min="1"
-                  value={formData.displayOrder}
-                  onChange={(e) => setFormData({ ...formData, displayOrder: e.target.value })}
+                  type="text"
+                  placeholder="https://picky-e-com.s3.ap-southeast-1.amazonaws.com/picky/sub-category/..."
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #e2e8f0',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.82rem',
+                    fontFamily: 'monospace',
                     background: '#ffffff',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
                     color: '#0f172a',
                     outline: 'none',
                     boxSizing: 'border-box',
-                    transition: 'all 0.18s ease',
                   }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#7c3aed';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                />
+                {formData.image && (
+                  <button
+                    type="button"
+                    onClick={handleCopyUrl}
+                    className="subcat-action-btn"
+                    style={{
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.78rem',
+                      flexShrink: 0,
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      cursor: 'pointer',
+                    }}
+                    title="Copy S3 URL"
+                  >
+                    {copiedUrl ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                    <span>{copiedUrl ? 'Copied' : 'Copy'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Image Preview if URL is available */}
+            {formData.image && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  marginTop: '0.5rem',
+                }}
+              >
+                <img
+                  src={formData.image}
+                  alt="Sub-category Preview"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
                   }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#e2e8f0';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    border: '1px solid #cbd5e1',
+                    flexShrink: 0,
                   }}
                 />
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                    <CheckCircle2 size={14} color="#16a34a" />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534' }}>
+                      Active S3 Image Loaded
+                    </span>
+                  </div>
+                  <a
+                    href={formData.image}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#7c3aed',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    <span>View uploaded image</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
               </div>
+            )}
+          </div>
 
-              {/* Publishing Status */}
-              <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'block', marginBottom: '0.45rem' }}>
-                  Publishing Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #e2e8f0',
-                    background: '#ffffff',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    color: '#0f172a',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#7c3aed';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#e2e8f0';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                >
-                  <option value="active">Active (Visible on Storefront)</option>
-                  <option value="inactive">Inactive (Hidden Draft)</option>
-                </select>
-              </div>
+          {/* Display Order & Publishing Status in 2 Columns */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1.25rem',
+            }}
+          >
+            {/* Display Order */}
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.45rem' }}>
+                Display Order
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.displayOrder}
+                onChange={(e) => setFormData({ ...formData, displayOrder: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid #e2e8f0',
+                  background: '#f8fafc',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.18s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#7c3aed';
+                  e.target.style.background = '#ffffff';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.background = '#f8fafc';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+
+            {/* Publishing Status */}
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.45rem' }}>
+                Publishing Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid #e2e8f0',
+                  background: '#f8fafc',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  color: '#0f172a',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.18s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#7c3aed';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                <option value="active">Active (Visible on Storefront)</option>
+                <option value="inactive">Inactive (Hidden Draft)</option>
+              </select>
             </div>
           </div>
 
@@ -1959,7 +2357,7 @@ export default function AdminSubCategories() {
             </button>
             <button
               type="submit"
-              disabled={modalLoading}
+              disabled={modalLoading || imageUploading}
               className="subcat-action-btn"
               style={{
                 padding: '0.7rem 1.75rem',
@@ -1969,7 +2367,7 @@ export default function AdminSubCategories() {
                 color: '#ffffff',
                 fontSize: '0.88rem',
                 fontWeight: 700,
-                cursor: 'pointer',
+                cursor: (modalLoading || imageUploading) ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 16px rgba(124, 58, 237, 0.32)',
               }}
             >
