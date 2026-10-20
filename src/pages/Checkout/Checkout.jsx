@@ -57,8 +57,9 @@ export const calculateDeliveryByPincode = (pincodeStr, customSettings = null) =>
 export default function Checkout() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { items, buyNowItem, clearBuyNowItem, updateQty, updateBuyNowQty, coupon, couponDiscount, setCoupon, clearCart } = useCartStore();
+  const { items, buyNowItem, clearBuyNowItem, updateQty, updateBuyNowQty, coupon, couponDiscount, setCoupon, clearCart, removeItem } = useCartStore();
   const isBuyNow = searchParams.get('buyNow') === 'true' && Boolean(buyNowItem);
+  const fromCart = searchParams.get('fromCart') === 'true' || Boolean(buyNowItem?.fromCart);
   const checkoutItems = isBuyNow ? [buyNowItem] : items;
 
   // ─── Auto Stock Reservation for Checkout Lifecycle ───
@@ -400,7 +401,7 @@ export default function Checkout() {
   // Dynamic Pincode-based Delivery Calculation (retrieved from live MongoDB database settings)
   const activePincode = (formData.pincode || (savedAddresses.find((a) => a.id === selectedAddressId)?.pincode) || '').toString().trim();
   const deliveryInfo = calculateShippingFee(activePincode, shippingSettings, deliveryMode);
-  const deliveryFee = deliveryInfo.fee;
+  const deliveryFee = coupon?.toUpperCase() === 'FREEDELIVERY' ? 0 : deliveryInfo.fee;
   
   // Fixed Convenience Fee as shown in reference design: ₹2
   const convenienceFee = checkoutItems.length > 0 ? 2 : 0;
@@ -502,6 +503,53 @@ export default function Checkout() {
       setCoupon(coupon, discount);
     }
   }, [subtotal, coupon, coupons, couponDiscount]);
+
+  // ─── Auto-Apply Recovery / Promotion Coupon from URL (?coupon=CODE) ───
+  const hasAutoAppliedUrlCouponRef = React.useRef(false);
+  React.useEffect(() => {
+    const urlCoupon = searchParams.get('coupon')?.trim()?.toUpperCase();
+    if (!urlCoupon || hasAutoAppliedUrlCouponRef.current || coupon) return;
+    if (subtotal <= 0) return;
+
+    hasAutoAppliedUrlCouponRef.current = true;
+    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
+    const matched = availableCoupons.find(
+      (c) => c.code.toUpperCase() === urlCoupon && c.isActive !== false
+    );
+
+    if (matched) {
+      if (matched.minOrderAmount && subtotal < matched.minOrderAmount) {
+        showToast(`Recovery coupon "${urlCoupon}" requires min. order of ${formatPrice(matched.minOrderAmount)}`, 'info');
+        return;
+      }
+
+      let discount = 0;
+      if (matched.type === 'percentage') {
+        discount = Math.round((subtotal * matched.value) / 100);
+        if (matched.maxDiscountAmount) {
+          discount = Math.min(discount, matched.maxDiscountAmount);
+        }
+      } else {
+        discount = Math.min(subtotal, matched.value);
+      }
+
+      setCoupon(urlCoupon, discount);
+      showToast(`🎉 Recovery coupon "${urlCoupon}" automatically applied!`, 'success');
+    } else {
+      if (urlCoupon === 'COMEBACK5') {
+        const discount = Math.round((subtotal * 5) / 100);
+        setCoupon('COMEBACK5', discount);
+        showToast('🎉 Exclusive 5% Comeback discount automatically applied!', 'success');
+      } else if (urlCoupon === 'SAVE15') {
+        const discount = Math.round((subtotal * 15) / 100);
+        setCoupon('SAVE15', discount);
+        showToast('🎉 Exclusive 15% Comeback discount automatically applied!', 'success');
+      } else if (urlCoupon === 'FREEDELIVERY') {
+        setCoupon('FREEDELIVERY', 0);
+        showToast('🚚 Free Delivery coupon automatically applied!', 'success');
+      }
+    }
+  }, [searchParams, coupons, subtotal, coupon, setCoupon, showToast]);
 
   // Step 1 Validation & Proceeding to Payment Step
   const handleConfirmDetails = async (e) => {
@@ -697,6 +745,8 @@ export default function Checkout() {
                     razorpayPaymentId: response.razorpay_payment_id,
                     razorpaySignature: response.razorpay_signature,
                     deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
+                    isBuyNow: Boolean(isBuyNow),
+                    fromCart: Boolean(fromCart),
                   };
 
                   const verifyRes = await orderService.verifyRazorpayPayment(verifyPayload);
@@ -708,6 +758,10 @@ export default function Checkout() {
 
                   if (isBuyNow) {
                     clearBuyNowItem();
+                    if (fromCart && buyNowItem) {
+                      const targetId = buyNowItem.productId || buyNowItem._id || buyNowItem.id;
+                      if (targetId && removeItem) removeItem(targetId);
+                    }
                   } else {
                     clearCart();
                   }
@@ -815,6 +869,8 @@ export default function Checkout() {
         totalAmount: finalPayable,
         paymentMethod,
         deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
+        isBuyNow: Boolean(isBuyNow),
+        fromCart: Boolean(fromCart),
       };
 
       orderCompletedRef.current = true;
@@ -826,6 +882,10 @@ export default function Checkout() {
 
       if (isBuyNow) {
         clearBuyNowItem();
+        if (fromCart && buyNowItem) {
+          const targetId = buyNowItem.productId || buyNowItem._id || buyNowItem.id;
+          if (targetId && removeItem) removeItem(targetId);
+        }
       } else {
         clearCart();
       }

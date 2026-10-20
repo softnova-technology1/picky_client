@@ -310,8 +310,12 @@ export default function AdminAbandonedCarts() {
       ? `&items=${items.map((i) => i.sku).join(',')}`
       : '';
 
+    const baseUrl = typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'https://picky.store';
+
     if (tplId === 'tpl_discount_5') {
-      const checkoutUrl = `https://picky.store/checkout?cart=${cart.id}${itemsQuery}&coupon=COMEBACK5`;
+      const checkoutUrl = `${baseUrl}/checkout?cart=${cart.id}${itemsQuery}&coupon=COMEBACK5`;
       const lead = isSingle
         ? `We noticed you left this authentic handcrafted favorite in your Picky bag:\n${itemsText}`
         : `We noticed you left these authentic handcrafted favorites in your Picky bag:\n${itemsText}`;
@@ -319,7 +323,7 @@ export default function AdminAbandonedCarts() {
     }
 
     if (tplId === 'tpl_gentle_reminder') {
-      const checkoutUrl = `https://picky.store/checkout?cart=${cart.id}${itemsQuery}`;
+      const checkoutUrl = `${baseUrl}/checkout?cart=${cart.id}${itemsQuery}`;
       const lead = isSingle
         ? `Your selected handcrafted treasure is waiting for you at Picky:\n${itemsText}`
         : `Your selected handcrafted treasures are waiting for you at Picky:\n${itemsText}`;
@@ -327,12 +331,12 @@ export default function AdminAbandonedCarts() {
     }
 
     if (tplId === 'tpl_free_shipping') {
-      const checkoutUrl = `https://picky.store/checkout?cart=${cart.id}${itemsQuery}&coupon=FREEDELIVERY`;
+      const checkoutUrl = `${baseUrl}/checkout?cart=${cart.id}${itemsQuery}&coupon=FREEDELIVERY`;
       return `Vanakkam ${cart.customer.name}! 🚚\n\nComplete your Picky order today and get *FREE Express Priority Delivery* to your doorstep!\n\nYour item${items.length > 1 ? 's' : ''}:\n${itemsText}\n\nUse Code: *FREEDELIVERY* at checkout:\n${checkoutUrl}\n\nHave questions? Chat with our live store representative right here.`;
     }
 
     // Default for Manual / Custom Offer:
-    const checkoutUrl = `https://picky.store/checkout?cart=${cart.id}${itemsQuery}&coupon=SAVE15`;
+    const checkoutUrl = `${baseUrl}/checkout?cart=${cart.id}${itemsQuery}&coupon=SAVE15`;
     const lead = isSingle
       ? `We noticed you left this handcrafted treasure in your Picky bag:\n${itemsText}`
       : `We noticed you left handcrafted treasures in your Picky bag:\n${itemsText}`;
@@ -391,17 +395,21 @@ export default function AdminAbandonedCarts() {
   const kpis = useMemo(() => {
     const total = carts.length;
     const recoveredCount = carts.filter((c) => c.status === 'recovered' || c.status === 'partial_recovery' || (c.recoveredAmount && c.recoveredAmount > 0)).length;
+    const totalCartValue = carts.reduce((acc, c) => acc + (Number(c.totalAmount) || 0), 0);
     const recoveredRevenue = carts.reduce((acc, c) => {
-      if (c.recoveredAmount && c.recoveredAmount > 0) return acc + c.recoveredAmount;
-      if (c.status === 'recovered') return acc + c.totalAmount;
+      const recAmt = Number(c.recoveredAmount);
+      const cartVal = Number(c.totalAmount) || 0;
+      if (!isNaN(recAmt) && recAmt > 0) return acc + Math.min(cartVal > 0 ? cartVal : recAmt, recAmt);
+      if (c.status === 'recovered') return acc + cartVal;
       return acc;
     }, 0);
-    const totalCartValue = carts.reduce((acc, c) => acc + c.totalAmount, 0);
-    const lostRevenue = Math.max(0, totalCartValue - recoveredRevenue);
-    const recoveryRate = totalCartValue > 0 ? ((recoveredRevenue / totalCartValue) * 100).toFixed(1) : '0.0';
+    const safeRecovered = Math.min(totalCartValue, recoveredRevenue);
+    const lostRevenue = Math.max(0, totalCartValue - safeRecovered);
+    // Standard Abandoned Cart Recovery Rate: (Recovered Carts / Total Monitored Carts) * 100
+    const recoveryRate = total > 0 ? ((recoveredCount / total) * 100).toFixed(1) : '0.0';
     const pendingAlerts = carts.filter((c) => c.status === 'pending').length;
 
-    return { total, recoveredCount, recoveredRevenue, lostRevenue, recoveryRate, pendingAlerts };
+    return { total, recoveredCount, recoveredRevenue: safeRecovered, lostRevenue, recoveryRate, pendingAlerts };
   }, [carts]);
 
   // ─── Filter & Search Logic ───

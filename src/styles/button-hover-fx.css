@@ -8,19 +8,19 @@
  */
 
 /* ── 1. Shared pseudo-element base for standard site buttons ─────────────── */
-button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx),
-a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx),
-[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx),
-[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx) {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]),
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]),
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]),
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]) {
   --btn-mx: 50%;
   --btn-my: 50%;
 }
 
 /* ── 2. Shimmer sweep layer (::after) — Pure subtle white highlight ──────── */
-button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after,
-a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after,
-[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after,
-[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::after {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::after,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::after,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::after,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -38,10 +38,10 @@ a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn
 }
 
 /* ── 3. Cursor-tracking spotlight layer (::before) ───────────────────────── */
-button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before,
-a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before,
-[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before,
-[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx)::before {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::before,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::before,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::before,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"])::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -56,17 +56,17 @@ a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn
 }
 
 /* ── 4. Hover: reveal spotlight + fire shimmer ───────────────────────────── */
-button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before,
-a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before,
-[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before,
-[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::before {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::before,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::before,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::before,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::before {
   opacity: 1;
 }
 
-button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after,
-a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after,
-[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after,
-[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):hover::after {
+button:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::after,
+a[class*="btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::after,
+[class*="-btn"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::after,
+[class*="btn-"]:not(.picky-float-btn):not(.picky-float-scroll):not(.nav-icon-btn):not([class*="icon-btn"]):not([class*="-icon-btn"]):not([class*="heart-btn"]):not([class*="float-btn"]):not([class*="stepper"]):not([class*="close"]):not(.no-hover-fx):not([class*="announcement"]):not([class*="preview"]):hover::after {
   transform: translateX(150%) skewX(-12deg);
 }
 
@@ -198,8 +198,22 @@ button:disabled:hover,
 .arrow-btn-left::after,
 .arrow-btn-right::before,
 .arrow-btn-right::after,
+[class*="announcement"]::before,
+[class*="announcement"]::after,
+[class*="preview"]::before,
+[class*="preview"]::after,
+.announcement-bar button::before,
+.announcement-bar button::after,
+.announcement-nav-btn::before,
+.announcement-nav-btn::after,
+.announcement-dismiss-btn::before,
+.announcement-dismiss-btn::after,
+.announcement-link::before,
+.announcement-link::after,
+.admin-layout button::before,
+.admin-layout button::after,
 .no-hover-fx::before,
 .no-hover-fx::after {
   display: none !important;
   content: none !important;
-}
+}

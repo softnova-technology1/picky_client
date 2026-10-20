@@ -54,7 +54,9 @@ export default function AdminLayout({ children, title }) {
   const { showToast } = useUiStore();
   const { categories, fetchCategories } = useCategoryStore();
   const pendingReturnsCount = useReturnStore((s) => s.returns.filter((r) => r.status === 'pending').length);
-  const pendingReviewsCount = useReviewStore((s) => s.reviews.filter((r) => r.status === 'pending').length);
+  const unreadReviewsCount = useReviewStore((s) => s.unreadCount);
+  const markReviewsAsViewed = useReviewStore((s) => s.markReviewsAsViewed);
+  const fetchReviews = useReviewStore((s) => s.fetchReviews);
   const pendingCartsCount = useAbandonedCartStore((s) => s.carts.filter((c) => c.status === 'pending').length);
   const campaigns = useBroadcastStore((s) => s.campaigns);
   const navigate = useNavigate();
@@ -141,7 +143,8 @@ export default function AdminLayout({ children, title }) {
 
   useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+    fetchReviews();
+  }, [fetchCategories, fetchReviews]);
 
   const dropdownRef = useRef(null);
   const quickAddRef = useRef(null);
@@ -449,6 +452,9 @@ export default function AdminLayout({ children, title }) {
             to={`${ADMIN}/reviews`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
             title="Product Reviews & Ratings"
+            onClick={() => {
+              markReviewsAsViewed();
+            }}
           >
             <div className="admin-nav-icon-wrap">
               <Star size={19} />
@@ -456,9 +462,12 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && (
               <>
                 <span className="admin-nav-label">Reviews & Ratings</span>
-                {pendingReviewsCount > 0 && (
-                  <span className="admin-nav-badge" title={`${pendingReviewsCount} pending moderation`}>
-                    {pendingReviewsCount}
+                {unreadReviewsCount > 0 && location.pathname !== `${ADMIN}/reviews` && (
+                  <span
+                    className="admin-nav-badge notif-pulse"
+                    title={`${unreadReviewsCount} new unread review${unreadReviewsCount > 1 ? 's' : ''}`}
+                  >
+                    {unreadReviewsCount}
                   </span>
                 )}
               </>

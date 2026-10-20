@@ -583,3 +583,344 @@
   display: inline-block;
   animation: livePulse 1.8s infinite ease-in-out;
 }
+
+/* ─── Self-Service Action Buttons ─── */
+.cancelBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1.5px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);
+}
+
+.cancelBtn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  transform: translateY(-1px);
+}
+
+.returnBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1.5px solid #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(194, 65, 12, 0.08);
+}
+
+.returnBtn:hover {
+  background: #ffedd5;
+  border-color: #fb923c;
+  transform: translateY(-1px);
+}
+
+.invoiceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+}
+
+.invoiceBtn:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+  transform: translateY(-1px);
+}
+
+/* ─── Modal Styles ─── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
+  border: 1px solid #ede9fe;
+  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 2rem;
+  position: relative;
+}
+
+.invoiceModalContent {
+  max-width: 820px;
+  padding: 2rem 2.5rem;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f0fb;
+}
+
+.modalTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.modalCloseBtn {
+  background: #f3f4f6;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalCloseBtn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modalWarning {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modalInfo {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.formLabel {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.formSelect, .formInput, .formTextarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1f2937;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.formSelect:focus, .formInput:focus, .formTextarea:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f0fb;
+}
+
+/* ─── Official GST Tax Invoice Print Styles ─── */
+.taxInvoiceWrapper {
+  background: #ffffff;
+  color: #0f172a;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.invoiceHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #7c3aed;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.sellerBrand {
+  font-size: 20px;
+  font-weight: 900;
+  color: #7c3aed;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.sellerMeta {
+  font-size: 11.5px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.invoiceMetaBox {
+  text-align: right;
+  font-size: 12px;
+}
+
+.taxInvoiceTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.invoiceAddressesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.addressColTitle {
+  font-weight: 700;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.invoiceTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 12px;
+}
+
+.invoiceTable th {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+  font-weight: 700;
+}
+
+.invoiceTable td {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.invoiceSummaryGrid {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.invoiceSummaryBox {
+  width: 300px;
+  font-size: 12.5px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.summaryTotalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1.5px solid #0f172a;
+  border-bottom: 1.5px solid #0f172a;
+  font-weight: 800;
+  font-size: 14px;
+  color: #0f172a;
+  margin-top: 6px;
+}
+
+.invoiceFooterNote {
+  font-size: 11px;
+  color: #64748b;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 1rem;
+  text-align: center;
+}
+
+/* When printing, hide all other elements */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printableInvoiceArea, .printableInvoiceArea * {
+    visibility: visible;
+  }
+  .printableInvoiceArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 1.5cm;
+    background: #ffffff;
+  }
+  .noPrint {
+    display: none !important;
+  }
+}

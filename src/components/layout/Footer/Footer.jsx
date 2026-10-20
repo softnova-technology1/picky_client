@@ -22,6 +22,7 @@ import {
   MessageSquare,
   CreditCard,
   Sparkles,
+  Ruler,
 } from 'lucide-react';
 import { useCategoryStore } from '../../../store/categoryStore';
 
@@ -211,28 +212,39 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/contact" className="footer-link">
+                  <Link to="/faq" className="footer-link">
                     <HelpCircle size={15} className="footer-icon-accent" />
                     <span>Help Center & FAQs</span>
                   </Link>
                 </li>
                 <li>
-                  <span className="footer-link footer-link-static">
+                  <Link to="/returns" className="footer-link">
                     <RotateCcw size={15} className="footer-icon-accent" />
                     <span>7-Day Easy Replacement</span>
-                  </span>
+                  </Link>
                 </li>
                 <li>
-                  <span className="footer-link footer-link-static">
+                  <Link to="/shipping-policy" className="footer-link">
                     <Zap size={15} className="footer-icon-accent" />
                     <span>Express 24-48h Dispatch</span>
-                  </span>
+                  </Link>
                 </li>
                 <li>
-                  <span className="footer-link footer-link-static">
+                  <Link to="/size-guide" className="footer-link">
+                    <Ruler size={15} className="footer-icon-accent" />
+                    <span>Size & Saree Guide</span>
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="https://wa.me/919876543210?text=Hi%20Picky,%20I%20need%20help%20with%20an%20order"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="footer-link"
+                  >
                     <MessageSquare size={15} className="footer-icon-accent" />
                     <span>WhatsApp Order Support</span>
-                  </span>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -254,15 +266,15 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/terms" className="footer-link">
+                  <Link to="/returns" className="footer-link">
                     <RefreshCw size={15} className="footer-icon-accent" />
                     <span>Return & Refund Policy</span>
                   </Link>
                 </li>
                 <li>
-                  <Link to="/terms" className="footer-link">
+                  <Link to="/shipping-policy" className="footer-link">
                     <Package size={15} className="footer-icon-accent" />
-                    <span>Shipping Policy</span>
+                    <span>Shipping & Delivery Policy</span>
                   </Link>
                 </li>
                 <li>

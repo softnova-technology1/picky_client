@@ -23,7 +23,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   Heart,
-  Tag,
   Ticket,
   Flame,
   Sparkles,
@@ -74,6 +73,7 @@ export default function Cart() {
     updateVariant,
     removeItem,
     clearCart,
+    setBuyNowItem,
     coupon,
     setCoupon,
     couponDiscount,
@@ -176,7 +176,11 @@ export default function Cart() {
       showToast(`⚠️ Please select Color for "${item.name}" before checkout.`, 'error');
       return;
     }
-    navigate('/checkout', { state: { singleItem: item } });
+    setBuyNowItem({
+      ...item,
+      fromCart: true,
+    });
+    navigate('/checkout?buyNow=true&fromCart=true');
   };
 
   const handleMoveToWishlist = (item) => {
@@ -643,15 +647,6 @@ export default function Cart() {
                         Apply
                       </button>
                     </form>
-
-                    <div className={styles['promo-hint']}>
-                      <span
-                        className={styles['promo-chip']}
-                        onClick={() => handleApplyCouponCode('FESTIVAL50')}
-                      >
-                        <Tag size={13} className={styles['promo-tag-icon']} /> Apply 'FESTIVAL50' for ₹350 off
-                      </span>
-                    </div>
                   </>
                 )}
               </div>
