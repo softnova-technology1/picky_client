@@ -11,6 +11,7 @@ import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { wishlistService } from '../../services/wishlist.service';
+import { contactService } from '../../services/contact.service';
 import { useReviewStore } from '../../store/reviewStore';
 import { REVIEWS_DATA } from '../../data/reviewsData';
 import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check, Eye, Zap, Layers } from 'lucide-react';
@@ -188,6 +189,146 @@ const MagneticButton = ({ children, className = '', onClick }) => {
 };
 
 // ─── Home Page Component ─────────────────────────────────────────
+
+
+// ─── Homepage Quick Inquiry Section ──────────────────────────────
+const HomepageInquirySection = () => {
+  const { showToast } = useUiStore();
+  const [form, setForm] = useState({ fullName: '', contactInfo: '', message: '' });
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.fullName.trim() || !form.message.trim()) {
+      showToast('Please enter your name and message.', 'warning');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('fullName', form.fullName.trim());
+      const contactVal = form.contactInfo.trim();
+      if (contactVal.includes('@')) {
+        formData.append('email', contactVal);
+      } else if (contactVal) {
+        formData.append('phone', contactVal);
+      }
+      formData.append('message', form.message.trim());
+      formData.append('source', 'homepage');
+
+      await contactService.submit(formData);
+
+      setSent(true);
+      showToast('Thank you! Your inquiry has been sent to our team.', 'success');
+      setForm({ fullName: '', contactInfo: '', message: '' });
+
+      window.dispatchEvent(new Event('picky_inquiries_updated'));
+      window.dispatchEvent(new Event('picky_notifications_updated'));
+
+      setTimeout(() => setSent(false), 6000);
+    } catch (err) {
+      showToast(err?.message || 'Failed to send inquiry. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="hp-inquiry-section" style={{ padding: '4rem 1.25rem', background: '#faf5ff' }}>
+      <div style={{ maxWidth: '840px', margin: '0 auto', background: '#ffffff', borderRadius: '24px', border: '1px solid #f3e8ff', boxShadow: '0 12px 35px rgba(124, 58, 237, 0.07)', padding: '2.5rem 2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <span style={{ display: 'inline-block', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#7c3aed', background: 'rgba(124, 58, 237, 0.1)', padding: '0.35rem 0.85rem', borderRadius: '999px', marginBottom: '0.65rem' }}>
+            ✦ CUSTOMER ASSISTANCE & INQUIRIES
+          </span>
+          <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#1e1b4b', margin: '0 0 0.5rem', letterSpacing: '-0.02em' }}>
+            Have a Question or Special Request?
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0, maxWidth: '580px', marginInline: 'auto' }}>
+            Need sizing help, styling advice, or custom order inquiries? Send us a quick note and our team will get right back to you.
+          </p>
+        </div>
+
+        {sent ? (
+          <div style={{ textAlign: 'center', padding: '2rem 1rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '16px' }}>
+            <CheckCircle size={40} style={{ color: '#16a34a', margin: '0 auto 0.75rem' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#166534', margin: '0 0 0.25rem' }}>Inquiry Received!</h3>
+            <p style={{ fontSize: '0.9rem', color: '#15803d', margin: 0 }}>Thank you for reaching out. Our support team will contact you shortly.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem' }}>
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Priyadharshini"
+                  value={form.fullName}
+                  onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', transition: 'border-color 0.2s' }}
+                  onFocus={(e) => (e.target.style.borderColor = '#7c3aed')}
+                  onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem' }}>
+                  Phone Number or Email
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. +91 98765 43210 or name@email.com"
+                  value={form.contactInfo}
+                  onChange={(e) => setForm((p) => ({ ...p, contactInfo: e.target.value }))}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', transition: 'border-color 0.2s' }}
+                  onFocus={(e) => (e.target.style.borderColor = '#7c3aed')}
+                  onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem' }}>
+                Your Message / Question *
+              </label>
+              <textarea
+                required
+                rows={3}
+                placeholder="Ask about product availability, fabrics, styling advice, or custom order requirements..."
+                value={form.message}
+                onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
+                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', resize: 'vertical', minHeight: '85px', transition: 'border-color 0.2s' }}
+                onFocus={(e) => (e.target.style.borderColor = '#7c3aed')}
+                onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '0.85rem 2rem', fontSize: '0.95rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.6rem', boxShadow: '0 4px 14px rgba(124, 58, 237, 0.35)', transition: 'all 0.2s ease', opacity: loading ? 0.7 : 1 }}
+              >
+                {loading ? (
+                  <span>Sending Inquiry...</span>
+                ) : (
+                  <>
+                    <span>Send Homepage Inquiry</span>
+                    <ArrowRight size={17} />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+};
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -1133,6 +1274,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* 9.5 — HOMEPAGE QUICK INQUIRY SECTION */}
+      <HomepageInquirySection />
 
       {/* 10 — FINAL CTA BANNER / INSTAGRAM COMMUNITY */}
       <section className="hp-final-cta-section">

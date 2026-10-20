@@ -2,12 +2,12 @@ import api from './api';
 
 export const contactService = {
   /**
-   * Submit Contact Form (FormData with optional file)
+   * Submit Contact / Inquiry Form (FormData with optional file and source)
    */
   submit: (formData) => api.post('/contact', formData),
 
   /**
-   * Admin: List all contact inquiries
+   * Admin: List all inquiries with source, status, search, and pagination
    */
   list: (params) => api.get('/contact', { params }),
 
@@ -17,9 +17,24 @@ export const contactService = {
   getById: (id) => api.get(`/contact/${id}`),
 
   /**
-   * Admin: Mark inquiry as read
+   * Admin: Mark inquiry as read/unread
    */
-  markAsRead: (id) => api.patch(`/contact/${id}/read`),
+  markAsRead: (id, isRead = true) => api.patch(`/contact/${id}/read`, { isRead }),
+
+  /**
+   * Admin: Bulk mark inquiries as read/unread
+   */
+  bulkReadInquiries: (ids, isRead = true) => api.patch('/contact/bulk-read', { ids, isRead }),
+
+  /**
+   * Admin: Bulk delete inquiries
+   */
+  bulkDeleteInquiries: (ids) => api.post('/contact/bulk-delete', { ids }),
+
+  /**
+   * Admin: Mark all inquiries as read
+   */
+  markAllInquiriesRead: () => api.patch('/contact/mark-all-read'),
 
   /**
    * Admin: Delete inquiry
@@ -44,5 +59,8 @@ export const contactService = {
   /**
    * Admin: Delete notification
    */
+  toggleStarNotification: (id) => api.patch(`/notifications/${id}/star`),
+  bulkReadNotifications: (ids) => api.patch('/notifications/bulk-read', { ids }),
+  bulkDeleteNotifications: (ids) => api.post('/notifications/bulk-delete', { ids }),
   deleteNotification: (id) => api.delete(`/notifications/${id}`),
 };

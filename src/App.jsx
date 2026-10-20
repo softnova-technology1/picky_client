@@ -51,6 +51,8 @@ import AdminReviews from './pages/admin/AdminReviews';
 import AdminAbandonedCarts from './pages/admin/AdminAbandonedCarts';
 import AdminBroadcast from './pages/admin/AdminBroadcast';
 import AdminFlashSales from './pages/admin/AdminFlashSales';
+import AdminNotifications from './pages/admin/AdminNotifications';
+import AdminInquiries from './pages/admin/AdminInquiries';
 
 const ADMIN = '/softpicky-sn2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
@@ -181,6 +183,8 @@ export default function App() {
           <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
 
 
           {/* ── Catch-all 404 Page ───────────────────── */}

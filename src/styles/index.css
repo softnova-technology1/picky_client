@@ -725,3 +725,75 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
   }
 }
 
+
+
+/* ─── Premium Running Tag Animation System ──────────────────── */
+@keyframes tagShimmerRunning {
+  0% {
+    transform: translateX(-160%) skewX(-20deg);
+  }
+  45%, 100% {
+    transform: translateX(190%) skewX(-20deg);
+  }
+}
+
+@keyframes tagPulseGlow {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+  50% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@keyframes tagIconFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-0.75px) scale(1.12);
+  }
+}
+
+/* Base class for all animated premium running tags across store and admin */
+.premium-running-tag {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
+}
+
+.premium-running-tag:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* Continuous running light streak gliding across the tag surface */
+.premium-running-tag::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: 0;
+  width: 55%;
+  height: 160%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 15%,
+    rgba(255, 255, 255, 0.72) 50%,
+    rgba(255, 255, 255, 0) 85%,
+    transparent 100%
+  );
+  filter: blur(0.5px);
+  animation: tagShimmerRunning 2.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Subtle micro-animation on the tag icon */
+.premium-running-tag svg,
+.premium-running-tag .ref-deal-icon svg,
+.premium-running-tag-icon {
+  animation: tagIconFloat 2.4s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}

@@ -13,6 +13,7 @@ import { useReviewStore } from '../../store/reviewStore';
 import { getProductReviews } from '../../data';
 import { reviewService } from '../../services/review.service';
 import styles from './ProductDetail.module.css';
+import { extractProductTag, getTagDesign } from '../../utils/productTagHelper';
 import {
   Truck,
   RotateCcw,
@@ -367,6 +368,13 @@ export default function ProductDetail() {
 
   const currentPrice = product.discountPrice || product.price || 231;
   const originalPrice = product.price && product.discountPrice ? product.price : Math.round(currentPrice * 1.25);
+  const productTagInfo = useMemo(() => {
+    const rawTag = extractProductTag(product);
+    if (!rawTag) return null;
+    return getTagDesign(rawTag);
+  }, [product]);
+
+  const TagIconComponent = productTagInfo?.icon;
   const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
 
   // Capacity / Variant options: only use what's configured in DB — NO mock fallbacks
@@ -412,23 +420,48 @@ export default function ProductDetail() {
               
               {/* ── CARD 1: Top Hero Info Card ── */}
               <div className={styles['bento-hero-card']}>
-                {/* Top Badge: In Stock & Ready to Ship / Low Stock / Out of Stock */}
-                {isOutOfStock ? (
-                  <div className={styles['top-stock-badge']} style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' }}>
-                    <span className={styles['green-dot']} style={{ background: '#dc2626' }} />
-                    <span>Out of Stock</span>
-                  </div>
-                ) : maxStock <= 5 ? (
-                  <div className={styles['top-stock-badge']} style={{ background: '#fffbeb', color: '#b45309', borderColor: '#fde68a' }}>
-                    <span className={styles['green-dot']} style={{ background: '#f59e0b' }} />
-                    <span>Only {maxStock} Left in Stock</span>
-                  </div>
-                ) : (
-                  <div className={styles['top-stock-badge']}>
-                    <span className={styles['green-dot']} />
-                    <span>In Stock &amp; Ready to Ship</span>
-                  </div>
-                )}
+                {/* Product Tag Badge & Stock Status Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+                  {productTagInfo && (
+                    <div
+                      className="premium-running-tag"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.28rem 0.85rem',
+                        borderRadius: '9999px',
+                        background: productTagInfo.bg,
+                        color: productTagInfo.color,
+                        border: `1px solid ${productTagInfo.border}`,
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        letterSpacing: '0.04em',
+                        boxShadow: `0 2px 10px -2px ${productTagInfo.color}35`,
+                      }}
+                    >
+                      <TagIconComponent size={13} color={productTagInfo.color} fill={productTagInfo.color} />
+                      <span>{productTagInfo.displayName || productTagInfo.name}</span>
+                    </div>
+                  )}
+
+                  {isOutOfStock ? (
+                    <div className={styles['top-stock-badge']} style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' }}>
+                      <span className={styles['green-dot']} style={{ background: '#dc2626' }} />
+                      <span>Out of Stock</span>
+                    </div>
+                  ) : maxStock <= 5 ? (
+                    <div className={styles['top-stock-badge']} style={{ background: '#fffbeb', color: '#b45309', borderColor: '#fde68a' }}>
+                      <span className={styles['green-dot']} style={{ background: '#f59e0b' }} />
+                      <span>Only {maxStock} Left in Stock</span>
+                    </div>
+                  ) : (
+                    <div className={styles['top-stock-badge']}>
+                      <span className={styles['green-dot']} />
+                      <span>In Stock &amp; Ready to Ship</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Product Title */}
                 <h1 className={styles['product-main-title']}>
