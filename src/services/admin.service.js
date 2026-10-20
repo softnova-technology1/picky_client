@@ -16,6 +16,7 @@ export const adminService = {
   // Products
   createProduct: (formData) => api.post('/products', formData),
   updateProduct: (id, formData) => api.put(`/products/${id}`, formData),
+  toggleProduct: (id) => api.patch(`/products/${id}/toggle`),
   deleteProduct: (id) => api.delete(`/products/${id}`),
 
   // Categories

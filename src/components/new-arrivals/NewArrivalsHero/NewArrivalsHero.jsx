@@ -63,7 +63,7 @@ export default function NewArrivalsHero({
         const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
         if (isMounted) {
           const newArrivals = items.filter(isNewArrivalItem);
-          setDbProducts(newArrivals.length > 0 ? newArrivals : items);
+          setDbProducts(newArrivals);
           setIsLoading(false);
         }
       } catch (err) {

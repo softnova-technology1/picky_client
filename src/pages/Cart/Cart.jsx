@@ -104,8 +104,7 @@ export default function Cart() {
         const itemsList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
         if (isMounted) {
           const filtered = itemsList.filter(isBestSellerProduct);
-          const finalItems = filtered.length > 0 ? filtered : itemsList.slice(0, 12);
-          setBestSellerProducts(finalItems);
+          setBestSellerProducts(filtered);
         }
       } catch (err) {
         console.error('Failed to load best seller products for cart:', err);

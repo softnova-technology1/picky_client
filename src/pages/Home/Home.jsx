@@ -297,30 +297,41 @@ export default function Home() {
         const prodRes = await productService.list({ limit: 50 });
         const pItems = prodRes?.data?.data || prodRes?.data || [];
         if (Array.isArray(pItems) && pItems.length > 0) {
-          // 1. Trending Now filter (matches 'trending now', 'trend', or isTrending)
-          const trending = pItems.filter((p) =>
-            p.tags?.some((t) => t.toLowerCase().includes('trend')) || p.isTrending
-          );
-          setTrendingProducts(trending.length > 0 ? trending : pItems.slice(0, 10));
+          const hasTag = (p, keyword) => {
+            if (!p) return false;
+            const kw = keyword.toLowerCase();
+            const badgeMatch = typeof p.badge === 'string' && p.badge.toLowerCase().includes(kw);
+            const tagMatch = Array.isArray(p.tags)
+              ? p.tags.some((t) => String(t).toLowerCase().includes(kw))
+              : typeof p.tags === 'string'
+              ? p.tags.toLowerCase().includes(kw)
+              : false;
+            return badgeMatch || tagMatch;
+          };
 
-          // 2. Best Sellers filter (matches 'best sellers', 'best', 'seller')
-          const bestSellers = pItems.filter((p) =>
-            p.tags?.some((t) => t.toLowerCase().includes('best') || t.toLowerCase().includes('seller'))
+          // 1. Trending Now filter (strictly matches 'trending now', 'trend', or isTrending)
+          const trending = pItems.filter(
+            (p) => hasTag(p, 'trend') || Boolean(p.isTrending)
           );
-          setFeaturedProducts(bestSellers.length > 0 ? bestSellers : pItems.slice(0, 8));
+          setTrendingProducts(trending);
 
-          // 3. New Arrivals filter (matches 'new arrivals', 'new', 'arrival')
-          const arrivals = pItems.filter((p) =>
-            p.tags?.some((t) => t.toLowerCase().includes('new') || t.toLowerCase().includes('arrival'))
+          // 2. Best Sellers filter (strictly matches 'best sellers', 'best', 'seller', or isBestSeller)
+          const bestSellers = pItems.filter(
+            (p) => hasTag(p, 'best') || hasTag(p, 'seller') || Boolean(p.isBestSeller)
           );
-          setNewArrivals(arrivals.length > 0 ? arrivals : pItems);
+          setFeaturedProducts(bestSellers);
 
-          // 4. Limited Deals filter (matches 'limited deals', 'limited', 'deal')
-          const deals = pItems.filter((p) =>
-            p.tags?.some((t) => t.toLowerCase().includes('deal') || t.toLowerCase().includes('limited'))
+          // 3. New Arrivals filter (strictly matches 'new arrivals', 'new', 'arrival', or isNewArrival)
+          const arrivals = pItems.filter(
+            (p) => hasTag(p, 'new') || hasTag(p, 'arrival') || Boolean(p.isNewArrival)
           );
-          const fallbackDeals = pItems.filter((p) => p && p.discountPrice && p.discountPrice < p.price);
-          setDealProducts(deals.length > 0 ? deals : (fallbackDeals.length > 0 ? fallbackDeals : pItems));
+          setNewArrivals(arrivals);
+
+          // 4. Limited Deals filter (strictly matches 'limited deals', 'limited', 'deal')
+          const deals = pItems.filter(
+            (p) => hasTag(p, 'deal') || hasTag(p, 'limited')
+          );
+          setDealProducts(deals);
         } else {
           setFeaturedProducts([]);
           setTrendingProducts([]);
@@ -357,8 +368,8 @@ export default function Home() {
 
   // ── Flash Deals / Limited Time Deals 15-Second Auto-Rotation ─────────
   const allDealProducts = useMemo(() => {
-    return dealProducts.length > 0 ? dealProducts : newArrivals;
-  }, [dealProducts, newArrivals]);
+    return dealProducts;
+  }, [dealProducts]);
 
   // Spotlight rotation list (prioritizes high discount products)
   const spotlightProductsList = useMemo(() => {
@@ -544,6 +555,7 @@ export default function Home() {
       </section>
 
       {/* 03 — HORIZONTAL PRODUCT EXPERIENCE (TRENDING NOW - CONTINUOUS LOOP) */}
+      {trendingProducts.length > 0 && (
       <section
         className="hp-horizontal-section"
         onMouseEnter={() => setIsTrendingHovered(true)}
@@ -599,8 +611,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* 04 — FLASH DEALS / LIMITED TIME DEALS (POWERED BY REAL MOCK DATA) */}
+      {allDealProducts.length > 0 && (
       <section className="hp-flash-deals-section">
         <div className="hp-flash-deals-container">
           
@@ -719,8 +733,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* 04 — NEW ARRIVALS SHOWCASE (REPLACES OLD STORY SECTION) */}
+      {newArrivals.length > 0 && (
       <section className="hp-new-arrivals-section">
         <div className="hp-new-arrivals-container">
           <div className="hp-new-arrivals-header">
@@ -772,11 +788,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
 
 
 
       {/* 07 — BEST SELLERS (1 ROW OF 5 CARDS) */}
+      {featuredProducts.length > 0 && (
       <section className="hp-bestsellers-section">
         <div className="hp-bestsellers-inner">
           <div className="hp-section-header">
@@ -802,6 +820,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* 08 — WHY SHOP WITH US */}
       <section className="hp-trust-section">

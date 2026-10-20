@@ -522,6 +522,20 @@ export default function AdminProducts() {
     }
   };
 
+  const handleToggleStatus = async (productId, currentStatus) => {
+    try {
+      const res = await adminService.toggleProduct(productId);
+      const updated = res?.data?.data || res?.data;
+      const newStatus = updated && updated.isActive !== undefined ? updated.isActive : !currentStatus;
+      setProducts((prev) =>
+        prev.map((p) => (p._id === productId ? { ...p, isActive: newStatus } : p))
+      );
+      showToast(`Product ${newStatus ? 'activated & live in shop' : 'deactivated & hidden from shop'}!`, 'success');
+    } catch (err) {
+      showToast('Failed to toggle product status', 'error');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.discountPrice && Number(formData.discountPrice) > Number(formData.price)) {
@@ -550,11 +564,12 @@ export default function AdminProducts() {
     payload.append('shortDescription', (formData.shortDescription || '').trim());
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
+    payload.append('isActive', formData.isActive !== false);
 
     const singleTag = formData.tags ? formData.tags.split(',')[0].trim() : '';
-    const tagsArray = singleTag ? [singleTag] : [];
-    payload.append('tags', singleTag);
-    tagsArray.forEach((t) => payload.append('tags[]', t));
+    if (singleTag) {
+      payload.append('tags', singleTag);
+    }
 
     // Serialize category preset characteristics + dynamic custom specifications
     const presetList = Object.entries(charValues)
@@ -3783,41 +3798,29 @@ export default function AdminProducts() {
 
                         {/* Status Badge */}
                         <td style={{ padding: '0.85rem 0.85rem', textAlign: 'center' }}>
-                          {p.isActive !== false ? (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                padding: '0.22rem 0.6rem',
-                                borderRadius: '9999px',
-                                fontSize: '0.74rem',
-                                fontWeight: 600,
-                                background: '#f0fdf4',
-                                color: '#15803d',
-                                border: '1px solid #dcfce7',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              Active
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                padding: '0.22rem 0.6rem',
-                                borderRadius: '9999px',
-                                fontSize: '0.74rem',
-                                fontWeight: 600,
-                                background: '#f1f5f9',
-                                color: '#64748b',
-                                border: '1px solid #e2e8f0',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              Inactive
-                            </span>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(p._id, p.isActive)}
+                            title={`Click to ${p.isActive !== false ? 'Deactivate' : 'Activate & Show in Store'}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '0.22rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              background: p.isActive !== false ? '#dcfce7' : '#f1f5f9',
+                              color: p.isActive !== false ? '#15803d' : '#64748b',
+                              border: p.isActive !== false ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                              whiteSpace: 'nowrap',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                          >
+                            {p.isActive !== false ? 'Active' : 'Inactive'}
+                          </button>
                         </td>
 
                         {/* Actions Buttons */}

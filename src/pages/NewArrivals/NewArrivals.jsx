@@ -118,11 +118,11 @@ export default function NewArrivals() {
       const data = res?.data || res;
       const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
       const newArrivalsOnly = items.filter(isNewArrivalProduct);
-      setProducts(newArrivalsOnly.length > 0 ? newArrivalsOnly : items);
+      setProducts(newArrivalsOnly);
 
       // Best sellers filtering for live running marquee section
       const bestSellersOnly = items.filter(isBestSellerProduct);
-      setBestSellerProducts(bestSellersOnly.length > 0 ? bestSellersOnly : items);
+      setBestSellerProducts(bestSellersOnly);
 
 
     } catch (err) {
@@ -401,7 +401,7 @@ export default function NewArrivals() {
 
   // Continuous infinite running cards list for Best Sellers
   const marqueeItems = useMemo(() => {
-    const baseList = bestSellerProducts.length > 0 ? bestSellerProducts : products;
+    const baseList = bestSellerProducts;
     if (!baseList.length) return [];
 
     let singleCycle = [...baseList];
@@ -410,7 +410,7 @@ export default function NewArrivals() {
     }
 
     return [...singleCycle, ...singleCycle];
-  }, [bestSellerProducts, products]);
+  }, [bestSellerProducts]);
 
   const handleScrollToCatalog = () => {
     if (catalogRef.current) {
