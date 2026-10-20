@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Package,
   Tag,
+  Percent,
   Settings,
   Store,
   Menu,
@@ -35,7 +36,7 @@ import {
   Flame,
   MessageSquareText,
 } from 'lucide-react';
-import { useAuthStore } from '../../../store/authStore';
+import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
 import { useReturnStore } from '../../../store/returnStore';
@@ -51,7 +52,7 @@ import '../../../styles/admin.css';
 const ADMIN = '/softpicky-sn2026';
 
 export default function AdminLayout({ children, title }) {
-  const { user, logout } = useAuthStore();
+  const { adminUser: user, logout } = useAdminAuthStore();
   const { showToast } = useUiStore();
   const { categories, fetchCategories } = useCategoryStore();
   const pendingReturnsCount = useReturnStore((s) => s.returns.filter((r) => r.status === 'pending').length);
@@ -518,12 +519,23 @@ export default function AdminLayout({ children, title }) {
           <NavLink
             to={`${ADMIN}/coupons`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Discount & Coupons"
+            title="Coupons & Promo Codes"
           >
             <div className="admin-nav-icon-wrap">
               <Tag size={19} />
             </div>
-            {!collapsed && <span className="admin-nav-label">Discount & Coupons</span>}
+            {!collapsed && <span className="admin-nav-label">Coupons</span>}
+          </NavLink>
+
+          <NavLink
+            to={`${ADMIN}/discounts`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Automatic Cart Discounts"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Percent size={19} />
+            </div>
+            {!collapsed && <span className="admin-nav-label">Discounts</span>}
           </NavLink>
 
           <NavLink
@@ -893,6 +905,21 @@ export default function AdminLayout({ children, title }) {
                       <div className="admin-quick-action-text">
                         <span className="admin-quick-action-main">Create Coupon Code</span>
                         <span className="admin-quick-action-sub">Promotions & vouchers</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+
+                    <Link
+                      to={`${ADMIN}/discounts`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-purple">
+                        <Percent size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Create Automatic Offer</span>
+                        <span className="admin-quick-action-sub">Cart discounts & rules</span>
                       </div>
                       <ArrowUpRight size={13} className="admin-quick-action-arrow" />
                     </Link>

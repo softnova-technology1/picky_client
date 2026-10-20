@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck, Sparkles } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
@@ -19,8 +19,20 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
 
   const [justAdded, setJustAdded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   if (!product) return null;
+
+  const endDateRaw = product.offerEndDate || product.validTill || product.endDate;
+
+  // Active ticking timer for offers with end dates
+  useEffect(() => {
+    if (!endDateRaw) return;
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [endDateRaw]);
 
   const inWishlist = isInWishlist(product._id || product.id || product.slug);
 
@@ -100,13 +112,45 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
-  const badgeInfo = useMemo(() => {
-    if (hideBadge) return null;
-    const resolvedTag = extractProductTag(product, badgeText);
-    if (!resolvedTag) return null;
-    return getTagDesign(resolvedTag);
-  }, [product, badgeText, hideBadge]);
+  const getBadgeInfo = () => {
+    let customBadge = badgeText || product.badge;
 
+    // Prioritize top product badge if featured or tagged with top
+    if (!customBadge && (product.isFeatured || product.tags?.some((t) => t.toLowerCase().includes('top')))) {
+      customBadge = 'TOP PRODUCT';
+    }
+
+    if (!customBadge && Array.isArray(product.tags) && product.tags.length > 0) {
+      const priorityTags = ['top product', 'limited deals', 'trending now', 'new arrivals', 'best sellers'];
+      const matched = product.tags.find((t) =>
+        priorityTags.some((pt) => t.toLowerCase().includes(pt) || pt.includes(t.toLowerCase()))
+      );
+      if (matched) {
+        customBadge = matched;
+      }
+    }
+
+    if (!customBadge) return null;
+
+    const upper = customBadge.toUpperCase().trim();
+    if (upper.includes('TOP')) {
+      return { text: 'TOP PRODUCT', icon: Award, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+    }
+    if (upper.includes('LIMITED') || upper.includes('DEAL')) {
+      return { text: 'LIMITED DEALS', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
+    }
+    if (upper.includes('TREND')) {
+      return { text: 'TRENDING NOW', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
+    }
+    if (upper.includes('NEW') || upper.includes('ARRIVAL')) {
+      return { text: 'NEW ARRIVALS', icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
+    }
+    if (upper.includes('BEST') || upper.includes('SELLER')) {
+      return { text: 'BEST SELLERS', icon: Flame, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+    }
+    return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+  };
+  const badgeInfo = getBadgeInfo();
   const BadgeIcon = badgeInfo?.icon;
 
   return (
@@ -126,9 +170,9 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
 
         <div className="ref-top-bar">
           {!hideBadge && badgeInfo && (
-            <div className="ref-mega-deal premium-running-tag" style={{ color: badgeInfo.color, background: badgeInfo.bg, border: `1px solid ${badgeInfo.border}`, boxShadow: `0 2px 10px -2px ${badgeInfo.color}40` }}>
+            <div className="ref-mega-deal" style={{ color: badgeInfo.color, background: badgeInfo.bg, border: `1px solid ${badgeInfo.border}` }}>
               <span className="ref-deal-icon"><BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} /></span>
-              <span className="ref-deal-text" style={{ color: badgeInfo.color }}>{badgeInfo.displayName || badgeInfo.name}</span>
+              <span className="ref-deal-text" style={{ color: badgeInfo.color }}>{badgeInfo.text}</span>
             </div>
           )}
           <button

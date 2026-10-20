@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { useAdminAuthStore } from '../store/adminAuthStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
@@ -7,10 +8,25 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Helper: check if request belongs to admin operations
+function isRequestForAdmin(config) {
+  const url = config?.url || '';
+  if (url.includes('/admin')) return true;
+  if (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/softpicky-sn2026')) {
+    return true;
+  }
+  return false;
+}
+
 // Request interceptor — attach access token
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
+  const isAdmin = isRequestForAdmin(config);
+  const adminToken = useAdminAuthStore.getState().accessToken;
+  const customerToken = useAuthStore.getState().accessToken;
+
+  const token = isAdmin ? (adminToken || customerToken) : (customerToken || adminToken);
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
     delete config.headers['content-type'];
@@ -34,8 +50,11 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !original?._retry && !isAuthEndpoint) {
       original._retry = true;
+      const isAdmin = isRequestForAdmin(original);
+      const targetStore = isAdmin ? useAdminAuthStore.getState() : useAuthStore.getState();
+
       try {
-        const { refreshToken, setTokens } = useAuthStore.getState();
+        const refreshToken = targetStore.refreshToken;
         if (!refreshToken) throw new Error('No refresh token available');
 
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
@@ -43,14 +62,14 @@ api.interceptors.response.use(
         const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken;
         const newRefreshToken = res.data?.data?.refreshToken || res.data?.refreshToken;
 
-        setTokens(newAccessToken, newRefreshToken);
+        targetStore.setTokens(newAccessToken, newRefreshToken);
         original.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(original);
       } catch (refreshErr) {
-        useAuthStore.getState().logout();
-        // Only redirect to login if not already on login or admin portal
+        targetStore.logout();
+        // Only redirect customer to login if not on admin portal or login
         const path = window.location.pathname;
-        if (!path.includes('/login') && !path.includes('/softpicky-sn2026')) {
+        if (!isAdmin && !path.includes('/login') && !path.includes('/softpicky-sn2026')) {
           window.location.href = '/login';
         }
       }
