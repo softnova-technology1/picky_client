@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck, Sparkles } from 'lucide-react';
+import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck, Sparkles, Clock } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
 import { useAuthStore } from '../../../store/authStore';
@@ -119,6 +119,69 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   }, [product.shortDescription, product.description]);
 
   const getBadgeInfo = () => {
+    // 1. If discount is active and an offerLabel is configured, display offerLabel (or 30m countdown timer)
+    const isDiscountActive = Boolean(product.isDiscountActive);
+    const hasOfferLabel = Boolean(product.offerLabel && String(product.offerLabel).trim() !== '');
+
+    let isOfferValid = isDiscountActive;
+    let endTimeMs = null;
+    if (isDiscountActive) {
+      if (product.offerStartDate && !isNaN(new Date(product.offerStartDate).getTime())) {
+        if (new Date(product.offerStartDate).getTime() > now) {
+          isOfferValid = false;
+        }
+      }
+      if (endDateRaw && !isNaN(new Date(endDateRaw).getTime())) {
+        endTimeMs = new Date(endDateRaw).getTime();
+        if (endTimeMs < now) {
+          isOfferValid = false;
+        }
+      }
+    }
+
+    if (isOfferValid && hasOfferLabel) {
+      // 30-minute countdown timer before discount end time
+      if (endTimeMs && endTimeMs > now) {
+        const timeLeftMs = endTimeMs - now;
+        const thirtyMinsMs = 30 * 60 * 1000;
+        if (timeLeftMs <= thirtyMinsMs) {
+          const totalSecs = Math.max(0, Math.floor(timeLeftMs / 1000));
+          const mins = Math.floor(totalSecs / 60);
+          const secs = totalSecs % 60;
+          const formattedTimer = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+          return {
+            text: `ENDS IN ${formattedTimer}`,
+            icon: Clock,
+            color: '#dc2626',
+            bg: '#fef2f2',
+            border: '#fecaca',
+            isTimer: true,
+          };
+        }
+      }
+
+      const labelText = String(product.offerLabel).trim();
+      const design = getTagDesign(labelText);
+      if (design) {
+        return {
+          text: design.displayName || labelText.toUpperCase(),
+          icon: design.icon || Sparkles,
+          color: design.color,
+          bg: design.bg,
+          border: design.border,
+        };
+      }
+      return {
+        text: labelText.toUpperCase(),
+        icon: Sparkles,
+        color: '#b45309',
+        bg: '#fef3c7',
+        border: '#fde68a',
+      };
+    }
+
+    // 2. Otherwise (discount deactivated / inactive / no offerLabel), show original product tag!
     let customBadge = badgeText || product.badge;
 
     // Prioritize top product badge if featured or tagged with top
@@ -133,10 +196,24 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
       );
       if (matched) {
         customBadge = matched;
+      } else {
+        const firstValid = product.tags.find((t) => typeof t === 'string' && t.trim() !== '');
+        if (firstValid) customBadge = firstValid.trim();
       }
     }
 
     if (!customBadge) return null;
+
+    const design = getTagDesign(customBadge);
+    if (design) {
+      return {
+        text: design.displayName || customBadge.toUpperCase(),
+        icon: design.icon || Sparkles,
+        color: design.color,
+        bg: design.bg,
+        border: design.border,
+      };
+    }
 
     const upper = customBadge.toUpperCase().trim();
     if (upper.includes('TOP')) {
@@ -177,8 +254,12 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         <div className="ref-top-bar">
           {!hideBadge && badgeInfo && (
             <div className="ref-mega-deal" style={{ color: badgeInfo.color, background: badgeInfo.bg, border: `1px solid ${badgeInfo.border}` }}>
-              <span className="ref-deal-icon"><BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} /></span>
-              <span className="ref-deal-text" style={{ color: badgeInfo.color }}>{badgeInfo.text}</span>
+              <span className="ref-deal-icon">
+                <BadgeIcon size={12} fill={badgeInfo.isTimer ? 'transparent' : badgeInfo.color} color={badgeInfo.color} strokeWidth={badgeInfo.isTimer ? 2.5 : 2} />
+              </span>
+              <span className="ref-deal-text" style={{ color: badgeInfo.color, fontVariantNumeric: 'tabular-nums' }}>
+                {badgeInfo.text}
+              </span>
             </div>
           )}
           <button

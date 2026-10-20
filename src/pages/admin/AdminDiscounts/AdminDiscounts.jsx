@@ -53,6 +53,20 @@ export default function AdminDiscounts() {
     isActive: true,
   });
 
+  // Bulk Discount Modal State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [applyingBulkDiscount, setApplyingBulkDiscount] = useState(false);
+  const [bulkForm, setBulkForm] = useState({
+    category: 'all',
+    tag: 'all',
+    discountType: 'percentage', // 'percentage' | 'flat'
+    discountValue: '',
+    offerLabel: '',
+    startDate: '',
+    endDate: '',
+    activateImmediately: true,
+  });
+
   // Fetch live products and categories from server
   async function loadData() {
     try {
@@ -76,6 +90,29 @@ export default function AdminDiscounts() {
         // Calculate if percentage exists
         const hasDiscount = p.discountPrice !== undefined && p.discountPrice !== null && p.discountPrice < p.price;
 
+        const hasStart = p.offerStartDate && !isNaN(new Date(p.offerStartDate).getTime());
+        const hasEnd = p.offerEndDate && !isNaN(new Date(p.offerEndDate).getTime());
+
+        const isScheduled = Boolean(
+          hasStart
+            ? new Date(p.offerStartDate) > new Date()
+            : p.scheduledAt && !isNaN(new Date(p.scheduledAt).getTime()) && new Date(p.scheduledAt) > new Date()
+        );
+
+        const isExpired = Boolean(
+          hasEnd && new Date(p.offerEndDate) < new Date()
+        );
+
+        const dateRange = hasStart && hasEnd
+          ? `${new Date(p.offerStartDate).toLocaleDateString()} - ${new Date(p.offerEndDate).toLocaleDateString()}`
+          : hasStart
+          ? `From ${new Date(p.offerStartDate).toLocaleDateString()}`
+          : hasEnd
+          ? `Till ${new Date(p.offerEndDate).toLocaleDateString()}`
+          : p.scheduledAt && !isNaN(new Date(p.scheduledAt).getTime())
+          ? `Scheduled: ${new Date(p.scheduledAt).toLocaleDateString()}`
+          : null;
+
         return {
           _id: p._id || p.id,
           name: p.name || 'Untitled Product',
@@ -85,23 +122,12 @@ export default function AdminDiscounts() {
           discountPrice: hasDiscount ? Number(p.discountPrice) : null,
           limitDiscount: p.limitDiscount || p.maxDiscount || null,
           label: p.offerLabel ? String(p.offerLabel).trim() : '',
-          startDate: p.offerStartDate ? new Date(p.offerStartDate).toISOString() : (p.scheduledAt || ''),
-          endDate: p.offerEndDate ? new Date(p.offerEndDate).toISOString() : (p.validTill || ''),
-          dateRange: p.offerStartDate && p.offerEndDate
-            ? `${new Date(p.offerStartDate).toLocaleDateString()} - ${new Date(p.offerEndDate).toLocaleDateString()}`
-            : p.offerStartDate
-            ? `From ${new Date(p.offerStartDate).toLocaleDateString()}`
-            : p.offerEndDate
-            ? `Till ${new Date(p.offerEndDate).toLocaleDateString()}`
-            : p.scheduledAt
-            ? `Scheduled: ${new Date(p.scheduledAt).toLocaleDateString()}`
-            : null,
+          startDate: hasStart ? new Date(p.offerStartDate).toISOString() : (p.scheduledAt || ''),
+          endDate: hasEnd ? new Date(p.offerEndDate).toISOString() : (p.validTill || ''),
+          dateRange,
           images: p.images && p.images.length > 0 ? p.images : [],
-          isScheduled: Boolean(
-            p.offerStartDate
-              ? new Date(p.offerStartDate) > new Date()
-              : p.scheduledAt && new Date(p.scheduledAt) > new Date()
-          ),
+          isScheduled,
+          isExpired,
           isActive: p.isActive !== false,
           isDiscountActive: Boolean(p.isDiscountActive),
           rawProduct: p,
@@ -135,9 +161,10 @@ export default function AdminDiscounts() {
       // 2. Discount Status Filter
       const hasDiscount = p.discountPrice !== null && p.discountPrice < p.price;
       const isConfiguredActive = Boolean(p.isDiscountActive);
-      if (discountFilter === 'Active Discounts' && (!isConfiguredActive || !hasDiscount)) return false;
-      if (discountFilter === 'No Discount' && (isConfiguredActive && hasDiscount)) return false;
-      if (discountFilter === 'Scheduled' && (!isConfiguredActive || !p.isScheduled)) return false;
+      if (discountFilter === 'Active Discounts' && (!isConfiguredActive || !hasDiscount || p.isScheduled || p.isExpired)) return false;
+      if (discountFilter === 'No Discount' && (isConfiguredActive && hasDiscount && !p.isExpired)) return false;
+      if (discountFilter === 'Scheduled' && (!isConfiguredActive || !p.isScheduled || p.isExpired)) return false;
+      if (discountFilter === 'Expired' && (!isConfiguredActive || !p.isExpired)) return false;
 
       // 3. Category Filter
       if (categoryFilter !== 'All Categories') {
@@ -158,14 +185,17 @@ export default function AdminDiscounts() {
 
   // Metrics for Top 4 Stat Cards
   const activeDiscountsCount = useMemo(() => {
-    return products.filter((p) => p.isDiscountActive && p.discountPrice !== null && p.discountPrice < p.price).length;
+    return products.filter((p) => p.isDiscountActive && p.discountPrice !== null && p.discountPrice < p.price && !p.isScheduled && !p.isExpired).length;
   }, [products]);
 
   const scheduledCount = useMemo(() => {
-    return products.filter((p) => p.isDiscountActive && p.isScheduled).length;
+    return products.filter((p) => p.isDiscountActive && p.isScheduled && !p.isExpired).length;
   }, [products]);
 
-  const expiredCount = 0;
+  const expiredCount = useMemo(() => {
+    return products.filter((p) => p.isDiscountActive && p.isExpired).length;
+  }, [products]);
+
   const totalProductsDisplay = products.length;
 
   // Checkbox handlers
@@ -272,10 +302,9 @@ export default function AdminDiscounts() {
         payload.append('discountPrice', '');
       }
 
-      // Synchronize offerLabel & tags to database
-      const cleanLabel = discountForm.offerLabel.trim();
+      // Save offerLabel directly to database (only from Discounts page)
+      const cleanLabel = (discountForm.offerLabel || '').trim();
       payload.append('offerLabel', cleanLabel);
-      payload.append('tags', cleanLabel); // if empty, sends '' which backend clears to []
 
       // Start & End dates saved to database
       payload.append('offerStartDate', discountForm.startDate ? new Date(discountForm.startDate).toISOString() : '');
@@ -288,6 +317,15 @@ export default function AdminDiscounts() {
       if (editingProduct.images && editingProduct.images.length > 0) {
         editingProduct.images.forEach((img) => {
           payload.append('imagePositions[]', img);
+        });
+      }
+
+      // Preserve existing product tags so catalog tags are never wiped
+      if (Array.isArray(editingProduct.rawProduct?.tags)) {
+        editingProduct.rawProduct.tags.forEach((t) => {
+          if (t && typeof t === 'string' && t.trim()) {
+            payload.append('tags[]', t.trim());
+          }
         });
       }
 
@@ -323,7 +361,6 @@ export default function AdminDiscounts() {
                 rawProduct: {
                   ...p.rawProduct,
                   offerLabel: cleanLabel,
-                  tags: cleanLabel ? [cleanLabel] : [],
                   offerStartDate: discountForm.startDate,
                   offerEndDate: discountForm.endDate,
                   isDiscountActive: Boolean(discountForm.isActive),
@@ -343,31 +380,374 @@ export default function AdminDiscounts() {
     }
   };
 
-  // Bulk Actions
-  const handleBulkRemove = () => {
+  // Bulk Actions - Remove only discounts (products are NEVER deleted)
+  const handleBulkRemove = async () => {
     if (selectedProductIds.length === 0) {
-      showToast('Select products first to remove discounts', 'error');
+      showToast('Select products first using checkboxes to remove their discounts', 'info');
       return;
     }
-    setProducts((prev) =>
-      prev.map((p) =>
-        selectedProductIds.includes(p._id)
-          ? { ...p, discountPrice: null, label: null, isScheduled: false, dateRange: null, isDiscountActive: false }
-          : p
-      )
-    );
-    setSelectedProductIds([]);
-    showToast(`Removed discounts from selected products!`, 'success');
+
+    const confirmMessage = `Remove discounts from ${selectedProductIds.length} selected product(s)?\n\n(Products will NOT be deleted - only the discounts will be removed)`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await Promise.all(
+        selectedProductIds.map((id) => {
+          const prod = products.find((p) => p._id === id);
+          const payload = new FormData();
+          if (prod) {
+            payload.append('name', prod.name);
+            payload.append('price', prod.price);
+            if (prod.rawProduct?.category) {
+              payload.append(
+                'category',
+                typeof prod.rawProduct.category === 'object'
+                  ? prod.rawProduct.category._id
+                  : prod.rawProduct.category
+              );
+            }
+            if (prod.rawProduct?.subCategory) {
+              payload.append('subCategory', prod.rawProduct.subCategory);
+            }
+            if (prod.images && prod.images.length > 0) {
+              prod.images.forEach((img) => payload.append('imagePositions[]', img));
+            }
+            if (Array.isArray(prod.rawProduct?.tags)) {
+              prod.rawProduct.tags.forEach((t) => {
+                if (t && typeof t === 'string' && t.trim()) {
+                  payload.append('tags[]', t.trim());
+                }
+              });
+            }
+          }
+          // Reset only discount attributes in database
+          payload.append('discountPrice', '');
+          payload.append('offerLabel', '');
+          payload.append('offerStartDate', '');
+          payload.append('offerEndDate', '');
+          payload.append('isDiscountActive', 'false');
+
+          return adminService.updateProduct(id, payload);
+        })
+      );
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          selectedProductIds.includes(p._id)
+            ? {
+                ...p,
+                discountPrice: null,
+                label: '',
+                isScheduled: false,
+                isExpired: false,
+                dateRange: null,
+                isDiscountActive: false,
+                rawProduct: {
+                  ...p.rawProduct,
+                  offerLabel: '',
+                  discountPrice: null,
+                  offerStartDate: null,
+                  offerEndDate: null,
+                  isDiscountActive: false,
+                },
+              }
+            : p
+        )
+      );
+
+      const count = selectedProductIds.length;
+      setSelectedProductIds([]);
+      showToast(`Discounts successfully removed from ${count} product(s)! Products remain intact.`, 'success');
+    } catch (err) {
+      showToast('Failed to remove discounts: ' + (err.message || 'Error'), 'error');
+    }
   };
 
-  const handleBulkDiscount = () => {
-    if (selectedProductIds.length === 0) {
-      showToast('Select products first to apply bulk discount', 'info');
+  // Single Action - Remove only discount for one product (product is NEVER deleted)
+  const handleRemoveSingleDiscount = async (prod) => {
+    if (!prod) return;
+
+    const confirmMessage = `Remove discount from "${prod.name}"?\n\n(The product will NOT be deleted - only its discount will be removed)`;
+    if (!window.confirm(confirmMessage)) {
       return;
     }
-    const firstSelected = products.find((p) => selectedProductIds.includes(p._id));
-    if (firstSelected) {
-      handleOpenEditDiscount(firstSelected);
+
+    try {
+      const payload = new FormData();
+      payload.append('name', prod.name);
+      payload.append('price', prod.price);
+      if (prod.rawProduct?.category) {
+        payload.append(
+          'category',
+          typeof prod.rawProduct.category === 'object'
+            ? prod.rawProduct.category._id
+            : prod.rawProduct.category
+        );
+      }
+      if (prod.rawProduct?.subCategory) {
+        payload.append('subCategory', prod.rawProduct.subCategory);
+      }
+      if (prod.images && prod.images.length > 0) {
+        prod.images.forEach((img) => payload.append('imagePositions[]', img));
+      }
+      if (Array.isArray(prod.rawProduct?.tags)) {
+        prod.rawProduct.tags.forEach((t) => {
+          if (t && typeof t === 'string' && t.trim()) {
+            payload.append('tags[]', t.trim());
+          }
+        });
+      }
+
+      // Reset discount attributes in MongoDB
+      payload.append('discountPrice', '');
+      payload.append('offerLabel', '');
+      payload.append('offerStartDate', '');
+      payload.append('offerEndDate', '');
+      payload.append('isDiscountActive', 'false');
+
+      await adminService.updateProduct(prod._id, payload);
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p._id === prod._id
+            ? {
+                ...p,
+                discountPrice: null,
+                label: '',
+                isScheduled: false,
+                isExpired: false,
+                dateRange: null,
+                isDiscountActive: false,
+                rawProduct: {
+                  ...p.rawProduct,
+                  offerLabel: '',
+                  discountPrice: null,
+                  offerStartDate: null,
+                  offerEndDate: null,
+                  isDiscountActive: false,
+                },
+              }
+            : p
+        )
+      );
+
+      showToast(`Discount removed from "${prod.name}"! Product remains intact.`, 'success');
+    } catch (err) {
+      console.error('Failed to remove discount:', err);
+      showToast('Failed to remove discount: ' + (err.message || 'Error'), 'error');
+    }
+  };
+
+  // Dynamically extract all unique tags from database products (MongoDB Atlas)
+  const availableTags = useMemo(() => {
+    const tagSet = new Set();
+    products.forEach((p) => {
+      const rawTags = p.rawProduct?.tags;
+      if (Array.isArray(rawTags)) {
+        rawTags.forEach((t) => {
+          if (t && typeof t === 'string' && t.trim()) {
+            tagSet.add(t.trim());
+          }
+        });
+      }
+    });
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
+  // Compute products that match the selected bulk criteria
+  const targetBulkProducts = useMemo(() => {
+    return products.filter((p) => {
+      // 1. If user checked specific products on table AND hasn't selected specific category/tag, prioritize selected items
+      if (selectedProductIds.length > 0 && bulkForm.category === 'all' && bulkForm.tag === 'all') {
+        return selectedProductIds.includes(p._id);
+      }
+
+      // 2. Filter by Category
+      if (bulkForm.category !== 'all') {
+        const prodCat = p.rawProduct?.category;
+        const prodCatId = typeof prodCat === 'object' ? prodCat?._id : prodCat;
+        const selectedCatObj = categories.find((c) => String(c._id) === String(bulkForm.category));
+        const selectedCatName = (selectedCatObj?.name || '').toLowerCase();
+        const prodCatName = (p.categoryName || '').toLowerCase();
+
+        const matchId = prodCatId && String(prodCatId) === String(bulkForm.category);
+        const matchName = selectedCatName && prodCatName.includes(selectedCatName);
+        if (!matchId && !matchName) return false;
+      }
+
+      // 3. Filter by Tag
+      if (bulkForm.tag !== 'all') {
+        const prodTags = (p.rawProduct?.tags || []).map((t) => String(t).trim().toLowerCase());
+        if (!prodTags.includes(bulkForm.tag.toLowerCase())) return false;
+      }
+
+      return true;
+    });
+  }, [products, selectedProductIds, bulkForm.category, bulkForm.tag, categories]);
+
+  const handleOpenBulkModal = () => {
+    setBulkForm({
+      category: 'all',
+      tag: 'all',
+      discountType: 'percentage',
+      discountValue: '',
+      offerLabel: '',
+      startDate: '',
+      endDate: '',
+      activateImmediately: true,
+    });
+    setIsBulkModalOpen(true);
+  };
+
+  const handleCloseBulkModal = () => {
+    setIsBulkModalOpen(false);
+  };
+
+  const handleApplyBulkDiscount = async (e) => {
+    e.preventDefault();
+
+    const numVal = parseFloat(bulkForm.discountValue);
+    if (!bulkForm.discountValue || isNaN(numVal) || numVal <= 0) {
+      showToast('Please enter a valid discount value', 'error');
+      return;
+    }
+
+    if (bulkForm.discountType === 'percentage' && numVal >= 100) {
+      showToast('Discount percentage must be less than 100%', 'error');
+      return;
+    }
+
+    if (targetBulkProducts.length === 0) {
+      showToast('No products match the selected criteria', 'error');
+      return;
+    }
+
+    setApplyingBulkDiscount(true);
+    try {
+      const cleanLabel = (bulkForm.offerLabel || '').trim();
+      const isAct = Boolean(bulkForm.activateImmediately);
+
+      // Persist discount updates to database via adminService.updateProduct
+      await Promise.all(
+        targetBulkProducts.map((p) => {
+          let calculatedDiscountPrice = null;
+          if (numVal > 0) {
+            if (bulkForm.discountType === 'percentage') {
+              calculatedDiscountPrice = Math.max(1, Math.round(p.price * (1 - numVal / 100)));
+            } else {
+              if (numVal >= p.price) {
+                calculatedDiscountPrice = Math.max(1, Math.round(p.price * 0.1));
+              } else {
+                calculatedDiscountPrice = Math.max(1, Math.round(p.price - numVal));
+              }
+            }
+          }
+
+          const payload = new FormData();
+          payload.append('name', p.name);
+          payload.append('price', p.price);
+          if (p.rawProduct?.category) {
+            payload.append(
+              'category',
+              typeof p.rawProduct.category === 'object' ? p.rawProduct.category._id : p.rawProduct.category
+            );
+          }
+          if (p.rawProduct?.subCategory) {
+            payload.append('subCategory', p.rawProduct.subCategory);
+          }
+
+          if (calculatedDiscountPrice) {
+            payload.append('discountPrice', calculatedDiscountPrice);
+          } else {
+            payload.append('discountPrice', '');
+          }
+
+          payload.append('offerLabel', cleanLabel);
+          payload.append('offerStartDate', bulkForm.startDate ? new Date(bulkForm.startDate).toISOString() : '');
+          payload.append('offerEndDate', bulkForm.endDate ? new Date(bulkForm.endDate).toISOString() : '');
+          payload.append('isDiscountActive', isAct ? 'true' : 'false');
+
+          if (p.images && p.images.length > 0) {
+            p.images.forEach((img) => {
+              payload.append('imagePositions[]', img);
+            });
+          }
+
+          if (Array.isArray(p.rawProduct?.tags)) {
+            p.rawProduct.tags.forEach((t) => {
+              if (t && typeof t === 'string' && t.trim()) {
+                payload.append('tags[]', t.trim());
+              }
+            });
+          }
+
+          return adminService.updateProduct(p._id, payload);
+        })
+      );
+
+      // Format date range text
+      const dateRangeText =
+        bulkForm.startDate && bulkForm.endDate
+          ? `${new Date(bulkForm.startDate).toLocaleDateString()} - ${new Date(bulkForm.endDate).toLocaleDateString()}`
+          : bulkForm.startDate
+          ? `From ${new Date(bulkForm.startDate).toLocaleDateString()}`
+          : bulkForm.endDate
+          ? `Till ${new Date(bulkForm.endDate).toLocaleDateString()}`
+          : null;
+
+      const isScheduledNow = Boolean(
+        bulkForm.startDate && new Date(bulkForm.startDate) > new Date()
+      );
+
+      const targetIds = new Set(targetBulkProducts.map((p) => p._id));
+
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (!targetIds.has(p._id)) return p;
+
+          let calculatedDiscountPrice = null;
+          if (numVal > 0) {
+            if (bulkForm.discountType === 'percentage') {
+              calculatedDiscountPrice = Math.max(1, Math.round(p.price * (1 - numVal / 100)));
+            } else {
+              calculatedDiscountPrice = Math.max(1, Math.round(p.price - numVal));
+            }
+          }
+
+          return {
+            ...p,
+            discountPrice: calculatedDiscountPrice,
+            label: cleanLabel,
+            startDate: bulkForm.startDate,
+            endDate: bulkForm.endDate,
+            dateRange: dateRangeText,
+            isScheduled: isScheduledNow,
+            isDiscountActive: isAct,
+            rawProduct: {
+              ...p.rawProduct,
+              offerLabel: cleanLabel,
+              discountPrice: calculatedDiscountPrice,
+              offerStartDate: bulkForm.startDate,
+              offerEndDate: bulkForm.endDate,
+              isDiscountActive: isAct,
+            },
+          };
+        })
+      );
+
+      setSelectedProductIds([]);
+      setIsBulkModalOpen(false);
+      showToast(
+        `Applied bulk discount to ${targetBulkProducts.length} product(s) in database!`,
+        'success'
+      );
+    } catch (err) {
+      console.error('Failed to apply bulk discount:', err);
+      showToast('Failed to apply bulk discount: ' + (err.message || 'Error'), 'error');
+    } finally {
+      setApplyingBulkDiscount(false);
     }
   };
 
@@ -408,6 +788,7 @@ export default function AdminDiscounts() {
             <button
               type="button"
               onClick={handleBulkRemove}
+              title="Remove discounts from selected products (products will not be deleted)"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -435,7 +816,7 @@ export default function AdminDiscounts() {
 
             <button
               type="button"
-              onClick={handleBulkDiscount}
+              onClick={handleOpenBulkModal}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -934,7 +1315,24 @@ export default function AdminDiscounts() {
                       );
 
                       if (isConfiguredActive && hasDiscount) {
-                        if (p.isScheduled) {
+                        if (p.isExpired) {
+                          statusBadge = (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '0.2rem 0.65rem',
+                                borderRadius: '6px',
+                                background: '#fee2e2',
+                                color: '#b91c1c',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Expired
+                            </span>
+                          );
+                        } else if (p.isScheduled) {
                           statusBadge = (
                             <span
                               style={{
@@ -1138,33 +1536,63 @@ export default function AdminDiscounts() {
 
                           {/* Actions */}
                           <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditDiscount(p)}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: '#64748b',
-                                padding: '6px',
-                                borderRadius: '6px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.15s ease',
-                              }}
-                              title="Edit product discount"
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.color = '#0f172a';
-                                e.currentTarget.style.background = '#f1f5f9';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.color = '#64748b';
-                                e.currentTarget.style.background = 'transparent';
-                              }}
-                            >
-                              <Edit2 size={15} />
-                            </button>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditDiscount(p)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  color: '#64748b',
+                                  padding: '6px',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                title="Edit product discount"
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = '#0f172a';
+                                  e.currentTarget.style.background = '#f1f5f9';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = '#64748b';
+                                  e.currentTarget.style.background = 'transparent';
+                                }}
+                              >
+                                <Edit2 size={15} />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSingleDiscount(p)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  color: '#94a3b8',
+                                  padding: '6px',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                title="Remove discount (product will not be deleted)"
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = '#ef4444';
+                                  e.currentTarget.style.background = '#fef2f2';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = '#94a3b8';
+                                  e.currentTarget.style.background = 'transparent';
+                                }}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -1609,6 +2037,388 @@ export default function AdminDiscounts() {
                     }}
                   >
                     {savingDiscount ? 'Saving...' : 'Save Discount'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* ── 6. Bulk Discount Modal (Matches provided design) ── */}
+        {isBulkModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15, 23, 42, 0.45)',
+              backdropFilter: 'blur(3px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '1.25rem',
+            }}
+            onClick={handleCloseBulkModal}
+          >
+            <div
+              style={{
+                background: '#ffffff',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '560px',
+                padding: '1.75rem',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.2)',
+                position: 'relative',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={handleCloseBulkModal}
+                style={{
+                  position: 'absolute',
+                  top: '1.25rem',
+                  right: '1.25rem',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#1e293b')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+              >
+                <X size={18} />
+              </button>
+
+
+              {/* Bulk Discount Form */}
+              <form onSubmit={handleApplyBulkDiscount}>
+                {/* Row 1: CATEGORY & TAG */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      CATEGORY
+                    </label>
+                    <select
+                      value={bulkForm.category}
+                      onChange={(e) => setBulkForm({ ...bulkForm, category: e.target.value })}
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        fontSize: '0.86rem',
+                        color: '#1e293b',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((cat) => (
+                        <option key={cat._id} value={cat._id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      TAG
+                    </label>
+                    <select
+                      value={bulkForm.tag}
+                      onChange={(e) => setBulkForm({ ...bulkForm, tag: e.target.value })}
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        fontSize: '0.86rem',
+                        color: '#1e293b',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="all">All Tags</option>
+                      {availableTags.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Row 2: DISCOUNT TYPE & DISCOUNT VALUE */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      DISCOUNT TYPE
+                    </label>
+                    <select
+                      value={bulkForm.discountType}
+                      onChange={(e) => setBulkForm({ ...bulkForm, discountType: e.target.value })}
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        fontSize: '0.86rem',
+                        color: '#1e293b',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="percentage">Percentage (%)</option>
+                      <option value="flat">Flat Amount (₹)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      DISCOUNT VALUE
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 15"
+                      value={bulkForm.discountValue}
+                      onChange={(e) => setBulkForm({ ...bulkForm, discountValue: e.target.value })}
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        fontSize: '0.86rem',
+                        color: '#1e293b',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: OFFER LABEL */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#475569',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      marginBottom: '0.45rem',
+                    }}
+                  >
+                    OFFER LABEL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mega Sale, Pongal Special"
+                    value={bulkForm.offerLabel}
+                    onChange={(e) => setBulkForm({ ...bulkForm, offerLabel: e.target.value })}
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      padding: '0 0.85rem',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      background: '#ffffff',
+                      fontSize: '0.86rem',
+                      color: '#1e293b',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                {/* Row 4: START DATE & TIME and END DATE & TIME */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      START DATE &amp; TIME
+                    </label>
+                    <DateTimePicker12h
+                      value={bulkForm.startDate}
+                      onChange={(val) => setBulkForm((prev) => ({ ...prev, startDate: val }))}
+                      placeholder="dd-mm-yyyy --:-- --"
+                      align="left"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      END DATE &amp; TIME
+                    </label>
+                    <DateTimePicker12h
+                      value={bulkForm.endDate}
+                      onChange={(val) => setBulkForm((prev) => ({ ...prev, endDate: val }))}
+                      placeholder="dd-mm-yyyy --:-- --"
+                      align="right"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 5: Activate Immediately Checkbox & Matching Count Hint */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <label
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.55rem',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={bulkForm.activateImmediately}
+                      onChange={(e) => setBulkForm({ ...bulkForm, activateImmediately: e.target.checked })}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        accentColor: '#2563eb',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <span style={{ fontSize: '0.86rem', color: '#334155', fontWeight: 500 }}>
+                      Activate Immediately
+                    </span>
+                  </label>
+
+                  <span
+                    style={{
+                      fontSize: '0.78rem',
+                      color: targetBulkProducts.length > 0 ? '#15803d' : '#94a3b8',
+                      fontWeight: 600,
+                      background: targetBulkProducts.length > 0 ? '#f0fdf4' : '#f8fafc',
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '6px',
+                      border: `1px solid ${targetBulkProducts.length > 0 ? '#bbf7d0' : '#e2e8f0'}`,
+                    }}
+                  >
+                    Matches {targetBulkProducts.length} product{targetBulkProducts.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+
+                {/* Modal Footer Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleCloseBulkModal}
+                    style={{
+                      padding: '0.55rem 1.4rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#334155',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={applyingBulkDiscount}
+                    style={{
+                      padding: '0.55rem 1.4rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: '#b48348',
+                      color: '#ffffff',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: applyingBulkDiscount ? 'not-allowed' : 'pointer',
+                      opacity: applyingBulkDiscount ? 0.7 : 1,
+                      boxShadow: '0 2px 6px rgba(180, 131, 72, 0.25)',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {applyingBulkDiscount ? 'Applying...' : 'Apply Bulk Discount'}
                   </button>
                 </div>
               </form>

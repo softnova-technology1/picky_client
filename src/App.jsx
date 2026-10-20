@@ -12,6 +12,7 @@ import CategorySubcategories from './pages/CategorySubcategories';
 import ProductList from './pages/ProductList';
 import NewArrivals from './pages/NewArrivals';
 import BestSellers from './pages/BestSellers';
+import Discounts from './pages/Discounts';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
@@ -129,6 +130,11 @@ export default function App() {
           <Route path="/new-arrivals" element={<NewArrivals />} />
           <Route path="/best-sellers" element={<BestSellers />} />
           <Route path="/bestsellers" element={<BestSellers />} />
+          <Route path="/limited-deals" element={<Discounts />} />
+          <Route path="/limiteddeals" element={<Navigate to="/limited-deals" replace />} />
+          <Route path="/discounts" element={<Navigate to="/limited-deals" replace />} />
+          <Route path="/deals" element={<Navigate to="/limited-deals" replace />} />
+          <Route path="/offers" element={<Navigate to="/limited-deals" replace />} />
           <Route path="/shop" element={<ProductList />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />

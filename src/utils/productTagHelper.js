@@ -14,6 +14,7 @@ import {
   Tag,
   Feather,
   Star,
+  Clock,
 } from 'lucide-react';
 
 /**
@@ -158,6 +159,36 @@ function hashString(str) {
 export function extractProductTag(product, fallbackBadge = null) {
   if (!product) return fallbackBadge || null;
 
+  // 0. Active discount offerLabel takes precedence over tag while discount is active
+  const isDiscountActive = Boolean(product.isDiscountActive);
+  const hasOfferLabel = Boolean(product.offerLabel && String(product.offerLabel).trim() !== '');
+
+  let isOfferValid = isDiscountActive;
+  if (isDiscountActive) {
+    const now = Date.now();
+    if (product.offerStartDate && !isNaN(new Date(product.offerStartDate).getTime())) {
+      if (new Date(product.offerStartDate).getTime() > now) {
+        isOfferValid = false;
+      }
+    }
+    const endDateRaw = product.offerEndDate || product.validTill || product.endDate;
+    if (endDateRaw && !isNaN(new Date(endDateRaw).getTime())) {
+      const endTime = new Date(endDateRaw).getTime();
+      if (endTime < now) {
+        isOfferValid = false;
+      } else if (hasOfferLabel && endTime - now <= 30 * 60 * 1000) {
+        const totalSecs = Math.max(0, Math.floor((endTime - now) / 1000));
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        return `ENDS IN ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+    }
+  }
+
+  if (isOfferValid && hasOfferLabel) {
+    return String(product.offerLabel).trim();
+  }
+
   // 1. Array tags from database / form
   if (Array.isArray(product.tags) && product.tags.length > 0) {
     const firstValid = product.tags.find((t) => typeof t === 'string' && t.trim() !== '');
@@ -204,6 +235,19 @@ export function getTagDesign(rawTag) {
   if (!clean) return null;
 
   const lower = clean.toLowerCase();
+
+  // Check for 30-minute urgency countdown timer
+  if (lower.startsWith('ends in') || lower.includes('ends in')) {
+    return {
+      name: clean,
+      displayName: clean.toUpperCase(),
+      icon: Clock,
+      color: '#dc2626',
+      bg: '#fef2f2',
+      border: '#fecaca',
+      isTimer: true,
+    };
+  }
 
   // Check against the 5 defaults (including aliases)
   if (lower === 'top product' || lower === 'top' || lower.includes('top product')) {

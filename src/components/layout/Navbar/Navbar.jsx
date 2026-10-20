@@ -241,6 +241,16 @@ export default function Navbar() {
               </Link>
             </div>
 
+            {/* Limited Deals */}
+            <div className="nav-item-rel">
+              <Link
+                to="/limited-deals"
+                className={`nav-pill-link ${isNavActive('/limited-deals') || isNavActive('/limiteddeals') ? 'active' : ''}`}
+              >
+                <span>Limited Deals</span>
+              </Link>
+            </div>
+
             {/* About Us */}
             <div className="nav-item-rel">
               <Link
@@ -708,6 +718,9 @@ export default function Navbar() {
               </Link>
               <Link to="/best-sellers" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>Best Sellers</span>
+              </Link>
+              <Link to="/limited-deals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <span>Limited Deals</span>
               </Link>
               <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
                 <span>About Us</span>

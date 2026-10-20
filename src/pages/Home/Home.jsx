@@ -537,10 +537,27 @@ export default function Home() {
           );
           setNewArrivals(arrivals);
 
-          // 4. Limited Deals filter (strictly matches 'limited deals', 'limited', 'deal')
-          const deals = pItems.filter(
+          // 4. Limited Deals filter: products with ACTIVE discounts from Discounts page, followed by tagged deal products
+          const now = Date.now();
+          const activeDiscounts = pItems.filter(
+            (p) =>
+              Boolean(p.isDiscountActive) &&
+              p.discountPrice &&
+              p.discountPrice < p.price &&
+              (!p.offerStartDate || new Date(p.offerStartDate).getTime() <= now) &&
+              (!p.offerEndDate || new Date(p.offerEndDate).getTime() >= now)
+          );
+          const tagDeals = pItems.filter(
             (p) => hasTag(p, 'deal') || hasTag(p, 'limited')
           );
+          const deals = activeDiscounts.length > 0
+            ? [
+                ...activeDiscounts,
+                ...tagDeals.filter(
+                  (t) => !activeDiscounts.some((a) => (a._id || a.id) === (t._id || t.id))
+                ),
+              ]
+            : tagDeals;
           setDealProducts(deals);
         } else {
           setFeaturedProducts([]);
@@ -837,26 +854,41 @@ export default function Home() {
               </h2>
             </FadeUp>
 
-            {/* Live Ticking Countdown Timer */}
-            <FadeUp delay={100}>
-              <div className="hp-flash-header-timer">
-                <span className="timer-label">Ends In:</span>
-                <div className="timer-box">
-                  <span className="timer-num">{String(timeLeft.hours).padStart(2, '0')}</span>
-                  <span className="timer-unit">HRS</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+              {/* Live Ticking Countdown Timer */}
+              <FadeUp delay={100}>
+                <div className="hp-flash-header-timer">
+                  <span className="timer-label">Ends In:</span>
+                  <div className="timer-box">
+                    <span className="timer-num">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <span className="timer-unit">HRS</span>
+                  </div>
+                  <span className="timer-colon">:</span>
+                  <div className="timer-box">
+                    <span className="timer-num">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    <span className="timer-unit">MIN</span>
+                  </div>
+                  <span className="timer-colon">:</span>
+                  <div className="timer-box">
+                    <span className="timer-num">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    <span className="timer-unit">SEC</span>
+                  </div>
                 </div>
-                <span className="timer-colon">:</span>
-                <div className="timer-box">
-                  <span className="timer-num">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                  <span className="timer-unit">MIN</span>
-                </div>
-                <span className="timer-colon">:</span>
-                <div className="timer-box">
-                  <span className="timer-num">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                  <span className="timer-unit">SEC</span>
-                </div>
-              </div>
-            </FadeUp>
+              </FadeUp>
+
+              {/* Explore Limited Deals button navigating to /limited-deals */}
+              <FadeUp delay={120}>
+                <button
+                  className="hp-view-all-btn"
+                  onClick={() => navigate('/limited-deals')}
+                  title="Explore All Limited Deals"
+                >
+                  <span className="hp-view-all-desktop">Explore Limited Deals</span>
+                  <span className="hp-view-all-mobile">EXPLORE</span>
+                  <ArrowRight size={14} />
+                </button>
+              </FadeUp>
+            </div>
           </div>
 
           {/* Flash Deals Main Grid (Spotlight Card + 4 Real Minimal Products) */}
