@@ -1,53 +1,23 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuthStore } from '../../../store/authStore';
+import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { authService } from '../../../services/auth.service';
 import Button from '../../ui/Button';
 
 export function AdminProtectedRoute({ children }) {
-  const { isLoggedIn, user, login, logout } = useAuthStore();
+  const { isLoggedIn, adminUser, login } = useAdminAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 1. If logged in and role is admin -> grant access immediately!
-  if (isLoggedIn && user?.role === 'admin') {
+  // 1. If logged in as admin -> grant access immediately!
+  if (isLoggedIn && adminUser?.role === 'admin') {
     return children;
   }
 
-  // 2. If logged in as customer (non-admin)
-  if (isLoggedIn && user?.role !== 'admin') {
-    return (
-      <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
-        <div style={{ maxWidth: '440px', width: '100%', background: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '2.5rem 2rem', color: 'white', textAlign: 'center' }}>
-          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>⛔</span>
-          <h2 style={{ color: 'white', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Admin Access Required</h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            You are currently signed in as a customer. Please sign in with an authorized Administrator account.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <button
-              onClick={() => logout()}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem' }}
-            >
-              Sign In to Admin Portal ➔
-            </button>
-            <a
-              href="/"
-              style={{ color: '#94a3b8', fontSize: '0.85rem', textDecoration: 'underline' }}
-            >
-              Return to Customer Store
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. Admin Authentication Form
+  // 2. Direct Admin Authentication Form
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -64,8 +34,14 @@ export function AdminProtectedRoute({ children }) {
       setLoading(true);
       const res = await authService.adminLogin(cleanEmail, cleanPassword);
       const payload = res?.data?.user ? res.data : (res?.user ? res : (res?.data || res));
-      const adminUser = payload?.user || payload;
-      login(adminUser, payload?.accessToken, payload?.refreshToken);
+      const user = payload?.user || payload;
+
+      if (user?.role !== 'admin') {
+        setError('Access denied: You must sign in with an authorized Administrator account.');
+        return;
+      }
+
+      login(user, payload?.accessToken, payload?.refreshToken);
     } catch (err) {
       console.error('Admin Login Error:', err);
       const msg = err?.error || err?.response?.data?.message || err?.message || 'Invalid administrator credentials or server unavailable.';

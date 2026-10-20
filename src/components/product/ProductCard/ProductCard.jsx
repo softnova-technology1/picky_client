@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck, Sparkles } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
@@ -18,8 +18,20 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
 
   const [justAdded, setJustAdded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   if (!product) return null;
+
+  const endDateRaw = product.offerEndDate || product.validTill || product.endDate;
+
+  // Active ticking timer for offers with end dates
+  useEffect(() => {
+    if (!endDateRaw) return;
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [endDateRaw]);
 
   const inWishlist = isInWishlist(product._id || product.id || product.slug);
 
@@ -100,42 +112,82 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     : 0;
 
   const getBadgeInfo = () => {
-    let customBadge = badgeText || product.badge;
-
-    // Prioritize top product badge if featured or tagged with top
-    if (!customBadge && (product.isFeatured || product.tags?.some((t) => t.toLowerCase().includes('top')))) {
-      customBadge = 'TOP PRODUCT';
-    }
-
-    if (!customBadge && Array.isArray(product.tags) && product.tags.length > 0) {
-      const priorityTags = ['top product', 'limited deals', 'trending now', 'new arrivals', 'best sellers'];
-      const matched = product.tags.find((t) =>
-        priorityTags.some((pt) => t.toLowerCase().includes(pt) || pt.includes(t.toLowerCase()))
-      );
-      if (matched) {
-        customBadge = matched;
+    // 1. Determine active offer label
+    // If badgeText prop is passed explicitly, use it; otherwise read offerLabel / tags
+    let activeLabel = badgeText || '';
+    if (!activeLabel) {
+      if (product.offerLabel !== undefined && product.offerLabel !== null) {
+        activeLabel = product.offerLabel.trim();
+      } else if (Array.isArray(product.tags) && product.tags.length > 0) {
+        activeLabel = product.tags[0].trim();
       }
     }
 
-    if (!customBadge) return null;
+    // Rule: "If the label is empty, the tag should not be displayed at all."
+    if (!activeLabel) return null;
 
-    const upper = customBadge.toUpperCase().trim();
+    // 2. Check offer start time (if scheduled for future, do not display yet)
+    const startDateRaw = product.offerStartDate || product.scheduledAt || product.startDate;
+    if (startDateRaw && new Date(startDateRaw).getTime() > now) {
+      return null;
+    }
+
+    // 3. Check offer end time and timer
+    let timerStr = null;
+    if (endDateRaw) {
+      const endMs = new Date(endDateRaw).getTime();
+      const diffMs = endMs - now;
+
+      // Rule: "Once the timer runs out, the tag should no longer be displayed on the product."
+      if (diffMs <= 0) {
+        return null;
+      }
+
+      // Rule: "a timer should appear on that tag, counting down the final 30 minutes before the offer ends."
+      if (diffMs <= 30 * 60 * 1000) {
+        const totalSec = Math.floor(diffMs / 1000);
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
+        timerStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+    }
+
+    const upper = activeLabel.toUpperCase().trim();
+    let icon = Flame;
+    let color = '#e11d48';
+    let bg = '#ffe4e6';
+    let border = '#fecdd3';
+
     if (upper.includes('TOP')) {
-      return { text: 'TOP PRODUCT', icon: Award, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+      icon = Award;
+      color = '#7c3aed';
+      bg = '#f5f3ff';
+      border = '#ddd6fe';
+    } else if (upper.includes('LIMITED') || upper.includes('DEAL')) {
+      icon = Zap;
+      color = '#d97706';
+      bg = '#fef3c7';
+      border = '#fde68a';
+    } else if (upper.includes('NEW') || upper.includes('ARRIVAL')) {
+      icon = Sparkles;
+      color = '#2563eb';
+      bg = '#eff6ff';
+      border = '#bfdbfe';
+    } else if (upper.includes('BEST') || upper.includes('SELLER')) {
+      icon = Flame;
+      color = '#7c3aed';
+      bg = '#f5f3ff';
+      border = '#ddd6fe';
     }
-    if (upper.includes('LIMITED') || upper.includes('DEAL')) {
-      return { text: 'LIMITED DEALS', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
-    }
-    if (upper.includes('TREND')) {
-      return { text: 'TRENDING NOW', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' };
-    }
-    if (upper.includes('NEW') || upper.includes('ARRIVAL')) {
-      return { text: 'NEW ARRIVALS', icon: Sparkles, color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' };
-    }
-    if (upper.includes('BEST') || upper.includes('SELLER')) {
-      return { text: 'BEST SELLERS', icon: Flame, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
-    }
-    return { text: upper, icon: Sparkles, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+
+    return {
+      text: upper,
+      timer: timerStr,
+      icon,
+      color,
+      bg,
+      border,
+    };
   };
   const badgeInfo = getBadgeInfo();
   const BadgeIcon = badgeInfo?.icon;
@@ -157,9 +209,40 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
 
         <div className="ref-top-bar">
           {!hideBadge && badgeInfo && (
-            <div className="ref-mega-deal" style={{ color: badgeInfo.color, background: badgeInfo.bg, border: `1px solid ${badgeInfo.border}` }}>
-              <span className="ref-deal-icon"><BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} /></span>
-              <span className="ref-deal-text" style={{ color: badgeInfo.color }}>{badgeInfo.text}</span>
+            <div
+              className="ref-mega-deal"
+              style={{
+                color: badgeInfo.color,
+                background: badgeInfo.bg,
+                border: `1px solid ${badgeInfo.border}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span className="ref-deal-icon">
+                <BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} />
+              </span>
+              <span className="ref-deal-text" style={{ color: badgeInfo.color }}>
+                {badgeInfo.text}
+              </span>
+              {badgeInfo.timer && (
+                <span
+                  style={{
+                    marginLeft: '4px',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    background: badgeInfo.color,
+                    color: '#ffffff',
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.03em',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  ⏱️ {badgeInfo.timer}
+                </span>
+              )}
             </div>
           )}
           <button
