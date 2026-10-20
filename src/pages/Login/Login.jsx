@@ -4,6 +4,7 @@ import { authService } from '../../services/auth.service';
 import { cartService } from '../../services/cart.service';
 import { wishlistService } from '../../services/wishlist.service';
 import { useAuthStore } from '../../store/authStore';
+import { useAdminAuthStore } from '../../store/adminAuthStore';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useUiStore } from '../../store/uiStore';
@@ -238,7 +239,7 @@ export default function Login({ initialTab = 'login' }) {
       const res = await authService.adminLogin(adminEmail.trim(), adminPassword);
       const payload = res?.data?.user ? res.data : (res?.user ? res : (res?.data || res));
       const adminUser = payload?.user || payload;
-      login(adminUser, payload?.accessToken, payload?.refreshToken);
+      useAdminAuthStore.getState().login(adminUser, payload?.accessToken, payload?.refreshToken);
       showToast(`Welcome back, Administrator!`, 'success');
       navigate('/softpicky-sn2026', { replace: true });
     } catch (err) {

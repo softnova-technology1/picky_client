@@ -134,6 +134,7 @@ export default function Contact() {
         formData.append('phone', form.phone.trim());
       }
       formData.append('message', form.message.trim());
+      formData.append('source', 'contact_page');
       if (selectedFile) {
         formData.append('file', selectedFile);
       }
@@ -157,7 +158,7 @@ export default function Contact() {
           relativeTime: 'Just now',
           unread: true,
           starred: false,
-          link: '/softpicky-sn2026/settings?tab=notifications',
+          link: '/softpicky-sn2026/inquiries',
           linkText: 'View Inquiry',
           hasAttachment: Boolean(selectedFile),
           attachmentName: selectedFile ? selectedFile.name : null,
@@ -175,6 +176,8 @@ export default function Contact() {
         };
         const updated = [newNotif, ...list];
         localStorage.setItem('picky_admin_notifications', JSON.stringify(updated));
+        window.dispatchEvent(new Event('picky_inquiries_updated'));
+        window.dispatchEvent(new Event('picky_notifications_updated'));
       } catch (syncErr) {
         console.error('Local notification sync error:', syncErr);
       }

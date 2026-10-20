@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Package,
   Tag,
+  Percent,
   Settings,
   Store,
   Menu,
@@ -33,8 +34,9 @@ import {
   ShoppingCart,
   MessageCircle,
   Flame,
+  MessageSquareText,
 } from 'lucide-react';
-import { useAuthStore } from '../../../store/authStore';
+import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
 import { useReturnStore } from '../../../store/returnStore';
@@ -50,7 +52,7 @@ import '../../../styles/admin.css';
 const ADMIN = '/softpicky-sn2026';
 
 export default function AdminLayout({ children, title }) {
-  const { user, logout } = useAuthStore();
+  const { adminUser: user, logout } = useAdminAuthStore();
   const { showToast } = useUiStore();
   const { categories, fetchCategories } = useCategoryStore();
   const pendingReturnsCount = useReturnStore((s) => s.returns.filter((r) => r.status === 'pending').length);
@@ -73,6 +75,15 @@ export default function AdminLayout({ children, title }) {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   // Real-time synced admin notifications state
+  const [unreadInquiriesCount, setUnreadInquiriesCount] = useState(0);
+
+  const refreshInquiriesCount = async () => {
+    try {
+      const res = await contactService.list({ limit: 1 });
+      setUnreadInquiriesCount(res?.data?.unreadCount || 0);
+    } catch (e) {}
+  };
+
   const [adminNotifications, setAdminNotifications] = useState(() => {
     try {
       const saved = localStorage.getItem('picky_admin_notifications');
@@ -93,7 +104,7 @@ export default function AdminLayout({ children, title }) {
       const res = await contactService.getNotifications({ limit: 10 }).catch(() => null);
       const apiNotifs = res?.data?.notifications || res?.data;
       if (Array.isArray(apiNotifs) && apiNotifs.length > 0) {
-        const formatted = apiNotifs.map((n) => ({
+        const formatted = apiNotifs.filter((n) => n && n.type !== 'product' && n.type !== 'coupon' && !String(n.title || '').includes('Product in Catalog')).map((n) => ({
           ...n,
           id: n.id || n._id,
           relativeTime: n.relativeTime || (n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'),
@@ -118,6 +129,7 @@ export default function AdminLayout({ children, title }) {
 
   useEffect(() => {
     refreshAdminNotifications();
+    refreshInquiriesCount();
     const handleStorage = (e) => {
       if (e.key === 'picky_admin_notifications') {
         try {
@@ -130,11 +142,28 @@ export default function AdminLayout({ children, title }) {
         } catch {}
       }
     };
+    const handleCustomUpdate = () => {
+      refreshAdminNotifications();
+    };
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('picky_notifications_updated', handleCustomUpdate);
+    window.addEventListener('picky_inquiries_updated', refreshInquiriesCount);
     window.addEventListener('focus', refreshAdminNotifications);
+
+    // Periodic real-time sync (every 6s when active)
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshAdminNotifications();
+        refreshInquiriesCount();
+      }
+    }, 6000);
+
     return () => {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('picky_notifications_updated', handleCustomUpdate);
+      window.removeEventListener('picky_inquiries_updated', refreshInquiriesCount);
       window.removeEventListener('focus', refreshAdminNotifications);
+      clearInterval(pollInterval);
     };
   }, []);
 
@@ -490,12 +519,23 @@ export default function AdminLayout({ children, title }) {
           <NavLink
             to={`${ADMIN}/coupons`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Discount & Coupons"
+            title="Coupons & Promo Codes"
           >
             <div className="admin-nav-icon-wrap">
               <Tag size={19} />
             </div>
-            {!collapsed && <span className="admin-nav-label">Discount & Coupons</span>}
+            {!collapsed && <span className="admin-nav-label">Coupons</span>}
+          </NavLink>
+
+          <NavLink
+            to={`${ADMIN}/discounts`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Automatic Cart Discounts"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Percent size={19} />
+            </div>
+            {!collapsed && <span className="admin-nav-label">Discounts</span>}
           </NavLink>
 
           <NavLink
@@ -542,6 +582,29 @@ export default function AdminLayout({ children, title }) {
             )}
           </NavLink>
 
+          <NavLink
+            to={`${ADMIN}/inquiries`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Customer Inquiries (Homepage and Contact Page)"
+          >
+            <div className="admin-nav-icon-wrap">
+              <MessageSquareText size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">Inquiries</span>
+                {unreadInquiriesCount > 0 && (
+                  <span
+                    className="admin-nav-badge notif-pulse"
+                    title={`${unreadInquiriesCount} unread customer inquir${unreadInquiriesCount > 1 ? 'ies' : 'y'}`}
+                  >
+                    {unreadInquiriesCount}
+                  </span>
+                )}
+              </>
+            )}
+          </NavLink>
+
           {/* ── STOREFRONT & SYSTEM ── */}
           {!collapsed && <div className="admin-nav-section-title">Storefront & System</div>}
           <NavLink
@@ -553,6 +616,29 @@ export default function AdminLayout({ children, title }) {
               <Palette size={19} />
             </div>
             {!collapsed && <span className="admin-nav-label">Customization (CMS)</span>}
+          </NavLink>
+
+          <NavLink
+            to={`${ADMIN}/notifications`}
+            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+            title="Notifications & Activity Feed"
+          >
+            <div className="admin-nav-icon-wrap">
+              <Bell size={19} />
+            </div>
+            {!collapsed && (
+              <>
+                <span className="admin-nav-label">Notifications</span>
+                {unreadCount > 0 && (
+                  <span
+                    className="admin-nav-badge notif-pulse"
+                    title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
+                  >
+                    {unreadCount}
+                  </span>
+                )}
+              </>
+            )}
           </NavLink>
 
           <NavLink
@@ -824,6 +910,21 @@ export default function AdminLayout({ children, title }) {
                     </Link>
 
                     <Link
+                      to={`${ADMIN}/discounts`}
+                      className="admin-quick-add-item admin-quick-action-item"
+                      onClick={() => setQuickAddOpen(false)}
+                    >
+                      <div className="admin-quick-action-icon-box icon-purple">
+                        <Percent size={15} />
+                      </div>
+                      <div className="admin-quick-action-text">
+                        <span className="admin-quick-action-main">Create Automatic Offer</span>
+                        <span className="admin-quick-action-sub">Cart discounts & rules</span>
+                      </div>
+                      <ArrowUpRight size={13} className="admin-quick-action-arrow" />
+                    </Link>
+
+                    <Link
                       to={`${ADMIN}/orders`}
                       className="admin-quick-add-item admin-quick-action-item"
                       onClick={() => setQuickAddOpen(false)}
@@ -909,7 +1010,7 @@ export default function AdminLayout({ children, title }) {
                             onClick={() => {
                               if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
                               setNotifOpen(false);
-                              navigate(n.link || `${ADMIN}/settings?tab=notifications`);
+                              navigate(n.link || `${ADMIN}/notifications`);
                             }}
                           >
                             <span className="admin-notif-dot-active" style={{ background: dotColor }} />
@@ -946,7 +1047,7 @@ export default function AdminLayout({ children, title }) {
                         e.stopPropagation();
                         if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
                         setNotifOpen(false);
-                        navigate(`${ADMIN}/settings?tab=notifications`);
+                        navigate(`${ADMIN}/notifications`);
                       }}
                       style={{
                         background: 'none',

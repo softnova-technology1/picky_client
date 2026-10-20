@@ -25,6 +25,7 @@ import {
   Ruler,
 } from 'lucide-react';
 import { useCategoryStore } from '../../../store/categoryStore';
+import { contactService } from '../../../services/contact.service';
 
 export default function Footer() {
   const [email, setEmail] = useState('');

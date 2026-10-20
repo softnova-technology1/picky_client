@@ -308,6 +308,560 @@
   border-color: #94a3b8;
 }
 
+.action-btn.invoiceAction {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.invoiceAction:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+/* ─── Rich Order Details Card ─── */
+.orderDetailsCard {
+  background: #ffffff;
+  border: 1.5px solid #ede9fe;
+  border-radius: 24px;
+  padding: 1.75rem 2rem;
+  max-width: 720px;
+  margin: 0 auto 2.5rem;
+  text-align: left;
+  box-shadow: 0 10px 35px rgba(124, 58, 237, 0.07);
+}
+
+@media (max-width: 640px) {
+  .orderDetailsCard {
+    padding: 1.25rem 1rem;
+    border-radius: 18px;
+  }
+}
+
+/* Order Header Bar */
+.orderHeaderBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1.5px solid #f1f5f9;
+  margin-bottom: 1.5rem;
+}
+
+.orderHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.orderNumTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.05rem;
+  color: #7c3aed;
+  font-weight: 800;
+}
+
+.orderNumTag span {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.orderDateText {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+/* Invoice Button */
+.invoiceBtn {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1.5px solid #ddd6fe;
+  padding: 0.6rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.invoiceBtn:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+/* Items Section */
+.itemsSection {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.sectionHeading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.85rem;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.itemImg {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.76rem;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.itemPrice {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+/* Two-Column Details Grid */
+.detailsTwoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .detailsTwoCol {
+    grid-template-columns: 1fr;
+  }
+}
+
+.addressBox,
+.summaryBox {
+  background: #faf5ff;
+  border: 1px solid #ede9fe;
+  border-radius: 16px;
+  padding: 1.15rem 1.25rem;
+}
+
+.addressContent {
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.5;
+  margin-bottom: 0.85rem;
+}
+
+.addressContent strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+}
+
+.addressContent p {
+  margin: 0.15rem 0;
+}
+
+.phoneText {
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 0.4rem !important;
+}
+
+.dispatchModePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.giftPill {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: #be123c;
+  background: #ffe4e6;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+}
+
+.giftMsg {
+  margin: 0.15rem 0 0;
+  font-style: italic;
+  font-size: 0.75rem;
+}
+
+/* Summary Rows */
+.summaryRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.discountText {
+  color: #16a34a !important;
+  font-weight: 600;
+}
+
+.summaryTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.65rem;
+  margin-top: 0.4rem;
+  border-top: 1.5px dashed #ddd6fe;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.totalAmount {
+  font-size: 1.25rem;
+  color: #7c3aed;
+  font-weight: 900;
+}
+
+.paymentMethodBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #a7f3d0;
+}
+
+/* ─── Official Tax Invoice Modal & Print View ─── */
+.invoiceModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.invoiceModalBox {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 860px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.15rem 1.75rem;
+  border-bottom: 1.5px solid #f1f5f9;
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.printBtn {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.printBtn:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #581c87 100%);
+  transform: translateY(-1px);
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Printable Tax Invoice Container */
+.taxInvoiceWrapper {
+  padding: 2rem 2.25rem;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: inherit;
+}
+
+.invoiceHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #0f172a;
+  margin-bottom: 1.5rem;
+}
+
+.sellerBrand {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #7c3aed;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+}
+
+.sellerMeta {
+  font-size: 0.75rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.invoiceMetaBox {
+  text-align: right;
+  font-size: 0.78rem;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.taxInvoiceTitle {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.invoiceAddressesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.addressColTitle {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+.invoiceTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+}
+
+.invoiceTable th {
+  background: #f1f5f9;
+  padding: 0.65rem 0.6rem;
+  font-weight: 700;
+  color: #334155;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.invoiceTable td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.invoiceSummaryGrid {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.invoiceSummaryBox {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.invoiceSummaryBox .summaryRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.invoiceSummaryBox .summaryTotalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #0f172a;
+  border-top: 2px solid #0f172a;
+  padding-top: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+/* ─── Official Print to PDF Media Query ─── */
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  :global(body *) {
+    visibility: hidden !important;
+  }
+  :global(.printableInvoiceArea),
+  :global(.printableInvoiceArea *),
+  .printableInvoiceArea,
+  .printableInvoiceArea * {
+    visibility: visible !important;
+  }
+  :global(.printableInvoiceArea),
+  .printableInvoiceArea {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+  .invoiceModalBox {
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .taxInvoiceWrapper {
+    padding: 0 !important;
+  }
+  :global(.noPrint),
+  .noPrint,
+  :global(header),
+  :global(nav),
+  :global(footer) {
+    display: none !important;
+  }
+}
+
 @keyframes cardFadeIn {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
@@ -318,3 +872,4 @@
   70% { transform: scale(1.12); opacity: 1; }
   100% { transform: scale(1); }
 }
+

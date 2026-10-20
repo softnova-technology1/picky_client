@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, Check, X, Zap, Flame, Star, Award, RotateCcw, Truck, Sparkles } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
@@ -6,6 +6,7 @@ import { useWishlistStore } from '../../../store/wishlistStore';
 import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
 import { wishlistService } from '../../../services/wishlist.service';
+import { extractProductTag, getTagDesign } from '../../../utils/productTagHelper';
 
 import './ProductCard.css';
 
@@ -18,8 +19,20 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
 
   const [justAdded, setJustAdded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   if (!product) return null;
+
+  const endDateRaw = product.offerEndDate || product.validTill || product.endDate;
+
+  // Active ticking timer for offers with end dates
+  useEffect(() => {
+    if (!endDateRaw) return;
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [endDateRaw]);
 
   const inWishlist = isInWishlist(product._id || product.id || product.slug);
 

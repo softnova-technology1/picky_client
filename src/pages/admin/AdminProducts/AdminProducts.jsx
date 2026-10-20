@@ -1,25 +1,51 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import {
   Plus,
   Edit2,
   Trash2,
   CheckCircle2,
+  XCircle,
   Sparkles,
   Package,
   PackageCheck,
   AlertTriangle,
+  AlertCircle,
   TrendingUp,
   ShoppingBag,
   Star,
   Eye,
   Download,
   Search,
-  MessageSquare,
   Ruler,
   Palette,
   Scale,
   Droplet,
+  Tag,
+  Clock,
+  Calendar,
+  IndianRupee,
+  ChevronRight,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  Share2,
+  Heart,
+  ImagePlus,
+  LayoutGrid,
+  FileText,
+  Smartphone,
+  Monitor,
+  Check,
+  X,
+  Upload,
+  RefreshCw,
+  Minus,
+  CheckSquare,
+  Square,
+  ArrowRight,
+  Loader2,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -32,16 +58,85 @@ import { productService } from '../../../services/product.service';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
-import { useReviewStore } from '../../../store/reviewStore';
 import { formatPrice } from '../../../utils/formatPrice';
+import { DEFAULT_PRODUCT_TAGS, getTagDesign, extractProductTag } from '../../../utils/productTagHelper';
 
-const PREDEFINED_TAGS = [
-  'Limited Deals',
-  'Trending Now',
-  'New Arrivals',
-  'Best Sellers',
-  'Top Product',
-];
+const PREDEFINED_TAGS = DEFAULT_PRODUCT_TAGS;
+
+const getCurrentIST = () => {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }).format(new Date());
+};
+
+const formatISTDateTime = (dateVal) => {
+  if (!dateVal) return '';
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return '';
+  return (
+    new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(d) + ' IST'
+  );
+};
+
+const istLocalToUTC = (istDateTimeString) => {
+  if (!istDateTimeString) return null;
+  return new Date(istDateTimeString + ':00+05:30').toISOString();
+};
+
+const utcToISTLocal = (utcDate) => {
+  if (!utcDate) return '';
+  const d = new Date(utcDate);
+  if (isNaN(d.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const getVal = (type) => parts.find((p) => p.type === type)?.value || '';
+  return `${getVal('year')}-${getVal('month')}-${getVal('day')}T${getVal('hour')}:${getVal('minute')}`;
+};
+
+const getPresetISTDateTime = (hoursOffset, targetHour = 9, targetMinute = 0) => {
+  const now = new Date();
+  const target = new Date(now.getTime() + hoursOffset * 3600 * 1000);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(target);
+  const getVal = (type) => parts.find((p) => p.type === type)?.value || '';
+  const y = getVal('year');
+  const m = getVal('month');
+  const d = getVal('day');
+  const hh = String(targetHour).padStart(2, '0');
+  const mm = String(targetMinute).padStart(2, '0');
+  return new Date(`${y}-${m}-${d}T${hh}:${mm}:00+05:30`).toISOString();
+};
+
+const getNextSaturday10AMIST = () => {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  let daysUntilSat = (6 - dayOfWeek + 7) % 7;
+  if (daysUntilSat === 0) daysUntilSat = 7;
+  return getPresetISTDateTime(daysUntilSat * 24, 10, 0);
+};
 
 const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 const STANDARD_WEIGHTS = ['25g', '50g', '100g', '200g', '250g', '500g', '1kg', '2kg', '5kg'];
@@ -82,6 +177,16 @@ export default function AdminProducts() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [viewingProduct, setViewingProduct] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewTab, setPreviewTab] = useState('card');
+  const [previewDevice, setPreviewDevice] = useState('desktop');
+  const [previewActiveImgIdx, setPreviewActiveImgIdx] = useState(0);
+  const [previewSelectedVariant, setPreviewSelectedVariant] = useState(null);
+  const [previewSelectedColor, setPreviewSelectedColor] = useState(null);
+  const [previewQuantity, setPreviewQuantity] = useState(1);
+  const [currentISTClock, setCurrentISTClock] = useState(() => getCurrentIST());
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [showCustomTagInput, setShowCustomTagInput] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -97,6 +202,13 @@ export default function AdminProducts() {
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, filterCategory, filterSubcategory, filterTag, filterStock, searchQuery]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentISTClock(getCurrentIST());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -135,32 +247,10 @@ export default function AdminProducts() {
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#1e2238');
   const [editingColorIndex, setEditingColorIndex] = useState(null);
-  const [showAddReviewModal, setShowAddReviewModal] = useState(false);
-  const [reviewSeedForm, setReviewSeedForm] = useState({ author: '', rating: 5, comment: '' });
-  const { reviews: allStoreReviews, addReview: addStoreReview } = useReviewStore();
   const [primaryFile, setPrimaryFile] = useState(null);
   const [secondaryFiles, setSecondaryFiles] = useState([]);
   const [primaryPreview, setPrimaryPreview] = useState(null);
   const [secondaryPreviews, setSecondaryPreviews] = useState([]);
-
-  // Reviews matching the product currently being edited
-  const currentProductReviews = useMemo(() => {
-    if (!editingProduct) return [];
-    const epId = String(editingProduct._id || editingProduct.id || '');
-    const epSlug = String(editingProduct.slug || '').toLowerCase();
-    const epName = String(editingProduct.name || '').toLowerCase();
-
-    return (allStoreReviews || []).filter((r) => {
-      const rId = String(r.product?.id || r.product?._id || '');
-      const rSlug = String(r.product?.slug || '').toLowerCase();
-      const rName = String(r.product?.name || '').toLowerCase();
-      return (
-        (rId && rId === epId) ||
-        (rSlug && rSlug === epSlug) ||
-        (rName && (rName === epName || epName.includes(rName) || rName.includes(epName)))
-      );
-    });
-  }, [editingProduct, allStoreReviews]);
 
   const handleAddCustomSpec = () => {
     setCustomSpecs((prev) => [...prev, { key: '', value: '' }]);
@@ -176,29 +266,6 @@ export default function AdminProducts() {
 
   const handleRemoveCustomSpec = (index) => {
     setCustomSpecs((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSeedReviewSubmit = (e) => {
-    e.preventDefault();
-    if (!reviewSeedForm.comment.trim()) {
-      showToast('Please enter a review comment', 'error');
-      return;
-    }
-    addStoreReview({
-      productId: editingProduct?._id || editingProduct?.id || 'prod-custom',
-      productName: formData.name || editingProduct?.name || 'Product',
-      productSlug: editingProduct?.slug || '',
-      productImage: primaryPreview || editingProduct?.images?.[0] || '',
-      category: typeof formData.category === 'object' ? formData.category?.name : (formData.category || ''),
-      price: Number(formData.discountPrice) || Number(formData.price) || 0,
-      author: reviewSeedForm.author.trim() || 'Verified Buyer',
-      rating: Number(reviewSeedForm.rating) || 5,
-      comment: reviewSeedForm.comment.trim(),
-      status: 'published',
-    });
-    showToast('Verified customer review added successfully!', 'success');
-    setShowAddReviewModal(false);
-    setReviewSeedForm({ author: '', rating: 5, comment: '' });
   };
 
   // Live Card Preview Data computed from current form inputs
@@ -239,11 +306,16 @@ export default function AdminProducts() {
       category: catName,
       subCategory: formData.subCategory,
       characteristics: combinedCharacteristics,
+      variants: {
+        type: hasSizes ? 'Size' : (hasWeights ? 'Weight' : (hasLiquids ? 'Volume' : '')),
+        options: hasSizes ? selectedSizes : (hasWeights ? selectedWeights : (hasLiquids ? selectedLiquids : [])),
+        colors: hasColors ? selectedColors : [],
+      },
       rating: editingProduct?.rating || 4.9,
-      numReviews: currentProductReviews.length || editingProduct?.numReviews || 8,
+      numReviews: editingProduct?.numReviews || 8,
       sku: formData.sku || 'SKU-PREVIEW',
     };
-  }, [formData, primaryPreview, secondaryPreviews, categories, editingProduct, charValues, customSpecs, currentProductReviews]);
+  }, [formData, primaryPreview, secondaryPreviews, categories, editingProduct, charValues, customSpecs, hasSizes, selectedSizes, hasWeights, selectedWeights, hasLiquids, selectedLiquids, hasColors, selectedColors]);
 
   async function loadData() {
     const startTime = Date.now();
@@ -447,32 +519,61 @@ export default function AdminProducts() {
     setViewMode('form');
   };
 
-  const handlePrimaryFileSelect = (e) => {
+  const handlePrimaryFileSelect = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setPrimaryPreview(URL.createObjectURL(file));
-      setPrimaryFile(file);
+    if (!file) return;
+    try {
+      setUploadingCover(true);
+      const localBlob = URL.createObjectURL(file);
+      setPrimaryPreview(localBlob);
+
+      const fd = new FormData();
+      fd.append('image', file);
+      fd.append('folder', 'products');
+
+      const res = await adminService.uploadImage(fd);
+      const s3Url = res?.data?.data?.url || res?.data?.url || res?.url;
+      if (s3Url) {
+        setPrimaryPreview(s3Url);
+        showToast('Cover image directly uploaded to S3 bucket!', 'success');
+      }
+    } catch (err) {
+      showToast(err?.message || 'Failed to upload cover image to S3', 'error');
+    } finally {
+      setUploadingCover(false);
+      e.target.value = '';
     }
-    e.target.value = '';
   };
 
-  const handleSecondaryFileSelect = (e) => {
+  const handleSecondaryFileSelect = async (e) => {
     const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      const remainingSlots = 10 - secondaryPreviews.length;
-      if (remainingSlots <= 0) {
-        showToast('Maximum 10 secondary gallery images allowed', 'warning');
-        return;
-      }
-      const filesToAdd = files.slice(0, remainingSlots);
-      const newUrls = filesToAdd.map((f) => URL.createObjectURL(f));
-      setSecondaryPreviews((prev) => [...prev, ...newUrls]);
-      setSecondaryFiles((prev) => [...prev, ...filesToAdd]);
-      if (files.length > remainingSlots) {
-        showToast(`Added ${remainingSlots} images. (Limit is 10 max)`, 'info');
-      }
+    if (!files.length) return;
+    const remainingSlots = 10 - secondaryPreviews.length;
+    if (remainingSlots <= 0) {
+      showToast('Maximum 10 secondary gallery images allowed', 'warning');
+      return;
     }
-    e.target.value = '';
+    const filesToAdd = files.slice(0, remainingSlots);
+    try {
+      setUploadingGallery(true);
+      showToast(`Uploading ${filesToAdd.length} image(s) directly to S3...`, 'info');
+      for (const f of filesToAdd) {
+        const fd = new FormData();
+        fd.append('image', f);
+        fd.append('folder', 'products');
+        const res = await adminService.uploadImage(fd);
+        const s3Url = res?.data?.data?.url || res?.data?.url || res?.url;
+        if (s3Url) {
+          setSecondaryPreviews((prev) => [...prev, s3Url]);
+        }
+      }
+      showToast('Gallery images uploaded directly to S3 bucket!', 'success');
+    } catch (err) {
+      showToast(err?.message || 'Failed to upload gallery images to S3', 'error');
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = '';
+    }
   };
 
   const handleSetAsCover = (index) => {
@@ -565,8 +666,16 @@ export default function AdminProducts() {
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
     payload.append('isActive', formData.isActive !== false);
+    if (formData.isScheduled && formData.scheduledAt) {
+      payload.append('scheduledAt', formData.scheduledAt);
+      payload.append('isScheduled', 'true');
+    } else {
+      payload.append('scheduledAt', '');
+      payload.append('isScheduled', 'false');
+    }
 
     const singleTag = formData.tags ? formData.tags.split(',')[0].trim() : '';
+    const tagsArray = singleTag ? [singleTag] : [];
     if (singleTag) {
       payload.append('tags', singleTag);
     }
@@ -805,6 +914,110 @@ export default function AdminProducts() {
     );
   };
 
+
+  // ─── Real-Time Bulk Action Handlers (Requirement 5) ─────────────────────────
+  const handleBulkActivate = async (activateStatus) => {
+    if (selectedProducts.length === 0) return;
+    try {
+      setLoading(true);
+      for (const id of selectedProducts) {
+        await adminService.updateProduct(id, { isActive: activateStatus });
+      }
+      setProducts((prev) =>
+        prev.map((p) => (selectedProducts.includes(p._id) ? { ...p, isActive: activateStatus } : p))
+      );
+      showToast(`${selectedProducts.length} product(s) marked as ${activateStatus ? 'Active' : 'Inactive'}`, 'success');
+      setSelectedProducts([]);
+    } catch (err) {
+      showToast('Failed to update products in bulk', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedProducts.length} selected product(s)?`)) return;
+    try {
+      setLoading(true);
+      for (const id of selectedProducts) {
+        await adminService.deleteProduct(id).catch(() => null);
+      }
+      setProducts((prev) => prev.filter((p) => !selectedProducts.includes(p._id)));
+      showToast(`Deleted ${selectedProducts.length} product(s)`, 'success');
+      setSelectedProducts([]);
+    } catch (err) {
+      showToast('Failed to delete products in bulk', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Excel (.xlsx) Download Export Handler (Requirement 4) ──────────────────
+  const handleExportExcel = (itemsToExport = filteredProducts) => {
+    if (!itemsToExport || itemsToExport.length === 0) {
+      showToast('No products available to export', 'error');
+      return;
+    }
+    const rows = itemsToExport.map((p, idx) => {
+      const catName = p.category?.name || (typeof p.category === 'string' ? p.category : '') || 'General';
+      const subCatName = p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '') || '—';
+      const tagText = Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || '—');
+      const mrp = Number(p.price) || 0;
+      const sellingPrice = Number(p.discountPrice || p.price) || 0;
+      const discountPct = mrp > sellingPrice ? Math.round(((mrp - sellingPrice) / mrp) * 100) : 0;
+
+      let statusStr = 'Active';
+      if (p.scheduledAt && new Date(p.scheduledAt) > new Date()) {
+        statusStr = `Scheduled (${formatISTDateTime(p.scheduledAt)})`;
+      } else if (p.isActive === false) {
+        statusStr = 'Inactive';
+      }
+
+      return {
+        'S.No': idx + 1,
+        'Product Name': p.name || '',
+        'SKU': p.sku || '',
+        'Category': catName,
+        'Subcategory': subCatName,
+        'Tag': tagText,
+        'M.R.P (₹)': mrp,
+        'Selling Price (₹)': sellingPrice,
+        'Discount (%)': discountPct > 0 ? `${discountPct}%` : '0%',
+        'Stock': p.stock || 0,
+        'Stock Status': p.stock > 10 ? 'In Stock' : p.stock > 0 ? 'Low Stock' : 'Out of Stock',
+        'Status': statusStr,
+        'Scheduled At (IST)': p.scheduledAt ? formatISTDateTime(p.scheduledAt) : 'Immediate',
+        'Created Date': p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-IN') : '',
+        'Primary Image URL': p.images?.[0] || p.image || '',
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [
+      { wch: 6 },
+      { wch: 32 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 8 },
+      { wch: 14 },
+      { wch: 24 },
+      { wch: 24 },
+      { wch: 14 },
+      { wch: 45 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Products Catalog');
+    const fileName = `Picky_Products_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    showToast(`Successfully exported ${rows.length} product(s) to Excel (.xlsx)!`, 'success');
+  };
+
   // ─── Products Metric Calculations ─────────────────────────────────────────
   const totalProducts = products.length;
   const activeCount = useMemo(
@@ -905,7 +1118,8 @@ export default function AdminProducts() {
     let result = [...products];
 
     // 1. Tab Filter
-    if (activeTab === 'Active') result = result.filter((p) => p.isActive !== false);
+    if (activeTab === 'Active') result = result.filter((p) => p.isActive !== false && !(p.scheduledAt && new Date(p.scheduledAt) > new Date()));
+    if (activeTab === 'Scheduled') result = result.filter((p) => p.scheduledAt && new Date(p.scheduledAt) > new Date());
     if (activeTab === 'Out of Stock') result = result.filter((p) => (Number(p.stock) || 0) <= 0);
     if (activeTab === 'Featured') result = result.filter((p) => p.isFeatured);
     if (activeTab === 'On Sale') result = result.filter((p) => p.discountPrice && Number(p.discountPrice) < Number(p.price));
@@ -1047,7 +1261,7 @@ export default function AdminProducts() {
                   {/* Primary Cover Image Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                     <label style={{ fontSize: '0.74rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: 0 }}>
-                      <span style={{ color: '#7c3aed' }}>★</span> PRIMARY COVER IMAGE <span style={{ color: '#ef4444' }}>*</span>
+                      <ImagePlus size={15} color="#7c3aed" /> PRIMARY COVER IMAGE <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#dc2626', background: '#fee2e2', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
@@ -1091,6 +1305,13 @@ export default function AdminProducts() {
                   >
                     <input type="file" accept="image/*" onChange={handlePrimaryFileSelect} style={{ display: 'none' }} />
 
+                    {uploadingCover && (
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.85)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <Spinner size={32} color="#7c3aed" />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#7c3aed' }}>Uploading directly to S3 bucket...</span>
+                      </div>
+                    )}
+
                     {primaryPreview ? (
                       <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                         <img
@@ -1118,7 +1339,7 @@ export default function AdminProducts() {
                             zIndex: 2,
                           }}
                         >
-                          ⭐ COVER IMAGE
+                          <Star size={11} fill="#fff" color="#fff" /> COVER IMAGE
                         </div>
 
                         {/* Hover Overlay with Change & Remove options */}
@@ -1158,7 +1379,7 @@ export default function AdminProducts() {
                               cursor: 'pointer',
                             }}
                           >
-                            🗑️ Remove Cover
+                            <Trash2 size={13} color="#fff" /> Remove Cover
                           </button>
                         </div>
                       </div>
@@ -1270,7 +1491,7 @@ export default function AdminProducts() {
                               fontSize: '0.72rem',
                             }}
                           >
-                            ⭐
+                            <Star size={12} fill="#fff" color="#fff" />
                           </button>
                           <button
                             type="button"
@@ -1293,7 +1514,7 @@ export default function AdminProducts() {
                               fontSize: '0.72rem',
                             }}
                           >
-                            ✕
+                            <Trash2 size={12} color="#fff" />
                           </button>
                         </div>
                       </div>
@@ -1549,26 +1770,10 @@ export default function AdminProducts() {
                 {/* 4. Pricing, Inventory & SKU Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', alignItems: 'start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center' }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         SKU
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, sku: generateSku(prev.category, prev.subCategory) }))}
-                        title="Click to re-generate auto SKU"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#7c3aed',
-                          fontSize: '0.68rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          padding: '0 0.2rem',
-                        }}
-                      >
-                        🔄 Auto
-                      </button>
                     </div>
                     <input
                       type="text"
@@ -1654,7 +1859,7 @@ export default function AdminProducts() {
                     />
                     {formData.price && formData.discountPrice && Number(formData.discountPrice) > Number(formData.price) && (
                       <span style={{ fontSize: '0.7rem', color: '#ef4444', display: 'block', marginTop: '0.35rem', fontWeight: 600 }}>
-                        ⚠️ Selling price cannot exceed M.R.P
+                        <AlertCircle size={13} color="#ef4444" style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} /> Selling price cannot exceed M.R.P
                       </span>
                     )}
                   </div>
@@ -3156,56 +3361,106 @@ export default function AdminProducts() {
                       </button>
                     )}
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Select or enter 1 tag (e.g. Limited Deals, Trending Now, New Arrivals, Best Sellers, Top Product)"
-                    value={formData.tags}
+                  <select
+                    value={PREDEFINED_TAGS.includes(formData.tags) ? formData.tags : (formData.tags ? '__custom__' : '')}
                     onChange={(e) => {
-                      const val = e.target.value.split(',')[0].trim();
-                      setFormData({ ...formData, tags: val });
+                      const val = e.target.value;
+                      if (val === '__custom__') {
+                        setShowCustomTagInput(true);
+                      } else {
+                        setShowCustomTagInput(false);
+                        setFormData({ ...formData, tags: val });
+                      }
                     }}
                     style={{
                       width: '100%',
                       padding: '0.68rem 0.9rem',
                       background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid #cbd5e1',
                       borderRadius: '10px',
                       fontSize: '0.84rem',
                       color: '#0f172a',
                       outline: 'none',
                       boxSizing: 'border-box',
-                      marginBottom: '0.6rem'
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      marginBottom: '0.5rem',
                     }}
-                  />
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {PREDEFINED_TAGS.map(tag => {
-                      const isSelected = formData.tags.trim().toLowerCase() === tag.toLowerCase();
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => {
-                            const newTag = isSelected ? '' : tag;
-                            setFormData({ ...formData, tags: newTag });
-                          }}
-                          style={{
-                            fontSize: '0.72rem',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '9999px',
-                            border: '1px solid',
-                            borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
-                            background: isSelected ? '#f3e8ff' : '#ffffff',
-                            color: isSelected ? '#6d28d9' : '#475569',
-                            cursor: 'pointer',
-                            fontWeight: isSelected ? 700 : 400,
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          {isSelected ? `✓ ${tag}` : `+ ${tag}`}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  >
+                    <option value="">-- No Tag (Select Tag) --</option>
+                    {PREDEFINED_TAGS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                    <option value="__custom__">+ Custom Tag...</option>
+                  </select>
+
+                  {showCustomTagInput && (
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                      <input
+                        type="text"
+                        placeholder="Enter custom tag name (e.g. Summer Edition)"
+                        value={formData.tags}
+                        onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',')[0] })}
+                        style={{
+                          flex: 1,
+                          padding: '0.55rem 0.85rem',
+                          borderRadius: '8px',
+                          border: '1px solid #7c3aed',
+                          fontSize: '0.82rem',
+                          outline: 'none',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomTagInput(false);
+                          setFormData({ ...formData, tags: '' });
+                        }}
+                        style={{
+                          padding: '0.55rem 0.85rem',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          background: '#f8fafc',
+                          color: '#64748b',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {formData.tags && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.25rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Current Tag:</span>
+                      {(() => {
+                        const tagStyle = getTagDesign(formData.tags);
+                        const IconComp = tagStyle?.icon || Tag;
+                        return (
+                          <span
+                            className="premium-running-tag"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.24rem 0.72rem',
+                              borderRadius: '9999px',
+                              background: tagStyle?.bg || '#faf5ff',
+                              color: tagStyle?.color || '#7c3aed',
+                              border: `1px solid ${tagStyle?.border || '#e9d5ff'}`,
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              boxShadow: `0 2px 8px -1px ${tagStyle?.color || '#7c3aed'}30`,
+                            }}
+                          >
+                            <IconComp size={11} color={tagStyle?.color} />
+                            {tagStyle?.displayName || tagStyle?.name || formData.tags}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Checkbox Options Container */}
@@ -3217,7 +3472,7 @@ export default function AdminProducts() {
                       onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                       style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
                     />
-                    ⭐ Featured Product
+                    <Star size={14} fill="#f59e0b" color="#f59e0b" /> Featured Product
                   </label>
 
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.84rem', fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>
@@ -3227,120 +3482,132 @@ export default function AdminProducts() {
                       onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                       style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
                     />
-                    ✅ Active Status
+                    <CheckCircle2 size={14} color="#15803d" /> Active Status
                   </label>
                 </div>
 
-                {/* 7. Customer Reviews & Ratings Management Card */}
+                {/* ── Schedule Product Launch (Indian Standard Time - IST) (Requirement 8) ── */}
                 <div
                   style={{
-                    background: '#ffffff',
-                    padding: '1.25rem',
-                    borderRadius: '14px',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                    background: '#faf5ff',
+                    padding: '1rem 1.25rem',
+                    borderRadius: '12px',
+                    border: '1px solid #e9d5ff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.85rem',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <div>
-                      <strong style={{ fontSize: '0.82rem', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <MessageSquare size={16} color="#7c3aed" />
-                        Customer Reviews &amp; Ratings ({currentProductReviews.length})
-                      </strong>
-                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
-                        View, seed initial verified reviews, or jump to moderation for this product.
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddReviewModal(true)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.4rem 0.85rem',
-                          borderRadius: '8px',
-                          background: '#f5f3ff',
-                          color: '#6d28d9',
-                          border: '1px solid #ddd6fe',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', fontWeight: 700, color: '#4c1d95', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.isScheduled}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (checked && !formData.scheduledAt) {
+                            const tomorrow9amIST = getPresetISTDateTime(24, 9, 0);
+                            setFormData({
+                              ...formData,
+                              isScheduled: true,
+                              scheduledAt: tomorrow9amIST,
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              isScheduled: checked,
+                              scheduledAt: checked ? formData.scheduledAt : '',
+                            });
+                          }
                         }}
-                      >
-                        <Plus size={14} />
-                        <span>Add Verified Review</span>
-                      </button>
+                        style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                      />
+                      <Calendar size={16} color="#7c3aed" />
+                      <span>Schedule Product Launch (Indian Standard Time - IST)</span>
+                    </label>
 
-                      <button
-                        type="button"
-                        onClick={() => navigate('/softpicky-sn2026/reviews')}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.4rem 0.85rem',
-                          borderRadius: '8px',
-                          background: '#f8fafc',
-                          color: '#475569',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Moderate All Reviews →
-                      </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#ffffff', padding: '0.2rem 0.65rem', borderRadius: '9999px', border: '1px solid #ddd6fe', fontSize: '0.72rem', color: '#6d28d9', fontWeight: 600 }}>
+                      <Clock size={12} />
+                      <span>Live IST: {currentISTClock}</span>
                     </div>
                   </div>
 
-                  {currentProductReviews.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                      {currentProductReviews.slice(0, 3).map((r, rIdx) => (
-                        <div
-                          key={rIdx}
-                          style={{
-                            background: '#f8fafc',
-                            padding: '0.75rem 1rem',
-                            borderRadius: '10px',
-                            border: '1px solid #e2e8f0',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            gap: '1rem',
-                          }}
-                        >
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                              <span style={{ fontWeight: 700, fontSize: '0.84rem', color: '#0f172a' }}>
-                                {r.customer?.name || 'Verified Customer'}
-                              </span>
-                              <div style={{ display: 'flex', gap: '2px' }}>
-                                {[...Array(Number(r.rating) || 5)].map((_, i) => (
-                                  <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
-                                ))}
-                              </div>
-                              <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', borderRadius: '9999px', background: r.status === 'published' ? '#dcfce7' : '#fef3c7', color: r.status === 'published' ? '#15803d' : '#b45309', fontWeight: 600 }}>
-                                {r.status}
-                              </span>
-                            </div>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569' }}>
-                              "{r.comment}"
-                            </p>
-                          </div>
-                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
-                            {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recent'}
-                          </span>
+                  {formData.isScheduled && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.25rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.75rem', alignItems: 'center' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#6d28d9', marginBottom: '0.3rem', textTransform: 'uppercase' }}>
+                            Launch Date &amp; Time (Asia/Kolkata IST)
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={utcToISTLocal(formData.scheduledAt)}
+                            onChange={(e) => {
+                              const utcIso = istLocalToUTC(e.target.value);
+                              setFormData({ ...formData, scheduledAt: utcIso });
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '0.55rem 0.85rem',
+                              borderRadius: '8px',
+                              border: '1px solid #c4b5fd',
+                              background: '#ffffff',
+                              fontSize: '0.84rem',
+                              fontWeight: 600,
+                              color: '#3b0764',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                            }}
+                          />
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
-                        No customer reviews logged yet for this product. Click <strong>+ Add Verified Review</strong> to seed an initial testimonial.
-                      </p>
+                        {formData.scheduledAt && (
+                          <div style={{ textAlign: 'right', alignSelf: 'flex-end', paddingBottom: '0.35rem' }}>
+                            <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b' }}>Confirmed Launch:</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#15803d' }}>
+                              {formatISTDateTime(formData.scheduledAt)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quick Presets */}
+                      <div>
+                        <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#6b21a8', marginBottom: '0.35rem' }}>
+                          Quick IST Scheduling Presets:
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          {[
+                            { label: 'Tomorrow 9 AM IST', getIso: () => getPresetISTDateTime(24, 9, 0) },
+                            { label: 'Tomorrow 6 PM IST', getIso: () => getPresetISTDateTime(24, 18, 0) },
+                            { label: 'In 24 Hours', getIso: () => new Date(Date.now() + 24 * 3600 * 1000).toISOString() },
+                            { label: 'In 48 Hours', getIso: () => new Date(Date.now() + 48 * 3600 * 1000).toISOString() },
+                            { label: 'This Weekend (Sat 10 AM)', getIso: () => getNextSaturday10AMIST() },
+                          ].map((preset) => (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => {
+                                const iso = preset.getIso();
+                                setFormData({ ...formData, scheduledAt: iso, isScheduled: true });
+                                showToast(`Scheduled for ${preset.label}`, 'info');
+                              }}
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '0.22rem 0.65rem',
+                                borderRadius: '6px',
+                                border: '1px solid #c4b5fd',
+                                background: '#ffffff',
+                                color: '#6d28d9',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -3390,14 +3657,21 @@ export default function AdminProducts() {
                   type="button"
                   onClick={() => setViewMode('table')}
                   style={{
-                    padding: '0.55rem 1.25rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '42px',
+                    minHeight: '42px',
+                    padding: '0 1.4rem',
                     borderRadius: '9999px',
-                    fontSize: '0.82rem',
+                    fontSize: '0.84rem',
                     fontWeight: 600,
                     background: '#f1f5f9',
                     color: '#475569',
                     border: 'none',
                     cursor: 'pointer',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   Cancel
@@ -3409,8 +3683,11 @@ export default function AdminProducts() {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '0.5rem',
-                    padding: '0.6rem 1.6rem',
+                    height: '42px',
+                    minHeight: '42px',
+                    padding: '0 1.6rem',
                     borderRadius: '9999px',
                     fontSize: '0.86rem',
                     fontWeight: 600,
@@ -3419,10 +3696,22 @@ export default function AdminProducts() {
                     border: 'none',
                     cursor: modalLoading ? 'not-allowed' : 'pointer',
                     boxShadow: '0 4px 16px rgba(124, 58, 237, 0.3)',
-                    opacity: modalLoading ? 0.75 : 1,
+                    opacity: modalLoading ? 0.8 : 1,
+                    boxSizing: 'border-box',
+                    whiteSpace: 'nowrap',
+                    transition: 'opacity 0.2s ease',
                   }}
                 >
-                  {modalLoading ? <Spinner size={16} color="#fff" /> : null}
+                  {modalLoading ? (
+                    <Loader2
+                      size={16}
+                      color="#ffffff"
+                      style={{
+                        animation: 'spin 0.75s linear infinite',
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null}
                   <span>{editingProduct ? 'Save Product Changes' : 'Create Product'}</span>
                 </button>
               </div>
@@ -3437,13 +3726,11 @@ export default function AdminProducts() {
               <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
                 Live Store Inventory
               </h2>
-              <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                Manage catalog specifications, prices, and high-resolution media
-              </span>
+              
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
-                onClick={() => showToast('Exporting products...', 'info')}
+                onClick={() => handleExportExcel(filteredProducts)} title="Export complete product list as Excel (.xlsx)"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -3527,7 +3814,7 @@ export default function AdminProducts() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem', background: '#ffffff', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
                 {/* Tabs */}
                 <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-                  {['All', 'Active', 'Out of Stock', 'Featured', 'On Sale'].map((tab) => (
+                  {['All', 'Active', 'Scheduled', 'Out of Stock', 'Featured', 'On Sale'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -3645,6 +3932,109 @@ export default function AdminProducts() {
                 </div>
               </div>
 
+              {/* Real-time Bulk Action Bar (Requirement 5) */}
+              {selectedProducts.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1.25rem',
+                    marginBottom: '1rem',
+                    background: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+                    color: '#ffffff',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 14px rgba(30, 27, 75, 0.25)',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <CheckCircle2 size={18} color="#a7f3d0" />
+                    <span style={{ fontSize: '0.86rem', fontWeight: 600 }}>
+                      <strong style={{ color: '#ffffff' }}>{selectedProducts.length}</strong> product{selectedProducts.length > 1 ? 's' : ''} selected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProducts([])}
+                      style={{
+                        background: 'rgba(255,255,255,0.15)',
+                        border: 'none',
+                        color: '#ffffff',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkActivate(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.35rem 0.8rem',
+                        background: '#15803d',
+                        color: '#ffffff',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <CheckCircle2 size={13} />
+                      Set Active
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkActivate(false)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.35rem 0.8rem',
+                        background: '#475569',
+                        color: '#ffffff',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <XCircle size={13} />
+                      Set Inactive
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkDelete}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.35rem 0.8rem',
+                        background: '#dc2626',
+                        color: '#ffffff',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Trash2 size={13} />
+                      Delete Selected
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div
                 className="table-container"
                 style={{
@@ -3658,9 +4048,34 @@ export default function AdminProducts() {
               <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ width: '42px', padding: '0.85rem 0.75rem', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={currentProducts.length > 0 && currentProducts.every(p => selectedProducts.includes(p._id))}
+                        ref={(el) => {
+                          if (el) {
+                            const someSelected = currentProducts.some(p => selectedProducts.includes(p._id));
+                            const allSelected = currentProducts.length > 0 && currentProducts.every(p => selectedProducts.includes(p._id));
+                            el.indeterminate = someSelected && !allSelected;
+                          }
+                        }}
+                        onChange={() => {
+                          const allSelected = currentProducts.length > 0 && currentProducts.every(p => selectedProducts.includes(p._id));
+                          if (allSelected) {
+                            const pageIds = new Set(currentProducts.map(p => p._id));
+                            setSelectedProducts(prev => prev.filter(id => !pageIds.has(id)));
+                          } else {
+                            const newSet = new Set([...selectedProducts, ...currentProducts.map(p => p._id)]);
+                            setSelectedProducts(Array.from(newSet));
+                          }
+                        }}
+                        style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                      />
+                    </th>
                     <th style={{ padding: '0.85rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Product</th>
                     <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</th>
                     <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subcategory</th>
+                    <th style={{ padding: '0.85rem 0.85rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tag</th>
                     <th style={{ padding: '0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>M.R.P</th>
                     <th style={{ padding: '0.85rem 0.85rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Selling Price</th>
                     <th style={{ padding: '0.85rem 0.85rem', textAlign: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stock</th>
@@ -3671,7 +4086,7 @@ export default function AdminProducts() {
                 <tbody>
                   {currentProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={10} style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                           <Package size={38} color="#cbd5e1" strokeWidth={1.5} />
                           <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#334155' }}>No products found</span>
@@ -3689,11 +4104,25 @@ export default function AdminProducts() {
                       <tr
                         key={p._id}
                         style={{
-                          background: index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                          background: selectedProducts.includes(p._id) ? '#f5f3ff' : (index % 2 === 0 ? '#ffffff' : '#faf7ff'),
                           borderBottom: '1px solid #f1f5f9',
+                          borderLeft: selectedProducts.includes(p._id) ? '3px solid #7c3aed' : '3px solid transparent',
                           transition: 'background 0.15s ease',
                         }}
                       >
+                        {/* Real-time Row Selection Checkbox */}
+                        <td style={{ width: '42px', padding: '0.85rem 0.75rem', textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.includes(p._id)}
+                            onChange={() => {
+                              setSelectedProducts(prev =>
+                                prev.includes(p._id) ? prev.filter(id => id !== p._id) : [...prev, p._id]
+                              );
+                            }}
+                            style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                          />
+                        </td>
                         {/* Product Cell with Clean Truncated Title & Image Thumbnail */}
                         <td style={{ padding: '0.85rem 1rem', textAlign: 'left' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', maxWidth: '280px' }}>
@@ -3773,6 +4202,38 @@ export default function AdminProducts() {
                           </span>
                         </td>
 
+                        {/* Tag Chip (Requirement 2) */}
+                        <td style={{ padding: '0.85rem 0.85rem', textAlign: 'left' }}>
+                          {(() => {
+                            const pTag = Array.isArray(p.tags) ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : null);
+                            if (!pTag) return <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>;
+                            const tagStyle = getTagDesign(pTag);
+                            const IconComponent = tagStyle?.icon || Tag;
+                            return (
+                              <span
+                                className="premium-running-tag"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  padding: '0.24rem 0.7rem',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 700,
+                                  background: tagStyle?.bg || '#faf5ff',
+                                  color: tagStyle?.color || '#7c3aed',
+                                  border: `1px solid ${tagStyle?.border || '#e9d5ff'}`,
+                                  whiteSpace: 'nowrap',
+                                  boxShadow: `0 2px 8px -1px ${tagStyle?.color || '#7c3aed'}30`,
+                                }}
+                              >
+                                <IconComponent size={10} color={tagStyle?.color || '#7c3aed'} />
+                                <span>{tagStyle?.displayName || tagStyle?.name || pTag}</span>
+                              </span>
+                            );
+                          })()}
+                        </td>
+
                         {/* MRP / Original Price */}
                         <td style={{ padding: '0.85rem 0.85rem', textAlign: 'right' }}>
                           <span style={{ fontSize: '0.85rem', color: p.discountPrice ? '#94a3b8' : '#0f172a', fontWeight: p.discountPrice ? 500 : 600, textDecoration: p.discountPrice ? 'line-through' : 'none' }}>
@@ -3798,29 +4259,68 @@ export default function AdminProducts() {
 
                         {/* Status Badge */}
                         <td style={{ padding: '0.85rem 0.85rem', textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(p._id, p.isActive)}
-                            title={`Click to ${p.isActive !== false ? 'Deactivate' : 'Activate & Show in Store'}`}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '0.22rem 0.65rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.74rem',
-                              fontWeight: 700,
-                              background: p.isActive !== false ? '#dcfce7' : '#f1f5f9',
-                              color: p.isActive !== false ? '#15803d' : '#64748b',
-                              border: p.isActive !== false ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-                              whiteSpace: 'nowrap',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                          >
-                            {p.isActive !== false ? 'Active' : 'Inactive'}
-                          </button>
+                          {(() => {
+                            const isScheduled = p.scheduledAt && new Date(p.scheduledAt) > new Date();
+                            if (isScheduled) {
+                              return (
+                                <span
+                                  title={`Scheduled to launch on ${formatISTDateTime(p.scheduledAt)}`}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    padding: '0.22rem 0.65rem',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 700,
+                                    background: '#fef3c7',
+                                    color: '#b45309',
+                                    border: '1px solid #fde68a',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Clock size={11} color="#b45309" />
+                                  <span>Scheduled</span>
+                                </span>
+                              );
+                            }
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(p._id, p.isActive)}
+                                title={`Click to ${p.isActive !== false ? 'Deactivate' : 'Activate & Show in Store'}`}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  padding: '0.22rem 0.65rem',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 700,
+                                  background: p.isActive !== false ? '#dcfce7' : '#f1f5f9',
+                                  color: p.isActive !== false ? '#15803d' : '#64748b',
+                                  border: p.isActive !== false ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                                  whiteSpace: 'nowrap',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                              >
+                                {p.isActive !== false ? (
+                                  <>
+                                    <CheckCircle2 size={11} color="#15803d" />
+                                    <span>Active</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle size={11} color="#64748b" />
+                                    <span>Inactive</span>
+                                  </>
+                                )}
+                              </button>
+                            );
+                          })()}
                         </td>
 
                         {/* Actions Buttons */}
@@ -4121,264 +4621,550 @@ export default function AdminProducts() {
         )}
       </Modal>
 
-      {/* Live Storefront Card Preview Modal */}
+      {/* ── RECREATED PRODUCT PREVIEW MODAL (CARD & PRODUCT DETAILS) (Requirement 7) ── */}
       <Modal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        title="Live Storefront Card Preview"
-        maxWidth={720}
+        title="Live Customer Product Preview"
+        maxWidth={previewTab === 'card' ? 780 : (previewDevice === 'mobile' ? 440 : 1060)}
       >
-        <div style={{ padding: '0.5rem 1rem 1.5rem', width: '100%' }}>
+        <div style={{ padding: '0.25rem 0.75rem 1.5rem', width: '100%', boxSizing: 'border-box' }}>
+          {/* Top Preview Switcher Bar */}
           <div
             style={{
-              background: 'linear-gradient(135deg, #f8fafc 0%, #ede9fe 100%)',
-              padding: '1rem 1.25rem',
+              background: '#ffffff',
+              padding: '0.75rem 1rem',
               borderRadius: '12px',
-              marginBottom: '1.5rem',
               border: '1px solid #e2e8f0',
+              marginBottom: '1.25rem',
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '1rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <p style={{ margin: 0, fontWeight: 700, color: '#4c1d95', fontSize: '0.95rem' }}>
-                Customer Storefront Appearance
-              </p>
-              <p style={{ margin: '0.2rem 0 0 0', color: '#64748b', fontSize: '0.8rem' }}>
-                This is exactly how customers see this product card in the Shop grid and carousels.
-              </p>
-            </div>
-            <span
-              style={{
-                background: '#7c3aed',
-                color: '#fff',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '0.3rem 0.75rem',
-                borderRadius: '9999px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Live Card
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: '2rem',
               alignItems: 'center',
-              justifyContent: 'center',
               flexWrap: 'wrap',
+              gap: '0.75rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
             }}
           >
-            {/* The Actual ProductCard Component */}
-            <div
-              onClickCapture={(e) => {
-                const link = e.target.closest('a');
-                if (link) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }
-              }}
-              style={{ width: '100%', maxWidth: '280px', flex: '0 0 280px' }}
-            >
-              <ProductCard
-                product={previewProductData}
-                onAction={() => showToast('Preview mode: "Add to Cart" clicked', 'info')}
-              />
-            </div>
-
-            {/* Quick Details breakdown */}
-            <div style={{ flex: '1', minWidth: '260px' }}>
-              <h4 style={{ margin: '0 0 0.85rem 0', color: '#0f172a', fontSize: '1rem', fontWeight: 700 }}>
-                Live Card Attributes
-              </h4>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Selling Price</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#15803d' }}>
-                    {formatPrice(previewProductData.discountPrice || previewProductData.price)}
-                  </span>
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>M.R.P</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#64748b', textDecoration: previewProductData.discountPrice && previewProductData.discountPrice < previewProductData.price ? 'line-through' : 'none' }}>
-                    {formatPrice(previewProductData.price)}
-                  </span>
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Active Tag / Badge</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#7c3aed' }}>
-                    {previewProductData.tags?.[0] || 'None'}
-                  </span>
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Stock Status</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: previewProductData.stock > 0 ? '#15803d' : '#dc2626' }}>
-                    {previewProductData.stock > 0 ? `${previewProductData.stock} in stock` : 'Out of Stock'}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ background: '#faf5ff', border: '1px dashed #c084fc', borderRadius: '10px', padding: '0.85rem', marginBottom: '1.25rem' }}>
-                <span style={{ display: 'block', fontSize: '0.72rem', color: '#7e22ce', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                  Category & SKU
-                </span>
-                <span style={{ fontSize: '0.85rem', color: '#3b0764', fontWeight: 600 }}>
-                  {previewProductData.category} {previewProductData.subCategory ? `› ${previewProductData.subCategory}` : ''} • SKU: {previewProductData.sku}
-                </span>
-              </div>
+            {/* View Mode Tabs: Product Card vs Product Details */}
+            <div style={{ display: 'flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.25rem', borderRadius: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setPreviewTab('card')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: previewTab === 'card' ? '#7c3aed' : 'transparent',
+                  color: previewTab === 'card' ? '#ffffff' : '#64748b',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <LayoutGrid size={14} />
+                <span>Product Card Exact Preview</span>
+              </button>
 
               <button
                 type="button"
-                onClick={() => setShowPreviewModal(false)}
+                onClick={() => setPreviewTab('details')}
                 style={{
-                  width: '100%',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '10px',
-                  background: '#f1f5f9',
-                  color: '#334155',
-                  fontWeight: 600,
-                  fontSize: '0.88rem',
-                  border: '1px solid #cbd5e1',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'background 0.2s',
+                  background: previewTab === 'details' ? '#7c3aed' : 'transparent',
+                  color: previewTab === 'details' ? '#ffffff' : '#64748b',
+                  transition: 'all 0.15s ease',
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.background = '#e2e8f0')}
-                onMouseOut={(e) => (e.currentTarget.style.background = '#f1f5f9')}
               >
-                Close Preview
+                <FileText size={14} />
+                <span>Product Details Exact Preview</span>
+              </button>
+            </div>
+
+            {/* Device Switcher (Desktop vs Mobile) */}
+            <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Device View:</span>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice('desktop')}
+                title="Desktop Layout Preview"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: '6px',
+                  border: '1px solid',
+                  borderColor: previewDevice === 'desktop' ? '#7c3aed' : '#cbd5e1',
+                  background: previewDevice === 'desktop' ? '#f3e8ff' : '#ffffff',
+                  color: previewDevice === 'desktop' ? '#7c3aed' : '#475569',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <Monitor size={13} />
+                <span>Desktop</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPreviewDevice('mobile')}
+                title="Mobile Phone Screen Preview"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: '6px',
+                  border: '1px solid',
+                  borderColor: previewDevice === 'mobile' ? '#7c3aed' : '#cbd5e1',
+                  background: previewDevice === 'mobile' ? '#f3e8ff' : '#ffffff',
+                  color: previewDevice === 'mobile' ? '#7c3aed' : '#475569',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <Smartphone size={13} />
+                <span>Mobile</span>
               </button>
             </div>
           </div>
-        </div>
-      </Modal>
 
-      {/* Add Verified Customer Review Modal */}
-      <Modal
-        isOpen={showAddReviewModal}
-        onClose={() => setShowAddReviewModal(false)}
-        title="Add Verified Customer Review"
-        maxWidth={500}
-      >
-        <form onSubmit={handleSeedReviewSubmit} style={{ padding: '0.5rem 1rem 1.5rem' }}>
-          <p style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.85rem' }}>
-            Add an authentic, verified review for <strong>{formData.name || 'this product'}</strong>. It will be published immediately to the customer storefront.
-          </p>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
-              Rating
-            </label>
-            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setReviewSeedForm((prev) => ({ ...prev, rating: s }))}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          {/* ── TAB 1: PRODUCT CARD EXACT PREVIEW ── */}
+          {previewTab === 'card' && (
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '2rem',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                  padding: '1.25rem',
+                  background: '#f8fafc',
+                  borderRadius: '14px',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                {/* Storefront Card Rendering */}
+                <div
+                  onClickCapture={(e) => {
+                    const link = e.target.closest('a');
+                    if (link) { e.preventDefault(); e.stopPropagation(); }
+                  }}
+                  style={{ width: '100%', maxWidth: '280px', flex: '0 0 280px' }}
                 >
-                  <Star
-                    size={26}
-                    fill={s <= reviewSeedForm.rating ? '#f59e0b' : 'transparent'}
-                    color={s <= reviewSeedForm.rating ? '#f59e0b' : '#cbd5e1'}
+                  <ProductCard
+                    product={previewProductData}
+                    onAction={() => showToast('Preview mode: "Add to Cart" clicked', 'info')}
                   />
-                </button>
-              ))}
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginLeft: '0.5rem' }}>
-                {reviewSeedForm.rating} / 5 Stars
-              </span>
+                </div>
+
+                {/* Card Attribute Summary */}
+                <div style={{ flex: '1', minWidth: '260px' }}>
+                  <div style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Card Preview Details
+                    </span>
+                    <h3 style={{ margin: '0.35rem 0 1rem 0', fontSize: '1.1rem', color: '#0f172a' }}>
+                      {previewProductData.name || 'Untitled Product'}
+                    </h3>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Selling Price</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#15803d' }}>
+                          {formatPrice(previewProductData.discountPrice || previewProductData.price)}
+                        </span>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>M.R.P</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#94a3b8', textDecoration: previewProductData.discountPrice ? 'line-through' : 'none' }}>
+                          {formatPrice(previewProductData.price)}
+                        </span>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Tag Badge</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#7c3aed' }}>
+                          {previewProductData.tags?.[0] || 'None'}
+                        </span>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Stock Status</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: previewProductData.stock > 0 ? '#15803d' : '#dc2626' }}>
+                          {previewProductData.stock > 0 ? `${previewProductData.stock} in stock` : 'Out of Stock'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#faf5ff', border: '1px dashed #c084fc', borderRadius: '8px', padding: '0.75rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.7rem', color: '#7e22ce', fontWeight: 700, textTransform: 'uppercase' }}>
+                        Category &amp; SKU
+                      </span>
+                      <span style={{ fontSize: '0.84rem', color: '#3b0764', fontWeight: 600 }}>
+                        {previewProductData.category} {previewProductData.subCategory ? `› ${previewProductData.subCategory}` : ''} • SKU: {previewProductData.sku}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
-              Customer Name
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Ananya S., Chennai"
-              value={reviewSeedForm.author}
-              onChange={(e) => setReviewSeedForm((prev) => ({ ...prev, author: e.target.value }))}
+          {/* ── TAB 2: PRODUCT DETAILS EXACT PREVIEW ── */}
+          {previewTab === 'details' && (
+            <div
               style={{
-                width: '100%',
-                padding: '0.55rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.85rem',
-                outline: 'none',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: previewDevice === 'mobile' ? '1rem' : '1.5rem',
+                maxWidth: previewDevice === 'mobile' ? '400px' : '100%',
+                margin: '0 auto',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
               }}
-            />
-          </div>
+            >
+              {/* Breadcrumb strip */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#64748b', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                <span>Home</span>
+                <ChevronRight size={12} />
+                <span>{previewProductData.category}</span>
+                {previewProductData.subCategory && (
+                  <>
+                    <ChevronRight size={12} />
+                    <span>{previewProductData.subCategory}</span>
+                  </>
+                )}
+                <ChevronRight size={12} />
+                <span style={{ color: '#0f172a', fontWeight: 600 }}>{previewProductData.name || 'Product'}</span>
+              </div>
 
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
-              Review Comment *
-            </label>
-            <textarea
-              required
-              rows={4}
-              placeholder="Write customer feedback (e.g. Loved the design, premium finish, fast delivery)..."
-              value={reviewSeedForm.comment}
-              onChange={(e) => setReviewSeedForm((prev) => ({ ...prev, comment: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '0.65rem 0.75rem',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.85rem',
-                outline: 'none',
-                fontFamily: 'inherit',
-              }}
-            />
-          </div>
+              {/* Responsive Details Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: previewDevice === 'mobile' ? '1fr' : '1.1fr 1.3fr',
+                  gap: '2rem',
+                  alignItems: 'start',
+                }}
+              >
+                {/* Left: Interactive Image Gallery */}
+                <div>
+                  <div style={{ position: 'relative', height: previewDevice === 'mobile' ? '280px' : '380px', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#f8fafc', marginBottom: '0.75rem' }}>
+                    <img
+                      src={
+                        (previewProductData.images && previewProductData.images[previewActiveImgIdx]) ||
+                        previewProductData.images?.[0] ||
+                        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'
+                      }
+                      alt={previewProductData.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
 
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    {/* Tag badge chip overlay */}
+                    {previewProductData.tags?.[0] && (() => {
+                      const tagStyle = getTagDesign(previewProductData.tags[0]);
+                      const IconComp = tagStyle?.icon || Tag;
+                      return (
+                        <div className="premium-running-tag" style={{ position: 'absolute', top: '12px', left: '12px', background: tagStyle?.bg || '#7c3aed', color: tagStyle?.color || '#ffffff', border: `1px solid ${tagStyle?.border || 'transparent'}`, padding: '0.28rem 0.82rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', boxShadow: `0 4px 14px ${tagStyle?.color || '#7c3aed'}40`, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <IconComp size={12} color={tagStyle?.color} />
+                          <span>{tagStyle?.displayName || tagStyle?.name || previewProductData.tags[0]}</span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Wishlist Heart & Share floating buttons */}
+                    <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                        <Heart size={16} color="#ef4444" />
+                      </div>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                        <Share2 size={15} color="#475569" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Row */}
+                  {previewProductData.images && previewProductData.images.length > 1 && (
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                      {previewProductData.images.map((img, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setPreviewActiveImgIdx(idx)}
+                          style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            border: '2px solid',
+                            borderColor: previewActiveImgIdx === idx ? '#7c3aed' : '#e2e8f0',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Product Attributes & CTAs */}
+                <div>
+                  <h1 style={{ fontSize: previewDevice === 'mobile' ? '1.2rem' : '1.5rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem 0', lineHeight: 1.3 }}>
+                    {previewProductData.name || 'Sample Product Name'}
+                  </h1>
+
+                  {/* Rating Stars & SKU */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#fef3c7', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                      <Star size={13} fill="#f59e0b" color="#f59e0b" />
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#b45309' }}>4.9</span>
+                      <span style={{ fontSize: '0.72rem', color: '#92400e' }}>(8 reviews)</span>
+                    </div>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b', background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                      SKU: {previewProductData.sku}
+                    </span>
+                  </div>
+
+                  {/* Pricing Box */}
+                  <div style={{ background: '#f8fafc', padding: '0.85rem 1.1rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#15803d' }}>
+                        {formatPrice(previewProductData.discountPrice || previewProductData.price)}
+                      </span>
+                      {previewProductData.discountPrice && (
+                        <span style={{ fontSize: '1rem', color: '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                          {formatPrice(previewProductData.price)}
+                        </span>
+                      )}
+                      {previewProductData.discountPrice && (
+                        <span style={{ background: '#fee2e2', color: '#dc2626', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                          Save {Math.round(((previewProductData.price - previewProductData.discountPrice) / previewProductData.price) * 100)}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '0.25rem' }}>
+                      Inclusive of all taxes • Free shipping on orders over ₹499
+                    </span>
+                  </div>
+
+                  {/* Variants Selector Preview */}
+                  {previewProductData.variants?.options && previewProductData.variants.options.length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                        Select Option ({previewProductData.variants.type || 'Variant'}):
+                      </span>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {previewProductData.variants.options.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => setPreviewSelectedVariant(opt)}
+                            style={{
+                              padding: '0.4rem 0.85rem',
+                              borderRadius: '8px',
+                              border: '1.5px solid',
+                              borderColor: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#7c3aed' : '#cbd5e1',
+                              background: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#f3e8ff' : '#ffffff',
+                              color: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#7c3aed' : '#334155',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Color Selector Preview */}
+                  {Array.isArray(previewProductData.variants?.colors) && previewProductData.variants.colors.length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                        Color Swatches:
+                      </span>
+                      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                        {previewProductData.variants.colors.map((col, idx) => {
+                          const cName = col.name || col;
+                          const cHex = col.color || '#000';
+                          const isSel = (previewSelectedColor || previewProductData.variants.colors[0]?.name) === cName;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setPreviewSelectedColor(cName)}
+                              title={cName}
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: cHex,
+                                border: isSel ? '3px solid #7c3aed' : '2px solid #cbd5e1',
+                                cursor: 'pointer',
+                                outline: isSel ? '2px solid #ddd6fe' : 'none',
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quantity & CTA Buttons */}
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden' }}>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewQuantity(q => Math.max(1, q - 1))}
+                        style={{ padding: '0.55rem 0.8rem', border: 'none', background: '#f8fafc', cursor: 'pointer' }}
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span style={{ padding: '0.55rem 0.9rem', fontSize: '0.86rem', fontWeight: 700, minWidth: '24px', textAlign: 'center' }}>
+                        {previewQuantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewQuantity(q => q + 1)}
+                        style={{ padding: '0.55rem 0.8rem', border: 'none', background: '#f8fafc', cursor: 'pointer' }}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => showToast('Preview mode: Added to Cart', 'info')}
+                      style={{
+                        flex: 1,
+                        padding: '0.7rem 1.4rem',
+                        borderRadius: '10px',
+                        background: '#7c3aed',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+                      }}
+                    >
+                      Add to Cart
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => showToast('Preview mode: Buy Now clicked', 'info')}
+                      style={{
+                        padding: '0.7rem 1.4rem',
+                        borderRadius: '10px',
+                        background: '#0f172a',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Buy Now
+                    </button>
+                  </div>
+
+                  {/* Storefront Trust Strip */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '1.25rem' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <Truck size={18} color="#7c3aed" style={{ margin: '0 auto 0.2rem' }} />
+                      <span style={{ display: 'block', fontSize: '0.68rem', fontWeight: 700, color: '#334155' }}>Fast Delivery</span>
+                      <span style={{ fontSize: '0.62rem', color: '#64748b' }}>2-4 business days</span>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <RotateCcw size={18} color="#7c3aed" style={{ margin: '0 auto 0.2rem' }} />
+                      <span style={{ display: 'block', fontSize: '0.68rem', fontWeight: 700, color: '#334155' }}>7 Days Return</span>
+                      <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Hassle-free swap</span>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <ShieldCheck size={18} color="#7c3aed" style={{ margin: '0 auto 0.2rem' }} />
+                      <span style={{ display: 'block', fontSize: '0.68rem', fontWeight: 700, color: '#334155' }}>100% Genuine</span>
+                      <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Quality verified</span>
+                    </div>
+                  </div>
+
+                  {/* Specifications & Description */}
+                  {previewProductData.shortDescription && (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                        Brief Overview:
+                      </span>
+                      <p style={{ margin: 0, fontSize: '0.84rem', color: '#334155', lineHeight: 1.5 }}>
+                        {previewProductData.shortDescription}
+                      </p>
+                    </div>
+                  )}
+
+                  {Array.isArray(previewProductData.characteristics) && previewProductData.characteristics.length > 0 && (
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem' }}>
+                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                        Product Specifications:
+                      </span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                        {previewProductData.characteristics.map((spec, i) => (
+                          <div key={i} style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>
+                              {spec.key}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: '#0f172a', fontWeight: 600 }}>
+                              {spec.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Close preview button at footer */}
+          <div style={{ marginTop: '1.25rem', textAlign: 'right' }}>
             <button
               type="button"
-              onClick={() => setShowAddReviewModal(false)}
+              onClick={() => setShowPreviewModal(false)}
               style={{
-                padding: '0.55rem 1.1rem',
+                padding: '0.55rem 1.4rem',
                 borderRadius: '8px',
                 background: '#f1f5f9',
-                color: '#475569',
-                border: 'none',
-                fontWeight: 600,
+                color: '#334155',
+                border: '1px solid #cbd5e1',
                 fontSize: '0.82rem',
+                fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              style={{
-                padding: '0.55rem 1.25rem',
-                borderRadius: '8px',
-                background: '#7c3aed',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
-              }}
-            >
-              Publish Review
+              Done Previewing
             </button>
           </div>
-        </form>
+        </div>
       </Modal>
-    </AdminLayout>
+    
+</AdminLayout>
   );
 }
