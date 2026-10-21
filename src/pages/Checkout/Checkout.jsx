@@ -631,8 +631,10 @@ export default function Checkout() {
       setSelectedAddressId(newId);
       setIsAddingNewAddress(false);
 
+      const cleanPhone = formData.phone?.trim()?.replace(/\D/g, '')?.slice(-10);
       if (updateUser) {
         updateUser({
+          ...(cleanPhone && (!user?.phone || !user.phone.trim()) ? { phone: cleanPhone } : {}),
           addresses: updatedList,
           defaultAddress: resData?.defaultAddress,
         });
@@ -765,6 +767,10 @@ export default function Checkout() {
                   } else {
                     clearCart();
                   }
+                  const cleanPhone = formData.phone?.trim()?.replace(/\D/g, '')?.slice(-10);
+                  if (cleanPhone && (!user?.phone || !user.phone.trim()) && updateUser) {
+                    updateUser({ phone: cleanPhone });
+                  }
                   setLoading(false);
                   showToast('🎉 Payment Successful! Order placed and marked as Sold.', 'success');
                   navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
@@ -888,6 +894,10 @@ export default function Checkout() {
         }
       } else {
         clearCart();
+      }
+      const cleanPhone = formData.phone?.trim()?.replace(/\D/g, '')?.slice(-10);
+      if (cleanPhone && (!user?.phone || !user.phone.trim()) && updateUser) {
+        updateUser({ phone: cleanPhone });
       }
       const elapsed = Date.now() - startTime;
       const remainingDelay = Math.max(0, 1000 - elapsed);

@@ -3,6 +3,7 @@ import api from './api';
 export const authService = {
   sendOTP: (phone) => api.post('/auth/send-otp', { phone }),
   verifyOTP: (phone, otp) => api.post('/auth/verify-otp', { phone, otp }),
+  googleLogin: (payload) => api.post('/auth/google', payload),
   adminLogin: async (email, password) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();

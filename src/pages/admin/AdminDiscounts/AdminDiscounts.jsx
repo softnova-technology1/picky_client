@@ -811,21 +811,21 @@ export default function AdminDiscounts() {
                 alignItems: 'center',
                 gap: '0.45rem',
                 padding: '0.55rem 1.25rem',
-                background: '#b48348',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#ffffff',
                 fontSize: '0.84rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(180, 131, 72, 0.25)',
+                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#9e713c';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#b48348';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
               }}
             >
               <Zap size={15} />
@@ -961,13 +961,13 @@ export default function AdminDiscounts() {
           <div
             style={{
               background: '#ffffff',
-              border: '1.5px solid #d4a373',
+              border: '1.5px solid #d8b4fe',
               borderRadius: '12px',
               padding: '1.1rem 1.25rem',
               display: 'flex',
               alignItems: 'center',
               gap: '1rem',
-              boxShadow: '0 1px 4px rgba(180, 131, 72, 0.08)',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.06)',
             }}
           >
             <div
@@ -975,8 +975,8 @@ export default function AdminDiscounts() {
                 width: '40px',
                 height: '40px',
                 borderRadius: '8px',
-                background: '#fef3c7',
-                color: '#b45309',
+                background: '#f5f3ff',
+                color: '#7c3aed',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -986,7 +986,7 @@ export default function AdminDiscounts() {
               <Layers size={19} />
             </div>
             <div>
-              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.1 }}>
+              <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', lineHeight: 1.1 }}>
                 {totalProductsDisplay}
               </div>
               <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500, marginTop: '3px' }}>
@@ -1015,7 +1015,7 @@ export default function AdminDiscounts() {
                 left: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#94a3b8',
+                color: '#7c3aed',
                 pointerEvents: 'none',
               }}
             />
@@ -1036,9 +1036,18 @@ export default function AdminDiscounts() {
                 border: '1px solid #e2e8f0',
                 background: '#ffffff',
                 fontSize: '0.85rem',
-                color: '#1e293b',
+                color: '#1e1b4b',
                 outline: 'none',
                 boxSizing: 'border-box',
+                transition: 'all 0.15s ease',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#7c3aed';
+                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.12)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
               }}
             />
           </div>
@@ -1126,7 +1135,7 @@ export default function AdminDiscounts() {
                         style={{
                           width: '16px',
                           height: '16px',
-                          accentColor: '#b48348',
+                          accentColor: '#7c3aed',
                           cursor: 'pointer',
                         }}
                       />
@@ -1367,7 +1376,7 @@ export default function AdminDiscounts() {
                         <tr
                           key={p._id}
                           style={{
-                            background: isSelected ? '#fdfbf7' : '#ffffff',
+                            background: isSelected ? '#faf5ff' : '#ffffff',
                             borderBottom: '1px solid #f1f5f9',
                             transition: 'background 0.15s ease',
                           }}
@@ -1381,7 +1390,7 @@ export default function AdminDiscounts() {
                               style={{
                                 width: '16px',
                                 height: '16px',
-                                accentColor: '#b48348',
+                                accentColor: '#7c3aed',
                                 cursor: 'pointer',
                               }}
                             />
@@ -1488,10 +1497,10 @@ export default function AdminDiscounts() {
                                   fontSize: '0.72rem',
                                   fontWeight: 700,
                                   padding: '0.15rem 0.5rem',
-                                  borderRadius: '4px',
-                                  background: '#fef3c7',
-                                  color: '#92400e',
-                                  border: '1px solid #fde68a',
+                                  borderRadius: '6px',
+                                  background: '#f5f3ff',
+                                  color: '#7c3aed',
+                                  border: '1px solid #ddd6fe',
                                   maxWidth: '130px',
                                   display: 'inline-block',
                                   overflow: 'hidden',
@@ -1648,8 +1657,8 @@ export default function AdminDiscounts() {
                         fontSize: '0.75rem',
                         fontWeight: 600,
                         border: '1px solid',
-                        borderColor: currentPage === i + 1 ? '#b48348' : '#cbd5e1',
-                        background: currentPage === i + 1 ? '#b48348' : '#ffffff',
+                        borderColor: currentPage === i + 1 ? '#7c3aed' : '#cbd5e1',
+                        background: currentPage === i + 1 ? '#7c3aed' : '#ffffff',
                         color: currentPage === i + 1 ? '#ffffff' : '#334155',
                         cursor: 'pointer',
                       }}
@@ -1724,7 +1733,7 @@ export default function AdminDiscounts() {
                 }}
               >
                 <div>
-                  <div style={{ color: '#b48348', fontSize: '1rem', fontWeight: 700, lineHeight: 1 }}>
+                  <div style={{ color: '#7c3aed', fontSize: '1rem', fontWeight: 700, lineHeight: 1 }}>
                     %
                   </div>
                   <h2
@@ -1769,8 +1778,8 @@ export default function AdminDiscounts() {
                     alignItems: 'center',
                     gap: '0.9rem',
                     padding: '0.75rem 0.9rem',
-                    background: '#fcfbfa',
-                    border: '1px solid #f1ece4',
+                    background: '#faf5ff',
+                    border: '1px solid #ede8f8',
                     borderRadius: '10px',
                     marginBottom: '1.25rem',
                   }}
@@ -1978,7 +1987,7 @@ export default function AdminDiscounts() {
                       style={{
                         width: '16px',
                         height: '16px',
-                        accentColor: '#b48348',
+                        accentColor: '#7c3aed',
                         cursor: 'pointer',
                       }}
                     />
@@ -2013,15 +2022,15 @@ export default function AdminDiscounts() {
                     disabled={savingDiscount}
                     style={{
                       padding: '0.55rem 1.4rem',
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       border: 'none',
-                      background: '#b48348',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                       color: '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: 600,
                       cursor: savingDiscount ? 'not-allowed' : 'pointer',
                       opacity: savingDiscount ? 0.7 : 1,
-                      boxShadow: '0 2px 6px rgba(180, 131, 72, 0.25)',
+                      boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)',
                       transition: 'all 0.15s ease',
                     }}
                   >
@@ -2087,6 +2096,41 @@ export default function AdminDiscounts() {
                 <X size={18} />
               </button>
 
+
+              {/* Modal Title */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    background: '#f5f3ff',
+                    color: '#7c3aed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid #ddd6fe',
+                  }}
+                >
+                  <Zap size={18} />
+                </div>
+                <div>
+                  <h2
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+                      fontSize: '1.28rem',
+                      fontWeight: 700,
+                      color: '#111827',
+                      margin: 0,
+                    }}
+                  >
+                    Apply Bulk Discount
+                  </h2>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                    Configure promotional discounts across multiple products
+                  </p>
+                </div>
+              </div>
 
               {/* Bulk Discount Form */}
               <form onSubmit={handleApplyBulkDiscount}>
@@ -2346,7 +2390,7 @@ export default function AdminDiscounts() {
                       style={{
                         width: '16px',
                         height: '16px',
-                        accentColor: '#2563eb',
+                        accentColor: '#7c3aed',
                         cursor: 'pointer',
                       }}
                     />
@@ -2395,15 +2439,15 @@ export default function AdminDiscounts() {
                     disabled={applyingBulkDiscount}
                     style={{
                       padding: '0.55rem 1.4rem',
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       border: 'none',
-                      background: '#b48348',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
                       color: '#ffffff',
                       fontSize: '0.85rem',
                       fontWeight: 600,
                       cursor: applyingBulkDiscount ? 'not-allowed' : 'pointer',
                       opacity: applyingBulkDiscount ? 0.7 : 1,
-                      boxShadow: '0 2px 6px rgba(180, 131, 72, 0.25)',
+                      boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)',
                       transition: 'all 0.15s ease',
                     }}
                   >
