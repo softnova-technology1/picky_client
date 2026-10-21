@@ -733,20 +733,10 @@ export default function AdminSubCategories() {
         }}
       >
         <div>
-          <h2
-            style={{
-              fontSize: '1.4rem',
-              fontWeight: 800,
-              color: '#0f172a',
-              margin: 0,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Sub-Categories Management
-          </h2>
-          <span style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.2rem', display: 'block' }}>
+          <h1 className="admin-page-main-title">Sub-Categories Management</h1>
+          <p className="admin-page-main-subtitle">
             Manage catalog sub-categories and specifications across all 10 departments
-          </span>
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>

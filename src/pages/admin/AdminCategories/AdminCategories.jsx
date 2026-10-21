@@ -240,12 +240,10 @@ export default function AdminCategories() {
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-            Store Categories
-          </h2>
-          <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+          <h1 className="admin-page-main-title">Store Categories</h1>
+          <p className="admin-page-main-subtitle">
             Organize catalog groupings and departments
-          </span>
+          </p>
         </div>
         <button
           onClick={handleOpenAdd}

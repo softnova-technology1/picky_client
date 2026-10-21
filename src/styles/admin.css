@@ -643,7 +643,7 @@
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(14px);
   border-bottom: 1.5px solid var(--adm-border);
-  padding: 0.95rem 2.25rem;
+  padding: 0.85rem 2.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -656,23 +656,17 @@
 .admin-layout .admin-topbar-left {
   display: flex;
   align-items: center;
-  gap: 1.15rem;
-  flex-shrink: 0;
+  gap: 0.85rem;
+  flex: 1;
+  max-width: 580px;
 }
 
 .admin-layout .admin-topbar-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  display: none;
 }
 
 .admin-layout .admin-topbar-heading {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #1e1b4b;
-  margin: 0;
-  white-space: nowrap;
-  letter-spacing: -0.015em;
+  display: none;
 }
 
 .admin-layout .admin-topbar-live-badge {
@@ -696,10 +690,10 @@
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
-/* Global Search Bar */
+/* Global Search Bar - Beside toggle */
 .admin-layout .admin-topbar-search-wrap {
   flex: 1;
-  max-width: 460px;
+  max-width: 440px;
   position: relative;
 }
 
@@ -1530,7 +1524,7 @@
 .admin-layout .admin-topbar-left {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.85rem;
 }
 
 .admin-layout .admin-toggle-sidebar-btn {
@@ -1586,13 +1580,12 @@
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), inset 0 1px 2px rgba(124, 58, 237, 0.05);
 }
 
-
-
 /* Topbar Right Actions */
 .admin-layout .admin-topbar-right {
   display: flex;
   align-items: center;
-  gap: 1.1rem;
+  gap: 0.95rem;
+  flex-shrink: 0;
 }
 
 .admin-layout .admin-notif-btn {
@@ -3792,4 +3785,51 @@
   display: none !important;
   animation: none !important;
   transform: none !important;
-}
+}
+
+/* ── Unified Admin In-Page Header System ── */
+.admin-layout .admin-page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-layout .admin-page-main-title {
+  font-size: 1.65rem;
+  font-weight: 850;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  margin: 0 0 4px 0;
+  line-height: 1.15;
+}
+
+.admin-layout .admin-page-main-subtitle {
+  font-size: 0.86rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .admin-layout .admin-topbar {
+    padding: 0.75rem 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-layout .admin-topbar-left {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .admin-layout .admin-topbar-search-wrap {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+

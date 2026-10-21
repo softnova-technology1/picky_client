@@ -599,6 +599,14 @@ export default function AdminOrders() {
   return (
     <AdminLayout title="Orders & Dispatch Dashboard">
 
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Orders & Dispatch</h1>
+          <p className="admin-page-main-subtitle">Manage customer orders, track dispatch status and fulfillment</p>
+        </div>
+      </div>
+
       {/* ── 1. INNOVATIVE DASHBOARD STATS CARDS (EXACT MATCH) ──────────────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard

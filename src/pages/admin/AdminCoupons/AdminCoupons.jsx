@@ -435,6 +435,14 @@ export default function AdminCoupons() {
 
   return (
     <AdminLayout title="Coupon Codes & Vouchers">
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Discounts & Coupons</h1>
+          <p className="admin-page-main-subtitle">Manage promo coupon codes, vouchers, and automatic order discounts</p>
+        </div>
+      </div>
+
       {/* ── 1. Top 4 Metric KPI Progress Cards ── */}
       <div className="kpi-progress-grid">
         <AdminStatCard

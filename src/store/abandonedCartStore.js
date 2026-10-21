@@ -1,10 +1,64 @@
 import { create } from 'zustand';
 import api from '../services/api';
 
+const ABANDONED_VIEWED_CARTS_KEY = 'picky_admin_viewed_abandoned_carts';
+const ABANDONED_VIEWED_CONVERSIONS_KEY = 'picky_admin_viewed_cart_conversions';
+
+const getViewedCarts = () => {
+  try {
+    const raw = localStorage.getItem(ABANDONED_VIEWED_CARTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+};
+
+const getViewedConversions = () => {
+  try {
+    const raw = localStorage.getItem(ABANDONED_VIEWED_CONVERSIONS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+};
+
+const computeSidebarBadge = (cartList, viewedCarts, viewedConversions) => {
+  // 1. Check for unviewed converted carts/products (GREEN priority!)
+  const newConvertedCarts = cartList.filter(
+    (c) =>
+      (c.status === 'recovered' || c.status === 'partial_recovery' || (c.recoveredProducts && c.recoveredProducts.length > 0)) &&
+      !viewedConversions.includes(String(c.id || c._id))
+  );
+
+  if (newConvertedCarts.length > 0) {
+    const convertedUnits = newConvertedCarts.reduce((sum, c) => {
+      const pCount = Array.isArray(c.recoveredProducts) && c.recoveredProducts.length > 0
+        ? c.recoveredProducts.length
+        : (c.purchasedItems?.length || c.itemCount || 1);
+      return sum + pCount;
+    }, 0);
+    return { count: convertedUnits, color: 'green', type: 'converted' };
+  }
+
+  // 2. Check for unviewed new pending abandoned carts (RED)
+  const newPendingCarts = cartList.filter(
+    (c) => c.status === 'pending' && !viewedCarts.includes(String(c.id || c._id))
+  );
+
+  if (newPendingCarts.length > 0) {
+    return { count: newPendingCarts.length, color: 'red', type: 'new_cart' };
+  }
+
+  return null;
+};
+
 export const useAbandonedCartStore = create((set, get) => ({
   carts: [],
   loading: false,
   error: null,
+  sidebarBadge: null,
+  viewedConversions: getViewedConversions(),
+  viewedCarts: getViewedCarts(),
 
   // Fetch real carts from MongoDB backend
   fetchCarts: async (isPolling = false) => {
@@ -18,7 +72,19 @@ export const useAbandonedCartStore = create((set, get) => ({
         : Array.isArray(res)
         ? res
         : (res?.data?.carts || res?.carts || []);
-      set({ carts: cartList, loading: false, error: null });
+      
+      const vCarts = getViewedCarts();
+      const vConversions = getViewedConversions();
+      const badge = computeSidebarBadge(cartList, vCarts, vConversions);
+
+      set({
+        carts: cartList,
+        loading: false,
+        error: null,
+        viewedCarts: vCarts,
+        viewedConversions: vConversions,
+        sidebarBadge: badge,
+      });
     } catch (err) {
       console.error('Failed to fetch abandoned carts from API:', err);
       // Retain existing carts on background polling errors to avoid blank screens
@@ -27,6 +93,49 @@ export const useAbandonedCartStore = create((set, get) => ({
         error: err?.message || 'Error fetching carts',
         carts: state.carts.length > 0 ? state.carts : [],
       }));
+    }
+  },
+
+  // Mark all carts & conversions as viewed (clears the sidebar badge on click/view)
+  markCartsAsViewed: () => {
+    const carts = get().carts;
+    const cartIds = carts.map((c) => String(c.id || c._id)).filter(Boolean);
+    const conversionIds = carts
+      .filter((c) => c.status === 'recovered' || c.status === 'partial_recovery' || (c.recoveredProducts && c.recoveredProducts.length > 0))
+      .map((c) => String(c.id || c._id))
+      .filter(Boolean);
+
+    const mergedCarts = Array.from(new Set([...getViewedCarts(), ...cartIds]));
+    const mergedConversions = Array.from(new Set([...getViewedConversions(), ...conversionIds]));
+
+    try {
+      localStorage.setItem(ABANDONED_VIEWED_CARTS_KEY, JSON.stringify(mergedCarts));
+      localStorage.setItem(ABANDONED_VIEWED_CONVERSIONS_KEY, JSON.stringify(mergedConversions));
+    } catch (_) {}
+
+    set({
+      viewedCarts: mergedCarts,
+      viewedConversions: mergedConversions,
+      sidebarBadge: null,
+    });
+  },
+
+  // Mark single conversion as viewed (switches table row from glowing green to normal)
+  markSingleCartConversionAsViewed: (cartId) => {
+    const cleanId = String(cartId);
+    const existing = getViewedConversions();
+    if (!existing.includes(cleanId)) {
+      const updated = [...existing, cleanId];
+      try {
+        localStorage.setItem(ABANDONED_VIEWED_CONVERSIONS_KEY, JSON.stringify(updated));
+      } catch (_) {}
+      set((state) => {
+        const newBadge = computeSidebarBadge(state.carts, state.viewedCarts, updated);
+        return {
+          viewedConversions: updated,
+          sidebarBadge: newBadge,
+        };
+      });
     }
   },
 

@@ -829,7 +829,7 @@ export default function AdminDashboard() {
         {/* ─── 1. Header Overview Row ───────── */}
         <div className={styles.headerRow}>
           <div className={styles.titleArea}>
-            <h1 className={styles.pageTitle}>Sales Overview</h1>
+            <h1 className={styles.pageTitle}>Dashboard</h1>
             <p className={styles.pageSubtitle}>Real-time store performance, growth metrics and analytics</p>
           </div>
 

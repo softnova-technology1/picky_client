@@ -616,6 +616,14 @@ export default function AdminCustomers() {
         }
       `}</style>
 
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Customers & Directory</h1>
+          <p className="admin-page-main-subtitle">View registered users, order statistics, and customer accounts</p>
+        </div>
+      </div>
+
       {/* ─── 4 Metric KPI Progress Cards (Clickable Interactive Filters) ────────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard

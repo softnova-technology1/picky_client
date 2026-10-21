@@ -189,7 +189,7 @@ export default function AdminOrderDetail() {
   return (
     <AdminLayout title={`Manage Order #${order.orderNumber}`}>
       {/* Top Breadcrumb & Status Pill */}
-      <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <Link
           to={`${ADMIN}/orders`}
           className="admin-period-select-btn"
@@ -204,6 +204,14 @@ export default function AdminOrderDetail() {
         >
           ● Status: {order.status ? order.status.toUpperCase() : 'CONFIRMED'}
         </span>
+      </div>
+
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Order #{order.orderNumber}</h1>
+          <p className="admin-page-main-subtitle">Manage customer shipment, tracking details and order lifecycle</p>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>

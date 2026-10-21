@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ShoppingCart,
   Clock,
@@ -11,9 +10,7 @@ import {
   Sparkles,
   Truck,
   Search,
-  Filter,
   Download,
-  ExternalLink,
   RotateCcw,
   ChevronUp,
   ChevronsUpDown,
@@ -22,21 +19,16 @@ import {
   Mail,
   MapPin,
   User,
-  IndianRupee,
   Trash2,
   Check,
   Package,
-  Tag,
   Edit3,
-  Zap,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import { useUiStore } from '../../../store/uiStore';
 import { useAbandonedCartStore } from '../../../store/abandonedCartStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import styles from './AdminAbandonedCarts.module.css';
-
-const ADMIN = '/softpicky-sn2026';
 
 // Status Tabs Configuration
 const CART_STATUS_TABS = [
@@ -175,8 +167,10 @@ export default function AdminAbandonedCarts() {
     revertConversion,
     deleteTimelineEntry,
     markAsExpired,
-    deleteCart,
     bulkSendAlerts,
+    markCartsAsViewed,
+    markSingleCartConversionAsViewed,
+    viewedConversions,
   } = useAbandonedCartStore();
 
   useEffect(() => {
@@ -184,6 +178,7 @@ export default function AdminAbandonedCarts() {
       localStorage.removeItem('picky_admin_abandoned_carts_v1');
     } catch (_) {}
     fetchCarts();
+    markCartsAsViewed();
 
     // Live auto-polling every 25 seconds when tab is visible for real-time customer cart synchronization
     const timer = setInterval(() => {
@@ -193,11 +188,14 @@ export default function AdminAbandonedCarts() {
     }, 25000);
 
     return () => clearInterval(timer);
-  }, [fetchCarts]);
+  }, [fetchCarts, markCartsAsViewed]);
 
   // Accordion drawer state
   const [expandedId, setExpandedId] = useState(null);
-  const toggleRow = (id) => setExpandedId((prev) => (prev === id ? null : id));
+  const toggleRow = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+    markSingleCartConversionAsViewed(id);
+  };
 
   // Filters state
   const [activeTab, setActiveTab] = useState('all');
@@ -409,7 +407,19 @@ export default function AdminAbandonedCarts() {
     const recoveryRate = total > 0 ? ((recoveredCount / total) * 100).toFixed(1) : '0.0';
     const pendingAlerts = carts.filter((c) => c.status === 'pending').length;
 
-    return { total, recoveredCount, recoveredRevenue: safeRecovered, lostRevenue, recoveryRate, pendingAlerts };
+    // Total products bought / won back via recovery
+    const totalProductsRecovered = carts.reduce((acc, c) => {
+      const list = getPurchasedItemsForCart(c);
+      if (list.length > 0) {
+        return acc + list.reduce((s, item) => s + (Number(item.quantity) || 1), 0);
+      }
+      if (c.status === 'recovered' || c.status === 'partial_recovery') {
+        return acc + (c.recoveredProducts?.length || c.itemCount || 1);
+      }
+      return acc;
+    }, 0);
+
+    return { total, recoveredCount, recoveredRevenue: safeRecovered, lostRevenue, recoveryRate, pendingAlerts, totalProductsRecovered };
   }, [carts]);
 
   // ─── Filter & Search Logic ───
@@ -679,7 +689,15 @@ export default function AdminAbandonedCarts() {
 
   return (
     <AdminLayout title="Abandoned Carts Recovery">
-      {/* ─── 1. Top 5 KPI Cards ─── */}
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Abandoned Carts Recovery</h1>
+          <p className="admin-page-main-subtitle">Recover dropped shopper carts and automate reminder alerts via WhatsApp</p>
+        </div>
+      </div>
+
+      {/* ─── 1. Top 6 KPI Cards ─── */}
       <div className={styles.kpiGrid}>
         {/* KPI 1: Lost Potential Revenue */}
         <div className={styles.kpiCard} style={{ borderLeft: '4px solid #ef4444' }}>
@@ -711,6 +729,23 @@ export default function AdminAbandonedCarts() {
           </div>
           <div className={styles.kpiMeta}>
             <span>Sales brought back</span>
+            <span style={{ color: '#059669', fontWeight: 700 }}>+ Won Back</span>
+          </div>
+        </div>
+
+        {/* KPI 3: Products Recovered */}
+        <div className={styles.kpiCard} style={{ borderLeft: '4px solid #059669' }}>
+          <div className={styles.kpiTop}>
+            <span className={styles.kpiLabel}>Products Recovered</span>
+            <div className={styles.kpiIconBox} style={{ background: '#ecfdf5', color: '#059669' }}>
+              <Package size={18} />
+            </div>
+          </div>
+          <div className={styles.kpiVal} style={{ color: '#059669' }}>
+            {kpis.totalProductsRecovered}
+          </div>
+          <div className={styles.kpiMeta}>
+            <span>Total units bought</span>
             <span style={{ color: '#059669', fontWeight: 700 }}>+ Won Back</span>
           </div>
         </div>
@@ -898,6 +933,50 @@ export default function AdminAbandonedCarts() {
             <button
               type="button"
               className={styles.bulkBtnExport}
+              onClick={handleBulkRecoverSelected}
+              title="Mark all selected carts as Won Back / Recovered"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#ecfdf5',
+                color: '#059669',
+                border: '1.5px solid #a7f3d0',
+                padding: '0.4rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <CheckCircle2 size={14} /> Won Back ({selectedCartIds.length})
+            </button>
+
+            <button
+              type="button"
+              className={styles.bulkBtnExport}
+              onClick={handleBulkExpireSelected}
+              title="Mark all selected carts as Expired"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#f8fafc',
+                color: '#64748b',
+                border: '1.5px solid #e2e8f0',
+                padding: '0.4rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <XCircle size={14} /> Expire ({selectedCartIds.length})
+            </button>
+
+            <button
+              type="button"
+              className={styles.bulkBtnExport}
               onClick={handleExportSelectedCSV}
               title="Export only selected carts to CSV"
             >
@@ -925,19 +1004,30 @@ export default function AdminAbandonedCarts() {
                     title="Select / Deselect all visible carts"
                   />
                 </th>
-                <th style={{ width: '15%' }} className={styles.thCell}>CART ID / TIME</th>
-                <th style={{ width: '16%' }} className={styles.thCell}>CUSTOMER</th>
-                <th style={{ width: '22%' }} className={styles.thCell}>ITEMS IN CART</th>
+                <th style={{ width: '13%' }} className={styles.thCell}>CART ID / TIME</th>
+                <th style={{ width: '15%' }} className={styles.thCell}>CUSTOMER</th>
+                <th style={{ width: '11%' }} className={styles.thCell}>ITEMS IN CART</th>
                 <th style={{ width: '12%' }} className={styles.thCell}>CART VALUE</th>
+                <th style={{ width: '13%' }} className={styles.thCellCenter}>CONVERTED ITEMS</th>
                 <th style={{ width: '13%' }} className={styles.thCellCenter}>STATUS</th>
                 <th style={{ width: '11%' }} className={styles.thCellCenter}>WHATSAPP</th>
-                <th style={{ width: '11%' }} className={styles.thCellCenter}>ACTION</th>
+                <th style={{ width: '12%' }} className={styles.thCellCenter}>ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {filteredCarts.length === 0 ? (
+              {loading && carts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className={styles.emptyState}>
+                  <td colSpan={9} className={styles.emptyState}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 0', gap: '0.75rem' }}>
+                      <ShoppingCart size={36} color="#7c3aed" />
+                      <div className={styles.emptyStateTitle} style={{ color: '#6d28d9' }}>Loading Abandoned Carts...</div>
+                      <div className={styles.emptyStateSubtitle}>Fetching real-time customer session data...</div>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredCarts.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className={styles.emptyState}>
                     <ShoppingCart size={40} color="#cbd5e1" style={{ display: 'block', margin: '0 auto' }} />
                     <div className={styles.emptyStateTitle}>No abandoned carts found</div>
                     <div className={styles.emptyStateSubtitle}>Try clearing search or changing filters.</div>
@@ -946,10 +1036,32 @@ export default function AdminAbandonedCarts() {
               ) : (
                 filteredCarts.map((cart, index) => {
                   const wonBackList = getPurchasedItemsForCart(cart);
-                  const isPartial = wonBackList.length > 0 && cart.items.length > 0;
-                  const statusCfg = isPartial
+                  const wonBackNamesOrSkus = new Set(
+                    wonBackList.map((w) => (w.name || w.sku || '').toLowerCase().trim()).filter(Boolean)
+                  );
+                  const stillInBagItems = (cart.items || []).filter((item) => {
+                    const nameMatch = item.name && wonBackNamesOrSkus.has(item.name.toLowerCase().trim());
+                    const skuMatch = item.sku && wonBackNamesOrSkus.has(item.sku.toLowerCase().trim());
+                    const recoveredMatch = (cart.recoveredProducts || []).includes(item.sku) || (cart.recoveredProducts || []).includes(item.name);
+                    return !nameMatch && !skuMatch && !recoveredMatch;
+                  });
+
+                  const convertedCount = wonBackList.length > 0
+                    ? wonBackList.reduce((s, item) => s + (Number(item.quantity) || 1), 0)
+                    : (cart.status === 'recovered' || cart.status === 'partial_recovery')
+                    ? (cart.recoveredProducts?.length || cart.itemCount || 1)
+                    : 0;
+
+                  const isAllWon = wonBackList.length > 0 && stillInBagItems.length === 0;
+                  const isPartial = wonBackList.length > 0 && stillInBagItems.length > 0;
+                  const isNewConversion = convertedCount > 0 && !viewedConversions.includes(String(cart.id || cart._id));
+
+                  const statusCfg = isAllWon
                     ? { label: `Won Back (${wonBackList.length})`, icon: CheckCircle2, bg: '#ecfdf5', color: '#059669', border: '#a7f3d0' }
+                    : isPartial
+                    ? { label: `Partial Won (${wonBackList.length})`, icon: CheckCircle2, bg: '#f0fdf4', color: '#059669', border: '#bbf7d0' }
                     : (CART_STATUS_CONFIG[cart.status] || CART_STATUS_CONFIG.pending);
+
                   const StatusIcon = statusCfg.icon;
                   const isOpen = expandedId === cart.id;
                   const isSelected = selectedCartIds.includes(cart.id);
@@ -1018,67 +1130,72 @@ export default function AdminAbandonedCarts() {
 
                         {/* 3. Items in Cart */}
                         <td className={styles.tdCell}>
-                          <div className={styles.itemsCol}>
-                            <div className={styles.thumbsGallery}>
-                              {cart.items.slice(0, 2).map((item, i) => (
-                                <img
-                                  key={i}
-                                  src={item.image}
-                                  alt={item.name}
-                                  className={styles.itemThumbMini}
-                                  onError={(e) => {
-                                    e.target.src = 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300';
-                                  }}
-                                />
-                              ))}
-                              {cart.items.length > 2 && (
-                                <span className={styles.itemCountBadge}>+{cart.items.length - 2}</span>
-                              )}
-                            </div>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              {wonBackList.length > 0 && (
-                                <div style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  fontSize: '0.66rem',
-                                  background: '#ecfdf5',
-                                  color: '#059669',
-                                  border: '1px solid #a7f3d0',
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  fontWeight: 700,
-                                  marginBottom: '3px',
-                                  whiteSpace: 'nowrap',
-                                  maxWidth: '100%',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                }}>
-                                  <Check size={10} strokeWidth={3} />
-                                  Won Back: "{wonBackList[0].name}"
-                                </div>
-                              )}
-                              <div className={styles.primaryItemName} title={cart.items[0]?.name}>
-                                {wonBackList.length > 0 ? `${cart.items.length} in bag: ${cart.items[0]?.name}` : cart.items[0]?.name}
-                              </div>
-                              <div style={{ fontSize: '0.7rem', color: '#7c3aed', fontWeight: 600 }}>
-                                {cart.items[0]?.variant || `Qty: ${cart.items[0]?.quantity}`}
-                              </div>
-                            </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            {(() => {
+                              const displayList = stillInBagItems.length > 0 ? stillInBagItems : wonBackList;
+                              const isWon = stillInBagItems.length === 0 && wonBackList.length > 0;
+                              const totalItems = displayList.length;
+                              const totalQty = displayList.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
+
+                              return (
+                                <>
+                                  <div
+                                    style={{
+                                      fontSize: '0.88rem',
+                                      fontWeight: 800,
+                                      color: isWon ? '#059669' : '#0f172a',
+                                      lineHeight: 1.2,
+                                    }}
+                                    title={displayList.map((i) => `${i.name} (Qty: ${i.quantity || 1})`).join(', ')}
+                                  >
+                                    {totalItems} {totalItems === 1 ? 'Item' : 'Items'}{isWon ? ' (Won)' : ''}
+                                  </div>
+                                  <div style={{ fontSize: '0.74rem', color: isWon ? '#059669' : '#64748b', fontWeight: 600 }}>
+                                    Qty: {totalQty}
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </td>
 
                         {/* 4. Cart Value */}
                         <td className={styles.tdCell}>
                           <div className={styles.cartValueText}>
-                            {formatPrice(cart.totalAmount)}
+                            {formatPrice(stillInBagItems.length > 0 ? stillInBagItems.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0) : 0)}
                           </div>
                           <div className={styles.cartValueSub}>
-                            {cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'}
+                            {stillInBagItems.length > 0
+                              ? `${stillInBagItems.length} ${stillInBagItems.length === 1 ? 'item at-risk' : 'items at-risk'}`
+                              : '0 at-risk (All won back)'}
                           </div>
                         </td>
 
-                        {/* 5. Status Badge */}
+                        {/* 5. Converted Items Count & Status */}
+                        <td className={styles.tdCellCenter}>
+                          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                            {convertedCount > 0 ? (
+                              isNewConversion ? (
+                                <span
+                                  className={styles.convertedBadgeNew}
+                                  title="Newly converted products! Click Manage to review details"
+                                >
+                                  <span className={styles.pulseDot} />
+                                  <span>{convertedCount} {convertedCount === 1 ? 'Product Won' : 'Products Won'}</span>
+                                </span>
+                              ) : (
+                                <span className={styles.convertedBadgeNormal}>
+                                  <Check size={11} style={{ color: '#059669' }} />
+                                  <span>{convertedCount} {convertedCount === 1 ? 'Product' : 'Products'}</span>
+                                </span>
+                              )
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>—</span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* 6. Status Badge */}
                         <td className={styles.tdCellCenter}>
                           <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                             <span
@@ -1142,11 +1259,21 @@ export default function AdminAbandonedCarts() {
                       {/* ── Expandable Details Drawer ── */}
                       {isOpen && (
                         <tr className={styles.expandedRowTr}>
-                          <td colSpan={8} className={styles.expandedColTd}>
+                          <td colSpan={9} className={styles.expandedColTd}>
                             <div className={styles.expandedDrawerWrap}>
                               <div className={styles.expandedGrid}>
                                 {/* CARD 1: ABANDONED ITEMS BREAKDOWN */}
                                 <div className={styles.expandedCard}>
+                                  <div className={styles.cardHeader}>
+                                    <h4 className={styles.cardTitle}>
+                                      <Package size={16} color="#7c3aed" />
+                                      Cart Items & Recovery Breakdown
+                                    </h4>
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, background: '#f8fafc', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '6px' }}>
+                                      ID: #{cart.id}
+                                    </span>
+                                  </div>
+
                                   {/* 🏆 Section 1A: WON BACK / PURCHASED PRODUCTS (CONVERTED BY THIS CUSTOMER) */}
                                   {wonBackList.length > 0 && (
                                     <div style={{
@@ -1224,33 +1351,30 @@ export default function AdminAbandonedCarts() {
                                     </div>
                                   )}
 
-                                  <div className={styles.cardHeader} style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px', paddingBottom: '0.75rem' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '0.75rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                      <h4 className={styles.cardTitle}>
-                                        <Package size={16} color="#7c3aed" />
-                                        {wonBackList.length > 0 ? `Still in Bag (Pending Recovery) (${cart.items.length})` : `Items Left in Bag (${cart.items.length})`}
-                                      </h4>
-                                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, background: '#f8fafc', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '6px' }}>
-                                        ID: #{cart.id}
+                                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <Package size={14} color="#7c3aed" />
+                                        {wonBackList.length > 0 ? `Still in Bag (Pending Recovery) (${stillInBagItems.length})` : `Items Left in Bag (${stillInBagItems.length})`}
                                       </span>
                                     </div>
 
-                                    {cart.items.length > 1 && (
+                                    {stillInBagItems.length > 1 && (
                                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#faf5ff', border: '1px solid #ede9fe', padding: '4px 10px', borderRadius: '8px' }}>
                                         {(() => {
                                           const selectedSkus = selectedProductsPerCart[cart.id] || [];
-                                          const isSubset = selectedSkus.length > 0 && selectedSkus.length < cart.items.length;
-                                          const allSelected = selectedSkus.length === cart.items.length;
+                                          const isSubset = selectedSkus.length > 0 && selectedSkus.length < stillInBagItems.length;
+                                          const allSelected = selectedSkus.length === stillInBagItems.length;
                                           return (
                                             <span style={{ fontSize: '0.72rem', color: '#6d28d9', fontWeight: 600 }}>
-                                              {allSelected ? '✓ All Items Targeted' : isSubset ? `🎯 ${selectedSkus.length} of ${cart.items.length} Targeted` : 'None Targeted'}
+                                              {allSelected ? '✓ All Items Targeted' : isSubset ? `🎯 ${selectedSkus.length} of ${stillInBagItems.length} Targeted` : 'None Targeted'}
                                             </span>
                                           );
                                         })()}
 
                                         <button
                                           type="button"
-                                          onClick={() => toggleSelectAllProducts(cart.id, cart.items.map((i) => i.sku))}
+                                          onClick={() => toggleSelectAllProducts(cart.id, stillInBagItems.map((i) => i.sku))}
                                           style={{
                                             fontSize: '0.7rem',
                                             padding: '2px 8px',
@@ -1264,14 +1388,32 @@ export default function AdminAbandonedCarts() {
                                           }}
                                           title="Toggle select all products"
                                         >
-                                          {(selectedProductsPerCart[cart.id] || []).length === cart.items.length ? 'Deselect All' : 'Select All'}
+                                          {(selectedProductsPerCart[cart.id] || []).length === stillInBagItems.length ? 'Deselect All' : 'Select All'}
                                         </button>
                                       </div>
                                     )}
                                   </div>
 
+                                  {stillInBagItems.length === 0 ? (
+                                    <div style={{
+                                      background: '#f0fdf4',
+                                      border: '1.5px dashed #86efac',
+                                      borderRadius: '10px',
+                                      padding: '1.5rem 1rem',
+                                      textAlign: 'center',
+                                      margin: '0.75rem 0',
+                                    }}>
+                                      <CheckCircle2 size={28} color="#16a34a" style={{ margin: '0 auto 6px auto', display: 'block' }} />
+                                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#15803d' }}>
+                                        All Cart Items Converted!
+                                      </div>
+                                      <div style={{ fontSize: '0.73rem', color: '#16a34a', marginTop: '3px' }}>
+                                        No items remaining in bag. All customer items were successfully purchased.
+                                      </div>
+                                    </div>
+                                  ) : (
                                   <div className={styles.itemListWrap}>
-                                    {cart.items.map((item, idx) => {
+                                    {stillInBagItems.map((item, idx) => {
                                       const isItemRecovered = wonBackList.length === 0 && ((cart.recoveredProducts || []).includes(item.sku) || (cart.recoveredProducts || []).includes(item.name));
                                       const selectedSkus = selectedProductsPerCart[cart.id] || [];
                                       const isSelected = selectedSkus.includes(item.sku);
@@ -1423,27 +1565,34 @@ export default function AdminAbandonedCarts() {
                                       );
                                     })}
                                   </div>
+                                  )}
 
                                   {(() => {
                                     const selectedSkus = selectedProductsPerCart[cart.id] || [];
                                     const targetedItems = getItemsForCartMessage(cart);
                                     const targetedAmount = targetedItems.reduce((s, i) => s + (i.price * i.quantity), 0);
-                                    const isSubset = selectedSkus.length > 0 && selectedSkus.length < cart.items.length;
+                                    const isSubset = selectedSkus.length > 0 && selectedSkus.length < stillInBagItems.length;
 
                                     return (
                                       <div className={styles.totalsBox}>
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                                           <span className={styles.totalLabel}>
-                                            {isSubset ? `Targeted Value (${selectedSkus.length} items)` : 'Total Cart Value'}
+                                            {stillInBagItems.length === 0
+                                              ? 'Total Converted'
+                                              : isSubset
+                                              ? `Targeted Value (${selectedSkus.length} items)`
+                                              : 'Remaining At-Risk Value'}
                                           </span>
-                                          {isSubset && (
+                                          {stillInBagItems.length > 0 && isSubset && (
                                             <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                              Total Bag: {formatPrice(cart.totalAmount)}
+                                              Remaining in Bag: {formatPrice(stillInBagItems.reduce((s, i) => s + (i.price * i.quantity), 0))}
                                             </span>
                                           )}
                                         </div>
                                         <span className={styles.totalAmountVal}>
-                                          {formatPrice(isSubset ? targetedAmount : cart.totalAmount)}
+                                          {stillInBagItems.length === 0
+                                            ? formatPrice(cart.recoveredAmount || wonBackList.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0))
+                                            : formatPrice(isSubset ? targetedAmount : stillInBagItems.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 1)), 0))}
                                         </span>
                                       </div>
                                     );
@@ -1614,7 +1763,7 @@ export default function AdminAbandonedCarts() {
                                               {cart.customer.name} purchased: "{wonBackList[0].name}" {wonBackList.length > 1 ? `(+${wonBackList.length - 1} more)` : ''}
                                             </div>
                                             <div style={{ fontSize: '0.7rem', color: '#059669', marginTop: '1px' }}>
-                                              Order #{wonBackList[0].orderNumber || 'WON-BACK'} • {cart.items.length} {cart.items.length === 1 ? 'item still in bag' : 'items still in bag'}
+                                              Order #{wonBackList[0]?.orderNumber || 'WON-BACK'} • {stillInBagItems.length > 0 ? `${stillInBagItems.length} item(s) still in bag` : 'All items in bag converted & purchased!'}
                                             </div>
                                           </div>
                                         )}
@@ -1626,9 +1775,7 @@ export default function AdminAbandonedCarts() {
                                     const recoveredList = wonBackList.length > 0
                                       ? wonBackList
                                       : cart.items.filter((i) => (cart.recoveredProducts || []).includes(i.sku) || (cart.recoveredProducts || []).includes(i.name));
-                                    const pendingItems = wonBackList.length > 0
-                                      ? cart.items
-                                      : cart.items.filter((i) => !(cart.recoveredProducts || []).includes(i.sku) && !(cart.recoveredProducts || []).includes(i.name));
+                                    const pendingItems = stillInBagItems;
 
                                     return (
                                       <>

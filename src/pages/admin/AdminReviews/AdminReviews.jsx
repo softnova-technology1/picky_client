@@ -331,7 +331,15 @@ export default function AdminReviews() {
 
   return (
     <AdminLayout title="Product Reviews & Ratings Moderation">
-      {/* ─── 0. Top Controls Bar (Duplicate title & subtitle removed) ─── */}
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Product Reviews & Ratings</h1>
+          <p className="admin-page-main-subtitle">Moderate customer reviews, approve photos, and feature top feedback on the storefront</p>
+        </div>
+      </div>
+
+      {/* ─── 0. Top Controls Bar ─── */}
       <div className={styles.topControlBar}>
         <div className={styles.liveStatusPill}>
           <span className={styles.livePulseDot} />

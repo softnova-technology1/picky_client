@@ -3723,10 +3723,8 @@ export default function AdminProducts() {
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
-                Live Store Inventory
-              </h2>
-              
+              <h1 className="admin-page-main-title">Products Catalog</h1>
+              <p className="admin-page-main-subtitle">Manage store products, variants, pricing, and live inventory</p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button

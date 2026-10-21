@@ -59,7 +59,9 @@ export default function AdminLayout({ children, title }) {
   const unreadReviewsCount = useReviewStore((s) => s.unreadCount);
   const markReviewsAsViewed = useReviewStore((s) => s.markReviewsAsViewed);
   const fetchReviews = useReviewStore((s) => s.fetchReviews);
-  const pendingCartsCount = useAbandonedCartStore((s) => s.carts.filter((c) => c.status === 'pending').length);
+  const abandonedBadge = useAbandonedCartStore((s) => s.sidebarBadge);
+  const markCartsAsViewed = useAbandonedCartStore((s) => s.markCartsAsViewed);
+  const fetchAbandonedCarts = useAbandonedCartStore((s) => s.fetchCarts);
   const campaigns = useBroadcastStore((s) => s.campaigns);
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,6 +130,12 @@ export default function AdminLayout({ children, title }) {
   };
 
   useEffect(() => {
+    if (title) {
+      document.title = `${title} | Picky Admin`;
+    }
+  }, [title]);
+
+  useEffect(() => {
     refreshAdminNotifications();
     refreshInquiriesCount();
     const handleStorage = (e) => {
@@ -150,11 +158,13 @@ export default function AdminLayout({ children, title }) {
     window.addEventListener('picky_inquiries_updated', refreshInquiriesCount);
     window.addEventListener('focus', refreshAdminNotifications);
 
+    fetchAbandonedCarts(true);
     // Periodic real-time sync (every 6s when active)
     const pollInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         refreshAdminNotifications();
         refreshInquiriesCount();
+        fetchAbandonedCarts(true);
       }
     }, 6000);
 
@@ -415,6 +425,11 @@ export default function AdminLayout({ children, title }) {
             to={`${ADMIN}/abandoned-carts`}
             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
             title="Abandoned Carts Recovery"
+            onClick={() => {
+              if (abandonedBadge) {
+                markCartsAsViewed();
+              }
+            }}
           >
             <div className="admin-nav-icon-wrap">
               <ShoppingCart size={19} />
@@ -422,9 +437,21 @@ export default function AdminLayout({ children, title }) {
             {!collapsed && (
               <>
                 <span className="admin-nav-label">Abandoned Carts</span>
-                {pendingCartsCount > 0 && (
-                  <span className="admin-nav-badge" style={{ background: '#ef4444', color: '#ffffff' }} title={`${pendingCartsCount} pending recovery alert`}>
-                    {pendingCartsCount}
+                {abandonedBadge && abandonedBadge.count > 0 && (
+                  <span
+                    className="admin-nav-badge"
+                    style={{
+                      background: abandonedBadge.color === 'green' ? '#10b981' : '#ef4444',
+                      color: '#ffffff',
+                      boxShadow: abandonedBadge.color === 'green' ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : '0 0 0 2px rgba(239, 68, 68, 0.25)',
+                    }}
+                    title={
+                      abandonedBadge.color === 'green'
+                        ? `${abandonedBadge.count} product(s) converted from abandoned carts`
+                        : `${abandonedBadge.count} new abandoned cart(s)`
+                    }
+                  >
+                    {abandonedBadge.count}
                   </span>
                 )}
               </>
@@ -708,7 +735,7 @@ export default function AdminLayout({ children, title }) {
       <div className="admin-main">
         {/* ─── Top Navbar with Breathing Room & Quick Actions ─── */}
         <header className="admin-topbar">
-          {/* Left: Sidebar Toggle + Heading + Store Status Badge */}
+          {/* Left: Sidebar Toggle + Global Search Bar + Notifications */}
           <div className="admin-topbar-left">
             <button
               onClick={() => setCollapsed(!collapsed)}
@@ -717,12 +744,6 @@ export default function AdminLayout({ children, title }) {
             >
               <Menu size={18} />
             </button>
-            <div className="admin-topbar-title-wrap">
-              <h2 className="admin-topbar-heading">{title || 'Dashboard Overview'}</h2>
-            </div>
-          </div>
-
-          {/* Center: Global Search Bar (Clean, simple & perfectly aligned) */}
           <div className="admin-topbar-search-wrap" ref={searchContainerRef}>
             <form onSubmit={handleSearchSubmit} className="admin-topbar-search-form">
               <div className="admin-topbar-search-box">
@@ -841,8 +862,120 @@ export default function AdminLayout({ children, title }) {
             )}
           </div>
 
-          {/* Right: Quick Action + Notifications + Profile Chip */}
-          <div className="admin-topbar-right">
+          {/* Notification Bell Dropdown (Beside Search Bar) */}
+          <div
+            className="admin-topbar-notif-wrap"
+            ref={notifRef}
+            onMouseEnter={() => {
+              refreshAdminNotifications();
+              handleNotifMouseEnter();
+            }}
+            onMouseLeave={handleNotifMouseLeave}
+          >
+            <button
+              type="button"
+              className="admin-topbar-notif-btn"
+              onClick={(e) => {
+                refreshAdminNotifications();
+                handleNotifToggle(e);
+              }}
+              title="Notifications (Hover to preview, Click to open)"
+              aria-label="Notifications"
+              aria-expanded={notifOpen}
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && <span className="admin-topbar-notif-dot" />}
+            </button>
+
+            {notifOpen && (
+              <div
+                className="admin-topbar-notif-dropdown"
+                onMouseEnter={handleNotifMouseEnter}
+                onMouseLeave={handleNotifMouseLeave}
+              >
+                <div className="admin-notif-header">
+                  <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e1b4b' }}>
+                    <Bell size={15} style={{ color: '#7025fb' }} /> Notifications
+                  </span>
+                  <span className="admin-notif-badge">
+                    {unreadCount > 0 ? `${unreadCount} New` : 'All caught up'}
+                  </span>
+                </div>
+
+                <div className="admin-notif-list">
+                  {displayNotifs.length > 0 ? (
+                    displayNotifs.map((n) => {
+                      const isContact = n.type === 'contact';
+                      const dotColor = isContact ? '#7c3aed' : (n.type === 'inventory' ? '#f59e0b' : (n.type === 'coupon' ? '#10b981' : '#7025fb'));
+                      return (
+                        <div
+                          key={n.id}
+                          className="admin-notif-item"
+                          onClick={() => {
+                            if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+                            setNotifOpen(false);
+                            navigate(n.link || `${ADMIN}/notifications`);
+                          }}
+                        >
+                          <span className="admin-notif-dot-active" style={{ background: dotColor }} />
+                          <div className="admin-notif-content">
+                            <div className="admin-notif-title" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>{n.title}</span>
+                              {(n.hasAttachment || n.metadata?.hasAttachment) && (
+                                <span style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', background: '#ede9fe', color: '#6d28d9', fontWeight: 600 }}>
+                                  📎 File
+                                </span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
+                              {n.message}
+                            </span>
+                            <span className="admin-notif-time">{n.relativeTime || n.time || 'Recent'}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+                      No new notifications
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-notif-footer">
+                  <button
+                    type="button"
+                    className="admin-notif-view-all"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+                      setNotifOpen(false);
+                      navigate(`${ADMIN}/notifications`);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      width: '100%',
+                      cursor: 'pointer',
+                      padding: '0.35rem 0.5rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Show More Notifications & Settings →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Quick Action + Profile Chip */}
+        <div className="admin-topbar-right">
             {/* Quick Actions Button with High Z-Index Luxury Dropdown */}
             <div className="admin-quick-add-wrap admin-quick-actions-wrap" ref={quickAddRef}>
               <button
@@ -958,116 +1091,7 @@ export default function AdminLayout({ children, title }) {
               )}
             </div>
 
-            {/* Notification Bell Dropdown (Hover & Click with Real-Time Synced Notifications) */}
-            <div
-              className="admin-topbar-notif-wrap"
-              ref={notifRef}
-              onMouseEnter={() => {
-                refreshAdminNotifications();
-                handleNotifMouseEnter();
-              }}
-              onMouseLeave={handleNotifMouseLeave}
-            >
-              <button
-                type="button"
-                className="admin-topbar-notif-btn"
-                onClick={(e) => {
-                  refreshAdminNotifications();
-                  handleNotifToggle(e);
-                }}
-                title="Notifications (Hover to preview, Click to open)"
-                aria-label="Notifications"
-                aria-expanded={notifOpen}
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && <span className="admin-topbar-notif-dot" />}
-              </button>
 
-              {notifOpen && (
-                <div
-                  className="admin-topbar-notif-dropdown"
-                  onMouseEnter={handleNotifMouseEnter}
-                  onMouseLeave={handleNotifMouseLeave}
-                >
-                  <div className="admin-notif-header">
-                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e1b4b' }}>
-                      <Bell size={15} style={{ color: '#7025fb' }} /> Notifications
-                    </span>
-                    <span className="admin-notif-badge">
-                      {unreadCount > 0 ? `${unreadCount} New` : 'All caught up'}
-                    </span>
-                  </div>
-
-                  <div className="admin-notif-list">
-                    {displayNotifs.length > 0 ? (
-                      displayNotifs.map((n) => {
-                        const isContact = n.type === 'contact';
-                        const dotColor = isContact ? '#7c3aed' : (n.type === 'inventory' ? '#f59e0b' : (n.type === 'coupon' ? '#10b981' : '#7025fb'));
-                        return (
-                          <div
-                            key={n.id}
-                            className="admin-notif-item"
-                            onClick={() => {
-                              if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-                              setNotifOpen(false);
-                              navigate(n.link || `${ADMIN}/notifications`);
-                            }}
-                          >
-                            <span className="admin-notif-dot-active" style={{ background: dotColor }} />
-                            <div className="admin-notif-content">
-                              <div className="admin-notif-title" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span>{n.title}</span>
-                                {(n.hasAttachment || n.metadata?.hasAttachment) && (
-                                  <span style={{ fontSize: '0.68rem', padding: '1px 5px', borderRadius: '4px', background: '#ede9fe', color: '#6d28d9', fontWeight: 600 }}>
-                                    📎 File
-                                  </span>
-                                )}
-                              </div>
-                              <span style={{ fontSize: '0.73rem', color: '#64748b', display: 'block', marginTop: '2px', lineHeight: 1.3 }}>
-                                {n.message}
-                              </span>
-                              <span className="admin-notif-time">{n.relativeTime || n.time || 'Recent'}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
-                        No new notifications
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="admin-notif-footer">
-                    <button
-                      type="button"
-                      className="admin-notif-view-all"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-                        setNotifOpen(false);
-                        navigate(`${ADMIN}/notifications`);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        width: '100%',
-                        cursor: 'pointer',
-                        padding: '0.35rem 0.5rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.35rem',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      Show More Notifications & Settings →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Profile Chip & Enhanced Dropdown with Breathing Room */}
             <div className="admin-topbar-profile-wrap" ref={dropdownRef}>

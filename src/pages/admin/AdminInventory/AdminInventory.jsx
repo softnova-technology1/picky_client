@@ -884,6 +884,14 @@ export default function AdminInventory() {
 
   return (
     <AdminLayout title="Inventory & Stock Management">
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Inventory & Stock Management</h1>
+          <p className="admin-page-main-subtitle">Monitor live product stock levels, set low-stock thresholds, and manage warehouse availability</p>
+        </div>
+      </div>
+
       {/* ─── 5 Clickable Top KPI Cards (Matching SubCategories Progress Blueprint) ──────── */}
       <div className="kpi-progress-grid">
         <AdminStatCard

@@ -364,6 +364,14 @@ export default function AdminReturns() {
 
   return (
     <AdminLayout title="Returns & Refunds Management">
+      {/* ── Page Header ── */}
+      <div className="admin-page-header-row">
+        <div>
+          <h1 className="admin-page-main-title">Returns & Refunds</h1>
+          <p className="admin-page-main-subtitle">Track customer return requests, reverse pickup inspections and refund approvals</p>
+        </div>
+      </div>
+
       {/* ── 1. Top 5 Universal Metric KPI Progress Cards ── */}
       <div className={styles.kpiGrid}>
         <AdminStatCard

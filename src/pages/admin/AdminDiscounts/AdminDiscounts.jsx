@@ -766,20 +766,9 @@ export default function AdminDiscounts() {
           }}
         >
           <div>
-            <h1
-              style={{
-                fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
-                fontSize: '1.9rem',
-                fontWeight: 700,
-                color: '#111827',
-                margin: 0,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Discounts
-            </h1>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.86rem', color: '#64748b' }}>
-              Manage product discounts &amp; offers
+            <h1 className="admin-page-main-title">Discounts & Promotions</h1>
+            <p className="admin-page-main-subtitle">
+              Manage product discounts, percentage sales &amp; special offers
             </p>
           </div>
 
