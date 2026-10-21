@@ -272,6 +272,13 @@ export default function ProductDetail() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [slug]);
 
+  const productTagInfo = useMemo(() => {
+    if (!product) return null;
+    const rawTag = extractProductTag(product);
+    if (!rawTag) return null;
+    return getTagDesign(rawTag);
+  }, [product]);
+
   if (loading && !product) {
     return (
       <PageWrapper>
@@ -368,12 +375,6 @@ export default function ProductDetail() {
 
   const currentPrice = product.discountPrice || product.price || 231;
   const originalPrice = product.price && product.discountPrice ? product.price : Math.round(currentPrice * 1.25);
-  const productTagInfo = useMemo(() => {
-    const rawTag = extractProductTag(product);
-    if (!rawTag) return null;
-    return getTagDesign(rawTag);
-  }, [product]);
-
   const TagIconComponent = productTagInfo?.icon;
   const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
 

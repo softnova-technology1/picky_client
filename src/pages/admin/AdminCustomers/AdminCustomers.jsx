@@ -31,6 +31,20 @@ import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDateShort } from '../../../utils/formatDate';
 
+const WhatsAppIcon = ({ size = 16, color = '#16a34a', className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, color }}
+  >
+    <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.98-.276-.1-.476-.15-.676.15-.2.3-.777.98-.952 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.175-.301-.019-.464.131-.614.136-.135.301-.351.452-.527.15-.175.2-.301.301-.501.101-.2.05-.376-.025-.526-.075-.15-.676-1.63-.926-2.232-.244-.587-.492-.507-.676-.516l-.577-.01c-.2 0-.526.075-.802.376-.276.301-1.053 1.029-1.053 2.51 0 1.48 1.078 2.91 1.228 3.111.15.2 2.122 3.24 5.141 4.544.718.31 1.279.495 1.716.634.721.23 1.378.197 1.897.12.578-.087 1.78-.727 2.031-1.429.25-.702.25-1.304.175-1.429-.075-.126-.275-.201-.576-.351z" />
+    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.502 3.58 1.378 5.08L2 22l5.068-1.33A9.95 9.95 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18.06c-1.62 0-3.13-.48-4.4-1.3l-.315-.205-3.003.788.802-2.928-.21-.334A8.028 8.028 0 0 1 3.94 12c0-4.445 3.615-8.06 8.06-8.06 4.445 0 8.06 3.615 8.06 8.06 0 4.445-3.615 8.06-8.06 8.06z" />
+  </svg>
+);
+
 // ─── Customer Tier Classification Constant ──────────────────────────────────
 export const CUSTOMER_TIERS = {
   VIP: {
@@ -1534,16 +1548,15 @@ export default function AdminCustomers() {
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.35rem',
-                              padding: '0.38rem 0.8rem',
+                              justifyContent: 'center',
+                              width: '32px',
+                              height: '32px',
                               borderRadius: '8px',
                               border: '1.5px solid #22c55e',
                               background: '#ffffff',
                               color: '#16a34a',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              textDecoration: 'none',
                               transition: 'all 0.15s ease',
+                              boxShadow: '0 1px 2px rgba(34, 197, 94, 0.08)',
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = '#f0fdf4';
@@ -1555,8 +1568,7 @@ export default function AdminCustomers() {
                             }}
                             title={`Chat with ${c.name} on WhatsApp`}
                           >
-                            <MessageCircle size={14} color="#16a34a" />
-                            <span>Chat WhatsApp</span>
+                            <WhatsAppIcon size={16} color="#16a34a" />
                           </a>
 
                           <button
@@ -2043,7 +2055,7 @@ export default function AdminCustomers() {
                     e.currentTarget.style.borderColor = '#22c55e';
                   }}
                 >
-                  <MessageCircle size={15} color="#16a34a" />
+                  <WhatsAppIcon size={16} color="#16a34a" />
                   <span>Chat WhatsApp</span>
                 </a>
               </div>

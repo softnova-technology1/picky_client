@@ -1556,13 +1556,13 @@ export default function Checkout() {
 
               {/* ── STEP 2: ADDRESS REVIEW & SECURE PAYMENT ── */}
               {checkoutStep === 2 && (
-                <div className={styles['step-content-box']}>
+                <div className={`${styles['step-content-box']} ${styles['step-payment-content-box']}`}>
                   
                   {/* 1. Delivery & Contact Information Summary Card */}
                   <div className={styles['address-summary-card']}>
                     <div className={styles['address-card-header']}>
                       <h3 className={styles['address-card-title']}>
-                        <MapPin size={17} style={{ color: '#8b5cf6' }} /> Delivery & Contact Information
+                        <MapPin size={18} style={{ color: '#8b5cf6' }} /> Delivery & Contact Information
                       </h3>
                       <button
                         type="button"
@@ -1616,45 +1616,6 @@ export default function Checkout() {
                           </span>
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                  {/* 2. Ultra-Neat Instant Payment & Security Banner */}
-                  <div className={styles['payment-gateway-card']}>
-                    <div className={styles['gateway-card-header']}>
-                      <div className={styles['gateway-icon-badge']}>
-                        <Lock size={18} />
-                      </div>
-                      <div className={styles['gateway-header-text']}>
-                        <h4 className={styles['gateway-title']}>Instant & Encrypted Payment</h4>
-                        <p className={styles['gateway-subtitle']}>
-                          Powered by Razorpay with 256-bit SSL bank-grade encryption
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className={styles['gateway-features-grid']}>
-                      <div className={styles['gateway-feature-pill']}>
-                        <QrCode size={15} className={styles['feature-icon']} />
-                        <span>GPay / PhonePe / Paytm UPI</span>
-                      </div>
-                      <div className={styles['gateway-feature-pill']}>
-                        <CreditCard size={15} className={styles['feature-icon']} />
-                        <span>Visa, Mastercard & RuPay</span>
-                      </div>
-                      <div className={styles['gateway-feature-pill']}>
-                        <Building2 size={15} className={styles['feature-icon']} />
-                        <span>Net Banking (50+ Banks)</span>
-                      </div>
-                      <div className={styles['gateway-feature-pill']}>
-                        <ShieldCheck size={15} className={styles['feature-icon']} />
-                        <span>100% Refund Protection</span>
-                      </div>
-                    </div>
-
-                    <div className={styles['gateway-footer-note']}>
-                      <ShieldCheck size={15} style={{ color: '#10b981', flexShrink: 0 }} />
-                      <span>Click <strong>Complete Order 🔒</strong> to open the secure payment portal.</span>
                     </div>
                   </div>
 
@@ -1762,48 +1723,50 @@ export default function Checkout() {
                     })}
                   </div>
 
-                  {/* Have a Promo / Coupon Code? Dotted Box */}
-                  <div className={styles['promo-box-container']}>
-                    <div className={styles['promo-header']}>
-                      <Tag size={16} className={styles['promo-tag-icon']} />
-                      <span>Have a Promo / Coupon Code?</span>
-                    </div>
-
-                    {coupon ? (
-                      <div className={styles['promo-applied-bar']}>
-                        <span className={styles['applied-code']}>
-                          Coupon <strong>{coupon}</strong> (-{formatPrice(couponDiscount)})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleRemovePromo}
-                          className={styles['btn-remove-coupon']}
-                        >
-                          Remove
-                        </button>
+                  {/* Have a Promo / Coupon Code? Dotted Box (Only on CHECKOUT step, hidden on PAYMENT step) */}
+                  {checkoutStep === 1 && (
+                    <div className={styles['promo-box-container']}>
+                      <div className={styles['promo-header']}>
+                        <Tag size={16} className={styles['promo-tag-icon']} />
+                        <span>Have a Promo / Coupon Code?</span>
                       </div>
-                    ) : (
-                      <form onSubmit={handleApplyPromo} className={styles['promo-form']}>
-                        <input
-                          type="text"
-                          value={promoCodeInput}
-                          onChange={(e) => {
-                            setPromoCodeInput(e.target.value);
-                            setPromoError('');
-                          }}
-                          placeholder="ENTER PROMO CODE"
-                          className={styles['promo-input']}
-                        />
-                        <button type="submit" className={styles['btn-apply-promo']}>
-                          Apply
-                        </button>
-                      </form>
-                    )}
 
-                    {promoError && (
-                      <div className={styles['promo-error-text']}>{promoError}</div>
-                    )}
-                  </div>
+                      {coupon ? (
+                        <div className={styles['promo-applied-bar']}>
+                          <span className={styles['applied-code']}>
+                            Coupon <strong>{coupon}</strong> (-{formatPrice(couponDiscount)})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRemovePromo}
+                            className={styles['btn-remove-coupon']}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleApplyPromo} className={styles['promo-form']}>
+                          <input
+                            type="text"
+                            value={promoCodeInput}
+                            onChange={(e) => {
+                              setPromoCodeInput(e.target.value);
+                              setPromoError('');
+                            }}
+                            placeholder="ENTER PROMO CODE"
+                            className={styles['promo-input']}
+                          />
+                          <button type="submit" className={styles['btn-apply-promo']}>
+                            Apply
+                          </button>
+                        </form>
+                      )}
+
+                      {promoError && (
+                        <div className={styles['promo-error-text']}>{promoError}</div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Breakdown Costs */}
                   <div className={styles['pricing-breakdown']}>

@@ -21,9 +21,7 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   const [imgFailed, setImgFailed] = useState(false);
   const [now, setNow] = useState(Date.now());
 
-  if (!product) return null;
-
-  const endDateRaw = product.offerEndDate || product.validTill || product.endDate;
+  const endDateRaw = product?.offerEndDate || product?.validTill || product?.endDate;
 
   // Active ticking timer for offers with end dates
   useEffect(() => {
@@ -34,15 +32,47 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     return () => clearInterval(interval);
   }, [endDateRaw]);
 
-  const inWishlist = isInWishlist(product._id || product.id || product.slug);
-
   const primaryImage = useMemo(() => {
+    if (!product) return '';
     if (Array.isArray(product.images) && product.images.length > 0) {
       const valid = product.images.find(Boolean);
       if (valid) return valid;
     }
     return product.image || '';
-  }, [product.images, product.image]);
+  }, [product?.images, product?.image]);
+
+  const isDiscountValid = useMemo(() => {
+    if (!product || product.isDiscountActive === false) return false;
+    const hasDiscPrice = product.discountPrice !== undefined && product.discountPrice !== null && product.discountPrice < product.price;
+    if (!hasDiscPrice) return false;
+
+    if (product.isDiscountActive) {
+      if (product.offerStartDate && !isNaN(new Date(product.offerStartDate).getTime())) {
+        if (new Date(product.offerStartDate).getTime() > now) return false;
+      }
+      if (endDateRaw && !isNaN(new Date(endDateRaw).getTime())) {
+        if (new Date(endDateRaw).getTime() < now) return false;
+      }
+    }
+    return true;
+  }, [product?.isDiscountActive, product?.discountPrice, product?.price, product?.offerStartDate, endDateRaw, now]);
+
+  const shortDesc = useMemo(() => {
+    if (!product) return '';
+    const raw = product.shortDescription || product.description || '';
+    if (!raw) return '';
+    return typeof raw === 'string' ? raw.replace(/<[^>]*>/g, '').trim() : '';
+  }, [product?.shortDescription, product?.description]);
+
+  if (!product) return null;
+
+  const inWishlist = isInWishlist(product._id || product.id || product.slug);
+  const currentPrice = isDiscountValid ? product.discountPrice : product.price;
+  const originalPrice = product.price;
+  const hasDiscount = isDiscountValid;
+  const discountPercent = hasDiscount
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+    : 0;
 
   const handleQuickAdd = (e) => {
     e.preventDefault();
@@ -104,19 +134,6 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
       'info'
     );
   };
-
-  const currentPrice = product.discountPrice || product.price;
-  const originalPrice = product.price;
-  const hasDiscount = product.discountPrice && product.discountPrice < product.price;
-  const discountPercent = hasDiscount
-    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-    : 0;
-
-  const shortDesc = useMemo(() => {
-    const raw = product.shortDescription || product.description || '';
-    if (!raw) return '';
-    return typeof raw === 'string' ? raw.replace(/<[^>]*>/g, '').trim() : '';
-  }, [product.shortDescription, product.description]);
 
   const getBadgeInfo = () => {
     // 1. If discount is active and an offerLabel is configured, display offerLabel (or 30m countdown timer)
