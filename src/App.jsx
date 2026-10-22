@@ -63,6 +63,7 @@ const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 import { useEffect } from 'react';
 import { useCustomizationStore } from './store/customizationStore';
 import { adminService } from './services/admin.service';
+import { settingsService } from './services/settings.service';
 import { useCategoryStore } from './store/categoryStore';
 
 export default function App() {
@@ -88,6 +89,7 @@ export default function App() {
 
     // 1. Initial fetch on mount
     fetchLatestCustomizations();
+    settingsService.getSettings().catch(() => {});
 
     // 2. Fetch real DB categories for frontend navigation
     useCategoryStore.getState().fetchCategories();

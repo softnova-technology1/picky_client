@@ -11,9 +11,19 @@ const api = axios.create({
 // Helper: check if request belongs to admin operations
 function isRequestForAdmin(config) {
   const url = config?.url || '';
+  const method = (config?.method || 'get').toLowerCase();
   if (url.includes('/admin')) return true;
-  if (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/softpicky-sn2026')) {
-    return true;
+  if (url.startsWith('/settings') && method !== 'get') return true;
+  if (url.startsWith('/categories') && method !== 'get') return true;
+  if (url.startsWith('/subcategories') && method !== 'get') return true;
+  if (url.startsWith('/products') && method !== 'get') return true;
+  if (url.startsWith('/coupons') && method !== 'get') return true;
+  if (url.startsWith('/discounts') && method !== 'get') return true;
+  if (typeof window !== 'undefined') {
+    const path = window.location?.pathname || '';
+    if (path.startsWith('/softpicky-sn2026') || path.startsWith('/admin')) {
+      return true;
+    }
   }
   return false;
 }

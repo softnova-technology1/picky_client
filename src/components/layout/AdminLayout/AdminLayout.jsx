@@ -48,12 +48,20 @@ import { productService } from '../../../services/product.service';
 import { contactService } from '../../../services/contact.service';
 import Toast from '../../ui/Toast';
 import '../../../styles/admin.css';
+import { useAdminIdleTimeout } from '../../../hooks/useAdminIdleTimeout';
 
 const ADMIN = '/softpicky-sn2026';
 
 export default function AdminLayout({ children, title }) {
+  useAdminIdleTimeout();
   const { adminUser: user, logout } = useAdminAuthStore();
-  const { showToast } = useUiStore();
+  const {
+    showToast,
+    adminSidebarCollapsed: collapsed,
+    toggleAdminSidebar,
+    adminSidebarPages,
+  } = useUiStore();
+  const isPageVisible = (key) => adminSidebarPages?.[key] !== false;
   const { categories, fetchCategories } = useCategoryStore();
   const pendingReturnsCount = useReturnStore((s) => s.returns.filter((r) => r.status === 'pending').length);
   const unreadReviewsCount = useReviewStore((s) => s.unreadCount);
@@ -68,7 +76,6 @@ export default function AdminLayout({ children, title }) {
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState(null);
@@ -375,309 +382,363 @@ export default function AdminLayout({ children, title }) {
         {/* Navigation List - Structured SaaS Luxury Sidebar */}
         <nav className="admin-sidebar-nav">
           {/* ── OVERVIEW ── */}
-          {!collapsed && <div className="admin-nav-section-title">Overview</div>}
-          <NavLink
-            to={ADMIN}
-            end
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Dashboard"
-          >
-            <div className="admin-nav-icon-wrap">
-              <LayoutDashboard size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Dashboard</span>}
-          </NavLink>
+          {isPageVisible('dashboard') && (
+            <>
+              {!collapsed && <div className="admin-nav-section-title">Overview</div>}
+              <NavLink
+                to={ADMIN}
+                end
+                className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                title="Dashboard"
+              >
+                <div className="admin-nav-icon-wrap">
+                  <LayoutDashboard size={19} />
+                </div>
+                {!collapsed && <span className="admin-nav-label">Dashboard</span>}
+              </NavLink>
+            </>
+          )}
 
           {/* ── SALES & FULFILLMENT ── */}
-          {!collapsed && <div className="admin-nav-section-title">Sales & Fulfillment</div>}
-          <NavLink
-            to={`${ADMIN}/orders`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Orders"
-          >
-            <div className="admin-nav-icon-wrap">
-              <ShoppingBag size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Orders</span>}
-          </NavLink>
+          {(isPageVisible('orders') || isPageVisible('returns') || isPageVisible('abandonedCarts')) && (
+            <>
+              {!collapsed && <div className="admin-nav-section-title">Sales & Fulfillment</div>}
+              {isPageVisible('orders') && (
+                <NavLink
+                  to={`${ADMIN}/orders`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Orders"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <ShoppingBag size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Orders</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/returns`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Returns & Refunds"
-          >
-            <div className="admin-nav-icon-wrap">
-              <RotateCcw size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">Returns & Refunds</span>
-                {pendingReturnsCount > 0 && (
-                  <span className="admin-nav-badge" title={`${pendingReturnsCount} pending review`}>
-                    {pendingReturnsCount}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+              {isPageVisible('returns') && (
+                <NavLink
+                  to={`${ADMIN}/returns`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Returns & Refunds"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <RotateCcw size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Returns & Refunds</span>
+                      {pendingReturnsCount > 0 && (
+                        <span className="admin-nav-badge" title={`${pendingReturnsCount} pending review`}>
+                          {pendingReturnsCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/abandoned-carts`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Abandoned Carts Recovery"
-            onClick={() => {
-              if (abandonedBadge) {
-                markCartsAsViewed();
-              }
-            }}
-          >
-            <div className="admin-nav-icon-wrap">
-              <ShoppingCart size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">Abandoned Carts</span>
-                {abandonedBadge && abandonedBadge.count > 0 && (
-                  <span
-                    className="admin-nav-badge"
-                    style={{
-                      background: abandonedBadge.color === 'green' ? '#10b981' : '#ef4444',
-                      color: '#ffffff',
-                      boxShadow: abandonedBadge.color === 'green' ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : '0 0 0 2px rgba(239, 68, 68, 0.25)',
-                    }}
-                    title={
-                      abandonedBadge.color === 'green'
-                        ? `${abandonedBadge.count} product(s) converted from abandoned carts`
-                        : `${abandonedBadge.count} new abandoned cart(s)`
+              {isPageVisible('abandonedCarts') && (
+                <NavLink
+                  to={`${ADMIN}/abandoned-carts`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Abandoned Carts Recovery"
+                  onClick={() => {
+                    if (abandonedBadge) {
+                      markCartsAsViewed();
                     }
-                  >
-                    {abandonedBadge.count}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+                  }}
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <ShoppingCart size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Abandoned Carts</span>
+                      {abandonedBadge && abandonedBadge.count > 0 && (
+                        <span
+                          className="admin-nav-badge"
+                          style={{
+                            background: abandonedBadge.color === 'green' ? '#10b981' : '#ef4444',
+                            color: '#ffffff',
+                            boxShadow: abandonedBadge.color === 'green' ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : '0 0 0 2px rgba(239, 68, 68, 0.25)',
+                          }}
+                          title={
+                            abandonedBadge.color === 'green'
+                              ? `${abandonedBadge.count} product(s) converted from abandoned carts`
+                              : `${abandonedBadge.count} new abandoned cart(s)`
+                          }
+                        >
+                          {abandonedBadge.count}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )}
+            </>
+          )}
 
           {/* ── CATALOG & STOCK ── */}
-          {!collapsed && <div className="admin-nav-section-title">Catalog & Stock</div>}
-          <NavLink
-            to={`${ADMIN}/products`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Products"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Package size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Products</span>}
-          </NavLink>
+          {(isPageVisible('products') || isPageVisible('categories') || isPageVisible('subcategories') || isPageVisible('inventory') || isPageVisible('reviews')) && (
+            <>
+              {!collapsed && <div className="admin-nav-section-title">Catalog & Stock</div>}
+              {isPageVisible('products') && (
+                <NavLink
+                  to={`${ADMIN}/products`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Products"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Package size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Products</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/categories`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Categories"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Layers size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Categories</span>}
-          </NavLink>
+              {isPageVisible('categories') && (
+                <NavLink
+                  to={`${ADMIN}/categories`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Categories"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Layers size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Categories</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/subcategories`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Sub-Categories"
-          >
-            <div className="admin-nav-icon-wrap">
-              <FolderTree size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Sub-Categories</span>}
-          </NavLink>
+              {isPageVisible('subcategories') && (
+                <NavLink
+                  to={`${ADMIN}/subcategories`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Sub-Categories"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <FolderTree size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Sub-Categories</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/inventory`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Inventory"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Boxes size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Inventory</span>}
-          </NavLink>
+              {isPageVisible('inventory') && (
+                <NavLink
+                  to={`${ADMIN}/inventory`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Inventory"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Boxes size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Inventory</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/reviews`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Product Reviews & Ratings"
-            onClick={() => {
-              markReviewsAsViewed();
-            }}
-          >
-            <div className="admin-nav-icon-wrap">
-              <Star size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">Reviews & Ratings</span>
-                {unreadReviewsCount > 0 && location.pathname !== `${ADMIN}/reviews` && (
-                  <span
-                    className="admin-nav-badge notif-pulse"
-                    title={`${unreadReviewsCount} new unread review${unreadReviewsCount > 1 ? 's' : ''}`}
-                  >
-                    {unreadReviewsCount}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+              {isPageVisible('reviews') && (
+                <NavLink
+                  to={`${ADMIN}/reviews`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Product Reviews & Ratings"
+                  onClick={() => {
+                    markReviewsAsViewed();
+                  }}
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Star size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Reviews & Ratings</span>
+                      {unreadReviewsCount > 0 && location.pathname !== `${ADMIN}/reviews` && (
+                        <span
+                          className="admin-nav-badge notif-pulse"
+                          title={`${unreadReviewsCount} new unread review${unreadReviewsCount > 1 ? 's' : ''}`}
+                        >
+                          {unreadReviewsCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )}
+            </>
+          )}
 
           {/* ── CUSTOMERS & OFFERS ── */}
-          {!collapsed && <div className="admin-nav-section-title">Customers & Offers</div>}
-          <NavLink
-            to={`${ADMIN}/customers`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Users & Customers"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Users size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Users / Customers</span>}
-          </NavLink>
-
-          <NavLink
-            to={`${ADMIN}/coupons`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Coupons & Promo Codes"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Tag size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Coupons</span>}
-          </NavLink>
-
-          <NavLink
-            to={`${ADMIN}/discounts`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Automatic Cart Discounts"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Percent size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Discounts</span>}
-          </NavLink>
-
-          <NavLink
-            to={`${ADMIN}/broadcast`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="WhatsApp Broadcast & Marketing Center"
-          >
-            <div className="admin-nav-icon-wrap">
-              <MessageCircle size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">WhatsApp Broadcast</span>
-                <span
-                  className="admin-nav-badge"
-                  style={{ background: '#059669', color: '#ffffff', fontSize: '0.66rem' }}
-                  title="Meta Cloud API Connected"
+          {(isPageVisible('customers') || isPageVisible('coupons') || isPageVisible('discounts') || isPageVisible('broadcast') || isPageVisible('flashSales') || isPageVisible('inquiries')) && (
+            <>
+              {!collapsed && <div className="admin-nav-section-title">Customers & Offers</div>}
+              {isPageVisible('customers') && (
+                <NavLink
+                  to={`${ADMIN}/customers`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Users & Customers"
                 >
-                  LIVE
-                </span>
-              </>
-            )}
-          </NavLink>
+                  <div className="admin-nav-icon-wrap">
+                    <Users size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Users / Customers</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/flash-sales`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Flash Sales & Festival Campaigns"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Flame size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">Flash Sales & Events</span>
-                <span
-                  className="admin-nav-badge"
-                  style={{ background: '#dc2626', color: '#ffffff', fontSize: '0.66rem' }}
-                  title="Active Flash Deals"
+              {isPageVisible('coupons') && (
+                <NavLink
+                  to={`${ADMIN}/coupons`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Coupons & Promo Codes"
                 >
-                  HOT
-                </span>
-              </>
-            )}
-          </NavLink>
+                  <div className="admin-nav-icon-wrap">
+                    <Tag size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Coupons</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/inquiries`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Customer Inquiries (Homepage and Contact Page)"
-          >
-            <div className="admin-nav-icon-wrap">
-              <MessageSquareText size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">Inquiries</span>
-                {unreadInquiriesCount > 0 && (
-                  <span
-                    className="admin-nav-badge notif-pulse"
-                    title={`${unreadInquiriesCount} unread customer inquir${unreadInquiriesCount > 1 ? 'ies' : 'y'}`}
-                  >
-                    {unreadInquiriesCount}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+              {isPageVisible('discounts') && (
+                <NavLink
+                  to={`${ADMIN}/discounts`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Automatic Cart Discounts"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Percent size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Discounts</span>}
+                </NavLink>
+              )}
+
+              {isPageVisible('broadcast') && (
+                <NavLink
+                  to={`${ADMIN}/broadcast`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="WhatsApp Broadcast & Marketing Center"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <MessageCircle size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">WhatsApp Broadcast</span>
+                      <span
+                        className="admin-nav-badge"
+                        style={{ background: '#059669', color: '#ffffff', fontSize: '0.66rem' }}
+                        title="Meta Cloud API Connected"
+                      >
+                        LIVE
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+              )}
+
+              {isPageVisible('flashSales') && (
+                <NavLink
+                  to={`${ADMIN}/flash-sales`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Flash Sales & Festival Campaigns"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Flame size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Flash Sales & Events</span>
+                      <span
+                        className="admin-nav-badge"
+                        style={{ background: '#dc2626', color: '#ffffff', fontSize: '0.66rem' }}
+                        title="Active Flash Deals"
+                      >
+                        HOT
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+              )}
+
+              {isPageVisible('inquiries') && (
+                <NavLink
+                  to={`${ADMIN}/inquiries`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Customer Inquiries (Homepage and Contact Page)"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <MessageSquareText size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Inquiries</span>
+                      {unreadInquiriesCount > 0 && (
+                        <span
+                          className="admin-nav-badge notif-pulse"
+                          title={`${unreadInquiriesCount} unread customer inquir${unreadInquiriesCount > 1 ? 'ies' : 'y'}`}
+                        >
+                          {unreadInquiriesCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )}
+            </>
+          )}
 
           {/* ── STOREFRONT & SYSTEM ── */}
-          {!collapsed && <div className="admin-nav-section-title">Storefront & System</div>}
-          <NavLink
-            to={`${ADMIN}/customization`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Store Customization"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Palette size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Customization (CMS)</span>}
-          </NavLink>
+          {(isPageVisible('customization') || isPageVisible('notifications') || isPageVisible('settings')) && (
+            <>
+              {!collapsed && <div className="admin-nav-section-title">Storefront & System</div>}
+              {isPageVisible('customization') && (
+                <NavLink
+                  to={`${ADMIN}/customization`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Store Customization"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Palette size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Customization (CMS)</span>}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/notifications`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Notifications & Activity Feed"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Bell size={19} />
-            </div>
-            {!collapsed && (
-              <>
-                <span className="admin-nav-label">Notifications</span>
-                {unreadCount > 0 && (
-                  <span
-                    className="admin-nav-badge notif-pulse"
-                    title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
-                  >
-                    {unreadCount}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+              {isPageVisible('notifications') && (
+                <NavLink
+                  to={`${ADMIN}/notifications`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Notifications & Activity Feed"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Bell size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span
+                          className="admin-nav-badge notif-pulse"
+                          title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
+                        >
+                          {unreadCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )}
 
-          <NavLink
-            to={`${ADMIN}/settings`}
-            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-            title="Store Settings"
-          >
-            <div className="admin-nav-icon-wrap">
-              <Settings size={19} />
-            </div>
-            {!collapsed && <span className="admin-nav-label">Settings</span>}
-          </NavLink>
+              {isPageVisible('settings') && (
+                <NavLink
+                  to={`${ADMIN}/settings`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Store Settings"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Settings size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Settings</span>}
+                </NavLink>
+              )}
+            </>
+          )}
         </nav>
 
         {/* ─── Bottom View Customer Store Section ─── */}
@@ -738,9 +799,10 @@ export default function AdminLayout({ children, title }) {
           {/* Left: Sidebar Toggle + Global Search Bar + Notifications */}
           <div className="admin-topbar-left">
             <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="admin-toggle-sidebar-btn"
-              title="Toggle Sidebar"
+              onClick={toggleAdminSidebar}
+              className={`admin-toggle-sidebar-btn ${collapsed ? 'active' : ''}`}
+              title={collapsed ? 'Expand Sidebar (290px)' : 'Collapse Sidebar (Mini 80px)'}
+              aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               <Menu size={18} />
             </button>

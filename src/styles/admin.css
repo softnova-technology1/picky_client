@@ -570,8 +570,15 @@
 }
 
 /* Collapsed Mode Sidebar Adjustments */
+.admin-layout .admin-sidebar.collapsed {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
 .admin-layout .admin-sidebar.collapsed .admin-sidebar-header {
   padding: 0.85rem 0.5rem 0.7rem;
+  justify-content: center;
 }
 
 .admin-layout .admin-sidebar.collapsed .admin-sidebar-nav {
@@ -583,6 +590,8 @@
   padding: 0.42rem;
   justify-content: center;
   width: 44px;
+  margin: 0.2rem auto;
+  position: relative;
 }
 
 .admin-layout .admin-sidebar.collapsed .admin-sidebar-bottom-section {
@@ -1547,6 +1556,13 @@
   border-color: var(--adm-shaded-pill-hover-border);
   color: #2e1065;
   transform: translateY(-1px);
+}
+
+.admin-layout .admin-toggle-sidebar-btn.active {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
 /* Search Bar with Ctrl+K - Exact soft lavender shade */
