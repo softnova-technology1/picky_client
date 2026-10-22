@@ -7,21 +7,27 @@ import AboutHeroSection from './components/AboutHeroSection';
 import AboutFeatureSection from './components/AboutFeatureSection';
 import GlassCountersSection from './components/GlassCountersSection';
 import BuyerProtectionSection from './components/BuyerProtectionSection';
+import { usePageCustomization } from '../../store/customizationStore';
 
 export default function About() {
+  const { isEnabled, getSetting } = usePageCustomization('about_us');
+
   return (
     <PageWrapper>
       {/* Full-Width Edge-to-Edge Hero Section */}
-      <AboutHeroSection />
+      {isEnabled('about_hero') && <AboutHeroSection />}
 
+      {isEnabled('about_values') && (
       <div className={styles['section']} style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
         <div className={styles['container']}>
           {/* About Us Feature Section */}
           <AboutFeatureSection />
         </div>
       </div>
+      )}
 
       {/* Standalone Parallax Mission & Vision Section with background-attachment: fixed */}
+      {isEnabled('about_mission') && (
       <section className={styles['about-parallax-mission-section']}>
         <div className={styles['about-parallax-mission-overlay']} />
         <div className={styles['about-parallax-mission-content']}>
@@ -40,17 +46,29 @@ export default function About() {
                 letterSpacing: '0.1em',
                 marginBottom: '1.25rem'
               }}>
-                ✦ OUR MISSION & VISION ✦
+                {getSetting('about_mission', 'tagText', '✦ OUR MISSION & VISION ✦')}
               </span>
               <h2 style={{ fontSize: '2.4rem', color: '#ffffff', marginBottom: '1.25rem', fontWeight: 800, lineHeight: 1.25 }}>
-                Making Online Shopping <br />
-                <span style={{ color: '#c084fc' }}>Simple & Trustworthy</span>
+                {(() => {
+                  const title = getSetting('about_mission', 'title', 'Making Online Shopping Simple & Trustworthy');
+                  const words = title.split(' ');
+                  if (words.length > 2) {
+                    const mid = Math.ceil(words.length / 2);
+                    return (
+                      <>
+                        {words.slice(0, mid).join(' ')} <br />
+                        <span style={{ color: '#c084fc' }}>{words.slice(mid).join(' ')}</span>
+                      </>
+                    );
+                  }
+                  return title;
+                })()}
               </h2>
               <p style={{ fontSize: '1.15rem', color: '#f3e8ff', lineHeight: 1.8, marginBottom: '1.25rem' }}>
-                <strong style={{ color: '#ffffff' }}>Picky</strong> was created to make everyday online shopping easier, clearer, and more convenient. We bring carefully selected products together in one simple shopping experience.
+                {getSetting('about_mission', 'missionText', 'Picky was created to make everyday online shopping easier, clearer, and more convenient. We bring carefully selected products together in one simple shopping experience.')}
               </p>
               <p style={{ fontSize: '1.05rem', color: '#e9d5ff', lineHeight: 1.7 }}>
-                Our vision is to build a store where customers can discover useful products, shop with confidence, and enjoy a smooth experience from browsing to delivery.
+                {getSetting('about_mission', 'visionText', 'Our vision is to build a store where customers can discover useful products, shop with confidence, and enjoy a smooth experience from browsing to delivery.')}
               </p>
             </div>
 
@@ -59,24 +77,26 @@ export default function About() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Final Section: Picky Buyer Protection Assurance ── */}
-      <BuyerProtectionSection />
+      {isEnabled('about_protection') && <BuyerProtectionSection />}
 
       {/* ── Final Community CTA Banner ── */}
+      {isEnabled('about_community') && (
       <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
         <div className="hp-final-cta-container">
           <div className="hp-final-cta-box">
-            <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
-            <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+            <span className="hp-final-cta-badge">{getSetting('about_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
+            <h2 className="hp-final-title">{getSetting('about_community', 'title', 'Connect With Us @picky.co.in')}</h2>
             <p className="hp-final-subtitle">
-              Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+              {getSetting('about_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
             </p>
             <div className="hp-final-cta-btn-group no-hover-fx">
               <button
                 type="button"
                 className="hp-final-cta-btn no-hover-fx"
-                onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open(getSetting('about_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                   <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
@@ -90,7 +110,10 @@ export default function About() {
               <button
                 type="button"
                 className="hp-final-cta-outline-btn no-hover-fx"
-                onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                onClick={() => {
+                  const wa = getSetting('about_community', 'whatsappNumber', '918300295721').replace(/\D/g, '');
+                  window.open(`https://wa.me/${wa}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer');
+                }}
                 aria-label="Join WhatsApp Group"
                 title="Join WhatsApp Group"
               >
@@ -107,6 +130,7 @@ export default function About() {
           </div>
         </div>
       </section>
+      )}
     </PageWrapper>
   );
 }

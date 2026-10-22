@@ -17,6 +17,7 @@ import {
   Calendar,
   Filter,
   Check,
+  Copy,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
@@ -24,7 +25,6 @@ import Button from '../../../components/ui/Button';
 import { contactService } from '../../../services/contact.service';
 import { useUiStore } from '../../../store/uiStore';
 import styles from './AdminInquiries.module.css';
-
 // Helper for exact relative time ("2 minutes ago", "1 hour ago", "Yesterday", etc.)
 const formatRelativeTime = (timestamp) => {
   if (!timestamp) return 'Recent';
@@ -76,6 +76,19 @@ export default function AdminInquiries() {
   // Detail & Delete Modals
   const [activeModalInquiry, setActiveModalInquiry] = useState(null);
   const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null); // 'bulk' | inquiryId
+  const [copiedUrl, setCopiedUrl] = useState(false);
+
+  const handleCopyUrl = async (url) => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedUrl(true);
+      showToast('S3 File URL copied to clipboard!', 'success');
+      setTimeout(() => setCopiedUrl(false), 2200);
+    } catch {
+      showToast('Failed to copy URL', 'error');
+    }
+  };
 
   const fetchInquiries = useCallback(
     async (isManualRefresh = false) => {
@@ -749,24 +762,73 @@ export default function AdminInquiries() {
 
               {activeModalInquiry.file && activeModalInquiry.file.url && (
                 <div className={styles.attachmentPreviewBox}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <Paperclip size={16} style={{ color: '#60a5fa' }} />
-                      <span style={{ fontSize: '0.825rem', fontWeight: 600 }}>
-                        {activeModalInquiry.file.originalName || 'Attached File'}
+                      <Paperclip size={16} style={{ color: '#2563eb' }} />
+                      <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1e3a8a' }}>
+                        {activeModalInquiry.file.originalName || 'Attached Reference File'}
                       </span>
+                      {activeModalInquiry.file.size > 0 && (
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          ({activeModalInquiry.file.size > 1024 * 1024
+                            ? `${(activeModalInquiry.file.size / (1024 * 1024)).toFixed(2)} MB`
+                            : `${(activeModalInquiry.file.size / 1024).toFixed(0)} KB`})
+                        </span>
+                      )}
                     </div>
-                    <a
-                      href={activeModalInquiry.file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.actionBtn}
-                      style={{ background: '#ffffff', border: '1px solid #cbd5e1', color: '#2563eb', textDecoration: 'none' }}
-                      download
-                    >
-                      <Download size={14} />
-                      <span>Download File</span>
-                    </a>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <a
+                        href={activeModalInquiry.file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.actionBtn}
+                        style={{ background: '#ffffff', border: '1px solid #bfdbfe', color: '#2563eb', textDecoration: 'none' }}
+                        title="Open file in new tab"
+                      >
+                        <ExternalLink size={13} />
+                        <span>Open File</span>
+                      </a>
+                      <a
+                        href={activeModalInquiry.file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.actionBtn}
+                        style={{ background: '#2563eb', border: '1px solid #2563eb', color: '#ffffff', textDecoration: 'none' }}
+                        download
+                        title="Download file"
+                      >
+                        <Download size={13} />
+                        <span>Download</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className={styles.s3UrlLabel}>S3 Direct URL</div>
+                    <div className={styles.s3UrlBox}>
+                      <span className={styles.s3UrlText} title={activeModalInquiry.file.url}>
+                        {activeModalInquiry.file.url}
+                      </span>
+                      <button
+                        type="button"
+                        className={`${styles.copyUrlBtn} ${copiedUrl ? styles.copyUrlBtnCopied : ''}`}
+                        onClick={() => handleCopyUrl(activeModalInquiry.file.url)}
+                        title="Copy S3 URL to clipboard"
+                      >
+                        {copiedUrl ? (
+                          <>
+                            <Check size={13} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={13} />
+                            <span>Copy URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {activeModalInquiry.file.mimeType?.startsWith('image/') && (

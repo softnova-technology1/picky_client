@@ -68,8 +68,10 @@ export const adminService = {
   // Customization
   getCustomizations: () => api.get('/customization'),
   updateCustomization: (pageId, sections) => api.put('/customization', { pageId, sections }),
+  clearCustomizationImage: (payload) => api.post('/customization/clear-image', payload),
 
-  // Upload
+  // Upload & S3 Storage
   uploadImage: (formData) => api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteImage: (urlOrKey) => api.delete('/upload', { data: { url: urlOrKey } }).catch(() => api.post('/upload/delete', { url: urlOrKey })),
 };
 

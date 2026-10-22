@@ -10,6 +10,7 @@ import ShopSubcategoryCards from '../../components/shop/ShopSubcategoryCards';
 import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
 import { categories as defaultCategories } from '../../data';
+import { usePageCustomization } from '../../store/customizationStore';
 import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 export default function ProductList() {
@@ -18,6 +19,7 @@ export default function ProductList() {
   const navigate = useNavigate();
 
   // URL parameters
+  const { isEnabled, getSetting } = usePageCustomization('shop');
   const selectedCategory = searchParams.get('category') || routeCategorySlug || '';
   const selectedSubCategory = searchParams.get('subCategory') || routeSubSlug || '';
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
@@ -416,15 +418,17 @@ export default function ProductList() {
     <PageWrapper>
       <div style={{ background: '#ffffff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Hero Spotlight: Desktop Only (> 768px) ── */}
-        <div className="desktop-shop-hero-wrapper">
-          <ShopHeroSpotlight
-            totalProducts={filteredProducts.length}
-            categoryName={currentCategoryObj ? currentCategoryObj.name : ''}
-            searchQuery={searchQuery}
-            onSearchSubmit={handleSearchSubmit}
-            onSearchClear={handleSearchClear}
-          />
-        </div>
+        {isEnabled('catalog_header_banner') && (
+          <div className="desktop-shop-hero-wrapper">
+            <ShopHeroSpotlight
+              totalProducts={filteredProducts.length}
+              categoryName={currentCategoryObj ? currentCategoryObj.name : ''}
+              searchQuery={searchQuery}
+              onSearchSubmit={handleSearchSubmit}
+              onSearchClear={handleSearchClear}
+            />
+          </div>
+        )}
 
         {/* ── 2. Master Shopping Catalog ── */}
         <div className="container">
@@ -471,32 +475,34 @@ export default function ProductList() {
             </form>
 
             {/* 2. Horizontally Scrollable Category Tabs */}
-            <div className="shop-mobile-category-track">
-              <button
-                type="button"
-                onClick={() => handleCategoryChange('')}
-                className={`shop-mobile-cat-pill ${!selectedCategory ? 'active' : ''}`}
-              >
-                All Products
-              </button>
-              {categories.map((cat) => {
-                const catSlug = cat.slug || cat._id;
-                const isActive =
-                  selectedCategory === catSlug ||
-                  selectedCategory === cat._id ||
-                  selectedCategory?.toLowerCase() === cat.slug?.toLowerCase();
-                return (
-                  <button
-                    key={cat._id || catSlug}
-                    type="button"
-                    onClick={() => handleCategoryChange(isActive ? '' : catSlug)}
-                    className={`shop-mobile-cat-pill ${isActive ? 'active' : ''}`}
-                  >
-                    {cat.name}
-                  </button>
-                );
-              })}
-            </div>
+            {isEnabled('subcategory_pills_bar') && (
+              <div className="shop-mobile-category-track">
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange('')}
+                  className={`shop-mobile-cat-pill ${!selectedCategory ? 'active' : ''}`}
+                >
+                  All Products
+                </button>
+                {categories.map((cat) => {
+                  const catSlug = cat.slug || cat._id;
+                  const isActive =
+                    selectedCategory === catSlug ||
+                    selectedCategory === cat._id ||
+                    selectedCategory?.toLowerCase() === cat.slug?.toLowerCase();
+                  return (
+                    <button
+                      key={cat._id || catSlug}
+                      type="button"
+                      onClick={() => handleCategoryChange(isActive ? '' : catSlug)}
+                      className={`shop-mobile-cat-pill ${isActive ? 'active' : ''}`}
+                    >
+                      {cat.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* 3. Controls Row (Product Count, Sort, Filter) */}
             <div className="shop-mobile-controls-row">
