@@ -56,8 +56,29 @@ export default function Login({ initialTab = 'login' }) {
   const { showToast } = useUiStore();
 
   // Active top tab: 'login' | 'signup'
-  const isSignupRoute = location.pathname.includes('signup');
+  const isSignupRoute =
+    location.pathname.includes('signup') ||
+    location.search.includes('tab=signup') ||
+    location.search.includes('tab=sign-up') ||
+    location.state?.tab === 'signup' ||
+    location.state?.activeTab === 'signup' ||
+    initialTab === 'signup';
   const [activeTab, setActiveTab] = useState(isSignupRoute ? 'signup' : initialTab);
+
+  useEffect(() => {
+    const isSignup =
+      location.pathname.includes('signup') ||
+      location.search.includes('tab=signup') ||
+      location.search.includes('tab=sign-up') ||
+      location.state?.tab === 'signup' ||
+      location.state?.activeTab === 'signup' ||
+      initialTab === 'signup';
+
+    if (isSignup) {
+      setActiveTab('signup');
+      setStep('phone');
+    }
+  }, [location.pathname, location.search, location.state, initialTab]);
 
   // Customer WhatsApp OTP state
   const [phone, setPhone] = useState('');

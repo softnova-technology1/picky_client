@@ -1,27 +1,78 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { heroSlides } from '../../../data/data';
+import { usePageCustomization } from '../../../store/customizationStore';
 
-export default function EditorialHero() {
+export default function EditorialHero({ settings: propSettings }) {
+  const { getSection } = usePageCustomization('home');
+  const customSettings = propSettings || getSection('hero_banner')?.settings || {};
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef(null);
   const navigate = useNavigate();
 
-  const slides = heroSlides || [];
+  const slides = useMemo(() => {
+    // 1. If customSettings.slides array is configured by admin
+    if (Array.isArray(customSettings.slides) && customSettings.slides.length > 0) {
+      const active = customSettings.slides
+        .filter((s) => s.enabled !== false)
+        .map((s, idx) => {
+          const fallback = heroSlides[idx] || heroSlides[0] || {};
+          return {
+            id: s.id || `slide_${idx + 1}`,
+            enabled: s.enabled !== false,
+            eyebrow: s.eyebrow ?? fallback.eyebrow ?? 'NEW ARRIVALS',
+            title: s.title ?? fallback.title ?? 'LUXE',
+            subtitle: s.subtitle ?? fallback.subtitle ?? 'NEW DROP',
+            ctaText: s.ctaText ?? fallback.ctaText ?? 'SHOP NOW',
+            ctaLink: s.ctaLink ?? fallback.ctaLink ?? '/products',
+            leftImage: s.leftImage || fallback.leftImage || '/images/slide_1_left.jpg',
+            rightImage: s.rightImage || fallback.rightImage || '/images/slide_1_right.jpg',
+          };
+        });
+      if (active.length > 0) return active;
+    }
+
+    // 2. Fallback to default heroSlides + legacy single-slide overrides
+    const base = (heroSlides || []).map((s) => ({ ...s }));
+    if (base.length > 0 && (customSettings.headline || customSettings.imageUrl || customSettings.badge || customSettings.ctaText)) {
+      base[0] = {
+        ...base[0],
+        ...(customSettings.badge ? { eyebrow: customSettings.badge } : {}),
+        ...(customSettings.headline ? { title: customSettings.headline } : {}),
+        ...(customSettings.subheadline
+          ? {
+              subtitle:
+                customSettings.subheadline.length > 38
+                  ? customSettings.subheadline.slice(0, 38) + '...'
+                  : customSettings.subheadline,
+            }
+          : {}),
+        ...(customSettings.ctaText ? { ctaText: customSettings.ctaText } : {}),
+        ...(customSettings.ctaLink ? { ctaLink: customSettings.ctaLink } : {}),
+        ...(customSettings.imageUrl
+          ? { leftImage: customSettings.imageUrl, rightImage: customSettings.imageUrl }
+          : {}),
+      };
+    }
+    return base;
+  }, [customSettings]);
+
   const totalSlides = slides.length;
+  const autoplaySpeed = Math.max(1500, Number(customSettings.autoplaySpeed) || 3200);
 
   useEffect(() => {
-    if (isPaused || totalSlides === 0) return;
+    if (isPaused || totalSlides <= 1) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % totalSlides);
-    }, 3200);
+    }, autoplaySpeed);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPaused, totalSlides]);
+  }, [isPaused, totalSlides, autoplaySpeed]);
 
   const handlePrev = (e) => {
     e.stopPropagation();

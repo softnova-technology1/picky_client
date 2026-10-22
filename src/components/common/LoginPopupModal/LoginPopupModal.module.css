@@ -1,0 +1,730 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY WELCOME LOGIN POPUP MODAL (CSS MODULE)
+   Exact match to the provided HTML & Reference Design.
+   Zero inline styles.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  animation: fadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 570px;
+  background: #ffffff;
+  border-radius: 36px;
+  box-shadow: 0 25px 60px -15px rgba(23, 10, 46, 0.35);
+  overflow: hidden;
+  padding: 2.5rem 2.5rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-sizing: border-box;
+  animation: scalePop 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scalePop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Top-Right 3D Visual Artwork Backdrop ── */
+.artBackdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 290px;
+  height: 295px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  border-top-right-radius: 36px;
+  border-bottom-left-radius: 210px 185px;
+  overflow: hidden;
+  background: #ebe4f9;
+  border-bottom: 2.5px solid rgba(255, 255, 255, 0.95);
+  border-left: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    -6px 6px 18px rgba(255, 255, 255, 0.95),
+    -12px 12px 26px rgba(255, 255, 255, 0.85),
+    0 0 16px 2px rgba(255, 255, 255, 0.9),
+    0 10px 22px rgba(124, 58, 237, 0.12),
+    inset 0 0 25px rgba(255, 255, 255, 0.4);
+}
+
+.artBackdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-top-right-radius: 36px;
+  border-bottom-left-radius: 210px 185px;
+  pointer-events: none;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.6), inset -3px 3px 10px rgba(255, 255, 255, 0.95);
+}
+
+.artImage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top right;
+  transform: scale(1.02);
+  filter: drop-shadow(0 4px 10px rgba(124, 58, 237, 0.12));
+  opacity: 0.98;
+  display: block;
+}
+
+/* ── Close Button ── */
+.closeButton {
+  position: absolute !important;
+  top: 1.25rem !important;
+  right: 1.25rem !important;
+  left: auto !important;
+  bottom: auto !important;
+  z-index: 50 !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(241, 245, 249, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.closeButton:hover {
+  background: #ffffff;
+  transform: scale(1.05);
+  color: #111827;
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+.closeIcon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.flagSvg {
+  border-radius: 2px;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ── Modal Content ── */
+.modalContent {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header: Logo & Category Navigation Tagline ── */
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brandIcon {
+  width: 28px;
+  height: 28px;
+  color: #7b2cbf;
+  flex-shrink: 0;
+}
+
+.brandWordmark {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #6923b7;
+  line-height: 1;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.tagline {
+  margin-top: 0.5rem;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  font-weight: 600;
+  color: #8f85a3;
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+/* ── Main Headline & Subtitle ── */
+.headlineSection {
+  max-width: 360px;
+  margin-bottom: 1.5rem;
+}
+
+.headline {
+  font-size: 2.5rem;
+  line-height: 1.12;
+  color: #131022;
+  margin: 0;
+}
+
+.serifWelcome {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  display: block;
+}
+
+.serifPicky {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  color: #7a3bec;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.heartEmoji {
+  display: inline-block;
+  font-size: 1.5rem;
+  margin-top: -0.5rem;
+}
+
+.sparkle {
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-left: -0.25rem;
+  color: #c084fc;
+}
+
+.subtitleText {
+  margin-top: 0.75rem;
+  font-size: 14.5px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: #4b435b;
+  margin-bottom: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ── Key Benefits / Trust Badges ── */
+.benefitsSection {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 385px;
+  box-sizing: border-box;
+}
+
+.benefitItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.benefitIcon {
+  color: #7c3aed;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.benefitText {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #373145;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+}
+
+.benefitDivider {
+  width: 1px;
+  height: 32px;
+  background: #e9e5f1;
+  flex-shrink: 0;
+}
+
+/* ── Input Form ── */
+.inputForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1e1b2b;
+  margin-bottom: 0.625rem;
+}
+
+.inputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #fdfdfd;
+  border: 1px solid #e5e1ee;
+  border-radius: 1rem;
+  padding: 0.375rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.inputContainer:focus-within {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+
+.countryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2a2438;
+  border-radius: 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.countryButton:hover {
+  background: #f8fafc;
+}
+
+.waIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0.75rem;
+  padding-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+.waCountryBadge {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1e1b2b;
+  padding: 0 0.25rem;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.fieldIcon {
+  color: #8f85a3;
+  flex-shrink: 0;
+}
+
+.flagIcon {
+  font-size: 1.125rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
+}
+
+.verticalSeparator {
+  height: 1.5rem;
+  width: 1px;
+  background: #e1dceb;
+  margin: 0 0.35rem;
+}
+
+.phoneInput {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1e1b2b;
+  outline: none;
+}
+
+.phoneInput::placeholder {
+  color: #9f98ae;
+}
+
+.btnArrow {
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.submitButton:hover .btnArrow {
+  transform: translateX(3px);
+}
+
+/* ── Divider ── */
+.orDivider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0.65rem 0;
+}
+
+.orDivider::before,
+.orDivider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e1ee;
+}
+
+.orDivider span {
+  padding: 0 0.75rem;
+  color: #8f85a3;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Google Button ── */
+.googleButton {
+  width: 100%;
+  padding: 0.85rem 1.5rem;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1.5px solid #e5e1ee;
+  color: #1e1b2b;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.googleButton:hover:not(:disabled) {
+  background: #fdfdfd;
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.googleButton:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.googleButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.googleSvg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.whatsappSvg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.waOtpNotice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  font-size: 12.5px;
+  color: #166534;
+  margin-bottom: 0.75rem;
+}
+
+.footerLegal {
+  margin-top: 0.85rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.termsText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #706782;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.termsLink {
+  color: #7c3aed;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.termsLink:hover {
+  text-decoration: underline;
+}
+
+.accountPrompt {
+  font-size: 13px;
+  font-weight: 600;
+  color: #585068;
+  margin-top: 0.25rem;
+}
+
+.accountActionBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7c3aed;
+  cursor: pointer;
+  margin-left: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.15s ease;
+}
+
+.accountActionBtn:hover {
+  color: #6923b7;
+  text-decoration: underline;
+}
+
+/* ── Primary CTA Button ── */
+.submitButton {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #8338ec, #9348f9);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 10px 25px -3px rgba(139, 92, 246, 0.45), 0 4px 10px -2px rgba(139, 92, 246, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: linear-gradient(to right, #7627e3, #8637f5);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -3px rgba(139, 92, 246, 0.55);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.submitButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── OTP Verification Mode ── */
+.otpInput {
+  width: 100%;
+  border: 1px solid #e5e1ee;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-align: center;
+  color: #1e1b2b;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.otpInput:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+
+.otpControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12.5px;
+}
+
+.textBtn:hover {
+  text-decoration: underline;
+}
+
+.timerText {
+  color: #8f85a3;
+  font-size: 12px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Footer Trust ── */
+.footerTrust {
+  margin-top: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.secureIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #585068;
+}
+
+.checkBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.legalText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #706782;
+  margin: 0;
+}
+
+.legalLink {
+  color: #7c3aed;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.legalLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Mobile Responsive Rules ── */
+@media (max-width: 640px) {
+  .card {
+    padding: 1.75rem 1.25rem 1.5rem;
+    border-radius: 28px;
+  }
+
+  .artBackdrop {
+    width: 240px;
+    height: 240px;
+    border-bottom-left-radius: 170px 150px;
+    opacity: 0.7;
+  }
+
+  .headline {
+    font-size: 1.85rem;
+  }
+
+  .benefitsSection {
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  .benefitDivider {
+    display: none;
+  }
+
+  .benefitText {
+    font-size: 11px;
+  }
+
+  .benefitItem {
+    gap: 0.375rem;
+  }
+}

@@ -1,8 +1,14 @@
 import React from 'react';
 import styles from '../../About.module.css';
 import { BadgeCheck, ShoppingCart, ShieldCheck, Headphones } from 'lucide-react';
+import { usePageCustomization } from '../../../../store/customizationStore';
 
 export default function AboutHeroSection() {
+  const { getSetting } = usePageCustomization('about_us');
+  const badgeText = getSetting('about_hero', 'badgeText', 'About Picky');
+  const headline = getSetting('about_hero', 'headline');
+  const subtitle = getSetting('about_hero', 'subtitle', 'Discover thoughtfully selected products across fashion, lifestyle, home, and more.');
+
   const features = [
     {
       id: 'selected',
@@ -33,15 +39,27 @@ export default function AboutHeroSection() {
       {/* Centered Main Hero Content */}
       <div className={styles['about-hero-content']}>
         <div className={styles['about-hero-pill-badge']}>
-          About Picky
+          {badgeText}
         </div>
 
         <h1 className={styles['about-hero-title']}>
-          Simple Shopping. <span>Trusted Products.</span>
+          {headline ? (
+            headline.includes('.') ? (
+              <>
+                {headline.split('.')[0]}. <span>{headline.split('.').slice(1).join('.')}</span>
+              </>
+            ) : (
+              headline
+            )
+          ) : (
+            <>
+              Simple Shopping. <span>Trusted Products.</span>
+            </>
+          )}
         </h1>
         
         <p className={styles['about-hero-subtitle']}>
-          Discover thoughtfully selected products across fashion, lifestyle, home, and more.
+          {subtitle}
         </p>
 
         {/* Decorative Cyan Squiggly Wave Separator */}

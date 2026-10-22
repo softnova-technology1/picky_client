@@ -3,9 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, LayoutGrid, Sparkles, Heart, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
+import { usePageCustomization } from '../../../store/customizationStore';
 import './MobileBottomNav.css';
 
 export default function MobileBottomNav() {
+  const { getSetting, isEnabled } = usePageCustomization('global_header');
+  const showMobileBottomNav = isEnabled('sticky_action_bar', true) && getSetting('sticky_action_bar', 'showMobileBottomNav', true) !== false;
+
   const location = useLocation();
   const { items: cartItems } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
@@ -19,6 +23,10 @@ export default function MobileBottomNav() {
     if (path === '/') return currentPath === '/';
     return currentPath.startsWith(path);
   };
+
+  if (!showMobileBottomNav) {
+    return null;
+  }
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">

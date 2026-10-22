@@ -62,6 +62,7 @@ const promoSlides = [
 ];
 
 export default function Contact() {
+  const { isEnabled, getSetting } = usePageCustomization('contact_us');
   const navigate = useNavigate();
   const { showToast } = useUiStore();
   const [form, setForm] = useState({ fullName: '', phone: '', message: '' });
@@ -156,6 +157,8 @@ export default function Contact() {
     setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
   };
 
+  const [uploadStatus, setUploadStatus] = useState('');
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!form.fullName.trim() || !form.message.trim()) {
@@ -165,19 +168,55 @@ export default function Contact() {
 
     const startTime = Date.now();
     setLoading(true);
+    setUploadStatus(selectedFile ? 'Uploading file to S3...' : 'Sending message...');
+
     try {
-      const formData = new FormData();
-      formData.append('fullName', form.fullName.trim());
-      if (form.phone && form.phone.trim()) {
-        formData.append('phone', form.phone.trim());
-      }
-      formData.append('message', form.message.trim());
-      formData.append('source', 'contact_page');
+      let uploadedFileResult = null;
+
+      // 1. If user attached a reference file, first directly upload to AWS S3 bucket (picky/inquiries)
       if (selectedFile) {
-        formData.append('file', selectedFile);
+        try {
+          const uploadRes = await contactService.uploadFile(selectedFile);
+          uploadedFileResult = uploadRes?.data || null;
+        } catch (uploadErr) {
+          console.warn('Direct S3 upload note:', uploadErr?.message || uploadErr);
+        }
       }
 
-      const res = await contactService.submit(formData);
+      setUploadStatus('Submitting message...');
+
+      let res;
+      if (uploadedFileResult && uploadedFileResult.url) {
+        // Send inquiry with pre-uploaded S3 URL
+        const payload = {
+          fullName: form.fullName.trim(),
+          phone: form.phone ? form.phone.trim() : '',
+          message: form.message.trim(),
+          source: 'contact_page',
+          fileUrl: uploadedFileResult.url,
+          fileKey: uploadedFileResult.key,
+          fileName: uploadedFileResult.originalName || selectedFile.name,
+          fileMime: uploadedFileResult.mimeType || selectedFile.type,
+          fileSize: uploadedFileResult.size || selectedFile.size,
+        };
+        res = await contactService.submit(payload);
+      } else {
+        // Fallback: multipart formData with file attached
+        const formData = new FormData();
+        formData.append('fullName', form.fullName.trim());
+        if (form.phone && form.phone.trim()) {
+          formData.append('phone', form.phone.trim());
+        }
+        formData.append('message', form.message.trim());
+        formData.append('source', 'contact_page');
+        if (selectedFile) {
+          formData.append('file', selectedFile);
+        }
+        res = await contactService.submit(formData);
+      }
+
+      const inquiryData = res?.data?.inquiry || {};
+      const finalFileUrl = inquiryData?.file?.url || uploadedFileResult?.url || null;
 
       // Sync notification with localStorage for instant admin bell badge & notifications feed
       try {
@@ -196,20 +235,21 @@ export default function Contact() {
           relativeTime: 'Just now',
           unread: true,
           starred: false,
-          link: '/softpicky-sn2026/inquiries',
+          link: '/softpicky-sn2026/notifications',
           linkText: 'View Inquiry',
           hasAttachment: Boolean(selectedFile),
           attachmentName: selectedFile ? selectedFile.name : null,
-          attachmentUrl: res?.data?.inquiry?.file?.url || (filePreviewUrl || null),
+          attachmentUrl: finalFileUrl,
           metadata: {
-            inquiryId: res?.data?.inquiry?._id,
+            inquiryId: inquiryData?._id,
             fullName: form.fullName.trim(),
             email: '',
             phone: form.phone.trim(),
             message: form.message.trim(),
             hasAttachment: Boolean(selectedFile),
             fileName: selectedFile ? selectedFile.name : null,
-            fileUrl: res?.data?.inquiry?.file?.url || null,
+            fileUrl: finalFileUrl,
+            fileKey: inquiryData?.file?.key || uploadedFileResult?.key || null,
           },
         };
         const updated = [newNotif, ...list];
@@ -228,11 +268,12 @@ export default function Contact() {
       showToast(err?.message || 'Failed to send message. Please try again or WhatsApp us.', 'error');
     } finally {
       const elapsed = Date.now() - startTime;
-      const remainingDelay = Math.max(0, 2000 - elapsed);
+      const remainingDelay = Math.max(0, 1000 - elapsed);
       if (remainingDelay > 0) {
         await new Promise((r) => setTimeout(r, remainingDelay));
       }
       setLoading(false);
+      setUploadStatus('');
     }
   };
 
@@ -242,26 +283,38 @@ export default function Contact() {
         {/* ============================================================== */}
         {/* 1. HERO SECTION                                                */}
         {/* ============================================================== */}
+        {isEnabled('contact_hero') && (
         <section className="k-hero-section">
           {/* Top subtle glow/curves can be added via CSS before/after */}
           <div className="k-container k-hero-grid">
             <div className="k-hero-content">
               <div className="k-eyebrow-container">
-                <span className="k-eyebrow">GET IN TOUCH</span>
+                <span className="k-eyebrow">{getSetting('contact_hero', 'eyebrow', 'GET IN TOUCH')}</span>
                 <div className="k-eyebrow-line"></div>
               </div>
               <h1 className="k-hero-title">
-                We’re Here to Help With Your <span>Picky Experience</span>
+                {(() => {
+                  const title = getSetting('contact_hero', 'title', 'We’re Here to Help With Your Picky Experience');
+                  const words = title.split(' ');
+                  if (words.length > 2) {
+                    return (
+                      <>
+                        {words.slice(0, -2).join(' ')} <span>{words.slice(-2).join(' ')}</span>
+                      </>
+                    );
+                  }
+                  return title;
+                })()}
               </h1>
               <p className="k-hero-desc">
-                Have a question about your order, product, delivery, or anything else? Our customer support team is here to help you with your Picky shopping experience.
+                {getSetting('contact_hero', 'description', 'Have a question about your order, product, delivery, or anything else? Our customer support team is here to help you with your Picky shopping experience.')}
               </p>
 
               {/* CTA Action Buttons */}
               <div className="k-hero-actions">
                 <a href="#contact-form-section" className="k-hero-btn-primary">
                   <MessageSquare size={18} />
-                  <span>Send Us a Message</span>
+                  <span>{getSetting('contact_hero', 'primaryButtonText', 'Send Us a Message')}</span>
                   <ArrowRight size={16} />
                 </a>
 
@@ -277,7 +330,7 @@ export default function Contact() {
                     <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
                     <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
                   </svg>
-                  <span>WhatsApp Consulting</span>
+                  <span>{getSetting('contact_hero', 'whatsappButtonText', 'WhatsApp Consulting')}</span>
                 </a>
               </div>
             </div>
@@ -291,10 +344,12 @@ export default function Contact() {
             </svg>
           </div>
         </section>
+        )}
 
         {/* ============================================================== */}
         {/* 2. CONTACT INFORMATION CARDS                                   */}
         {/* ============================================================== */}
+        {isEnabled('contact_channels') && (
         <section className="k-info-section">
           <div className="k-container">
             <div className="k-section-header">
@@ -423,10 +478,12 @@ export default function Contact() {
             </div>
           </div>
         </section>
+        )}
 
         {/* ============================================================== */}
         {/* 3. FORM AND DIRECT ASSISTANCE HUB                              */}
         {/* ============================================================== */}
+        {isEnabled('contact_form') && (
         <section id="contact-form-section" className="k-form-map-section">
           <div className="k-container k-form-map-grid">
             
@@ -533,7 +590,7 @@ export default function Contact() {
                 </div>
 
                 <button type="submit" disabled={loading} className="k-submit-btn">
-                  {loading ? 'Submitting Message...' : 'Submit Message'}
+                  {loading ? (uploadStatus || 'Submitting Message...') : 'Submit Message'}
                   <ArrowRight size={18} />
                 </button>
               </form>
@@ -623,10 +680,12 @@ export default function Contact() {
 
           </div>
         </section>
+        )}
 
         {/* ============================================================== */}
         {/* 4. DEDICATED STORE LOCATION & MAP SECTION                      */}
         {/* ============================================================== */}
+        {isEnabled('contact_location') && (
         <section id="store-map-section" className="k-store-map-section">
           <div className="k-container">
             <div className="k-store-map-header">
@@ -687,21 +746,23 @@ export default function Contact() {
             </div>
           </div>
         </section>
+        )}
 
         {/* ── 4. Community CTA Banner ── */}
+        {isEnabled('contact_community') && (
         <section className="hp-final-cta-section" style={{ paddingTop: '2.5rem', paddingBottom: '3.5rem' }}>
           <div className="hp-final-cta-container">
             <div className="hp-final-cta-box">
-              <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
-              <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+              <span className="hp-final-cta-badge">{getSetting('contact_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
+              <h2 className="hp-final-title">{getSetting('contact_community', 'title', 'Connect With Us @picky.co.in')}</h2>
               <p className="hp-final-subtitle">
-                Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+                {getSetting('contact_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
               </p>
               <div className="hp-final-cta-btn-group no-hover-fx">
                 <button
                   type="button"
                   className="hp-final-cta-btn no-hover-fx"
-                  onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(getSetting('contact_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
@@ -715,7 +776,10 @@ export default function Contact() {
                 <button
                   type="button"
                   className="hp-final-cta-outline-btn no-hover-fx"
-                  onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                  onClick={() => {
+                    const wa = getSetting('contact_community', 'whatsappNumber', '918300295721').replace(/\D/g, '');
+                    window.open(`https://wa.me/${wa}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer');
+                  }}
                   aria-label="Join WhatsApp Group"
                   title="Join WhatsApp Group"
                 >
@@ -732,6 +796,7 @@ export default function Contact() {
             </div>
           </div>
         </section>
+        )}
 
       </div>
     </PageWrapper>

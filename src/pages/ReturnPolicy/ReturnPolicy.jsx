@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ShoppingBag,
 } from 'lucide-react';
+import { usePageCustomization } from '../../store/customizationStore';
 import '../../styles/legal.css';
 
 const RETURN_SECTIONS = [
@@ -31,6 +32,9 @@ const RETURN_SECTIONS = [
 ];
 
 export default function ReturnPolicy() {
+  const { isEnabled, getSetting } = usePageCustomization('content_pages');
+  const returnDays = getSetting('policy_return_content', 'returnDays', 7);
+  const returnBlurb = getSetting('policy_return_content', 'returnBlurb', 'Enjoy a hassle-free 7-day replacement and transparent refund guarantee.');
   const [activeSection, setActiveSection] = useState('overview');
 
   useEffect(() => {

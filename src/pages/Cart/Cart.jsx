@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { cartService } from '../../services/cart.service';
 import { formatPrice } from '../../utils/formatPrice';
+import { usePageCustomization } from '../../store/customizationStore';
 import {
   ShoppingCart,
   Trash2,
@@ -66,6 +67,7 @@ const getItemColors = (item) => {
 };
 
 export default function Cart() {
+  const { isEnabled, getSetting } = usePageCustomization('cart');
   const navigate = useNavigate();
   const {
     items,
@@ -278,13 +280,24 @@ export default function Cart() {
         <div className={styles['bestsellers-header']}>
           <div className={styles['bestsellers-badge']}>
             <Flame size={14} className={styles['bestsellers-badge-icon']} />
-            <span>MOST POPULAR PICKS</span>
+            <span>{getSetting('cart_bestsellers', 'badgeText', 'MOST POPULAR PICKS')}</span>
           </div>
           <h2 className={styles['bestsellers-title']}>
-            Best <span>Sellers</span>
+            {(() => {
+              const title = getSetting('cart_bestsellers', 'title', 'Best Sellers');
+              const words = title.split(' ');
+              if (words.length > 1) {
+                return (
+                  <>
+                    {words[0]} <span>{words.slice(1).join(' ')}</span>
+                  </>
+                );
+              }
+              return title;
+            })()}
           </h2>
           <p className={styles['bestsellers-subtitle']}>
-            Customer-favorite trending styles and top-rated drops to complete your bag.
+            {getSetting('cart_bestsellers', 'subtitle', 'Customer-favorite trending styles and top-rated drops to complete your bag.')}
           </p>
         </div>
 
@@ -312,8 +325,12 @@ export default function Cart() {
           <Truck size={22} strokeWidth={2} />
         </div>
         <div>
-          <h3 className={styles['trust-title']}>Express Shipping</h3>
-          <p className={styles['trust-subtext']}>Fast door delivery</p>
+          <h3 className={styles['trust-title']}>
+            {getSetting('cart_trust_security', 'badge1Title', 'Express Shipping')}
+          </h3>
+          <p className={styles['trust-subtext']}>
+            {getSetting('cart_trust_security', 'badge1Sub', 'Fast door delivery')}
+          </p>
         </div>
       </div>
 
@@ -322,8 +339,12 @@ export default function Cart() {
           <RotateCcw size={22} strokeWidth={2} />
         </div>
         <div>
-          <h3 className={styles['trust-title']}>7-Day Easy Returns</h3>
-          <p className={styles['trust-subtext']}>Hassle-free policy</p>
+          <h3 className={styles['trust-title']}>
+            {getSetting('cart_trust_security', 'badge2Title', '7-Day Easy Returns')}
+          </h3>
+          <p className={styles['trust-subtext']}>
+            {getSetting('cart_trust_security', 'badge2Sub', 'Hassle-free policy')}
+          </p>
         </div>
       </div>
 
@@ -332,8 +353,12 @@ export default function Cart() {
           <ShieldCheck size={22} strokeWidth={2} />
         </div>
         <div>
-          <h3 className={styles['trust-title']}>100% Verified Quality</h3>
-          <p className={styles['trust-subtext']}>Guaranteed products</p>
+          <h3 className={styles['trust-title']}>
+            {getSetting('cart_trust_security', 'badge3Title', '100% Verified Quality')}
+          </h3>
+          <p className={styles['trust-subtext']}>
+            {getSetting('cart_trust_security', 'badge3Sub', 'Guaranteed products')}
+          </p>
         </div>
       </div>
     </div>
@@ -380,8 +405,8 @@ export default function Cart() {
               Start Shopping <ArrowRight size={18} />
             </Link>
 
-            {renderBestSellers()}
-            {renderTrustBadges()}
+            {isEnabled('cart_bestsellers') && renderBestSellers()}
+            {isEnabled('cart_trust_security') && renderTrustBadges()}
           </div>
         </div>
       </PageWrapper>
@@ -403,6 +428,54 @@ export default function Cart() {
           </div>
 
           {/* ── Main Layout Grid ── */}
+          {(() => {
+            const threshold = Number(getSetting('free_shipping_goal_bar', 'thresholdAmount', 999)) || 999;
+            const remaining = Math.max(0, threshold - subtotal);
+            const percent = Math.min(100, Math.round((subtotal / threshold) * 100));
+
+            return (
+              <>
+                {isEnabled('free_shipping_goal_bar') && (
+                  <div
+                    style={{
+                      background: remaining === 0 ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : '#ffffff',
+                      border: remaining === 0 ? '1.5px solid #a7f3d0' : '1px solid #ede9fe',
+                      borderRadius: '16px',
+                      padding: '1rem 1.4rem',
+                      marginBottom: '1.75rem',
+                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.92rem', fontWeight: 700, color: remaining === 0 ? '#065f46' : '#1e1b4b' }}>
+                        <Truck size={19} color={remaining === 0 ? '#059669' : '#7c3aed'} />
+                        <span>
+                          {remaining === 0
+                            ? getSetting('free_shipping_goal_bar', 'completedText', '🎉 Congratulations! You have unlocked Free Shipping!')
+                            : getSetting('free_shipping_goal_bar', 'progressText', 'Add ₹{remaining} more to unlock FREE Shipping! 🚚').replace('{remaining}', remaining)}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.84rem', fontWeight: 800, color: remaining === 0 ? '#059669' : '#7c3aed' }}>
+                        {percent}%
+                      </span>
+                    </div>
+                    <div style={{ width: '100%', height: '8px', background: remaining === 0 ? '#a7f3d0' : '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          width: `${percent}%`,
+                          height: '100%',
+                          background: remaining === 0 ? 'linear-gradient(90deg, #10b981, #059669)' : 'linear-gradient(90deg, #c084fc, #7c3aed)',
+                          borderRadius: '999px',
+                          transition: 'width 0.4s ease',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
           <div className={styles['cart-layout-grid']}>
             {/* Left Column: Items Card & Trust Badges */}
             <div>
@@ -611,45 +684,47 @@ export default function Cart() {
               <h2 className={styles['summary-title']}>Order Summary</h2>
 
               {/* Single Clean Promo Section */}
-              <div className={styles['promo-section']}>
-                {coupon ? (
-                  <div className={styles['promo-hint']} style={{ color: '#16a34a', fontWeight: 600 }}>
-                    <span>Coupon <strong>{coupon}</strong> applied (-{formatPrice(couponDiscount)})</span>
-                    <button
-                      type="button"
-                      onClick={handleRemoveCoupon}
-                      style={{ border: 'none', background: 'transparent', color: '#b91c1c', cursor: 'pointer', fontWeight: 700 }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleApplyCouponCode();
-                      }}
-                      className={styles['promo-form']}
-                    >
-                      <input
-                        type="text"
-                        placeholder="PROMO CODE"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className={styles['promo-input']}
-                      />
+              {isEnabled('cart_coupon_strip') && (
+                <div className={styles['promo-section']}>
+                  {coupon ? (
+                    <div className={styles['promo-hint']} style={{ color: '#16a34a', fontWeight: 600 }}>
+                      <span>Coupon <strong>{coupon}</strong> applied (-{formatPrice(couponDiscount)})</span>
                       <button
-                        type="submit"
-                        disabled={couponLoading}
-                        className={styles['promo-apply-btn']}
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        style={{ border: 'none', background: 'transparent', color: '#b91c1c', cursor: 'pointer', fontWeight: 700 }}
                       >
-                        Apply
+                        Remove
                       </button>
-                    </form>
-                  </>
-                )}
-              </div>
+                    </div>
+                  ) : (
+                    <>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleApplyCouponCode();
+                        }}
+                        className={styles['promo-form']}
+                      >
+                        <input
+                          type="text"
+                          placeholder={getSetting('cart_coupon_strip', 'promoPlaceholder', 'PROMO CODE')}
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          className={styles['promo-input']}
+                        />
+                        <button
+                          type="submit"
+                          disabled={couponLoading}
+                          className={styles['promo-apply-btn']}
+                        >
+                          {getSetting('cart_coupon_strip', 'applyButtonText', 'Apply')}
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Price Breakdown with MRP & Discounts */}
               <div className={styles['price-breakdown']}>
@@ -733,10 +808,10 @@ export default function Cart() {
           </div>
 
           {/* ── Best Sellers 1-Row Infinite Running Showcase ── */}
-          {renderBestSellers()}
+          {isEnabled('cart_bestsellers') && renderBestSellers()}
 
           {/* ── 3 Trust Badges Section - Placed right above footer across full width ── */}
-          {renderTrustBadges()}
+          {isEnabled('cart_trust_security') && renderTrustBadges()}
         </div>
       </div>
 

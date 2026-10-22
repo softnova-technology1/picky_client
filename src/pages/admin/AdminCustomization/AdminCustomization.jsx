@@ -43,6 +43,7 @@ import {
   RotateCcw,
   Play,
   Pause,
+  Heart,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Button from '../../../components/ui/Button';
@@ -72,6 +73,10 @@ function getPageIcon(iconName, size = 18) {
       return <Sparkles size={size} />;
     case 'Flame':
       return <Flame size={size} />;
+    case 'Percent':
+      return <Percent size={size} />;
+    case 'Heart':
+      return <Heart size={size} />;
     case 'Package':
       return <Package size={size} />;
     case 'ShoppingCart':
@@ -221,11 +226,36 @@ function CharacterCount({ current = '', max = 80 }) {
 }
 
 // ─── Image Upload Component ───────────────────────────────────────────────────
-function ImageUploadControl({ label, value, onChange }) {
+function ImageUploadControl({ label, value, onChange, onClear }) {
   const [tab, setTab] = useState('upload'); // 'upload' | 'url'
   const [isDragging, setIsDragging] = useState(false);
   const [urlError, setUrlError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef(null);
+
+  const handleClearImage = async () => {
+    if (!value) {
+      onChange('');
+      setUrlError(null);
+      return;
+    }
+    const previousUrl = value;
+    setIsDeleting(true);
+    try {
+      if (onClear) {
+        await onClear(previousUrl);
+      } else {
+        await adminService.deleteImage(previousUrl).catch(() => {});
+      }
+      onChange('');
+      setUrlError(null);
+    } catch (err) {
+      console.warn('Clear image error:', err);
+      onChange('');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleFileProcess = async (file) => {
     if (!file) return;
@@ -237,8 +267,14 @@ function ImageUploadControl({ label, value, onChange }) {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('folder', 'customization');
       const res = await adminService.uploadImage(formData);
-      onChange(res.data?.url || res.url);
+      const uploadedUrl = res?.data?.url || res?.data?.data?.url || res?.url;
+      if (uploadedUrl) {
+        onChange(uploadedUrl);
+      } else {
+        setUrlError('Failed to retrieve image URL from server');
+      }
     } catch (err) {
       setUrlError('Failed to upload image to server');
     }
@@ -430,24 +466,33 @@ function ImageUploadControl({ label, value, onChange }) {
             </span>
             <button
               type="button"
-              onClick={() => {
-                onChange('');
-                setUrlError(null);
-              }}
+              disabled={isDeleting}
+              onClick={handleClearImage}
+              title="Delete image from S3 bucket and database"
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#dc2626',
+                color: isDeleting ? '#94a3b8' : '#dc2626',
                 fontSize: '0.74rem',
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: isDeleting ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '3px',
+                gap: '4px',
                 padding: '2px 6px',
+                borderRadius: '4px',
+                transition: 'all 0.15s ease',
               }}
             >
-              <Trash2 size={12} /> Clear
+              {isDeleting ? (
+                <>
+                  <RotateCw size={12} style={{ animation: 'spin 1s linear infinite' }} /> Deleting from S3...
+                </>
+              ) : (
+                <>
+                  <Trash2 size={12} /> Clear (S3 & DB)
+                </>
+              )}
             </button>
           </div>
           <div
@@ -481,7 +526,13 @@ function ImageUploadControl({ label, value, onChange }) {
 }
 
 // ─── Live Visual Section Preview Component (Shopify Style) ───────────────────
-function LiveSectionPreview({ section, activeLineIdx, onSelectLine }) {
+function LiveSectionPreview({
+  section,
+  activeLineIdx,
+  onSelectLine,
+  activeHeroSlideIdx,
+  onSelectHeroSlide,
+}) {
   if (!section || !section.id) return null;
   const s = section.settings || {};
   const [internalLineIdx, setInternalLineIdx] = useState(0);
@@ -563,6 +614,102 @@ function LiveSectionPreview({ section, activeLineIdx, onSelectLine }) {
     }
   };
 
+  // ─── Hero Banner: 3 Slides & 6 Images Preview Logic ─────────────────────────
+  const heroDefaultSlides = useMemo(
+    () => [
+      {
+        id: 'slide_1',
+        enabled: true,
+        eyebrow: 'NEW ARRIVALS',
+        title: 'LUXE',
+        subtitle: 'NEW DROP',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_1_left.jpg',
+        rightImage: '/images/slide_1_right.jpg',
+      },
+      {
+        id: 'slide_2',
+        enabled: true,
+        eyebrow: 'EXCLUSIVELY OUR',
+        title: 'BRAND',
+        subtitle: '50% OFF',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_2_left.jpg',
+        rightImage: '/images/slide_2_right.jpg',
+      },
+      {
+        id: 'slide_3',
+        enabled: true,
+        eyebrow: 'PREMIUM SELECTION',
+        title: 'URBAN',
+        subtitle: '30% OFF',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_3_left.jpg',
+        rightImage: '/images/slide_3_right.jpg',
+      },
+    ],
+    []
+  );
+
+  const heroSlidesList = useMemo(() => {
+    if (section.id !== 'hero_banner') return [];
+    if (Array.isArray(s.slides) && s.slides.length > 0) {
+      return [0, 1, 2].map((i) => ({
+        ...heroDefaultSlides[i],
+        ...(s.slides[i] || {}),
+      }));
+    }
+    const copy = [...heroDefaultSlides];
+    if (s.headline || s.imageUrl || s.badge || s.ctaText) {
+      copy[0] = {
+        ...copy[0],
+        eyebrow: s.badge || copy[0].eyebrow,
+        title: s.headline || copy[0].title,
+        subtitle: s.subheadline || copy[0].subtitle,
+        ctaText: s.ctaText || copy[0].ctaText,
+        leftImage: s.imageUrl || copy[0].leftImage,
+        rightImage: s.imageUrl || copy[0].rightImage,
+      };
+    }
+    return copy;
+  }, [section.id, s.slides, s.headline, s.subheadline, s.badge, s.ctaText, s.imageUrl, heroDefaultSlides]);
+
+  const [internalHeroSlideIdx, setInternalHeroSlideIdx] = useState(0);
+  const [isHeroAutoPlaying, setIsHeroAutoPlaying] = useState(true);
+
+  useEffect(() => {
+    if (section.id !== 'hero_banner' || heroSlidesList.length <= 1 || !isHeroAutoPlaying) return;
+    const speed = Math.max(2000, Number(s.autoplaySpeed) || 3200);
+    const timer = setInterval(() => {
+      setInternalHeroSlideIdx((prev) => (prev + 1) % heroSlidesList.length);
+    }, speed);
+    return () => clearInterval(timer);
+  }, [section.id, heroSlidesList.length, s.autoplaySpeed, isHeroAutoPlaying]);
+
+  const isHeroSlidePinned = typeof activeHeroSlideIdx === 'number' && !isHeroAutoPlaying;
+  const currentHeroIdx = isHeroSlidePinned
+    ? (activeHeroSlideIdx % (heroSlidesList.length || 1))
+    : (internalHeroSlideIdx % (heroSlidesList.length || 1));
+
+  const curHeroSlide = heroSlidesList[currentHeroIdx] || heroSlidesList[0] || {};
+
+  const handleManualHeroSelect = (target) => {
+    setIsHeroAutoPlaying(false);
+    if (typeof target === 'function') {
+      setInternalHeroSlideIdx((prev) => {
+        const nextVal = target(prev);
+        if (onSelectHeroSlide) onSelectHeroSlide(nextVal);
+        return nextVal;
+      });
+    } else {
+      setInternalHeroSlideIdx(target);
+      if (onSelectHeroSlide) onSelectHeroSlide(target);
+    }
+  };
+
   return (
     <div className="adm-cust-preview-box">
       <div className="adm-cust-preview-header">
@@ -581,6 +728,19 @@ function LiveSectionPreview({ section, activeLineIdx, onSelectLine }) {
               <span>{isAutoPlaying ? 'Auto Rotating' : 'Rotate Paused'}</span>
             </button>
           )}
+
+          {section.id === 'hero_banner' && (
+            <button
+              type="button"
+              className={`adm-cust-preview-auto-btn no-hover-fx ${isHeroAutoPlaying ? 'active' : ''}`}
+              onClick={() => setIsHeroAutoPlaying(!isHeroAutoPlaying)}
+              title={isHeroAutoPlaying ? 'Pause automatic slide rotation' : 'Resume automatic slide rotation'}
+            >
+              {isHeroAutoPlaying ? <Pause size={10} /> : <Play size={10} />}
+              <span>{isHeroAutoPlaying ? 'Auto Rotating' : 'Rotate Paused'}</span>
+            </button>
+          )}
+
           <span className="adm-cust-preview-subtitle">
             Real-time customer view simulation
           </span>
@@ -692,78 +852,455 @@ function LiveSectionPreview({ section, activeLineIdx, onSelectLine }) {
         </div>
       )}
 
-      {/* 2. Hero Banner Preview */}
+      {/* 2. Hero Banner Preview (True Storefront Diagonal Split Collage with 3 Slides & 6 Images) */}
       {section.id === 'hero_banner' && (
-        <div
-          style={{
-            position: 'relative',
-            borderRadius: '10px',
-            overflow: 'hidden',
-            minHeight: '170px',
-            background: s.imageUrl
-              ? `linear-gradient(rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.65)), url(${s.imageUrl}) center/cover no-repeat`
-              : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-            color: '#ffffff',
-            padding: '1.25rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: '0.45rem',
-          }}
-        >
-          {s.badge && (
-            <span
+        <div className="adm-cust-announcement-preview-wrap">
+          <div
+            style={{
+              position: 'relative',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              height: '240px',
+              backgroundColor: '#0f1117',
+              border: '1.5px solid #1e293b',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+              userSelect: 'none',
+            }}
+          >
+            {/* Left Diagonal Image (58% width with polygon clip-path) */}
+            <div
               style={{
-                alignSelf: 'flex-start',
-                background: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(4px)',
-                padding: '2px 8px',
-                borderRadius: '9999px',
-                fontSize: '0.68rem',
-                fontWeight: 700,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '58%',
+                height: '100%',
+                clipPath: 'polygon(0 0, 100% 0, 72% 100%, 0 100%)',
+                WebkitClipPath: 'polygon(0 0, 100% 0, 72% 100%, 0 100%)',
+                overflow: 'hidden',
+                backgroundColor: '#1e1b4b',
               }}
             >
-              {s.badge}
-            </span>
-          )}
-          <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#ffffff' }}>
-            {s.headline || 'Headline Title'}
-          </h4>
-          <p style={{ margin: 0, fontSize: '0.78rem', opacity: 0.9, maxWidth: '480px', lineHeight: 1.4 }}>
-            {s.subheadline || 'Subheadline description will appear here...'}
-          </p>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.35rem' }}>
-            {s.ctaText && (
-              <span
+              <img
+                src={curHeroSlide.leftImage || '/images/slide_1_left.jpg'}
+                alt={`${curHeroSlide.title || 'Hero'} Left Diagonal`}
                 style={{
-                  background: '#ffffff',
-                  color: '#7c3aed',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  padding: '4px 10px',
-                  borderRadius: '6px',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center 15%',
+                  display: 'block',
+                  transition: 'transform 0.4s ease',
                 }}
-              >
-                {s.ctaText}
-              </span>
-            )}
-            {s.secondaryCtaText && (
-              <span
+              />
+              <div
                 style={{
-                  background: 'rgba(255,255,255,0.2)',
+                  position: 'absolute',
+                  bottom: '6px',
+                  left: '8px',
+                  background: 'rgba(0, 0, 0, 0.65)',
                   color: '#ffffff',
-                  fontSize: '0.74rem',
-                  fontWeight: 600,
-                  padding: '4px 10px',
-                  borderRadius: '6px',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  letterSpacing: '0.04em',
+                  backdropFilter: 'blur(4px)',
                 }}
               >
-                {s.secondaryCtaText}
-              </span>
-            )}
+                LEFT IMAGE
+              </div>
+            </div>
+
+            {/* Right Diagonal Image (58% width with polygon clip-path) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: '42%',
+                width: '58%',
+                height: '100%',
+                clipPath: 'polygon(28% 0, 100% 0, 100% 100%, 0 100%)',
+                WebkitClipPath: 'polygon(28% 0, 100% 0, 100% 100%, 0 100%)',
+                overflow: 'hidden',
+                backgroundColor: '#312e81',
+              }}
+            >
+              <img
+                src={curHeroSlide.rightImage || '/images/slide_1_right.jpg'}
+                alt={`${curHeroSlide.title || 'Hero'} Right Diagonal`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center 15%',
+                  display: 'block',
+                  transition: 'transform 0.4s ease',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '6px',
+                  right: '8px',
+                  background: 'rgba(0, 0, 0, 0.65)',
+                  color: '#ffffff',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  letterSpacing: '0.04em',
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                RIGHT IMAGE
+              </div>
+            </div>
+
+            {/* Subtle Overlay Shadow */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, transparent 70%)',
+                pointerEvents: 'none',
+              }}
+            />
+
+            {/* Center Frosted Glass Callout Card */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 4,
+                width: 'min(240px, 60%)',
+                padding: '1rem 1.1rem',
+                borderRadius: '16px',
+                background: 'rgba(255, 255, 255, 0.92)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1.5px solid rgba(255, 255, 255, 0.8)',
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.22)',
+                textAlign: 'center',
+              }}
+            >
+              {curHeroSlide.eyebrow && (
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.12em',
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    marginBottom: '0.2rem',
+                  }}
+                >
+                  {curHeroSlide.eyebrow}
+                </span>
+              )}
+              <h3
+                style={{
+                  margin: '0 0 0.15rem 0',
+                  fontSize: '1.25rem',
+                  fontWeight: 900,
+                  color: '#0f172a',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                }}
+              >
+                {curHeroSlide.title || 'LUXE'}
+              </h3>
+              {curHeroSlide.subtitle && (
+                <div
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    color: '#dc2626',
+                    letterSpacing: '0.06em',
+                    marginBottom: '0.45rem',
+                  }}
+                >
+                  {curHeroSlide.subtitle}
+                </div>
+              )}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  borderBottom: '1.5px solid #0f172a',
+                  paddingBottom: '2px',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  color: '#0f172a',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <span>{curHeroSlide.ctaText || 'SHOP NOW'}</span>
+                <ArrowRight size={10} strokeWidth={2.5} />
+              </div>
+            </div>
+
+            {/* Left Nav Arrow */}
+            <button
+              type="button"
+              onClick={() => handleManualHeroSelect((prev) => (prev - 1 + 3) % 3)}
+              title="Preview previous slide"
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 6,
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                color: '#111111',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <ChevronLeft size={16} strokeWidth={2.4} />
+            </button>
+
+            {/* Right Nav Arrow */}
+            <button
+              type="button"
+              onClick={() => handleManualHeroSelect((prev) => (prev + 1) % 3)}
+              title="Preview next slide"
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 6,
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                color: '#111111',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <ChevronRight size={16} strokeWidth={2.4} />
+            </button>
+          </div>
+
+          {/* Slide Indicator Bar & Jump Dots */}
+          <div className="adm-cust-preview-dots-row" style={{ marginTop: '0.65rem' }}>
+            <span className="adm-cust-preview-dots-label">
+              Previewing <strong>Slide {currentHeroIdx + 1} of 3 ({curHeroSlide.title || 'Untitled'})</strong> • 2 Images Shown
+              {isHeroAutoPlaying ? ` (Auto: ${((Number(s.autoplaySpeed) || 3200) / 1000).toFixed(1)}s)` : ' (Paused)'}
+            </span>
+            <div className="adm-cust-preview-dots-container">
+              {[0, 1, 2].map((idx) => {
+                const isActive = currentHeroIdx === idx;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`adm-cust-preview-dot-btn no-hover-fx ${isActive ? 'active' : 'inactive'}`}
+                    onClick={() => handleManualHeroSelect(idx)}
+                    title={`Jump to Slide ${idx + 1}`}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
+
+      {/* 2. Shop by Category Preview */}
+      {section.id === 'shop_by_category' && (() => {
+        const rawTitle = s.title || 'Shop by Category';
+        let prefix = s.titlePrefix;
+        let highlight = s.titleHighlight;
+        if (!prefix && !highlight) {
+          const words = rawTitle.trim().split(/\s+/);
+          if (words.length > 1) {
+            highlight = words.pop();
+            prefix = words.join(' ');
+          } else {
+            prefix = rawTitle;
+            highlight = '';
+          }
+        }
+        const titleFontSize = s.titleFontSize || 28;
+        const titleColor = s.titleColor || '#1e1b4b';
+        const titleHighlightColor = s.titleHighlightColor || '#7c3aed';
+        const subtitle = s.subtitle || 'Explore authentic handpicked items tailored for your home and lifestyle';
+        const subtitleColor = s.subtitleColor || '#64748b';
+        const subtitleFontSize = s.subtitleFontSize || 13;
+        const viewAllText = s.viewAllText || 'View All';
+        const viewAllUrl = s.viewAllUrl || '/categories';
+
+        const mockAvatars = [
+          { name: 'Kanjivaram Silk', color: '#fce7f3' },
+          { name: 'Madurai Sungudi', color: '#f3e8ff' },
+          { name: 'Handloom Cotton', color: '#ecfdf5' },
+          { name: 'Festive Lehengas', color: '#fef3c7' },
+          { name: 'Temple Jewelry', color: '#e0f2fe' },
+        ];
+
+        return (
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1.5px solid #ede8f8',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+            }}
+          >
+            {/* Header row with Title & View All */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                borderBottom: '1px solid #f1f5f9',
+                paddingBottom: '0.85rem',
+                marginBottom: '1rem',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.12em',
+                    color: '#7c3aed',
+                    textTransform: 'uppercase',
+                    marginBottom: '0.25rem',
+                  }}
+                >
+                  <span style={{ width: '12px', height: '1.5px', background: '#7c3aed' }} />
+                  SHOP BY
+                  <span style={{ width: '12px', height: '1.5px', background: '#7c3aed' }} />
+                </div>
+                <h3
+                  style={{
+                    margin: '0 0 0.25rem 0',
+                    fontSize: `${Math.min(titleFontSize, 32)}px`,
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  <span style={{ color: titleColor }}>{prefix}</span>
+                  {highlight ? (
+                    <>
+                      {' '}
+                      <span style={{ color: titleHighlightColor }}>{highlight}</span>
+                    </>
+                  ) : null}
+                </h3>
+                {subtitle && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: `${subtitleFontSize}px`,
+                      color: subtitleColor,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: '#7c3aed',
+                    color: '#ffffff',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                  }}
+                >
+                  <span>{viewAllText}</span>
+                  <ArrowRight size={12} strokeWidth={2.5} />
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.65rem',
+                    color: '#64748b',
+                    background: '#f8fafc',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #e2e8f0',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  Links to: {viewAllUrl}
+                </span>
+              </div>
+            </div>
+
+            {/* Dome/Arch category preview chips */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.6rem' }}>
+              {mockAvatars.map((cat, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '60px',
+                      borderRadius: '30px 30px 10px 10px',
+                      background: cat.color,
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#475569',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    ✦
+                  </div>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#1e293b' }}>
+                    {cat.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 3. Flash Deals Preview */}
       {section.id === 'flash_deals' && (
@@ -878,6 +1415,7 @@ function LiveSectionPreview({ section, activeLineIdx, onSelectLine }) {
       {/* 6. Generic Preview for Other Pages */}
       {section.id !== 'announcement_bar' &&
         section.id !== 'hero_banner' &&
+        section.id !== 'shop_by_category' &&
         section.id !== 'flash_deals' &&
         section.id !== 'why_picky' &&
         section.id !== 'free_shipping_goal_bar' && (
@@ -1074,6 +1612,9 @@ export default function AdminCustomization() {
   // Active Announcement Bar line tab (0, 1, 2, or 3)
   const [activeAnnouncementLineIdx, setActiveAnnouncementLineIdx] = useState(0);
 
+  // Active Hero Banner slide tab (0, 1, 2, or 'all')
+  const [activeHeroSlideIdx, setActiveHeroSlideIdx] = useState(0);
+
   // Active section objects
   const currentSection = currentSections.find((s) => s.id === activeSectionId) || currentSections[0] || {};
   const savedCurrentSection = savedCurrentSections.find((s) => s.id === activeSectionId) || savedCurrentSections[0] || {};
@@ -1103,6 +1644,8 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
+    storeSavePageSections(activePageId, updated);
+    broadcastLivePreview(activePageId, updated);
     setDraggedIdx(null);
     setDragOverIdx(null);
     showToast(`Reordered "${movedItem.name}"`, 'info');
@@ -1124,6 +1667,8 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
+    storeSavePageSections(activePageId, updated);
+    broadcastLivePreview(activePageId, updated);
     showToast(`Moved "${updated[index - 1].name}" up`, 'info');
   };
 
@@ -1142,6 +1687,8 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
+    storeSavePageSections(activePageId, updated);
+    broadcastLivePreview(activePageId, updated);
     showToast(`Moved "${updated[index + 1].name}" down`, 'info');
   };
 
@@ -1203,7 +1750,8 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
-    // Instant live preview broadcast to all open storefront tabs
+    // Instant live preview broadcast and store sync to all open storefront tabs
+    storeSavePageSections(activePageId, updated);
     broadcastLivePreview(activePageId, updated);
   };
 
@@ -1298,7 +1846,8 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
-    // Instant live preview broadcast to all open storefront tabs
+    // Instant live preview broadcast and store sync
+    storeSavePageSections(activePageId, updated);
     broadcastLivePreview(activePageId, updated);
   };
 
@@ -1380,8 +1929,177 @@ export default function AdminCustomization() {
       ...prev,
       [activePageId]: updated,
     }));
+    storeSavePageSections(activePageId, updated);
     broadcastLivePreview(activePageId, updated);
     showToast(`Showing ${targetCount} active line${targetCount > 1 ? 's' : ''} on storefront`, 'info');
+  };
+
+  // Helper for updating individual slides (and 6 images) of the Hero Banner
+  const handleUpdateHeroSlide = (slideIdx, field, val) => {
+    setLastSavedSectionTimeMap((prev) => {
+      if (!prev[activeSectionId]) return prev;
+      const copy = { ...prev };
+      delete copy[activeSectionId];
+      return copy;
+    });
+
+    const defaultHeroSlides = [
+      {
+        id: 'slide_1',
+        enabled: true,
+        eyebrow: 'NEW ARRIVALS',
+        title: 'LUXE',
+        subtitle: 'NEW DROP',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_1_left.jpg',
+        rightImage: '/images/slide_1_right.jpg',
+      },
+      {
+        id: 'slide_2',
+        enabled: true,
+        eyebrow: 'EXCLUSIVELY OUR',
+        title: 'BRAND',
+        subtitle: '50% OFF',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_2_left.jpg',
+        rightImage: '/images/slide_2_right.jpg',
+      },
+      {
+        id: 'slide_3',
+        enabled: true,
+        eyebrow: 'PREMIUM SELECTION',
+        title: 'URBAN',
+        subtitle: '30% OFF',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_3_left.jpg',
+        rightImage: '/images/slide_3_right.jpg',
+      },
+    ];
+
+    const currentHeroSlides =
+      Array.isArray(currentSection.settings?.slides) && currentSection.settings.slides.length > 0
+        ? currentSection.settings.slides
+        : defaultHeroSlides;
+
+    const updatedSlides = [0, 1, 2].map((idx) => {
+      const existing = currentHeroSlides[idx] || defaultHeroSlides[idx] || {
+        id: `slide_${idx + 1}`,
+        enabled: true,
+        eyebrow: '',
+        title: '',
+        subtitle: '',
+        ctaText: 'SHOP NOW',
+        ctaLink: '/products',
+        leftImage: '/images/slide_1_left.jpg',
+        rightImage: '/images/slide_1_right.jpg',
+      };
+      if (idx === slideIdx) {
+        return { ...existing, [field]: val };
+      }
+      return existing;
+    });
+
+    const updated = currentSections.map((s) => {
+      if (s.id === 'hero_banner') {
+        return {
+          ...s,
+          settings: {
+            ...s.settings,
+            slides: updatedSlides,
+            // Keep backwards-compatibility flat fields synchronized with Slide 1
+            ...(slideIdx === 0
+              ? {
+                  ...(field === 'title' ? { headline: val } : {}),
+                  ...(field === 'subtitle' ? { subheadline: val } : {}),
+                  ...(field === 'eyebrow' ? { badge: val } : {}),
+                  ...(field === 'ctaText' ? { ctaText: val } : {}),
+                  ...(field === 'ctaLink' ? { ctaLink: val } : {}),
+                  ...(field === 'leftImage' ? { imageUrl: val } : {}),
+                }
+              : {}),
+          },
+        };
+      }
+      return s;
+    });
+
+    setAllPageSections((prev) => ({
+      ...prev,
+      [activePageId]: updated,
+    }));
+    storeSavePageSections(activePageId, updated);
+    broadcastLivePreview(activePageId, updated);
+  };
+
+  // Clear a slide image: deletes from AWS S3 storage AND updates MongoDB database
+  const handleClearHeroSlideImage = async (slideIdx, field, currentUrl) => {
+    try {
+      // 1. Call backend API to delete from S3 bucket and MongoDB
+      await adminService.clearCustomizationImage({
+        pageId: activePageId,
+        sectionId: 'hero_banner',
+        slideIndex: slideIdx,
+        slideId: `slide_${slideIdx + 1}`,
+        imageField: field,
+        imageUrl: currentUrl,
+      });
+
+      // 2. Clear in local state and live preview
+      handleUpdateHeroSlide(slideIdx, field, '');
+
+      // 3. Mark in savedPageSections so unsaved badge doesn't linger for DB-persisted clear
+      setSavedPageSections((prev) => {
+        const copy = { ...prev };
+        if (copy[activePageId]) {
+          copy[activePageId] = copy[activePageId].map((s) => {
+            if (s.id === 'hero_banner') {
+              const currentHeroSlides = Array.isArray(s.settings?.slides) ? [...s.settings.slides] : [];
+              if (currentHeroSlides[slideIdx]) {
+                currentHeroSlides[slideIdx] = { ...currentHeroSlides[slideIdx], [field]: '' };
+              }
+              return {
+                ...s,
+                settings: {
+                  ...s.settings,
+                  slides: currentHeroSlides,
+                  ...(slideIdx === 0 && field === 'leftImage' ? { imageUrl: '' } : {}),
+                },
+              };
+            }
+            return s;
+          });
+        }
+        return copy;
+      });
+
+      showToast(`🗑️ Slide ${slideIdx + 1} ${field === 'leftImage' ? 'Left' : 'Right'} image deleted from S3 & DB!`, 'success');
+    } catch (err) {
+      console.error('Failed to clear hero image from S3/DB:', err);
+      handleUpdateHeroSlide(slideIdx, field, '');
+      showToast('Image cleared locally', 'info');
+    }
+  };
+
+  // Clear generic section image: deletes from AWS S3 storage AND clears in DB
+  const handleClearSectionImage = async (settingKey, currentUrl) => {
+    try {
+      await adminService.clearCustomizationImage({
+        pageId: activePageId,
+        sectionId: currentSection?.id,
+        imageField: settingKey,
+        imageUrl: currentUrl,
+      });
+
+      handleUpdateSetting(settingKey, '');
+      showToast('🗑️ Image deleted from S3 bucket and cleared in DB!', 'success');
+    } catch (err) {
+      console.error('Failed to clear section image from S3/DB:', err);
+      handleUpdateSetting(settingKey, '');
+      showToast('Image cleared locally', 'info');
+    }
   };
 
 
@@ -1429,6 +2147,7 @@ export default function AdminCustomization() {
       [activePageId]: reverted,
     }));
     storeSavePageSections(activePageId, reverted);
+    broadcastLivePreview(activePageId, reverted);
 
 
     if (pendingAction) {
@@ -1455,8 +2174,8 @@ export default function AdminCustomization() {
     showToast('Unsaved edits discarded', 'info');
   };
 
-  // Save Page Section Order & Visibility
-  const handleSaveOrderAndVisibility = async () => {
+  // Save Live Configuration (Section Order, Visibility & Settings)
+  const handleSaveLiveConfiguration = async () => {
     setIsSavingOrder(true);
     try {
       try {
@@ -1470,14 +2189,20 @@ export default function AdminCustomization() {
         [activePageId]: [...currentSections],
       }));
       storeSavePageSections(activePageId, currentSections);
+      broadcastLivePreview(activePageId, currentSections);
 
+      const now = Date.now();
       setLastSavedOrderTimeMap((prev) => ({
         ...prev,
-        [activePageId]: Date.now(),
+        [activePageId]: now,
       }));
-      showToast('🎉 Section order & visibility saved!', 'success');
+      setLastSavedSectionTimeMap((prev) => ({
+        ...prev,
+        [activeSectionId]: now,
+      }));
+      showToast('🎉 Live configuration saved and published!', 'success');
     } catch (err) {
-      console.error('Save order and visibility error:', err);
+      console.error('Save configuration error:', err);
       showToast('Failed to save customization', 'error');
     } finally {
       setIsSavingOrder(false);
@@ -1581,12 +2306,12 @@ export default function AdminCustomization() {
           <button
             type="button"
             className="adm-cust-btn-save-order no-hover-fx"
-            onClick={handleSaveOrderAndVisibility}
+            onClick={handleSaveLiveConfiguration}
             disabled={isSavingOrder}
-            title="Save Section Order & Visibility for this page"
+            title="Save Live Configuration for this page"
           >
             <Save size={15} />
-            <span>{isSavingOrder ? 'Saving...' : 'Save Section Order & Visibility'}</span>
+            <span>{isSavingOrder ? 'Saving...' : 'Save Live Configuration'}</span>
           </button>
         </div>
       </div>
@@ -2103,6 +2828,8 @@ export default function AdminCustomization() {
                 section={currentSection}
                 activeLineIdx={activeAnnouncementLineIdx}
                 onSelectLine={setActiveAnnouncementLineIdx}
+                activeHeroSlideIdx={activeHeroSlideIdx}
+                onSelectHeroSlide={setActiveHeroSlideIdx}
               />
 
               {/* Dynamic Form Controls */}
@@ -2736,83 +3463,401 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {/* 4. Hero Banner */}
-                {currentSection.id === 'hero_banner' && (
-                  <>
-                    <div>
-                      <Input
-                        label="Headline Title"
-                        value={currentSection.settings?.headline || ''}
-                        maxLength={80}
-                        onChange={(e) => handleUpdateSetting('headline', e.target.value)}
-                        placeholder="e.g. Authentic South Indian Elegance"
-                      />
-                      <CharacterCount current={currentSection.settings?.headline} max={80} />
-                    </div>
+                {/* 4. Hero Banner (Collage Billboard: 3 Slides & 6 Images) */}
+                {currentSection.id === 'hero_banner' && (() => {
+                  const defaultHeroSlides = [
+                    {
+                      id: 'slide_1',
+                      enabled: true,
+                      eyebrow: 'NEW ARRIVALS',
+                      title: 'LUXE',
+                      subtitle: 'NEW DROP',
+                      ctaText: 'SHOP NOW',
+                      ctaLink: '/products',
+                      leftImage: '/images/slide_1_left.jpg',
+                      rightImage: '/images/slide_1_right.jpg',
+                    },
+                    {
+                      id: 'slide_2',
+                      enabled: true,
+                      eyebrow: 'EXCLUSIVELY OUR',
+                      title: 'BRAND',
+                      subtitle: '50% OFF',
+                      ctaText: 'SHOP NOW',
+                      ctaLink: '/products',
+                      leftImage: '/images/slide_2_left.jpg',
+                      rightImage: '/images/slide_2_right.jpg',
+                    },
+                    {
+                      id: 'slide_3',
+                      enabled: true,
+                      eyebrow: 'PREMIUM SELECTION',
+                      title: 'URBAN',
+                      subtitle: '30% OFF',
+                      ctaText: 'SHOP NOW',
+                      ctaLink: '/products',
+                      leftImage: '/images/slide_3_left.jpg',
+                      rightImage: '/images/slide_3_right.jpg',
+                    },
+                  ];
 
-                    <div>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
-                        Subheadline Description
-                      </label>
-                      <textarea
-                        value={currentSection.settings?.subheadline || ''}
-                        maxLength={200}
-                        onChange={(e) => handleUpdateSetting('subheadline', e.target.value)}
-                        rows={3}
+                  const rawSlides =
+                    Array.isArray(currentSection.settings?.slides) && currentSection.settings.slides.length > 0
+                      ? currentSection.settings.slides
+                      : defaultHeroSlides;
+
+                  const slidesList = [0, 1, 2].map(
+                    (i) => rawSlides[i] || defaultHeroSlides[i] || {
+                      id: `slide_${i + 1}`,
+                      enabled: true,
+                      eyebrow: 'NEW ARRIVALS',
+                      title: 'LUXE',
+                      subtitle: 'NEW DROP',
+                      ctaText: 'SHOP NOW',
+                      ctaLink: '/products',
+                      leftImage: '/images/slide_1_left.jpg',
+                      rightImage: '/images/slide_1_right.jpg',
+                    }
+                  );
+
+                  const curSlide =
+                    (typeof activeHeroSlideIdx === 'number' && slidesList[activeHeroSlideIdx])
+                      ? slidesList[activeHeroSlideIdx]
+                      : slidesList[0];
+
+                  const activeSlidesCount = slidesList.filter((s) => s.enabled !== false).length;
+
+                  const heroBadgePresets = [
+                    'NEW ARRIVALS',
+                    'EXCLUSIVELY OUR',
+                    'PREMIUM SELECTION',
+                    'FESTIVE OFFER',
+                    'LIMITED EDITION',
+                    'HOT DROP',
+                    'TAMIL HERITAGE',
+                  ];
+
+                  // Render fields for a single slide
+                  const renderSlideEditor = (slideItem, slideIdx, isStacked = false) => {
+                    const isSlideOn = slideItem.enabled !== false;
+                    return (
+                      <div
+                        key={slideItem.id || slideIdx}
                         style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: '10px',
-                          border: '1px solid #dfd5f5',
-                          fontSize: '0.88rem',
-                          fontFamily: 'inherit',
-                          outline: 'none',
+                          background: isStacked ? '#fcfaff' : '#ffffff',
+                          border: isStacked ? '1.5px solid #ede8f8' : 'none',
+                          borderRadius: isStacked ? '12px' : '0',
+                          padding: isStacked ? '1.15rem' : '0.25rem 0 0',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '1.15rem',
                         }}
-                      />
-                      <CharacterCount current={currentSection.settings?.subheadline} max={200} />
-                    </div>
+                      >
+                        {/* Slide Sub-Header */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderBottom: '1px solid #f1f5f9',
+                            paddingBottom: '0.65rem',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                            <span
+                              style={{
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '50%',
+                                background: isSlideOn ? '#7c3aed' : '#cbd5e1',
+                                color: '#ffffff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {slideIdx + 1}
+                            </span>
+                            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#1e1b4b' }}>
+                              Slide {slideIdx + 1}: {slideItem.title || 'Untitled'}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                padding: '2px 7px',
+                                borderRadius: '999px',
+                                background: isSlideOn ? '#dcfce7' : '#f1f5f9',
+                                color: isSlideOn ? '#15803d' : '#94a3b8',
+                              }}
+                            >
+                              {isSlideOn ? '● Visible in Rotation' : '○ Slide Hidden'}
+                            </span>
+                          </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Primary CTA Text"
-                        value={currentSection.settings?.ctaText || ''}
-                        onChange={(e) => handleUpdateSetting('ctaText', e.target.value)}
-                      />
-                      <div>
-                        <Input
-                          label="Primary CTA Link"
-                          value={currentSection.settings?.ctaLink || ''}
-                          onChange={(e) => handleUpdateSetting('ctaLink', e.target.value)}
-                          error={heroPrimaryLinkError}
-                          placeholder="/shop or https://..."
-                        />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <AccessibleToggleSwitch
+                              enabled={isSlideOn}
+                              onToggle={() => handleUpdateHeroSlide(slideIdx, 'enabled', !isSlideOn)}
+                              label={`Toggle Slide ${slideIdx + 1} visibility`}
+                              id={`toggle-slide-${slideIdx}`}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Eyebrow / Pill Badge */}
+                        <div>
+                          <label
+                            style={{
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              color: '#334155',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginBottom: '0.35rem',
+                            }}
+                          >
+                            <span>Eyebrow Pill Tag (Top Badge)</span>
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Optional</span>
+                          </label>
+                          <Input
+                            value={slideItem.eyebrow || ''}
+                            onChange={(e) => handleUpdateHeroSlide(slideIdx, 'eyebrow', e.target.value)}
+                            placeholder="e.g. NEW ARRIVALS, EXCLUSIVELY OUR"
+                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '5px' }}>
+                            <span style={{ fontSize: '0.69rem', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                            {heroBadgePresets.map((preset) => {
+                              const isCur = slideItem.eyebrow === preset;
+                              return (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  className={`adm-cust-badge-preset-btn no-hover-fx ${isCur ? 'active' : ''}`}
+                                  onClick={() => handleUpdateHeroSlide(slideIdx, 'eyebrow', preset)}
+                                >
+                                  {preset}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Title (Headline) & Subtitle (Subheadline) */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div>
+                            <Input
+                              label="Main Headline Title"
+                              value={slideItem.title || ''}
+                              maxLength={40}
+                              onChange={(e) => handleUpdateHeroSlide(slideIdx, 'title', e.target.value)}
+                              placeholder="e.g. LUXE, BRAND, URBAN"
+                            />
+                            <CharacterCount current={slideItem.title} max={40} />
+                          </div>
+
+                          <div>
+                            <Input
+                              label="Subtitle / Discount Accent"
+                              value={slideItem.subtitle || ''}
+                              maxLength={40}
+                              onChange={(e) => handleUpdateHeroSlide(slideIdx, 'subtitle', e.target.value)}
+                              placeholder="e.g. NEW DROP, 50% OFF"
+                            />
+                            <CharacterCount current={slideItem.subtitle} max={40} />
+                          </div>
+                        </div>
+
+                        {/* CTA Button Text & Link */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <Input
+                            label="CTA Button Text"
+                            value={slideItem.ctaText || 'SHOP NOW'}
+                            onChange={(e) => handleUpdateHeroSlide(slideIdx, 'ctaText', e.target.value)}
+                            placeholder="SHOP NOW"
+                          />
+                          <Input
+                            label="CTA Button Link"
+                            value={slideItem.ctaLink || '/products'}
+                            onChange={(e) => handleUpdateHeroSlide(slideIdx, 'ctaLink', e.target.value)}
+                            placeholder="/products or /shop"
+                          />
+                        </div>
+
+                        {/* The 2 Diagonal Collage Images for this slide */}
+                        <div
+                          style={{
+                            background: '#faf8fe',
+                            border: '1.5px solid #ede8f8',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.85rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            <div>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                🖼️ Collage Images for Slide {slideIdx + 1} (2 Images)
+                              </span>
+                              <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                Both images are clipped into a modern diagonal split with an interactive center glass card.
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#7c3aed', background: '#f5f3ff', padding: '2px 8px', borderRadius: '4px' }}>
+                              Slide {slideIdx + 1} of 3
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                            {/* Left Diagonal Image */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                1. Left Diagonal Image (58% Width)
+                              </span>
+                              <ImageUploadControl
+                                label={`Slide ${slideIdx + 1} Left Image`}
+                                value={slideItem.leftImage || ''}
+                                onChange={(val) => handleUpdateHeroSlide(slideIdx, 'leftImage', val)}
+                                onClear={(currUrl) => handleClearHeroSlideImage(slideIdx, 'leftImage', currUrl)}
+                              />
+                            </div>
+
+                            {/* Right Diagonal Image */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                2. Right Diagonal Image (58% Width)
+                              </span>
+                              <ImageUploadControl
+                                label={`Slide ${slideIdx + 1} Right Image`}
+                                value={slideItem.rightImage || ''}
+                                onChange={(val) => handleUpdateHeroSlide(slideIdx, 'rightImage', val)}
+                                onClear={(currUrl) => handleClearHeroSlideImage(slideIdx, 'rightImage', currUrl)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* ── CARD 1: Hero Carousel Slides (3 Slides, 6 Images) ── */}
+                      <div className="adm-cust-form-card">
+                        {/* Header & Status */}
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <div className="adm-cust-form-card-title">
+                              <Flame size={16} color="#7c3aed" />
+                              <span>Hero Banner Carousel (3 Slides • 6 Images)</span>
+                            </div>
+                            <span className="adm-cust-form-card-subtitle">
+                              Customize all 3 collage slides and all 6 diagonal images. Each slide has its own Left & Right images, headline, badge, and CTA link.
+                            </span>
+                          </div>
+                          <span className="adm-cust-active-line-tag">
+                            {activeHeroSlideIdx === 'all'
+                              ? `Viewing All 3 Slides (${activeSlidesCount} Active)`
+                              : `Active: Slide ${activeHeroSlideIdx + 1} of 3 (${slidesList[activeHeroSlideIdx]?.enabled !== false ? 'ON' : 'OFF'})`}
+                          </span>
+                        </div>
+
+                        {/* Segmented Slide Switcher Tabs */}
+                        <div className="adm-cust-line-tabs-grid">
+                          {slidesList.map((slide, idx) => {
+                            const isSelected = activeHeroSlideIdx === idx;
+                            const isSlideOn = slide.enabled !== false;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                className={`adm-cust-line-tab-btn no-hover-fx ${isSelected ? 'active' : ''}`}
+                                onClick={() => setActiveHeroSlideIdx(idx)}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                  <span className={`adm-cust-tab-status-dot ${isSlideOn ? 'on' : 'off'}`} />
+                                  <span>Slide {idx + 1}</span>
+                                  <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isSlideOn ? '#15803d' : '#94a3b8' }}>
+                                    {isSlideOn ? 'ON' : 'OFF'}
+                                  </span>
+                                </div>
+                                <span className="adm-cust-line-badge-pill">
+                                  {slide.title || `Slide ${idx + 1}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            className={`adm-cust-line-tab-btn no-hover-fx ${activeHeroSlideIdx === 'all' ? 'active' : ''}`}
+                            onClick={() => setActiveHeroSlideIdx('all')}
+                            style={{ fontWeight: 800 }}
+                          >
+                            <span>📋 All 3 Slides</span>
+                          </button>
+                        </div>
+
+                        {/* Render Fields: Either currently selected slide or all 3 slides stacked */}
+                        {activeHeroSlideIdx === 'all' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingTop: '0.5rem' }}>
+                            {slidesList.map((slide, idx) => renderSlideEditor(slide, idx, true))}
+                          </div>
+                        ) : (
+                          renderSlideEditor(curSlide, typeof activeHeroSlideIdx === 'number' ? activeHeroSlideIdx : 0, false)
+                        )}
+                      </div>
+
+                      {/* ── CARD 2: Autoplay Timing & Carousel Options ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-title">
+                          <Clock size={16} color="#7c3aed" />
+                          <span>Carousel Timing & Autoplay Speed</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+                          <Input
+                            label="Autoplay Interval (Milliseconds)"
+                            type="number"
+                            min="1500"
+                            max="10000"
+                            step="200"
+                            value={currentSection.settings?.autoplaySpeed || 3200}
+                            onChange={(e) => handleUpdateSetting('autoplaySpeed', Number(e.target.value))}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155' }}>Speed Presets</span>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              {[
+                                { label: '2.5s (Fast)', val: 2500 },
+                                { label: '3.2s (Default)', val: 3200 },
+                                { label: '4.5s (Relaxed)', val: 4500 },
+                                { label: '6s (Slow)', val: 6000 },
+                              ].map((p) => {
+                                const isCur = (currentSection.settings?.autoplaySpeed || 3200) === p.val;
+                                return (
+                                  <button
+                                    key={p.val}
+                                    type="button"
+                                    className={`adm-cust-badge-preset-btn no-hover-fx ${isCur ? 'active' : ''}`}
+                                    onClick={() => handleUpdateSetting('autoplaySpeed', p.val)}
+                                  >
+                                    {p.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Secondary CTA Text"
-                        value={currentSection.settings?.secondaryCtaText || ''}
-                        onChange={(e) => handleUpdateSetting('secondaryCtaText', e.target.value)}
-                      />
-                      <div>
-                        <Input
-                          label="Secondary CTA Link"
-                          value={currentSection.settings?.secondaryCtaLink || ''}
-                          onChange={(e) => handleUpdateSetting('secondaryCtaLink', e.target.value)}
-                          error={heroSecondaryLinkError}
-                          placeholder="/categories or https://..."
-                        />
-                      </div>
-                    </div>
-
-                    <ImageUploadControl
-                      label="Hero Banner Image"
-                      value={currentSection.settings?.imageUrl || ''}
-                      onChange={(val) => handleUpdateSetting('imageUrl', val)}
-                    />
-                  </>
-                )}
+                  );
+                })()}
 
                 {/* 5. Flash Deals */}
                 {currentSection.id === 'flash_deals' && (
@@ -2853,38 +3898,344 @@ export default function AdminCustomization() {
                 )}
 
                 {/* 6. Shop by Category */}
-                {currentSection.id === 'shop_by_category' && (
-                  <>
-                    <Input
-                      label="Section Title"
-                      value={currentSection.settings?.title || ''}
-                      onChange={(e) => handleUpdateSetting('title', e.target.value)}
-                    />
-                    <Input
-                      label="Section Subtitle"
-                      value={currentSection.settings?.subtitle || ''}
-                      onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
-                    />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Grid Columns (Desktop)"
-                        type="number"
-                        min="2"
-                        max="6"
-                        value={currentSection.settings?.columns || 5}
-                        onChange={(e) => handleUpdateSetting('columns', Number(e.target.value))}
-                      />
-                      <Input
-                        label="Max Visible Categories"
-                        type="number"
-                        min="3"
-                        max="12"
-                        value={currentSection.settings?.maxItems || 10}
-                        onChange={(e) => handleUpdateSetting('maxItems', Number(e.target.value))}
-                      />
+                {currentSection.id === 'shop_by_category' && (() => {
+                  const s = currentSection.settings || {};
+                  const rawTitle = s.title || 'Shop by Category';
+                  let prefix = s.titlePrefix;
+                  let highlight = s.titleHighlight;
+                  if (prefix === undefined && highlight === undefined) {
+                    const words = rawTitle.trim().split(/\s+/);
+                    if (words.length > 1) {
+                      highlight = words.pop();
+                      prefix = words.join(' ');
+                    } else {
+                      prefix = rawTitle;
+                      highlight = '';
+                    }
+                  } else {
+                    prefix = prefix ?? '';
+                    highlight = highlight ?? '';
+                  }
+
+                  const titleFontSize = s.titleFontSize || 34;
+                  const titleColor = s.titleColor || '#1e1b4b';
+                  const titleHighlightColor = s.titleHighlightColor || '#7c3aed';
+                  const subtitle = s.subtitle ?? 'Explore authentic handpicked items tailored for your home and lifestyle';
+                  const subtitleFontSize = s.subtitleFontSize || 15;
+                  const subtitleColor = s.subtitleColor || '#64748b';
+                  const viewAllText = s.viewAllText || 'View All';
+                  const viewAllUrl = s.viewAllUrl || '/categories';
+
+                  const handleUpdateTitleParts = (newPrefix, newHighlight) => {
+                    const combined = `${newPrefix} ${newHighlight}`.trim();
+                    handleUpdateSetting('titlePrefix', newPrefix);
+                    handleUpdateSetting('titleHighlight', newHighlight);
+                    handleUpdateSetting('title', combined);
+                  };
+
+                  const primaryColorPresets = ['#1e1b4b', '#0f172a', '#111827', '#312e81', '#065f46', '#991b1b'];
+                  const accentColorPresets = ['#7c3aed', '#ec4899', '#f59e0b', '#10b981', '#2563eb', '#e11d48'];
+                  const fontSizePresets = [26, 30, 34, 40, 48];
+                  const urlPresets = [
+                    { label: 'Categories Hub', url: '/categories' },
+                    { label: 'All Products', url: '/shop' },
+                    { label: 'New Drops', url: '/new-arrivals' },
+                    { label: 'Best Sellers', url: '/best-sellers' },
+                    { label: 'Discounts & Deals', url: '/discounts' },
+                  ];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* ── CARD 1: Dual-Color Headline & Font Size ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              Two-Tone Section Headline & Typography
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the primary phrase ("Shop by") and the secondary accent word ("Category") with distinct colors and sizing.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          {/* Title Inputs Grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <Input
+                              label="Primary Headline Text (Word 1)"
+                              value={prefix}
+                              placeholder="Shop by"
+                              onChange={(e) => handleUpdateTitleParts(e.target.value, highlight)}
+                            />
+                            <Input
+                              label="Accent Secondary Word (Word 2)"
+                              value={highlight}
+                              placeholder="Category"
+                              onChange={(e) => handleUpdateTitleParts(prefix, e.target.value)}
+                            />
+                          </div>
+
+                          {/* Two-Color Controls */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                            {/* Color 1: Primary Phrase Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Primary Text Color ("{prefix || 'Shop by'}")
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={titleColor}
+                                  onChange={(e) => handleUpdateSetting('titleColor', e.target.value)}
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={titleColor}
+                                  onChange={(e) => handleUpdateSetting('titleColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {primaryColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('titleColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: titleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                      transform: titleColor === c ? 'scale(1.15)' : 'none',
+                                      transition: 'transform 0.15s ease',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Color 2: Secondary Accent Word Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Secondary Accent Color ("{highlight || 'Category'}")
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={titleHighlightColor}
+                                  onChange={(e) => handleUpdateSetting('titleHighlightColor', e.target.value)}
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={titleHighlightColor}
+                                  onChange={(e) => handleUpdateSetting('titleHighlightColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {accentColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('titleHighlightColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: titleHighlightColor === c ? '2px solid #1e1b4b' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                      transform: titleHighlightColor === c ? 'scale(1.15)' : 'none',
+                                      transition: 'transform 0.15s ease',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Title Font Size Control */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.35rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Title Font Size ({titleFontSize}px)
+                              </label>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                {fontSizePresets.map((fs) => (
+                                  <button
+                                    key={fs}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('titleFontSize', fs)}
+                                    className={`adm-cust-badge-preset-btn no-hover-fx ${Number(titleFontSize) === fs ? 'active' : ''}`}
+                                    style={{ padding: '2px 7px', fontSize: '0.7rem' }}
+                                  >
+                                    {fs}px
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <input
+                              type="range"
+                              min="20"
+                              max="54"
+                              value={titleFontSize}
+                              onChange={(e) => handleUpdateSetting('titleFontSize', Number(e.target.value))}
+                              style={{ width: '100%', accentColor: '#7c3aed', cursor: 'pointer' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 2: Subtitle & Description ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              Section Subtitle & Styling
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Descriptive caption displayed beneath the category title.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <Input
+                            label="Section Subtitle"
+                            value={subtitle}
+                            placeholder="Explore authentic handpicked items tailored for your home and lifestyle"
+                            onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
+                          />
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            {/* Subtitle Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Subtitle Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Subtitle Font Size */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Subtitle Font Size ({subtitleFontSize}px)
+                              </label>
+                              <input
+                                type="range"
+                                min="12"
+                                max="22"
+                                value={subtitleFontSize}
+                                onChange={(e) => handleUpdateSetting('subtitleFontSize', Number(e.target.value))}
+                                style={{ width: '100%', accentColor: '#7c3aed', cursor: 'pointer', marginTop: '8px' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 3: View All Button & Destination URL ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              "View All" Button & Destination Link
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Configure the button label and where the customer navigates when clicking the header CTA.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <Input
+                              label="View All Button Label"
+                              value={viewAllText}
+                              placeholder="View All"
+                              onChange={(e) => handleUpdateSetting('viewAllText', e.target.value)}
+                            />
+                            <Input
+                              label="Destination URL Route (when clicked)"
+                              value={viewAllUrl}
+                              placeholder="/categories"
+                              onChange={(e) => handleUpdateSetting('viewAllUrl', e.target.value)}
+                            />
+                          </div>
+
+                          {/* Quick Preset Route Chips */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b' }}>
+                              Quick Route Presets:
+                            </span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {urlPresets.map((p) => {
+                                const isCur = viewAllUrl === p.url;
+                                return (
+                                  <button
+                                    key={p.url}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('viewAllUrl', p.url)}
+                                    className={`adm-cust-badge-preset-btn no-hover-fx ${isCur ? 'active' : ''}`}
+                                  >
+                                    {p.label} <code style={{ fontSize: '0.65rem', opacity: 0.85 }}>({p.url})</code>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </>
-                )}
+                  );
+                })()}
 
                 {/* 7. New Arrivals / Best Sellers / Featured Products */}
                 {(currentSection.id === 'new_arrivals' ||
@@ -2962,6 +4313,7 @@ export default function AdminCustomization() {
                       label="Offer Background Image"
                       value={currentSection.settings?.imageUrl || ''}
                       onChange={(val) => handleUpdateSetting('imageUrl', val)}
+                      onClear={(currUrl) => handleClearSectionImage('imageUrl', currUrl)}
                     />
                   </>
                 )}
@@ -3442,28 +4794,25 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {/* 15. Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, About Us, Contact Us, Blog & others */}
+                {/* 15. Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, Wishlist, About Us, Contact Us, Blog & others */}
                 {![
                   'announcement_bar',
                   'main_header_nav',
                   'sticky_action_bar',
                   'hero_banner',
                   'flash_deals',
-                  'categories_showcase',
-                  'trending_picks',
-                  'best_sellers_preview',
+                  'shop_by_category',
                   'why_picky',
-                  'newsletter_popup',
-                  'shop_catalog_layout',
-                  'shop_filters',
-                  'shop_sorting',
-                  'shop_product_card',
-                  'pdp_image_gallery',
-                  'pdp_delivery_estimator',
-                  'pdp_stock_urgency',
+                  'catalog_header_banner',
+                  'shop_filters_sort',
+                  'product_card_appearance',
+                  'subcategory_pills_bar',
+                  'pdp_gallery_settings',
+                  'pdp_stock_delivery_pill',
                   'pdp_trust_guarantee',
+                  'pdp_related_products',
                   'free_shipping_goal_bar',
-                  'cart_coupons_strip',
+                  'cart_coupon_strip',
                   'cart_trust_security',
                   'cart_upsell_carousel',
                   'footer_config',
@@ -3519,11 +4868,32 @@ export default function AdminCustomization() {
 
                       if (
                         typeof val === 'string' &&
+                        (key.toLowerCase().includes('image') ||
+                          key.toLowerCase().includes('img') ||
+                          key.toLowerCase().includes('bannerbg') ||
+                          key.toLowerCase().includes('photo'))
+                      ) {
+                        return (
+                          <ImageUploadControl
+                            key={key}
+                            label={label}
+                            value={val}
+                            onChange={(newUrl) => handleUpdateSetting(key, newUrl)}
+                            onClear={(currUrl) => handleClearSectionImage(key, currUrl)}
+                          />
+                        );
+                      }
+
+                      if (
+                        typeof val === 'string' &&
                         (val.length > 50 ||
                           key.toLowerCase().includes('body') ||
                           key.toLowerCase().includes('story') ||
                           key.toLowerCase().includes('quote') ||
                           key.toLowerCase().includes('desc') ||
+                          key.toLowerCase().includes('mission') ||
+                          key.toLowerCase().includes('vision') ||
+                          key.toLowerCase().includes('blurb') ||
                           key.toLowerCase().includes('subheading') ||
                           key.toLowerCase().includes('subtitle'))
                       ) {

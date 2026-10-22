@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MOCK_STORE_CUSTOMIZATION, MOCK_PAGE_SECTIONS } from '../data/customizationMockData';
@@ -26,7 +27,7 @@ export function broadcastLiveSync(pageId, sections) {
         sections,
         timestamp: Date.now(),
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -40,7 +41,7 @@ export function broadcastLivePreview(pageId, sections) {
         sections,
         timestamp: Date.now(),
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -180,7 +181,7 @@ if (typeof window !== 'undefined') {
     if (sseSource) {
       try {
         sseSource.close();
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
@@ -199,13 +200,13 @@ if (typeof window !== 'undefined') {
           ) {
             useCustomizationStore.getState().setPageSections(payload.pageId, payload.sections, false);
           }
-        } catch (err) {}
+        } catch (err) { }
       };
 
       sseSource.onerror = () => {
         try {
           sseSource.close();
-        } catch (e) {}
+        } catch (e) { }
         sseSource = null;
 
         // Auto-reconnect with 3s backoff
@@ -223,4 +224,50 @@ if (typeof window !== 'undefined') {
 
   // Initiate real-time SSE stream on startup
   connectSseStream();
+}
+
+// ─── Custom Hook: usePageCustomization(pageId) ────────────────────────────────
+// Provides reactive, real-time section order, visibility, and settings per page
+export function usePageCustomization(pageId) {
+  const pageSections = useCustomizationStore((state) => state.pageSections?.[pageId]);
+
+  const sections = useMemo(() => {
+    const raw = Array.isArray(pageSections) && pageSections.length > 0
+      ? pageSections
+      : (MOCK_PAGE_SECTIONS[pageId] || []);
+    // Return sorted according to section.order (1, 2, 3...)
+    return [...raw].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+  }, [pageSections, pageId]);
+
+  const sectionMap = useMemo(() => {
+    const map = {};
+    for (const sec of sections) {
+      if (sec.id) map[sec.id] = sec;
+      if (sec.key) map[sec.key] = sec;
+    }
+    return map;
+  }, [sections]);
+
+  const getSection = (keyOrId) => sectionMap[keyOrId] || null;
+
+  const isEnabled = (keyOrId, defaultVal = true) => {
+    const sec = sectionMap[keyOrId];
+    if (!sec) return defaultVal;
+    return sec.enabled !== false;
+  };
+
+  const getSetting = (keyOrId, settingKey, fallback) => {
+    const sec = sectionMap[keyOrId];
+    const val = sec?.settings?.[settingKey];
+    if (val !== undefined && val !== null && val !== '') return val;
+    return fallback;
+  };
+
+  return {
+    sections,
+    sectionMap,
+    getSection,
+    isEnabled,
+    getSetting,
+  };
 }
