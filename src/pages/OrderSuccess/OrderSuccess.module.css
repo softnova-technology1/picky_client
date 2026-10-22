@@ -482,8 +482,11 @@
 /* Two-Column Details Grid */
 .detailsTwoCol {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.25rem;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
@@ -498,6 +501,10 @@
   border: 1px solid #ede9fe;
   border-radius: 16px;
   padding: 1.15rem 1.25rem;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .addressContent {
@@ -505,6 +512,8 @@
   color: #334155;
   line-height: 1.5;
   margin-bottom: 0.85rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .addressContent strong {
@@ -512,10 +521,12 @@
   font-size: 0.9rem;
   color: #0f172a;
   margin-bottom: 0.2rem;
+  word-break: break-word;
 }
 
 .addressContent p {
   margin: 0.15rem 0;
+  word-break: break-word;
 }
 
 .phoneText {
@@ -534,24 +545,41 @@
   padding: 0.35rem 0.65rem;
   border-radius: 8px;
   font-weight: 600;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .giftPill {
   display: flex;
   align-items: flex-start;
-  gap: 0.45rem;
+  gap: 0.5rem;
   font-size: 0.78rem;
   color: #be123c;
   background: #ffe4e6;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  border: 1px solid #fecdd3;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
   margin-top: 0.75rem;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.giftPill > div {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .giftMsg {
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
   font-style: italic;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #9f1239;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 /* Summary Rows */

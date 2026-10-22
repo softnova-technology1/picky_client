@@ -942,8 +942,8 @@
 .stepperRail {
   position: absolute;
   top: 21px;
-  left: calc(100% / 6);
-  right: calc(100% / 6);
+  left: calc(100% / 8);
+  right: calc(100% / 8);
   height: 3px;
   background: #ede9fe;
   border-radius: 99px;

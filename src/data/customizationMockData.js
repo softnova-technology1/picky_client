@@ -381,7 +381,7 @@ export const MOCK_PAGE_SECTIONS = {
       id: 'quick_inquiry',
       key: 'quick_inquiry',
       name: 'Quick Product & Bulk Inquiry',
-      enabled: true,
+      enabled: false,
       order: 9,
       type: 'inquiry',
       description: 'Homepage interactive product inquiry banner with fast submission form.',

@@ -23,6 +23,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
+import AdminInvoice from '../../components/admin/AdminInvoice';
 
 export default function OrderSuccess() {
   const { id } = useParams();
@@ -71,234 +72,18 @@ export default function OrderSuccess() {
 
   const handlePrintInvoice = () => {
     setShowInvoiceModal(true);
-    setTimeout(() => {
-      window.print();
-    }, 250);
   };
 
-  const handleDownloadInvoice = async () => {
-    if (!order) return;
-    try {
-      setDownloading(true);
-      const invoiceElement = document.getElementById('printable-tax-invoice');
-      if (!invoiceElement) {
-        setDownloading(false);
-        return;
-      }
-
-      // Clone element for clean off-screen rendering
-      const clone = invoiceElement.cloneNode(true);
-      clone.style.display = 'block';
-      clone.style.position = 'fixed';
-      clone.style.left = '0';
-      clone.style.top = '0';
-      clone.style.width = '800px';
-      clone.style.zIndex = '-99999';
-      clone.style.visibility = 'visible';
-      clone.style.background = '#ffffff';
-      document.body.appendChild(clone);
-
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-
-      document.body.removeChild(clone);
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      let heightLeft = pdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`Invoice-${order.orderNumber || order._id || 'Picky'}.pdf`);
-    } catch (err) {
-      console.error('Invoice PDF Download failed:', err);
-    } finally {
-      setDownloading(false);
-    }
+  const handleDownloadInvoice = () => {
+    setShowInvoiceModal(true);
   };
 
-  // Tax calculations for GST invoice
-  const orderTotal = Number(order?.totalAmount || order?.total || 0);
-  const orderSubtotal = Number(order?.subtotal || orderTotal);
-  const orderDiscount = Number(order?.discountAmount || 0);
-  const orderShipping = Number(order?.shippingFee || 0);
-  const convenienceFee = Number(order?.convenienceFee || 0);
-  const giftWrapFee = Boolean(order?.giftWrap?.isGiftWrapped || order?.giftWrapFee > 0)
-    ? Number(order?.giftWrap?.fee || order?.giftWrapFee || 30)
-    : 0;
-  const taxableBase = Math.max(0, (orderTotal - orderShipping - giftWrapFee - convenienceFee) / 1.05);
-  const totalGst = (orderTotal - orderShipping - giftWrapFee - convenienceFee) - taxableBase;
-  const halfGst = totalGst / 2;
-
-  const renderTaxInvoiceBody = (containerId) => {
-    if (!order) return null;
-    return (
-      <div id={containerId} className={styles.taxInvoiceWrapper}>
-        {/* Header Row: Seller & Invoice Meta */}
-        <div className={styles.invoiceHeaderRow}>
-          <div>
-            <div className={styles.sellerBrand}>PICKY CRAFTS & TEXTILES PVT. LTD.</div>
-            <div className={styles.sellerMeta}>
-              Registered Office: 42, Heritage Weavers Street, Madurai, Tamil Nadu - 625001<br />
-              <strong>GSTIN:</strong> 33AABCP1234F1Z5 | <strong>PAN:</strong> AABCP1234F<br />
-              <strong>State:</strong> 33 - Tamil Nadu | <strong>CIN:</strong> U52100TN2024PTC123456<br />
-              <strong>Support Email:</strong> care@picky.in | <strong>Phone:</strong> +91 98765 43210
-            </div>
-          </div>
-          <div className={styles.invoiceMetaBox}>
-            <div className={styles.taxInvoiceTitle}>TAX INVOICE</div>
-            <div><strong>Invoice No:</strong> INV-{order.orderNumber}</div>
-            <div><strong>Invoice Date:</strong> {formatDate(order.createdAt || new Date())}</div>
-            <div><strong>Order Ref:</strong> {order.orderNumber}</div>
-            <div><strong>Place of Supply:</strong> {order.shippingAddress?.state || 'Tamil Nadu'} (Code: 33)</div>
-          </div>
-        </div>
-
-        {/* Customer Billing & Shipping Address */}
-        <div className={styles.invoiceAddressesGrid}>
-          <div>
-            <div className={styles.addressColTitle}>Billed To (Customer Details)</div>
-            <strong>{order.shippingAddress?.fullName || order.shippingAddress?.name || order.user?.name || 'Customer'}</strong>
-            <div>{order.shippingAddress?.street || order.shippingAddress?.address}</div>
-            <div>{order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}</div>
-            <div>Phone: {order.shippingAddress?.phone || order.user?.phone || 'N/A'}</div>
-          </div>
-          <div>
-            <div className={styles.addressColTitle}>Shipped To (Delivery Destination)</div>
-            <strong>{order.shippingAddress?.fullName || order.shippingAddress?.name || order.user?.name || 'Customer'}</strong>
-            <div>{order.shippingAddress?.street || order.shippingAddress?.address}</div>
-            <div>{order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}</div>
-            <div>Country: India</div>
-          </div>
-        </div>
-
-        {/* Itemized Table */}
-        <table className={styles.invoiceTable}>
-          <thead>
-            <tr>
-              <th style={{ width: '40px', textAlign: 'center' }}>#</th>
-              <th>Description of Goods / Services</th>
-              <th style={{ width: '80px', textAlign: 'center' }}>HSN / SAC</th>
-              <th style={{ width: '40px', textAlign: 'center' }}>Qty</th>
-              <th style={{ width: '90px', textAlign: 'right' }}>Unit Rate (₹)</th>
-              <th style={{ width: '95px', textAlign: 'right' }}>Taxable Value (₹)</th>
-              <th style={{ width: '85px', textAlign: 'right' }}>CGST (2.5%)</th>
-              <th style={{ width: '85px', textAlign: 'right' }}>SGST (2.5%)</th>
-              <th style={{ width: '100px', textAlign: 'right' }}>Total (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items?.map((item, idx) => {
-              const itemGross = Number(item.price) * Number(item.quantity);
-              const itemBase = itemGross / 1.05;
-              const itemGst = itemGross - itemBase;
-              const itemHalfGst = itemGst / 2;
-              return (
-                <tr key={idx}>
-                  <td style={{ textAlign: 'center' }}>{idx + 1}</td>
-                  <td>
-                    <strong>{item.name}</strong>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>
-                      SKU: {item.sku || `PKY-ITEM-${idx + 101}`}
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>5208</td>
-                  <td style={{ textAlign: 'center' }}>{item.quantity}</td>
-                  <td style={{ textAlign: 'right' }}>{formatPrice(item.price)}</td>
-                  <td style={{ textAlign: 'right' }}>₹{itemBase.toFixed(2)}</td>
-                  <td style={{ textAlign: 'right' }}>₹{itemHalfGst.toFixed(2)}</td>
-                  <td style={{ textAlign: 'right' }}>₹{itemHalfGst.toFixed(2)}</td>
-                  <td style={{ textAlign: 'right' }}><strong>{formatPrice(itemGross)}</strong></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {/* Summary Breakdown Grid */}
-        <div className={styles.invoiceSummaryGrid}>
-          <div className={styles.invoiceSummaryBox}>
-            <div className={styles.summaryRow}>
-              <span>Subtotal (Gross):</span>
-              <span>{formatPrice(orderSubtotal)}</span>
-            </div>
-            {orderDiscount > 0 && (
-              <div className={styles.summaryRow} style={{ color: '#16a34a' }}>
-                <span>Coupon Discount:</span>
-                <span>-{formatPrice(orderDiscount)}</span>
-              </div>
-            )}
-            <div className={styles.summaryRow}>
-              <span>Taxable Amount:</span>
-              <span>₹{taxableBase.toFixed(2)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>CGST (2.5%):</span>
-              <span>₹{halfGst.toFixed(2)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>SGST (2.5%):</span>
-              <span>₹{halfGst.toFixed(2)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Delivery Charges:</span>
-              <span>{orderShipping > 0 ? formatPrice(orderShipping) : 'FREE'}</span>
-            </div>
-            {convenienceFee > 0 && (
-              <div className={styles.summaryRow}>
-                <span>Platform / Convenience Fee:</span>
-                <span>{formatPrice(convenienceFee)}</span>
-              </div>
-            )}
-            {giftWrapFee > 0 && (
-              <div className={styles.summaryRow}>
-                <span>Gift Wrapping Fee:</span>
-                <span>{formatPrice(giftWrapFee)}</span>
-              </div>
-            )}
-            <div className={styles.summaryTotalRow}>
-              <span>Grand Total (INR):</span>
-              <span>{formatPrice(orderTotal)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Info & Signatory */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1.25rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
-          <div style={{ fontSize: '11px', color: '#475569', maxWidth: '420px', lineHeight: '1.6' }}>
-            <strong>Payment Information:</strong><br />
-            Mode: {order.paymentMethod ? order.paymentMethod.toUpperCase() : 'ONLINE PAYMENT'}<br />
-            {order.razorpayPaymentId && <span>Transaction ID: {order.razorpayPaymentId}<br /></span>}
-            Status: Completed • Transaction Verified<br />
-            Goods once sold are covered under Picky's 7-Day Replacement Policy.
-          </div>
-          <div style={{ textAlign: 'center', minWidth: '180px' }}>
-            <div style={{ fontStyle: 'italic', color: '#7c3aed', fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
-              Picky Authorized Signatory
-            </div>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>This is a computer-generated official tax invoice.</div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const orderSubtotal = order?.subtotal ?? (order?.total || 0);
+  const orderDiscount = order?.discountAmount ?? 0;
+  const orderShipping = order?.shippingFee ?? 0;
+  const convenienceFee = order?.convenienceFee ?? 0;
+  const giftWrapFee = order?.giftWrap?.fee ?? (order?.giftWrapFee || 0);
+  const orderTotal = order?.totalAmount ?? (order?.total || 0);
 
   return (
     <PageWrapper>
@@ -545,7 +330,15 @@ export default function OrderSuccess() {
                 </div>
 
               </div>
-            ) : null}
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2.5rem 1.5rem', background: '#fbf9ff', borderRadius: '16px', border: '1.5px dashed #ddd6fe', margin: '1.75rem 0' }}>
+                <Package size={40} color="#7c3aed" style={{ marginBottom: '0.65rem' }} />
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.4rem 0' }}>Order #{id} Confirmed!</h3>
+                <p style={{ fontSize: '0.84rem', color: '#64748b', margin: 0, maxWidth: '440px', display: 'inline-block' }}>
+                  Your order has been recorded successfully. A confirmation message and invoice details are available on your account.
+                </p>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className={styles['actions-row']}>
@@ -582,59 +375,13 @@ export default function OrderSuccess() {
           </div>
 
           {/* ══════════════════════════════════════════════════════════════════
-              OFFICIAL GST TAX INVOICE MODAL & VECTOR PDF PRINT TEMPLATE
+              OFFICIAL GST TAX INVOICE (UNIFIED ADMIN & STOREFRONT INVOICE)
              ══════════════════════════════════════════════════════════════════ */}
           {showInvoiceModal && order && (
-            <div className={`${styles.invoiceModalOverlay} ${styles.printableInvoiceArea} printableInvoiceArea`}>
-              <div className={styles.invoiceModalBox}>
-                
-                {/* Modal Top Bar - Hidden during print */}
-                <div className={`${styles.modalHeader} ${styles.noPrint} noPrint`}>
-                  <div className={styles.modalTitle}>
-                    <FileText size={22} color="#7c3aed" />
-                    <span>Official Tax Invoice — #{order.orderNumber}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => window.print()}
-                      className={styles.printBtn}
-                    >
-                      <Printer size={16} />
-                      <span>Print</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowInvoiceModal(false)}
-                      className={styles.modalCloseBtn}
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Printable Invoice Body */}
-                {renderTaxInvoiceBody('modal-tax-invoice')}
-
-              </div>
-            </div>
-          )}
-
-          {/* Hidden off-screen invoice container permanently mounted for direct PDF download */}
-          {order && (
-            <div
-              style={{
-                position: 'fixed',
-                left: '-99999px',
-                top: 0,
-                width: '800px',
-                pointerEvents: 'none',
-                opacity: 0,
-                zIndex: -100,
-              }}
-            >
-              {renderTaxInvoiceBody('printable-tax-invoice')}
-            </div>
+            <AdminInvoice
+              order={order}
+              onClose={() => setShowInvoiceModal(false)}
+            />
           )}
 
         </div>

@@ -8,6 +8,8 @@ import {
   Truck,
   CheckCircle2,
   Package,
+  PackageCheck,
+  ShoppingBag,
   MapPin,
   Clock,
   ExternalLink,
@@ -24,6 +26,7 @@ import {
   Printer,
 } from 'lucide-react';
 import styles from './TrackOrder.module.css';
+import AdminInvoice from '../../components/admin/AdminInvoice';
 
 // ─── Arrival Window Helper ────────────────────────────────────────────────
 const getEstimatedArrivalWindow = (createdAt, isDelivered) => {
@@ -38,26 +41,36 @@ const getEstimatedArrivalWindow = (createdAt, isDelivered) => {
   return `${start.toLocaleDateString('en-US', opts)} — ${end.toLocaleDateString('en-US', opts)}`;
 };
 
-// ─── Picky Admin Order Progress Lifecycle Steps ─────────────────────────────
 const ADMIN_PROGRESS_STEPS = [
+  {
+    key: 'placed',
+    label: 'Order Placed',
+    sublabel: 'Customer order place செய்துவிட்டார்',
+    icon: ShoppingBag,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+  },
   {
     key: 'confirmed',
     label: 'Confirmed',
-    icon: Clock,
+    sublabel: 'Admin order-ஐ confirm செய்துவிட்டார்',
+    icon: CheckCircle2,
     color: '#b45309',
     bg: '#fffbeb',
   },
   {
     key: 'shipped',
-    label: 'Shipping',
+    label: 'Shipped',
+    sublabel: 'Order courier-க்கு அனுப்பப்பட்டுவிட்டது',
     icon: Truck,
-    color: '#7c3aed',
-    bg: '#f5f3ff',
+    color: '#2563eb',
+    bg: '#eff6ff',
   },
   {
     key: 'delivered',
     label: 'Delivered',
-    icon: BadgeCheck,
+    sublabel: 'Customer-க்கு order கிடைத்துவிட்டது',
+    icon: PackageCheck,
     color: '#15803d',
     bg: '#f0fdf4',
   },
@@ -73,6 +86,7 @@ export default function TrackOrder() {
   const [trackedOrder, setTrackedOrder] = useState(null);
   const [copiedAwb, setCopiedAwb] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const handleCopyTrackingId = (idToCopy) => {
     if (!idToCopy) return;
@@ -135,21 +149,23 @@ export default function TrackOrder() {
       }
 
       if (foundOrder && (foundOrder._id || foundOrder.orderNumber)) {
-        const rawStatus = (foundOrder.status || 'confirmed').toLowerCase();
-        const status = rawStatus === 'processing' || rawStatus === 'pending' || rawStatus === 'packed' ? 'confirmed' : rawStatus;
+        const rawStatus = (foundOrder.status || 'placed').toLowerCase();
+        const status = rawStatus === 'processing' || rawStatus === 'pending' || rawStatus === 'packed' ? 'placed' : rawStatus;
 
         const isCancelled = status === 'cancelled';
         const isDelivered = status === 'delivered';
         const isShipped = status === 'shipped' || status === 'in_transit' || status === 'out_for_delivery';
         const isConfirmed = status === 'confirmed';
+        const isPlaced = status === 'placed';
 
-        const currentStepIdx = isCancelled ? -1 : (isDelivered ? 2 : (isShipped ? 1 : 0));
+        const currentStepIdx = isCancelled ? -1 : (isDelivered ? 3 : (isShipped ? 2 : (isConfirmed ? 1 : 0)));
 
-        let statusBadgeText = 'CONFIRMED';
+        let statusBadgeText = 'ORDER PLACED';
         if (isDelivered) statusBadgeText = 'DELIVERED';
-        else if (isShipped) statusBadgeText = 'SHIPPING';
+        else if (isShipped) statusBadgeText = 'SHIPPED';
+        else if (isConfirmed) statusBadgeText = 'CONFIRMED';
         else if (isCancelled) statusBadgeText = 'CANCELLED';
-        else statusBadgeText = 'CONFIRMED';
+        else statusBadgeText = 'ORDER PLACED';
 
         const carrierName = (isShipped || isDelivered) && foundOrder.courier && foundOrder.courier !== 'Standard Surface Delivery'
           ? foundOrder.courier
@@ -165,15 +181,19 @@ export default function TrackOrder() {
           const isCompleted = !isCancelled && idx < currentStepIdx;
 
           let subText = '';
-          if (step.key === 'confirmed') {
-            subText = `Placed on ${formatDate(foundOrder.createdAt)}`;
+          if (step.key === 'placed') {
+            subText = `Order Placed on ${formatDate(foundOrder.createdAt)}`;
+          } else if (step.key === 'confirmed') {
+            subText = (isConfirmed || isShipped || isDelivered)
+              ? 'Confirmed by Admin'
+              : 'Awaiting Admin Confirmation';
           } else if (step.key === 'shipped') {
             subText = (isShipped || isDelivered)
-              ? `${carrierName ? carrierName : 'Shipped'}${trackingId ? ` • ${trackingId}` : ''}`
-              : 'Preparing for dispatch';
+              ? `${carrierName ? carrierName : 'Shipped'}${trackingId ? ` • AWB: ${trackingId}` : ''}`
+              : 'Courier dispatch pending';
           } else if (step.key === 'delivered') {
             subText = isDelivered
-              ? `Completed on ${formatDate(foundOrder.updatedAt || foundOrder.createdAt)}`
+              ? `Delivered on ${formatDate(foundOrder.updatedAt || foundOrder.createdAt)}`
               : 'Estimated arrival soon';
           }
 
@@ -260,6 +280,7 @@ export default function TrackOrder() {
           convenienceFee: computedConvenienceFee,
           discountAmount: orderDiscount,
           total: orderTotal,
+          rawOrder: foundOrder,
         });
 
         // ── Smooth Scroll Down to Results on Successful Lookup ──
@@ -429,14 +450,18 @@ export default function TrackOrder() {
                               trackedOrder.currentStepIdx <= 0
                                 ? 0
                                 : trackedOrder.currentStepIdx === 1
-                                ? 50
+                                ? 33.33
+                                : trackedOrder.currentStepIdx === 2
+                                ? 66.66
                                 : 100
                             }%`,
                             background:
                               trackedOrder.currentStepIdx === 1
-                                ? 'linear-gradient(90deg, #b45309 0%, #7c3aed 100%)'
-                                : trackedOrder.currentStepIdx >= 2
-                                ? 'linear-gradient(90deg, #b45309 0%, #7c3aed 50%, #15803d 100%)'
+                                ? 'linear-gradient(90deg, #7c3aed 0%, #b45309 100%)'
+                                : trackedOrder.currentStepIdx === 2
+                                ? 'linear-gradient(90deg, #7c3aed 0%, #b45309 45%, #2563eb 100%)'
+                                : trackedOrder.currentStepIdx >= 3
+                                ? 'linear-gradient(90deg, #7c3aed 0%, #b45309 30%, #2563eb 65%, #15803d 100%)'
                                 : '#ede9fe',
                           }}
                         />
@@ -662,7 +687,7 @@ export default function TrackOrder() {
                 <div className={styles.cardActionsRow}>
                   <button
                     type="button"
-                    onClick={() => window.print()}
+                    onClick={() => setShowInvoiceModal(true)}
                     className={styles.printInvoiceBtn}
                   >
                     <Printer size={15} />
@@ -680,6 +705,14 @@ export default function TrackOrder() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ── Unified Tax Invoice Modal ── */}
+          {showInvoiceModal && trackedOrder && (
+            <AdminInvoice
+              order={trackedOrder.rawOrder || trackedOrder}
+              onClose={() => setShowInvoiceModal(false)}
+            />
           )}
         </div>
       </div>

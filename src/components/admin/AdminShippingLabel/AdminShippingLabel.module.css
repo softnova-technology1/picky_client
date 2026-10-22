@@ -1,0 +1,434 @@
+/* ─── AdminShippingLabel Module CSS (4x6 Inch Thermal Courier Sticker) ─── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modalCard {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+  max-width: 580px;
+  width: 100%;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: lblModalIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lblModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal Top Bar */
+.modalHeaderBar {
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.headerTitleCluster {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.headerTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.headerSubtitle {
+  font-size: 0.76rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.printBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: 9999px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+.printBtn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.closeBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.closeBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Scrollable Preview Area */
+.previewBody {
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
+  background: #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+/* ─── 4x6 Inch (100mm x 150mm) Thermal Shipping Sticker ─── */
+.labelSheet {
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  border: 2px solid #000000;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 14px 16px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Row 1: Courier & Brand Header */
+.labelHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+}
+
+.brandLogo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.expressCarrierMeta {
+  text-align: right;
+}
+
+.expressTitle {
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.routingHubTag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: 0.05em;
+}
+
+/* Row 2: Scannable AWB Barcode */
+.barcodeSection {
+  text-align: center;
+  padding: 4px 0 8px;
+  border-bottom: 2px solid #000000;
+}
+
+.barcodeSvg {
+  width: 90%;
+  height: 52px;
+  margin: 0 auto;
+  display: block;
+}
+
+.awbNumber {
+  font-family: monospace;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-top: 3px;
+}
+
+/* Row 3: SHIP TO with High-Contrast PINCODE */
+.shipToSection {
+  border-bottom: 2px solid #000000;
+  padding-bottom: 10px;
+}
+
+.shipToTitle {
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.shipToFlexRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.recipientDetails {
+  flex: 1;
+}
+
+.recipientName {
+  font-size: 1.05rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+}
+
+.recipientAddress {
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #1e293b;
+}
+
+.recipientPhone {
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.pincodeBox {
+  border: 2px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-align: center;
+  min-width: 130px;
+  flex-shrink: 0;
+}
+
+.pincodeLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+}
+
+.pincodeValue {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  display: block;
+  line-height: 1.1;
+}
+
+/* Row 4: 4-Cell Logistics Matrix */
+.matrixGrid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 0.9fr 1fr;
+  border: 1.5px solid #000000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.matrixCell {
+  padding: 6px 8px;
+  border-right: 1.5px solid #000000;
+  display: flex;
+  flex-direction: column;
+}
+
+.matrixCell:last-child {
+  border-right: none;
+}
+
+.matrixLabel {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.matrixVal {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #000000;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+/* Row 5: Full-Width Payment Banner */
+.paymentBanner {
+  background: #000000;
+  color: #ffffff;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Row 6: Return Address + QR Code + Handling Care Icons */
+.footerLogisticsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.returnAddressBox {
+  flex: 1;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.returnTitle {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.qrAndIconsCluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.qrCodeContainer {
+  width: 58px;
+  height: 58px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.handlingIconsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.handlingIconItem {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+}
+
+/* ─── THERMAL PRINTER SPECIFIC RULES (@media print) ─── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .modalHeaderBar {
+    display: none !important;
+  }
+
+  .previewBody {
+    background: #ffffff !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .modalCard {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-height: none !important;
+    max-width: 100% !important;
+  }
+
+  .labelSheet,
+  .labelSheet * {
+    visibility: visible;
+  }
+
+  .labelSheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100mm !important;
+    max-width: 100mm !important;
+    height: 150mm !important;
+    max-height: 150mm !important;
+    padding: 8mm 6mm !important;
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  @page {
+    size: 100mm 150mm;
+    margin: 0;
+  }
+}

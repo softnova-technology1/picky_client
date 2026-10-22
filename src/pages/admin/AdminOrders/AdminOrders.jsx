@@ -41,8 +41,18 @@ import {
   RotateCcw,
   Trash2,
   Gift,
+  Tag,
+  Globe,
+  Barcode,
+  Plus,
+  Pencil,
+  Settings,
+  ExternalLink,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminInvoice from '../../../components/admin/AdminInvoice';
+import AdminShippingLabel from '../../../components/admin/AdminShippingLabel';
+import AdminGiftCard from '../../../components/admin/AdminGiftCard';
 import AdminStatCard from '../../../components/common/AdminStatCard';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
@@ -62,8 +72,69 @@ import {
   SORT_OPTIONS,
 } from '../../../data/ordersMockData';
 
-// ─── Custom Status Select Dropdown (icon-rich, SaaS-style, Forward-only lifecycle) ───
-function StatusSelect({ value, onChange, currentStatus }) {
+// ─── Default Logistics & Courier Partners Quick Fill Presets ─────────────────
+const INITIAL_COURIER_PRESETS = [
+  { id: 'st_courier', name: 'ST Courier', url: 'https://stcourier.com/', number: 'STC-', color: '#dc2626' },
+  { id: 'prof_courier', name: 'Professional Courier', url: 'https://www.tpcindia.com/', number: 'TPC-', color: '#ea580c' },
+  { id: 'bluedart', name: 'Blue Dart', url: 'https://www.bluedart.com/', number: 'BD-', color: '#2563eb' },
+  { id: 'dtdc', name: 'DTDC', url: 'https://www.dtdc.in/', number: 'DTDC-', color: '#b91c1c' },
+  { id: 'delhivery', name: 'Delhivery', url: 'https://www.delhivery.com/', number: 'DEL-', color: '#0f172a' },
+  { id: 'speedpost', name: 'Speed Post', url: 'https://www.indiapost.gov.in/', number: 'SP-', color: '#d97706' },
+];
+
+// ─── Format status date and time ───────────────────────────────────────────
+const MONTHS_SHORT_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatStatusDateTime(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = MONTHS_SHORT_NAMES[d.getMonth()] || '';
+  const year = d.getFullYear();
+  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  return `${day} ${month} ${year}, ${time}`;
+}
+
+function getStatusUpdateInfo(statusKey, order) {
+  if (!order) return { isDone: false, timestamp: null };
+  const targetKey = (statusKey || '').toLowerCase();
+  const currentKey = (order.status || 'placed').toLowerCase();
+
+  // 1. Check explicit statusHistory first (latest occurrence for this status)
+  const historyList = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+  const found = historyList.slice().reverse().find((h) => (h.status || '').toLowerCase() === targetKey);
+
+  if (found?.timestamp) {
+    return { isDone: true, timestamp: found.timestamp };
+  }
+
+  // 2. Lifecycle sequence logic:
+  const stepSequence = ['placed', 'confirmed', 'shipped', 'delivered'];
+  const currentIdx = currentKey === 'delivered' ? 3 : (currentKey === 'shipped' ? 2 : (currentKey === 'confirmed' ? 1 : (currentKey === 'placed' ? 0 : -1)));
+  const targetIdx = stepSequence.indexOf(targetKey);
+
+  if (currentKey === 'cancelled') {
+    if (targetKey === 'cancelled') {
+      return { isDone: true, timestamp: order.updatedAt || order.createdAt || null };
+    }
+    if (targetKey === 'placed') {
+      return { isDone: true, timestamp: order.createdAt || null };
+    }
+    return { isDone: false, timestamp: null };
+  }
+
+  // If status is current or in completed sequence
+  if (targetIdx !== -1 && targetIdx <= currentIdx) {
+    const ts = targetIdx === currentIdx ? (order.updatedAt || order.createdAt) : order.createdAt;
+    return { isDone: true, timestamp: ts };
+  }
+
+  return { isDone: false, timestamp: null };
+}
+
+// ─── Custom Status Select Dropdown (All options visible, Green Tick on updated, Date & Time beside status) ───
+function StatusSelect({ value, onChange, currentStatus, order }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -73,43 +144,30 @@ function StatusSelect({ value, onChange, currentStatus }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Filter options strictly forward: cannot downgrade status!
-  const availableOptions = useMemo(() => {
-    if (currentStatus === 'delivered') {
-      return STATUS_OPTIONS.filter((o) => o.value === 'delivered');
-    }
-    if (currentStatus === 'cancelled') {
-      return STATUS_OPTIONS.filter((o) => o.value === 'cancelled');
-    }
-    if (currentStatus === 'shipped') {
-      // Cannot go back to confirmed!
-      return STATUS_OPTIONS.filter((o) => o.value === 'shipped' || o.value === 'delivered' || o.value === 'cancelled');
-    }
-    // Confirmed can go to shipped or cancelled
-    return STATUS_OPTIONS.filter((o) => o.value === 'confirmed' || o.value === 'shipped' || o.value === 'cancelled');
-  }, [currentStatus]);
+  // ALL status options remain visible (never invisible)
+  const availableOptions = STATUS_OPTIONS;
 
   const selected = availableOptions.find((o) => o.value === value) || availableOptions[0] || STATUS_OPTIONS[0];
   const SelIcon = selected.icon;
-  const isLocked = currentStatus === 'delivered' || currentStatus === 'cancelled';
+  const currentSelectedInfo = getStatusUpdateInfo(selected.value, order);
+  const formattedSelectedTime = currentSelectedInfo.timestamp ? formatStatusDateTime(currentSelectedInfo.timestamp) : '';
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       {/* Trigger Button */}
       <button
         type="button"
-        disabled={isLocked}
-        onClick={() => !isLocked && setOpen((p) => !p)}
+        onClick={() => setOpen((p) => !p)}
         style={{
           width: '100%',
           padding: '0.65rem 0.9rem',
-          background: isLocked ? '#f8fafc' : open ? '#ffffff' : '#f8fafc',
+          background: open ? '#ffffff' : '#f8fafc',
           border: `1.5px solid ${open ? '#7c3aed' : '#e2e8f0'}`,
           borderRadius: '10px',
           fontSize: '0.84rem',
           fontWeight: 600,
           color: '#0f172a',
-          cursor: isLocked ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
           outline: 'none',
           boxSizing: 'border-box',
           display: 'flex',
@@ -118,28 +176,59 @@ function StatusSelect({ value, onChange, currentStatus }) {
           gap: '0.5rem',
           boxShadow: open ? '0 0 0 3px rgba(124,58,237,0.08)' : 'none',
           transition: 'all 0.2s ease',
-          opacity: isLocked ? 0.85 : 1,
         }}
-        title={isLocked ? `Order is ${currentStatus} (completed lifecycle)` : 'Select New Status'}
+        title="Select New Status"
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
           <span style={{ width: '26px', height: '26px', borderRadius: '7px', background: selected.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <SelIcon size={13} color={selected.color} />
           </span>
-          {selected.label}
-          {isLocked && (
-            <span style={{ fontSize: '0.68rem', color: '#64748b', background: '#e2e8f0', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 600, marginLeft: '0.3rem' }}>
-              Final
+          <span style={{ fontWeight: 700, color: '#0f172a' }}>{selected.label}</span>
+          {formattedSelectedTime && (
+            <span style={{
+              fontSize: '0.71rem',
+              fontWeight: 600,
+              color: '#15803d',
+              background: '#dcfce7',
+              border: '1px solid #bbf7d0',
+              padding: '0.12rem 0.45rem',
+              borderRadius: '6px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              whiteSpace: 'nowrap',
+            }}>
+              <Clock size={11} color="#16a34a" />
+              {formattedSelectedTime}
             </span>
           )}
         </span>
-        {!isLocked && (
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+          {currentSelectedInfo.isDone && (
+            <span
+              title="Status Updated"
+              style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: '#dcfce7',
+                border: '1.5px solid #86efac',
+                color: '#16a34a',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Check size={11} strokeWidth={3} />
+            </span>
+          )}
           <ChevronDown size={14} color="#94a3b8" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', flexShrink: 0 }} />
-        )}
+        </div>
       </button>
 
       {/* Dropdown Panel */}
-      {open && !isLocked && (
+      {open && (
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 6px)',
@@ -148,15 +237,18 @@ function StatusSelect({ value, onChange, currentStatus }) {
           background: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '12px',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.10)',
+          boxShadow: '0 10px 32px rgba(0,0,0,0.12)',
           zIndex: 200,
           overflow: 'hidden',
           animation: 'fadeIn 0.15s ease',
-          padding: '0.3rem',
+          padding: '0.35rem',
         }}>
           {availableOptions.map((opt) => {
             const OptIcon = opt.icon;
             const isSelected = opt.value === value;
+            const { isDone, timestamp } = getStatusUpdateInfo(opt.value, order);
+            const formattedTime = timestamp ? formatStatusDateTime(timestamp) : '';
+
             return (
               <div
                 key={opt.value}
@@ -164,25 +256,74 @@ function StatusSelect({ value, onChange, currentStatus }) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.6rem',
-                  padding: '0.55rem 0.75rem',
-                  borderRadius: '8px',
+                  justifyContent: 'space-between',
+                  gap: '0.65rem',
+                  padding: '0.62rem 0.85rem',
+                  borderRadius: '9px',
                   cursor: 'pointer',
                   background: isSelected ? '#f5f3ff' : 'transparent',
+                  border: `1px solid ${isSelected ? '#ddd6fe' : 'transparent'}`,
                   color: isSelected ? '#6d28d9' : '#0f172a',
-                  fontSize: '0.83rem',
+                  fontSize: '0.84rem',
                   fontWeight: isSelected ? 700 : 500,
                   transition: 'background 0.12s ease',
                   userSelect: 'none',
+                  marginBottom: '0.2rem',
                 }}
                 onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#f8fafc'; }}
                 onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
               >
-                <span style={{ width: '26px', height: '26px', borderRadius: '7px', background: opt.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <OptIcon size={13} color={opt.color} />
-                </span>
-                <span style={{ flex: 1 }}>{opt.label}</span>
-                {isSelected && <CheckCircle2 size={14} color="#7c3aed" style={{ flexShrink: 0 }} />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
+                  <span style={{ width: '28px', height: '28px', borderRadius: '8px', background: opt.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <OptIcon size={14} color={opt.color} />
+                  </span>
+                  <span style={{ fontSize: '0.86rem', fontWeight: isSelected ? 700 : 600, color: isSelected ? '#6d28d9' : '#0f172a' }}>
+                    {opt.label}
+                  </span>
+                  {/* Date & Time beside the status */}
+                  {isDone && formattedTime && (
+                    <span style={{
+                      fontSize: '0.71rem',
+                      fontWeight: 600,
+                      color: '#15803d',
+                      background: '#dcfce7',
+                      border: '1px solid #bbf7d0',
+                      padding: '0.12rem 0.45rem',
+                      borderRadius: '6px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      <Clock size={10} color="#16a34a" />
+                      {formattedTime}
+                    </span>
+                  )}
+                </div>
+
+                {/* Right side Green Tick */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0, marginLeft: '0.5rem' }}>
+                  {isDone ? (
+                    <span
+                      title={`Updated on ${formattedTime || 'done'}`}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#dcfce7',
+                        border: '1.5px solid #86efac',
+                        color: '#16a34a',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                  ) : isSelected ? (
+                    <CheckCircle2 size={16} color="#7c3aed" />
+                  ) : null}
+                </div>
               </div>
             );
           })}
@@ -199,6 +340,136 @@ export default function AdminOrders() {
   // ─── Delete Order State ───────────────────────────────────────────────────
   const [orderToDelete, setOrderToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // ─── Multi-Select & Bulk Actions State ───────────────────────────────────
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [bulkStatus, setBulkStatus] = useState('shipped');
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  // ─── Shipped Dispatch Modal State ─────────────────────────────────────────
+  const [orderToShip, setOrderToShip] = useState(null);
+  const [isSubmittingShip, setIsSubmittingShip] = useState(false);
+  const [shipModalCourier, setShipModalCourier] = useState('');
+  const [shipModalCourierUrl, setShipModalCourierUrl] = useState('');
+  const [shipModalAwb, setShipModalAwb] = useState('');
+  const [isBulkShipModal, setIsBulkShipModal] = useState(false);
+
+  // ─── Print Tax Invoice & Shipping Label Preview State ─────────────────────
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const [selectedLabelOrder, setSelectedLabelOrder] = useState(null);
+  const [selectedGiftCardOrder, setSelectedGiftCardOrder] = useState(null);
+
+  // ─── Dynamic Courier Partners Presets (Saved to localStorage) ─────────────
+  const [courierPresets, setCourierPresets] = useState(() => {
+    try {
+      const saved = localStorage.getItem('picky_admin_courier_presets');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load courier presets', e);
+    }
+    return INITIAL_COURIER_PRESETS;
+  });
+
+  const saveCourierPresets = (newPresets) => {
+    setCourierPresets(newPresets);
+    try {
+      localStorage.setItem('picky_admin_courier_presets', JSON.stringify(newPresets));
+    } catch (e) {
+      console.error('Failed to save courier presets', e);
+    }
+  };
+
+  // Courier Partner Modal Management (Add / Edit / List)
+  const [courierModalOpen, setCourierModalOpen] = useState(false);
+  const [editingCourier, setEditingCourier] = useState(null);
+  const [courierFormName, setCourierFormName] = useState('');
+  const [courierFormUrl, setCourierFormUrl] = useState('');
+  const [courierFormNumber, setCourierFormNumber] = useState('');
+  const [courierFormColor, setCourierFormColor] = useState('#2563eb');
+  const [manageCouriersModalOpen, setManageCouriersModalOpen] = useState(false);
+
+  const handleOpenAddCourier = () => {
+    setEditingCourier(null);
+    setCourierFormName('');
+    setCourierFormUrl('');
+    setCourierFormNumber('');
+    setCourierFormColor('#2563eb');
+    setCourierModalOpen(true);
+  };
+
+  const handleOpenEditCourier = (preset, e) => {
+    if (e) e.stopPropagation();
+    setEditingCourier(preset);
+    setCourierFormName(preset.name || '');
+    setCourierFormUrl(preset.url || '');
+    setCourierFormNumber(preset.number || '');
+    setCourierFormColor(preset.color || '#2563eb');
+    setCourierModalOpen(true);
+  };
+
+  const handleSaveCourierPartner = (e) => {
+    if (e) e.preventDefault();
+    const cleanName = courierFormName.trim();
+    const cleanUrl = courierFormUrl.trim();
+    const cleanNumber = courierFormNumber.trim();
+
+    if (!cleanName) {
+      showToast('⚠️ Courier Name is required', 'error');
+      return;
+    }
+    if (!cleanUrl) {
+      showToast('⚠️ Courier Site URL Link is required', 'error');
+      return;
+    }
+
+    if (editingCourier) {
+      const updated = courierPresets.map((p) => {
+        const match = p.id ? p.id === editingCourier.id : (p.name === editingCourier.name && p.url === editingCourier.url);
+        if (match) {
+          return {
+            ...p,
+            name: cleanName,
+            url: cleanUrl,
+            number: cleanNumber,
+            color: courierFormColor || p.color || '#2563eb',
+          };
+        }
+        return p;
+      });
+      saveCourierPresets(updated);
+      showToast(`✓ Updated courier partner "${cleanName}"`, 'success');
+    } else {
+      const newPartner = {
+        id: `courier_${Date.now()}`,
+        name: cleanName,
+        url: cleanUrl,
+        number: cleanNumber,
+        color: courierFormColor || '#2563eb',
+      };
+      saveCourierPresets([...courierPresets, newPartner]);
+      showToast(`✓ Added new courier partner "${cleanName}"`, 'success');
+    }
+    setCourierModalOpen(false);
+  };
+
+  const handleDeleteCourierPartner = (presetId, presetName) => {
+    const remaining = courierPresets.filter((p) => (p.id ? p.id !== presetId : p.name !== presetName));
+    saveCourierPresets(remaining);
+    showToast(`Deleted courier partner "${presetName}"`, 'success');
+    if (editingCourier && (editingCourier.id === presetId || editingCourier.name === presetName)) {
+      setCourierModalOpen(false);
+    }
+  };
+
+  const handleResetCourierPresets = () => {
+    saveCourierPresets(INITIAL_COURIER_PRESETS);
+    showToast('Reset courier partners to defaults', 'success');
+  };
 
   // ─── Filter & Search State ────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('all');
@@ -550,8 +821,8 @@ export default function AdminOrders() {
       showToast('⚠️ Cancelled order cannot be reopened.', 'error');
       return;
     }
-    if (order.status === 'shipped' && newStatus === 'confirmed') {
-      showToast('⚠️ Shipped order cannot be moved back to Confirmed.', 'error');
+    if (order.status === 'shipped' && (newStatus === 'confirmed' || newStatus === 'placed')) {
+      showToast('⚠️ Shipped order cannot be moved back to Confirmed or Order Placed.', 'error');
       return;
     }
 
@@ -649,6 +920,235 @@ export default function AdminOrders() {
     } finally {
       setIsDeleting(false);
       setOrderToDelete(null);
+    }
+  };
+
+  // ─── Multi-Select Helpers & Bulk Action Handlers ──────────────────────────
+  const pageOrderIds = useMemo(() => paginatedOrders.map((o) => o._id || o.id), [paginatedOrders]);
+  const isAllCurrentPageSelected =
+    pageOrderIds.length > 0 && pageOrderIds.every((id) => selectedOrderIds.includes(id));
+  const isSomeCurrentPageSelected =
+    pageOrderIds.some((id) => selectedOrderIds.includes(id)) && !isAllCurrentPageSelected;
+
+  const handleSelectAllCurrentPage = (e) => {
+    if (e) e.stopPropagation();
+    if (isAllCurrentPageSelected) {
+      setSelectedOrderIds((prev) => prev.filter((id) => !pageOrderIds.includes(id)));
+    } else {
+      setSelectedOrderIds((prev) => Array.from(new Set([...prev, ...pageOrderIds])));
+    }
+  };
+
+  const toggleSelectOrder = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllFiltered = () => {
+    const allFilteredIds = filteredOrders.map((o) => o._id || o.id);
+    setSelectedOrderIds(allFilteredIds);
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (selectedOrderIds.length === 0) return;
+    setIsBulkUpdating(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedOrderIds.map((id) =>
+          adminService.updateOrderStatus(id, {
+            status: bulkStatus,
+            note: `Bulk status update to ${bulkStatus} by Admin`,
+          })
+        )
+      );
+
+      const successfulIds = [];
+      results.forEach((res, idx) => {
+        if (res.status === 'fulfilled') {
+          successfulIds.push(selectedOrderIds[idx]);
+        }
+      });
+
+      if (successfulIds.length > 0) {
+        successfulIds.forEach((id) => {
+          storeUpdateStatus(id, bulkStatus);
+          const found = storeOrders.find((o) => (o._id || o.id) === id);
+          updateOrder(id, {
+            status: bulkStatus,
+            statusHistory: [
+              ...(found?.statusHistory || []),
+              {
+                status: bulkStatus,
+                timestamp: new Date().toISOString(),
+                note: `Bulk status update by Admin`,
+              },
+            ],
+          });
+        });
+        showToast(
+          `✅ Successfully updated ${successfulIds.length} order(s) to "${STATUS_CFG[bulkStatus]?.label || bulkStatus}"`,
+          'success'
+        );
+        setSelectedOrderIds([]);
+      } else {
+        showToast('Failed to update status for selected orders', 'error');
+      }
+    } catch (err) {
+      console.error('Bulk status update error:', err);
+      showToast('Failed to update status for selected orders', 'error');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedOrderIds.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedOrderIds.map((id) => adminService.deleteOrder(id))
+      );
+
+      const successfulIds = [];
+      results.forEach((res, idx) => {
+        if (res.status === 'fulfilled') {
+          successfulIds.push(selectedOrderIds[idx]);
+        }
+      });
+
+      if (successfulIds.length > 0) {
+        successfulIds.forEach((id) => {
+          if (storeDeleteOrder) storeDeleteOrder(id);
+        });
+        showToast(`✅ Successfully deleted ${successfulIds.length} order(s)`, 'success');
+        setSelectedOrderIds((prev) => prev.filter((id) => !successfulIds.includes(id)));
+      } else {
+        showToast('Failed to delete selected orders', 'error');
+      }
+      setShowBulkDeleteModal(false);
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      showToast('Failed to delete selected orders', 'error');
+    } finally {
+      setIsBulkDeleting(false);
+      setShowBulkDeleteModal(false);
+    }
+  };
+
+  // ─── Dispatch & Ship Modal Handlers ───────────────────────────────────────
+  const handleOpenShipModal = (order, e) => {
+    if (e) e.stopPropagation();
+    setIsBulkShipModal(false);
+    setOrderToShip(order);
+    setShipModalCourier(order?.courier !== 'Standard Surface Delivery' ? (order?.courier || '') : '');
+    setShipModalCourierUrl(order?.courierUrl || '');
+    setShipModalAwb(order?.trackingId || '');
+  };
+
+  const handleOpenBulkShipModal = () => {
+    if (selectedOrderIds.length === 0) return;
+    setIsBulkShipModal(true);
+    setOrderToShip({ isBulk: true, count: selectedOrderIds.length });
+    setShipModalCourier('');
+    setShipModalCourierUrl('');
+    setShipModalAwb('');
+  };
+
+  const handleConfirmShipModal = async () => {
+    const courier = shipModalCourier.trim();
+    const url = shipModalCourierUrl.trim();
+    const awb = shipModalAwb.trim();
+
+    if (!courier) {
+      showToast('⚠️ Courier Name is required *', 'error');
+      return;
+    }
+    if (!url) {
+      showToast('⚠️ Courier Site URL Link is required *', 'error');
+      return;
+    }
+    if (!awb) {
+      showToast('⚠️ Tracking / AWB Number is required *', 'error');
+      return;
+    }
+
+    setIsSubmittingShip(true);
+    try {
+      if (isBulkShipModal) {
+        // Bulk shipping
+        const results = await Promise.allSettled(
+          selectedOrderIds.map((id) =>
+            adminService.updateOrderStatus(id, {
+              status: 'shipped',
+              courier,
+              courierUrl: url,
+              trackingId: awb,
+              note: `Bulk dispatched via ${courier} (AWB: ${awb})`,
+            })
+          )
+        );
+        const successfulIds = [];
+        results.forEach((res, idx) => {
+          if (res.status === 'fulfilled') successfulIds.push(selectedOrderIds[idx]);
+        });
+        if (successfulIds.length > 0) {
+          successfulIds.forEach((id) => {
+            storeUpdateStatus(id, 'shipped');
+            const found = storeOrders.find((o) => (o._id || o.id) === id);
+            updateOrder(id, {
+              status: 'shipped',
+              courier,
+              courierUrl: url,
+              trackingId: awb,
+              statusHistory: [
+                ...(found?.statusHistory || []),
+                {
+                  status: 'shipped',
+                  timestamp: new Date().toISOString(),
+                  note: `Dispatched via ${courier} (AWB: ${awb})`,
+                },
+              ],
+            });
+          });
+          showToast(`🚀 Successfully dispatched & shipped ${successfulIds.length} orders!`, 'success');
+          setSelectedOrderIds([]);
+        }
+      } else if (orderToShip) {
+        // Single order shipping
+        const id = orderToShip._id || orderToShip.id;
+        await adminService.updateOrderStatus(id, {
+          status: 'shipped',
+          courier,
+          courierUrl: url,
+          trackingId: awb,
+          note: `Dispatched via ${courier} (AWB: ${awb})`,
+        });
+        storeUpdateStatus(id, 'shipped');
+        updateOrder(id, {
+          status: 'shipped',
+          courier,
+          courierUrl: url,
+          trackingId: awb,
+          statusHistory: [
+            ...(orderToShip.statusHistory || []),
+            {
+              status: 'shipped',
+              timestamp: new Date().toISOString(),
+              note: `Dispatched via ${courier} (AWB: ${awb})`,
+            },
+          ],
+        });
+        showToast(`🚀 Order #${orderToShip.orderNumber} successfully marked as Shipped!`, 'success');
+      }
+      setOrderToShip(null);
+      setIsBulkShipModal(false);
+    } catch (err) {
+      console.error('Ship order error:', err);
+      showToast(err?.response?.data?.message || err?.message || 'Failed to update shipping details', 'error');
+    } finally {
+      setIsSubmittingShip(false);
     }
   };
 
@@ -1190,7 +1690,194 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* ── 3. ORDERS TABLE WITH PERFECT ALIGNMENTS (8 COLUMNS) ──────────────────────── */}
+      {/* ── BULK ACTIONS BAR (ACTIVATES ON MULTI-SELECTION) ───────────────── */}
+      {selectedOrderIds.length > 0 && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+            color: '#ffffff',
+            borderRadius: '16px',
+            padding: '0.9rem 1.35rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            boxShadow: '0 10px 25px -5px rgba(49, 46, 129, 0.35)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            animation: 'ordAccordionIn 0.22s ease',
+          }}
+        >
+          {/* Left: Selection Counter & Bulk Select All */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'rgba(255, 255, 255, 0.16)',
+                padding: '0.4rem 0.9rem',
+                borderRadius: '9999px',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                color: '#ffffff',
+              }}
+            >
+              <Layers size={15} color="#c4b5fd" />
+              <span>{selectedOrderIds.length} Order{selectedOrderIds.length > 1 ? 's' : ''} Selected</span>
+            </div>
+
+            {selectedOrderIds.length < filteredOrders.length && (
+              <button
+                type="button"
+                onClick={handleSelectAllFiltered}
+                style={{
+                  background: 'rgba(196, 181, 253, 0.15)',
+                  border: '1px solid rgba(196, 181, 253, 0.35)',
+                  borderRadius: '6px',
+                  color: '#ddd6fe',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                  padding: '0.3rem 0.7rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(196, 181, 253, 0.25)';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(196, 181, 253, 0.15)';
+                  e.currentTarget.style.color = '#ddd6fe';
+                }}
+              >
+                Select all {filteredOrders.length} orders
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setSelectedOrderIds([])}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#cbd5e1',
+                fontSize: '0.78rem',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                padding: '0.2rem 0.4rem',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+            >
+              Clear Selection
+            </button>
+          </div>
+
+          {/* Right: Bulk Status Update & Bulk Delete */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* Status Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <span style={{ fontSize: '0.77rem', color: '#c4b5fd', fontWeight: 600 }}>Update Status:</span>
+              <select
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value)}
+                disabled={isBulkUpdating || isBulkDeleting}
+                style={{
+                  height: '36px',
+                  padding: '0 0.85rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+              >
+                <option value="confirmed">Order Confirmed</option>
+                <option value="shipped">Order Shipping (Dispatched)</option>
+                <option value="delivered">Order Delivered</option>
+                <option value="cancelled">Cancelled Order</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={bulkStatus === 'shipped' ? handleOpenBulkShipModal : handleBulkStatusUpdate}
+                disabled={isBulkUpdating || isBulkDeleting}
+                style={{
+                  height: '36px',
+                  padding: '0 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  cursor: isBulkUpdating ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 3px 10px rgba(124, 58, 237, 0.35)',
+                  transition: 'all 0.18s ease',
+                }}
+              >
+                {isBulkUpdating ? (
+                  <>
+                    <RotateCw size={14} className="spin-animation" />
+                    <span>Updating...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={15} />
+                    <span>Apply Status</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Bulk Delete Button */}
+            <button
+              type="button"
+              onClick={() => setShowBulkDeleteModal(true)}
+              disabled={isBulkUpdating || isBulkDeleting}
+              style={{
+                height: '36px',
+                padding: '0 1.1rem',
+                borderRadius: '8px',
+                border: '1px solid #fecdd3',
+                background: '#fff1f2',
+                color: '#e11d48',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                cursor: isBulkDeleting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 8px rgba(225, 29, 72, 0.15)',
+                transition: 'all 0.18s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#e11d48';
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.borderColor = '#e11d48';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff1f2';
+                e.currentTarget.style.color = '#e11d48';
+                e.currentTarget.style.borderColor = '#fecdd3';
+              }}
+            >
+              <Trash2 size={15} />
+              <span>Delete Selected ({selectedOrderIds.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 3. ORDERS TABLE WITH MULTI-SELECT & PERFECT ALIGNMENTS (9 COLUMNS) ── */}
       <div
         className="table-container"
         style={{
@@ -1204,7 +1891,28 @@ export default function AdminOrders() {
         <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: '0.9rem 0.6rem 0.9rem 1.25rem', textAlign: 'center', width: '50px', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>S.No</th>
+              <th style={{ padding: '0.9rem 0.5rem 0.9rem 1.25rem', textAlign: 'center', width: '44px' }}>
+                <input
+                  type="checkbox"
+                  checked={isAllCurrentPageSelected}
+                  ref={(input) => {
+                    if (input) {
+                      input.indeterminate = isSomeCurrentPageSelected;
+                    }
+                  }}
+                  onChange={handleSelectAllCurrentPage}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    accentColor: '#7c3aed',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    verticalAlign: 'middle',
+                  }}
+                  title={isAllCurrentPageSelected ? 'Deselect all on this page' : 'Select all on this page'}
+                />
+              </th>
+              <th style={{ padding: '0.9rem 0.6rem', textAlign: 'center', width: '48px', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>S.No</th>
               <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID</th>
               <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Customer</th>
               <th style={{ padding: '0.9rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Shipping Address</th>
@@ -1217,7 +1925,7 @@ export default function AdminOrders() {
           <tbody>
             {paginatedOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
                   <ShoppingBag size={42} style={{ opacity: 0.3, marginBottom: '0.75rem', display: 'block', margin: '0 auto 0.75rem' }} />
                   No orders found matching your search or filters.
                 </td>
@@ -1227,13 +1935,13 @@ export default function AdminOrders() {
                 const custName  = order.customer?.name || order.user?.name || order.shippingAddress?.fullName || 'Customer';
                 const custPhone = order.customer?.phone || order.user?.phone || '';
                 const custEmail = order.customer?.email || order.user?.email || '';
-                const st        = (order.status || 'confirmed').toLowerCase();
-                const cfg       = STATUS_CFG[st] || STATUS_CFG.confirmed;
+                const st        = (order.status || 'placed').toLowerCase();
+                const cfg       = STATUS_CFG[st] || STATUS_CFG.placed;
                 const StatusIcon = cfg.icon;
                 const isOpen    = expandedId === order._id;
 
                 // Default status strictly to order's current status (never auto-advance to shipping)
-                const currentRowStatus    = rowStatus[order._id]       ?? order.status;
+                const currentRowStatus    = rowStatus[order._id]       ?? (order.status || 'placed');
                 const isAlreadyShippedOrDelivered = order.status === 'shipped' || order.status === 'delivered';
                 const initialCourier = isAlreadyShippedOrDelivered && order.courier !== 'Standard Surface Delivery' ? (order.courier || '') : '';
                 const currentRowNote      = rowNote[order._id]         ?? (isAlreadyShippedOrDelivered ? (order.trackingId || '') : '');
@@ -1242,21 +1950,44 @@ export default function AdminOrders() {
                 const currentCancelReason = rowCancelReason[order._id] ?? '';
                 const isUpdating          = rowLoading[order._id]       ?? false;
 
+                const orderId = order._id || order.id;
+                const isSelected = selectedOrderIds.includes(orderId);
+
                 return (
                   <React.Fragment key={order._id}>
                     {/* ── Main Table Row (Neat Spacing & Clean SaaS Colors) ─────────────────────── */}
                     <tr
                       style={{
                         cursor: 'pointer',
-                        background: isOpen ? '#faf5ff' : index % 2 === 0 ? '#ffffff' : '#faf7ff',
+                        background: isSelected ? '#f5f3ff' : isOpen ? '#faf5ff' : index % 2 === 0 ? '#ffffff' : '#faf7ff',
                         borderBottom: isOpen ? 'none' : '1px solid #f1f5f9',
-                        borderLeft: isOpen ? '3px solid #7c3aed' : '3px solid transparent',
+                        borderLeft: isSelected ? '3px solid #7c3aed' : isOpen ? '3px solid #7c3aed' : '3px solid transparent',
                         transition: 'background 0.15s ease',
                       }}
                       onClick={() => toggleRow(order._id)}
                     >
+                      {/* Selection Checkbox */}
+                      <td
+                        style={{ padding: '1rem 0.5rem 1rem 1.25rem', textAlign: 'center' }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => toggleSelectOrder(orderId, e)}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            accentColor: '#7c3aed',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            verticalAlign: 'middle',
+                          }}
+                        />
+                      </td>
+
                       {/* S.No */}
-                      <td style={{ padding: '1rem 0.6rem 1rem 1.25rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>
+                      <td style={{ padding: '1rem 0.6rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>
                         {startIndex + index + 1}
                       </td>
 
@@ -1406,6 +2137,84 @@ export default function AdminOrders() {
                       {/* Action Cell: Manage Accordion Toggle & Delete Button */}
                       <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.45rem' }}>
+                          {/* Quick Tax Invoice Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedInvoiceOrder(order);
+                            }}
+                            title={`Generate Tax Invoice #${order.orderNumber}`}
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '9999px',
+                              border: '1px solid #ddd6fe',
+                              background: '#f5f3ff',
+                              color: '#7c3aed',
+                              cursor: 'pointer',
+                              transition: 'all 0.18s ease',
+                              boxSizing: 'border-box',
+                              flexShrink: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#7c3aed';
+                              e.currentTarget.style.color = '#ffffff';
+                              e.currentTarget.style.borderColor = '#7c3aed';
+                              e.currentTarget.style.boxShadow = '0 3px 10px rgba(124,58,237,0.3)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#f5f3ff';
+                              e.currentTarget.style.color = '#7c3aed';
+                              e.currentTarget.style.borderColor = '#ddd6fe';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <FileText size={15} />
+                          </button>
+
+                          {/* Quick Courier Shipping Label Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLabelOrder(order);
+                            }}
+                            title={`Generate 4x6 Shipping Label #${order.orderNumber}`}
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '9999px',
+                              border: '1.5px solid #cbd5e1',
+                              background: '#f8fafc',
+                              color: '#0f172a',
+                              cursor: 'pointer',
+                              transition: 'all 0.18s ease',
+                              boxSizing: 'border-box',
+                              flexShrink: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#0f172a';
+                              e.currentTarget.style.color = '#ffffff';
+                              e.currentTarget.style.borderColor = '#0f172a';
+                              e.currentTarget.style.boxShadow = '0 3px 10px rgba(15,23,42,0.25)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#f8fafc';
+                              e.currentTarget.style.color = '#0f172a';
+                              e.currentTarget.style.borderColor = '#cbd5e1';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <Tag size={15} />
+                          </button>
+
                           {/* Manage Order Accordion Toggle Button */}
                           <button
                             onClick={(e) => {
@@ -1437,45 +2246,6 @@ export default function AdminOrders() {
                             {isOpen ? <ChevronUp size={13} /> : <ChevronsUpDown size={13} />}
                             {isOpen ? 'Close Panel' : 'Manage Order'}
                           </button>
-
-                          {/* Delete Order Button */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOrderToDelete(order);
-                            }}
-                            title={`Delete Order #${order.orderNumber}`}
-                            style={{
-                              width: '34px',
-                              height: '34px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '9999px',
-                              border: '1px solid #fecdd3',
-                              background: '#fff1f2',
-                              color: '#e11d48',
-                              cursor: 'pointer',
-                              transition: 'all 0.18s ease',
-                              boxSizing: 'border-box',
-                              flexShrink: 0,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#e11d48';
-                              e.currentTarget.style.color = '#ffffff';
-                              e.currentTarget.style.borderColor = '#e11d48';
-                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(225,29,72,0.3)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = '#fff1f2';
-                              e.currentTarget.style.color = '#e11d48';
-                              e.currentTarget.style.borderColor = '#fecdd3';
-                              e.currentTarget.style.boxShadow = 'none';
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1483,7 +2253,7 @@ export default function AdminOrders() {
                     {/* ── 4. EXPANDED DETAIL VIEW WITH EQUAL HEIGHT SECTIONS ──── */}
                     {isOpen && (
                       <tr style={{ background: '#faf5ff' }}>
-                        <td colSpan={8} style={{ padding: 0, borderBottom: '1px solid #e2e8f0' }}>
+                        <td colSpan={9} style={{ padding: 0, borderBottom: '1px solid #e2e8f0' }}>
                           <div
                             style={{
                               padding: '1.5rem 1.75rem',
@@ -1628,19 +2398,47 @@ export default function AdminOrders() {
                                         background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
                                         border: '1.5px solid #fecdd3',
                                         boxShadow: '0 2px 6px rgba(225, 29, 72, 0.05)',
+                                        minWidth: 0,
+                                        overflow: 'hidden',
+                                        boxSizing: 'border-box',
                                       }}
                                     >
-                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#be123c', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#be123c', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                                           🎁 Gift Wrapping Service {order.giftWrap?.fee ? `(+₹${order.giftWrap.fee})` : ''}
                                         </span>
-                                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
-                                          Gift Order
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setSelectedGiftCardOrder(order)}
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.35rem',
+                                              fontSize: '0.72rem',
+                                              fontWeight: 700,
+                                              color: '#ffffff',
+                                              background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+                                              border: 'none',
+                                              padding: '0.24rem 0.7rem',
+                                              borderRadius: '9999px',
+                                              cursor: 'pointer',
+                                              boxShadow: '0 2px 6px rgba(225, 29, 72, 0.25)',
+                                              transition: 'all 0.15s ease',
+                                            }}
+                                            title="Print Luxury Gift Greeting Card"
+                                          >
+                                            <Printer size={12} />
+                                            <span>Print Card</span>
+                                          </button>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.18rem 0.55rem', borderRadius: '9999px' }}>
+                                            Gift Order
+                                          </span>
+                                        </div>
                                       </div>
-                                      <div style={{ fontSize: '0.82rem', color: '#881337', lineHeight: 1.5 }}>
+                                      <div style={{ fontSize: '0.82rem', color: '#881337', lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                         <strong>Gift Message: </strong>
-                                        <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239' }}>
+                                        <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                           {(order.giftWrap?.message && order.giftWrap.message.trim()) ? `"${order.giftWrap.message.trim()}"` : 'No message'}
                                         </span>
                                       </div>
@@ -1898,17 +2696,173 @@ export default function AdminOrders() {
                                         value={currentRowStatus}
                                         onChange={(val) => setRowStatus((p) => ({ ...p, [order._id]: val }))}
                                         currentStatus={order.status}
+                                        order={order}
                                       />
                                     </div>
 
                                     {/* ── Courier Details & AWB Input: shown strictly when Shipping is selected ── */}
                                     {currentRowStatus === 'shipped' && (
-                                      <div style={{ animation: 'fadeIn 0.22s ease', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                      <div
+                                        style={{
+                                          animation: 'fadeIn 0.22s ease',
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          gap: '0.85rem',
+                                          background: 'linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%)',
+                                          border: '1.5px solid #93c5fd',
+                                          borderRadius: '14px',
+                                          padding: '1.1rem',
+                                          boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+                                        }}
+                                      >
+                                        {/* Header */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #bfdbfe', paddingBottom: '0.6rem' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#2563eb', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                              <Truck size={15} />
+                                            </div>
+                                            <div>
+                                              <strong style={{ fontSize: '0.82rem', color: '#1e3a8a', display: 'block' }}>Courier Dispatch Information</strong>
+                                                                                          </div>
+                                          </div>
+                                          <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.12rem 0.5rem', borderRadius: '6px', fontWeight: 700 }}>
+                                            All 3 Fields Required *
+                                          </span>
+                                        </div>
+
+                                        {/* 1-Click Popular Courier Quick Fill Presets */}
+                                        <div>
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                            <div style={{ fontSize: '0.69rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                              Quick Select Courier Partner:
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <button
+                                                type="button"
+                                                onClick={handleOpenAddCourier}
+                                                title="Add new Courier Partner"
+                                                style={{
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '0.25rem',
+                                                  padding: '0.22rem 0.55rem',
+                                                  borderRadius: '6px',
+                                                  border: '1px dashed #2563eb',
+                                                  background: '#eff6ff',
+                                                  color: '#1d4ed8',
+                                                  fontSize: '0.72rem',
+                                                  fontWeight: 700,
+                                                  cursor: 'pointer',
+                                                  transition: 'all 0.15s ease',
+                                                }}
+                                                onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
+                                                onMouseLeave={(e) => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#1d4ed8'; }}
+                                              >
+                                                <Plus size={11} />
+                                                <span>Add Partner</span>
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => setManageCouriersModalOpen(true)}
+                                                title="Manage & Edit Courier Partners"
+                                                style={{
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '0.25rem',
+                                                  padding: '0.22rem 0.55rem',
+                                                  borderRadius: '6px',
+                                                  border: '1px solid #cbd5e1',
+                                                  background: '#ffffff',
+                                                  color: '#475569',
+                                                  fontSize: '0.72rem',
+                                                  fontWeight: 600,
+                                                  cursor: 'pointer',
+                                                  transition: 'all 0.15s ease',
+                                                }}
+                                                onMouseEnter={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
+                                                onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#475569'; }}
+                                              >
+                                                <Settings size={11} />
+                                                <span>Manage / Edit</span>
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                            {courierPresets.map((preset) => {
+                                              const isSelectedCourier = (currentRowCourier || '').toLowerCase() === preset.name.toLowerCase();
+                                              return (
+                                                <div
+                                                  key={preset.id || preset.name}
+                                                  style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    borderRadius: '8px',
+                                                    border: `1px solid ${isSelectedCourier ? '#2563eb' : '#cbd5e1'}`,
+                                                    background: isSelectedCourier ? '#2563eb' : '#ffffff',
+                                                    color: isSelectedCourier ? '#ffffff' : '#334155',
+                                                    boxShadow: isSelectedCourier ? '0 2px 6px rgba(37,99,235,0.3)' : 'none',
+                                                    transition: 'all 0.15s ease',
+                                                    overflow: 'hidden',
+                                                  }}
+                                                >
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setRowCourier((p) => ({ ...p, [order._id]: preset.name }));
+                                                      setRowCourierUrl((p) => ({ ...p, [order._id]: preset.url }));
+                                                      if (preset.number) {
+                                                        setRowNote((p) => ({ ...p, [order._id]: preset.number }));
+                                                      }
+                                                    }}
+                                                    title={`Click to Auto-fill: ${preset.name} (URL: ${preset.url}${preset.number ? ` • AWB: ${preset.number}` : ''})`}
+                                                    style={{
+                                                      fontSize: '0.73rem',
+                                                      fontWeight: isSelectedCourier ? 700 : 600,
+                                                      padding: '0.28rem 0.55rem',
+                                                      background: 'transparent',
+                                                      border: 'none',
+                                                      color: 'inherit',
+                                                      cursor: 'pointer',
+                                                      display: 'inline-flex',
+                                                      alignItems: 'center',
+                                                      gap: '0.35rem',
+                                                    }}
+                                                  >
+                                                    <Truck size={11} color={isSelectedCourier ? '#ffffff' : (preset.color || '#2563eb')} />
+                                                    <span>{preset.name}</span>
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => handleOpenEditCourier(preset, e)}
+                                                    title={`Edit ${preset.name} (Name, Link, Number)`}
+                                                    style={{
+                                                      padding: '0.28rem 0.45rem',
+                                                      background: isSelectedCourier ? 'rgba(255,255,255,0.18)' : '#f8fafc',
+                                                      border: 'none',
+                                                      borderLeft: `1px solid ${isSelectedCourier ? 'rgba(255,255,255,0.3)' : '#e2e8f0'}`,
+                                                      color: isSelectedCourier ? '#ffffff' : '#64748b',
+                                                      cursor: 'pointer',
+                                                      display: 'inline-flex',
+                                                      alignItems: 'center',
+                                                      justifyContent: 'center',
+                                                      transition: 'background 0.15s',
+                                                    }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.background = isSelectedCourier ? 'rgba(255,255,255,0.32)' : '#e2e8f0'; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.background = isSelectedCourier ? 'rgba(255,255,255,0.18)' : '#f8fafc'; }}
+                                                  >
+                                                    <Pencil size={10} />
+                                                  </button>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+
                                         {/* Field 1: Courier Name (Required) */}
                                         <div>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                            <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                              <Truck size={13} color="#1d4ed8" /> Courier Name <span style={{ color: '#ef4444' }}>*</span>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <Truck size={13} color="#2563eb" /> Courier Name <span style={{ color: '#ef4444' }}>*</span>
                                             </label>
                                             <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.08rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Required *</span>
                                           </div>
@@ -1916,29 +2870,29 @@ export default function AdminOrders() {
                                             type="text"
                                             value={currentRowCourier}
                                             onChange={(e) => setRowCourier((p) => ({ ...p, [order._id]: e.target.value }))}
-                                            placeholder="e.g. ST Courier, Blue Dart, DTDC"
+                                            placeholder="e.g. ST Courier, Professional Courier, Blue Dart, DTDC"
                                             style={{
                                               width: '100%',
                                               padding: '0.62rem 0.85rem',
-                                              background: '#eff6ff',
-                                              border: '1.5px solid #93c5fd',
+                                              background: '#ffffff',
+                                              border: `1.5px solid ${!currentRowCourier.trim() ? '#93c5fd' : '#2563eb'}`,
                                               borderRadius: '10px',
-                                              fontSize: '0.81rem',
+                                              fontSize: '0.82rem',
                                               color: '#0f172a',
                                               outline: 'none',
                                               boxSizing: 'border-box',
                                               transition: 'all 0.2s ease',
                                             }}
-                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.background = '#ffffff'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff'; }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.12)'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.boxShadow = 'none'; }}
                                           />
                                         </div>
 
                                         {/* Field 2: Courier Site URL Link (Required) */}
                                         <div>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                            <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                              <ArrowUpRight size={13} color="#1d4ed8" /> Courier Site URL Link <span style={{ color: '#ef4444' }}>*</span>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <Globe size={13} color="#2563eb" /> Courier Site URL Link <span style={{ color: '#ef4444' }}>*</span>
                                             </label>
                                             <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.08rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Required *</span>
                                           </div>
@@ -1946,29 +2900,29 @@ export default function AdminOrders() {
                                             type="text"
                                             value={currentRowCourierUrl}
                                             onChange={(e) => setRowCourierUrl((p) => ({ ...p, [order._id]: e.target.value }))}
-                                            placeholder="e.g. https://stcourier.com/"
+                                            placeholder="e.g. https://stcourier.com/ or https://www.bluedart.com/"
                                             style={{
                                               width: '100%',
                                               padding: '0.62rem 0.85rem',
-                                              background: '#eff6ff',
-                                              border: '1.5px solid #93c5fd',
+                                              background: '#ffffff',
+                                              border: `1.5px solid ${!currentRowCourierUrl.trim() ? '#93c5fd' : '#2563eb'}`,
                                               borderRadius: '10px',
-                                              fontSize: '0.81rem',
+                                              fontSize: '0.82rem',
                                               color: '#0f172a',
                                               outline: 'none',
                                               boxSizing: 'border-box',
                                               transition: 'all 0.2s ease',
                                             }}
-                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.background = '#ffffff'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff'; }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.12)'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.boxShadow = 'none'; }}
                                           />
                                         </div>
 
                                         {/* Field 3: Tracking / AWB Number (Required) */}
                                         <div>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                            <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                              <Truck size={13} color="#1d4ed8" /> Tracking / AWB Number <span style={{ color: '#ef4444' }}>*</span>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                              <Barcode size={13} color="#2563eb" /> Tracking / AWB Number <span style={{ color: '#ef4444' }}>*</span>
                                             </label>
                                             <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.08rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Required *</span>
                                           </div>
@@ -1976,21 +2930,21 @@ export default function AdminOrders() {
                                             type="text"
                                             value={currentRowNote}
                                             onChange={(e) => setRowNote((p) => ({ ...p, [order._id]: e.target.value }))}
-                                            placeholder="e.g. Courier: BlueDart | AWB #987654321"
+                                            placeholder="e.g. STC-614602-9871 or AWB #88921004"
                                             style={{
                                               width: '100%',
                                               padding: '0.62rem 0.85rem',
-                                              background: '#eff6ff',
-                                              border: '1.5px solid #93c5fd',
+                                              background: '#ffffff',
+                                              border: `1.5px solid ${!currentRowNote.trim() ? '#93c5fd' : '#2563eb'}`,
                                               borderRadius: '10px',
-                                              fontSize: '0.81rem',
+                                              fontSize: '0.82rem',
                                               color: '#0f172a',
                                               outline: 'none',
                                               boxSizing: 'border-box',
                                               transition: 'all 0.2s ease',
                                             }}
-                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.background = '#ffffff'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff'; }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.12)'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.boxShadow = 'none'; }}
                                           />
                                         </div>
                                       </div>
@@ -2068,83 +3022,173 @@ export default function AdminOrders() {
                                       </div>
                                     )}
 
-                                    {/* Order Status Flow Tracker */}
-                                    <div style={{ padding: '0.9rem 1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-                                      <div style={{ fontSize: '0.67rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.7rem' }}>Order Progress</div>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                                    {/* ── Order Status Flow Tracker with Tamil Explanations ── */}
+                                    <div style={{ padding: '0.95rem 1.15rem', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                                        <span style={{ fontSize: '0.69rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                          Order Lifecycle Progress
+                                        </span>
+                                        {order.status === 'cancelled' && (
+                                          <span style={{ fontSize: '0.7rem', color: '#b91c1c', background: '#fee2e2', padding: '0.12rem 0.5rem', borderRadius: '6px', fontWeight: 700 }}>
+                                            Cancelled
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
                                         {ORDER_PROGRESS_STEPS.map((step, i, arr) => {
-                                          const stepOrder = ['confirmed', 'shipped', 'delivered'];
-                                          const currentIdx = stepOrder.indexOf(order.status);
+                                          const stepOrder = ['placed', 'confirmed', 'shipped', 'delivered'];
+                                          const orderStatusKey = (order.status || 'placed').toLowerCase();
+                                          const currentIdx = orderStatusKey === 'delivered' ? 3 : (orderStatusKey === 'shipped' ? 2 : (orderStatusKey === 'confirmed' ? 1 : 0));
                                           const stepIdx = stepOrder.indexOf(step.key);
-                                          const isDone   = order.status !== 'cancelled' && stepIdx <= currentIdx;
-                                          const isCurrent = stepIdx === currentIdx;
+                                          const isDone = orderStatusKey !== 'cancelled' && stepIdx <= currentIdx;
+                                          const isCurrent = orderStatusKey !== 'cancelled' && stepIdx === currentIdx;
                                           const StepIcon = step.icon;
+
                                           return (
-                                            <div key={step.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', flex: '0 0 auto' }}>
-                                                <div style={{
-                                                  width: '30px', height: '30px', borderRadius: '50%',
-                                                  background: isDone ? step.bg : '#f1f5f9',
-                                                  border: `2px solid ${isCurrent ? step.color : isDone ? step.color + '66' : '#e2e8f0'}`,
-                                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                  boxShadow: isCurrent ? `0 0 0 3px ${step.color}22` : 'none',
-                                                  transition: 'all 0.2s',
-                                                }}>
-                                                  <StepIcon size={12} color={isDone ? step.color : '#cbd5e1'} />
+                                            <React.Fragment key={step.key}>
+                                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0, textAlign: 'center' }}>
+                                                <div
+                                                  style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '50%',
+                                                    background: isDone ? step.bg : '#f1f5f9',
+                                                    border: `2px solid ${isCurrent ? step.color : isDone ? step.color : '#cbd5e1'}`,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    boxShadow: isCurrent ? `0 0 0 3px ${step.color}25` : 'none',
+                                                    transition: 'all 0.2s',
+                                                    marginBottom: '0.35rem',
+                                                  }}
+                                                >
+                                                  <StepIcon size={14} color={isDone ? step.color : '#94a3b8'} />
                                                 </div>
-                                                <span style={{ fontSize: '0.6rem', fontWeight: isCurrent ? 700 : 500, color: isDone ? step.color : '#94a3b8', whiteSpace: 'nowrap' }}>{step.label}</span>
+                                                <strong style={{ fontSize: '0.74rem', fontWeight: isCurrent ? 700 : 600, color: isDone ? step.color : '#64748b', whiteSpace: 'nowrap' }}>
+                                                  {step.label}
+                                                </strong>
                                               </div>
+
                                               {i < arr.length - 1 && (
-                                                <div style={{ flex: 1, height: '2px', background: stepIdx < currentIdx && order.status !== 'cancelled' ? step.color + '55' : '#e2e8f0', margin: '0 2px', marginBottom: '16px', borderRadius: '2px' }} />
+                                                <div
+                                                  style={{
+                                                    flex: 1,
+                                                    height: '2px',
+                                                    background: stepIdx < currentIdx && orderStatusKey !== 'cancelled' ? '#2563eb' : '#e2e8f0',
+                                                    margin: '15px 4px 0 4px',
+                                                    borderRadius: '2px',
+                                                  }}
+                                                />
                                               )}
-                                            </div>
+                                            </React.Fragment>
                                           );
                                         })}
                                       </div>
+
                                       {order.status === 'cancelled' && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem', color: '#b91c1c', fontSize: '0.75rem', fontWeight: 600 }}>
-                                          <XCircle size={13} /> This order has been cancelled
+                                        <div
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.45rem',
+                                            marginTop: '0.85rem',
+                                            padding: '0.6rem 0.85rem',
+                                            background: '#fef2f2',
+                                            border: '1px solid #fecaca',
+                                            borderRadius: '8px',
+                                            color: '#b91c1c',
+                                            fontSize: '0.76rem',
+                                            fontWeight: 600,
+                                          }}
+                                        >
+                                          <XCircle size={15} color="#dc2626" />
+                                          <span><strong>Cancelled:</strong> Order cancel செய்யப்பட்டது {order.cancelReason ? `(${order.cancelReason})` : ''}</span>
                                         </div>
                                       )}
                                     </div>
                                   </div>
 
-                                  {/* Update CTA & Print Slip Action Buttons */}
-                                  <div style={{ paddingTop: '0.85rem', marginTop: 'auto', display: 'flex', gap: '0.65rem' }}>
+                                  {/* Update CTA & Print Invoice & Shipping Label Action Buttons */}
+                                  <div style={{ paddingTop: '0.85rem', marginTop: 'auto', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                                    {/* Tax Invoice Button */}
                                     <button
                                       type="button"
-                                      onClick={(e) => handlePrintOrderSlip(order, e)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedInvoiceOrder(order);
+                                      }}
                                       style={{
                                         height: '42px',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        gap: '0.4rem',
+                                        gap: '0.45rem',
                                         padding: '0.65rem 1rem',
                                         borderRadius: '10px',
-                                        border: '1.5px solid #e2e8f0',
+                                        border: '1.5px solid #ddd6fe',
                                         fontWeight: 600,
                                         fontSize: '0.82rem',
                                         cursor: 'pointer',
-                                        background: '#ffffff',
-                                        color: '#475569',
+                                        background: '#faf5ff',
+                                        color: '#7c3aed',
                                         transition: 'all 0.2s ease',
                                         flexShrink: 0,
                                       }}
                                       onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = '#7c3aed';
-                                        e.currentTarget.style.color = '#7c3aed';
-                                        e.currentTarget.style.background = '#faf5ff';
+                                        e.currentTarget.style.background = '#7c3aed';
+                                        e.currentTarget.style.color = '#ffffff';
+                                        e.currentTarget.style.boxShadow = '0 3px 10px rgba(124,58,237,0.25)';
                                       }}
                                       onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = '#e2e8f0';
-                                        e.currentTarget.style.color = '#475569';
-                                        e.currentTarget.style.background = '#ffffff';
+                                        e.currentTarget.style.background = '#faf5ff';
+                                        e.currentTarget.style.color = '#7c3aed';
+                                        e.currentTarget.style.boxShadow = 'none';
                                       }}
-                                      title="Print or Export Order Dispatch Slip"
+                                      title="View & Print Official A4 Tax Invoice"
                                     >
-                                      <Printer size={15} />
-                                      Print Slip
+                                      <FileText size={15} />
+                                      Tax Invoice
+                                    </button>
+
+                                    {/* Shipping Label Button */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedLabelOrder(order);
+                                      }}
+                                      style={{
+                                        height: '42px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.45rem',
+                                        padding: '0.65rem 1rem',
+                                        borderRadius: '10px',
+                                        border: '1.5px solid #cbd5e1',
+                                        fontWeight: 600,
+                                        fontSize: '0.82rem',
+                                        cursor: 'pointer',
+                                        background: '#f8fafc',
+                                        color: '#0f172a',
+                                        transition: 'all 0.2s ease',
+                                        flexShrink: 0,
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#0f172a';
+                                        e.currentTarget.style.color = '#ffffff';
+                                        e.currentTarget.style.boxShadow = '0 3px 10px rgba(15,23,42,0.2)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#f8fafc';
+                                        e.currentTarget.style.color = '#0f172a';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                      }}
+                                      title="View & Print 4x6 Courier Shipping Label"
+                                    >
+                                      <Tag size={15} />
+                                      Shipping Label
                                     </button>
 
                                     <button
@@ -2390,6 +3434,1002 @@ export default function AdminOrders() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Bulk Delete Confirmation Modal ── */}
+      {showBulkDeleteModal && selectedOrderIds.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1.5rem',
+          }}
+          onClick={() => { if (!isBulkDeleting) setShowBulkDeleteModal(false); }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '440px',
+              width: '100%',
+              padding: '2rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              textAlign: 'center',
+              animation: 'ordAccordionIn 0.2s ease',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Warning Trash Icon */}
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: '#fee2e2',
+                color: '#e11d48',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <Trash2 size={26} />
+            </div>
+
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
+              Delete {selectedOrderIds.length} Selected Order{selectedOrderIds.length > 1 ? 's' : ''}?
+            </h3>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5 }}>
+              Are you sure you want to permanently delete <strong style={{ color: '#0f172a' }}>{selectedOrderIds.length} selected order{selectedOrderIds.length > 1 ? 's' : ''}</strong>?
+              This action cannot be undone and will permanently remove them from the system.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                disabled={isBulkDeleting}
+                onClick={() => setShowBulkDeleteModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '0.7rem 1.25rem',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  background: '#f8fafc',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: isBulkDeleting ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isBulkDeleting}
+                onClick={handleConfirmBulkDelete}
+                style={{
+                  flex: 1,
+                  padding: '0.7rem 1.25rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: isBulkDeleting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(225, 29, 72, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {isBulkDeleting ? (
+                  <>
+                    <RotateCw size={15} className="spin-animation" />
+                    <span>Deleting…</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={15} />
+                    <span>Yes, Delete All</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Courier Dispatch & Shipping Details Modal (Mandatory Fields on "Shipped") ── */}
+      {orderToShip && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1.5rem',
+          }}
+          onClick={() => { if (!isSubmittingShip) setOrderToShip(null); }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '540px',
+              width: '100%',
+              padding: '1.75rem 2rem',
+              boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.35)',
+              animation: 'ordAccordionIn 0.22s ease',
+              border: '1px solid #e2e8f0',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Truck size={24} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.12rem', fontWeight: 800, color: '#0f172a' }}>
+                    {isBulkShipModal
+                      ? `Dispatch ${orderToShip.count} Orders to Courier`
+                      : `Dispatch Order #${orderToShip.orderNumber}`}
+                  </h3>
+                  
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOrderToShip(null)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: '1px solid #e2e8f0',
+                  background: '#f8fafc',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#dc2626'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#64748b'; }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Quick Select Popular Courier Partner Presets */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Quick 1-Click Courier Partner Fill:
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenAddCourier}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '6px',
+                    border: '1px dashed #2563eb',
+                    background: '#eff6ff',
+                    color: '#1d4ed8',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus size={11} />
+                  <span>Add Partner</span>
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem' }}>
+                {courierPresets.map((preset) => {
+                  const isSelected = (shipModalCourier || '').toLowerCase() === preset.name.toLowerCase();
+                  return (
+                    <button
+                      key={preset.id || preset.name}
+                      type="button"
+                      onClick={() => {
+                        setShipModalCourier(preset.name);
+                        setShipModalCourierUrl(preset.url);
+                        if (preset.number) {
+                          setShipModalAwb(preset.number);
+                        }
+                      }}
+                      style={{
+                        padding: '0.5rem 0.6rem',
+                        borderRadius: '10px',
+                        border: `1.5px solid ${isSelected ? '#2563eb' : '#e2e8f0'}`,
+                        background: isSelected ? '#eff6ff' : '#f8fafc',
+                        color: isSelected ? '#1d4ed8' : '#334155',
+                        fontSize: '0.77rem',
+                        fontWeight: isSelected ? 700 : 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        justifyContent: 'center',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isSelected ? '0 2px 8px rgba(37,99,235,0.2)' : 'none',
+                      }}
+                    >
+                      <Truck size={13} color={preset.color || '#2563eb'} />
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preset.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Form Fields: All 3 Mandatory */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              {/* Field 1: Courier Name* (Required *) */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Truck size={14} color="#2563eb" /> Courier Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
+                    Required *
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={shipModalCourier}
+                  onChange={(e) => setShipModalCourier(e.target.value)}
+                  placeholder="e.g. ST Courier, Professional Courier, Blue Dart, DTDC, Delhivery"
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${!shipModalCourier.trim() ? '#93c5fd' : '#2563eb'}`,
+                    fontSize: '0.86rem',
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.18s ease',
+                    background: '#ffffff',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = !shipModalCourier.trim() ? '#93c5fd' : '#2563eb'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+
+              {/* Field 2: Courier Site URL Link* (Required *) */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Globe size={14} color="#2563eb" /> Courier Site URL Link <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
+                    Required *
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={shipModalCourierUrl}
+                  onChange={(e) => setShipModalCourierUrl(e.target.value)}
+                  placeholder="e.g. https://stcourier.com/ or https://www.tpcindia.com/"
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${!shipModalCourierUrl.trim() ? '#93c5fd' : '#2563eb'}`,
+                    fontSize: '0.86rem',
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.18s ease',
+                    background: '#ffffff',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = !shipModalCourierUrl.trim() ? '#93c5fd' : '#2563eb'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+
+              {/* Field 3: Tracking / AWB Number* (Required *) */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Barcode size={14} color="#2563eb" /> Tracking / AWB Number <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
+                    Required *
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={shipModalAwb}
+                  onChange={(e) => setShipModalAwb(e.target.value)}
+                  placeholder="e.g. STC-614602-9871 or AWB #88921004"
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${!shipModalAwb.trim() ? '#93c5fd' : '#2563eb'}`,
+                    fontSize: '0.86rem',
+                    color: '#0f172a',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.18s ease',
+                    background: '#ffffff',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = !shipModalAwb.trim() ? '#93c5fd' : '#2563eb'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', gap: '0.85rem', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+              <button
+                type="button"
+                disabled={isSubmittingShip}
+                onClick={() => setOrderToShip(null)}
+                style={{
+                  padding: '0.7rem 1.4rem',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: isSubmittingShip ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingShip}
+                onClick={handleConfirmShipModal}
+                style={{
+                  padding: '0.7rem 1.6rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.86rem',
+                  cursor: isSubmittingShip ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.18s ease',
+                }}
+              >
+                {isSubmittingShip ? (
+                  <>
+                    <RotateCw size={15} className="spin-animation" />
+                    <span>Updating Dispatch…</span>
+                  </>
+                ) : (
+                  <>
+                    <Truck size={16} />
+                    <span>Confirm & Mark as Shipped</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add / Edit Courier Partner Modal ── */}
+      {courierModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setCourierModalOpen(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              width: '100%',
+              maxWidth: '480px',
+              boxShadow: '0 20px 40px -15px rgba(0,0,0,0.25)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+              animation: 'ordAccordionIn 0.22s ease',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.1rem 1.4rem',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 3px 8px rgba(37,99,235,0.28)',
+                  }}
+                >
+                  <Truck size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                    {editingCourier ? 'Edit Courier Partner' : 'Add Courier Partner'}
+                  </h3>
+                  <span style={{ fontSize: '0.73rem', color: '#64748b' }}>
+                    Quick 1-Click Dispatch Preset
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCourierModalOpen(false)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: '#f1f5f9',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#dc2626'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveCourierPartner} style={{ padding: '1.35rem 1.4rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+                {/* Field 1: Courier Name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.77rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                    Courier Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={courierFormName}
+                    onChange={(e) => setCourierFormName(e.target.value)}
+                    placeholder="e.g. ST Courier, Professional Courier, Blue Dart, DTDC"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '9px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#2563eb'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; }}
+                  />
+                </div>
+
+                {/* Field 2: Courier Site URL Link */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.77rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                    Courier Site URL Link <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={courierFormUrl}
+                    onChange={(e) => setCourierFormUrl(e.target.value)}
+                    placeholder="e.g. https://stcourier.com/ or https://www.bluedart.com/"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '9px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#2563eb'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; }}
+                  />
+                </div>
+
+                {/* Field 3: Tracking / AWB Number or Prefix */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.77rem', fontWeight: 700, color: '#1e293b' }}>
+                      Tracking / AWB Number or Prefix
+                    </label>
+                    <span style={{ fontSize: '0.68rem', color: '#64748b', background: '#f1f5f9', padding: '0.08rem 0.4rem', borderRadius: '4px' }}>
+                      Auto-fill helper
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={courierFormNumber}
+                    onChange={(e) => setCourierFormNumber(e.target.value)}
+                    placeholder="e.g. STC-614602-9871 or default AWB / prefix"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '9px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#2563eb'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#cbd5e1'; }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginTop: '0.25rem' }}>
+                    Quick Select கிளிக் செய்யும்போது இந்த AWB number தானாக fill ஆகும்.
+                  </span>
+                </div>
+
+                {/* Field 4: Badge Color */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.77rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.45rem' }}>
+                    Badge Color Accent
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.55rem', alignItems: 'center' }}>
+                    {[
+                      { label: 'Red', color: '#dc2626' },
+                      { label: 'Orange', color: '#ea580c' },
+                      { label: 'Blue', color: '#2563eb' },
+                      { label: 'Green', color: '#16a34a' },
+                      { label: 'Purple', color: '#7c3aed' },
+                      { label: 'Slate', color: '#0f172a' },
+                    ].map((c) => {
+                      const isSelected = courierFormColor === c.color;
+                      return (
+                        <button
+                          key={c.color}
+                          type="button"
+                          onClick={() => setCourierFormColor(c.color)}
+                          style={{
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '50%',
+                            background: c.color,
+                            border: isSelected ? '3px solid #ffffff' : '2px solid transparent',
+                            boxShadow: isSelected ? `0 0 0 2px ${c.color}` : 'none',
+                            cursor: 'pointer',
+                            transition: 'transform 0.15s ease',
+                            transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                          }}
+                          title={c.label}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                <div>
+                  {editingCourier && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCourierPartner(editingCourier.id, editingCourier.name)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.55rem 0.85rem',
+                        borderRadius: '9px',
+                        border: '1px solid #fecaca',
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Trash2 size={13} />
+                      <span>Delete</span>
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.65rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCourierModalOpen(false)}
+                    style={{
+                      padding: '0.6rem 1.1rem',
+                      borderRadius: '9px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#475569',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: '0.6rem 1.3rem',
+                      borderRadius: '9px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 3px 10px rgba(37,99,235,0.3)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    <Save size={14} />
+                    <span>{editingCourier ? 'Update Partner' : 'Save Partner'}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Manage Courier Partners Modal ── */}
+      {manageCouriersModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setManageCouriersModalOpen(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: '90vh',
+              boxShadow: '0 20px 40px -15px rgba(0,0,0,0.25)',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              animation: 'ordAccordionIn 0.22s ease',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '1.1rem 1.4rem',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Settings size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                    Manage Courier Partners
+                  </h3>
+                  <span style={{ fontSize: '0.73rem', color: '#64748b' }}>
+                    {courierPresets.length} Quick Select Partners Configured
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManageCouriersModalOpen(false);
+                    handleOpenAddCourier();
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '8px',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(37,99,235,0.3)',
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>Add Partner</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManageCouriersModalOpen(false)}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div style={{ padding: '1.25rem 1.4rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '420px' }}>
+              {courierPresets.map((preset) => (
+                <div
+                  key={preset.id || preset.name}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1rem',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: `${preset.color || '#2563eb'}18`,
+                        color: preset.color || '#2563eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Truck size={16} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ fontSize: '0.86rem', color: '#0f172a', display: 'block' }}>
+                        {preset.name}
+                      </strong>
+                      <a
+                        href={preset.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          fontSize: '0.73rem',
+                          color: '#2563eb',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          maxWidth: '240px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        <span>{preset.url}</span>
+                        <ExternalLink size={10} />
+                      </a>
+                      {preset.number && (
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.15rem' }}>
+                          AWB / Prefix: <code style={{ background: '#e2e8f0', padding: '0.05rem 0.35rem', borderRadius: '4px', color: '#0f172a' }}>{preset.number}</code>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManageCouriersModalOpen(false);
+                        handleOpenEditCourier(preset);
+                      }}
+                      title="Edit Courier Partner"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: '7px',
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#1e293b',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Pencil size={12} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCourierPartner(preset.id, preset.name)}
+                      title="Delete Partner"
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '7px',
+                        border: '1px solid #fecaca',
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '0.85rem 1.4rem', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fafbfc' }}>
+              <button
+                type="button"
+                onClick={handleResetCourierPresets}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#64748b',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#dc2626'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
+              >
+                <RotateCcw size={12} />
+                <span>Reset to Default Couriers</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setManageCouriersModalOpen(false)}
+                style={{
+                  padding: '0.5rem 1.1rem',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tax Invoice Modal Preview ── */}
+      {selectedInvoiceOrder && (
+        <AdminInvoice
+          order={selectedInvoiceOrder}
+          onClose={() => setSelectedInvoiceOrder(null)}
+        />
+      )}
+
+      {/* ── Courier Shipping Label Modal Preview ── */}
+      {selectedLabelOrder && (
+        <AdminShippingLabel
+          order={selectedLabelOrder}
+          onClose={() => setSelectedLabelOrder(null)}
+        />
+      )}
+
+      {/* ── Gift Greeting Card Modal Preview ── */}
+      {selectedGiftCardOrder && (
+        <AdminGiftCard
+          order={selectedGiftCardOrder}
+          onClose={() => setSelectedGiftCardOrder(null)}
+        />
       )}
 
       {/* Accordion and Spin Animations */}

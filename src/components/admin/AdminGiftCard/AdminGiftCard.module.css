@@ -1,0 +1,716 @@
+/* ─── AdminGiftCard Module CSS (Luxury Print-Ready Gift Greeting Card) ─── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+.modalContainer {
+  background: #0f172a;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  max-width: 960px;
+  width: 100%;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: cardModalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cardModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ─── Modal Header Bar ─── */
+.modalHeaderBar {
+  padding: 0.9rem 1.5rem;
+  background: #1e293b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.headerIconBadge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f43f5e, #be123c);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.35);
+}
+
+.headerTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.headerSubtitle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.printBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4);
+}
+
+.printBtn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.5);
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* ─── Toolbar (Themes & Customization) ─── */
+.toolbar {
+  padding: 0.75rem 1.5rem;
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.themeSelector {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.toolbarLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.25rem;
+}
+
+.themePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.themePill:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.themePillActive {
+  background: linear-gradient(135deg, #e11d48, #be123c) !important;
+  border-color: #f43f5e !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35);
+}
+
+.toolbarTools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.toolToggleBtnActive {
+  background: #3b82f6 !important;
+  border-color: #60a5fa !important;
+  color: #ffffff !important;
+}
+
+/* ─── Editor Drawer (Optional Customization) ─── */
+.editDrawer {
+  padding: 0.85rem 1.5rem;
+  background: #1e293b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr auto;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.editGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.editLabel {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.editInput {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 0.45rem 0.65rem;
+  color: #ffffff;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.editInput:focus {
+  border-color: #e11d48;
+}
+
+.resetBtn {
+  padding: 0.45rem 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resetBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* ─── Modal Body / Preview Canvas ─── */
+.previewCanvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: radial-gradient(circle at 50% 30%, #1e293b 0%, #0b1120 100%);
+}
+
+/* ─── THE GREETING CARD (Physical Card Design) ─── */
+.cardStage {
+  position: relative;
+  width: 520px;
+  max-width: 100%;
+  min-height: 700px;
+  border-radius: 18px;
+  padding: 2.2rem 2.4rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 
+    0 20px 45px -10px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Card Themes */
+/* 1. BIRTHDAY THEME */
+.theme_birthday {
+  background: #fffdfa;
+  border: 12px solid #fffdfa;
+  color: #3b1d11;
+}
+.theme_birthday .cardOuterBorder {
+  border: 2.5px solid #d97706;
+  outline: 1.5px dashed #f59e0b;
+  outline-offset: 4px;
+}
+.theme_birthday .themeTag {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  color: #ffffff;
+}
+.theme_birthday .quoteText {
+  color: #451a03;
+}
+.theme_birthday .sealBadge {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fef3c7;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35);
+}
+
+/* 2. LOVE & ROMANCE THEME */
+.theme_love {
+  background: #fffafa;
+  border: 12px solid #fffafa;
+  color: #4c0519;
+}
+.theme_love .cardOuterBorder {
+  border: 2.5px solid #e11d48;
+  outline: 1.5px dashed #fda4af;
+  outline-offset: 4px;
+}
+.theme_love .themeTag {
+  background: linear-gradient(135deg, #f43f5e, #be123c);
+  color: #ffffff;
+}
+.theme_love .quoteText {
+  color: #4c0519;
+}
+.theme_love .sealBadge {
+  background: linear-gradient(135deg, #e11d48, #9f1239);
+  color: #ffe4e6;
+  box-shadow: 0 4px 15px rgba(225, 29, 72, 0.35);
+}
+
+/* 3. CONGRATULATIONS THEME */
+.theme_congrats {
+  background: #fafaf9;
+  border: 12px solid #fafaf9;
+  color: #1e293b;
+}
+.theme_congrats .cardOuterBorder {
+  border: 2.5px solid #b45309;
+  outline: 1.5px dashed #1e3a8a;
+  outline-offset: 4px;
+}
+.theme_congrats .themeTag {
+  background: linear-gradient(135deg, #1e3a8a, #0f172a);
+  color: #fbbf24;
+}
+.theme_congrats .quoteText {
+  color: #0f172a;
+}
+.theme_congrats .sealBadge {
+  background: linear-gradient(135deg, #b45309, #78350f);
+  color: #fef3c7;
+  box-shadow: 0 4px 15px rgba(180, 83, 9, 0.35);
+}
+
+/* 4. THANK YOU THEME */
+.theme_thankyou {
+  background: #fbfdfb;
+  border: 12px solid #fbfdfb;
+  color: #064e3b;
+}
+.theme_thankyou .cardOuterBorder {
+  border: 2.5px solid #059669;
+  outline: 1.5px dashed #34d399;
+  outline-offset: 4px;
+}
+.theme_thankyou .themeTag {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #ffffff;
+}
+.theme_thankyou .quoteText {
+  color: #064e3b;
+}
+.theme_thankyou .sealBadge {
+  background: linear-gradient(135deg, #047857, #064e3b);
+  color: #d1fae5;
+  box-shadow: 0 4px 15px rgba(4, 120, 87, 0.35);
+}
+
+/* 5. CLASSIC LUXURY THEME */
+.theme_classic {
+  background: #fdfdfe;
+  border: 12px solid #fdfdfe;
+  color: #2e1065;
+}
+.theme_classic .cardOuterBorder {
+  border: 2.5px solid #7c3aed;
+  outline: 1.5px dashed #c084fc;
+  outline-offset: 4px;
+}
+.theme_classic .themeTag {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #ffffff;
+}
+.theme_classic .quoteText {
+  color: #2e1065;
+}
+.theme_classic .sealBadge {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #f3e8ff;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+}
+
+/* ─── Inner Decorative Box ─── */
+.cardOuterBorder {
+  position: absolute;
+  inset: 12px;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* Corner Ornaments (Victorian / Filigree Flourish) */
+.cornerOrnament {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  opacity: 0.75;
+}
+.cornerTL { top: 16px; left: 16px; }
+.cornerTR { top: 16px; right: 16px; transform: scaleX(-1); }
+.cornerBL { bottom: 16px; left: 16px; transform: scaleY(-1); }
+.cornerBR { bottom: 16px; right: 16px; transform: scale(-1); }
+
+/* Card Content Flow */
+.cardInnerContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  flex: 1;
+}
+
+/* Header Cluster */
+.cardHeaderSection {
+  text-align: center;
+  padding-top: 0.5rem;
+}
+
+.cardEmblem {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.themeTag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.8rem;
+  border-radius: 9999px;
+  margin-bottom: 0.65rem;
+}
+
+.cardTitle {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 1.95rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.cardSubtitle {
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.75;
+  margin: 0;
+}
+
+.dividerLine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 1.1rem 0;
+  opacity: 0.45;
+}
+
+.dividerLine span {
+  height: 1px;
+  width: 60px;
+  background: currentColor;
+}
+
+/* Body: Recipient, Message, Sender */
+.cardBodySection {
+  text-align: center;
+  padding: 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.recipientBox {
+  margin-bottom: 1rem;
+}
+
+.recipientLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.recipientName {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* The Heartfelt Message */
+.quoteContainer {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin: 0.5rem 0;
+}
+
+.quoteMarkLeft {
+  position: absolute;
+  top: -10px;
+  left: 0;
+  font-family: Georgia, serif;
+  font-size: 3.2rem;
+  line-height: 1;
+  opacity: 0.2;
+}
+
+.quoteMarkRight {
+  position: absolute;
+  bottom: -28px;
+  right: 0;
+  font-family: Georgia, serif;
+  font-size: 3.2rem;
+  line-height: 1;
+  opacity: 0.2;
+}
+
+.quoteText {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  font-style: italic;
+  margin: 0;
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+/* Sender Box */
+.senderBox {
+  margin-top: 1.25rem;
+}
+
+.senderLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.senderName {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* Footer Section */
+.cardFooterSection {
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sealBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.footerOrderMeta {
+  text-align: right;
+  font-size: 0.68rem;
+  opacity: 0.65;
+  line-height: 1.4;
+}
+
+.footerOrderMeta strong {
+  font-weight: 700;
+}
+
+/* Instructions / Print Tip */
+.previewTip {
+  margin-top: 1.25rem;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ─── PRINT MEDIA RULES (@media print) ───
+   Ensures ONLY the Card prints crisply with authentic colors
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  /* Hide all external application elements */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show ONLY the cardStage and all its descendants */
+  .cardStage,
+  .cardStage * {
+    visibility: visible;
+  }
+
+  /* Remove modal wrappers, backdrops, and navigation bars */
+  .overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .modalContainer {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    max-height: none !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .modalHeaderBar,
+  .toolbar,
+  .editDrawer,
+  .previewTip {
+    display: none !important;
+  }
+
+  .previewCanvas {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Position card perfectly on physical page */
+  .cardStage {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+}

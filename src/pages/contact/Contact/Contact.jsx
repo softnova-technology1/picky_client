@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../components/layout/PageWrapper';
 import { useUiStore } from '../../../store/uiStore';
+import { usePageCustomization } from '../../../store/customizationStore';
 import { contactService } from '../../../services/contact.service';
 import { settingsService } from '../../../services/settings.service';
 import './Contact.css';

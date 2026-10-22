@@ -511,7 +511,8 @@ export default function Navbar() {
                         className="nav-mega-link-item"
                         onClick={() => setIsCategoryOpen(false)}
                       >
-                        {item.name}
+                        <span className="nav-mega-link-name">{item.name}</span>
+                        <ChevronRight size={14} strokeWidth={2.4} className="nav-mega-link-arrow" />
                       </Link>
                     ))}
                   </div>

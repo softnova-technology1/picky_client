@@ -13,8 +13,10 @@ import {
   Send,
   ExternalLink,
   Gift,
+  Printer,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
+import AdminGiftCard from '../../../components/admin/AdminGiftCard';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Spinner from '../../../components/ui/Spinner';
@@ -35,6 +37,7 @@ export default function AdminOrderDetail() {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showGiftCardModal, setShowGiftCardModal] = useState(false);
 
   // Manual AWB Entry state (supports extensible courier list + Other)
   const [trackingId, setTrackingId] = useState('');
@@ -346,19 +349,47 @@ export default function AdminOrderDetail() {
                   background: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
                   border: '1.5px solid #fecdd3',
                   boxShadow: '0 2px 6px rgba(225, 29, 72, 0.05)',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#be123c', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Gift size={16} /> Gift Wrapping Service {order.giftWrap?.fee ? `(+₹${order.giftWrap.fee})` : ''}
                   </span>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.15rem 0.55rem', borderRadius: '9999px' }}>
-                    Gift Order
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowGiftCardModal(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#ffffff',
+                        background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+                        border: 'none',
+                        padding: '0.24rem 0.7rem',
+                        borderRadius: '9999px',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(225, 29, 72, 0.25)',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="Print Luxury Gift Greeting Card"
+                    >
+                      <Printer size={12} />
+                      <span>Print Card</span>
+                    </button>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9f1239', background: '#fecdd3', padding: '0.18rem 0.55rem', borderRadius: '9999px' }}>
+                      Gift Order
+                    </span>
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.85rem', color: '#881337', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '0.85rem', color: '#881337', lineHeight: 1.5, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   <strong>Gift Message: </strong>
-                  <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239' }}>
+                  <span style={{ fontStyle: (order.giftWrap?.message && order.giftWrap.message.trim()) ? 'normal' : 'italic', color: (order.giftWrap?.message && order.giftWrap.message.trim()) ? '#4c0519' : '#9f1239', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                     {(order.giftWrap?.message && order.giftWrap.message.trim()) ? `"${order.giftWrap.message.trim()}"` : 'No message'}
                   </span>
                 </div>
@@ -489,6 +520,13 @@ export default function AdminOrderDetail() {
           </div>
         </div>
       </div>
+
+      {showGiftCardModal && (
+        <AdminGiftCard
+          order={order}
+          onClose={() => setShowGiftCardModal(false)}
+        />
+      )}
     </AdminLayout>
   );
 }
