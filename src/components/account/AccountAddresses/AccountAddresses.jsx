@@ -135,7 +135,11 @@ export default function AccountAddresses() {
       }));
       setAddresses(updatedList);
       if (updateUser) {
-        updateUser({ addresses: resData?.addresses, defaultAddress: resData?.defaultAddress });
+        updateUser({
+          ...(resData?.phone ? { phone: resData.phone } : {}),
+          addresses: resData?.addresses,
+          defaultAddress: resData?.defaultAddress,
+        });
       }
       setIsModalOpen(false);
       showToast('Delivery address saved to database successfully!', 'success');

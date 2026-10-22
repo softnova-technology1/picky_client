@@ -16,6 +16,10 @@ import {
   Truck,
   Layers,
   SlidersHorizontal,
+  ShoppingBag,
+  Percent,
+  Phone,
+  Home,
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useCartStore } from '../../../store/cartStore';
@@ -43,6 +47,22 @@ export default function Navbar() {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') setIsMobileMenuOpen(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [isMobileMenuOpen]);
 
   const categoryDropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
@@ -185,11 +205,23 @@ export default function Navbar() {
       {/* ── 2. Floating Pill Navbar (Desktop Only: > 768px) ────────────── */}
       <header className={`floating-nav-container desktop-nav-only ${isScrolled ? 'is-scrolled' : ''}`}>
         <div className="floating-nav-pill">
-          {/* Brand & Divider (Left) */}
-          <Link to="/" className="nav-brand-cluster" title="Picky Home">
-            <img src="/images/logo.png" alt="Picky Logo" style={{ height: '50px', width: 'auto', objectFit: 'contain' }} />
-            <div className="nav-vertical-divider" />
-          </Link>
+          {/* Brand & Left Cluster with Menu Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <button
+              type="button"
+              className="nav-desktop-sidebar-btn"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              title={isMobileMenuOpen ? 'Close Navigation Sidebar' : 'Open Navigation Sidebar'}
+              aria-label="Toggle Navigation Menu"
+            >
+              <Menu size={20} />
+            </button>
+
+            <Link to="/" className="nav-brand-cluster" title="Picky Home">
+              <img src="/images/logo.png" alt="Picky Logo" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
+              <div className="nav-vertical-divider" />
+            </Link>
+          </div>
 
           {/* Center Navigation Links (Clean Text Only, Minimalist) */}
           <nav className="nav-center-links" aria-label="Main Navigation">
@@ -677,29 +709,50 @@ export default function Navbar() {
           >
             {/* Header */}
             <div className="mobile-drawer-header">
-              <Link to="/" className="nav-brand-cluster" onClick={() => setIsMobileMenuOpen(false)}>
-                <img src="/images/logo.png" alt="Picky Logo" style={{ height: '42px', width: 'auto', objectFit: 'contain' }} />
-              </Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <Link to="/" className="nav-brand-cluster" onClick={() => setIsMobileMenuOpen(false)}>
+                  <img src="/images/logo.png" alt="Picky Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain' }} />
+                </Link>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7c3aed', background: '#ede8f8', padding: '2px 8px', borderRadius: '6px', letterSpacing: '0.04em' }}>
+                  MENU
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                style={{
-                  background: '#f1f5f9',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#475569',
-                }}
+                className="mobile-drawer-close-btn"
                 aria-label="Close menu"
+                title="Close Menu (Esc)"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
+
+            {/* User Profile or Guest Welcome Banner */}
+            {isLoggedIn ? (
+              <div className="drawer-user-card">
+                <div className="drawer-user-avatar">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="drawer-user-info">
+                  <div className="drawer-user-greeting">Signed in as</div>
+                  <div className="drawer-user-name">{user?.name || 'Customer'}</div>
+                </div>
+                <Link to="/profile" className="drawer-user-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Profile
+                </Link>
+              </div>
+            ) : (
+              <div className="drawer-guest-card">
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#1e1b4b' }}>Welcome to Picky</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Curated Fashion & Lifestyle</div>
+                </div>
+                <Link to="/login" className="drawer-signin-btn" onClick={() => setIsMobileMenuOpen(false)}>
+                  Sign In
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Search */}
             <form onSubmit={handleSearchSubmit}>
@@ -715,87 +768,108 @@ export default function Navbar() {
               </div>
             </form>
 
-            {/* Navigation Links */}
-            <div className="mobile-drawer-links">
-              <Link to="/products" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Shop Catalog</span>
+            {/* Quick Access: Wishlist & Cart (Top) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+              <Link
+                to="/wishlist"
+                className="mobile-drawer-link"
+                style={{ justifyContent: 'center' }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Heart size={16} style={{ color: '#e11d48' }} />
+                <span>Wishlist ({totalWishlistCount})</span>
               </Link>
-              <Link to="/categories" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Categories</span>
-              </Link>
-              <Link to="/new-arrivals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>New Arrivals</span>
-              </Link>
-              <Link to="/best-sellers" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Best Sellers</span>
-              </Link>
-              <Link to="/limited-deals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Limited Deals</span>
-              </Link>
-              <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>About Us</span>
-              </Link>
-              <Link to="/contact" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Contact Us</span>
-              </Link>
-              <Link to="/blog" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Blog / Insights</span>
-              </Link>
-              <Link to="/track-order" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <span>Track Order</span>
+              <Link
+                to="/cart"
+                className="mobile-drawer-link"
+                style={{ justifyContent: 'center' }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <ShoppingCart size={16} style={{ color: '#7c3aed' }} />
+                <span>Cart ({totalCartCount})</span>
               </Link>
             </div>
 
-            {/* Quick Actions at bottom */}
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid #ede8f8' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-                <Link
-                  to="/wishlist"
-                  className="mobile-drawer-link"
-                  style={{ justifyContent: 'center' }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Heart size={16} style={{ color: '#e11d48' }} />
-                  <span>Wishlist</span>
-                </Link>
-                <Link
-                  to="/cart"
-                  className="mobile-drawer-link"
-                  style={{ justifyContent: 'center' }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <ShoppingCart size={16} style={{ color: '#7c3aed' }} />
-                  <span>Cart ({totalCartCount})</span>
-                </Link>
-              </div>
+            {/* Navigation Links */}
+            <div className="mobile-drawer-links">
+              <div className="drawer-section-title">Explore Store</div>
 
+              <Link to="/" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Home size={18} className="drawer-link-icon" />
+                <span>Home</span>
+              </Link>
+
+              <Link to="/shop" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <ShoppingBag size={18} className="drawer-link-icon" />
+                <span>Shop All Catalog</span>
+              </Link>
+
+              <Link to="/categories" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Layers size={18} className="drawer-link-icon" />
+                <span>Categories</span>
+              </Link>
+
+              <Link to="/new-arrivals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Sparkles size={18} className="drawer-link-icon" style={{ color: '#7c3aed' }} />
+                <span>New Arrivals</span>
+                <span className="drawer-badge-pill" style={{ background: '#ede8f8', color: '#7c3aed' }}>New</span>
+              </Link>
+
+              <Link to="/best-sellers" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <SlidersHorizontal size={18} className="drawer-link-icon" style={{ color: '#ea580c' }} />
+                <span>Best Sellers</span>
+                <span className="drawer-badge-pill" style={{ background: '#ffedd5', color: '#ea580c' }}>Hot</span>
+              </Link>
+
+              <Link to="/limited-deals" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Percent size={18} className="drawer-link-icon" style={{ color: '#e11d48' }} />
+                <span>Limited Deals</span>
+                <span className="drawer-badge-pill" style={{ background: '#ffe4e6', color: '#e11d48' }}>Sale</span>
+              </Link>
+
+              <div className="drawer-section-title" style={{ marginTop: '0.5rem' }}>Customer Care</div>
+
+              <Link to="/track-order" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Truck size={18} className="drawer-link-icon" />
+                <span>Track Your Order</span>
+              </Link>
+
+              <Link to="/about" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Package size={18} className="drawer-link-icon" />
+                <span>About Picky</span>
+              </Link>
+
+              <Link to="/contact" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                <Phone size={18} className="drawer-link-icon" />
+                <span>Contact Us & Support</span>
+              </Link>
+            </div>
+
+            {/* Bottom Actions: Sign Out or Sign In */}
+            <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid #ede8f8' }}>
               {isLoggedIn ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <Link
-                    to="/profile"
-                    className="nav-cta-btn"
-                    style={{ width: '100%', textAlign: 'center', justifyContent: 'center' }}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <User size={16} />
-                    <span>My Account ({user?.name || 'User'})</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setShowLogoutConfirm(true)}
-                    style={{
-                      background: '#fee2e2',
-                      color: '#dc2626',
-                      border: '1px solid #fecaca',
-                      borderRadius: '9999px',
-                      padding: '0.55rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(true)}
+                  style={{
+                    width: '100%',
+                    background: '#fee2e2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    borderRadius: '9999px',
+                    padding: '0.65rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <LogOut size={16} />
+                  <span>Sign Out</span>
+                </button>
               ) : (
                 <Link
                   to="/login"

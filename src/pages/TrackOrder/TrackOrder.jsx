@@ -85,10 +85,10 @@ export default function TrackOrder() {
 
   const resultRef = useRef(null);
 
-  // Automatically track if order ID/number is passed via URL query parameter
+  // Pre-populate order number from URL query parameter without auto-searching or scrolling
   useEffect(() => {
     if (urlOrderNumber) {
-      handleLocateShipment(null, urlOrderNumber);
+      setOrderNumber(urlOrderNumber);
     }
   }, [urlOrderNumber]);
 
@@ -151,9 +151,11 @@ export default function TrackOrder() {
         else if (isCancelled) statusBadgeText = 'CANCELLED';
         else statusBadgeText = 'CONFIRMED';
 
-        const carrierName = foundOrder.courier || '';
-        const trackingId = foundOrder.trackingId || '';
-        const courierUrl = foundOrder.courierUrl || '';
+        const carrierName = (isShipped || isDelivered) && foundOrder.courier && foundOrder.courier !== 'Standard Surface Delivery'
+          ? foundOrder.courier
+          : '';
+        const trackingId = (isShipped || isDelivered) ? (foundOrder.trackingId || '') : '';
+        const courierUrl = (isShipped || isDelivered) ? (foundOrder.courierUrl || '') : '';
         const estimatedArrival = getEstimatedArrivalWindow(foundOrder.createdAt, isDelivered);
 
         // Format Admin Stepper Steps
@@ -263,11 +265,11 @@ export default function TrackOrder() {
         // ── Smooth Scroll Down to Results on Successful Lookup ──
         setTimeout(() => {
           if (resultRef.current) {
-            const yOffset = -90;
+            const yOffset = -80;
             const y = resultRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
             window.scrollTo({ top: y, behavior: 'smooth' });
           }
-        }, 120);
+        }, 150);
       } else {
         setErrorMsg(`We couldn't find an order matching "${queryId}". Please verify your order number from your confirmation SMS or email.`);
         setTrackedOrder(null);
@@ -281,7 +283,7 @@ export default function TrackOrder() {
       setTrackedOrder(null);
     } finally {
       const elapsed = Date.now() - startTime;
-      const remainingDelay = Math.max(0, 2000 - elapsed);
+      const remainingDelay = Math.max(0, 300 - elapsed);
       if (remainingDelay > 0) {
         await new Promise((r) => setTimeout(r, remainingDelay));
       }
@@ -501,8 +503,10 @@ export default function TrackOrder() {
                     </div>
                     <div className={styles.metaBody}>
                       <span className={styles.metaLabel}>COURIER SERVICE</span>
-                      <span className={styles.metaCourierName}>
-                        {trackedOrder.carrier || (trackedOrder.isShipped || trackedOrder.isDelivered ? 'Courier Dispatched' : 'Courier Partner')}
+                      <span className={styles.metaCourierName} style={!trackedOrder.isShipped && !trackedOrder.isDelivered ? { color: '#64748b', fontSize: '0.92rem', fontWeight: 600 } : {}}>
+                        {trackedOrder.isShipped || trackedOrder.isDelivered
+                          ? (trackedOrder.carrier || 'Courier Dispatched')
+                          : 'To be assigned upon dispatch'}
                       </span>
                       {/* Show Tracking ID & Website Link ONLY when order status is Shipped / Delivered, and only if entered */}
                       {(trackedOrder.isShipped || trackedOrder.isDelivered) && (

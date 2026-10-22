@@ -41,6 +41,8 @@ export function AdminProtectedRoute({ children }) {
         return;
       }
 
+      sessionStorage.removeItem('picky_admin_logout_reason');
+      sessionStorage.removeItem('picky_admin_timeout_mins');
       login(user, payload?.accessToken, payload?.refreshToken);
     } catch (err) {
       console.error('Admin Login Error:', err);
@@ -50,6 +52,9 @@ export function AdminProtectedRoute({ children }) {
       setLoading(false);
     }
   };
+
+  const logoutReason = typeof window !== 'undefined' ? sessionStorage.getItem('picky_admin_logout_reason') : null;
+  const timeoutMins = typeof window !== 'undefined' ? sessionStorage.getItem('picky_admin_timeout_mins') : null;
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
@@ -63,6 +68,12 @@ export function AdminProtectedRoute({ children }) {
             Authorized Administrator credentials required.
           </p>
         </div>
+
+        {logoutReason === 'timeout' && (
+          <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fcd34d', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>⏱️ Your admin session timed out after {timeoutMins || 60} minutes of inactivity. Please sign in again.</span>
+          </div>
+        )}
 
         {error && (
           <div style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.25rem' }}>

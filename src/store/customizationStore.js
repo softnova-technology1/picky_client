@@ -27,7 +27,7 @@ export function broadcastLiveSync(pageId, sections) {
         sections,
         timestamp: Date.now(),
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -41,7 +41,7 @@ export function broadcastLivePreview(pageId, sections) {
         sections,
         timestamp: Date.now(),
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -181,7 +181,7 @@ if (typeof window !== 'undefined') {
     if (sseSource) {
       try {
         sseSource.close();
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
@@ -200,13 +200,13 @@ if (typeof window !== 'undefined') {
           ) {
             useCustomizationStore.getState().setPageSections(payload.pageId, payload.sections, false);
           }
-        } catch (err) {}
+        } catch (err) { }
       };
 
       sseSource.onerror = () => {
         try {
           sseSource.close();
-        } catch (e) {}
+        } catch (e) { }
         sseSource = null;
 
         // Auto-reconnect with 3s backoff
@@ -222,28 +222,7 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  // Fetch initial customizations on client startup
-  async function fetchInitialCustomizations() {
-    try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-      const res = await fetch(`${apiBase}/customization`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json?.data) {
-          useCustomizationStore.setState((state) => ({
-            pageSections: {
-              ...state.pageSections,
-              ...json.data,
-            },
-            lastSyncTimestamp: Date.now(),
-          }));
-        }
-      }
-    } catch (e) {}
-  }
-
-  // Initiate real-time SSE stream & initial fetch on startup
-  fetchInitialCustomizations();
+  // Initiate real-time SSE stream on startup
   connectSseStream();
 }
 

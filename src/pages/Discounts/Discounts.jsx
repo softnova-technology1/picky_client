@@ -5,32 +5,40 @@ import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
 import { productService } from '../../services/product.service';
 import { useCategoryStore } from '../../store/categoryStore';
+import { useUiStore } from '../../store/uiStore';
+import { formatPrice } from '../../utils/formatPrice';
 import {
   Tag,
-  Percent,
   Clock,
   Sparkles,
   ArrowRight,
+  ArrowDown,
   Search,
   SlidersHorizontal,
   Flame,
   Zap,
-  TrendingDown,
   RotateCcw,
+  ShieldCheck,
+  Truck,
+  RotateCcw as ReturnIcon,
+  Headphones,
+  CheckCircle2,
 } from 'lucide-react';
-import '../../styles/home-premium.css';
-import { usePageCustomization } from '../../store/customizationStore';
 
 export default function Discounts() {
-  const { isEnabled, getSetting } = usePageCustomization('discounts');
   const navigate = useNavigate();
-  const { categories, fetchCategories } = useCategoryStore();
+  const { fetchCategories } = useCategoryStore();
+  const { showToast } = useUiStore();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters & Controls
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('highest-discount'); // 'highest-discount' | 'price-low' | 'price-high' | 'newest'
+  const [sortBy, setSortBy] = useState('recommended'); // 'recommended' | 'highest-discount' | 'price-low' | 'price-high' | 'newest'
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     fetchCategories();
@@ -53,62 +61,164 @@ export default function Discounts() {
     loadDiscounts();
   }, []);
 
-  // Helper to check tags
+  // Tag matcher helper
   const hasTag = (p, keyword) => {
     if (!p) return false;
     const kw = keyword.toLowerCase();
     if (Array.isArray(p.tags)) {
-      return p.tags.some(
-        (t) => typeof t === 'string' && t.toLowerCase().includes(kw)
-      );
+      return p.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(kw));
     }
-    if (typeof p.tags === 'string') {
-      return p.tags.toLowerCase().includes(kw);
-    }
-    if (typeof p.tag === 'string') {
-      return p.tag.toLowerCase().includes(kw);
-    }
+    if (typeof p.tags === 'string') return p.tags.toLowerCase().includes(kw);
+    if (typeof p.tag === 'string') return p.tag.toLowerCase().includes(kw);
     return false;
   };
 
-  // Filter products: either has active discount from Admin OR has "limited deals" tag
-  const activeDiscountProducts = useMemo(() => {
+  // Helper to verify if product is actively discounted right now in DB
+  const isProductInActiveDiscount = (p) => {
+    if (!p || !p.isDiscountActive) return false;
+    if (p.discountPrice === undefined || p.discountPrice === null || p.discountPrice >= p.price) return false;
     const now = Date.now();
-    const filtered = products.filter((p) => {
-      // 1. Check if product has "Limited Deals" / "deal" / "limited" tag
-      const isTaggedLimitedDeal = hasTag(p, 'limited') || hasTag(p, 'deal');
+    const startDateValid = !p.offerStartDate || isNaN(new Date(p.offerStartDate).getTime()) || new Date(p.offerStartDate).getTime() <= now;
+    const endDate = p.offerEndDate || p.validTill || p.endDate;
+    const endDateValid = !endDate || isNaN(new Date(endDate).getTime()) || new Date(endDate).getTime() >= now;
+    return startDateValid && endDateValid;
+  };
 
-      // 2. Check if product has active discount configured in Admin Discounts
-      let isConfiguredDiscount = false;
-      if (p.isDiscountActive) {
-        const hasDiscount = p.discountPrice !== undefined && p.discountPrice !== null && p.discountPrice < p.price;
-        if (hasDiscount) {
-          const startDateValid = !p.offerStartDate || isNaN(new Date(p.offerStartDate).getTime()) || new Date(p.offerStartDate).getTime() <= now;
-          const endDate = p.offerEndDate || p.validTill || p.endDate;
-          const endDateValid = !endDate || isNaN(new Date(endDate).getTime()) || new Date(endDate).getTime() >= now;
-          if (startDateValid && endDateValid) {
-            isConfiguredDiscount = true;
-          }
-        }
-      }
-
-      // Show if either has active discount OR has limited deals tag
+  // Filter products: ONLY products matching active discounts or limited deals tag
+  const activeDiscountProducts = useMemo(() => {
+    return products.filter((p) => {
+      const isTaggedLimitedDeal = hasTag(p, 'limited');
+      const isConfiguredDiscount = isProductInActiveDiscount(p);
       return isConfiguredDiscount || isTaggedLimitedDeal;
     });
-
-    if (filtered.length > 0) return filtered;
-    const fallback = products.filter((p) => p.discountPrice && p.discountPrice < p.price);
-    return fallback.length > 0 ? fallback : products.slice(0, 12);
   }, [products]);
 
-  // Available categories among discounted items
+  // Check if any product has an active offer with an end date in the future
+  const activeOfferWithEnd = useMemo(() => {
+    const now = Date.now();
+    return activeDiscountProducts.find((p) => {
+      const end = p.offerEndDate || p.validTill || p.endDate;
+      if (!end) return false;
+      const endMs = new Date(end).getTime();
+      return !isNaN(endMs) && endMs > now;
+    });
+  }, [activeDiscountProducts]);
+
+  // Live countdown timer: ONLY active if a real DB offer with future end date exists
+  const [countdown, setCountdown] = useState(null);
+
+  useEffect(() => {
+    if (!activeOfferWithEnd) {
+      setCountdown(null);
+      return;
+    }
+
+    const end = activeOfferWithEnd.offerEndDate || activeOfferWithEnd.validTill || activeOfferWithEnd.endDate;
+    const targetMs = new Date(end).getTime();
+
+    const updateTimer = () => {
+      const diff = targetMs - Date.now();
+      if (diff <= 0) {
+        setCountdown(null);
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+      setCountdown({ days, hours, minutes, seconds });
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+    return () => clearInterval(timer);
+  }, [activeOfferWithEnd]);
+
+  // Navigate directly to Product Detail page when clicking any hero product card
+  const handleProductClick = (p) => {
+    if (!p) return;
+    const identifier = p.slug || p._id || p.id;
+    if (identifier) {
+      navigate(`/products/${identifier}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Hero Showcase Pool: ONLY products matching limited deals tag or active discount (no other tags)
+  const heroPool = useMemo(() => {
+    return activeDiscountProducts;
+  }, [activeDiscountProducts]);
+
+  // 1-Minute Auto-Rotation for the 3 Hero Cards
+  const [rotationIndex, setRotationIndex] = useState(0);
+  const [isCardTransitioning, setIsCardTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (heroPool.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setIsCardTransitioning(true);
+      setTimeout(() => {
+        setRotationIndex((prev) => (prev + 1) % heroPool.length);
+        setIsCardTransitioning(false);
+      }, 400); // 400ms fade transition
+    }, 60000); // 1 minute (60,000ms)
+
+    return () => clearInterval(interval);
+  }, [heroPool.length]);
+
+  const poolLen = heroPool.length;
+  const card1Product = poolLen > 0 ? heroPool[rotationIndex % poolLen] : null;
+  const card2Product = poolLen > 1 ? heroPool[(rotationIndex + 1) % poolLen] : card1Product;
+  const card3Product =
+    poolLen > 2
+      ? heroPool[(rotationIndex + 2) % poolLen]
+      : poolLen > 1
+        ? heroPool[(rotationIndex + 1) % poolLen]
+        : card1Product;
+
+  const getProductImage = (p) => {
+    if (!p) return 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const valid = p.images.find((img) => typeof img === 'string' && img.trim().length > 0);
+      if (valid) return valid;
+    }
+    if (typeof p.image === 'string' && p.image.trim().length > 0) return p.image;
+    return 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+  };
+
+  const getCardBadge = (p, defaultBadge = 'LIMITED DEAL') => {
+    if (!p) return defaultBadge;
+    if (p.price && p.discountPrice && p.price > p.discountPrice) {
+      const pct = Math.round(((p.price - p.discountPrice) / p.price) * 100);
+      return `${pct}% OFF`;
+    }
+    if (p.offerLabel && typeof p.offerLabel === 'string' && p.offerLabel.trim()) {
+      return p.offerLabel.trim().toUpperCase();
+    }
+    return defaultBadge;
+  };
+
+  // Flash deals: ONLY products that are ACTUALLY in active discount from DB!
+  const flashDeals = useMemo(() => {
+    return products
+      .filter((p) => isProductInActiveDiscount(p))
+      .sort((a, b) => {
+        const diffA = (a.price - a.discountPrice) / a.price;
+        const diffB = (b.price - b.discountPrice) / b.price;
+        return diffB - diffA;
+      })
+      .slice(0, 4);
+  }, [products]);
+
+  // Categories among deals with real counts from DB
   const availableCategories = useMemo(() => {
     const catMap = new Map();
     activeDiscountProducts.forEach((p) => {
       const catName =
         typeof p.category === 'object' && p.category?.name
           ? p.category.name
-          : p.subCategory || (typeof p.category === 'string' ? p.category : null);
+          : p.subCategory || (typeof p.category === 'string' ? p.category : 'General');
       const catId = typeof p.category === 'object' && p.category?.slug ? p.category.slug : catName;
       if (catName && catId) {
         catMap.set(catId, catName);
@@ -117,11 +227,11 @@ export default function Discounts() {
     return Array.from(catMap.entries()).map(([id, label]) => ({ id, label }));
   }, [activeDiscountProducts]);
 
-  // Search, Category filter, and Sorting
+  // Filtered & Sorted products for the main catalog
   const filteredProducts = useMemo(() => {
     let result = activeDiscountProducts;
 
-    // Search query
+    // 1. Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
@@ -129,11 +239,12 @@ export default function Discounts() {
           p.name?.toLowerCase().includes(q) ||
           p.description?.toLowerCase().includes(q) ||
           p.offerLabel?.toLowerCase().includes(q) ||
-          (typeof p.category === 'object' && p.category?.name?.toLowerCase().includes(q))
+          (typeof p.category === 'object' && p.category?.name?.toLowerCase().includes(q)) ||
+          p.subCategory?.toLowerCase().includes(q)
       );
     }
 
-    // Category filter
+    // 2. Category Filter
     if (selectedCategory !== 'all') {
       result = result.filter((p) => {
         const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
@@ -142,73 +253,65 @@ export default function Discounts() {
       });
     }
 
-    // Sort
+    // 3. Sorting
     return [...result].sort((a, b) => {
-      const discPctA = ((a.price - a.discountPrice) / a.price) * 100 || 0;
-      const discPctB = ((b.price - b.discountPrice) / b.price) * 100 || 0;
+      const priceA = a.discountPrice || a.price || 0;
+      const priceB = b.discountPrice || b.price || 0;
+      const discPctA = a.price && a.discountPrice ? ((a.price - a.discountPrice) / a.price) * 100 : 0;
+      const discPctB = b.price && b.discountPrice ? ((b.price - b.discountPrice) / b.price) * 100 : 0;
 
       if (sortBy === 'highest-discount') {
         return discPctB - discPctA;
       }
       if (sortBy === 'price-low') {
-        return (a.discountPrice || a.price) - (b.discountPrice || b.price);
+        return priceA - priceB;
       }
       if (sortBy === 'price-high') {
-        return (b.discountPrice || b.price) - (a.discountPrice || a.price);
+        return priceB - priceA;
       }
       if (sortBy === 'newest') {
         return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
       }
-      return 0;
+      return (b.ratings?.average || 4.8) - (a.ratings?.average || 4.8);
     });
   }, [activeDiscountProducts, searchQuery, selectedCategory, sortBy]);
 
-  // Max discount stat
-  const maxDiscountPct = useMemo(() => {
-    const discountsWithSavings = activeDiscountProducts
-      .filter((p) => p.price && p.discountPrice && p.discountPrice < p.price)
-      .map((p) => Math.round(((p.price - p.discountPrice) / p.price) * 100));
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
-    if (!discountsWithSavings.length) return 0;
-    return Math.max(...discountsWithSavings);
-  }, [activeDiscountProducts]);
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    window.scrollTo({ top: 750, behavior: 'smooth' });
+  };
 
   return (
     <PageWrapper>
-      <div style={{ background: '#fdfbf7', minHeight: '100vh', paddingBottom: '5rem' }}>
-        {/* ── 1. Hero Banner ── */}
-        {isEnabled('discounts_hero') && (
+      <div style={{ background: '#ffffff', minHeight: '100vh', color: '#1e293b' }}>
+        {/* ── 1. Hero Section: Editorial Limited-Time Deals Banner ── */}
         <section
           style={{
+            background: 'linear-gradient(135deg, #faf7fe 0%, #f4eefa 50%, #eee8f8 100%)',
+            borderBottom: '1px solid #ede9fe',
+            padding: '3.5rem 1.5rem 4rem',
             position: 'relative',
-            background: 'linear-gradient(135deg, #170733 0%, #2b0f55 50%, #4c1d95 100%)',
-            color: '#ffffff',
-            padding: '4.5rem 1.5rem 4rem',
             overflow: 'hidden',
           }}
         >
-          {/* Decorative Background Elements */}
+          {/* Subtle Ambient Glow */}
           <div
             style={{
               position: 'absolute',
-              top: '-20%',
-              right: '-10%',
-              width: '500px',
-              height: '500px',
+              top: '-30%',
+              right: '15%',
+              width: '550px',
+              height: '550px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-25%',
-              left: '-5%',
-              width: '420px',
-              height: '420px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(234, 88, 12, 0.2) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
               pointerEvents: 'none',
             }}
           />
@@ -217,321 +320,735 @@ export default function Discounts() {
             style={{
               maxWidth: '1280px',
               margin: '0 auto',
+              display: 'grid',
+              gridTemplateColumns: activeDiscountProducts.length > 0 ? 'repeat(auto-fit, minmax(320px, 1fr))' : '1fr',
+              gap: '3rem',
+              alignItems: 'center',
               position: 'relative',
               zIndex: 2,
-              textAlign: 'center',
             }}
           >
-            {/* Live Indicator Badge */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.4rem 1rem',
-                borderRadius: '999px',
-                background: 'rgba(255, 255, 255, 0.12)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                color: '#fef08a',
-                marginBottom: '1.25rem',
-              }}
-            >
-              <span
+            {/* Left Column: Headlines, Timer (Only if offer active), CTAs & Value Props */}
+            <div>
+              {/* Campaign Pill */}
+              <div
                 style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#22c55e',
-                  boxShadow: '0 0 10px #22c55e',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.35rem 0.95rem',
+                  borderRadius: '999px',
+                  background: '#ede9fe',
+                  color: '#6b21a8',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  marginBottom: '1.25rem',
                 }}
-              />
-              {getSetting('discounts_hero', 'badgeText', 'LIMITED DEALS • LIVE NOW')}
-            </div>
-
-            <h1
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: 'clamp(2.2rem, 5vw, 3.6rem)',
-                fontWeight: 800,
-                lineHeight: 1.15,
-                margin: '0 0 1rem',
-                color: '#ffffff',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {(() => {
-                const title = getSetting('discounts_hero', 'title', 'Limited Deals');
-                const words = title.split(' ');
-                if (words.length > 1) {
-                  const firstPart = words.slice(0, -1).join(' ');
-                  const lastWord = words[words.length - 1];
-                  return (
-                    <>
-                      {firstPart}{' '}
-                      <span
-                        style={{
-                          background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 50%, #c084fc 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                        }}
-                      >
-                        {lastWord}
-                      </span>
-                    </>
-                  );
-                }
-                return title;
-              })()}
-            </h1>
-
-            <p
-              style={{
-                maxWidth: '640px',
-                margin: '0 auto 2rem',
-                fontSize: 'clamp(0.95rem, 1.8vw, 1.12rem)',
-                color: '#e2e8f0',
-                lineHeight: 1.6,
-              }}
-            >
-              {getSetting('discounts_hero', 'subtitle', 'Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.')}
-            </p>
-
-            {/* Stat Counters Row */}
-            {getSetting('discounts_hero', 'showStatCounters', true) && (
-            <div
-              style={{
-                display: 'inline-flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                gap: '1.5rem',
-                background: 'rgba(15, 23, 42, 0.45)',
-                backdropFilter: 'blur(12px)',
-                padding: '0.9rem 1.8rem',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <Zap size={18} color="#fbbf24" />
-                <span style={{ fontSize: '0.88rem', color: '#f8fafc' }}>
-                  <strong>{activeDiscountProducts.length}</strong> Active Deals Live
-                </span>
+              >
+                <Sparkles size={13} color="#7c3aed" />
+                <span>EXCLUSIVE CAMPAIGN</span>
               </div>
-              {maxDiscountPct > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <Flame size={18} color="#f97316" />
-                  <span style={{ fontSize: '0.88rem', color: '#f8fafc' }}>
-                    Up to <strong>{maxDiscountPct}% OFF</strong>
+
+              {/* Title */}
+              <h1
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)',
+                  fontWeight: 800,
+                  color: '#1e1b4b',
+                  lineHeight: 1.15,
+                  margin: '0 0 1.25rem',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Limited–Time <span style={{ color: '#6d28d9' }}>Deals</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p
+                style={{
+                  fontSize: '1rem',
+                  color: '#64748b',
+                  lineHeight: 1.65,
+                  margin: '0 0 1.75rem',
+                  maxWidth: '520px',
+                }}
+              >
+                Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at steep promotional tiers.
+              </p>
+
+              {/* Live Countdown Pill: ONLY shown if real active offer with end date exists */}
+              {activeOfferWithEnd && countdown && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.45rem 1.15rem',
+                    borderRadius: '999px',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    color: '#1e1b4b',
+                    marginBottom: '2rem',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#ef4444',
+                      boxShadow: '0 0 8px #ef4444',
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span>
+                    ENDS IN:&nbsp;&nbsp;
+                    <span style={{ color: '#4338ca', fontWeight: 800 }}>
+                      {countdown.days > 0 ? `${countdown.days} d : ` : ''}
+                      {String(countdown.hours).padStart(2, '0')} h : {String(countdown.minutes).padStart(2, '0')} m : {String(countdown.seconds).padStart(2, '0')} s
+                    </span>
                   </span>
+                  <Clock size={14} color="#64748b" style={{ marginLeft: '2px' }} />
                 </div>
               )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <Sparkles size={18} color="#c084fc" />
-                <span style={{ fontSize: '0.88rem', color: '#f8fafc' }}>
-                  100% Authentic Products
-                </span>
+
+              {/* Action Button: Explore Deals */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+                <a
+                  href="#curated-catalog"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.8rem 2rem',
+                    borderRadius: '999px',
+                    background: '#2e1065',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(46, 16, 101, 0.25)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+                >
+                  <span>Explore Deals</span>
+                  <ArrowDown size={15} />
+                </a>
+              </div>
+
+              {/* Trust Micro-Badges */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                  <CheckCircle2 size={16} color="#6d28d9" />
+                  <span>100% Genuine Provenance</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                  <Truck size={16} color="#6d28d9" />
+                  <span>Same-Day Dispatch</span>
+                </div>
               </div>
             </div>
-            )}
+
+            {/* Right Column: 3 Overlapping Floating Cards Cluster with 1-Minute Rotation */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', width: '100%' }}>
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '480px',
+                  height: '380px',
+                  background: 'linear-gradient(145deg, #f3f0ff 0%, #ebe5fb 100%)',
+                  borderRadius: '24px',
+                  padding: '20px',
+                  boxShadow: 'inset 0 1px 3px rgba(255, 255, 255, 0.8), 0 10px 30px -10px rgba(109, 40, 217, 0.08)',
+                  opacity: isCardTransitioning ? 0.35 : 1,
+                  transform: isCardTransitioning ? 'scale(0.985)' : 'scale(1)',
+                  transition: 'opacity 0.4s ease, transform 0.4s ease',
+                }}
+              >
+                {/* ── CARD 1: Left / Main Featured Card ── */}
+                {card1Product && (
+                  <div
+                    onClick={() => handleProductClick(card1Product)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card1Product); }}
+                    style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: '20px',
+                      width: '230px',
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      zIndex: 2,
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: '1px solid rgba(226, 232, 240, 0.8)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.14)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)';
+                    }}
+                  >
+                    <div style={{ position: 'relative', width: '100%', height: '145px', background: '#f8fafc', overflow: 'hidden' }}>
+                      <img
+                        src={getProductImage(card1Product)}
+                        alt={card1Product.name || 'Deal'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          background: '#991b1b',
+                          color: '#ffffff',
+                          fontSize: '0.66rem',
+                          fontWeight: 800,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        {getCardBadge(card1Product, 'UP TO 60% OFF')}
+                      </div>
+                    </div>
+                    <div style={{ padding: '12px 14px 14px' }}>
+                      <h3
+                        style={{
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          margin: '0 0 6px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        title={card1Product.name}
+                      >
+                        {card1Product.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>
+                          {formatPrice(card1Product.discountPrice || card1Product.price || 0)}
+                        </span>
+                        {card1Product.price && (
+                          <span style={{ fontSize: '0.76rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                            {formatPrice(
+                              card1Product.discountPrice && card1Product.price > card1Product.discountPrice
+                                ? card1Product.price
+                                : Math.round(card1Product.price * 1.4)
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── CARD 2: Top-Right Card ── */}
+                {card2Product && (
+                  <div
+                    onClick={() => handleProductClick(card2Product)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card2Product); }}
+                    style={{
+                      position: 'absolute',
+                      top: '24px',
+                      right: '20px',
+                      width: '205px',
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      boxShadow: '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      zIndex: 1,
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: '1px solid rgba(226, 232, 240, 0.8)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 16px 32px -4px rgba(0, 0, 0, 0.12)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)';
+                    }}
+                  >
+                    <div style={{ position: 'relative', width: '100%', height: '125px', background: '#f8fafc', overflow: 'hidden' }}>
+                      <img
+                        src={getProductImage(card2Product)}
+                        alt={card2Product.name || 'Deal'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: '#4f46e5',
+                          color: '#ffffff',
+                          fontSize: '0.62rem',
+                          fontWeight: 800,
+                          padding: '3px 7px',
+                          borderRadius: '5px',
+                          letterSpacing: '0.03em',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                        }}
+                      >
+                        {getCardBadge(card2Product, '57% OFF')}
+                      </div>
+                    </div>
+                    <div style={{ padding: '10px 12px 12px' }}>
+                      <h3
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          margin: '0 0 4px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        title={card2Product.name}
+                      >
+                        {card2Product.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#6d28d9' }}>
+                          {formatPrice(card2Product.discountPrice || card2Product.price || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── CARD 3: Bottom-Right Horizontal Mini Card ── */}
+                {card3Product && (
+                  <div
+                    onClick={() => handleProductClick(card3Product)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card3Product); }}
+                    style={{
+                      position: 'absolute',
+                      bottom: '22px',
+                      right: '20px',
+                      width: '240px',
+                      background: '#ffffff',
+                      borderRadius: '14px',
+                      boxShadow: '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)',
+                      padding: '8px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      cursor: 'pointer',
+                      zIndex: 3,
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.16)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)';
+                    }}
+                  >
+                    <img
+                      src={getProductImage(card3Product)}
+                      alt={card3Product.name || 'Item'}
+                      style={{
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '10px',
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                        background: '#f1f5f9',
+                      }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          background: '#ede9fe',
+                          color: '#6d28d9',
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          marginBottom: '3px',
+                          maxWidth: '100%',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {card3Product.category?.name || card3Product.subCategory || 'Gourmet Box'}
+                      </span>
+                      <h4
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          margin: '0 0 3px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          lineHeight: 1.2,
+                        }}
+                        title={card3Product.name}
+                      >
+                        {card3Product.name}
+                      </h4>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#6d28d9' }}>
+                          {formatPrice(card3Product.discountPrice || card3Product.price || 0)}
+                        </span>
+                        {card3Product.price && (
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                            {formatPrice(
+                              card3Product.discountPrice && card3Product.price > card3Product.discountPrice
+                                ? card3Product.price
+                                : Math.round(card3Product.price * 1.4)
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
-        )}
 
-        {/* ── 2. Filters & Search Toolbar + Product Grid ── */}
-        {isEnabled('discounts_feed') && (
-        <>
-        <div
-          style={{
-            maxWidth: '1320px',
-            margin: '0 auto',
-            padding: '2rem 1.5rem 1rem',
-          }}
-        >
-          <div
+        {/* ── 2. High Urgency Vault: Flash Deals (Rendered ONLY if active offer with countdown exists) ── */}
+        {countdown && flashDeals.length > 0 && (
+          <section
+            id="flash-deals-section"
             style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '1.25rem 1.5rem',
-              boxShadow: '0 4px 20px rgba(109, 40, 217, 0.05)',
-              border: '1px solid #ede9fe',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
+              maxWidth: '1280px',
+              margin: '0 auto',
+              padding: '3.5rem 1.5rem 2.5rem',
             }}
           >
-            {/* Search Box */}
-            <div style={{ position: 'relative', width: '320px', flex: '1 1 260px' }}>
-              <Search
-                size={17}
-                style={{
-                  position: 'absolute',
-                  left: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#94a3b8',
-                  pointerEvents: 'none',
-                }}
-              />
-              <input
-                type="text"
-                placeholder={getSetting('discounts_feed', 'searchPlaceholder', 'Search limited deals, categories...')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '42px',
-                  paddingLeft: '40px',
-                  paddingRight: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #e2e8f0',
-                  background: '#fafafa',
-                  fontSize: '0.88rem',
-                  color: '#1e293b',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
+            {/* Header Row: Title & Digital Countdown Flip Boxes (Only if offer active) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: '#dc2626',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  <Zap size={14} color="#dc2626" />
+                  <span>HIGH URGENCY VAULT</span>
+                </div>
+
+                <h2
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: '2.1rem',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    margin: 0,
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  Flash Deals
+                </h2>
+
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.88rem', color: '#64748b' }}>
+                  Limited-time savings on selected favourites with verified inventory caps.
+                </p>
+              </div>
+
+              {/* Digital Countdown Timer Boxes (ONLY shown when real active offer exists) */}
+              {countdown && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div
+                    style={{
+                      background: '#881337',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.65rem',
+                      textAlign: 'center',
+                      minWidth: '50px',
+                    }}
+                  >
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, lineHeight: 1 }}>
+                      {String(countdown.days).padStart(2, '0')}
+                    </div>
+                    <div style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.05em', opacity: 0.8, marginTop: '3px' }}>
+                      DAYS
+                    </div>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#881337' }}>:</span>
+
+                  <div
+                    style={{
+                      background: '#881337',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.65rem',
+                      textAlign: 'center',
+                      minWidth: '50px',
+                    }}
+                  >
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, lineHeight: 1 }}>
+                      {String(countdown.hours).padStart(2, '0')}
+                    </div>
+                    <div style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.05em', opacity: 0.8, marginTop: '3px' }}>
+                      HOURS
+                    </div>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#881337' }}>:</span>
+
+                  <div
+                    style={{
+                      background: '#881337',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.65rem',
+                      textAlign: 'center',
+                      minWidth: '50px',
+                    }}
+                  >
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, lineHeight: 1 }}>
+                      {String(countdown.minutes).padStart(2, '0')}
+                    </div>
+                    <div style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.05em', opacity: 0.8, marginTop: '3px' }}>
+                      MINS
+                    </div>
+                  </div>
+                  <span style={{ fontWeight: 800, color: '#881337' }}>:</span>
+
+                  <div
+                    style={{
+                      background: '#881337',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.65rem',
+                      textAlign: 'center',
+                      minWidth: '50px',
+                    }}
+                  >
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, lineHeight: 1 }}>
+                      {String(countdown.seconds).padStart(2, '0')}
+                    </div>
+                    <div style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.05em', opacity: 0.8, marginTop: '3px' }}>
+                      SECS
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Sort Dropdown */}
+            {/* Flash Deals Cards using Site's Official ProductCard Component */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: '1.5rem',
+              }}
+            >
+              {flashDeals.map((prod) => (
+                <ProductCard key={prod._id || prod.id} product={prod} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── 3. Controls Toolbar (Search, Category Filter Dropdown, Sorting) ── */}
+        <div id="curated-catalog" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem 1.5rem 0.5rem' }}>
+          {/* Search, Category Filter & Sorting Toolbar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              paddingBottom: '1.5rem',
+              borderBottom: '1px solid #f1f5f9',
+            }}
+          >
+            {/* Left: Summary Count & Active Filter Indicator */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748b', fontSize: '0.82rem', fontWeight: 600 }}>
-                <SlidersHorizontal size={15} />
-                <span>Sort by:</span>
+              <span style={{ fontSize: '0.86rem', color: '#64748b' }}>
+                Showing <strong style={{ color: '#0f172a' }}>{filteredProducts.length}</strong> curated deals
+              </span>
+
+              {(selectedCategory !== 'all' || searchQuery) && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span
+                    style={{
+                      background: '#ede9fe',
+                      color: '#6d28d9',
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    Filtered
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setSearchQuery('');
+                      setCurrentPage(1);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#dc2626',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '0.2rem 0.4rem',
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Search, Category Dropdown Filter, Sort Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {/* Search */}
+              <div style={{ position: 'relative', width: '220px' }}>
+                <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="Search deals..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    paddingLeft: '34px',
+                    paddingRight: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.84rem',
+                    outline: 'none',
+                    background: '#f8fafc',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
+
+              {/* Category Dropdown Filter */}
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  height: '38px',
+                  padding: '0 0.85rem',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  fontSize: '0.84rem',
+                  color: '#334155',
+                  fontWeight: 600,
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="all">All Categories ({activeDiscountProducts.length})</option>
+                {availableCategories.map((cat) => {
+                  const count = activeDiscountProducts.filter((p) => {
+                    const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
+                    const catName = typeof p.category === 'object' && p.category?.name ? p.category.name : p.subCategory || p.category;
+                    return catSlug === cat.id || catName === cat.id;
+                  }).length;
+                  return (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.label} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+
+              {/* Sort By */}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 style={{
-                  height: '42px',
-                  padding: '0 1rem',
-                  borderRadius: '10px',
+                  height: '38px',
+                  padding: '0 0.85rem',
+                  borderRadius: '8px',
                   border: '1px solid #e2e8f0',
                   background: '#ffffff',
-                  fontSize: '0.86rem',
-                  fontWeight: 600,
+                  fontSize: '0.84rem',
                   color: '#334155',
-                  cursor: 'pointer',
+                  fontWeight: 600,
                   outline: 'none',
+                  cursor: 'pointer',
                 }}
               >
+                <option value="recommended">Sort: Recommended</option>
                 <option value="highest-discount">Highest Discount (% OFF)</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="newest">Newest Deals</option>
               </select>
-
-              {(searchQuery || selectedCategory !== 'all') && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
-                  }}
-                  style={{
-                    height: '42px',
-                    padding: '0 1rem',
-                    borderRadius: '10px',
-                    border: '1px solid #e2e8f0',
-                    background: '#f8fafc',
-                    color: '#64748b',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                  }}
-                >
-                  <RotateCcw size={13} />
-                  Reset
-                </button>
-              )}
             </div>
           </div>
-
-          {/* Category Filter Pills */}
-          {availableCategories.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                overflowX: 'auto',
-                paddingTop: '1.25rem',
-                paddingBottom: '0.5rem',
-                scrollbarWidth: 'none',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedCategory('all')}
-                style={{
-                  padding: '0.45rem 1.1rem',
-                  borderRadius: '999px',
-                  border: selectedCategory === 'all' ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
-                  background: selectedCategory === 'all' ? '#7c3aed' : '#ffffff',
-                  color: selectedCategory === 'all' ? '#ffffff' : '#475569',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
-                  boxShadow: selectedCategory === 'all' ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none',
-                }}
-              >
-                All Deals ({activeDiscountProducts.length})
-              </button>
-
-              {availableCategories.map((c) => {
-                const count = activeDiscountProducts.filter((p) => {
-                  const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
-                  const catName = typeof p.category === 'object' && p.category?.name ? p.category.name : p.subCategory || p.category;
-                  return catSlug === c.id || catName === c.id;
-                }).length;
-
-                const isSelected = selectedCategory === c.id;
-
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(c.id)}
-                    style={{
-                      padding: '0.45rem 1.1rem',
-                      borderRadius: '999px',
-                      border: isSelected ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
-                      background: isSelected ? '#7c3aed' : '#ffffff',
-                      color: isSelected ? '#ffffff' : '#475569',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none',
-                    }}
-                  >
-                    {c.label} ({count})
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
-        {/* ── 3. Products Grid Section ── */}
-        <div style={{ maxWidth: '1320px', margin: '0 auto', padding: '1rem 1.5rem 2rem' }}>
+        {/* ── 4. Main Product Deals Grid (Using Official ProductCard Component) ── */}
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
           {loading ? (
-            <div style={{ padding: '5rem 0', textAlign: 'center' }}>
+            <div style={{ padding: '6rem 0', textAlign: 'center' }}>
               <Spinner size="lg" />
               <p style={{ marginTop: '1rem', color: '#64748b', fontSize: '0.92rem' }}>
-                Loading live limited deals...
+                Loading verified deals from database...
               </p>
             </div>
           ) : filteredProducts.length === 0 ? (
@@ -539,91 +1056,303 @@ export default function Discounts() {
               style={{
                 background: '#ffffff',
                 borderRadius: '16px',
-                padding: '4.5rem 1.5rem',
+                padding: '4rem 1.5rem',
                 textAlign: 'center',
                 border: '1px solid #f1f5f9',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
               }}
             >
-              <div
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  background: '#fef3c7',
-                  color: '#d97706',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '1rem',
-                }}
-              >
-                <Tag size={28} />
-              </div>
-              <h3
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: '1.45rem',
-                  fontWeight: 700,
-                  color: '#1e293b',
-                  margin: '0 0 0.5rem',
-                }}
-              >
-                {getSetting('discounts_feed', 'emptyMessage', 'No limited deals found')}
+              <Tag size={32} color="#94a3b8" style={{ marginBottom: '0.75rem' }} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#1e293b' }}>
+                No deals found in catalog
               </h3>
-              <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '0 0 1.25rem' }}>
                 {searchQuery || selectedCategory !== 'all'
                   ? 'No products match your current filters. Try resetting search or category filter.'
-                  : 'There are currently no active limited deals configured. Check back soon for new deals!'}
+                  : 'There are currently no active limited deals in the store. Please check back later!'}
               </p>
               <button
                 type="button"
                 onClick={() => {
-                  setSearchQuery('');
                   setSelectedCategory('all');
+                  setSearchQuery('');
                   navigate('/shop');
                 }}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.65rem 1.4rem',
-                  borderRadius: '10px',
-                  background: '#7c3aed',
+                  padding: '0.55rem 1.35rem',
+                  borderRadius: '8px',
+                  background: '#2e1065',
                   color: '#ffffff',
-                  fontSize: '0.88rem',
+                  fontSize: '0.85rem',
                   fontWeight: 600,
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(124, 58, 237, 0.25)',
                 }}
               >
-                <span>Browse All Products</span>
-                <ArrowRight size={15} />
+                Browse All Products
               </button>
             </div>
           ) : (
             <div>
-              <div style={{ marginBottom: '1.25rem', fontSize: '0.86rem', color: '#64748b', fontWeight: 500 }}>
-                Showing <strong style={{ color: '#0f172a' }}>{filteredProducts.length}</strong> active limited deals
-              </div>
-
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
                   gap: '1.5rem',
                 }}
               >
-                {filteredProducts.map((p) => (
-                  <ProductCard key={p._id || p.id || p.slug} product={p} />
+                {paginatedProducts.map((prod) => (
+                  <ProductCard key={prod._id || prod.id} product={prod} />
                 ))}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                    marginTop: '3rem',
+                    paddingTop: '1.5rem',
+                    borderTop: '1px solid #f1f5f9',
+                  }}
+                >
+                  <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    Showing {(currentPage - 1) * itemsPerPage + 1}-
+                    {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} items
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <button
+                      type="button"
+                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        color: currentPage === 1 ? '#cbd5e1' : '#334155',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Prev
+                    </button>
+
+                    {Array.from({ length: totalPages }).map((_, i) => {
+                      const pageNum = i + 1;
+                      const isActive = currentPage === pageNum;
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => handlePageChange(pageNum)}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            border: 'none',
+                            background: isActive ? '#2e1065' : 'transparent',
+                            color: isActive ? '#ffffff' : '#334155',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        color: currentPage === totalPages ? '#cbd5e1' : '#334155',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Next &gt;
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
-        </>
-        )}
+
+
+        {/* ── Trust Features Row ── */}
+        <section
+          style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            padding: '4rem 1.5rem 5rem',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '1.5rem',
+            }}
+          >
+            {/* Feature 1 */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #f1f5f9',
+                borderRadius: '14px',
+                padding: '1.5rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: '#f5f3ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <ShieldCheck size={20} color="#7c3aed" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.35rem' }}>
+                  Secure Payments
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  100% encrypted UPI, NetBanking, and all international cards.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #f1f5f9',
+                borderRadius: '14px',
+                padding: '1.5rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: '#f5f3ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Truck size={20} color="#7c3aed" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.35rem' }}>
+                  Express Delivery
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  Dispatched within 24 hours with live door-step tracking.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #f1f5f9',
+                borderRadius: '14px',
+                padding: '1.5rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: '#f5f3ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <ReturnIcon size={20} color="#7c3aed" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.35rem' }}>
+                  Easy 7-Day Returns
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  Hassle-free reverse courier pickup for eligible products.
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 4 */}
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #f1f5f9',
+                borderRadius: '14px',
+                padding: '1.5rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: '#f5f3ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Headphones size={20} color="#7c3aed" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.35rem' }}>
+                  Dedicated Support
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  Personal concierge available 9 AM - 8 PM IST every day.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </PageWrapper>
   );

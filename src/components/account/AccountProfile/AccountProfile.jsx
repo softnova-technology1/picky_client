@@ -45,6 +45,23 @@ export default function AccountProfile() {
     if (!isEditingDob) setDob(user?.dob || '');
   }, [user, isEditingName, isEditingEmail, isEditingDob]);
 
+  // Re-fetch latest user profile from server so phone linked via order/address is immediately displayed
+  useEffect(() => {
+    let isMounted = true;
+    authService
+      .getMe()
+      .then((res) => {
+        const freshUser = res?.data?.data || res?.data;
+        if (isMounted && freshUser && updateUser) {
+          updateUser(freshUser);
+        }
+      })
+      .catch(() => null);
+    return () => {
+      isMounted = false;
+    };
+  }, [updateUser]);
+
   // ── Handlers for Name ──
   const isNameDirty = name.trim() !== (user?.name || '').trim();
   const handleStartEditName = () => {
@@ -814,23 +831,42 @@ export default function AccountProfile() {
               </span>
             </div>
 
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.78rem',
-                color: '#047857',
-                background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                border: '1px solid #a7f3d0',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '999px',
-                fontWeight: 700,
-                boxShadow: '0 2px 6px rgba(5, 150, 105, 0.12)',
-              }}
-            >
-              <ShieldCheck size={14} strokeWidth={2.5} /> Verified
-            </span>
+            {user?.phone ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.78rem',
+                  color: '#047857',
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                  border: '1px solid #a7f3d0',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '999px',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 6px rgba(5, 150, 105, 0.12)',
+                }}
+              >
+                <ShieldCheck size={14} strokeWidth={2.5} /> Verified
+              </span>
+            ) : (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.75rem',
+                  color: '#64748b',
+                  background: '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '999px',
+                  fontWeight: 600,
+                }}
+              >
+                Pending First Order
+              </span>
+            )}
           </div>
           <span
             style={{
@@ -849,10 +885,12 @@ export default function AccountProfile() {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: '#10b981',
+                background: user?.phone ? '#10b981' : '#f59e0b',
               }}
             />
-            Verified via WhatsApp OTP
+            {user?.phone
+              ? 'Linked & Verified via WhatsApp'
+              : 'Auto-links from your delivery address upon order'}
           </span>
         </div>
       </div>

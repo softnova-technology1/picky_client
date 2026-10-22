@@ -81,8 +81,8 @@ export default function NewArrivals() {
     const rawTags = Array.isArray(p.tags)
       ? p.tags
       : typeof p.tags === 'string'
-      ? p.tags.split(',')
-      : [];
+        ? p.tags.split(',')
+        : [];
     return rawTags.some((t) => {
       if (!t) return false;
       const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
@@ -101,8 +101,8 @@ export default function NewArrivals() {
     const rawTags = Array.isArray(p.tags)
       ? p.tags
       : typeof p.tags === 'string'
-      ? p.tags.split(',')
-      : [];
+        ? p.tags.split(',')
+        : [];
     return rawTags.some((t) => {
       if (!t) return false;
       const clean = String(t).trim().toLowerCase().replace(/[-_]/g, ' ');
@@ -120,11 +120,11 @@ export default function NewArrivals() {
       const data = res?.data || res;
       const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
       const newArrivalsOnly = items.filter(isNewArrivalProduct);
-      setProducts(newArrivalsOnly.length > 0 ? newArrivalsOnly : items);
+      setProducts(newArrivalsOnly);
 
       // Best sellers filtering for live running marquee section
       const bestSellersOnly = items.filter(isBestSellerProduct);
-      setBestSellerProducts(bestSellersOnly.length > 0 ? bestSellersOnly : items);
+      setBestSellerProducts(bestSellersOnly);
 
 
     } catch (err) {
@@ -492,576 +492,575 @@ export default function NewArrivals() {
               </Link>
             </div>
 
-          {/* ── 7 Circular Category Stories (All New Arrivals + 6 Categories) ── */}
-          <div className="circular-categories-wrapper">
-            <div className="circular-categories-track">
-              {categoryStories.map((item) => {
-                const isActive = activeCategory === item.id;
+            {/* ── 7 Circular Category Stories (All New Arrivals + 6 Categories) ── */}
+            <div className="circular-categories-wrapper">
+              <div className="circular-categories-track">
+                {categoryStories.map((item) => {
+                  const isActive = activeCategory === item.id;
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveCategory(item.id);
-                      setActiveSubcategory('all');
-                    }}
-                    className={`category-story-item ${isActive ? 'active' : ''}`}
-                    title={item.label}
-                  >
-                    {/* 100% Circular Avatar Container */}
-                    <div className="story-circle-pod">
-                      {/* Inner 100% Round Mask for High Detail Zoomed Content */}
-                      <div className="story-circle-inner">
-                        {item.icon === 'package-plus' ? (
-                          <div className="story-all-drops-icon">
-                            <PackagePlus size={24} strokeWidth={1.75} />
-                          </div>
-                        ) : item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.label}
-                            className={`story-circle-img img-${item.id}`}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: '#ede9fe',
-                              color: '#7c3aed',
-                            }}
-                            title="No image in DB"
-                          >
-                            <Layers size={22} strokeWidth={2} />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Category Label Below Circle */}
-                    <span className="story-label-text">
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Filter Bar & Product Search ── */}
-          <div className="sort-filter-bar">
-            {/* Left Group: Folder Toggle Button & Product Search Field */}
-            <div className="bar-left-group">
-              <button
-                onClick={() => setIsFilterFolderOpen((prev) => !prev)}
-                className={`sort-pill folder-toggle-btn ${isFilterFolderOpen ? 'open' : ''} ${
-                  activeFiltersCount > 0 ? 'has-active' : ''
-                }`}
-                title="Open Curated Filter Folder"
-              >
-                <SlidersHorizontal size={15} />
-                <span>All Filters</span>
-                {activeFiltersCount > 0 && (
-                  <span className="folder-count-badge">{activeFiltersCount}</span>
-                )}
-                <ChevronDown
-                  size={15}
-                  style={{
-                    transform: isFilterFolderOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.25s ease',
-                  }}
-                />
-              </button>
-
-              {/* Product Search Field by Name or SKU */}
-              <div className="new-arrivals-search-box">
-                <Search size={16} className="search-box-icon" />
-                <input
-                  type="text"
-                  placeholder="Search by Product Name or SKU..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="new-arrivals-search-input"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="search-clear-btn"
-                    title="Clear search"
-                    type="button"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Right Group: Sort Selector & Clear All */}
-            <div className="bar-right-group">
-              <div className="bar-sort-selector">
-                <ArrowDownNarrowWide size={14} color="#7c3aed" />
-                <span className="bar-sort-label">Sort:</span>
-                <select
-                  value={activeSort}
-                  onChange={(e) => setActiveSort(e.target.value)}
-                  className="bar-sort-select"
-                >
-                  <option value="newest">Newest</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                </select>
-              </div>
-
-              {activeFiltersCount > 0 && (
-                <button
-                  onClick={handleResetAllFilters}
-                  className="clear-all-pill-btn"
-                  title="Reset all filters"
-                >
-                  <RotateCcw size={13} />
-                  <span>Reset All</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* ── Active Filter Tags Row (1-click dismissable tags) ── */}
-          {activeFilterTags.length > 0 && (
-            <div className="active-filter-tags-row">
-              <span className="active-tags-label">Applied:</span>
-              <div className="active-tags-list">
-                {activeFilterTags.map((tag) => (
-                  <button
-                    key={tag.key}
-                    onClick={tag.onRemove}
-                    className="active-tag-chip"
-                    title={`Remove ${tag.label}`}
-                  >
-                    <span>{tag.label}</span>
-                    <X size={13} strokeWidth={2.5} />
-                  </button>
-                ))}
-                <button
-                  onClick={handleResetAllFilters}
-                  className="active-tags-clear-link"
-                >
-                  Clear All
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Slide-Over Side Filter Drawer (From Left - Portaled to document.body) ── */}
-          {isFilterFolderOpen &&
-            typeof document !== 'undefined' &&
-            createPortal(
-              <div className="filter-drawer-overlay" onClick={() => setIsFilterFolderOpen(false)}>
-              <div
-                className="filter-drawer-container"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Drawer Header */}
-                <div className="drawer-header">
-                  <div className="drawer-header-title">
-                    <div className="drawer-icon-box">
-                      <SlidersHorizontal size={18} color="#7c3aed" />
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <h3 className="drawer-title">Filters</h3>
-                        {activeFiltersCount > 0 && (
-                          <span className="drawer-active-badge">
-                            {activeFiltersCount}
-                          </span>
-                        )}
-                      </div>
-                      <p className="drawer-subtitle">
-                        Refine by category, price & deals
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsFilterFolderOpen(false)}
-                    className="drawer-close-btn"
-                    title="Close filters"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
-                {/* Drawer Body - Clean Scrollable Stack */}
-                <div className="drawer-body">
-                  {/* 1. Category Section */}
-                  <div className="drawer-section">
-                    <div className="drawer-section-header">
-                      <div className="drawer-section-label">
-                        <Layers size={14} color="#7c3aed" />
-                        <span>Category</span>
-                      </div>
-                      {activeCategory !== 'all' && (
-                        <button
-                          onClick={() => {
-                            setActiveCategory('all');
-                            setActiveSubcategory('all');
-                          }}
-                          className="drawer-section-clear"
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                    <div className="drawer-pills-list">
-                      {categoryStories.map((cat) => {
-                        const isSelected = activeCategory === cat.id;
-                        return (
-                          <button
-                            key={cat.id}
-                            onClick={() => {
-                              setActiveCategory(cat.id);
-                              setActiveSubcategory('all');
-                            }}
-                            className={`drawer-pill ${isSelected ? 'active' : ''}`}
-                          >
-                            <span>{cat.label}</span>
-                            {isSelected && <Check size={12} strokeWidth={3} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 2. Subcategory Section */}
-                  {availableSubcategories.length > 0 && (
-                    <div className="drawer-section">
-                      <div className="drawer-section-header">
-                        <div className="drawer-section-label">
-                          <Tag size={14} color="#7c3aed" />
-                          <span>Subcategory</span>
-                        </div>
-                        {activeSubcategory !== 'all' && (
-                          <button
-                            onClick={() => setActiveSubcategory('all')}
-                            className="drawer-section-clear"
-                          >
-                            Reset
-                          </button>
-                        )}
-                      </div>
-                      <div className="drawer-pills-list">
-                        <button
-                          onClick={() => setActiveSubcategory('all')}
-                          className={`drawer-pill ${activeSubcategory === 'all' ? 'active' : ''}`}
-                        >
-                          <span>All</span>
-                          {activeSubcategory === 'all' && <Check size={12} strokeWidth={3} />}
-                        </button>
-                        {availableSubcategories.map((sub) => {
-                          const isSelected = activeSubcategory === sub.slug;
-                          return (
-                            <button
-                              key={sub.slug}
-                              onClick={() => setActiveSubcategory(sub.slug)}
-                              className={`drawer-pill ${isSelected ? 'active' : ''}`}
-                            >
-                              <span>{sub.name}</span>
-                              {isSelected && <Check size={12} strokeWidth={3} />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3. Price Range Section */}
-                  <div className="drawer-section">
-                    <div className="drawer-section-header">
-                      <div className="drawer-section-label">
-                        <Coins size={14} color="#7c3aed" />
-                        <span>Price Range</span>
-                      </div>
-                      {priceRange !== 'all' && (
-                        <button
-                          onClick={() => setPriceRange('all')}
-                          className="drawer-section-clear"
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                    <div className="drawer-pills-list">
-                      {[
-                        { id: 'all', label: 'All Prices' },
-                        { id: 'under500', label: 'Under ₹500' },
-                        { id: '500-1500', label: '₹500 - ₹1,500' },
-                        { id: '1500-3000', label: '₹1,500 - ₹3,000' },
-                        { id: 'above3000', label: 'Above ₹3,000' },
-                      ].map((item) => {
-                        const isSelected = priceRange === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => setPriceRange(item.id)}
-                            className={`drawer-pill ${isSelected ? 'active' : ''}`}
-                          >
-                            <span>{item.label}</span>
-                            {isSelected && <Check size={12} strokeWidth={3} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 4. Discounts Section */}
-                  <div className="drawer-section">
-                    <div className="drawer-section-header">
-                      <div className="drawer-section-label">
-                        <Percent size={14} color="#7c3aed" />
-                        <span>Discounts</span>
-                      </div>
-                      {discountFilter !== 'all' && (
-                        <button
-                          onClick={() => setDiscountFilter('all')}
-                          className="drawer-section-clear"
-                        >
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                    <div className="drawer-pills-list">
-                      {[
-                        { id: 'all', label: 'All Deals' },
-                        { id: '10', label: '10% OFF+' },
-                        { id: '20', label: '20% OFF+' },
-                        { id: '30', label: '30% OFF+' },
-                        { id: '50', label: '50% OFF+' },
-                      ].map((item) => {
-                        const isSelected = discountFilter === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => setDiscountFilter(item.id)}
-                            className={`drawer-pill ${isSelected ? 'active' : ''}`}
-                          >
-                            <span>{item.label}</span>
-                            {isSelected && <Check size={12} strokeWidth={3} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Drawer Sticky Footer */}
-                <div className="drawer-footer">
-                  {activeFiltersCount > 0 && (
+                  return (
                     <button
-                      onClick={handleResetAllFilters}
-                      className="drawer-reset-btn"
+                      key={item.id}
+                      onClick={() => {
+                        setActiveCategory(item.id);
+                        setActiveSubcategory('all');
+                      }}
+                      className={`category-story-item ${isActive ? 'active' : ''}`}
+                      title={item.label}
                     >
-                      <RotateCcw size={13} />
-                      <span>Reset</span>
+                      {/* 100% Circular Avatar Container */}
+                      <div className="story-circle-pod">
+                        {/* Inner 100% Round Mask for High Detail Zoomed Content */}
+                        <div className="story-circle-inner">
+                          {item.icon === 'package-plus' ? (
+                            <div className="story-all-drops-icon">
+                              <PackagePlus size={24} strokeWidth={1.75} />
+                            </div>
+                          ) : item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.label}
+                              className={`story-circle-img img-${item.id}`}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: '#ede9fe',
+                                color: '#7c3aed',
+                              }}
+                              title="No image in DB"
+                            >
+                              <Layers size={22} strokeWidth={2} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Category Label Below Circle */}
+                      <span className="story-label-text">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Filter Bar & Product Search ── */}
+            <div className="sort-filter-bar">
+              {/* Left Group: Folder Toggle Button & Product Search Field */}
+              <div className="bar-left-group">
+                <button
+                  onClick={() => setIsFilterFolderOpen((prev) => !prev)}
+                  className={`sort-pill folder-toggle-btn ${isFilterFolderOpen ? 'open' : ''} ${activeFiltersCount > 0 ? 'has-active' : ''
+                    }`}
+                  title="Open Curated Filter Folder"
+                >
+                  <SlidersHorizontal size={15} />
+                  <span>All Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="folder-count-badge">{activeFiltersCount}</span>
+                  )}
+                  <ChevronDown
+                    size={15}
+                    style={{
+                      transform: isFilterFolderOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease',
+                    }}
+                  />
+                </button>
+
+                {/* Product Search Field by Name or SKU */}
+                <div className="new-arrivals-search-box">
+                  <Search size={16} className="search-box-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by Product Name or SKU..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="new-arrivals-search-input"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="search-clear-btn"
+                      title="Clear search"
+                      type="button"
+                    >
+                      <X size={14} />
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      setIsFilterFolderOpen(false);
-                      handleScrollToCatalog();
-                    }}
-                    className="drawer-apply-btn"
+                </div>
+              </div>
+
+              {/* Right Group: Sort Selector & Clear All */}
+              <div className="bar-right-group">
+                <div className="bar-sort-selector">
+                  <ArrowDownNarrowWide size={14} color="#7c3aed" />
+                  <span className="bar-sort-label">Sort:</span>
+                  <select
+                    value={activeSort}
+                    onChange={(e) => setActiveSort(e.target.value)}
+                    className="bar-sort-select"
                   >
-                    <span>Show {processedProducts.length} Items</span>
-                    <ArrowRight size={15} />
+                    <option value="newest">Newest</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                  </select>
+                </div>
+
+                {activeFiltersCount > 0 && (
+                  <button
+                    onClick={handleResetAllFilters}
+                    className="clear-all-pill-btn"
+                    title="Reset all filters"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Reset All</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ── Active Filter Tags Row (1-click dismissable tags) ── */}
+            {activeFilterTags.length > 0 && (
+              <div className="active-filter-tags-row">
+                <span className="active-tags-label">Applied:</span>
+                <div className="active-tags-list">
+                  {activeFilterTags.map((tag) => (
+                    <button
+                      key={tag.key}
+                      onClick={tag.onRemove}
+                      className="active-tag-chip"
+                      title={`Remove ${tag.label}`}
+                    >
+                      <span>{tag.label}</span>
+                      <X size={13} strokeWidth={2.5} />
+                    </button>
+                  ))}
+                  <button
+                    onClick={handleResetAllFilters}
+                    className="active-tags-clear-link"
+                  >
+                    Clear All
                   </button>
                 </div>
               </div>
-            </div>,
-            document.body
-          )}
+            )}
 
-          {/* Products Grid with Generous Spacing */}
-          {loading ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '6rem 2rem',
-                background: '#ffffff',
-                borderRadius: '24px',
-                border: '1.5px solid #ede9fe',
-                marginBottom: '4rem',
-              }}
-            >
-              <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
-                <Spinner size={40} />
-              </div>
-              <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
-                Loading fresh new arrivals...
-              </p>
-            </div>
-          ) : fetchError ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '4rem 2rem',
-                background: '#ffffff',
-                borderRadius: '24px',
-                border: '1.5px solid #ede9fe',
-                marginBottom: '4rem',
-              }}
-            >
-              <h3 style={{ color: '#1e1b4b', fontWeight: 800, marginBottom: '0.5rem' }}>
-                Unable to load fresh arrivals
-              </h3>
-              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                {fetchError}
-              </p>
-              <button
-                onClick={() => loadNewArrivals(1)}
-                style={{
-                  background: '#7c3aed',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.65rem 1.4rem',
-                  borderRadius: '9999px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}
-              >
-                <RotateCcw size={14} />
-                <span>Try Again</span>
-              </button>
-            </div>
-          ) : processedProducts.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '4rem 2rem',
-                background: '#ffffff',
-                borderRadius: '24px',
-                border: '1.5px solid #ede9fe',
-                marginBottom: '4rem',
-              }}
-            >
-              <h3 style={{ color: '#1e1b4b', fontWeight: 800, marginBottom: '0.5rem' }}>
-                No products match this filter
-              </h3>
-              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Try selecting "All New Arrivals" or reset your search & filter criteria.
-              </p>
-              <button
-                onClick={handleResetAllFilters}
-                style={{
-                  background: '#7c3aed',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.65rem 1.4rem',
-                  borderRadius: '9999px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                Reset Filters
-              </button>
-            </div>
-          ) : (
-            <div className="new-arrivals-product-grid">
-              {processedProducts.map((prod, idx) => (
-                <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── 3. Continuous Running Showcase Section (Infinite Marquee for Best Sellers) ── */}
-      {isEnabled('new_arrivals_marquee') && marqueeItems.length > 0 && (
-        <div className="container">
-          <section className="new-arrivals-marquee-section" aria-label="Best Sellers Live Showcase">
-            <div className="new-arrivals-marquee-header-wrap">
-              <div className="marquee-badge-pill">
-                <Flame size={14} className="marquee-sparkle-icon" color="#f97316" />
-                <span>{getSetting('new_arrivals_marquee', 'badgeText', 'Best Sellers • Top Customer Picks')}</span>
-              </div>
-              <h3 className="new-arrivals-marquee-title">
-                {getSetting('new_arrivals_marquee', 'title', 'All Best Sellers Running Live')}
-              </h3>
-              <p className="new-arrivals-marquee-subtitle">
-                {getSetting('new_arrivals_marquee', 'subtitle', 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.')}
-              </p>
-            </div>
-
-            {/* Viewport for infinite running ribbon */}
-            <div className="new-arrivals-marquee-viewport">
-              <div className="new-arrivals-marquee-track">
-                {marqueeItems.map((prod, idx) => (
+            {/* ── Slide-Over Side Filter Drawer (From Left - Portaled to document.body) ── */}
+            {isFilterFolderOpen &&
+              typeof document !== 'undefined' &&
+              createPortal(
+                <div className="filter-drawer-overlay" onClick={() => setIsFilterFolderOpen(false)}>
                   <div
-                    key={`marquee-${prod._id || prod.id || 'p'}-${idx}`}
-                    className="new-arrivals-marquee-card-item"
+                    className="filter-drawer-container"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <ProductCard product={prod} />
+                    {/* Drawer Header */}
+                    <div className="drawer-header">
+                      <div className="drawer-header-title">
+                        <div className="drawer-icon-box">
+                          <SlidersHorizontal size={18} color="#7c3aed" />
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <h3 className="drawer-title">Filters</h3>
+                            {activeFiltersCount > 0 && (
+                              <span className="drawer-active-badge">
+                                {activeFiltersCount}
+                              </span>
+                            )}
+                          </div>
+                          <p className="drawer-subtitle">
+                            Refine by category, price & deals
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsFilterFolderOpen(false)}
+                        className="drawer-close-btn"
+                        title="Close filters"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    {/* Drawer Body - Clean Scrollable Stack */}
+                    <div className="drawer-body">
+                      {/* 1. Category Section */}
+                      <div className="drawer-section">
+                        <div className="drawer-section-header">
+                          <div className="drawer-section-label">
+                            <Layers size={14} color="#7c3aed" />
+                            <span>Category</span>
+                          </div>
+                          {activeCategory !== 'all' && (
+                            <button
+                              onClick={() => {
+                                setActiveCategory('all');
+                                setActiveSubcategory('all');
+                              }}
+                              className="drawer-section-clear"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="drawer-pills-list">
+                          {categoryStories.map((cat) => {
+                            const isSelected = activeCategory === cat.id;
+                            return (
+                              <button
+                                key={cat.id}
+                                onClick={() => {
+                                  setActiveCategory(cat.id);
+                                  setActiveSubcategory('all');
+                                }}
+                                className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                              >
+                                <span>{cat.label}</span>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. Subcategory Section */}
+                      {availableSubcategories.length > 0 && (
+                        <div className="drawer-section">
+                          <div className="drawer-section-header">
+                            <div className="drawer-section-label">
+                              <Tag size={14} color="#7c3aed" />
+                              <span>Subcategory</span>
+                            </div>
+                            {activeSubcategory !== 'all' && (
+                              <button
+                                onClick={() => setActiveSubcategory('all')}
+                                className="drawer-section-clear"
+                              >
+                                Reset
+                              </button>
+                            )}
+                          </div>
+                          <div className="drawer-pills-list">
+                            <button
+                              onClick={() => setActiveSubcategory('all')}
+                              className={`drawer-pill ${activeSubcategory === 'all' ? 'active' : ''}`}
+                            >
+                              <span>All</span>
+                              {activeSubcategory === 'all' && <Check size={12} strokeWidth={3} />}
+                            </button>
+                            {availableSubcategories.map((sub) => {
+                              const isSelected = activeSubcategory === sub.slug;
+                              return (
+                                <button
+                                  key={sub.slug}
+                                  onClick={() => setActiveSubcategory(sub.slug)}
+                                  className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                                >
+                                  <span>{sub.name}</span>
+                                  {isSelected && <Check size={12} strokeWidth={3} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 3. Price Range Section */}
+                      <div className="drawer-section">
+                        <div className="drawer-section-header">
+                          <div className="drawer-section-label">
+                            <Coins size={14} color="#7c3aed" />
+                            <span>Price Range</span>
+                          </div>
+                          {priceRange !== 'all' && (
+                            <button
+                              onClick={() => setPriceRange('all')}
+                              className="drawer-section-clear"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="drawer-pills-list">
+                          {[
+                            { id: 'all', label: 'All Prices' },
+                            { id: 'under500', label: 'Under ₹500' },
+                            { id: '500-1500', label: '₹500 - ₹1,500' },
+                            { id: '1500-3000', label: '₹1,500 - ₹3,000' },
+                            { id: 'above3000', label: 'Above ₹3,000' },
+                          ].map((item) => {
+                            const isSelected = priceRange === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => setPriceRange(item.id)}
+                                className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                              >
+                                <span>{item.label}</span>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 4. Discounts Section */}
+                      <div className="drawer-section">
+                        <div className="drawer-section-header">
+                          <div className="drawer-section-label">
+                            <Percent size={14} color="#7c3aed" />
+                            <span>Discounts</span>
+                          </div>
+                          {discountFilter !== 'all' && (
+                            <button
+                              onClick={() => setDiscountFilter('all')}
+                              className="drawer-section-clear"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="drawer-pills-list">
+                          {[
+                            { id: 'all', label: 'All Deals' },
+                            { id: '10', label: '10% OFF+' },
+                            { id: '20', label: '20% OFF+' },
+                            { id: '30', label: '30% OFF+' },
+                            { id: '50', label: '50% OFF+' },
+                          ].map((item) => {
+                            const isSelected = discountFilter === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => setDiscountFilter(item.id)}
+                                className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                              >
+                                <span>{item.label}</span>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Drawer Sticky Footer */}
+                    <div className="drawer-footer">
+                      {activeFiltersCount > 0 && (
+                        <button
+                          onClick={handleResetAllFilters}
+                          className="drawer-reset-btn"
+                        >
+                          <RotateCcw size={13} />
+                          <span>Reset</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsFilterFolderOpen(false);
+                          handleScrollToCatalog();
+                        }}
+                        className="drawer-apply-btn"
+                      >
+                        <span>Show {processedProducts.length} Items</span>
+                        <ArrowRight size={15} />
+                      </button>
+                    </div>
                   </div>
+                </div>,
+                document.body
+              )}
+
+            {/* Products Grid with Generous Spacing */}
+            {loading ? (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '6rem 2rem',
+                  background: '#ffffff',
+                  borderRadius: '24px',
+                  border: '1.5px solid #ede9fe',
+                  marginBottom: '4rem',
+                }}
+              >
+                <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
+                  <Spinner size={40} />
+                </div>
+                <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+                  Loading fresh new arrivals...
+                </p>
+              </div>
+            ) : fetchError ? (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '4rem 2rem',
+                  background: '#ffffff',
+                  borderRadius: '24px',
+                  border: '1.5px solid #ede9fe',
+                  marginBottom: '4rem',
+                }}
+              >
+                <h3 style={{ color: '#1e1b4b', fontWeight: 800, marginBottom: '0.5rem' }}>
+                  Unable to load fresh arrivals
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                  {fetchError}
+                </p>
+                <button
+                  onClick={() => loadNewArrivals(1)}
+                  style={{
+                    background: '#7c3aed',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '9999px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <RotateCcw size={14} />
+                  <span>Try Again</span>
+                </button>
+              </div>
+            ) : processedProducts.length === 0 ? (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '4rem 2rem',
+                  background: '#ffffff',
+                  borderRadius: '24px',
+                  border: '1.5px solid #ede9fe',
+                  marginBottom: '4rem',
+                }}
+              >
+                <h3 style={{ color: '#1e1b4b', fontWeight: 800, marginBottom: '0.5rem' }}>
+                  No products match this filter
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                  Try selecting "All New Arrivals" or reset your search & filter criteria.
+                </p>
+                <button
+                  onClick={handleResetAllFilters}
+                  style={{
+                    background: '#7c3aed',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '9999px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            ) : (
+              <div className="new-arrivals-product-grid">
+                {processedProducts.map((prod, idx) => (
+                  <ProductCard key={prod._id || prod.id} product={prod} index={idx} />
                 ))}
               </div>
-            </div>
-          </section>
-        </div>
-      )}
+            )}
+          </div>
+        )}
 
-      {/* ── 4. Final Community CTA Banner (Exact Home Page Section) ── */}
-      {isEnabled('new_arrivals_community') && (
-        <div className="container">
-          <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
-            <div className="hp-final-cta-container" style={{ padding: 0 }}>
-              <div className="hp-final-cta-box">
-                <span className="hp-final-cta-badge">{getSetting('new_arrivals_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
-                <h2 className="hp-final-title">{getSetting('new_arrivals_community', 'title', 'Connect With Us @picky.co.in')}</h2>
-                <p className="hp-final-subtitle">
-                  {getSetting('new_arrivals_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
+        {/* ── 3. Continuous Running Showcase Section (Infinite Marquee for Best Sellers) ── */}
+        {isEnabled('new_arrivals_marquee') && marqueeItems.length > 0 && (
+          <div className="container">
+            <section className="new-arrivals-marquee-section" aria-label="Best Sellers Live Showcase">
+              <div className="new-arrivals-marquee-header-wrap">
+                <div className="marquee-badge-pill">
+                  <Flame size={14} className="marquee-sparkle-icon" color="#f97316" />
+                  <span>{getSetting('new_arrivals_marquee', 'badgeText', 'Best Sellers • Top Customer Picks')}</span>
+                </div>
+                <h3 className="new-arrivals-marquee-title">
+                  {getSetting('new_arrivals_marquee', 'title', 'All Best Sellers Running Live')}
+                </h3>
+                <p className="new-arrivals-marquee-subtitle">
+                  {getSetting('new_arrivals_marquee', 'subtitle', 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.')}
                 </p>
-                <div className="hp-final-cta-btn-group no-hover-fx">
-                  <button
-                    type="button"
-                    className="hp-final-cta-btn no-hover-fx"
-                    onClick={() => window.open(getSetting('new_arrivals_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                    </svg>
-                    <span>Follow on Instagram</span>
-                    <ArrowRight size={16} />
-                  </button>
+              </div>
 
-                  <button
-                    type="button"
-                    className="hp-final-cta-outline-btn no-hover-fx"
-                    onClick={() => window.open(`https://wa.me/${getSetting('new_arrivals_community', 'whatsappNumber', '918300295721')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer')}
-                    aria-label="Join WhatsApp Group"
-                    title="Join WhatsApp Group"
-                  >
-                    <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                      <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                    </svg>
-                    <span className="hp-cta-wa-label">
-                      <span>Join WhatsApp Group</span>
-                      <ArrowRight size={16} />
-                    </span>
-                  </button>
+              {/* Viewport for infinite running ribbon */}
+              <div className="new-arrivals-marquee-viewport">
+                <div className="new-arrivals-marquee-track">
+                  {marqueeItems.map((prod, idx) => (
+                    <div
+                      key={`marquee-${prod._id || prod.id || 'p'}-${idx}`}
+                      className="new-arrivals-marquee-card-item"
+                    >
+                      <ProductCard product={prod} />
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          </section>
-        </div>
-      )}
-    </div>
+            </section>
+          </div>
+        )}
+
+        {/* ── 4. Final Community CTA Banner (Exact Home Page Section) ── */}
+        {isEnabled('new_arrivals_community') && (
+          <div className="container">
+            <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
+              <div className="hp-final-cta-container" style={{ padding: 0 }}>
+                <div className="hp-final-cta-box">
+                  <span className="hp-final-cta-badge">{getSetting('new_arrivals_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
+                  <h2 className="hp-final-title">{getSetting('new_arrivals_community', 'title', 'Connect With Us @picky.co.in')}</h2>
+                  <p className="hp-final-subtitle">
+                    {getSetting('new_arrivals_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
+                  </p>
+                  <div className="hp-final-cta-btn-group no-hover-fx">
+                    <button
+                      type="button"
+                      className="hp-final-cta-btn no-hover-fx"
+                      onClick={() => window.open(getSetting('new_arrivals_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                      </svg>
+                      <span>Follow on Instagram</span>
+                      <ArrowRight size={16} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hp-final-cta-outline-btn no-hover-fx"
+                      onClick={() => window.open(`https://wa.me/${getSetting('new_arrivals_community', 'whatsappNumber', '918300295721')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer')}
+                      aria-label="Join WhatsApp Group"
+                      title="Join WhatsApp Group"
+                    >
+                      <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                        <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                      </svg>
+                      <span className="hp-cta-wa-label">
+                        <span>Join WhatsApp Group</span>
+                        <ArrowRight size={16} />
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
 
       <style>{`
         .new-arrivals-product-grid {

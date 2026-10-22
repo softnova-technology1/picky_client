@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Send,
@@ -27,12 +27,49 @@ import {
 import { useCategoryStore } from '../../../store/categoryStore';
 import { usePageCustomization } from '../../../store/customizationStore';
 import { contactService } from '../../../services/contact.service';
+import { settingsService } from '../../../services/settings.service';
 
 export default function Footer() {
   const { isEnabled, getSetting } = usePageCustomization('global_footer');
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const categories = useCategoryStore((state) => state.categories);
+  const [storeSettings, setStoreSettings] = useState(() => settingsService.getCachedStoreSettings());
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSettings() {
+      try {
+        const res = await settingsService.getSettings();
+        const data = res?.data || res;
+        if (isMounted && data) {
+          setStoreSettings(data);
+        }
+      } catch (_) {}
+    }
+    loadSettings();
+
+    const handleUpdate = (e) => {
+      if (e?.detail) {
+        setStoreSettings(e.detail);
+      }
+    };
+    window.addEventListener('picky_store_settings_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('picky_store_settings_updated', handleUpdate);
+    };
+  }, []);
+
+  const formattedAddress = storeSettings?.address && typeof storeSettings.address === 'object'
+    ? [storeSettings.address.street, storeSettings.address.city, storeSettings.address.state, storeSettings.address.pincode].filter(Boolean).join(', ')
+    : (typeof storeSettings?.address === 'string' ? storeSettings.address : 'Main Road, Peravurani, Thanjavur District, Tamil Nadu, 614804');
+
+  const displayStoreName = storeSettings?.storeName || 'Picky Store';
+  const displayPhone = storeSettings?.contactPhone || storeSettings?.supportPhone || '+91 83002 95721';
+  const displayEmail = storeSettings?.contactEmail || storeSettings?.supportEmail || 'care@pickystore.com';
+  const displayWhatsapp = storeSettings?.whatsappNumber || displayPhone;
+  const rawCleanPhone = displayWhatsapp.replace(/[^0-9]/g, '');
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -243,7 +280,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
-                    href="https://wa.me/919876543210?text=Hi%20Picky,%20I%20need%20help%20with%20an%20order"
+                    href={`https://wa.me/${rawCleanPhone || '919876543210'}?text=${encodeURIComponent('Hi ' + displayStoreName + ', I need help with an order')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer-link"
@@ -308,8 +345,8 @@ export default function Footer() {
                     <MapPin size={15} className="footer-contact-icon" />
                   </div>
                   <div>
-                    <strong className="footer-contact-title">Softnova Hub India</strong>
-                    <span className="footer-contact-sub">Victoria Tower, Anna Salai, Chennai, TN</span>
+                    <strong className="footer-contact-title">{displayStoreName}</strong>
+                    <span className="footer-contact-sub">{formattedAddress}</span>
                   </div>
                 </div>
 

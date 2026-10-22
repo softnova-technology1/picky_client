@@ -5,6 +5,10 @@ import './styles/index.css';
 import './styles/admin.css';
 import './styles/navbar.css';
 import './styles/footer.css';
+import { initTheme } from './utils/theme';
+
+// Initialize full-storefront theme before first render
+initTheme();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -40,7 +40,7 @@ const FlashDealMiniCard = ({ product }) => {
     if (isLoggedIn) {
       try {
         await wishlistService.toggle(product._id || product.id);
-      } catch (_) {}
+      } catch (_) { }
     }
     showToast(
       inWishlist ? `Removed "${product.name}" from wishlist` : `Saved "${product.name}" to wishlist!`,
@@ -516,8 +516,8 @@ export default function Home() {
             const tagMatch = Array.isArray(p.tags)
               ? p.tags.some((t) => String(t).toLowerCase().includes(kw))
               : typeof p.tags === 'string'
-              ? p.tags.toLowerCase().includes(kw)
-              : false;
+                ? p.tags.toLowerCase().includes(kw)
+                : false;
             return badgeMatch || tagMatch;
           };
 
@@ -525,19 +525,19 @@ export default function Home() {
           const trending = pItems.filter(
             (p) => hasTag(p, 'trend') || Boolean(p.isTrending)
           );
-          setTrendingProducts(trending.length > 0 ? trending : pItems.slice(0, 10));
+          setTrendingProducts(trending);
 
           // 2. Best Sellers filter (strictly matches 'best sellers', 'best', 'seller', or isBestSeller)
           const bestSellers = pItems.filter(
             (p) => hasTag(p, 'best') || hasTag(p, 'seller') || Boolean(p.isBestSeller)
           );
-          setFeaturedProducts(bestSellers.length > 0 ? bestSellers : pItems.slice(0, 10));
+          setFeaturedProducts(bestSellers);
 
           // 3. New Arrivals filter (strictly matches 'new arrivals', 'new', 'arrival', or isNewArrival)
           const arrivals = pItems.filter(
             (p) => hasTag(p, 'new') || hasTag(p, 'arrival') || Boolean(p.isNewArrival)
           );
-          setNewArrivals(arrivals.length > 0 ? arrivals : pItems.slice(0, 10));
+          setNewArrivals(arrivals);
 
           // 4. Limited Deals filter: products with ACTIVE discounts from Discounts page, followed by tagged deal products
           const now = Date.now();
@@ -554,14 +554,13 @@ export default function Home() {
           );
           const deals = activeDiscounts.length > 0
             ? [
-                ...activeDiscounts,
-                ...tagDeals.filter(
-                  (t) => !activeDiscounts.some((a) => (a._id || a.id) === (t._id || t.id))
-                ),
-              ]
+              ...activeDiscounts,
+              ...tagDeals.filter(
+                (t) => !activeDiscounts.some((a) => (a._id || a.id) === (t._id || t.id))
+              ),
+            ]
             : tagDeals;
-          const fallbackDeals = pItems.filter((p) => p.discountPrice && p.discountPrice < p.price);
-          setDealProducts(deals.length > 0 ? deals : (fallbackDeals.length > 0 ? fallbackDeals : pItems.slice(0, 8)));
+          setDealProducts(deals);
         } else {
           setFeaturedProducts([]);
           setTrendingProducts([]);
@@ -642,7 +641,7 @@ export default function Home() {
     const nonSpotlight = allDealProducts.filter(
       (p) => p.slug !== currentSpotlightSlug && (p._id || p.id) !== (spotlightProduct?._id || spotlightProduct?.id)
     );
-    
+
     // Instead of forcing exactly 4 items by looping, just return up to 4 available unique items
     return nonSpotlight.slice(0, 4);
   }, [allDealProducts, spotlightProduct, miniBatchIndex]);
@@ -659,7 +658,7 @@ export default function Home() {
     if (isLoggedIn) {
       try {
         wishlistService.toggle(spotlightProduct._id || spotlightProduct.id);
-      } catch (_) {}
+      } catch (_) { }
     }
     showToast(
       isSpotlightInWishlist
@@ -698,7 +697,7 @@ export default function Home() {
     showToast(`Added "${spotlightProduct.name}" to cart!`, 'success');
   };
 
-  
+
   const sectionRenderers = {
     hero_banner: () => isEnabled('hero_banner') && (
       <EditorialHero />
@@ -899,7 +898,7 @@ export default function Home() {
     flash_deals: () => isEnabled('flash_deals') && allDealProducts.length > 0 && (
       <section className="hp-flash-deals-section">
         <div className="hp-flash-deals-container">
-          
+
           {/* Header Row: Title + Live Ticking Countdown */}
           <div className="hp-flash-deals-header">
             <FadeUp>
@@ -948,7 +947,7 @@ export default function Home() {
 
           {/* Flash Deals Main Grid (Spotlight Card + 4 Real Minimal Products) */}
           <div className={`hp-flash-deals-grid ${isRotating ? 'is-rotating' : ''}`}>
-            
+
             {/* Left Featured Spotlight Banner */}
             <FadeUp delay={150}>
               {spotlightProduct ? (
@@ -957,7 +956,7 @@ export default function Home() {
                   onClick={() => navigate(`/products/${spotlightProduct.slug}`)}
                 >
                   <div className="spotlight-tag">DEAL OF THE DAY • 32% OFF</div>
-                  
+
                   <div className="spotlight-img-wrap">
                     <button
                       onClick={handleToggleSpotlightWishlist}
@@ -983,7 +982,7 @@ export default function Home() {
                     <div className="spotlight-category">Featured Offer</div>
                     <h3 className="spotlight-title">{spotlightProduct.name}</h3>
                     <p className="spotlight-desc">{spotlightProduct.description}</p>
-                    
+
                     <div className="spotlight-price-row">
                       <span className="spotlight-current-price">₹{spotlightProduct.discountPrice || spotlightProduct.price}</span>
                       {spotlightProduct.discountPrice && spotlightProduct.discountPrice < spotlightProduct.price && (
@@ -1114,7 +1113,7 @@ export default function Home() {
     why_picky: () => isEnabled('why_picky') && (
       <section className="hp-trust-section">
         <div className="hp-trust-container">
-          
+
           <div className="hp-trust-header">
             <FadeUp>
               <div className="hp-section-badge">{getSetting("why_picky", "badgeText", "THE PICKY COMMITMENT")}</div>
@@ -1175,7 +1174,7 @@ export default function Home() {
     customer_reviews: () => isEnabled('customer_reviews') && (
       <section className="hp-reviews-section">
         <div className="hp-reviews-container">
-          
+
           <div className="hp-reviews-header">
             <FadeUp>
               <div className="hp-section-badge">{getSetting("customer_reviews", "badgeText", "REAL REVIEWS • 4.9/5 RATING")}</div>
@@ -1225,7 +1224,7 @@ export default function Home() {
                     }}
                   >
                     <div className="hp-review-watermark">“</div>
-                    
+
                     <div className="hp-review-card-top">
                       <div className="hp-review-stars">
                         {[...Array(rev.rating || 5)].map((_, i) => (
@@ -1297,7 +1296,7 @@ export default function Home() {
                     }}
                   >
                     <div className="hp-review-watermark">“</div>
-                    
+
                     <div className="hp-review-card-top">
                       <div className="hp-review-stars">
                         {[...Array(rev.rating || 5)].map((_, i) => (
@@ -1411,26 +1410,22 @@ export default function Home() {
     ),
   };
 
-  // Section Aliases for database compatibility
-  sectionRenderers.featured_products = sectionRenderers.trending_products;
-  sectionRenderers.special_offers = sectionRenderers.flash_deals;
-
   return (
     <PageWrapper>
       {(Array.isArray(sections) && sections.length > 0
         ? sections
         : [
-            { id: 'hero_banner' },
-            { id: 'shop_by_category' },
-            { id: 'trending_products' },
-            { id: 'flash_deals' },
-            { id: 'new_arrivals' },
-            { id: 'best_sellers' },
-            { id: 'why_picky' },
-            { id: 'customer_reviews' },
-            { id: 'quick_inquiry' },
-            { id: 'final_cta_banner' },
-          ]
+          { id: 'hero_banner' },
+          { id: 'shop_by_category' },
+          { id: 'trending_products' },
+          { id: 'flash_deals' },
+          { id: 'new_arrivals' },
+          { id: 'best_sellers' },
+          { id: 'why_picky' },
+          { id: 'customer_reviews' },
+          { id: 'quick_inquiry' },
+          { id: 'final_cta_banner' },
+        ]
       ).map((sec) => {
         const renderFn = sectionRenderers[sec.id];
         return renderFn ? <React.Fragment key={sec.id}>{renderFn()}</React.Fragment> : null;

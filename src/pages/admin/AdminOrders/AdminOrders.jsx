@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Search,
   Phone,
@@ -62,8 +62,8 @@ import {
   SORT_OPTIONS,
 } from '../../../data/ordersMockData';
 
-// ─── Custom Status Select Dropdown (icon-rich, SaaS-style) ───────────────────
-function StatusSelect({ value, onChange }) {
+// ─── Custom Status Select Dropdown (icon-rich, SaaS-style, Forward-only lifecycle) ───
+function StatusSelect({ value, onChange, currentStatus }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -73,25 +73,43 @@ function StatusSelect({ value, onChange }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const selected = STATUS_OPTIONS.find((o) => o.value === value) || STATUS_OPTIONS[0];
+  // Filter options strictly forward: cannot downgrade status!
+  const availableOptions = useMemo(() => {
+    if (currentStatus === 'delivered') {
+      return STATUS_OPTIONS.filter((o) => o.value === 'delivered');
+    }
+    if (currentStatus === 'cancelled') {
+      return STATUS_OPTIONS.filter((o) => o.value === 'cancelled');
+    }
+    if (currentStatus === 'shipped') {
+      // Cannot go back to confirmed!
+      return STATUS_OPTIONS.filter((o) => o.value === 'shipped' || o.value === 'delivered' || o.value === 'cancelled');
+    }
+    // Confirmed can go to shipped or cancelled
+    return STATUS_OPTIONS.filter((o) => o.value === 'confirmed' || o.value === 'shipped' || o.value === 'cancelled');
+  }, [currentStatus]);
+
+  const selected = availableOptions.find((o) => o.value === value) || availableOptions[0] || STATUS_OPTIONS[0];
   const SelIcon = selected.icon;
+  const isLocked = currentStatus === 'delivered' || currentStatus === 'cancelled';
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       {/* Trigger Button */}
       <button
         type="button"
-        onClick={() => setOpen((p) => !p)}
+        disabled={isLocked}
+        onClick={() => !isLocked && setOpen((p) => !p)}
         style={{
           width: '100%',
           padding: '0.65rem 0.9rem',
-          background: open ? '#ffffff' : '#f8fafc',
+          background: isLocked ? '#f8fafc' : open ? '#ffffff' : '#f8fafc',
           border: `1.5px solid ${open ? '#7c3aed' : '#e2e8f0'}`,
           borderRadius: '10px',
           fontSize: '0.84rem',
           fontWeight: 600,
           color: '#0f172a',
-          cursor: 'pointer',
+          cursor: isLocked ? 'not-allowed' : 'pointer',
           outline: 'none',
           boxSizing: 'border-box',
           display: 'flex',
@@ -100,19 +118,28 @@ function StatusSelect({ value, onChange }) {
           gap: '0.5rem',
           boxShadow: open ? '0 0 0 3px rgba(124,58,237,0.08)' : 'none',
           transition: 'all 0.2s ease',
+          opacity: isLocked ? 0.85 : 1,
         }}
+        title={isLocked ? `Order is ${currentStatus} (completed lifecycle)` : 'Select New Status'}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
           <span style={{ width: '26px', height: '26px', borderRadius: '7px', background: selected.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <SelIcon size={13} color={selected.color} />
           </span>
           {selected.label}
+          {isLocked && (
+            <span style={{ fontSize: '0.68rem', color: '#64748b', background: '#e2e8f0', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 600, marginLeft: '0.3rem' }}>
+              Final
+            </span>
+          )}
         </span>
-        <ChevronDown size={14} color="#94a3b8" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', flexShrink: 0 }} />
+        {!isLocked && (
+          <ChevronDown size={14} color="#94a3b8" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', flexShrink: 0 }} />
+        )}
       </button>
 
       {/* Dropdown Panel */}
-      {open && (
+      {open && !isLocked && (
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 6px)',
@@ -127,7 +154,7 @@ function StatusSelect({ value, onChange }) {
           animation: 'fadeIn 0.15s ease',
           padding: '0.3rem',
         }}>
-          {STATUS_OPTIONS.map((opt) => {
+          {availableOptions.map((opt) => {
             const OptIcon = opt.icon;
             const isSelected = opt.value === value;
             return (
@@ -510,14 +537,43 @@ export default function AdminOrders() {
   // ─── Handle status update ─────────────────────────────────────────────────
   const handleStatusUpdate = async (order) => {
     const id = order._id || order.id;
-    const STATUS_FLOW = ['confirmed', 'shipped', 'delivered'];
-    const flowIdx = STATUS_FLOW.indexOf(order.status);
-    const nextAuto = flowIdx >= 0 && flowIdx < STATUS_FLOW.length - 1
-      ? STATUS_FLOW[flowIdx + 1]
-      : order.status;
-    const newStatus = rowStatus[id] ?? nextAuto;
+    const newStatus = rowStatus[id] ?? order.status;
     const note = rowNote[id] ?? '';
     const cancelReason = rowCancelReason[id] ?? '';
+
+    // Disallow backward status transitions
+    if (order.status === 'delivered' && newStatus !== 'delivered') {
+      showToast('⚠️ Delivered order is completed and cannot be modified.', 'error');
+      return;
+    }
+    if (order.status === 'cancelled' && newStatus !== 'cancelled') {
+      showToast('⚠️ Cancelled order cannot be reopened.', 'error');
+      return;
+    }
+    if (order.status === 'shipped' && newStatus === 'confirmed') {
+      showToast('⚠️ Shipped order cannot be moved back to Confirmed.', 'error');
+      return;
+    }
+
+    // Validate: shipping requires all 3 input fields
+    if (newStatus === 'shipped') {
+      const enteredCourier = (rowCourier[id] !== undefined ? rowCourier[id] : (order.courier !== 'Standard Surface Delivery' ? (order.courier || '') : '')).trim();
+      const enteredCourierUrl = (rowCourierUrl[id] !== undefined ? rowCourierUrl[id] : (order.courierUrl || '')).trim();
+      const enteredAwb = (rowNote[id] !== undefined ? rowNote[id] : (order.trackingId || '')).trim();
+
+      if (!enteredCourier) {
+        showToast('⚠️ Courier Name is required to ship order.', 'error');
+        return;
+      }
+      if (!enteredCourierUrl) {
+        showToast('⚠️ Courier Site URL Link is required to ship order.', 'error');
+        return;
+      }
+      if (!enteredAwb) {
+        showToast('⚠️ Tracking / AWB Number is required to ship order.', 'error');
+        return;
+      }
+    }
 
     // Validate: cancelled requires a reason
     if (newStatus === 'cancelled' && !cancelReason) {
@@ -532,7 +588,7 @@ export default function AdminOrders() {
     setRowLoading((p) => ({ ...p, [id]: true }));
     try {
       const enteredAwb = (rowNote[id] !== undefined ? rowNote[id] : (order.trackingId || '')).trim();
-      const enteredCourier = (rowCourier[id] !== undefined ? rowCourier[id] : (order.courier || '')).trim();
+      const enteredCourier = (rowCourier[id] !== undefined ? rowCourier[id] : (order.courier !== 'Standard Surface Delivery' ? (order.courier || '') : '')).trim();
       const enteredCourierUrl = (rowCourierUrl[id] !== undefined ? rowCourierUrl[id] : (order.courierUrl || '')).trim();
 
       const trackingPayload = {};
@@ -1176,16 +1232,13 @@ export default function AdminOrders() {
                 const StatusIcon = cfg.icon;
                 const isOpen    = expandedId === order._id;
 
-                // Auto-advance to next logical status (so admin doesn't need to manually change)
-                const STATUS_FLOW = ['confirmed', 'shipped', 'delivered'];
-                const flowIdx  = STATUS_FLOW.indexOf(order.status);
-                const nextAuto = flowIdx >= 0 && flowIdx < STATUS_FLOW.length - 1
-                  ? STATUS_FLOW[flowIdx + 1]
-                  : order.status;
-                const currentRowStatus    = rowStatus[order._id]       ?? nextAuto;
-                const currentRowNote      = rowNote[order._id]         ?? (order.trackingId || '');
-                const currentRowCourier   = rowCourier[order._id]      ?? (order.courier || '');
-                const currentRowCourierUrl= rowCourierUrl[order._id]   ?? (order.courierUrl || '');
+                // Default status strictly to order's current status (never auto-advance to shipping)
+                const currentRowStatus    = rowStatus[order._id]       ?? order.status;
+                const isAlreadyShippedOrDelivered = order.status === 'shipped' || order.status === 'delivered';
+                const initialCourier = isAlreadyShippedOrDelivered && order.courier !== 'Standard Surface Delivery' ? (order.courier || '') : '';
+                const currentRowNote      = rowNote[order._id]         ?? (isAlreadyShippedOrDelivered ? (order.trackingId || '') : '');
+                const currentRowCourier   = rowCourier[order._id]      ?? initialCourier;
+                const currentRowCourierUrl= rowCourierUrl[order._id]   ?? (isAlreadyShippedOrDelivered ? (order.courierUrl || '') : '');
                 const currentCancelReason = rowCancelReason[order._id] ?? '';
                 const isUpdating          = rowLoading[order._id]       ?? false;
 
@@ -1844,51 +1897,20 @@ export default function AdminOrders() {
                                       <StatusSelect
                                         value={currentRowStatus}
                                         onChange={(val) => setRowStatus((p) => ({ ...p, [order._id]: val }))}
+                                        currentStatus={order.status}
                                       />
                                     </div>
 
-                                    {/* ── Courier Name Input: shown when Confirmed ── */}
-                                    {currentRowStatus === 'confirmed' && (
-                                      <div style={{ animation: 'fadeIn 0.22s ease' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                          <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                            <Truck size={13} color="#7c3aed" /> Courier Name
-                                          </label>
-                                          <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#f8fafc', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
-                                        </div>
-                                        <input
-                                          type="text"
-                                          value={currentRowCourier}
-                                          onChange={(e) => setRowCourier((p) => ({ ...p, [order._id]: e.target.value }))}
-                                          placeholder="e.g. ST Courier, Blue Dart, DTDC"
-                                          style={{
-                                            width: '100%',
-                                            padding: '0.62rem 0.85rem',
-                                            background: '#f8fafc',
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '10px',
-                                            fontSize: '0.81rem',
-                                            color: '#0f172a',
-                                            outline: 'none',
-                                            boxSizing: 'border-box',
-                                            transition: 'all 0.2s ease',
-                                          }}
-                                          onFocus={(e) => { e.target.style.borderColor = '#7c3aed'; e.target.style.background = '#ffffff'; }}
-                                          onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc'; }}
-                                        />
-                                      </div>
-                                    )}
-
-                                    {/* ── Courier Details & AWB Input: shown only when Shipping is selected ── */}
+                                    {/* ── Courier Details & AWB Input: shown strictly when Shipping is selected ── */}
                                     {currentRowStatus === 'shipped' && (
                                       <div style={{ animation: 'fadeIn 0.22s ease', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        {/* Field 1: Courier Name */}
+                                        {/* Field 1: Courier Name (Required) */}
                                         <div>
                                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                             <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                              <Truck size={13} color="#1d4ed8" /> Courier Name
+                                              <Truck size={13} color="#1d4ed8" /> Courier Name <span style={{ color: '#ef4444' }}>*</span>
                                             </label>
-                                            <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                            <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.08rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Required *</span>
                                           </div>
                                           <input
                                             type="text"
@@ -1899,7 +1921,7 @@ export default function AdminOrders() {
                                               width: '100%',
                                               padding: '0.62rem 0.85rem',
                                               background: '#eff6ff',
-                                              border: '1px dashed #93c5fd',
+                                              border: '1.5px solid #93c5fd',
                                               borderRadius: '10px',
                                               fontSize: '0.81rem',
                                               color: '#0f172a',
@@ -1907,18 +1929,18 @@ export default function AdminOrders() {
                                               boxSizing: 'border-box',
                                               transition: 'all 0.2s ease',
                                             }}
-                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff'; }}
                                           />
                                         </div>
 
-                                        {/* Field 2: Courier Site URL Link */}
+                                        {/* Field 2: Courier Site URL Link (Required) */}
                                         <div>
                                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                             <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                              <ArrowUpRight size={13} color="#1d4ed8" /> Courier Site URL Link
+                                              <ArrowUpRight size={13} color="#1d4ed8" /> Courier Site URL Link <span style={{ color: '#ef4444' }}>*</span>
                                             </label>
-                                            <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                            <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.08rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Required *</span>
                                           </div>
                                           <input
                                             type="text"
@@ -1929,7 +1951,7 @@ export default function AdminOrders() {
                                               width: '100%',
                                               padding: '0.62rem 0.85rem',
                                               background: '#eff6ff',
-                                              border: '1px dashed #93c5fd',
+                                              border: '1.5px solid #93c5fd',
                                               borderRadius: '10px',
                                               fontSize: '0.81rem',
                                               color: '#0f172a',
@@ -1937,18 +1959,18 @@ export default function AdminOrders() {
                                               boxSizing: 'border-box',
                                               transition: 'all 0.2s ease',
                                             }}
-                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff'; }}
                                           />
                                         </div>
 
-                                        {/* Existing Tracking / AWB Number (Untouched!) */}
+                                        {/* Field 3: Tracking / AWB Number (Required) */}
                                         <div>
                                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                             <label style={{ fontSize: '0.71rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                              <Truck size={13} color="#1d4ed8" /> Tracking / AWB Number
+                                              <Truck size={13} color="#1d4ed8" /> Tracking / AWB Number <span style={{ color: '#ef4444' }}>*</span>
                                             </label>
-                                            <span style={{ fontSize: '0.67rem', color: '#64748b', background: '#eff6ff', padding: '0.08rem 0.4rem', borderRadius: '4px', fontWeight: 500 }}>Optional</span>
+                                            <span style={{ fontSize: '0.67rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.08rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Required *</span>
                                           </div>
                                           <input
                                             type="text"
@@ -1959,7 +1981,7 @@ export default function AdminOrders() {
                                               width: '100%',
                                               padding: '0.62rem 0.85rem',
                                               background: '#eff6ff',
-                                              border: '1px dashed #93c5fd',
+                                              border: '1.5px solid #93c5fd',
                                               borderRadius: '10px',
                                               fontSize: '0.81rem',
                                               color: '#0f172a',
@@ -1967,8 +1989,8 @@ export default function AdminOrders() {
                                               boxSizing: 'border-box',
                                               transition: 'all 0.2s ease',
                                             }}
-                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.borderStyle = 'solid'; e.target.style.background = '#ffffff'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.borderStyle = 'dashed'; e.target.style.background = '#eff6ff'; }}
+                                            onFocus={(e) => { e.target.style.borderColor = '#1d4ed8'; e.target.style.background = '#ffffff'; }}
+                                            onBlur={(e) => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff'; }}
                                           />
                                         </div>
                                       </div>

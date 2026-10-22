@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../components/layout/PageWrapper';
 import { useUiStore } from '../../../store/uiStore';
 import { contactService } from '../../../services/contact.service';
-import { usePageCustomization } from '../../../store/customizationStore';
+import { settingsService } from '../../../services/settings.service';
 import './Contact.css';
 import '../../../styles/home-premium.css';
 import {
@@ -74,6 +74,43 @@ export default function Contact() {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+
+  // Live store settings state
+  const [storeSettings, setStoreSettings] = useState(() => settingsService.getCachedStoreSettings());
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSettings() {
+      try {
+        const res = await settingsService.getSettings();
+        const data = res?.data || res;
+        if (isMounted && data) {
+          setStoreSettings(data);
+        }
+      } catch (_) {}
+    }
+    loadSettings();
+
+    const handleUpdate = (e) => {
+      if (e?.detail) {
+        setStoreSettings(e.detail);
+      }
+    };
+    window.addEventListener('picky_store_settings_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('picky_store_settings_updated', handleUpdate);
+    };
+  }, []);
+
+  const formattedAddress = storeSettings?.address && typeof storeSettings.address === 'object'
+    ? [storeSettings.address.street, storeSettings.address.city, storeSettings.address.state, storeSettings.address.pincode].filter(Boolean).join(', ')
+    : (typeof storeSettings?.address === 'string' ? storeSettings.address : 'Main Road, Peravurani, Thanjavur District, Tamil Nadu, 614804');
+
+  const displayStoreName = storeSettings?.storeName || 'Picky Store';
+  const displayPhone = storeSettings?.contactPhone || storeSettings?.supportPhone || '+91 83002 95721';
+  const displayEmail = storeSettings?.contactEmail || storeSettings?.supportEmail || 'care@pickystore.com';
+  const rawCleanPhone = displayPhone.replace(/[^0-9]/g, '');
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -282,12 +319,12 @@ export default function Contact() {
                 </a>
 
                 <a
-                  href={`https://wa.me/${getSetting('contact_channels', 'whatsappNumber', '918300295721').replace(/\D/g, '')}?text=Hi%20Picky!%20I%20would%20like%20to%20consult%20regarding%20products.`}
+                  href={`https://wa.me/${rawCleanPhone || '918300295721'}?text=${encodeURIComponent('Hi ' + displayStoreName + '! I would like to consult regarding products.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="k-hero-btn-secondary"
                   style={{ borderColor: 'rgba(37, 211, 102, 0.5)', color: '#047857' }}
-                  title="WhatsApp Consulting"
+                  title={`WhatsApp Consulting (${displayPhone})`}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
@@ -342,9 +379,9 @@ export default function Contact() {
                   <div className="k-flow-icon">
                     <Phone size={20} strokeWidth={2.5} />
                   </div>
-                  <h3 className="k-flow-title">+91 83002 95721</h3>
+                  <h3 className="k-flow-title">{displayPhone}</h3>
                   <p className="k-flow-desc">
-                    +91 6385118083<br />
+                    Customer Care & Support<br />
                     Mon - Sat, 9AM - 8PM
                   </p>
                 </div>
@@ -373,7 +410,7 @@ export default function Contact() {
                   <div className="k-flow-icon">
                     <Mail size={20} strokeWidth={2.5} />
                   </div>
-                  <h3 className="k-flow-title k-email-title">pickysn2026@gmail.com</h3>
+                  <h3 className="k-flow-title k-email-title">{displayEmail}</h3>
                   <p className="k-flow-desc">
                     Drop us an email<br />
                     We reply within 24hrs
@@ -404,10 +441,9 @@ export default function Contact() {
                   <div className="k-flow-icon">
                     <MapPin size={20} strokeWidth={2.5} />
                   </div>
-                  <h3 className="k-flow-title">Peravurani, TN</h3>
-                  <p className="k-flow-desc">
-                    1st Floor, Softnova Apt<br />
-                    SNV Mahal back side
+                  <h3 className="k-flow-title">{displayStoreName}</h3>
+                  <p className="k-flow-desc" style={{ fontSize: '0.78rem', lineHeight: 1.35, maxHeight: '48px', overflow: 'hidden' }}>
+                    {formattedAddress}
                   </p>
                 </div>
               </div>
@@ -695,7 +731,7 @@ export default function Contact() {
                 </div>
                 <div className="k-store-badge-meta-item">
                   <Phone size={14} />
-                  <span>+91 83002 95721</span>
+                  <span>{displayPhone}</span>
                 </div>
               </div>
               <a

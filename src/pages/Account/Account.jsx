@@ -575,15 +575,6 @@ export default function Account() {
                                     {totalFormatted}
                                   </strong>
                                 </div>
-
-                                {order.trackingId && (
-                                  <>
-                                    <div style={{ height: '24px', width: '1px', background: '#cbd5e1' }} />
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: '#6d28d9', background: '#ede9fe', border: '1px solid #ddd6fe', padding: '0.35rem 0.85rem', borderRadius: '999px', fontWeight: 700, boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)' }}>
-                                      💳 {order.courier || 'Express'}: {order.trackingId}
-                                    </div>
-                                  </>
-                                )}
                               </div>
 
                               {/* Right: Prominent Track Order Button */}
