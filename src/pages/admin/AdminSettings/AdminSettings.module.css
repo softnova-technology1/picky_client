@@ -2519,17 +2519,22 @@ input:checked + .slider::before {
   flex: 1;
   padding: 0.55rem 0.75rem;
   border-radius: 8px;
-  background: var(--color-purple-gradient, linear-gradient(135deg, #7c3aed 0%, #9333ea 100%));
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--adm-primary, #7c3aed);
   font-weight: 700;
   font-size: 0.82rem;
-  border: none;
+  border: 1.5px solid var(--adm-primary, #7c3aed);
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .previewSecondaryBtn:hover {
-  opacity: 0.92;
+  opacity: 0.88;
+  transform: translateY(-1px);
 }
 
 .previewNavCard {
@@ -2592,3 +2597,337 @@ input:checked + .slider::before {
 .previewIconPrimary {
   color: var(--color-primary, #7c3aed);
 }
+
+/* Admin Panel Specific Preview Components */
+.previewAdminTopbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.15rem;
+  background: #ffffff;
+  border-bottom: 1.5px solid #ede8f8;
+  gap: 1rem;
+}
+
+.previewAdminSearch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fbf9ff;
+  border: 1.5px solid #ebe4f8;
+  border-radius: 9999px;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  flex: 1;
+  max-width: 260px;
+}
+
+.previewAdminActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.previewQuickActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--adm-primary, #7c3aed);
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 0.42rem 0.95rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.previewAdminSidebarMock {
+  border-radius: 12px;
+  padding: 1rem;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.previewSidebarBrand {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.previewSidebarActiveItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.previewSidebarIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.previewSidebarNormalItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.previewKpiCard {
+  background: #ffffff;
+  border: 1.5px solid #ede8f8;
+  border-radius: 12px;
+  padding: 1.15rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.previewKpiLabel {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.previewKpiValue {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.previewKpiBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 6px;
+}
+
+/* ─── Mode Selector (Light & Dark Theme) ─── */
+.modeToggleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .modeToggleGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modeCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.modeCard:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.modeCardActive {
+  border-color: var(--adm-primary, #7c3aed) !important;
+  background: #fbf9ff;
+  box-shadow: 0 0 0 2px var(--adm-primary, #7c3aed), 0 8px 24px rgba(124, 58, 237, 0.12) !important;
+}
+
+.modeCardContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.modeCardIconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.modeCardTitle {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+}
+
+.modeCardSub {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.modeCardBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--adm-primary, #7c3aed);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+/* ─── Manual Custom Swatches Grid ─── */
+.swatchesSection {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.swatchesLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.swatchesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.swatchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.swatchBtn:hover {
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.swatchBtnActive {
+  border-color: var(--adm-primary, #7c3aed);
+  background: #fbf9ff;
+  color: var(--adm-primary, #7c3aed);
+  font-weight: 700;
+  box-shadow: 0 0 0 1.5px var(--adm-primary, #7c3aed);
+}
+
+.swatchDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* ─── Sidebar Tone Style Cards ─── */
+.sidebarStyleGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .sidebarStyleGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebarStyleCard {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sidebarStyleCard:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.sidebarStyleCardActive {
+  border-color: var(--adm-primary, #7c3aed) !important;
+  background: #fbf9ff;
+  box-shadow: 0 0 0 1.5px var(--adm-primary, #7c3aed);
+}
+
+.sidebarStyleBar {
+  height: 8px;
+  border-radius: 9999px;
+  margin-bottom: 0.25rem;
+}
+
+.sidebarStyleName {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sidebarStyleDesc {
+  font-size: 0.74rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+

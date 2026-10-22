@@ -123,7 +123,7 @@ export default function AdminInventory() {
       try {
         setIsLoading(true);
         const [invRes, catRes, subCatRes] = await Promise.all([
-          adminService.getInventory({ limit: 100 }).catch(() => null),
+          adminService.getInventory({ limit: 250 }).catch(() => null),
           categoryService.list().catch(() => null),
           categoryService.getSubCategories().catch(() => null),
         ]);

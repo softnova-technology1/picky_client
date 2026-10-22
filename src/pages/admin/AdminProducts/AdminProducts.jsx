@@ -322,7 +322,7 @@ export default function AdminProducts() {
     try {
       setLoading(true);
       const [prodRes, catRes, subRes] = await Promise.all([
-        productService.list({ limit: 100, includeInactive: true }).catch(() => null),
+        productService.list({ limit: 250, includeInactive: true }).catch(() => null),
         categoryService.list().catch(() => null),
         adminService.getSubCategories().catch(() => null),
       ]);

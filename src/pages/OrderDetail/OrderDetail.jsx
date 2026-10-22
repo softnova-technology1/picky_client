@@ -143,7 +143,7 @@ export default function OrderDetail() {
   };
 
   // Handle Customer Return / Replacement Submit
-  const handleReturnSubmit = (e) => {
+  const handleReturnSubmit = async (e) => {
     e.preventDefault();
     if (!order || !order.items?.length) return;
 
@@ -153,10 +153,11 @@ export default function OrderDetail() {
 
     const newReturnRecord = {
       id: ticketId,
+      orderId: order._id,
       orderNumber: order.orderNumber,
       createdAt: new Date().toISOString(),
       customer: {
-        name: order.shippingAddress?.name || user?.name || 'Valued Customer',
+        name: order.shippingAddress?.fullName || order.shippingAddress?.name || user?.name || 'Valued Customer',
         phone: order.shippingAddress?.phone || user?.phone || '+91 98765 43210',
         email: user?.email || 'customer@picky.com',
         address: `${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}`,
@@ -186,9 +187,14 @@ export default function OrderDetail() {
       ],
     };
 
-    createReturnRequest(newReturnRecord);
-    setReturnSuccessTicket(newReturnRecord);
-    setReturnSubmitting(false);
+    try {
+      const created = await createReturnRequest(newReturnRecord);
+      setReturnSuccessTicket(created || newReturnRecord);
+    } catch (_) {
+      setReturnSuccessTicket(newReturnRecord);
+    } finally {
+      setReturnSubmitting(false);
+    }
   };
 
   if (loading) {

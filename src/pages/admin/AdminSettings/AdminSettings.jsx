@@ -53,6 +53,9 @@ import {
   SlidersHorizontal,
   Check,
   Sparkles,
+  TrendingUp,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
@@ -61,7 +64,7 @@ import Button from '../../../components/ui/Button';
 import { adminService } from '../../../services/admin.service';
 import { contactService } from '../../../services/contact.service';
 import { useUiStore } from '../../../store/uiStore';
-import { THEME_PRESETS, applyTheme, generateThemeFromHex } from '../../../utils/theme';
+import { THEME_PRESETS, MANUAL_SWATCHES, SIDEBAR_STYLES, applyTheme, generateThemeFromHex } from '../../../utils/theme';
 import styles from './AdminSettings.module.css';
 
 const DEFAULT_SETTINGS = {
@@ -330,24 +333,63 @@ export default function AdminSettings() {
       preset: preset.id,
       primaryColor: preset.primary,
       name: preset.name,
+      mode: settings.theme?.mode || 'light',
+      sidebarStyle: settings.theme?.sidebarStyle || 'gradient',
     };
     setSettings((prev) => ({ ...prev, theme: updatedTheme }));
     setCustomHex(preset.primary);
-    applyTheme(preset);
+    applyTheme(updatedTheme);
+    try {
+      localStorage.setItem('picky_admin_theme', JSON.stringify(updatedTheme));
+    } catch (_) {}
   };
 
   const handleCustomHexChange = (newHex) => {
     setCustomHex(newHex);
     if (/^#[0-9A-Fa-f]{6}$/.test(newHex)) {
-      const customTheme = generateThemeFromHex(newHex, 'Custom Brand');
+      const customTheme = generateThemeFromHex(newHex, 'Custom Admin Brand');
       const updatedTheme = {
         preset: 'custom',
         primaryColor: newHex,
-        name: 'Custom Brand',
+        name: 'Custom Admin Brand',
+        mode: settings.theme?.mode || 'light',
+        sidebarStyle: settings.theme?.sidebarStyle || 'gradient',
       };
       setSettings((prev) => ({ ...prev, theme: updatedTheme }));
-      applyTheme(customTheme);
+      applyTheme(updatedTheme);
+      try {
+        localStorage.setItem('picky_admin_theme', JSON.stringify(updatedTheme));
+      } catch (_) {}
     }
+  };
+
+  const handleModeChange = (newMode) => {
+    const updatedTheme = {
+      ...(settings.theme || {}),
+      mode: newMode,
+      primaryColor: settings.theme?.primaryColor || customHex || '#7c3aed',
+      name: settings.theme?.name || 'Custom Theme',
+    };
+    setSettings((prev) => ({ ...prev, theme: updatedTheme }));
+    applyTheme(updatedTheme);
+    try {
+      localStorage.setItem('picky_admin_theme', JSON.stringify(updatedTheme));
+    } catch (_) {}
+    showToast(`Admin Mode changed to ${newMode === 'dark' ? 'Dark 🌙' : 'Light ☀️'}!`, 'info');
+  };
+
+  const handleSidebarStyleChange = (styleId) => {
+    const updatedTheme = {
+      ...(settings.theme || {}),
+      sidebarStyle: styleId,
+      primaryColor: settings.theme?.primaryColor || customHex || '#7c3aed',
+      name: settings.theme?.name || 'Custom Theme',
+    };
+    setSettings((prev) => ({ ...prev, theme: updatedTheme }));
+    applyTheme(updatedTheme);
+    try {
+      localStorage.setItem('picky_admin_theme', JSON.stringify(updatedTheme));
+    } catch (_) {}
   };
 
   // Load live settings from MongoDB Atlas
@@ -530,12 +572,15 @@ export default function AdminSettings() {
 
       if (payload.theme) {
         applyTheme(payload.theme);
+        try {
+          localStorage.setItem('picky_admin_theme', JSON.stringify(payload.theme));
+        } catch (_) {}
       }
 
       await adminService.updateSettings(payload);
 
       if (activeTab === 'theme') {
-        showToast(`Theme updated! "${settings.theme?.name || 'Selected theme'}" applied across all pages.`, 'success');
+        showToast(`Admin theme updated! "${settings.theme?.name || 'Selected theme'}" applied to Admin Panel.`, 'success');
       } else if (activeTab === 'security') {
         if (parsedTimeout === 0) {
           showToast('Security settings saved! Session timeout is DISABLED (Stay logged in permanently).', 'success');
@@ -650,7 +695,7 @@ export default function AdminSettings() {
                 </div>
                 <div className={styles.sidebarNavText}>
                   <div className={styles.sidebarNavLabel}>Theme & Appearance</div>
-                  <div className={styles.sidebarNavSub}>Storefront colors & brand styling</div>
+                  <div className={styles.sidebarNavSub}>Admin panel colors & styling</div>
                 </div>
                 <ChevronRight size={15} className={styles.sidebarNavArrow} />
               </button>
@@ -734,24 +779,13 @@ export default function AdminSettings() {
           {/* 3. SHIPPING & LOGISTICS */}
           {activeTab === 'shipping' && (
             <div className={styles.section}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px dashed var(--border-color, #e2e8f0)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <h2 className={styles.sectionTitle} style={{ borderBottom: 'none', paddingBottom: 0, margin: 0 }}>
-                    <Truck size={20} className={styles.sectionIcon} /> Shipping Rates & Logistics
-                  </h2>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                    Set shipping charges for Tamil Nadu and All India. The system automatically classifies orders based on customer pincode.
-                  </p>
-                </div>
-                <Button
-                  variant="primary"
-                  size="md"
-                  type="button"
-                  onClick={handleSave}
-                  loading={saving}
-                >
-                  Save Changes
-                </Button>
+              <div style={{ borderBottom: '1px dashed var(--border-color, #e2e8f0)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                <h2 className={styles.sectionTitle} style={{ borderBottom: 'none', paddingBottom: 0, margin: 0 }}>
+                  <Truck size={20} className={styles.sectionIcon} /> Shipping Rates & Logistics
+                </h2>
+                <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                  Set shipping charges for Tamil Nadu and All India. The system automatically classifies orders based on customer pincode.
+                </p>
               </div>
 
               {/* CARD 1: ALL OVER TAMIL NADU */}
@@ -1125,21 +1159,26 @@ export default function AdminSettings() {
             </div>
           )}
 
-          {/* 5. THEME & APPEARANCE */}
+          {/* 5. THEME & APPEARANCE (ADMIN PANEL EXCLUSIVE) */}
           {activeTab === 'theme' && (
             <div className={styles.section}>
               <div className={styles.themeHeaderWrap}>
                 <div>
                   <h2 className={styles.sectionTitle}>
-                    <Palette size={20} className={styles.sectionIcon} /> Storefront Theme & Visual Identity
+                    <Palette size={20} className={styles.sectionIcon} /> Admin Panel Theme & Visual Identity
                   </h2>
                   <p className={styles.themeSubtitle}>
-                    Select a signature brand palette or create your custom theme. Applied instantly across all storefront and admin pages.
+                    Personalize your Picky Administrator workspace. Choose Light or Dark mode, executive presets, or customize colors manually with quick swatches and sidebar styling.
                   </p>
                 </div>
                 <div className={styles.activeThemePill}>
                   <span className={styles.activeThemeDot} style={{ background: settings.theme?.primaryColor || '#7c3aed' }} />
-                  <span>Active: <strong>{settings.theme?.name || 'Royal Purple'}</strong></span>
+                  <span>
+                    Admin Workspace: <strong>{settings.theme?.name || 'Royal Purple'}</strong>
+                    <span style={{ marginLeft: '6px', opacity: 0.85, fontSize: '0.78rem' }}>
+                      ({settings.theme?.mode === 'dark' ? '🌙 Dark' : '☀️ Light'})
+                    </span>
+                  </span>
                 </div>
               </div>
 
@@ -1149,17 +1188,83 @@ export default function AdminSettings() {
                   <Sparkles size={18} />
                 </div>
                 <div className={styles.themeSyncText}>
-                  <strong>Real-time Storefront Synchronization:</strong>
+                  <strong>Admin Workspace Live Synchronization:</strong>
                   <p>
-                    Switching colors here updates buttons, price highlights, gradients, navbar pills, badges, cart and checkout buttons across all pages for all customers.
+                    Switching modes or colors instantly updates the Admin Sidebar, active menu pills, Topbar Quick Actions, focus glows, and control buttons across the entire Admin Dashboard.
                   </p>
                 </div>
               </div>
 
-              {/* Curated Presets Grid */}
+              {/* 1. Admin Appearance Mode (Light vs Dark) */}
               <div className={styles.themeSectionHeading}>
-                <span>1. Curated Brand Theme Presets</span>
-                <span className={styles.themeCountBadge}>{THEME_PRESETS.length} Handcrafted Palettes</span>
+                <span>1. Admin Appearance Mode</span>
+                <span className={styles.themeCountBadge}>Light & Dark System</span>
+              </div>
+
+              <div className={styles.modeToggleGrid}>
+                {/* Light Mode Card */}
+                <div
+                  className={`${styles.modeCard} ${settings.theme?.mode !== 'dark' ? styles.modeCardActive : ''}`}
+                  onClick={() => handleModeChange('light')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className={styles.modeCardContent}>
+                    <div
+                      className={styles.modeCardIconWrap}
+                      style={{
+                        background: settings.theme?.mode !== 'dark' ? 'rgba(245, 158, 11, 0.15)' : '#f1f5f9',
+                        color: settings.theme?.mode !== 'dark' ? '#d97706' : '#64748b',
+                      }}
+                    >
+                      <Sun size={22} />
+                    </div>
+                    <div>
+                      <div className={styles.modeCardTitle}>Light Mode</div>
+                      <div className={styles.modeCardSub}>Clean & crisp daylight look with bright cards and high-contrast text</div>
+                    </div>
+                  </div>
+                  {settings.theme?.mode !== 'dark' && (
+                    <span className={styles.modeCardBadge}>
+                      <Check size={13} strokeWidth={3} /> Active
+                    </span>
+                  )}
+                </div>
+
+                {/* Dark Mode Card */}
+                <div
+                  className={`${styles.modeCard} ${settings.theme?.mode === 'dark' ? styles.modeCardActive : ''}`}
+                  onClick={() => handleModeChange('dark')}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className={styles.modeCardContent}>
+                    <div
+                      className={styles.modeCardIconWrap}
+                      style={{
+                        background: settings.theme?.mode === 'dark' ? 'rgba(99, 102, 241, 0.18)' : '#f1f5f9',
+                        color: settings.theme?.mode === 'dark' ? '#818cf8' : '#64748b',
+                      }}
+                    >
+                      <Moon size={22} />
+                    </div>
+                    <div>
+                      <div className={styles.modeCardTitle}>Dark Mode</div>
+                      <div className={styles.modeCardSub}>Futuristic midnight stealth look with deep space surfaces & glowing accents</div>
+                    </div>
+                  </div>
+                  {settings.theme?.mode === 'dark' && (
+                    <span className={styles.modeCardBadge}>
+                      <Check size={13} strokeWidth={3} /> Active
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Curated Presets Grid */}
+              <div className={styles.themeSectionHeading} style={{ marginTop: '2rem' }}>
+                <span>2. Curated Executive Theme Presets</span>
+                <span className={styles.themeCountBadge}>{THEME_PRESETS.length} Executive Palettes</span>
               </div>
 
               <div className={styles.presetGrid}>
@@ -1206,13 +1311,14 @@ export default function AdminSettings() {
                 })}
               </div>
 
-              {/* Custom Brand Color */}
+              {/* 3. Manual Custom Color Suite */}
               <div className={styles.themeSectionHeading} style={{ marginTop: '2rem' }}>
-                <span>2. Custom Brand Hex Color</span>
-                <span className={styles.themeCountBadge}>Advanced</span>
+                <span>3. Manual Color Customization Suite</span>
+                <span className={styles.themeCountBadge}>Manual Controls</span>
               </div>
 
               <div className={styles.customColorCard}>
+                {/* Native Hex Picker Row */}
                 <div className={styles.customColorInputs}>
                   <div className={styles.colorPickerWrapper}>
                     <input
@@ -1245,73 +1351,244 @@ export default function AdminSettings() {
                     onClick={() => {
                       if (/^#[0-9A-Fa-f]{6}$/.test(customHex)) {
                         handleCustomHexChange(customHex);
-                        showToast(`Applied custom hex ${customHex}!`, 'info');
+                        showToast(`Applied custom accent ${customHex}!`, 'info');
                       }
                     }}
                   >
-                    Apply Color
+                    Apply Custom Accent
                   </Button>
                 </div>
                 <p className={styles.customColorHelp}>
-                  Enter any brand hex code. Picky automatically computes complementary light accents, gradients, hover states, and shadows.
+                  Enter any custom hex code or click the color wheel. Picky automatically computes dark gradients, active sidebar tabs, and button hover states.
                 </p>
+
+                {/* Quick Manual Swatches */}
+                <div className={styles.swatchesSection}>
+                  <div className={styles.swatchesLabel}>
+                    <Sparkles size={14} />
+                    <span>Quick Manual Accent Swatches (Click to Apply):</span>
+                  </div>
+                  <div className={styles.swatchesGrid}>
+                    {MANUAL_SWATCHES.map((swatch) => {
+                      const isSwatchActive = (settings.theme?.primaryColor || '').toLowerCase() === swatch.hex.toLowerCase();
+                      return (
+                        <button
+                          key={swatch.hex}
+                          type="button"
+                          className={`${styles.swatchBtn} ${isSwatchActive ? styles.swatchBtnActive : ''}`}
+                          onClick={() => handleCustomHexChange(swatch.hex)}
+                        >
+                          <span className={styles.swatchDot} style={{ background: swatch.hex }} />
+                          <span>{swatch.name}</span>
+                          {isSwatchActive && <Check size={12} strokeWidth={3} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Sidebar Style Selector */}
+                <div className={styles.swatchesSection} style={{ marginTop: '1.5rem' }}>
+                  <div className={styles.swatchesLabel}>
+                    <SlidersHorizontal size={14} />
+                    <span>Admin Sidebar Style Option:</span>
+                  </div>
+                  <div className={styles.sidebarStyleGrid}>
+                    {SIDEBAR_STYLES.map((style) => {
+                      const isStyleActive = (settings.theme?.sidebarStyle || 'gradient') === style.id;
+                      return (
+                        <div
+                          key={style.id}
+                          className={`${styles.sidebarStyleCard} ${isStyleActive ? styles.sidebarStyleCardActive : ''}`}
+                          onClick={() => handleSidebarStyleChange(style.id)}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <div className={styles.sidebarStyleBar} style={{ background: style.preview }} />
+                          <div className={styles.sidebarStyleName}>{style.name}</div>
+                          <div className={styles.sidebarStyleDesc}>{style.description}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {/* Live Storefront Component Preview */}
+              {/* 4. Live Admin Workspace Preview */}
               <div className={styles.themeSectionHeading} style={{ marginTop: '2rem' }}>
-                <span>3. Live Storefront Component Preview</span>
+                <span>4. Live Admin Workspace Preview</span>
                 <span className={styles.themeCountBadge}>Interactive</span>
               </div>
 
-              <div className={styles.previewContainer}>
-                {/* Mini Announcement Bar */}
-                <div className={styles.previewAnnouncement}>
-                  <span>✨ Free Delivery on all orders above ₹999 | Use Code <strong>PICKY10</strong> for 10% OFF</span>
+              <div
+                className={styles.previewContainer}
+                style={{
+                  background: settings.theme?.mode === 'dark' ? '#0b0f19' : '#f8fafc',
+                  border: settings.theme?.mode === 'dark' ? '1.5px solid #1f293d' : '1.5px solid #e2e8f0',
+                  borderRadius: '16px',
+                  padding: '1.25rem',
+                }}
+              >
+                {/* Admin Topbar Mockup */}
+                <div
+                  className={styles.previewAdminTopbar}
+                  style={{
+                    background: settings.theme?.mode === 'dark' ? '#111827' : '#ffffff',
+                    borderColor: settings.theme?.mode === 'dark' ? '#1f293d' : '#ede8f8',
+                    borderRadius: '10px 10px 0 0',
+                  }}
+                >
+                  <div
+                    className={styles.previewAdminSearch}
+                    style={{
+                      background: settings.theme?.mode === 'dark' ? '#161f30' : '#fbf9ff',
+                      borderColor: settings.theme?.mode === 'dark' ? '#1f293d' : '#ebe4f8',
+                      color: settings.theme?.mode === 'dark' ? '#94a3b8' : '#64748b',
+                    }}
+                  >
+                    <Search size={14} style={{ color: settings.theme?.primaryColor || '#7c3aed' }} />
+                    <span>Search orders, products, customers...</span>
+                  </div>
+                  <div className={styles.previewAdminActions}>
+                    <button
+                      type="button"
+                      className={styles.previewQuickActionBtn}
+                      style={{ background: settings.theme?.primaryColor || '#7c3aed' }}
+                    >
+                      <Sparkles size={12} />
+                      <span>⚡ Quick Actions</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Mini Product Card Component */}
+                {/* Admin Workspace Content Grid */}
                 <div className={styles.previewGrid}>
-                  <div className={styles.previewCard}>
-                    <div className={styles.previewCardTop}>
-                      <span className={styles.previewBadge}>25% OFF</span>
-                      <span className={styles.previewPill}>New Arrival</span>
+                  {/* Left: Sidebar Mockup */}
+                  <div
+                    className={styles.previewAdminSidebarMock}
+                    style={{
+                      background:
+                        settings.theme?.sidebarStyle === 'onyx'
+                          ? 'linear-gradient(180deg, #09090b 0%, #18181b 100%)'
+                          : settings.theme?.sidebarStyle === 'tinted'
+                          ? `linear-gradient(180deg, ${settings.theme?.primaryColor || '#7c3aed'}40 0%, #06020c 100%)`
+                          : THEME_PRESETS.find((p) => p.primary.toLowerCase() === (settings.theme?.primaryColor || '').toLowerCase())?.sidebarBg ||
+                            'linear-gradient(180deg, #07030e 0%, #15092a 100%)',
+                    }}
+                  >
+                    <div className={styles.previewSidebarBrand}>
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: settings.theme?.primaryColor || '#7c3aed',
+                          display: 'inline-block',
+                          boxShadow: `0 0 8px ${settings.theme?.primaryColor || '#7c3aed'}`,
+                        }}
+                      />
+                      <span>PICKY ADMIN</span>
                     </div>
-                    <div className={styles.previewProductTitle}>Kanchipuram Pure Silk Saree</div>
-                    <div className={styles.previewPriceRow}>
-                      <span className={styles.previewPriceCurrent}>₹4,999</span>
-                      <span className={styles.previewPriceOriginal}>₹6,999</span>
+
+                    <div
+                      className={styles.previewSidebarActiveItem}
+                      style={{
+                        background: `linear-gradient(90deg, ${settings.theme?.primaryColor || '#7c3aed'}33 0%, ${settings.theme?.primaryColor || '#7c3aed'}0a 100%)`,
+                        borderColor: `${settings.theme?.primaryColor || '#7c3aed'}66`,
+                      }}
+                    >
+                      <div
+                        className={styles.previewSidebarIcon}
+                        style={{ background: settings.theme?.primaryColor || '#7c3aed' }}
+                      >
+                        <LayoutDashboard size={13} />
+                      </div>
+                      <span>Dashboard</span>
                     </div>
-                    <div className={styles.previewButtonsRow}>
-                      <button type="button" className={styles.previewPrimaryBtn}>
-                        Add to Bag
-                      </button>
-                      <button type="button" className={styles.previewSecondaryBtn}>
-                        Buy Now
-                      </button>
+
+                    <div className={styles.previewSidebarNormalItem}>
+                      <div className={styles.previewSidebarIcon} style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <ShoppingBag size={13} />
+                      </div>
+                      <span>Orders</span>
+                    </div>
+
+                    <div className={styles.previewSidebarNormalItem}>
+                      <div className={styles.previewSidebarIcon} style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <Users size={13} />
+                      </div>
+                      <span>Customers</span>
                     </div>
                   </div>
 
-                  {/* Mini Navigation Tabs */}
-                  <div className={styles.previewNavCard}>
-                    <div className={styles.previewNavTitle}>Store Navigation Pills</div>
-                    <div className={styles.previewNavPills}>
-                      <span className={styles.previewNavPillActive}>Sarees</span>
-                      <span className={styles.previewNavPill}>Kurtis</span>
-                      <span className={styles.previewNavPill}>Handloom</span>
-                      <span className={styles.previewNavPill}>Festive</span>
+                  {/* Right: Admin KPI Metric Card & Action Pill */}
+                  <div
+                    className={styles.previewNavCard}
+                    style={{
+                      background: settings.theme?.mode === 'dark' ? '#111827' : '#ffffff',
+                      borderColor: settings.theme?.mode === 'dark' ? '#1f293d' : '#e2e8f0',
+                    }}
+                  >
+                    <div
+                      className={styles.previewKpiCard}
+                      style={{
+                        background: settings.theme?.mode === 'dark' ? '#161f30' : '#ffffff',
+                        borderColor: settings.theme?.mode === 'dark' ? '#1f293d' : '#ede8f8',
+                      }}
+                    >
+                      <div
+                        className={styles.previewKpiLabel}
+                        style={{ color: settings.theme?.mode === 'dark' ? '#94a3b8' : '#64748b' }}
+                      >
+                        Monthly Revenue
+                      </div>
+                      <div className={styles.previewKpiValue} style={{ color: settings.theme?.primaryColor || '#7c3aed' }}>
+                        ₹4,82,900
+                      </div>
+                      <div
+                        className={styles.previewKpiBadge}
+                        style={{
+                          background: `${settings.theme?.primaryColor || '#7c3aed'}18`,
+                          color: settings.theme?.primaryColor || '#7c3aed',
+                        }}
+                      >
+                        <TrendingUp size={12} />
+                        <span>+18.4% this month</span>
+                      </div>
                     </div>
 
                     <div style={{ marginTop: '1.25rem' }}>
-                      <div className={styles.previewNavTitle}>Trust Guarantee & Icons</div>
-                      <div className={styles.previewTrustRow}>
-                        <div className={styles.previewTrustItem}>
-                          <Truck size={16} className={styles.previewIconPrimary} />
-                          <span>Express Shipping</span>
-                        </div>
-                        <div className={styles.previewTrustItem}>
-                          <ShieldCheck size={16} className={styles.previewIconPrimary} />
-                          <span>Verified Quality</span>
-                        </div>
+                      <div
+                        className={styles.previewNavTitle}
+                        style={{ color: settings.theme?.mode === 'dark' ? '#94a3b8' : '#64748b' }}
+                      >
+                        Admin Action Buttons
+                      </div>
+                      <div className={styles.previewButtonsRow}>
+                        <button
+                          type="button"
+                          className={styles.previewPrimaryBtn}
+                          style={{
+                            background: settings.theme?.primaryColor || '#7c3aed',
+                            borderColor: settings.theme?.primaryColor || '#7c3aed',
+                            color: '#ffffff',
+                          }}
+                        >
+                          <Download size={13} />
+                          Export Report
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.previewSecondaryBtn}
+                          style={{
+                            background: settings.theme?.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
+                            color: settings.theme?.primaryColor || '#7c3aed',
+                            borderColor: settings.theme?.primaryColor || '#7c3aed',
+                          }}
+                        >
+                          <Filter size={13} style={{ color: settings.theme?.primaryColor || '#7c3aed' }} />
+                          Filter Orders
+                        </button>
                       </div>
                     </div>
                   </div>

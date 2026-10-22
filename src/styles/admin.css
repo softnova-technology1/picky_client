@@ -667,7 +667,8 @@
   align-items: center;
   gap: 0.85rem;
   flex: 1;
-  max-width: 580px;
+  max-width: 640px;
+  flex-wrap: nowrap;
 }
 
 .admin-layout .admin-topbar-title-wrap {
@@ -1108,10 +1109,19 @@
   transform: translateX(0);
 }
 
-/* Notifications Button & Dropdown */
+/* Action Icons & Notifications Button & Dropdown */
+.admin-layout .admin-topbar-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
 .admin-layout .admin-topbar-notif-wrap {
   position: relative;
   z-index: 1001;
+  display: flex;
+  align-items: center;
 }
 
 .admin-layout .admin-topbar-notif-btn {
@@ -1121,12 +1131,13 @@
   border-radius: 50%;
   background: #faf8fe;
   border: 1.5px solid #ede8f8;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #475569;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .admin-layout .admin-topbar-notif-btn:hover {

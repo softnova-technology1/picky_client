@@ -35,6 +35,8 @@ import {
   MessageCircle,
   Flame,
   MessageSquareText,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -46,6 +48,7 @@ import { useBroadcastStore } from '../../../store/broadcastStore';
 import { adminService } from '../../../services/admin.service';
 import { productService } from '../../../services/product.service';
 import { contactService } from '../../../services/contact.service';
+import { applyTheme } from '../../../utils/theme';
 import Toast from '../../ui/Toast';
 import '../../../styles/admin.css';
 import { useAdminIdleTimeout } from '../../../hooks/useAdminIdleTimeout';
@@ -82,6 +85,40 @@ export default function AdminLayout({ children, title }) {
   const [searchLoading, setSearchLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+
+  // Admin Theme Mode (Light / Dark) State
+  const [themeMode, setThemeMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('picky_admin_theme');
+      if (saved) return JSON.parse(saved).mode || 'light';
+    } catch (_) {}
+    return 'light';
+  });
+
+  useEffect(() => {
+    const handleThemeUpdate = (e) => {
+      if (e?.detail?.mode) {
+        setThemeMode(e.detail.mode);
+      }
+    };
+    window.addEventListener('picky_admin_theme_updated', handleThemeUpdate);
+    return () => window.removeEventListener('picky_admin_theme_updated', handleThemeUpdate);
+  }, []);
+
+  const handleToggleThemeMode = () => {
+    const nextMode = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(nextMode);
+    try {
+      const saved = JSON.parse(localStorage.getItem('picky_admin_theme') || '{}');
+      const updated = {
+        ...saved,
+        mode: nextMode,
+      };
+      applyTheme(updated);
+      adminService.updateSettings({ theme: updated }).catch(() => {});
+      showToast(`Admin Mode: ${nextMode === 'dark' ? 'Dark 🌙' : 'Light ☀️'}`, 'info');
+    } catch (_) {}
+  };
 
   // Real-time synced admin notifications state
   const [unreadInquiriesCount, setUnreadInquiriesCount] = useState(0);
@@ -348,7 +385,7 @@ export default function AdminLayout({ children, title }) {
   };
 
   return (
-    <div className="admin-layout">
+    <div className={`admin-layout ${themeMode === 'dark' ? 'dark-mode' : ''}`} data-theme-mode={themeMode}>
       {/* ─── Ultra-Luxury Light Purple Sidebar (290px) ─── */}
       <aside
         className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}
@@ -924,16 +961,32 @@ export default function AdminLayout({ children, title }) {
             )}
           </div>
 
-          {/* Notification Bell Dropdown (Beside Search Bar) */}
-          <div
-            className="admin-topbar-notif-wrap"
-            ref={notifRef}
-            onMouseEnter={() => {
-              refreshAdminNotifications();
-              handleNotifMouseEnter();
-            }}
-            onMouseLeave={handleNotifMouseLeave}
-          >
+          {/* Action Icons (Dark/Light Mode Toggle + Notification Bell aligned horizontally) */}
+          <div className="admin-topbar-action-btns">
+            <button
+              type="button"
+              className="admin-topbar-notif-btn admin-theme-mode-toggle"
+              onClick={handleToggleThemeMode}
+              title={themeMode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle Dark/Light Mode"
+            >
+              {themeMode === 'dark' ? (
+                <Sun size={18} style={{ color: '#f59e0b' }} />
+              ) : (
+                <Moon size={18} style={{ color: '#6366f1' }} />
+              )}
+            </button>
+
+            <div
+              className="admin-topbar-notif-wrap"
+              ref={notifRef}
+              onMouseEnter={() => {
+                refreshAdminNotifications();
+                handleNotifMouseEnter();
+              }}
+              onMouseLeave={handleNotifMouseLeave}
+            >
+
             <button
               type="button"
               className="admin-topbar-notif-btn"
@@ -1033,6 +1086,7 @@ export default function AdminLayout({ children, title }) {
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
 
