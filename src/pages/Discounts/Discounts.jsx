@@ -12,6 +12,7 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  ArrowDown,
   Search,
   SlidersHorizontal,
   Flame,
@@ -21,6 +22,7 @@ import {
   Truck,
   RotateCcw as ReturnIcon,
   Headphones,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function Discounts() {
@@ -82,10 +84,10 @@ export default function Discounts() {
     return startDateValid && endDateValid;
   };
 
-  // Filter products: real products matching active discounts or limited deals tag
+  // Filter products: ONLY products matching active discounts or limited deals tag
   const activeDiscountProducts = useMemo(() => {
     return products.filter((p) => {
-      const isTaggedLimitedDeal = hasTag(p, 'limited') || hasTag(p, 'deal');
+      const isTaggedLimitedDeal = hasTag(p, 'limited');
       const isConfiguredDiscount = isProductInActiveDiscount(p);
       return isConfiguredDiscount || isTaggedLimitedDeal;
     });
@@ -102,7 +104,7 @@ export default function Discounts() {
     });
   }, [activeDiscountProducts]);
 
-  // Live countdown timer: ONLY active if a real offer with end date exists
+  // Live countdown timer: ONLY active if a real DB offer with future end date exists
   const [countdown, setCountdown] = useState(null);
 
   useEffect(() => {
@@ -131,6 +133,71 @@ export default function Discounts() {
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
   }, [activeOfferWithEnd]);
+
+  // Navigate directly to Product Detail page when clicking any hero product card
+  const handleProductClick = (p) => {
+    if (!p) return;
+    const identifier = p.slug || p._id || p.id;
+    if (identifier) {
+      navigate(`/products/${identifier}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Hero Showcase Pool: ONLY products matching limited deals tag or active discount (no other tags)
+  const heroPool = useMemo(() => {
+    return activeDiscountProducts;
+  }, [activeDiscountProducts]);
+
+  // 1-Minute Auto-Rotation for the 3 Hero Cards
+  const [rotationIndex, setRotationIndex] = useState(0);
+  const [isCardTransitioning, setIsCardTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (heroPool.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setIsCardTransitioning(true);
+      setTimeout(() => {
+        setRotationIndex((prev) => (prev + 1) % heroPool.length);
+        setIsCardTransitioning(false);
+      }, 400); // 400ms fade transition
+    }, 60000); // 1 minute (60,000ms)
+
+    return () => clearInterval(interval);
+  }, [heroPool.length]);
+
+  const poolLen = heroPool.length;
+  const card1Product = poolLen > 0 ? heroPool[rotationIndex % poolLen] : null;
+  const card2Product = poolLen > 1 ? heroPool[(rotationIndex + 1) % poolLen] : card1Product;
+  const card3Product =
+    poolLen > 2
+      ? heroPool[(rotationIndex + 2) % poolLen]
+      : poolLen > 1
+      ? heroPool[(rotationIndex + 1) % poolLen]
+      : card1Product;
+
+  const getProductImage = (p) => {
+    if (!p) return 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const valid = p.images.find((img) => typeof img === 'string' && img.trim().length > 0);
+      if (valid) return valid;
+    }
+    if (typeof p.image === 'string' && p.image.trim().length > 0) return p.image;
+    return 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+  };
+
+  const getCardBadge = (p, defaultBadge = 'LIMITED DEAL') => {
+    if (!p) return defaultBadge;
+    if (p.price && p.discountPrice && p.price > p.discountPrice) {
+      const pct = Math.round(((p.price - p.discountPrice) / p.price) * 100);
+      return `${pct}% OFF`;
+    }
+    if (p.offerLabel && typeof p.offerLabel === 'string' && p.offerLabel.trim()) {
+      return p.offerLabel.trim().toUpperCase();
+    }
+    return defaultBadge;
+  };
 
   // Flash deals: ONLY products that are ACTUALLY in active discount from DB!
   const flashDeals = useMemo(() => {
@@ -296,7 +363,7 @@ export default function Discounts() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                Limited-Time <span style={{ color: '#4338ca' }}>Deals</span>
+                Limited–Time <span style={{ color: '#6d28d9' }}>Deals</span>
               </h1>
 
               {/* Subtitle */}
@@ -309,11 +376,11 @@ export default function Discounts() {
                   maxWidth: '520px',
                 }}
               >
-                Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at verified promotional tiers.
+                Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at steep promotional tiers.
               </p>
 
               {/* Live Countdown Pill: ONLY shown if real active offer with end date exists */}
-              {countdown && (
+              {activeOfferWithEnd && countdown && (
                 <div
                   style={{
                     display: 'inline-flex',
@@ -326,7 +393,7 @@ export default function Discounts() {
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
                     fontSize: '0.82rem',
                     fontWeight: 700,
-                    color: '#334155',
+                    color: '#1e1b4b',
                     marginBottom: '2rem',
                   }}
                 >
@@ -338,15 +405,21 @@ export default function Discounts() {
                       background: '#ef4444',
                       boxShadow: '0 0 8px #ef4444',
                       display: 'inline-block',
+                      flexShrink: 0,
                     }}
                   />
                   <span>
-                    ENDS IN: {countdown.days > 0 ? `${countdown.days}D : ` : ''}{String(countdown.hours).padStart(2, '0')}H : {String(countdown.minutes).padStart(2, '0')}M : {String(countdown.seconds).padStart(2, '0')}S
+                    ENDS IN:&nbsp;&nbsp;
+                    <span style={{ color: '#4338ca', fontWeight: 800 }}>
+                      {countdown.days > 0 ? `${countdown.days} d : ` : ''}
+                      {String(countdown.hours).padStart(2, '0')} h : {String(countdown.minutes).padStart(2, '0')} m : {String(countdown.seconds).padStart(2, '0')} s
+                    </span>
                   </span>
+                  <Clock size={14} color="#64748b" style={{ marginLeft: '2px' }} />
                 </div>
               )}
 
-              {/* Action Buttons */}
+              {/* Action Button: Explore Deals */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
                 <a
                   href="#curated-catalog"
@@ -354,11 +427,11 @@ export default function Discounts() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-                    padding: '0.75rem 1.8rem',
+                    padding: '0.8rem 2rem',
                     borderRadius: '999px',
                     background: '#2e1065',
                     color: '#ffffff',
-                    fontSize: '0.88rem',
+                    fontSize: '0.9rem',
                     fontWeight: 700,
                     textDecoration: 'none',
                     boxShadow: '0 4px 14px rgba(46, 16, 101, 0.25)',
@@ -368,39 +441,14 @@ export default function Discounts() {
                   onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
                   <span>Explore Deals</span>
-                  <ArrowRight size={15} />
+                  <ArrowDown size={15} />
                 </a>
-
-                {countdown && flashDeals.length > 0 && (
-                  <a
-                    href="#flash-deals-section"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.75rem 1.6rem',
-                      borderRadius: '999px',
-                      background: '#ffffff',
-                      border: '1.5px solid #c4b5fd',
-                      color: '#4c1d95',
-                      fontSize: '0.88rem',
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f3ff')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
-                  >
-                    <Flame size={15} color="#ea580c" />
-                    <span>View Flash Offers</span>
-                  </a>
-                )}
               </div>
 
               {/* Trust Micro-Badges */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
-                  <ShieldCheck size={16} color="#6d28d9" />
+                  <CheckCircle2 size={16} color="#6d28d9" />
                   <span>100% Genuine Provenance</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
@@ -410,14 +458,287 @@ export default function Discounts() {
               </div>
             </div>
 
-            {/* Right Column: Featured Real DB Product using site's official ProductCard */}
-            {(flashDeals.length > 0 ? flashDeals : activeDiscountProducts).length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-                <div style={{ width: '100%', maxWidth: '300px' }}>
-                  <ProductCard product={flashDeals.length > 0 ? flashDeals[0] : activeDiscountProducts[0]} />
-                </div>
+            {/* Right Column: 3 Overlapping Floating Cards Cluster with 1-Minute Rotation */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', width: '100%' }}>
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '480px',
+                  height: '380px',
+                  background: 'linear-gradient(145deg, #f3f0ff 0%, #ebe5fb 100%)',
+                  borderRadius: '24px',
+                  padding: '20px',
+                  boxShadow: 'inset 0 1px 3px rgba(255, 255, 255, 0.8), 0 10px 30px -10px rgba(109, 40, 217, 0.08)',
+                  opacity: isCardTransitioning ? 0.35 : 1,
+                  transform: isCardTransitioning ? 'scale(0.985)' : 'scale(1)',
+                  transition: 'opacity 0.4s ease, transform 0.4s ease',
+                }}
+              >
+                {/* ── CARD 1: Left / Main Featured Card ── */}
+                {card1Product && (
+                  <div
+                    onClick={() => handleProductClick(card1Product)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card1Product); }}
+                    style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: '20px',
+                      width: '230px',
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      zIndex: 2,
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: '1px solid rgba(226, 232, 240, 0.8)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.14)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)';
+                    }}
+                  >
+                    <div style={{ position: 'relative', width: '100%', height: '145px', background: '#f8fafc', overflow: 'hidden' }}>
+                      <img
+                        src={getProductImage(card1Product)}
+                        alt={card1Product.name || 'Deal'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          background: '#991b1b',
+                          color: '#ffffff',
+                          fontSize: '0.66rem',
+                          fontWeight: 800,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        {getCardBadge(card1Product, 'UP TO 60% OFF')}
+                      </div>
+                    </div>
+                    <div style={{ padding: '12px 14px 14px' }}>
+                      <h3
+                        style={{
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          margin: '0 0 6px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        title={card1Product.name}
+                      >
+                        {card1Product.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>
+                          {formatPrice(card1Product.discountPrice || card1Product.price || 0)}
+                        </span>
+                        {card1Product.price && (
+                          <span style={{ fontSize: '0.76rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                            {formatPrice(
+                              card1Product.discountPrice && card1Product.price > card1Product.discountPrice
+                                ? card1Product.price
+                                : Math.round(card1Product.price * 1.4)
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── CARD 2: Top-Right Card ── */}
+                {card2Product && (
+                  <div
+                    onClick={() => handleProductClick(card2Product)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card2Product); }}
+                    style={{
+                      position: 'absolute',
+                      top: '24px',
+                      right: '20px',
+                      width: '205px',
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      boxShadow: '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      zIndex: 1,
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: '1px solid rgba(226, 232, 240, 0.8)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 16px 32px -4px rgba(0, 0, 0, 0.12)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)';
+                    }}
+                  >
+                    <div style={{ position: 'relative', width: '100%', height: '125px', background: '#f8fafc', overflow: 'hidden' }}>
+                      <img
+                        src={getProductImage(card2Product)}
+                        alt={card2Product.name || 'Deal'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: '#4f46e5',
+                          color: '#ffffff',
+                          fontSize: '0.62rem',
+                          fontWeight: 800,
+                          padding: '3px 7px',
+                          borderRadius: '5px',
+                          letterSpacing: '0.03em',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                        }}
+                      >
+                        {getCardBadge(card2Product, '57% OFF')}
+                      </div>
+                    </div>
+                    <div style={{ padding: '10px 12px 12px' }}>
+                      <h3
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          margin: '0 0 4px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        title={card2Product.name}
+                      >
+                        {card2Product.name}
+                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#6d28d9' }}>
+                          {formatPrice(card2Product.discountPrice || card2Product.price || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── CARD 3: Bottom-Right Horizontal Mini Card ── */}
+                {card3Product && (
+                  <div
+                    onClick={() => handleProductClick(card3Product)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card3Product); }}
+                    style={{
+                      position: 'absolute',
+                      bottom: '22px',
+                      right: '20px',
+                      width: '240px',
+                      background: '#ffffff',
+                      borderRadius: '14px',
+                      boxShadow: '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)',
+                      padding: '8px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      cursor: 'pointer',
+                      zIndex: 3,
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.16)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)';
+                    }}
+                  >
+                    <img
+                      src={getProductImage(card3Product)}
+                      alt={card3Product.name || 'Item'}
+                      style={{
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '10px',
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                        background: '#f1f5f9',
+                      }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          background: '#ede9fe',
+                          color: '#6d28d9',
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          marginBottom: '3px',
+                          maxWidth: '100%',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {card3Product.category?.name || card3Product.subCategory || 'Gourmet Box'}
+                      </span>
+                      <h4
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          margin: '0 0 3px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          lineHeight: 1.2,
+                        }}
+                        title={card3Product.name}
+                      >
+                        {card3Product.name}
+                      </h4>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#6d28d9' }}>
+                          {formatPrice(card3Product.discountPrice || card3Product.price || 0)}
+                        </span>
+                        {card3Product.price && (
+                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+                            {formatPrice(
+                              card3Product.discountPrice && card3Product.price > card3Product.discountPrice
+                                ? card3Product.price
+                                : Math.round(card3Product.price * 1.4)
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </section>
 

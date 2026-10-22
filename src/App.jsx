@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AdminProtectedRoute } from './components/layout/AdminProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
+import LoginPopupModal from './components/common/LoginPopupModal/LoginPopupModal';
 import { useButtonHoverFX } from './hooks/useButtonHoverFX';
 
 // Customer Pages
@@ -127,6 +128,7 @@ export default function App() {
       <QueryClientProvider client={qc}>
         <BrowserRouter>
         <ScrollToTop />
+        <LoginPopupModal />
         <Routes>
           {/* ── Customer Core Catalog & Browsing ─────── */}
           <Route path="/" element={<Home />} />

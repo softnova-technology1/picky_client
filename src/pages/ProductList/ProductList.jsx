@@ -844,11 +844,12 @@ export default function ProductList() {
                     }}
                   >
                     {visibleProducts.map((product, idx) => {
-                      const showBazaarBanner = idx === 6;
+                      // In a 4-column grid, break after 2 full rows (8 products) so rows are always full 4 cards
+                      const showBazaarBanner = idx === 8;
 
                       return (
                         <React.Fragment key={product._id || product.id || idx}>
-                          {/* In-Feed Editorial Break: Bazaar (after item 6) */}
+                          {/* In-Feed Editorial Break: Bazaar (after 2 full rows of 4 cards) */}
                           {showBazaarBanner && (
                             <ShopInFeedBanner
                               variant="bazaar"
