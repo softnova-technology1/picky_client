@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, X, ChevronRight } from 'lucide-react';
+import { usePageCustomization } from '../../../store/customizationStore';
 
 export default function ShopHeroSpotlight({
   totalProducts = 0,
@@ -9,6 +10,11 @@ export default function ShopHeroSpotlight({
   onSearchSubmit,
   onSearchClear,
 }) {
+  const { getSetting } = usePageCustomization('shop');
+  const customHeadline = getSetting('catalog_header_banner', 'headline', 'Explore Curated Collections');
+  const customSubtitle = getSetting('catalog_header_banner', 'subtitle', 'Discover handpicked, verified products directly dispatched from our Madurai hub.');
+  const customPlaceholder = getSetting('catalog_header_banner', 'searchPlaceholder', 'Search sarees, jewellery, gadgets...');
+
   const [searchInput, setSearchInput] = useState(searchQuery);
 
   const handleSubmit = (e) => {
@@ -129,7 +135,7 @@ export default function ShopHeroSpotlight({
                 lineHeight: 1.15,
               }}
             >
-              {categoryName ? categoryName : searchQuery ? `Results for "${searchQuery}"` : 'Explore Curated Collections'}
+              {categoryName ? categoryName : searchQuery ? `Results for "${searchQuery}"` : customHeadline}
             </h1>
 
             <p
@@ -141,7 +147,7 @@ export default function ShopHeroSpotlight({
                 lineHeight: 1.5,
               }}
             >
-              Discover handpicked, verified products directly dispatched from our Madurai hub.
+              {customSubtitle}
             </p>
           </div>
 
@@ -170,7 +176,7 @@ export default function ShopHeroSpotlight({
               <Search size={17} color="#7c3aed" style={{ flexShrink: 0, marginRight: '0.55rem' }} />
               <input
                 type="text"
-                placeholder="Search sarees, jewellery, gadgets..."
+                placeholder={customPlaceholder}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 style={{

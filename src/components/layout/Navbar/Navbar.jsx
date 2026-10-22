@@ -24,6 +24,7 @@ import { useCategoryStore } from '../../../store/categoryStore';
 import CategoryIcon from '../../common/CategoryIcon';
 import AnnouncementBar from '../../common/AnnouncementBar';
 import Modal from '../../ui/Modal/Modal';
+import { usePageCustomization } from '../../../store/customizationStore';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,6 +102,11 @@ export default function Navbar() {
 
   const totalCartCount = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
   const totalWishlistCount = wishlistItems.length;
+
+  const { getSetting } = usePageCustomization('global_header');
+  const searchPlaceholder = getSetting('main_header_nav', 'searchPlaceholder', 'Search products...');
+  const showWishlistLink = getSetting('main_header_nav', 'showWishlistLink', true);
+  const showAccountLink = getSetting('main_header_nav', 'showAccountLink', true);
 
   // Close menus on route change
   useEffect(() => {
@@ -293,23 +299,25 @@ export default function Navbar() {
               aria-label="Search products"
             >
               <Search size={14} style={{ color: '#7c3aed', flexShrink: 0 }} />
-              <span className="nav-search-placeholder">Search products...</span>
+              <span className="nav-search-placeholder">{searchPlaceholder}</span>
             </button>
 
             {/* Wishlist Button with Counter Badge */}
-            <Link
-              to="/wishlist"
-              className="nav-icon-btn"
-              title="My Wishlist"
-              aria-label={`Wishlist: ${totalWishlistCount} items`}
-            >
-              <Heart size={17} />
-              {totalWishlistCount > 0 && (
-                <span className="nav-action-badge nav-action-badge-rose">
-                  {totalWishlistCount}
-                </span>
-              )}
-            </Link>
+            {showWishlistLink && (
+              <Link
+                to="/wishlist"
+                className="nav-icon-btn"
+                title="My Wishlist"
+                aria-label={`Wishlist: ${totalWishlistCount} items`}
+              >
+                <Heart size={17} />
+                {totalWishlistCount > 0 && (
+                  <span className="nav-action-badge nav-action-badge-rose">
+                    {totalWishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Cart Button (Clean Icon Button Only) */}
             <Link
@@ -327,105 +335,107 @@ export default function Navbar() {
             </Link>
 
             {/* Restored Auth: Profile Chip vs. Violet Gradient Sign In CTA */}
-            {isLoggedIn ? (
-              <div
-                className="nav-item-rel"
-                ref={userMenuRef}
-                onMouseEnter={handleUserMouseEnter}
-                onMouseLeave={handleUserMouseLeave}
-              >
-                <button
-                  type="button"
-                  className="nav-user-chip"
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    navigate('/profile?tab=profile');
-                  }}
-                  aria-expanded={isUserMenuOpen}
+            {showAccountLink && (
+              isLoggedIn ? (
+                <div
+                  className="nav-item-rel"
+                  ref={userMenuRef}
+                  onMouseEnter={handleUserMouseEnter}
+                  onMouseLeave={handleUserMouseLeave}
                 >
-                  <div className="nav-user-avatar">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                  <span className="nav-user-name">
-                    {user?.name?.split(' ')[0] || 'Account'}
-                  </span>
-                  <ChevronDown
-                    size={13}
-                    style={{
-                      color: '#7c3aed',
-                      transform: isUserMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s ease',
+                  <button
+                    type="button"
+                    className="nav-user-chip"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      navigate('/profile?tab=profile');
                     }}
-                  />
-                </button>
-
-                {isUserMenuOpen && (
-                  <div
-                    className="nav-user-menu"
-                    onMouseEnter={handleUserMouseEnter}
-                    onMouseLeave={handleUserMouseLeave}
+                    aria-expanded={isUserMenuOpen}
                   >
-                    <div style={{ padding: '0.35rem 0.65rem 0.2rem', fontSize: '0.78rem', color: '#64748b' }}>
-                      Signed in as <strong style={{ color: '#1e1b4b', display: 'block' }}>{user?.email || user?.name}</strong>
+                    <div className="nav-user-avatar">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
-                    <div className="nav-user-menu-divider" />
-                    <Link
-                      to="/profile?tab=profile"
-                      className="nav-user-menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <User size={15} />
-                      <span>My Profile</span>
-                    </Link>
-                    <Link
-                      to="/track-order"
-                      className="nav-user-menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <Truck size={15} />
-                      <span>Track Order</span>
-                    </Link>
-                    <Link
-                      to="/profile?tab=orders"
-                      className="nav-user-menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <Package size={15} />
-                      <span>My Orders</span>
-                    </Link>
-                    <Link
-                      to="/wishlist"
-                      className="nav-user-menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <Heart size={15} />
-                      <span>Wishlist</span>
-                    </Link>
-                    <div className="nav-user-menu-divider" />
-                    <button
-                      type="button"
-                      onClick={() => setShowLogoutConfirm(true)}
-                      className="nav-user-menu-link"
+                    <span className="nav-user-name">
+                      {user?.name?.split(' ')[0] || 'Account'}
+                    </span>
+                    <ChevronDown
+                      size={13}
                       style={{
-                        width: '100%',
-                        border: 'none',
-                        background: 'transparent',
-                        color: '#e11d48',
-                        cursor: 'pointer',
-                        textAlign: 'left',
+                        color: '#7c3aed',
+                        transform: isUserMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease',
                       }}
+                    />
+                  </button>
+
+                  {isUserMenuOpen && (
+                    <div
+                      className="nav-user-menu"
+                      onMouseEnter={handleUserMouseEnter}
+                      onMouseLeave={handleUserMouseLeave}
                     >
-                      <LogOut size={15} />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link to="/login" className="nav-cta-btn">
-                <User size={15} />
-                <span>Sign In</span>
-              </Link>
+                      <div style={{ padding: '0.35rem 0.65rem 0.2rem', fontSize: '0.78rem', color: '#64748b' }}>
+                        Signed in as <strong style={{ color: '#1e1b4b', display: 'block' }}>{user?.email || user?.name}</strong>
+                      </div>
+                      <div className="nav-user-menu-divider" />
+                      <Link
+                        to="/profile?tab=profile"
+                        className="nav-user-menu-link"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <User size={15} />
+                        <span>My Profile</span>
+                      </Link>
+                      <Link
+                        to="/track-order"
+                        className="nav-user-menu-link"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Truck size={15} />
+                        <span>Track Order</span>
+                      </Link>
+                      <Link
+                        to="/profile?tab=orders"
+                        className="nav-user-menu-link"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Package size={15} />
+                        <span>My Orders</span>
+                      </Link>
+                      <Link
+                        to="/wishlist"
+                        className="nav-user-menu-link"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Heart size={15} />
+                        <span>Wishlist</span>
+                      </Link>
+                      <div className="nav-user-menu-divider" />
+                      <button
+                        type="button"
+                        onClick={() => setShowLogoutConfirm(true)}
+                        className="nav-user-menu-link"
+                        style={{
+                          width: '100%',
+                          border: 'none',
+                          background: 'transparent',
+                          color: '#e11d48',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <LogOut size={15} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link to="/login" className="nav-cta-btn">
+                  <User size={15} />
+                  <span>Sign In</span>
+                </Link>
+              )
             )}
 
             {/* Mobile Hamburger Toggle (Shown on tablet/mobile) */}
@@ -523,7 +533,7 @@ export default function Navbar() {
             <input
               type="text"
               className="mobile-search-input"
-              placeholder="Search products, brands, options, jewelry..."
+              placeholder={searchPlaceholder || "Search products, brands, options, jewelry..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -582,7 +592,7 @@ export default function Navbar() {
                   ref={searchInputRef}
                   type="text"
                   className="nav-search-input"
-                  placeholder="Search premium headphones, watches, apparel, shoes..."
+                  placeholder={searchPlaceholder || "Search premium headphones, watches, apparel, shoes..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />

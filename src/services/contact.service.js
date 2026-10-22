@@ -2,9 +2,20 @@ import api from './api';
 
 export const contactService = {
   /**
-   * Submit Contact / Inquiry Form (FormData with optional file and source)
+   * Directly upload reference file to AWS S3 bucket (picky/inquiries)
    */
-  submit: (formData) => api.post('/contact', formData),
+  uploadFile: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/contact/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  /**
+   * Submit Contact / Inquiry Form (FormData or JSON payload with S3 file info)
+   */
+  submit: (payload) => api.post('/contact', payload),
 
   /**
    * Admin: List all inquiries with source, status, search, and pagination

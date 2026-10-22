@@ -5,6 +5,7 @@ import BestSellersHeroSection from '../../components/bestseller/BestSellersHeroS
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
 import { getProducts, SLUG_ALIAS_MAP } from '../../data';
+import { usePageCustomization } from '../../store/customizationStore';
 import '../../styles/home-premium.css';
 import {
   Flame,
@@ -65,10 +66,11 @@ const PRICE_FILTERS = [
 ];
 
 export default function BestSellers() {
+  const { isEnabled, getSetting } = usePageCustomization('best_sellers');
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('popular');
+  const [sortBy, setSortBy] = useState(() => getSetting('best_sellers_feed', 'defaultSort', 'popular'));
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('all');
   const catalogRef = useRef(null);
@@ -149,7 +151,7 @@ export default function BestSellers() {
           const items = res?.data?.data || res?.data || [];
           const sourceList = Array.isArray(items) ? items : [];
           const bestSellersOnly = sourceList.filter(isBestSellerProduct);
-          setAllProducts(bestSellersOnly);
+          setAllProducts(bestSellersOnly.length > 0 ? bestSellersOnly : sourceList);
         }
       } catch (err) {
         if (isMounted) {
@@ -260,9 +262,10 @@ export default function BestSellers() {
     <PageWrapper>
       <div style={{ background: 'transparent', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Hero Showcase with SVG Doodles & Stamp ── */}
-        <BestSellersHeroSection />
+        {isEnabled('best_sellers_hero') && <BestSellersHeroSection />}
 
         {/* ── 2. Catalog & Interactive Filter Grid Anchor ── */}
+        {isEnabled('best_sellers_feed') && (
         <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px', paddingTop: '4.5rem' }}>
           {/* Header Title Section */}
           <div className="bestsellers-catalog-header">
@@ -434,7 +437,7 @@ export default function BestSellers() {
             >
               <Award size={48} color="#c084fc" style={{ margin: '0 auto 1rem auto' }} />
               <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e1b4b', marginBottom: '0.5rem' }}>
-                No Best Sellers Matched These Filters
+                {getSetting('best_sellers_feed', 'emptyMessage', 'No Best Sellers Matched These Filters')}
               </h3>
               <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto 1.5rem auto' }}>
                 Try relaxing the rating or search filter to see more top items.
@@ -457,8 +460,12 @@ export default function BestSellers() {
               </button>
             </div>
           )}
+        </div>
+        )}
 
+        <div className="container">
           {/* ── 3. Quality Guarantee & Buyer Trust Strip ── */}
+          {isEnabled('best_sellers_trust_strip') && (
           <div
             style={{
               background: '#ffffff',
@@ -487,9 +494,11 @@ export default function BestSellers() {
               >
                 <Award size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>CAREFULLY SELECTED PRODUCTS</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
+                {getSetting('best_sellers_trust_strip', 'pillar1Title', 'CAREFULLY SELECTED PRODUCTS')}
+              </h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.
+                {getSetting('best_sellers_trust_strip', 'pillar1Desc', 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.')}
               </p>
             </div>
 
@@ -508,9 +517,11 @@ export default function BestSellers() {
               >
                 <ShoppingBag size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>EASY SHOPPING EXPERIENCE</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
+                {getSetting('best_sellers_trust_strip', 'pillar2Title', 'EASY SHOPPING EXPERIENCE')}
+              </h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Simple product discovery, clear pricing, and a smooth shopping journey.
+                {getSetting('best_sellers_trust_strip', 'pillar2Desc', 'Simple product discovery, clear pricing, and a smooth shopping journey.')}
               </p>
             </div>
 
@@ -529,9 +540,11 @@ export default function BestSellers() {
               >
                 <Truck size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>RELIABLE ORDER UPDATES</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
+                {getSetting('best_sellers_trust_strip', 'pillar3Title', 'RELIABLE ORDER UPDATES')}
+              </h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Track your order from confirmation to shipping and delivery through your order details.
+                {getSetting('best_sellers_trust_strip', 'pillar3Desc', 'Track your order from confirmation to shipping and delivery through your order details.')}
               </p>
             </div>
 
@@ -550,27 +563,31 @@ export default function BestSellers() {
               >
                 <Headphones size={26} />
               </div>
-              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>CUSTOMER SUPPORT</h4>
+              <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
+                {getSetting('best_sellers_trust_strip', 'pillar4Title', 'CUSTOMER SUPPORT')}
+              </h4>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Get help with your order, products, delivery, or other shopping questions.
+                {getSetting('best_sellers_trust_strip', 'pillar4Desc', 'Get help with your order, products, delivery, or other shopping questions.')}
               </p>
             </div>
           </div>
+          )}
 
           {/* ── 4. Final Community CTA Banner ── */}
+          {isEnabled('best_sellers_community') && (
           <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
             <div className="hp-final-cta-container" style={{ padding: 0 }}>
               <div className="hp-final-cta-box">
-                <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
-                <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+                <span className="hp-final-cta-badge">{getSetting('best_sellers_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
+                <h2 className="hp-final-title">{getSetting('best_sellers_community', 'title', 'Connect With Us @picky.co.in')}</h2>
                 <p className="hp-final-subtitle">
-                  Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+                  {getSetting('best_sellers_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
                 </p>
                 <div className="hp-final-cta-btn-group no-hover-fx">
                   <button
                     type="button"
                     className="hp-final-cta-btn no-hover-fx"
-                    onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(getSetting('best_sellers_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
@@ -584,7 +601,10 @@ export default function BestSellers() {
                   <button
                     type="button"
                     className="hp-final-cta-outline-btn no-hover-fx"
-                    onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                    onClick={() => {
+                      const waNum = getSetting('best_sellers_community', 'whatsappNumber', '918300295721').replace(/\D/g, '');
+                      window.open(`https://wa.me/${waNum}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer');
+                    }}
                     aria-label="Join WhatsApp Group"
                     title="Join WhatsApp Group"
                   >
@@ -601,6 +621,7 @@ export default function BestSellers() {
               </div>
             </div>
           </section>
+          )}
         </div>
       </div>
     </PageWrapper>

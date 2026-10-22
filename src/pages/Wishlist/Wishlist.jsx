@@ -10,6 +10,7 @@ import { wishlistService } from '../../services/wishlist.service';
 import styles from './Wishlist.module.css';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
+import { usePageCustomization } from '../../store/customizationStore';
 import {
   Heart,
   ShoppingCart,
@@ -111,6 +112,7 @@ export const ASSURANCE_FEATURES = [
 ];
 
 export default function Wishlist() {
+  const { isEnabled, getSetting } = usePageCustomization('wishlist');
   const { items, removeItem, setWishlist, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
   const { isLoggedIn } = useAuthStore();
@@ -322,10 +324,12 @@ export default function Wishlist() {
     <PageWrapper>
       <div className={styles['wishlist-wrapper']}>
         <div className={styles['container']}>
-          {/* ── Luxury Stats Strip (Page Header) - Always Visible ── */}
+          {/* ── Luxury Stats Strip (Page Header) ── */}
+          {isEnabled('wishlist_stats') && (
           <div className={styles['stats-strip']}>
             <div className={styles['stats-cards-row']}>
-              {/* Stat 1 – Total Items (Pre-filled solid purple active state) */}
+              {/* Stat 1 – Total Items */}
+              {getSetting('wishlist_stats', 'showTotalItems', true) && (
               <div className={`${styles['stat-card-wrapper']} ${styles['active-wrapper']}`}>
                 <div className={`${styles['stat-card']} ${styles['stat-card-active']}`}>
                   <div className={styles['stat-icon-wrap']}>
@@ -338,14 +342,18 @@ export default function Wishlist() {
                   <div className={styles['stat-underline']} />
                 </div>
               </div>
+              )}
 
+              {getSetting('wishlist_stats', 'showTotalItems', true) && getSetting('wishlist_stats', 'showWishlistValue', true) && (
               <div className={styles['stat-connector']}>
                 <span className={styles['connector-dot']} />
                 <div className={styles['connector-line']} />
                 <span className={styles['connector-dot']} />
               </div>
+              )}
 
               {/* Stat 2 – Wishlist Value */}
+              {getSetting('wishlist_stats', 'showWishlistValue', true) && (
               <div className={styles['stat-card-wrapper']}>
                 <div className={styles['stat-card']}>
                   <div className={styles['stat-icon-wrap']}>
@@ -358,14 +366,18 @@ export default function Wishlist() {
                   <div className={styles['stat-underline']} />
                 </div>
               </div>
+              )}
 
+              {getSetting('wishlist_stats', 'showWishlistValue', true) && getSetting('wishlist_stats', 'showPotentialSavings', true) && (
               <div className={styles['stat-connector']}>
                 <span className={styles['connector-dot']} />
                 <div className={styles['connector-line']} />
                 <span className={styles['connector-dot']} />
               </div>
+              )}
 
               {/* Stat 3 – Potential Savings */}
+              {getSetting('wishlist_stats', 'showPotentialSavings', true) && (
               <div className={styles['stat-card-wrapper']}>
                 <div className={styles['stat-card']}>
                   <div className={styles['stat-icon-wrap']}>
@@ -378,8 +390,10 @@ export default function Wishlist() {
                   <div className={styles['stat-underline']} />
                 </div>
               </div>
+              )}
             </div>
           </div>
+          )}
 
           {/* ── Controls Bar ── */}
           {displayItems.length > 0 && (
@@ -416,21 +430,24 @@ export default function Wishlist() {
           )}
 
           {/* ── Product Grid or Empty State ── */}
-          {displayItems.length === 0 ? (
+          {isEnabled('wishlist_grid') && (
+            displayItems.length === 0 ? (
             <div className={styles['empty-card']}>
               <div className={styles['empty-icon-bubble']}>
                 <Heart size={38} />
               </div>
-              <h2 className={styles['empty-title']}>Your Wishlist is Empty</h2>
+              <h2 className={styles['empty-title']}>
+                {getSetting('wishlist_grid', 'emptyTitle', 'Your Wishlist is Empty')}
+              </h2>
               <p className={styles['empty-desc']}>
-                Explore our festive collections and tap the heart icon to save your favorites!
+                {getSetting('wishlist_grid', 'emptySubtitle', 'Explore our festive collections and tap the heart icon to save your favorites!')}
               </p>
               <Link
                 to="/products"
                 className="btn btn-primary btn-lg"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
               >
-                Explore Store <ArrowRight size={18} />
+                {getSetting('wishlist_grid', 'shopButtonText', 'Explore Store')} <ArrowRight size={18} />
               </Link>
 
               <div>
@@ -607,21 +624,33 @@ export default function Wishlist() {
                 );
               })}
             </div>
-          )}
+          )
+        )}
 
           {/* ── Recommended Products Running Showcase (Infinite 1-Row Marquee Loop) ── */}
-          {marqueeRecommended.length > 0 && (
+          {isEnabled('wishlist_recommended') && marqueeRecommended.length > 0 && (
             <section className={styles['recommended-section']} aria-label="Recommended Products">
               <div className={styles['recommended-header']}>
                 <div className={styles['recommended-badge']}>
                   <Sparkles size={14} className={styles['recommended-sparkle']} />
-                  <span>CURATED PICKS FOR YOU</span>
+                  <span>{getSetting('wishlist_recommended', 'badgeText', 'CURATED PICKS FOR YOU')}</span>
                 </div>
                 <h3 className={styles['recommended-title']}>
-                  Recommended <span>Products</span>
+                  {(() => {
+                    const title = getSetting('wishlist_recommended', 'title', 'Recommended Products');
+                    const words = title.split(' ');
+                    if (words.length > 1) {
+                      return (
+                        <>
+                          {words[0]} <span>{words.slice(1).join(' ')}</span>
+                        </>
+                      );
+                    }
+                    return title;
+                  })()}
                 </h3>
                 <p className={styles['recommended-subtitle']}>
-                  Trending favorites and top-rated drops handpicked to match your style.
+                  {getSetting('wishlist_recommended', 'subtitle', 'Trending favorites and top-rated drops handpicked to match your style.')}
                 </p>
               </div>
 
@@ -643,6 +672,7 @@ export default function Wishlist() {
         </div>
 
         {/* ── 4. Luxury Picky E-Commerce Curated Parallax Banner (100% Full Width & Fixed BG) ── */}
+        {isEnabled('wishlist_parallax_banner') && (
         <section
           className={styles['wardrobe-banner-section']}
           aria-label="Curate Your Entire Wardrobe"
@@ -652,27 +682,29 @@ export default function Wishlist() {
           <div className={styles['wardrobe-banner-content']}>
             <span className={styles['wardrobe-atelier-tag']}>
               <Sparkles size={13} />
-              <span>THE PICKY FLAGSHIP ATELIER</span>
+              <span>{getSetting('wishlist_parallax_banner', 'tagText', 'THE PICKY FLAGSHIP ATELIER')}</span>
             </span>
 
             <h2 className={styles['wardrobe-title']}>
-              Curate Your Entire Wardrobe
+              {getSetting('wishlist_parallax_banner', 'title', 'Curate Your Entire Wardrobe')}
             </h2>
 
             <div className={styles['wardrobe-sparkle-divider']}>✦</div>
 
             <p className={styles['wardrobe-desc']}>
-              Explore our latest arrivals across Fashion, Tech, Jewellery, and Lifestyle. Handcrafted and handpicked for your statement aesthetic.
+              {getSetting('wishlist_parallax_banner', 'desc', 'Explore our latest arrivals across Fashion, Tech, Jewellery, and Lifestyle. Handcrafted and handpicked for your statement aesthetic.')}
             </p>
 
-            <Link to="/new-arrivals" className={styles['wardrobe-cta-btn']}>
-              <span>DISCOVER NEW ARRIVALS</span>
+            <Link to={getSetting('wishlist_parallax_banner', 'ctaLink', '/new-arrivals')} className={styles['wardrobe-cta-btn']}>
+              <span>{getSetting('wishlist_parallax_banner', 'ctaText', 'DISCOVER NEW ARRIVALS')}</span>
               <ArrowRight size={16} />
             </Link>
           </div>
         </section>
+        )}
 
         {/* ── 5. The Picky Assurance & Quality Guarantee Section ── */}
+        {isEnabled('wishlist_assurance') && (
         <section
           className={styles['assurance-section']}
           aria-label="The Picky Assurance & Quality Guarantee"
@@ -680,10 +712,10 @@ export default function Wishlist() {
           <div className={styles['container']}>
             <div className={styles['assurance-header']}>
               <span className={styles['assurance-tag']}>
-                THE PICKY ASSURANCE
+                {getSetting('wishlist_assurance', 'tagText', 'THE PICKY ASSURANCE')}
               </span>
               <h2 className={styles['assurance-title']}>
-                Authentic Service & Quality Guarantee
+                {getSetting('wishlist_assurance', 'title', 'Authentic Service & Quality Guarantee')}
               </h2>
             </div>
 
@@ -703,6 +735,7 @@ export default function Wishlist() {
             </div>
           </div>
         </section>
+        )}
       </div>
 
       {/* ── Remove Confirmation Modal ── */}

@@ -10,6 +10,7 @@ import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
+import { usePageCustomization } from '../../store/customizationStore';
 import { wishlistService } from '../../services/wishlist.service';
 import { contactService } from '../../services/contact.service';
 import { useReviewStore } from '../../store/reviewStore';
@@ -331,6 +332,7 @@ const HomepageInquirySection = () => {
 };
 
 export default function Home() {
+  const { sections, isEnabled, getSetting } = usePageCustomization('home');
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
@@ -523,19 +525,19 @@ export default function Home() {
           const trending = pItems.filter(
             (p) => hasTag(p, 'trend') || Boolean(p.isTrending)
           );
-          setTrendingProducts(trending);
+          setTrendingProducts(trending.length > 0 ? trending : pItems.slice(0, 10));
 
           // 2. Best Sellers filter (strictly matches 'best sellers', 'best', 'seller', or isBestSeller)
           const bestSellers = pItems.filter(
             (p) => hasTag(p, 'best') || hasTag(p, 'seller') || Boolean(p.isBestSeller)
           );
-          setFeaturedProducts(bestSellers);
+          setFeaturedProducts(bestSellers.length > 0 ? bestSellers : pItems.slice(0, 10));
 
           // 3. New Arrivals filter (strictly matches 'new arrivals', 'new', 'arrival', or isNewArrival)
           const arrivals = pItems.filter(
             (p) => hasTag(p, 'new') || hasTag(p, 'arrival') || Boolean(p.isNewArrival)
           );
-          setNewArrivals(arrivals);
+          setNewArrivals(arrivals.length > 0 ? arrivals : pItems.slice(0, 10));
 
           // 4. Limited Deals filter: products with ACTIVE discounts from Discounts page, followed by tagged deal products
           const now = Date.now();
@@ -558,7 +560,8 @@ export default function Home() {
                 ),
               ]
             : tagDeals;
-          setDealProducts(deals);
+          const fallbackDeals = pItems.filter((p) => p.discountPrice && p.discountPrice < p.price);
+          setDealProducts(deals.length > 0 ? deals : (fallbackDeals.length > 0 ? fallbackDeals : pItems.slice(0, 8)));
         } else {
           setFeaturedProducts([]);
           setTrendingProducts([]);
@@ -695,12 +698,12 @@ export default function Home() {
     showToast(`Added "${spotlightProduct.name}" to cart!`, 'success');
   };
 
-  return (
-    <PageWrapper>
-      {/* 01 — EDITORIAL PRODUCT-CUTOUT HERO */}
+  
+  const sectionRenderers = {
+    hero_banner: () => isEnabled('hero_banner') && (
       <EditorialHero />
-
-      {/* 02 — DOME / ARCH CATEGORY NAVIGATION SECTION */}
+    ),
+    shop_by_category: () => isEnabled('shop_by_category') && (
       <section className="hp-category-nav">
         <div className="hp-category-container">
           {/* Header Bar */}
@@ -712,16 +715,71 @@ export default function Home() {
                 <span className="hp-eyebrow-mobile">QUICK BUY</span>
                 <span className="hp-line hp-eyebrow-desktop" />
               </div>
-              <h2 className="hp-cat-title">
-                <span className="hp-title-desktop">Explore <span className="purple-accent-text">Categories</span></span>
-                <span className="hp-title-mobile">Top Categories</span>
-              </h2>
-              <p className="hp-cat-subtitle">Discover products for everyday life, all in one place.</p>
+              {(() => {
+                const rawTitle = getSetting("shop_by_category", "title", "Shop by Category");
+                const titlePrefix = getSetting("shop_by_category", "titlePrefix", "");
+                const titleHighlight = getSetting("shop_by_category", "titleHighlight", "");
+
+                let prefix = titlePrefix;
+                let highlight = titleHighlight;
+
+                if (!prefix && !highlight) {
+                  const words = (rawTitle || "Shop by Category").trim().split(/\s+/);
+                  if (words.length > 1) {
+                    highlight = words.pop();
+                    prefix = words.join(" ");
+                  } else {
+                    prefix = rawTitle;
+                    highlight = "";
+                  }
+                }
+
+                const titleFontSize = getSetting("shop_by_category", "titleFontSize", 34);
+                const titleColor = getSetting("shop_by_category", "titleColor", "#1e1b4b");
+                const titleHighlightColor = getSetting("shop_by_category", "titleHighlightColor", "#7c3aed");
+                const subtitle = getSetting("shop_by_category", "subtitle", "Discover products for everyday life, all in one place.");
+                const subtitleFontSize = getSetting("shop_by_category", "subtitleFontSize", 15);
+                const subtitleColor = getSetting("shop_by_category", "subtitleColor", "#64748b");
+
+                const parsedTitleFontSize = typeof titleFontSize === 'number' ? `${titleFontSize}px` : (titleFontSize || 'clamp(2rem, 3.5vw, 3rem)');
+                const parsedSubtitleFontSize = typeof subtitleFontSize === 'number' ? `${subtitleFontSize}px` : (subtitleFontSize || 'clamp(0.9rem, 1.1vw, 1.05rem)');
+
+                return (
+                  <>
+                    <h2
+                      className="hp-cat-title"
+                      style={{
+                        fontSize: parsedTitleFontSize,
+                        lineHeight: 1.15,
+                      }}
+                    >
+                      <span style={{ color: titleColor }}>{prefix}</span>
+                      {highlight ? (
+                        <>
+                          {' '}
+                          <span style={{ color: titleHighlightColor }}>{highlight}</span>
+                        </>
+                      ) : null}
+                    </h2>
+                    {subtitle && (
+                      <p
+                        className="hp-cat-subtitle"
+                        style={{
+                          fontSize: parsedSubtitleFontSize,
+                          color: subtitleColor,
+                        }}
+                      >
+                        {subtitle}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
-            <button className="hp-cat-view-all-btn" onClick={() => navigate('/categories')}>
-              <span className="hp-view-all-desktop">View All</span>
-              <span className="hp-view-all-mobile">VIEW ALL</span>
+            <button className="hp-cat-view-all-btn" onClick={() => navigate(getSetting("shop_by_category", "viewAllUrl", "/categories"))}>
+              <span className="hp-view-all-desktop">{getSetting("shop_by_category", "viewAllText", "View All")}</span>
+              <span className="hp-view-all-mobile">{String(getSetting("shop_by_category", "viewAllText", "View All")).toUpperCase()}</span>
               <ArrowRight size={14} />
             </button>
           </div>
@@ -780,9 +838,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* 03 — HORIZONTAL PRODUCT EXPERIENCE (TRENDING NOW - CONTINUOUS LOOP) */}
-      {trendingProducts.length > 0 && (
+    ),
+    trending_products: () => isEnabled('trending_products') && trendingProducts.length > 0 && (
       <section
         className="hp-horizontal-section"
         onMouseEnter={() => setIsTrendingHovered(true)}
@@ -793,11 +850,11 @@ export default function Home() {
         <div className="hp-horizontal-inner">
           <div className="hp-section-header">
             <FadeUp>
-              <div className="hp-section-badge">POPULAR SELECTION</div>
+              <div className="hp-section-badge">{getSetting("trending_products", "badgeText", "POPULAR SELECTION")}</div>
               <h2 className="hp-section-title">
-                Trending <span className="editorial-purple-accent">Now</span>
+                {getSetting("trending_products", "title", "Trending Now")}
               </h2>
-              <p className="hp-section-subtitle">Discover the products everyone is talking about.</p>
+              <p className="hp-section-subtitle">{getSetting("trending_products", "subtitle", "Discover the products everyone is talking about.")}</p>
             </FadeUp>
 
             {/* Right-Side Premium Carousel Navigation Controls */}
@@ -838,19 +895,17 @@ export default function Home() {
           </div>
         </div>
       </section>
-      )}
-
-      {/* 04 — FLASH DEALS / LIMITED TIME DEALS (POWERED BY REAL MOCK DATA) */}
-      {allDealProducts.length > 0 && (
+    ),
+    flash_deals: () => isEnabled('flash_deals') && allDealProducts.length > 0 && (
       <section className="hp-flash-deals-section">
         <div className="hp-flash-deals-container">
           
           {/* Header Row: Title + Live Ticking Countdown */}
           <div className="hp-flash-deals-header">
             <FadeUp>
-              <div className="hp-section-badge">FLASH SALE • LIMITED TIME ONLY</div>
+              <div className="hp-section-badge">{getSetting("flash_deals", "badgeText", "FLASH SALE • LIMITED TIME ONLY")}</div>
               <h2 className="hp-section-title">
-                Limited Time <span className="editorial-purple-accent">Deals</span>
+                {getSetting("flash_deals", "headline", "Limited Time Deals")}
               </h2>
             </FadeUp>
 
@@ -975,20 +1030,18 @@ export default function Home() {
           </div>
         </div>
       </section>
-      )}
-
-      {/* 04 — NEW ARRIVALS SHOWCASE (REPLACES OLD STORY SECTION) */}
-      {newArrivals.length > 0 && (
+    ),
+    new_arrivals: () => isEnabled('new_arrivals') && newArrivals.length > 0 && (
       <section className="hp-new-arrivals-section">
         <div className="hp-new-arrivals-container">
           <div className="hp-new-arrivals-header">
             <FadeUp>
-              <div className="hp-section-badge">JUST DROPPED • 2026 EDITION</div>
+              <div className="hp-section-badge">{getSetting("new_arrivals", "badge", "JUST DROPPED • 2026 EDITION")}</div>
               <h2 className="hp-section-title">
-                New <span className="editorial-purple-accent">Arrivals</span>
+                {getSetting("new_arrivals", "title", "New Arrivals")}
               </h2>
               <p className="hp-section-subtitle">
-                Be the first to explore our latest handpicked releases, updated weekly with artisanal quality.
+                {getSetting("new_arrivals", "subtitle", "Be the first to explore our latest handpicked releases, updated weekly with artisanal quality.")}
               </p>
             </FadeUp>
 
@@ -1030,22 +1083,17 @@ export default function Home() {
           </div>
         </div>
       </section>
-      )}
-
-
-
-
-      {/* 07 — BEST SELLERS (1 ROW OF 5 CARDS) */}
-      {featuredProducts.length > 0 && (
+    ),
+    best_sellers: () => isEnabled('best_sellers') && featuredProducts.length > 0 && (
       <section className="hp-bestsellers-section">
         <div className="hp-bestsellers-inner">
           <div className="hp-section-header">
             <FadeUp>
-              <div className="hp-section-badge">CUSTOMER FAVORITES</div>
+              <div className="hp-section-badge">{getSetting("best_sellers", "badge", "CUSTOMER FAVORITES")}</div>
               <h2 className="hp-section-title">
-                Best <span className="editorial-purple-accent">Sellers</span>
+                {getSetting("best_sellers", "title", "Best Sellers")}
               </h2>
-              <p className="hp-section-subtitle">Customer favorites, selected for you.</p>
+              <p className="hp-section-subtitle">{getSetting("best_sellers", "subtitle", "Customer favorites, selected for you.")}</p>
             </FadeUp>
 
             <button
@@ -1062,20 +1110,19 @@ export default function Home() {
           </div>
         </div>
       </section>
-      )}
-
-      {/* 08 — WHY SHOP WITH US */}
+    ),
+    why_picky: () => isEnabled('why_picky') && (
       <section className="hp-trust-section">
         <div className="hp-trust-container">
           
           <div className="hp-trust-header">
             <FadeUp>
-              <div className="hp-section-badge">THE PICKY COMMITMENT</div>
+              <div className="hp-section-badge">{getSetting("why_picky", "badgeText", "THE PICKY COMMITMENT")}</div>
               <h2 className="hp-section-title">
-                Why Shop <span className="editorial-purple-accent">With Us</span>
+                {getSetting("why_picky", "title", "Why Shop With Us")}
               </h2>
               <p className="hp-section-subtitle">
-                Experience uncompromised quality, lightning-fast dispatch, and 100% buyer protection.
+                {getSetting("why_picky", "subtitle", "Experience uncompromised quality, lightning-fast dispatch, and 100% buyer protection.")}
               </p>
             </FadeUp>
           </div>
@@ -1124,19 +1171,19 @@ export default function Home() {
 
         </div>
       </section>
-
-      {/* 09 — CUSTOMER REVIEWS SHOWCASE */}
+    ),
+    customer_reviews: () => isEnabled('customer_reviews') && (
       <section className="hp-reviews-section">
         <div className="hp-reviews-container">
           
           <div className="hp-reviews-header">
             <FadeUp>
-              <div className="hp-section-badge">REAL REVIEWS • 4.9/5 RATING</div>
+              <div className="hp-section-badge">{getSetting("customer_reviews", "badgeText", "REAL REVIEWS • 4.9/5 RATING")}</div>
               <h2 className="hp-section-title">
-                Loved By <span className="editorial-purple-accent">Thousands</span>
+                {getSetting("customer_reviews", "title", "Loved By Thousands")}
               </h2>
               <p className="hp-section-subtitle">
-                Read real experiences from over 2,400+ verified shoppers across India.
+                {getSetting("customer_reviews", "subtitle", "Read real experiences from over 2,400+ verified shoppers across India.")}
               </p>
             </FadeUp>
 
@@ -1306,21 +1353,21 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* 9.5 — HOMEPAGE QUICK INQUIRY SECTION */}
+    ),
+    quick_inquiry: () => isEnabled('quick_inquiry') && (
       <HomepageInquirySection />
-
-      {/* 10 — FINAL CTA BANNER / INSTAGRAM COMMUNITY */}
+    ),
+    final_cta_banner: () => isEnabled('final_cta_banner') && (
       <section className="hp-final-cta-section">
         <div className="hp-final-cta-container">
           <div className="hp-final-cta-box">
             <FadeUp delay={100}>
-              <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
-              <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+              <span className="hp-final-cta-badge">{getSetting("final_cta_banner", "badgeText", "✦ JOIN OUR COMMUNITY")}</span>
+              <h2 className="hp-final-title">{getSetting("final_cta_banner", "title", "Connect With Us @picky.co.in")}</h2>
             </FadeUp>
             <FadeUp delay={200}>
               <p className="hp-final-subtitle">
-                Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+                {getSetting("final_cta_banner", "subtitle", "Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.")}
               </p>
             </FadeUp>
             <FadeUp delay={300}>
@@ -1328,7 +1375,7 @@ export default function Home() {
                 <button
                   type="button"
                   className="hp-final-cta-btn no-hover-fx"
-                  onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(getSetting('final_cta_banner', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
@@ -1343,7 +1390,7 @@ export default function Home() {
                 <button
                   type="button"
                   className="hp-final-cta-outline-btn no-hover-fx"
-                  onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(`https://wa.me/${getSetting('final_cta_banner', 'whatsappNumber', '918300295721')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer')}
                   aria-label="Join WhatsApp Group"
                   title="Join WhatsApp Group"
                 >
@@ -1361,8 +1408,34 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
-      {/* 11 — EXISTING FOOTER is handled by PageWrapper */}
+    ),
+  };
+
+  // Section Aliases for database compatibility
+  sectionRenderers.featured_products = sectionRenderers.trending_products;
+  sectionRenderers.special_offers = sectionRenderers.flash_deals;
+
+  return (
+    <PageWrapper>
+      {(Array.isArray(sections) && sections.length > 0
+        ? sections
+        : [
+            { id: 'hero_banner' },
+            { id: 'shop_by_category' },
+            { id: 'trending_products' },
+            { id: 'flash_deals' },
+            { id: 'new_arrivals' },
+            { id: 'best_sellers' },
+            { id: 'why_picky' },
+            { id: 'customer_reviews' },
+            { id: 'quick_inquiry' },
+            { id: 'final_cta_banner' },
+          ]
+      ).map((sec) => {
+        const renderFn = sectionRenderers[sec.id];
+        return renderFn ? <React.Fragment key={sec.id}>{renderFn()}</React.Fragment> : null;
+      })}
     </PageWrapper>
+
   );
 }

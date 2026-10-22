@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Copy, Check, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { useUiStore } from '../../../store/uiStore';
+import { usePageCustomization } from '../../../store/customizationStore';
 
 export default function CategoryPromoBanner() {
+  const { getSetting } = usePageCustomization('categories');
+  const promoTitle = getSetting('categories_promo_banner', 'title', 'Mega Department Carnival 2026');
+  const promoSubtitle = getSetting('categories_promo_banner', 'subtitle', 'Handloom sarees, traditional snacks, smart electronics & kitchen gadgets at unmatched direct-from-artisan prices.');
+  const couponCode = getSetting('categories_promo_banner', 'couponCode', 'CARNIVAL200');
+
   const [copied, setCopied] = useState(false);
   const { showToast } = useUiStore();
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText('PICKYFIRST');
+    navigator.clipboard.writeText(couponCode);
     setCopied(true);
     if (showToast) {
-      showToast('Coupon code "PICKYFIRST" copied! ✨', 'success');
+      showToast(`Coupon code "${couponCode}" copied! ✨`, 'success');
     }
     setTimeout(() => setCopied(false), 2400);
   };
@@ -96,7 +102,7 @@ export default function CategoryPromoBanner() {
               textShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
             }}
           >
-            Grab Up to 60% OFF Across All Departments
+            {promoTitle}
           </h2>
 
           <p
@@ -108,7 +114,7 @@ export default function CategoryPromoBanner() {
               maxWidth: '520px',
             }}
           >
-            Handloom sarees, traditional snacks, smart electronics & kitchen gadgets at unmatched direct-from-artisan prices.
+            {promoSubtitle}
           </p>
 
           {/* 3 Value Checkmark Badges */}

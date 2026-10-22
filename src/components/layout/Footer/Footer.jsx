@@ -25,9 +25,11 @@ import {
   Ruler,
 } from 'lucide-react';
 import { useCategoryStore } from '../../../store/categoryStore';
+import { usePageCustomization } from '../../../store/customizationStore';
 import { contactService } from '../../../services/contact.service';
 
 export default function Footer() {
+  const { isEnabled, getSetting } = usePageCustomization('global_footer');
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const categories = useCategoryStore((state) => state.categories);
@@ -46,6 +48,7 @@ export default function Footer() {
   return (
     <footer className="picky-footer-root" role="contentinfo">
       {/* ── 1. Footer Skyline Banner (Infinite Running Animation) ─────────────── */}
+      {isEnabled('footer_skyline') && getSetting('footer_skyline', 'showSkylineBanner', true) && (
       <div className="footer-skyline-canvas-wrap" aria-hidden="true">
         <div className="footer-skyline-track">
           <div className="footer-skyline-group">
@@ -74,8 +77,10 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      )}
 
       {/* ── 2. Main Footer Body (Color Matched Royal Purple Theme) ─────────── */}
+      {isEnabled('footer_config') && (
       <div className="picky-footer-body">
         <div className="footer-container">
           <div className="footer-grid">
@@ -85,9 +90,9 @@ export default function Footer() {
               <div style={{ marginBottom: '0.85rem' }}>
                 <img src="/images/logo.png" alt="Picky Logo" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
               </div>
-              <h3 className="footer-heading">Picky's Newsletter</h3>
+              <h3 className="footer-heading">{getSetting('footer_config', 'newsletterTitle', "Picky's Newsletter")}</h3>
               <p className="footer-newsletter-text">
-                Subscribe for private drops, flash sales & <strong>₹200 instant discount coupons</strong> directly to your inbox.
+                {getSetting('footer_config', 'aboutText', "Subscribe for private drops, flash sales & ₹200 instant discount coupons directly to your inbox.")}
               </p>
 
               <form onSubmit={handleSubscribe} className="footer-newsletter-form">
@@ -120,7 +125,7 @@ export default function Footer() {
                 <span className="footer-social-title">Follow Picky</span>
                 <div className="footer-social-row">
                   <a
-                    href="https://instagram.com"
+                    href={getSetting('footer_config', 'instagram', 'https://instagram.com')}
                     target="_blank"
                     rel="noreferrer"
                     className="footer-social-icon"
@@ -134,11 +139,11 @@ export default function Footer() {
                     </svg>
                   </a>
                   <a
-                    href="https://wa.me/918300295721"
+                    href={`https://wa.me/${getSetting('footer_config', 'whatsapp', '918300295721').replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noreferrer"
                     className="footer-social-icon"
-                    title="WhatsApp (+91 83002 95721)"
+                    title="WhatsApp"
                     aria-label="WhatsApp"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -313,8 +318,8 @@ export default function Footer() {
                     <Phone size={15} className="footer-contact-icon" />
                   </div>
                   <div>
-                    <a href="tel:+918300295721" className="footer-contact-sub" style={{ color: 'inherit', textDecoration: 'none' }}>
-                      Phone Consulting: <strong>+91 83002 95721</strong>
+                    <a href={`tel:${getSetting('footer_config', 'supportPhone', '+918300295721')}`} className="footer-contact-sub" style={{ color: 'inherit', textDecoration: 'none' }}>
+                      Phone Consulting: <strong>{getSetting('footer_config', 'supportPhone', '+91 83002 95721')}</strong>
                     </a>
                   </div>
                 </div>
@@ -324,20 +329,20 @@ export default function Footer() {
                     <Mail size={15} className="footer-contact-icon" />
                   </div>
                   <div>
-                    <span className="footer-contact-sub">care@pickystore.com</span>
+                    <span className="footer-contact-sub">{getSetting('footer_config', 'supportEmail', 'care@pickystore.in')}</span>
                   </div>
                 </div>
               </div>
 
               <a
-                href="https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20consult%20regarding%20products."
+                href={`https://wa.me/${getSetting('footer_config', 'whatsapp', '918300295721').replace(/\D/g, '')}?text=Hi%20Picky!%20I%20would%20like%20to%20consult%20regarding%20products.`}
                 target="_blank"
                 rel="noreferrer"
                 className="footer-whatsapp-chip"
-                title="WhatsApp Consulting (+91 83002 95721)"
+                title="WhatsApp Consulting"
               >
                 <span className="whatsapp-status-dot"></span>
-                <span>WhatsApp: +91 83002 95721</span>
+                <span>WhatsApp: {getSetting('footer_config', 'whatsapp', '+91 83002 95721')}</span>
               </a>
             </div>
 
@@ -345,27 +350,30 @@ export default function Footer() {
 
           {/* ── 3. Bottom Bar (Trust Badges & Copyright) ───── */}
           <div className="footer-bottom-bar">
+            {isEnabled('footer_trust_chips') && (
             <div className="footer-trust-chips">
               <span className="trust-chip-item">
                 <Lock size={13} className="trust-icon" />
-                <span>256-Bit SSL Encrypted Checkout</span>
+                <span>{getSetting('footer_trust_chips', 'sslText', '256-Bit SSL Encrypted Checkout')}</span>
               </span>
               <span className="trust-chip-item">
                 <CreditCard size={13} className="trust-icon" />
-                <span>Instant Payment via UPI, Cards & NetBanking</span>
+                <span>{getSetting('footer_trust_chips', 'paymentText', 'Instant Payment via UPI, Cards & NetBanking')}</span>
               </span>
               <span className="trust-chip-item">
                 <Zap size={13} className="trust-icon" />
-                <span>Express Dispatch Across India</span>
+                <span>{getSetting('footer_trust_chips', 'dispatchText', 'Express Dispatch Across India')}</span>
               </span>
             </div>
+            )}
             <p className="footer-copyright">
-              © {new Date().getFullYear()} <strong>Picky</strong> Inc. Single-Vendor Quality Store. Handpicked Essentials Delivered Fast. Crafted by <strong>Softnova Technologies</strong>.
+              {getSetting('footer_config', 'copyrightText', `© ${new Date().getFullYear()} Picky Inc. Single-Vendor Quality Store. Handpicked Essentials Delivered Fast. Crafted by Softnova Technologies.`)}
             </p>
           </div>
 
         </div>
       </div>
+      )}
     </footer>
   );
 }

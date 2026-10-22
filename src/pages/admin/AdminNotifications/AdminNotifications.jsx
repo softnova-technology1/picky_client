@@ -24,6 +24,8 @@ import {
   Mail,
   MailOpen,
   ArrowUpRight,
+  Copy,
+  Check,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Modal from '../../../components/ui/Modal';
@@ -96,6 +98,19 @@ export default function AdminNotifications() {
   // Inquiry preview modal
   const [selectedContactModal, setSelectedContactModal] = useState(null);
   const [contactFullData, setContactFullData] = useState(null);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+
+  const handleCopyUrl = async (url) => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedUrl(true);
+      showToast('S3 File URL copied to clipboard!', 'success');
+      setTimeout(() => setCopiedUrl(false), 2200);
+    } catch {
+      showToast('Failed to copy URL', 'error');
+    }
+  };
 
   // Sync notifications from server (strictly live DB, never auto-recreates deleted items)
   const fetchNotifications = useCallback(async (isBackground = false) => {
@@ -1008,33 +1023,89 @@ export default function AdminNotifications() {
                 </div>
 
                 {file?.url && (
-                  <div>
-                    <div className={styles.attachmentCard}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <Paperclip size={18} style={{ color: '#db2777' }} />
-                        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#831843' }}>
-                          {file.originalName || 'Attached File'}
-                        </span>
-                      </div>
+                  <div className={styles.s3AssetContainer}>
+                    <div className={styles.s3AssetHeader}>
+                      <span className={styles.s3AssetBadge}>
+                        <Paperclip size={13} />
+                        <span>S3 Reference Asset (picky/inquiries)</span>
+                      </span>
 
+                      <div className={styles.s3FileMeta}>
+                        <span style={{ fontWeight: 600, color: '#0f172a' }}>
+                          {file.originalName || 'Attached Document'}
+                        </span>
+                        {file.size > 0 && (
+                          <span style={{ color: '#64748b', fontSize: '0.78rem' }}>
+                            • {file.size > 1024 * 1024
+                              ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                              : `${(file.size / 1024).toFixed(0)} KB`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className={styles.s3UrlLabel}>S3 File URL</div>
+                      <div className={styles.s3UrlBox}>
+                        <span className={styles.s3UrlText} title={file.url}>
+                          {file.url}
+                        </span>
+                        <button
+                          type="button"
+                          className={`${styles.copyUrlBtn} ${copiedUrl ? styles.copyUrlBtnCopied : ''}`}
+                          onClick={() => handleCopyUrl(file.url)}
+                          title="Copy S3 URL to clipboard"
+                        >
+                          {copiedUrl ? (
+                            <>
+                              <Check size={13} />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={13} />
+                              <span>Copy URL</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.s3ActionRow}>
                       <a
                         href={file.url}
                         target="_blank"
                         rel="noreferrer"
-                        className={styles.attachmentBtn}
+                        className={styles.openAssetBtn}
+                        title="Open file in new tab"
                       >
-                        <Download size={14} /> Open Attachment
+                        <ExternalLink size={14} />
+                        <span>Open in New Tab</span>
+                      </a>
+
+                      <a
+                        href={file.url}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.attachmentBtn}
+                        title="Download attached file"
+                      >
+                        <Download size={14} />
+                        <span>Download</span>
                       </a>
                     </div>
 
                     {file.url &&
                       (file.mimeType?.startsWith('image/') ||
                         /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(file.url)) && (
-                        <img
-                          src={file.url}
-                          alt="Attachment Preview"
-                          className={styles.attachmentPreviewImage}
-                        />
+                        <div style={{ marginTop: '0.4rem', textAlign: 'center' }}>
+                          <img
+                            src={file.url}
+                            alt="Attachment Preview"
+                            className={styles.attachmentPreviewImage}
+                          />
+                        </div>
                       )}
                   </div>
                 )}

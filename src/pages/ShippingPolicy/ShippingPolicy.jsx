@@ -16,6 +16,7 @@ import {
   Phone,
   ArrowRight,
 } from 'lucide-react';
+import { usePageCustomization } from '../../store/customizationStore';
 import '../../styles/legal.css';
 
 const SHIPPING_SECTIONS = [
@@ -30,6 +31,9 @@ const SHIPPING_SECTIONS = [
 ];
 
 export default function ShippingPolicy() {
+  const { isEnabled, getSetting } = usePageCustomization('content_pages');
+  const turnaroundBlurb = getSetting('policy_shipping_content', 'turnaroundBlurb', 'Dispatched within 24 to 48 hours via trusted couriers (DTDC, Blue Dart & Delhivery).');
+  const expressTimeline = getSetting('policy_shipping_content', 'expressTimeline', '2 to 4 business days across Tamil Nadu, 4 to 6 business days nationwide.');
   const [activeSection, setActiveSection] = useState('dispatch');
 
   useEffect(() => {

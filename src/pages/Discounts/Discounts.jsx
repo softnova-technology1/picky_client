@@ -19,8 +19,10 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import '../../styles/home-premium.css';
+import { usePageCustomization } from '../../store/customizationStore';
 
 export default function Discounts() {
+  const { isEnabled, getSetting } = usePageCustomization('discounts');
   const navigate = useNavigate();
   const { categories, fetchCategories } = useCategoryStore();
 
@@ -72,7 +74,7 @@ export default function Discounts() {
   // Filter products: either has active discount from Admin OR has "limited deals" tag
   const activeDiscountProducts = useMemo(() => {
     const now = Date.now();
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       // 1. Check if product has "Limited Deals" / "deal" / "limited" tag
       const isTaggedLimitedDeal = hasTag(p, 'limited') || hasTag(p, 'deal');
 
@@ -93,6 +95,10 @@ export default function Discounts() {
       // Show if either has active discount OR has limited deals tag
       return isConfiguredDiscount || isTaggedLimitedDeal;
     });
+
+    if (filtered.length > 0) return filtered;
+    const fallback = products.filter((p) => p.discountPrice && p.discountPrice < p.price);
+    return fallback.length > 0 ? fallback : products.slice(0, 12);
   }, [products]);
 
   // Available categories among discounted items
@@ -171,6 +177,7 @@ export default function Discounts() {
     <PageWrapper>
       <div style={{ background: '#fdfbf7', minHeight: '100vh', paddingBottom: '5rem' }}>
         {/* ── 1. Hero Banner ── */}
+        {isEnabled('discounts_hero') && (
         <section
           style={{
             position: 'relative',
@@ -242,7 +249,7 @@ export default function Discounts() {
                   boxShadow: '0 0 10px #22c55e',
                 }}
               />
-              LIMITED DEALS • LIVE NOW
+              {getSetting('discounts_hero', 'badgeText', 'LIMITED DEALS • LIVE NOW')}
             </div>
 
             <h1
@@ -256,15 +263,29 @@ export default function Discounts() {
                 letterSpacing: '-0.02em',
               }}
             >
-              Limited <span
-                style={{
-                  background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 50%, #c084fc 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                Deals
-              </span>
+              {(() => {
+                const title = getSetting('discounts_hero', 'title', 'Limited Deals');
+                const words = title.split(' ');
+                if (words.length > 1) {
+                  const firstPart = words.slice(0, -1).join(' ');
+                  const lastWord = words[words.length - 1];
+                  return (
+                    <>
+                      {firstPart}{' '}
+                      <span
+                        style={{
+                          background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 50%, #c084fc 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                        }}
+                      >
+                        {lastWord}
+                      </span>
+                    </>
+                  );
+                }
+                return title;
+              })()}
             </h1>
 
             <p
@@ -276,10 +297,11 @@ export default function Discounts() {
                 lineHeight: 1.6,
               }}
             >
-              Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.
+              {getSetting('discounts_hero', 'subtitle', 'Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.')}
             </p>
 
             {/* Stat Counters Row */}
+            {getSetting('discounts_hero', 'showStatCounters', true) && (
             <div
               style={{
                 display: 'inline-flex',
@@ -314,10 +336,14 @@ export default function Discounts() {
                 </span>
               </div>
             </div>
+            )}
           </div>
         </section>
+        )}
 
-        {/* ── 2. Filters & Search Toolbar ── */}
+        {/* ── 2. Filters & Search Toolbar + Product Grid ── */}
+        {isEnabled('discounts_feed') && (
+        <>
         <div
           style={{
             maxWidth: '1320px',
@@ -354,7 +380,7 @@ export default function Discounts() {
               />
               <input
                 type="text"
-                placeholder="Search limited deals, categories..."
+                placeholder={getSetting('discounts_feed', 'searchPlaceholder', 'Search limited deals, categories...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
@@ -543,7 +569,7 @@ export default function Discounts() {
                   margin: '0 0 0.5rem',
                 }}
               >
-                No limited deals found
+                {getSetting('discounts_feed', 'emptyMessage', 'No limited deals found')}
               </h3>
               <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
                 {searchQuery || selectedCategory !== 'all'
@@ -596,6 +622,8 @@ export default function Discounts() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </PageWrapper>
   );

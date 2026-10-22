@@ -842,8 +842,69 @@
 .attachmentPreviewBox {
   border: 1px solid #bfdbfe;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1.1rem;
   background: #eff6ff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.s3UrlLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e40af;
+  margin-top: 0.15rem;
+}
+
+.s3UrlBox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  overflow: hidden;
+}
+
+.s3UrlText {
+  flex: 1;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: all;
+}
+
+.copyUrlBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.copyUrlBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.copyUrlBtnCopied {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
 }
 
 .attachmentImage {
@@ -853,7 +914,7 @@
   object-fit: contain;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  margin-top: 0.65rem;
+  margin-top: 0.5rem;
   display: block;
 }
 

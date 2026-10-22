@@ -32,9 +32,11 @@ import { Link } from 'react-router-dom';
 import { useCartStore } from '../../store/cartStore';
 import { useUiStore } from '../../store/uiStore';
 import { useCategoryStore } from '../../store/categoryStore';
+import { usePageCustomization } from '../../store/customizationStore';
 import '../../styles/home-premium.css';
 
 export default function NewArrivals() {
+  const { isEnabled, getSetting } = usePageCustomization('new_arrivals');
   const { categories, fetchCategories } = useCategoryStore();
   const { addItem } = useCartStore();
   const { showToast } = useUiStore();
@@ -118,11 +120,11 @@ export default function NewArrivals() {
       const data = res?.data || res;
       const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
       const newArrivalsOnly = items.filter(isNewArrivalProduct);
-      setProducts(newArrivalsOnly);
+      setProducts(newArrivalsOnly.length > 0 ? newArrivalsOnly : items);
 
       // Best sellers filtering for live running marquee section
       const bestSellersOnly = items.filter(isBestSellerProduct);
-      setBestSellerProducts(bestSellersOnly);
+      setBestSellerProducts(bestSellersOnly.length > 0 ? bestSellersOnly : items);
 
 
     } catch (err) {
@@ -422,70 +424,73 @@ export default function NewArrivals() {
     <PageWrapper>
       <div style={{ background: 'transparent', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Celestial Dome Arc Hero Showcase (Full Width) ── */}
-        <div style={{ position: 'relative' }}>
-          <NewArrivalsHero
-            products={products}
-            isLoading={loading}
-            onExploreClick={handleScrollToCatalog}
-            categories={categoryStories}
-            activeCategory={activeCategory}
-            onSelectCategory={(id) => {
-              setActiveCategory(id);
-              setActiveSubcategory('all');
-            }}
-          />
-        </div>
+        {isEnabled('new_arrivals_hero') && (
+          <div style={{ position: 'relative' }}>
+            <NewArrivalsHero
+              products={products}
+              isLoading={loading}
+              onExploreClick={handleScrollToCatalog}
+              categories={categoryStories}
+              activeCategory={activeCategory}
+              onSelectCategory={(id) => {
+                setActiveCategory(id);
+                setActiveSubcategory('all');
+              }}
+            />
+          </div>
+        )}
 
         {/* ── 2. New Arrivals Catalog Section ── */}
-        <div className="container" ref={catalogRef} style={{ scrollMarginTop: '100px', marginTop: '2.5rem' }}>
-          {/* Header Row: Title & Active Count */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
-                  fontWeight: 900,
-                  color: '#1e1b4b',
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Explore Fresh Arrivals
-              </h2>
-            </div>
-
-            <Link
-              to="/products"
+        {isEnabled('new_arrivals_feed') && (
+          <div className="container" ref={catalogRef} style={{ scrollMarginTop: '100px', marginTop: '2.5rem' }}>
+            {/* Header Row: Title & Active Count */}
+            <div
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1.4rem',
-                borderRadius: '9999px',
-                background: '#ffffff',
-                color: '#7c3aed',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                border: '1.5px solid #ede9fe',
-                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
-                transition: 'all 0.2s ease',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                marginBottom: '1.5rem',
               }}
-              className="view-catalog-link"
             >
-              <span>View Full Store Catalog</span>
-              <ArrowRight size={15} />
-            </Link>
-          </div>
+              <div>
+                <h2
+                  style={{
+                    fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
+                    fontWeight: 900,
+                    color: '#1e1b4b',
+                    margin: 0,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {getSetting('new_arrivals_feed', 'title', 'Explore Fresh Arrivals')}
+                </h2>
+              </div>
+
+              <Link
+                to="/products"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '9999px',
+                  background: '#ffffff',
+                  color: '#7c3aed',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  border: '1.5px solid #ede9fe',
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+                  transition: 'all 0.2s ease',
+                }}
+                className="view-catalog-link"
+              >
+                <span>{getSetting('new_arrivals_feed', 'viewCatalogText', 'View Full Store Catalog')}</span>
+                <ArrowRight size={15} />
+              </Link>
+            </div>
 
           {/* ── 7 Circular Category Stories (All New Arrivals + 6 Categories) ── */}
           <div className="circular-categories-wrapper">
@@ -971,53 +976,59 @@ export default function NewArrivals() {
               ))}
             </div>
           )}
+        </div>
+      )}
 
-          {/* ── 3. Continuous Running Showcase Section (Infinite Marquee for Best Sellers) ── */}
-          {marqueeItems.length > 0 && (
-            <section className="new-arrivals-marquee-section" aria-label="Best Sellers Live Showcase">
-              <div className="new-arrivals-marquee-header-wrap">
-                <div className="marquee-badge-pill">
-                  <Flame size={14} className="marquee-sparkle-icon" color="#f97316" />
-                  <span>Best Sellers • Top Customer Picks</span>
-                </div>
-                <h3 className="new-arrivals-marquee-title">
-                  All Best Sellers <span>Running Live</span>
-                </h3>
-                <p className="new-arrivals-marquee-subtitle">
-                  Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.
-                </p>
+      {/* ── 3. Continuous Running Showcase Section (Infinite Marquee for Best Sellers) ── */}
+      {isEnabled('new_arrivals_marquee') && marqueeItems.length > 0 && (
+        <div className="container">
+          <section className="new-arrivals-marquee-section" aria-label="Best Sellers Live Showcase">
+            <div className="new-arrivals-marquee-header-wrap">
+              <div className="marquee-badge-pill">
+                <Flame size={14} className="marquee-sparkle-icon" color="#f97316" />
+                <span>{getSetting('new_arrivals_marquee', 'badgeText', 'Best Sellers • Top Customer Picks')}</span>
               </div>
+              <h3 className="new-arrivals-marquee-title">
+                {getSetting('new_arrivals_marquee', 'title', 'All Best Sellers Running Live')}
+              </h3>
+              <p className="new-arrivals-marquee-subtitle">
+                {getSetting('new_arrivals_marquee', 'subtitle', 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.')}
+              </p>
+            </div>
 
-              {/* Viewport for infinite running ribbon */}
-              <div className="new-arrivals-marquee-viewport">
-                <div className="new-arrivals-marquee-track">
-                  {marqueeItems.map((prod, idx) => (
-                    <div
-                      key={`marquee-${prod._id || prod.id || 'p'}-${idx}`}
-                      className="new-arrivals-marquee-card-item"
-                    >
-                      <ProductCard product={prod} />
-                    </div>
-                  ))}
-                </div>
+            {/* Viewport for infinite running ribbon */}
+            <div className="new-arrivals-marquee-viewport">
+              <div className="new-arrivals-marquee-track">
+                {marqueeItems.map((prod, idx) => (
+                  <div
+                    key={`marquee-${prod._id || prod.id || 'p'}-${idx}`}
+                    className="new-arrivals-marquee-card-item"
+                  >
+                    <ProductCard product={prod} />
+                  </div>
+                ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        </div>
+      )}
 
-          {/* ── 4. Final Community CTA Banner (Exact Home Page Section) ── */}
+      {/* ── 4. Final Community CTA Banner (Exact Home Page Section) ── */}
+      {isEnabled('new_arrivals_community') && (
+        <div className="container">
           <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
             <div className="hp-final-cta-container" style={{ padding: 0 }}>
               <div className="hp-final-cta-box">
-                <span className="hp-final-cta-badge">✦ JOIN OUR COMMUNITY</span>
-                <h2 className="hp-final-title">Connect With Us @picky.co.in</h2>
+                <span className="hp-final-cta-badge">{getSetting('new_arrivals_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
+                <h2 className="hp-final-title">{getSetting('new_arrivals_community', 'title', 'Connect With Us @picky.co.in')}</h2>
                 <p className="hp-final-subtitle">
-                  Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.
+                  {getSetting('new_arrivals_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
                 </p>
                 <div className="hp-final-cta-btn-group no-hover-fx">
                   <button
                     type="button"
                     className="hp-final-cta-btn no-hover-fx"
-                    onClick={() => window.open('https://www.instagram.com/picky.co.in/', '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(getSetting('new_arrivals_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
@@ -1031,7 +1042,7 @@ export default function NewArrivals() {
                   <button
                     type="button"
                     className="hp-final-cta-outline-btn no-hover-fx"
-                    onClick={() => window.open('https://wa.me/918300295721?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.', '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(`https://wa.me/${getSetting('new_arrivals_community', 'whatsappNumber', '918300295721')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer')}
                     aria-label="Join WhatsApp Group"
                     title="Join WhatsApp Group"
                   >
@@ -1049,7 +1060,8 @@ export default function NewArrivals() {
             </div>
           </section>
         </div>
-      </div>
+      )}
+    </div>
 
       <style>{`
         .new-arrivals-product-grid {

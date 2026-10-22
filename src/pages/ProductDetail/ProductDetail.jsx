@@ -14,6 +14,7 @@ import { getProductReviews } from '../../data';
 import { reviewService } from '../../services/review.service';
 import styles from './ProductDetail.module.css';
 import { extractProductTag, getTagDesign } from '../../utils/productTagHelper';
+import { usePageCustomization } from '../../store/customizationStore';
 import {
   Truck,
   RotateCcw,
@@ -34,6 +35,7 @@ import {
 const DEFAULT_CAPACITIES = ['128GB', '256GB', '512GB'];
 
 export default function ProductDetail() {
+  const { isEnabled, getSetting } = usePageCustomization('pdp');
   const { slug } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -450,7 +452,7 @@ export default function ProductDetail() {
                       <span className={styles['green-dot']} style={{ background: '#dc2626' }} />
                       <span>Out of Stock</span>
                     </div>
-                  ) : maxStock <= 5 ? (
+                  ) : maxStock <= (Number(getSetting('pdp_stock_delivery_pill', 'lowStockThreshold', 5)) || 5) ? (
                     <div className={styles['top-stock-badge']} style={{ background: '#fffbeb', color: '#b45309', borderColor: '#fde68a' }}>
                       <span className={styles['green-dot']} style={{ background: '#f59e0b' }} />
                       <span>Only {maxStock} Left in Stock</span>
@@ -462,6 +464,13 @@ export default function ProductDetail() {
                     </div>
                   )}
                 </div>
+
+                {isEnabled('pdp_stock_delivery_pill') && (
+                  <div style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 600, marginTop: '-0.2rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Truck size={14} />
+                    <span>{getSetting('pdp_stock_delivery_pill', 'estimatedDeliveryText', '⚡ Usually delivered in 2 - 4 business days across Tamil Nadu')}</span>
+                  </div>
+                )}
 
                 {/* Product Title */}
                 <h1 className={styles['product-main-title']}>
@@ -639,7 +648,8 @@ export default function ProductDetail() {
 
                 <div className={styles['card-inner-divider']} />
 
-                {/* Trust Badges Strip (Priority Freight, Authenticated, 30-Day Window) */}
+                {/* Trust Badges Strip */}
+                {isEnabled('pdp_trust_guarantee') && (
                 <div className={styles['trust-pills-row']}>
                   <div className={styles['trust-pill-tag']}>
                     <Truck size={14} className={styles['trust-tag-icon']} />
@@ -648,14 +658,15 @@ export default function ProductDetail() {
 
                   <div className={styles['trust-pill-tag']}>
                     <ShieldCheck size={14} className={styles['trust-tag-icon']} />
-                    <span>Authentified</span>
+                    <span>100% Genuine</span>
                   </div>
 
                   <div className={styles['trust-pill-tag']}>
                     <RotateCcw size={14} className={styles['trust-tag-icon']} />
-                    <span>30-Day Window</span>
+                    <span>{getSetting('pdp_trust_guarantee', 'returnPolicyDays', 7)}-Day Replacement</span>
                   </div>
                 </div>
+                )}
               </div>
 
             </div>{/* end .right-bento-column */}
@@ -680,6 +691,7 @@ export default function ProductDetail() {
                 Description
               </button>
 
+              {getSetting('pdp_tabs_overview', 'showSpecsTab', true) && (
               <button
                 type="button"
                 onClick={() => setActiveDetailTab('specs')}
@@ -689,7 +701,9 @@ export default function ProductDetail() {
               >
                 Specifications
               </button>
+              )}
 
+              {getSetting('pdp_tabs_overview', 'showReviewsTab', true) && (
               <button
                 type="button"
                 onClick={() => setActiveDetailTab('reviews')}
@@ -699,6 +713,7 @@ export default function ProductDetail() {
               >
                 Reviews
               </button>
+              )}
             </div>
 
             {/* Tab 1: Description Panel */}
@@ -959,11 +974,12 @@ export default function ProductDetail() {
           {/* ═══════════════════════════════════════════════════════════════
               3. BOTTOM SECTION: "Expand Your Arsenal" (Related Products)
              ═══════════════════════════════════════════════════════════════ */}
+          {isEnabled('pdp_related_products') && (
           <div className={styles['arsenal-section']}>
             <div className={styles['arsenal-header-row']}>
-              <h2 className={styles['arsenal-main-heading']}>Expand Your Arsenal</h2>
+              <h2 className={styles['arsenal-main-heading']}>{getSetting('pdp_related_products', 'sectionTitle', 'Expand Your Arsenal')}</h2>
               <Link to="/products" className={styles['access-db-link']}>
-                <span>Access Database</span>
+                <span>{getSetting('pdp_related_products', 'viewAllLinkText', 'Access Database')}</span>
                 <ChevronRight size={16} strokeWidth={2.5} />
               </Link>
             </div>
@@ -1077,7 +1093,8 @@ export default function ProductDetail() {
                 );
               })}
             </div>
-          </div>{/* end .arsenal-section */}
+          </div>
+        )}
 
         </div>{/* end .container */}
       </div>{/* end .product-detail-wrapper */}
