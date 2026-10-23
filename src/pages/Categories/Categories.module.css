@@ -1,0 +1,20 @@
+.desktopOnly {
+  display: block;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktopOnly {
+    display: none !important;
+  }
+
+  .mobileOnly {
+    display: block !important;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #F8F9FE;
+  }
+}
