@@ -337,6 +337,19 @@ export default function Login({ initialTab = 'login' }) {
     },
   });
 
+  const handleGoogleAuthClick = () => {
+    const rawId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!rawId || rawId.trim() === '' || rawId.includes('placeholder')) {
+      showToast('Google Sign-in is not configured yet. Please continue with WhatsApp.', 'info');
+      return;
+    }
+    try {
+      loginWithGoogle();
+    } catch (e) {
+      console.error('Google login trigger error:', e);
+    }
+  };
+
   const handleClose = () => {
     if (window.history.length > 2) {
       navigate(-1);
@@ -499,7 +512,7 @@ export default function Login({ initialTab = 'login' }) {
                     <button
                       type="button"
                       className="picky-google-btn"
-                      onClick={() => loginWithGoogle()}
+                      onClick={handleGoogleAuthClick}
                       disabled={loading}
                     >
                       <GoogleIcon size={19} />

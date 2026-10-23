@@ -268,6 +268,19 @@ export default function LoginPopupModal() {
     },
   });
 
+  const handleGoogleAuthClick = () => {
+    const rawId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!rawId || rawId.trim() === '' || rawId.includes('placeholder')) {
+      showToast('Google Sign-in is not configured yet. Please continue with WhatsApp.', 'info');
+      return;
+    }
+    try {
+      loginWithGoogle();
+    } catch (e) {
+      console.error('Google login trigger error:', e);
+    }
+  };
+
   // Don't render modal when closed or when user is authenticated
   if (!isOpen || isLoggedIn) return null;
 
@@ -509,7 +522,7 @@ export default function LoginPopupModal() {
                 <button
                   type="button"
                   className={styles.googleButton}
-                  onClick={() => loginWithGoogle()}
+                  onClick={handleGoogleAuthClick}
                   disabled={loading}
                 >
                   <GoogleIcon />
