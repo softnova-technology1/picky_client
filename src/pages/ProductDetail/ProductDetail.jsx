@@ -375,8 +375,17 @@ export default function ProductDetail() {
     navigate('/checkout?buyNow=true');
   };
 
-  const currentPrice = product.discountPrice || product.price || 231;
-  const originalPrice = product.price && product.discountPrice ? product.price : Math.round(currentPrice * 1.25);
+  const hasDiscount = Boolean(
+    product.discountPrice !== undefined &&
+    product.discountPrice !== null &&
+    Number(product.discountPrice) > 0 &&
+    Number(product.discountPrice) < Number(product.price)
+  );
+  const currentPrice = hasDiscount ? Number(product.discountPrice) : (Number(product.price) || 231);
+  const originalPrice = Number(product.price) || Math.round(currentPrice * 1.25);
+  const discountPercent = hasDiscount
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+    : 0;
   const TagIconComponent = productTagInfo?.icon;
   const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
 
@@ -480,9 +489,21 @@ export default function ProductDetail() {
 
                 {/* Price & Rating Row */}
                 <div className={styles['price-rating-row']}>
-                  <span className={styles['bold-price']}>
-                    {formattedPrice}
-                  </span>
+                  <div className={styles['price-group']}>
+                    <span className={styles['bold-price']}>
+                      {formattedPrice}
+                    </span>
+                    {hasDiscount && (
+                      <>
+                        <span className={styles['original-price']}>
+                          ₹{originalPrice.toLocaleString('en-IN')}
+                        </span>
+                        <span className={styles['discount-badge']}>
+                          {discountPercent}% OFF
+                        </span>
+                      </>
+                    )}
+                  </div>
 
                   <div className={styles['rating-pill']}>
                     <Star size={16} fill="#f59e0b" color="#f59e0b" />

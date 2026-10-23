@@ -42,20 +42,21 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   }, [product?.images, product?.image]);
 
   const isDiscountValid = useMemo(() => {
-    if (!product || product.isDiscountActive === false) return false;
-    const hasDiscPrice = product.discountPrice !== undefined && product.discountPrice !== null && product.discountPrice < product.price;
+    if (!product) return false;
+    const hasDiscPrice = product.discountPrice !== undefined && 
+                         product.discountPrice !== null && 
+                         Number(product.discountPrice) > 0 && 
+                         Number(product.discountPrice) < Number(product.price);
     if (!hasDiscPrice) return false;
 
-    if (product.isDiscountActive) {
-      if (product.offerStartDate && !isNaN(new Date(product.offerStartDate).getTime())) {
-        if (new Date(product.offerStartDate).getTime() > now) return false;
-      }
-      if (endDateRaw && !isNaN(new Date(endDateRaw).getTime())) {
-        if (new Date(endDateRaw).getTime() < now) return false;
-      }
+    if (product.offerStartDate && !isNaN(new Date(product.offerStartDate).getTime())) {
+      if (new Date(product.offerStartDate).getTime() > now) return false;
+    }
+    if (endDateRaw && !isNaN(new Date(endDateRaw).getTime())) {
+      if (new Date(endDateRaw).getTime() < now) return false;
     }
     return true;
-  }, [product?.isDiscountActive, product?.discountPrice, product?.price, product?.offerStartDate, endDateRaw, now]);
+  }, [product?.discountPrice, product?.price, product?.offerStartDate, endDateRaw, now]);
 
   const shortDesc = useMemo(() => {
     if (!product) return '';
