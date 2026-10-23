@@ -58,8 +58,8 @@ import { productService } from '../../../services/product.service';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
-import { formatPrice } from '../../../utils/formatPrice';
 import { DEFAULT_PRODUCT_TAGS, getTagDesign, extractProductTag } from '../../../utils/productTagHelper';
+import { fuzzyFilter } from '../../../utils/fuzzySearch';
 
 const PREDEFINED_TAGS = DEFAULT_PRODUCT_TAGS;
 
@@ -1169,16 +1169,11 @@ export default function AdminProducts() {
     if (filterStock === 'Low Stock') result = result.filter((p) => (Number(p.stock) || 0) >= 1 && (Number(p.stock) || 0) <= 5);
     if (filterStock === 'Out of Stock') result = result.filter((p) => (Number(p.stock) || 0) <= 0);
 
-    // 6. Search Filter
+    // 6. Fuzzy Search Filter
     if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((p) => {
-        const nameMatch = p.name?.toLowerCase().includes(q);
-        const skuMatch = p.sku?.toLowerCase().includes(q);
-        const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
-        const tagMatch = tagsStr.toLowerCase().includes(q);
-        const subCatMatch = (p.subCategory?.name || (typeof p.subCategory === 'string' ? p.subCategory : '')).toLowerCase().includes(q);
-        return nameMatch || skuMatch || tagMatch || subCatMatch;
+      result = fuzzyFilter(result, searchQuery.trim(), {
+        keys: ['name', 'sku', 'tags', 'subCategory.name', 'subCategory'],
+        threshold: 0.38,
       });
     }
 

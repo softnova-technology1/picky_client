@@ -36,7 +36,7 @@ import { usePageCustomization } from '../../store/customizationStore';
 import '../../styles/home-premium.css';
 
 export default function NewArrivals() {
-  const { isEnabled, getSetting } = usePageCustomization('new_arrivals');
+  const { isEnabled, getSetting, getSection } = usePageCustomization('new_arrivals');
   const { categories, fetchCategories } = useCategoryStore();
   const { addItem } = useCartStore();
   const { showToast } = useUiStore();
@@ -436,6 +436,7 @@ export default function NewArrivals() {
                 setActiveCategory(id);
                 setActiveSubcategory('all');
               }}
+              customization={getSection('new_arrivals_hero')}
             />
           </div>
         )}

@@ -21,6 +21,7 @@ import {
   Store,
   Tag,
 } from 'lucide-react';
+import { getTagDesign } from '../../../utils/productTagHelper';
 
 const CATEGORY_LUCIDE_ICONS = {
   'all': Store,
@@ -41,6 +42,7 @@ export default function ShopFilterDrawer({
   isOpen = false,
   onClose,
   categories = [],
+  availableTags = [],
   filterState = {},
   onUpdateFilter,
   onResetAll,
@@ -306,6 +308,102 @@ export default function ShopFilterDrawer({
             </div>
           </div>
 
+          {/* Section: Product Tags */}
+          {availableTags && availableTags.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                <Tag size={16} color="#7c3aed" strokeWidth={2.3} />
+                <h4
+                  style={{
+                    fontSize: '0.86rem',
+                    fontWeight: 800,
+                    color: '#1e1b4b',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    margin: 0,
+                  }}
+                >
+                  Product Tags
+                </h4>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                <button
+                  type="button"
+                  onClick={() => onUpdateFilter('tag', '')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.42rem 0.75rem',
+                    borderRadius: '10px',
+                    border: !filterState.tag ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                    background: !filterState.tag ? '#f3e8ff' : '#ffffff',
+                    color: !filterState.tag ? '#6b21a8' : '#475569',
+                    fontSize: '0.78rem',
+                    fontWeight: !filterState.tag ? 800 : 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Tag size={12} />
+                  <span>All Tags</span>
+                  {!filterState.tag && <Check size={12} strokeWidth={3} />}
+                </button>
+                {availableTags.map((tagItem) => {
+                  const tagName = typeof tagItem === 'string' ? tagItem : tagItem.name;
+                  const tagCount = typeof tagItem === 'object' ? tagItem.count : 0;
+                  const isChecked = filterState.tag?.toLowerCase() === tagName.toLowerCase();
+                  const design = getTagDesign(tagName) || {
+                    icon: Tag,
+                    color: '#7c3aed',
+                    bg: '#f5f3ff',
+                    border: '#ddd6fe',
+                  };
+                  const TagIcon = design.icon || Tag;
+
+                  return (
+                    <button
+                      key={tagName}
+                      type="button"
+                      onClick={() => onUpdateFilter('tag', isChecked ? '' : tagName)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.42rem 0.75rem',
+                        borderRadius: '10px',
+                        border: isChecked
+                          ? `1.5px solid ${design.color || '#7c3aed'}`
+                          : `1px solid ${design.border || '#e2e8f0'}`,
+                        background: isChecked ? (design.bg || '#f5f3ff') : '#ffffff',
+                        color: isChecked ? (design.color || '#7c3aed') : '#475569',
+                        fontSize: '0.78rem',
+                        fontWeight: isChecked ? 800 : 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <TagIcon size={12} />
+                      <span>{tagName}</span>
+                      {tagCount > 0 && (
+                        <span
+                          style={{
+                            fontSize: '0.64rem',
+                            padding: '0.05rem 0.35rem',
+                            borderRadius: '999px',
+                            background: isChecked ? '#ffffff' : '#f1f5f9',
+                            color: isChecked ? (design.color || '#7c3aed') : '#64748b',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {tagCount}
+                        </span>
+                      )}
+                      {isChecked && <Check size={12} strokeWidth={3} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Section: Minimum Discount */}
           <div>

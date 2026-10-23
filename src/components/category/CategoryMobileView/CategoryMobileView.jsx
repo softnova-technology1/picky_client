@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { usePageCustomization } from '../../../store/customizationStore';
 import styles from './CategoryMobileView.module.css';
 
 export default function CategoryMobileView() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [newsletterEmail, setNewsletterEmail] = useState('');
+
+  // Live Customization settings for categories_hero
+  const { getSetting } = usePageCustomization('categories');
+  const headline = getSetting('categories_hero', 'headline', 'YOUR EVERYTHING STORE');
+  const subheadline = getSetting('categories_hero', 'subheadline', 'Shop Your Daily Essentials & More');
+  const startingPriceLabel = getSetting('categories_hero', 'startingPriceLabel', 'Starting From');
+  const startingPrice = getSetting('categories_hero', 'startingPrice', '₹129');
+  const buttonText = getSetting('categories_hero', 'buttonText', 'Shop Now');
+  const buttonLink = getSetting('categories_hero', 'buttonLink', '/products');
+  const heroImage = getSetting('categories_hero', 'heroImage', '');
 
   const filterTabs = ['All', 'Fashion', 'Jewellery', 'Wellness', 'Kids'];
 
@@ -235,19 +246,19 @@ export default function CategoryMobileView() {
 
               <div className={styles.heroHeadlineWrap}>
                 <h1 className={styles.heroHeadline}>
-                  YOUR EVERYTHING STORE
+                  {headline}
                 </h1>
                 <p className={styles.heroDescription}>
-                  Shop Daily Essentials, Temple Brassware, Skincare &amp; Tech.
+                  {subheadline}
                 </p>
               </div>
 
               <div className={styles.heroCtaRow}>
                 <span className={styles.heroPriceBadge}>
-                  Starting From <span className={styles.heroGoldPrice}>₹129</span>
+                  {startingPriceLabel} <span className={styles.heroGoldPrice}>{startingPrice}</span>
                 </span>
-                <Link to="/products" className={styles.heroShopNowLink}>
-                  <span>Shop Now</span>
+                <Link to={buttonLink || '/products'} className={styles.heroShopNowLink}>
+                  <span>{buttonText}</span>
                   <i className={`fa-solid fa-arrow-trend-up ${styles.heroShopNowIcon}`}></i>
                 </Link>
               </div>
@@ -255,9 +266,9 @@ export default function CategoryMobileView() {
 
             <div className={styles.heroFloatingCollage}>
               <img
-                alt="Lifestyle Product"
+                alt={headline || 'Lifestyle Product'}
                 className={styles.heroCollageImg}
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ6m8kfMqvnRIQ7XCfUeF0AHf8C9zqh2Ro0siGh1-0BDcGaZYglYUtV-azNNdXuB0-GtpJEUUWZtztFzC5h6VuPFBgiLhg47NeZhcOuNAmPB_niMf4WrRU8AWIPMIxu2nPgtufh6G_bkEz2NJBXKiILf3q0ZBni805QHe0H9VOT1Z8xrOHj0o54PgwbLuzCpHcATBGjrAA6zOL1lj5qPuFEaV0rbeFi8oy55OhZ6co0GQaUr4umcdd"
+                src={heroImage || "https://lh3.googleusercontent.com/aida-public/AB6AXuBJ6m8kfMqvnRIQ7XCfUeF0AHf8C9zqh2Ro0siGh1-0BDcGaZYglYUtV-azNNdXuB0-GtpJEUUWZtztFzC5h6VuPFBgiLhg47NeZhcOuNAmPB_niMf4WrRU8AWIPMIxu2nPgtufh6G_bkEz2NJBXKiILf3q0ZBni805QHe0H9VOT1Z8xrOHj0o54PgwbLuzCpHcATBGjrAA6zOL1lj5qPuFEaV0rbeFi8oy55OhZ6co0GQaUr4umcdd"}
               />
             </div>
           </div>

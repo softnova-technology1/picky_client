@@ -55,17 +55,17 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.25rem;
-  padding-top: 35px; /* Headroom for 3D cutout popping out over the top */
+  padding-top: 0.75rem;
 }
 
 /* ── Individual Pill Card ── */
 .pillCard {
   position: relative;
   border-radius: 9999px;
-  height: 144px;
+  height: 148px;
   display: flex;
   align-items: center;
-  overflow: visible;
+  overflow: hidden; /* Images are strictly contained inside the pill */
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
   cursor: pointer;
   text-decoration: none;
@@ -73,8 +73,8 @@
 }
 
 .pillCard:hover {
-  transform: translateY(-6px) scale(1.018);
-  box-shadow: 0 22px 45px -6px var(--card-glow, rgba(124, 58, 237, 0.28)) !important;
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 20px 40px -6px var(--card-glow, rgba(124, 58, 237, 0.28)) !important;
 }
 
 /* Left Content Column */
@@ -82,7 +82,7 @@
   position: relative;
   z-index: 3;
   padding-left: 1.65rem;
-  padding-right: 140px; /* Safe clearance away from right image cluster */
+  padding-right: 135px; /* Safe clearance away from right image cluster */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -145,16 +145,15 @@
   transform: translate(2px, -2px);
 }
 
-/* Right: mixed-category image cluster (left + right small, centre hero) */
+/* Right: mixed-category image cluster tucked cleanly inside the pill */
 .cutoutCluster {
   position: absolute;
-  right: 6px;
-  bottom: 0;
-  width: 140px;
-  height: 178px;
+  right: 18px;
+  bottom: 8px;
+  width: 132px;
+  height: 132px;
   z-index: 4;
   pointer-events: none;
-  overflow: visible;
 }
 
 .clusterImg {
@@ -163,47 +162,48 @@
   object-fit: contain;
   object-position: bottom center;
   display: block;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.16));
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
 }
 
-/* Centre hero item pops above the pill rim */
+/* Centre hero item fits gracefully inside the pill height */
 .slot_center {
   left: 50%;
-  width: 92px;
-  height: 178px;
-  margin-left: -46px;
+  width: 82px;
+  height: 126px;
+  margin-left: -41px;
+  bottom: 2px;
   z-index: 3;
 }
 
-/* Small supporting items tucked behind the hero on each side */
+/* Small supporting items tucked on each side */
 .slot_left {
-  left: -6px;
-  width: 66px;
-  height: 66px;
-  bottom: 10px;
+  left: 0;
+  width: 52px;
+  height: 52px;
+  bottom: 12px;
   z-index: 2;
 }
 
 .slot_right {
-  right: -6px;
-  width: 66px;
-  height: 66px;
-  bottom: 10px;
+  right: 0;
+  width: 52px;
+  height: 52px;
+  bottom: 12px;
   z-index: 2;
 }
 
 .pillCard:hover .slot_center {
-  transform: translateY(-6px) scale(1.06);
-  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.24));
+  transform: translateY(-3px) scale(1.04);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
 }
 
 .pillCard:hover .slot_left {
-  transform: translate(-4px, -4px) rotate(-6deg) scale(1.08);
+  transform: translate(-3px, -2px) rotate(-4deg) scale(1.05);
 }
 
 .pillCard:hover .slot_right {
-  transform: translate(4px, -4px) rotate(6deg) scale(1.08);
+  transform: translate(3px, -2px) rotate(4deg) scale(1.05);
 }
 
 /* ── Responsive Breakpoints ── */

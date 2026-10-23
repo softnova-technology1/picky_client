@@ -59,6 +59,7 @@ import AdminNotifications from './pages/admin/AdminNotifications';
 import AdminInquiries from './pages/admin/AdminInquiries';
 
 const ADMIN = '/softpicky-sn2026';
+const ADMIN_ALT = '/softpicky_sn2026';
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 import { useEffect } from 'react';
@@ -121,7 +122,9 @@ export default function App() {
   }, [setPageSections]);
 
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const googleClientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    'picky-dev-placeholder.apps.googleusercontent.com';
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
@@ -183,24 +186,43 @@ export default function App() {
 
           {/* ── Admin Protected Portal ───────────────── */}
           <Route path={ADMIN} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+          <Route path={ADMIN_ALT} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/returns`} element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/returns`} element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/abandoned-carts`} element={<AdminProtectedRoute><AdminAbandonedCarts /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/abandoned-carts`} element={<AdminProtectedRoute><AdminAbandonedCarts /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/broadcast`} element={<AdminProtectedRoute><AdminBroadcast /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/broadcast`} element={<AdminProtectedRoute><AdminBroadcast /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/flash-sales`} element={<AdminProtectedRoute><AdminFlashSales /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/flash-sales`} element={<AdminProtectedRoute><AdminFlashSales /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/subcategories`} element={<AdminProtectedRoute><AdminSubCategories /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/subcategories`} element={<AdminProtectedRoute><AdminSubCategories /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/reviews`} element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/reviews`} element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/discounts`} element={<AdminProtectedRoute><AdminDiscounts /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/discounts`} element={<AdminProtectedRoute><AdminDiscounts /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
 
 
           {/* ── Catch-all 404 Page ───────────────────── */}

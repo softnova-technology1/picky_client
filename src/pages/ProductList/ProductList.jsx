@@ -11,7 +11,9 @@ import { productService } from '../../services/product.service';
 import { categoryService } from '../../services/category.service';
 import { categories as defaultCategories } from '../../data';
 import { usePageCustomization } from '../../store/customizationStore';
-import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight, ArrowUpDown, Tag } from 'lucide-react';
+import { DEFAULT_PRODUCT_TAGS, extractProductTag } from '../../utils/productTagHelper';
+import { fuzzyFilter } from '../../utils/fuzzySearch';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();
@@ -22,6 +24,7 @@ export default function ProductList() {
   const { isEnabled, getSetting } = usePageCustomization('shop');
   const selectedCategory = searchParams.get('category') || routeCategorySlug || '';
   const selectedSubCategory = searchParams.get('subCategory') || routeSubSlug || '';
+  const selectedTag = searchParams.get('tag') || '';
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
   const sort = searchParams.get('sort') || 'all';
   const urlMaxPrice = searchParams.get('maxPrice') || '';
@@ -55,11 +58,9 @@ export default function ProductList() {
 
   const getSortLabel = (s) => {
     switch (s) {
-      case 'newest': return 'Newest';
       case 'price_asc': return 'Price: Low';
       case 'price_desc': return 'Price: High';
-      case 'featured': return 'Featured';
-      default: return 'Featured';
+      default: return 'All Products';
     }
   };
 
@@ -186,6 +187,70 @@ export default function ProductList() {
     return clonedCat;
   }, [categories, subcategories, selectedCategory]);
 
+  // Dynamic Available Tags: Primary 5 default tags + any custom tags from all products
+  const { availableTags, tagProductCounts } = useMemo(() => {
+    const counts = {};
+    const customTagsMap = new Map();
+
+    allProducts.forEach((p) => {
+      const pTags = new Set();
+
+      if (Array.isArray(p.tags)) {
+        p.tags.forEach((t) => {
+          if (typeof t === 'string' && t.trim()) pTags.add(t.trim());
+        });
+      } else if (typeof p.tags === 'string' && p.tags.trim()) {
+        p.tags.split(',').forEach((t) => {
+          if (t.trim()) pTags.add(t.trim());
+        });
+      }
+
+      if (typeof p.tag === 'string' && p.tag.trim()) {
+        pTags.add(p.tag.trim());
+      }
+      if (typeof p.badge === 'string' && p.badge.trim()) {
+        pTags.add(p.badge.trim());
+      }
+      if (typeof p.offerLabel === 'string' && p.offerLabel.trim()) {
+        pTags.add(p.offerLabel.trim());
+      }
+      if (p.isFeatured) {
+        pTags.add('Top Product');
+      }
+
+      const extracted = extractProductTag(p);
+      if (extracted && typeof extracted === 'string' && extracted.trim()) {
+        pTags.add(extracted.trim());
+      }
+
+      pTags.forEach((rawTag) => {
+        const norm = rawTag.toLowerCase();
+        counts[norm] = (counts[norm] || 0) + 1;
+        const isDefault = DEFAULT_PRODUCT_TAGS.some(
+          (dt) => dt.toLowerCase() === norm
+        );
+        if (!isDefault && !customTagsMap.has(norm)) {
+          customTagsMap.set(norm, rawTag);
+        }
+      });
+    });
+
+    const allTagNames = [
+      ...DEFAULT_PRODUCT_TAGS,
+      ...Array.from(customTagsMap.values()),
+    ];
+
+    const list = allTagNames.map((name) => ({
+      name,
+      count: counts[name.toLowerCase()] || 0,
+    }));
+
+    return {
+      availableTags: list,
+      tagProductCounts: counts,
+    };
+  }, [allProducts]);
+
   // Multi-facet filtering on loaded products
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
@@ -193,16 +258,19 @@ export default function ProductList() {
     // Category Filter
     if (selectedCategory) {
       const catTarget = String(selectedCategory).toLowerCase();
+      const currentCatId = currentCategoryObj?._id ? String(currentCategoryObj._id).toLowerCase() : '';
       result = result.filter((p) => {
         if (!p.category) return false;
         if (typeof p.category === 'object') {
           return (
             String(p.category.slug || '').toLowerCase() === catTarget ||
             String(p.category._id || '').toLowerCase() === catTarget ||
+            (currentCatId && String(p.category._id || '').toLowerCase() === currentCatId) ||
             String(p.category.name || '').toLowerCase() === catTarget
           );
         }
-        return String(p.category).toLowerCase() === catTarget;
+        const pCatStr = String(p.category).toLowerCase();
+        return pCatStr === catTarget || (currentCatId && pCatStr === currentCatId);
       });
     }
 
@@ -222,14 +290,12 @@ export default function ProductList() {
       });
     }
 
-    // Search Filter
+    // Search Filter (Fuzzy Search with typo tolerance)
     if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter((p) =>
-        p.name?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.tags?.some((t) => t.toLowerCase().includes(q))
-      );
+      result = fuzzyFilter(result, searchQuery.trim(), {
+        keys: ['name', 'shortDescription', 'description', 'tags', 'sku'],
+        threshold: 0.38,
+      });
     }
 
     // Min Price Filter (e.g. ₹1,099+ Luxe tier)
@@ -283,6 +349,41 @@ export default function ProductList() {
       });
     }
 
+    // Tag Filter
+    if (selectedTag) {
+      const tagLower = selectedTag.trim().toLowerCase();
+      result = result.filter((p) => {
+        if (Array.isArray(p.tags)) {
+          if (p.tags.some((t) => typeof t === 'string' && t.trim().toLowerCase() === tagLower)) {
+            return true;
+          }
+        } else if (typeof p.tags === 'string' && p.tags.trim()) {
+          const parts = p.tags.split(',').map((s) => s.trim().toLowerCase());
+          if (parts.includes(tagLower)) return true;
+        }
+
+        if (typeof p.tag === 'string' && p.tag.trim().toLowerCase() === tagLower) {
+          return true;
+        }
+        if (typeof p.badge === 'string' && p.badge.trim().toLowerCase() === tagLower) {
+          return true;
+        }
+        if (typeof p.offerLabel === 'string' && p.offerLabel.trim().toLowerCase() === tagLower) {
+          return true;
+        }
+        if (tagLower === 'top product' && p.isFeatured) {
+          return true;
+        }
+
+        const extracted = extractProductTag(p);
+        if (extracted && typeof extracted === 'string' && extracted.trim().toLowerCase() === tagLower) {
+          return true;
+        }
+
+        return false;
+      });
+    }
+
     // Sorting
     if (sort === 'price_asc') {
       result.sort((a, b) => {
@@ -303,7 +404,7 @@ export default function ProductList() {
     }
 
     return result;
-  }, [allProducts, quickFilters, urlMaxPrice, urlMinPrice, urlMinDiscount, selectedCategory, selectedSubCategory, searchQuery, sort]);
+  }, [allProducts, quickFilters, urlMaxPrice, urlMinPrice, urlMinDiscount, selectedCategory, selectedSubCategory, selectedTag, searchQuery, sort, currentCategoryObj]);
 
   // Handle Category Selection
   const handleCategoryChange = (catSlug) => {
@@ -324,6 +425,21 @@ export default function ProductList() {
       next.set('subCategory', subSlug);
     } else {
       next.delete('subCategory');
+    }
+    setSearchParams(next);
+  };
+
+  // Handle Tag Selection
+  const handleTagChange = (tagVal) => {
+    const next = new URLSearchParams(searchParams);
+    if (tagVal) {
+      if (next.get('tag')?.toLowerCase() === tagVal.toLowerCase()) {
+        next.delete('tag');
+      } else {
+        next.set('tag', tagVal);
+      }
+    } else {
+      next.delete('tag');
     }
     setSearchParams(next);
   };
@@ -406,6 +522,7 @@ export default function ProductList() {
   const activeFilterCount =
     (selectedCategory ? 1 : 0) +
     (selectedSubCategory ? 1 : 0) +
+    (selectedTag ? 1 : 0) +
     (searchQuery ? 1 : 0) +
     (urlMaxPrice || urlMinPrice ? 1 : 0) +
     (urlMinDiscount || quickFilters.discount40 ? 1 : 0);
@@ -475,34 +592,32 @@ export default function ProductList() {
             </form>
 
             {/* 2. Horizontally Scrollable Category Tabs */}
-            {isEnabled('subcategory_pills_bar') && (
-              <div className="shop-mobile-category-track">
-                <button
-                  type="button"
-                  onClick={() => handleCategoryChange('')}
-                  className={`shop-mobile-cat-pill ${!selectedCategory ? 'active' : ''}`}
-                >
-                  All Products
-                </button>
-                {categories.map((cat) => {
-                  const catSlug = cat.slug || cat._id;
-                  const isActive =
-                    selectedCategory === catSlug ||
-                    selectedCategory === cat._id ||
-                    selectedCategory?.toLowerCase() === cat.slug?.toLowerCase();
-                  return (
-                    <button
-                      key={cat._id || catSlug}
-                      type="button"
-                      onClick={() => handleCategoryChange(isActive ? '' : catSlug)}
-                      className={`shop-mobile-cat-pill ${isActive ? 'active' : ''}`}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <div className="shop-mobile-category-track">
+              <button
+                type="button"
+                onClick={() => handleCategoryChange('')}
+                className={`shop-mobile-cat-pill ${!selectedCategory ? 'active' : ''}`}
+              >
+                All Products
+              </button>
+              {categories.map((cat) => {
+                const catSlug = cat.slug || cat._id;
+                const isActive =
+                  selectedCategory === catSlug ||
+                  selectedCategory === cat._id ||
+                  selectedCategory?.toLowerCase() === cat.slug?.toLowerCase();
+                return (
+                  <button
+                    key={cat._id || catSlug}
+                    type="button"
+                    onClick={() => handleCategoryChange(isActive ? '' : catSlug)}
+                    className={`shop-mobile-cat-pill ${isActive ? 'active' : ''}`}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
 
             {/* 3. Controls Row (Product Count, Sort, Filter) */}
             <div className="shop-mobile-controls-row">
@@ -526,8 +641,7 @@ export default function ProductList() {
                   {isMobileSortOpen && (
                     <div className="shop-mobile-sort-menu">
                       {[
-                        { id: 'all', label: 'Featured' },
-                        { id: 'newest', label: 'Newest Arrivals' },
+                        { id: 'all', label: 'All Products' },
                         { id: 'price_asc', label: 'Price: Low to High' },
                         { id: 'price_desc', label: 'Price: High to Low' },
                       ].map((opt) => (
@@ -608,6 +722,14 @@ export default function ProductList() {
                     </button>
                   </div>
                 )}
+                {selectedTag && (
+                  <div className="shop-mobile-chip">
+                    <span>Tag: {selectedTag}</span>
+                    <button type="button" onClick={() => handleTagChange('')}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={handleResetAll}
@@ -635,6 +757,9 @@ export default function ProductList() {
               selectedSubCategory={selectedSubCategory}
               onSelectCategory={handleCategoryChange}
               onSelectSubCategory={handleSubCategoryChange}
+              availableTags={availableTags}
+              selectedTag={selectedTag}
+              onSelectTag={handleTagChange}
               urlMaxPrice={urlMaxPrice}
               onSelectMaxPrice={handleMaxPriceChange}
               urlMinPrice={urlMinPrice}
@@ -707,16 +832,86 @@ export default function ProductList() {
                     )}
                   </button>
 
-                  {/* Clean Product Title */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  {/* Clean Product Title & Active Tag Chip */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
                       {currentCategoryObj ? currentCategoryObj.name : 'All Products'}
                     </span>
+                    {selectedTag && (
+                      <span
+                        style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          padding: '0.18rem 0.55rem',
+                          borderRadius: '8px',
+                          background: '#f5f3ff',
+                          color: '#7c3aed',
+                          border: '1px solid #ddd6fe',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                        }}
+                      >
+                        <Tag size={11} strokeWidth={2.4} />
+                        {selectedTag}
+                        <button
+                          type="button"
+                          onClick={() => handleTagChange('')}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#7c3aed',
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                          title="Remove tag filter"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Right: Sort Dropdown */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                {/* Right: Tags Dropdown & Sort Dropdown */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                  {/* Product Tags Dropdown */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                      Tags:
+                    </span>
+                    <select
+                      value={selectedTag || ''}
+                      onChange={(e) => handleTagChange(e.target.value)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '10px',
+                        border: '1.5px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#1e293b',
+                        fontWeight: 700,
+                        fontSize: '0.84rem',
+                        cursor: 'pointer',
+                        outline: 'none',
+                      }}
+                      aria-label="Filter products by tag"
+                    >
+                      <option value="">All Tags</option>
+                      {availableTags.map((t) => {
+                        const name = typeof t === 'string' ? t : t.name;
+                        const count = typeof t === 'object' ? t.count : 0;
+                        return (
+                          <option key={name} value={name}>
+                            {name} {count > 0 ? `(${count})` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Sort Dropdown */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
                       Sort:
@@ -742,8 +937,6 @@ export default function ProductList() {
                       aria-label="Sort products"
                     >
                       <option value="all">All Products</option>
-                      <option value="newest">Newest Arrivals</option>
-                      <option value="featured">Best Sellers & Featured</option>
                       <option value="price_asc">Price: Low to High</option>
                       <option value="price_desc">Price: High to Low</option>
                     </select>
@@ -757,6 +950,9 @@ export default function ProductList() {
                 selectedSubCategory={selectedSubCategory}
                 onSelectSubCategory={handleSubCategoryChange}
                 allProducts={allProducts}
+                searchQuery={searchQuery}
+                onSearchSubmit={handleSearchSubmit}
+                onSearchClear={handleSearchClear}
               />
 
               {/* Product Catalog Grid */}
@@ -910,8 +1106,10 @@ export default function ProductList() {
         isOpen={isMobileDrawerOpen}
         onClose={() => setIsMobileDrawerOpen(false)}
         categories={categories}
+        availableTags={availableTags}
         filterState={{
           category: selectedCategory,
+          tag: selectedTag,
           maxPrice: urlMaxPrice,
           minPrice: urlMinPrice,
           minRating: quickFilters.rating4Plus ? '4.5' : '',
@@ -919,6 +1117,7 @@ export default function ProductList() {
         }}
         onUpdateFilter={(key, val) => {
           if (key === 'category') handleCategoryChange(val);
+          if (key === 'tag') handleTagChange(val);
           if (key === 'maxPrice') handleMaxPriceChange(val);
           if (key === 'minPrice') handleMinPriceChange(val);
           if (key === 'minRating') setQuickFilters((p) => ({ ...p, rating4Plus: val === '4.5' }));
