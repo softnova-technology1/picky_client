@@ -1691,7 +1691,119 @@ function LiveSectionPreview({
         );
       })()}
 
-      {/* 8. Generic Preview for Other Pages */}
+      {/* ── 8. New Arrivals: Best Sellers Live Marquee Preview ── */}
+      {section.id === 'new_arrivals_marquee' && (() => {
+        const badgeText = s.badgeText || 'Best Sellers • Top Customer Picks';
+        const title = s.title || 'All Best Sellers Running Live';
+        const subtitle = s.subtitle || 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.';
+
+        return (
+          <div
+            style={{
+              background: 'linear-gradient(180deg, #fbfaff 0%, #f5f3ff 100%)',
+              border: '1.5px solid #ede9fe',
+              borderRadius: '16px',
+              padding: '1.75rem 1.25rem',
+              textAlign: 'center',
+              boxShadow: '0 4px 18px rgba(124, 58, 237, 0.06)',
+            }}
+          >
+            {/* Badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#f5f3ff',
+                border: '1px solid #ddd6fe',
+                padding: '4px 14px',
+                borderRadius: '9999px',
+                marginBottom: '0.85rem',
+              }}
+            >
+              <Flame size={14} color="#f97316" />
+              <span
+                style={{
+                  color: '#7c3aed',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {badgeText}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3
+              style={{
+                fontFamily: 'serif',
+                fontSize: '1.75rem',
+                fontWeight: 900,
+                color: '#1e1b4b',
+                margin: '0 0 0.5rem',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </h3>
+
+            {/* Subtitle */}
+            <p
+              style={{
+                color: '#64748b',
+                fontSize: '0.85rem',
+                maxWidth: '520px',
+                margin: '0 auto 1.25rem',
+                lineHeight: 1.5,
+              }}
+            >
+              {subtitle}
+            </p>
+
+            {/* Simulated Live Stream Ribbon */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '10px',
+                overflow: 'hidden',
+                justifyContent: 'center',
+                padding: '4px 0',
+              }}
+            >
+              {[
+                { tag: '⭐ 4.9', name: 'Madurai Sungudi Saree', price: '₹1,850' },
+                { tag: '🔥 BESTSELLER', name: 'Handcrafted Brass Vilakku', price: '₹2,490' },
+                { tag: '⭐ 4.8', name: 'Kanchipuram Silk Stole', price: '₹1,299' },
+              ].map((prod, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #ede9fe',
+                    borderRadius: '10px',
+                    padding: '8px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#f97316' }}>{prod.tag}</span>
+                  <strong style={{ color: '#1e1b4b' }}>{prod.name}</strong>
+                  <span style={{ color: '#7c3aed', fontWeight: 700 }}>{prod.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 9. Generic Preview for Other Pages */}
       {section.id !== 'announcement_bar' &&
         section.id !== 'hero_banner' &&
         section.id !== 'shop_by_category' &&
@@ -1699,7 +1811,8 @@ function LiveSectionPreview({
         section.id !== 'why_picky' &&
         section.id !== 'free_shipping_goal_bar' &&
         section.id !== 'categories_hero' &&
-        section.id !== 'new_arrivals_hero' && (
+        section.id !== 'new_arrivals_hero' &&
+        section.id !== 'new_arrivals_marquee' && (
           <div
             style={{
               background: '#ffffff',
@@ -1712,10 +1825,10 @@ function LiveSectionPreview({
             }}
           >
             <div>
-              <strong style={{ fontSize: '0.86rem', color: '#1e1b4b' }}>
+              <strong style={{ fontSize: '0.86rem', color: s.titleColor || s.textColor || '#1e1b4b' }}>
                 {s.title || s.headline || s.storyTitle || section.name}
               </strong>
-              <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+              <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: s.subtitleColor || '#64748b' }}>
                 {s.subtitle || s.subheadline || s.storyBody || s.bannerText || section.description}
               </p>
             </div>
@@ -1751,12 +1864,26 @@ export default function AdminCustomization() {
   const validPageIds = useMemo(() => MOCK_CUSTOMIZATION_PAGES.map((p) => p.id), []);
   const firstPageId = MOCK_CUSTOMIZATION_PAGES[0]?.id || 'global_header';
 
+  // Helper to ensure all sections from MOCK_PAGE_SECTIONS are included even if DB has older schema
+  const mergeWithDefaults = (source) => {
+    const merged = { ...(source || {}) };
+    Object.keys(MOCK_PAGE_SECTIONS).forEach((pId) => {
+      const defaults = MOCK_PAGE_SECTIONS[pId] || [];
+      const current = Array.isArray(merged[pId]) ? merged[pId] : [];
+      const missing = defaults.filter((d) => !current.some((c) => c.id === d.id || c.key === d.key));
+      if (missing.length > 0) {
+        merged[pId] = [...current, ...missing];
+      }
+    });
+    return merged;
+  };
+
   // Baseline and Working copies of all page sections
   const [allPageSections, setAllPageSections] = useState(() => {
-    return storePageSections || MOCK_PAGE_SECTIONS;
+    return mergeWithDefaults(storePageSections || MOCK_PAGE_SECTIONS);
   });
   const [savedPageSections, setSavedPageSections] = useState(() => {
-    return storePageSections || MOCK_PAGE_SECTIONS;
+    return mergeWithDefaults(storePageSections || MOCK_PAGE_SECTIONS);
   });
 
   // Active Selected Page (Header, Home, Shop, PDP, Cart, Footer, Content)
@@ -1849,9 +1976,10 @@ export default function AdminCustomization() {
         if (!mounted) return;
         const data = res?.data || res;
         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-          setAllPageSections((prev) => ({ ...prev, ...data }));
-          setSavedPageSections((prev) => ({ ...prev, ...data }));
-          Object.entries(data).forEach(([pId, secs]) => {
+          const mergedData = mergeWithDefaults(data);
+          setAllPageSections((prev) => ({ ...prev, ...mergedData }));
+          setSavedPageSections((prev) => ({ ...prev, ...mergedData }));
+          Object.entries(mergedData).forEach(([pId, secs]) => {
             if (Array.isArray(secs) && secs.length > 0) {
               storeSavePageSections(pId, secs);
             }
@@ -2600,7 +2728,16 @@ export default function AdminCustomization() {
       {/* ─── 3-Panel Unified Grid Layout ────────────────────────────────────── */}
       <div className="adm-cust-3panel-grid">
         {/* ── PANEL 1: Store Area Selector (Left Nav) ── */}
-        <div className="card adm-cust-panel-nav">
+        <div
+          className="card adm-cust-panel-nav"
+          style={{
+            height: '90vh',
+            maxHeight: '90vh',
+            position: 'sticky',
+            top: '80px',
+            overflowY: 'auto',
+          }}
+        >
           <div className="adm-cust-nav-groups">
             {/* Global Store */}
             <div>
@@ -2856,7 +2993,11 @@ export default function AdminCustomization() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            height: '100%',
+            height: '90vh',
+            maxHeight: '90vh',
+            position: 'sticky',
+            top: '80px',
+            overflowY: 'auto',
             marginBottom: 0,
             boxSizing: 'border-box',
           }}
@@ -3025,8 +3166,12 @@ export default function AdminCustomization() {
             padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            height: '100%',
+            justifyContent: 'flex-start',
+            height: '90vh',
+            maxHeight: '90vh',
+            position: 'sticky',
+            top: '80px',
+            overflowY: 'auto',
             marginBottom: 0,
             boxSizing: 'border-box',
           }}
@@ -5541,6 +5686,331 @@ export default function AdminCustomization() {
                   );
                 })()}
 
+                {/* ── NEW ARRIVALS: Best Sellers Live Marquee Text Editor ── */}
+                {currentSection.id === 'new_arrivals_marquee' && (() => {
+                  const s = currentSection.settings || {};
+                  const badgeText = s.badgeText ?? 'Best Sellers • Top Customer Picks';
+                  const title = s.title ?? 'All Best Sellers Running Live';
+                  const subtitle = s.subtitle ?? 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.';
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🔥 Marquee Section Text Content
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the badge, main heading, and subtitle displayed above the live running best sellers stream.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {/* 1. Top Badge Pill Text */}
+                          <div>
+                            <Input
+                              label="Top Badge Pill Text"
+                              value={badgeText}
+                              onChange={(e) => handleUpdateSetting('badgeText', e.target.value)}
+                              placeholder="Best Sellers • Top Customer Picks"
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Small badge pill displayed at the top with the orange flame icon.
+                            </span>
+                          </div>
+
+                          {/* 2. Main Title / Headline */}
+                          <div>
+                            <Input
+                              label="Main Headline / Section Title"
+                              value={title}
+                              onChange={(e) => handleUpdateSetting('title', e.target.value)}
+                              placeholder="All Best Sellers Running Live"
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Primary headline displayed in bold serif typography.
+                            </span>
+                          </div>
+
+                          {/* 3. Subtitle / Description */}
+                          <div>
+                            <label
+                              style={{
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#1e1b4b',
+                                display: 'block',
+                                marginBottom: '0.4rem',
+                              }}
+                            >
+                              Section Subtitle / Description
+                            </label>
+                            <textarea
+                              rows={3}
+                              className="adm-cust-textarea"
+                              value={subtitle}
+                              onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
+                              placeholder="Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '0.86rem',
+                                color: '#1e1b4b',
+                                fontFamily: 'inherit',
+                                resize: 'vertical',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Descriptive text explaining the hover-to-pause and live stream experience for customers.
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── BEST SELLERS: Leaderboard Banner Editor ── */}
+                {currentSection.id === 'best_sellers_hero' && (() => {
+                  const s = currentSection.settings || {};
+                  const headline = s.headline ?? 'Most Loved South Indian Masterpieces';
+                  const subheadline = s.subheadline ?? 'Handpicked by thousands of happy homes across India and worldwide.';
+                  const badgeText = s.badgeText ?? 'TOP RATED & VERIFIED';
+                  const titleColor = s.titleColor || s.textColor || '#111827';
+                  const subtitleColor = s.subtitleColor || '#475569';
+
+                  const titleColorPresets = [
+                    '#111827', // Obsidian Black (Default)
+                    '#1e1b4b', // Midnight Navy
+                    '#7c3aed', // Royal Purple
+                    '#4c1d95', // Deep Indigo
+                    '#0f172a', // Slate Dark
+                    '#be123c', // Festive Crimson
+                    '#065f46', // Emerald
+                    '#9a3412', // Warm Amber
+                  ];
+
+                  const subtitleColorPresets = [
+                    '#475569', // Slate Gray (Default)
+                    '#64748b', // Muted Gray
+                    '#1e293b', // Deep Charcoal
+                    '#6b21a8', // Soft Purple
+                    '#4b5563', // Neutral Cool
+                  ];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🏆 Leaderboard Banner Content & Colors
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the headline text, subtitle, badge, and text colors of the Best Sellers Hero Leaderboard.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {/* 1. Headline */}
+                          <div>
+                            <Input
+                              label="Headline"
+                              value={headline}
+                              onChange={(e) => handleUpdateSetting('headline', e.target.value)}
+                              placeholder="Most Loved South Indian Masterpieces"
+                            />
+                          </div>
+
+                          {/* 2. Subheadline */}
+                          <div>
+                            <label
+                              style={{
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#1e1b4b',
+                                display: 'block',
+                                marginBottom: '0.4rem',
+                              }}
+                            >
+                              Subheadline
+                            </label>
+                            <textarea
+                              rows={3}
+                              className="adm-cust-textarea"
+                              value={subheadline}
+                              onChange={(e) => handleUpdateSetting('subheadline', e.target.value)}
+                              placeholder="Handpicked by thousands of happy homes across India and worldwide."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '0.86rem',
+                                color: '#1e1b4b',
+                                fontFamily: 'inherit',
+                                resize: 'vertical',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          </div>
+
+                          {/* 3. Badge Text */}
+                          <div>
+                            <Input
+                              label="Badge Text"
+                              value={badgeText}
+                              onChange={(e) => handleUpdateSetting('badgeText', e.target.value)}
+                              placeholder="TOP RATED & VERIFIED"
+                            />
+                          </div>
+
+                          {/* 4. Banner Background Image (Restored) */}
+                          <div>
+                            <ImageUploadControl
+                              label="Banner Background Image"
+                              value={s.bannerBgImage || s.bannerBgColor || ''}
+                              onChange={(newUrl) => {
+                                handleUpdateSetting('bannerBgImage', newUrl);
+                                handleUpdateSetting('bannerBgColor', newUrl);
+                              }}
+                              onClear={(currUrl) => {
+                                handleClearSectionImage('bannerBgImage', currUrl);
+                                handleUpdateSetting('bannerBgColor', '');
+                              }}
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Supports JPG, PNG, WEBP or SVG (instant live preview). Default: <code>/images/bestseller_category_bg.jpg</code>.
+                            </span>
+                          </div>
+
+                          {/* 5. Text Colors Grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid #ede8f8' }}>
+                            {/* Headline Text Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Headline Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={titleColor}
+                                  onChange={(e) => {
+                                    handleUpdateSetting('titleColor', e.target.value);
+                                    handleUpdateSetting('textColor', e.target.value);
+                                  }}
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={titleColor}
+                                  onChange={(e) => {
+                                    handleUpdateSetting('titleColor', e.target.value);
+                                    handleUpdateSetting('textColor', e.target.value);
+                                  }}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                {titleColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => {
+                                      handleUpdateSetting('titleColor', c);
+                                      handleUpdateSetting('textColor', c);
+                                    }}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: titleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                      boxShadow: titleColor === c ? '0 0 0 2px #ddd6fe' : 'none',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                Changes the main headline font color.
+                              </span>
+                            </div>
+
+                            {/* Subtitle Text Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Subtitle Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                {subtitleColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('subtitleColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: subtitleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                      boxShadow: subtitleColor === c ? '0 0 0 2px #ddd6fe' : 'none',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                Changes the paragraph subtitle font color.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, About Us, Blog & others */}
                 {![
                   'announcement_bar',
@@ -5556,6 +6026,8 @@ export default function AdminCustomization() {
                   'cart_trust_security',
                   'categories_hero',
                   'new_arrivals_hero',
+                  'new_arrivals_marquee',
+                  'best_sellers_hero',
                 ].includes(currentSection.id) && currentSection.settings && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.entries(currentSection.settings).map(([key, val]) => {

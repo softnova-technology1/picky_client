@@ -187,27 +187,71 @@
   display: grid;
   grid-template-columns: 240px 300px minmax(0, 1fr);
   gap: 1.15rem;
-  align-items: stretch;
-  min-height: calc(100vh - 175px);
+  align-items: start;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
-/* Ensure all 3 panels are 100% strictly equal in height, stretch together, and bottom-align */
-.adm-cust-3panel-grid > .card,
+/* Panel 1 & Panel 2: Height 90vh, fixed/sticky, do not scroll */
 .adm-cust-3panel-grid > .adm-cust-panel-nav,
-.adm-cust-3panel-grid > .adm-cust-panel-sections,
-.adm-cust-3panel-grid > .adm-cust-panel-editor {
+.adm-cust-3panel-grid > .adm-cust-panel-sections {
   margin-bottom: 0 !important;
-  height: 100% !important;
-  min-height: 100% !important;
+  height: 90vh !important;
+  max-height: 90vh !important;
+  position: sticky !important;
+  top: 80px !important;
+  overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  align-self: stretch !important;
   box-sizing: border-box !important;
+}
+
+/* Panel 3: Height 90vh, fixed/sticky, ONLY this panel scrolls */
+.adm-cust-3panel-grid > .adm-cust-panel-editor {
+  margin-bottom: 0 !important;
+  height: 90vh !important;
+  max-height: 90vh !important;
+  position: sticky !important;
+  top: 80px !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
+}
+
+/* Custom sleek scrollbar for Editor panel */
+.adm-cust-panel-editor::-webkit-scrollbar {
+  width: 6px;
+}
+.adm-cust-panel-editor::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.adm-cust-panel-editor::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.25);
+  border-radius: 4px;
+}
+.adm-cust-panel-editor::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.5);
+}
+
+/* Navigation & Sections scrollbars - minimal and subtle */
+.adm-cust-panel-nav::-webkit-scrollbar,
+.adm-cust-panel-sections::-webkit-scrollbar {
+  width: 4px;
+}
+.adm-cust-panel-nav::-webkit-scrollbar-track,
+.adm-cust-panel-sections::-webkit-scrollbar-track {
+  background: transparent;
+}
+.adm-cust-panel-nav::-webkit-scrollbar-thumb,
+.adm-cust-panel-sections::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
 }
 
 @media (max-width: 1400px) {
@@ -237,6 +281,9 @@
   .adm-cust-3panel-grid > .adm-cust-panel-editor {
     height: auto !important;
     min-height: auto !important;
+    max-height: none !important;
+    position: static !important;
+    overflow-y: visible !important;
     margin-bottom: 0 !important;
   }
 }
@@ -250,7 +297,11 @@
   gap: 1.25rem;
   min-width: 0;
   box-sizing: border-box;
-  height: 100%;
+  height: 90vh;
+  max-height: 90vh;
+  position: sticky;
+  top: 80px;
+  overflow-y: auto;
   margin-bottom: 0 !important;
 }
 
@@ -342,7 +393,11 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 100%;
+  height: 90vh;
+  max-height: 90vh;
+  position: sticky;
+  top: 80px;
+  overflow-y: auto;
   margin-bottom: 0 !important;
   box-sizing: border-box;
 }
@@ -411,12 +466,16 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-width: 0;
   max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
-  height: 100%;
+  height: 90vh;
+  max-height: 90vh;
+  position: sticky;
+  top: 80px;
+  overflow-y: auto;
   margin-bottom: 0 !important;
 }
 
