@@ -24,8 +24,10 @@ import {
   Headphones,
   CheckCircle2,
 } from 'lucide-react';
+import { usePageCustomization } from '../../store/customizationStore';
 
 export default function Discounts() {
+  const { isEnabled, getSetting } = usePageCustomization('discounts');
   const navigate = useNavigate();
   const { fetchCategories } = useCategoryStore();
   const { showToast } = useUiStore();
@@ -293,6 +295,7 @@ export default function Discounts() {
     <PageWrapper>
       <div style={{ background: '#ffffff', minHeight: '100vh', color: '#1e293b' }}>
         {/* ── 1. Hero Section: Editorial Limited-Time Deals Banner ── */}
+        {isEnabled('discounts_hero') && (
         <section
           style={{
             background: 'linear-gradient(135deg, #faf7fe 0%, #f4eefa 50%, #eee8f8 100%)',
@@ -348,7 +351,7 @@ export default function Discounts() {
                 }}
               >
                 <Sparkles size={13} color="#7c3aed" />
-                <span>EXCLUSIVE CAMPAIGN</span>
+                <span>{getSetting('discounts_hero', 'badgeText', 'EXCLUSIVE CAMPAIGN')}</span>
               </div>
 
               {/* Title */}
@@ -363,7 +366,19 @@ export default function Discounts() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                Limited–Time <span style={{ color: '#6d28d9' }}>Deals</span>
+                {(() => {
+                  const title = getSetting('discounts_hero', 'title', 'Limited–Time Deals');
+                  const words = title.split(' ');
+                  if (words.length > 1) {
+                    return (
+                      <>
+                        {words.slice(0, -1).join(' ')}{' '}
+                        <span style={{ color: '#6d28d9' }}>{words[words.length - 1]}</span>
+                      </>
+                    );
+                  }
+                  return title;
+                })()}
               </h1>
 
               {/* Subtitle */}
@@ -376,7 +391,11 @@ export default function Discounts() {
                   maxWidth: '520px',
                 }}
               >
-                Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at steep promotional tiers.
+                {getSetting(
+                  'discounts_hero',
+                  'subtitle',
+                  'Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at steep promotional tiers.'
+                )}
               </p>
 
               {/* Live Countdown Pill: ONLY shown if real active offer with end date exists */}
@@ -741,6 +760,7 @@ export default function Discounts() {
             </div>
           </div>
         </section>
+        )}
 
         {/* ── 2. High Urgency Vault: Flash Deals (Rendered ONLY if active offer with countdown exists) ── */}
         {countdown && flashDeals.length > 0 && (

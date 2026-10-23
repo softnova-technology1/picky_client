@@ -3403,65 +3403,6 @@ export default function AdminCustomization() {
                   );
                 })()}
 
-                {/* 2. Main Navigation Header */}
-                {currentSection.id === 'main_header_nav' && (
-                  <>
-                    <Input
-                      label="Brand Logo Text"
-                      value={currentSection.settings?.logoText || 'PICKY'}
-                      onChange={(e) => handleUpdateSetting('logoText', e.target.value)}
-                    />
-                    <Input
-                      label="Search Bar Placeholder"
-                      value={currentSection.settings?.searchPlaceholder || ''}
-                      onChange={(e) => handleUpdateSetting('searchPlaceholder', e.target.value)}
-                    />
-                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.isSticky || false}
-                          onChange={(e) => handleUpdateSetting('isSticky', e.target.checked)}
-                        />
-                        Sticky Navigation on Scroll
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showWishlistLink || false}
-                          onChange={(e) => handleUpdateSetting('showWishlistLink', e.target.checked)}
-                        />
-                        Show Wishlist Icon
-                      </label>
-                    </div>
-                  </>
-                )}
-
-                {/* 3. Sticky Quick Bar */}
-                {currentSection.id === 'sticky_action_bar' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="WhatsApp Support Hotline"
-                        value={currentSection.settings?.whatsappNumber || ''}
-                        onChange={(e) => handleUpdateSetting('whatsappNumber', e.target.value)}
-                      />
-                      <Input
-                        label="Support Callout Text"
-                        value={currentSection.settings?.supportCallout || ''}
-                        onChange={(e) => handleUpdateSetting('supportCallout', e.target.value)}
-                      />
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={currentSection.settings?.showMobileBottomNav || false}
-                        onChange={(e) => handleUpdateSetting('showMobileBottomNav', e.target.checked)}
-                      />
-                      Enable Floating Mobile Quick Bar
-                    </label>
-                  </>
-                )}
 
                 {/* 4. Hero Banner (Collage Billboard: 3 Slides & 6 Images) */}
                 {currentSection.id === 'hero_banner' && (() => {
@@ -4400,74 +4341,6 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {currentSection.id === 'shop_filters_sort' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Default Sorting"
-                        value={currentSection.settings?.defaultSort || 'featured'}
-                        onChange={(e) => handleUpdateSetting('defaultSort', e.target.value)}
-                      />
-                      <Input
-                        label="Desktop Product Columns (3 / 4 / 5)"
-                        type="number"
-                        min="2"
-                        max="5"
-                        value={currentSection.settings?.desktopGridColumns || 4}
-                        onChange={(e) => handleUpdateSetting('desktopGridColumns', Number(e.target.value))}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.enablePriceSlider || false}
-                          onChange={(e) => handleUpdateSetting('enablePriceSlider', e.target.checked)}
-                        />
-                        Enable Price Slider
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.enableDepartmentFilter || false}
-                          onChange={(e) => handleUpdateSetting('enableDepartmentFilter', e.target.checked)}
-                        />
-                        Department Facets
-                      </label>
-                    </div>
-                  </>
-                )}
-
-                {currentSection.id === 'product_card_appearance' && (
-                  <>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showWishlistHeart || false}
-                          onChange={(e) => handleUpdateSetting('showWishlistHeart', e.target.checked)}
-                        />
-                        Show Floating Wishlist Heart Icon
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showQuickAddToCart || false}
-                          onChange={(e) => handleUpdateSetting('showQuickAddToCart', e.target.checked)}
-                        />
-                        Show Instant Add-to-Cart Button
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showDiscountPercentage || false}
-                          onChange={(e) => handleUpdateSetting('showDiscountPercentage', e.target.checked)}
-                        />
-                        Show Discount Percentage Badge
-                      </label>
-                    </div>
-                  </>
-                )}
 
                 {currentSection.id === 'subcategory_pills_bar' && (
                   <>
@@ -4492,31 +4365,6 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {/* 11. Product Details (PDP) Settings */}
-                {currentSection.id === 'pdp_gallery_settings' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Thumbnail Position (left / bottom)"
-                        value={currentSection.settings?.thumbnailPosition || 'left'}
-                        onChange={(e) => handleUpdateSetting('thumbnailPosition', e.target.value)}
-                      />
-                      <Input
-                        label="Image Aspect Ratio (1:1 / 3:4)"
-                        value={currentSection.settings?.aspectRatio || '1:1'}
-                        onChange={(e) => handleUpdateSetting('aspectRatio', e.target.value)}
-                      />
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={currentSection.settings?.enableMagnifierZoom || false}
-                        onChange={(e) => handleUpdateSetting('enableMagnifierZoom', e.target.checked)}
-                      />
-                      Enable High-Resolution Magnifier Hover Zoom
-                    </label>
-                  </>
-                )}
 
                 {currentSection.id === 'pdp_stock_delivery_pill' && (
                   <>
@@ -4601,23 +4449,6 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {currentSection.id === 'cart_coupon_strip' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Featured Coupon Code"
-                        value={currentSection.settings?.featuredCouponCode || ''}
-                        onChange={(e) => handleUpdateSetting('featuredCouponCode', e.target.value)}
-                      />
-                      <Input
-                        label="Coupon Highlight Blurb"
-                        value={currentSection.settings?.couponHighlightText || ''}
-                        onChange={(e) => handleUpdateSetting('couponHighlightText', e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-
                 {currentSection.id === 'cart_trust_security' && (
                   <>
                     <Input
@@ -4633,192 +4464,20 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {currentSection.id === 'cart_upsell_carousel' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Carousel Title"
-                        value={currentSection.settings?.title || ''}
-                        onChange={(e) => handleUpdateSetting('title', e.target.value)}
-                      />
-                      <Input
-                        label="Maximum Upsell Products"
-                        type="number"
-                        min="1"
-                        max="6"
-                        value={currentSection.settings?.maxItems || 3}
-                        onChange={(e) => handleUpdateSetting('maxItems', Number(e.target.value))}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* 13. Storefront Footer Settings */}
-                {currentSection.id === 'footer_config' && (
-                  <>
-                    <div>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
-                        About Storefront Blurb
-                      </label>
-                      <textarea
-                        value={currentSection.settings?.aboutText || ''}
-                        onChange={(e) => handleUpdateSetting('aboutText', e.target.value)}
-                        rows={2}
-                        style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: '10px',
-                          border: '1px solid #dfd5f5',
-                          fontSize: '0.88rem',
-                          fontFamily: 'inherit',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Newsletter Heading"
-                        value={currentSection.settings?.newsletterTitle || ''}
-                        onChange={(e) => handleUpdateSetting('newsletterTitle', e.target.value)}
-                      />
-                      <Input
-                        label="Support WhatsApp"
-                        value={currentSection.settings?.whatsapp || ''}
-                        onChange={(e) => handleUpdateSetting('whatsapp', e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Support Email"
-                        value={currentSection.settings?.supportEmail || ''}
-                        onChange={(e) => handleUpdateSetting('supportEmail', e.target.value)}
-                      />
-                      <Input
-                        label="Instagram URL"
-                        value={currentSection.settings?.instagram || ''}
-                        onChange={(e) => handleUpdateSetting('instagram', e.target.value)}
-                      />
-                    </div>
-
-                    <Input
-                      label="Copyright Notice"
-                      value={currentSection.settings?.copyrightText || ''}
-                      onChange={(e) => handleUpdateSetting('copyrightText', e.target.value)}
-                    />
-                  </>
-                )}
-
-                {/* 14. Content & Policies Pages Settings */}
-                {currentSection.id === 'about_us_content' && (
-                  <>
-                    <Input
-                      label="Story Headline"
-                      value={currentSection.settings?.storyTitle || ''}
-                      onChange={(e) => handleUpdateSetting('storyTitle', e.target.value)}
-                    />
-                    <div>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
-                        Artisan Story Body
-                      </label>
-                      <textarea
-                        value={currentSection.settings?.storyBody || ''}
-                        onChange={(e) => handleUpdateSetting('storyBody', e.target.value)}
-                        rows={3}
-                        style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: '10px',
-                          border: '1px solid #dfd5f5',
-                          fontSize: '0.88rem',
-                          fontFamily: 'inherit',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Artisan Count Badge"
-                        value={currentSection.settings?.artisanCount || ''}
-                        onChange={(e) => handleUpdateSetting('artisanCount', e.target.value)}
-                      />
-                      <Input
-                        label="Districts Covered Badge"
-                        value={currentSection.settings?.districtsCovered || ''}
-                        onChange={(e) => handleUpdateSetting('districtsCovered', e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {currentSection.id === 'contact_support_content' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Support Phone"
-                        value={currentSection.settings?.supportPhone || ''}
-                        onChange={(e) => handleUpdateSetting('supportPhone', e.target.value)}
-                      />
-                      <Input
-                        label="Support Email"
-                        value={currentSection.settings?.supportEmail || ''}
-                        onChange={(e) => handleUpdateSetting('supportEmail', e.target.value)}
-                      />
-                    </div>
-                    <Input
-                      label="Working Hours Blurb"
-                      value={currentSection.settings?.workingHours || ''}
-                      onChange={(e) => handleUpdateSetting('workingHours', e.target.value)}
-                    />
-                    <Input
-                      label="Headquarters Office Address"
-                      value={currentSection.settings?.officeAddress || ''}
-                      onChange={(e) => handleUpdateSetting('officeAddress', e.target.value)}
-                    />
-                  </>
-                )}
-
-                {currentSection.id === 'policies_terms_content' && (
-                  <>
-                    <Input
-                      label="Policy Revision Notice"
-                      value={currentSection.settings?.policyUpdateDate || ''}
-                      onChange={(e) => handleUpdateSetting('policyUpdateDate', e.target.value)}
-                    />
-                    <Input
-                      label="Shipping Turnaround Blurb"
-                      value={currentSection.settings?.shippingTimeline || ''}
-                      onChange={(e) => handleUpdateSetting('shippingTimeline', e.target.value)}
-                    />
-                  </>
-                )}
-
-                {/* 15. Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, Wishlist, About Us, Contact Us, Blog & others */}
+                {/* Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, About Us, Blog & others */}
                 {![
                   'announcement_bar',
-                  'main_header_nav',
-                  'sticky_action_bar',
                   'hero_banner',
                   'flash_deals',
                   'shop_by_category',
                   'why_picky',
                   'catalog_header_banner',
-                  'shop_filters_sort',
-                  'product_card_appearance',
                   'subcategory_pills_bar',
-                  'pdp_gallery_settings',
                   'pdp_stock_delivery_pill',
                   'pdp_trust_guarantee',
                   'pdp_related_products',
                   'free_shipping_goal_bar',
-                  'cart_coupon_strip',
                   'cart_trust_security',
-                  'cart_upsell_carousel',
-                  'footer_config',
-                  'about_us_content',
-                  'contact_support_content',
-                  'policies_terms_content',
                 ].includes(currentSection.id) && currentSection.settings && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.entries(currentSection.settings).map(([key, val]) => {

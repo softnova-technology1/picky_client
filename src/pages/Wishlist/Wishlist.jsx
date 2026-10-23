@@ -10,7 +10,6 @@ import { wishlistService } from '../../services/wishlist.service';
 import styles from './Wishlist.module.css';
 import ProductCard from '../../components/product/ProductCard';
 import { productService } from '../../services/product.service';
-import { usePageCustomization } from '../../store/customizationStore';
 import {
   Heart,
   ShoppingCart,
@@ -112,7 +111,6 @@ export const ASSURANCE_FEATURES = [
 ];
 
 export default function Wishlist() {
-  const { isEnabled, getSetting } = usePageCustomization('wishlist');
   const { items, removeItem, setWishlist, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
   const { isLoggedIn } = useAuthStore();
