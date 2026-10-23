@@ -25,7 +25,17 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
-import { COMMON_COURIERS } from '../../../data/ordersMockData';
+// ─── Common Logistics & Courier Partners ────────────────────────────────────
+const COMMON_COURIERS = [
+  'DTDC Express',
+  'BlueDart Express',
+  'Delhivery',
+  'India Post Speed Post',
+  'Ecom Express',
+  'Shadowfax',
+  'Xpressbees',
+  'Professional Couriers',
+];
 import { useOrderStore } from '../../../store/orderStore';
 
 const ADMIN = '/softpicky-sn2026';
