@@ -60,6 +60,7 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { DEFAULT_PRODUCT_TAGS, getTagDesign, extractProductTag } from '../../../utils/productTagHelper';
 import { fuzzyFilter } from '../../../utils/fuzzySearch';
+import { formatPrice } from '../../../utils/formatPrice';
 
 const PREDEFINED_TAGS = DEFAULT_PRODUCT_TAGS;
 

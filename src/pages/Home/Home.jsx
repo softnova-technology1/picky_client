@@ -764,17 +764,18 @@ export default function Home() {
         <div className="hp-flash-deals-container">
 
           {/* Header Row: Title + Live Ticking Countdown */}
+          {/* Header Row: Title + Live Ticking Countdown */}
           <div className="hp-flash-deals-header">
-            <FadeUp>
-              <div className="hp-section-badge">{getSetting("flash_deals", "badgeText", "FLASH SALE • LIMITED TIME ONLY")}</div>
-              <h2 className="hp-section-title">
-                {getSetting("flash_deals", "headline", "Limited Time Deals")}
-              </h2>
-            </FadeUp>
+            <div className="hp-flash-title-block">
+              <FadeUp>
+                <div className="hp-section-badge">{getSetting("flash_deals", "badgeText", "FLASH SALE • LIMITED TIME ONLY")}</div>
+                <h2 className="hp-section-title">
+                  {getSetting("flash_deals", "headline", "Limited Time Deals")}
+                </h2>
+              </FadeUp>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-              {/* Live Ticking Countdown Timer */}
-              <FadeUp delay={100}>
+              {/* Mobile Timer directly under title */}
+              <div className="hp-flash-timer-mobile">
                 <div className="hp-flash-header-timer">
                   <span className="timer-label">Ends In:</span>
                   <div className="timer-box">
@@ -792,7 +793,32 @@ export default function Home() {
                     <span className="timer-unit">SEC</span>
                   </div>
                 </div>
-              </FadeUp>
+              </div>
+            </div>
+
+            <div className="hp-flash-header-actions">
+              {/* Desktop Live Ticking Countdown Timer */}
+              <div className="hp-flash-timer-desktop">
+                <FadeUp delay={100}>
+                  <div className="hp-flash-header-timer">
+                    <span className="timer-label">Ends In:</span>
+                    <div className="timer-box">
+                      <span className="timer-num">{String(timeLeft.hours).padStart(2, '0')}</span>
+                      <span className="timer-unit">HRS</span>
+                    </div>
+                    <span className="timer-colon">:</span>
+                    <div className="timer-box">
+                      <span className="timer-num">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      <span className="timer-unit">MIN</span>
+                    </div>
+                    <span className="timer-colon">:</span>
+                    <div className="timer-box">
+                      <span className="timer-num">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      <span className="timer-unit">SEC</span>
+                    </div>
+                  </div>
+                </FadeUp>
+              </div>
 
               {/* Explore Limited Deals button navigating to /limited-deals */}
               <FadeUp delay={120}>
@@ -819,8 +845,6 @@ export default function Home() {
                   className="hp-flash-spotlight-card"
                   onClick={() => navigate(`/products/${spotlightProduct.slug}`)}
                 >
-                  <div className="spotlight-tag">DEAL OF THE DAY • 32% OFF</div>
-
                   <div className="spotlight-img-wrap">
                     <button
                       onClick={handleToggleSpotlightWishlist}
@@ -828,7 +852,7 @@ export default function Home() {
                       title={isSpotlightInWishlist ? 'Remove from wishlist' : 'Save to wishlist'}
                     >
                       <Heart
-                        size={18}
+                        size={14}
                         color={isSpotlightInWishlist ? '#e11d48' : '#64748b'}
                         fill={isSpotlightInWishlist ? '#e11d48' : 'transparent'}
                         strokeWidth={2.3}

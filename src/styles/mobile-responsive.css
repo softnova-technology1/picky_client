@@ -111,7 +111,7 @@
     background: #ffffff;
     border-bottom: 1px solid #ede8f8;
     box-shadow: 0 2px 10px rgba(124, 58, 237, 0.05);
-    padding: 8px 14px 10px;
+    padding: 8px 14px !important;
     box-sizing: border-box;
     transition: box-shadow 0.25s ease;
   }
@@ -125,7 +125,7 @@
     align-items: center;
     justify-content: space-between;
     height: 42px;
-    margin-bottom: 8px;
+    margin-bottom: 0 !important;
     width: 100%;
   }
 
@@ -170,6 +170,9 @@
     color: #1e1b4b;
     text-decoration: none;
     padding: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
   }
 
   .mobile-header-badge {
@@ -252,6 +255,26 @@
     cursor: pointer;
     flex-shrink: 0;
     color: #64748b;
+  }
+
+  /* Quick Search Modal on Mobile */
+  .nav-search-modal-backdrop {
+    padding: 12px !important;
+    align-items: flex-start !important;
+    background: rgba(15, 12, 35, 0.65) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 2500 !important;
+  }
+
+  .nav-search-modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 20px 50px rgba(124, 58, 237, 0.25) !important;
   }
 
   /* 3. Top Categories Section */
@@ -495,10 +518,10 @@
   .ref-card-top {
     position: relative !important;
     background: linear-gradient(180deg, #f5effe 0%, #ede4fb 100%) !important;
-    aspect-ratio: 4 / 5 !important;
+    aspect-ratio: 1 / 1 !important;
     height: auto !important;
     min-height: unset !important;
-    max-height: unset !important;
+    max-height: 135px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
@@ -517,32 +540,51 @@
     top: 6px !important;
     left: 6px !important;
     right: 6px !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
+    bottom: 6px !important;
+    pointer-events: none !important;
     z-index: 10 !important;
   }
 
   .ref-mega-deal {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    top: auto !important;
     display: inline-flex !important;
     align-items: center !important;
-    padding: 2px 6px 2px 2px !important;
+    padding: 1.5px 5px 1.5px 2px !important;
     border-radius: 9999px !important;
-    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+    pointer-events: auto !important;
+    max-width: calc(100% - 10px) !important;
   }
 
   .ref-deal-icon {
-    width: 14px !important;
-    height: 14px !important;
-    margin-right: 3px !important;
+    width: 12px !important;
+    height: 12px !important;
+    margin-right: 2.5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
+  .ref-deal-icon svg {
+    width: 7px !important;
+    height: 7px !important;
+  }
+
+  .ref-mega-deal .ref-deal-text,
   .ref-deal-text {
-    font-size: 0.55rem !important;
+    font-size: 7.5px !important;
     font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.15px !important;
   }
 
   .ref-wishlist-btn {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
     width: 26px !important;
     height: 26px !important;
     border-radius: 50% !important;
@@ -553,6 +595,7 @@
     justify-content: center !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     margin-left: auto !important;
+    pointer-events: auto !important;
   }
 
   .ref-img-wrapper {
@@ -570,7 +613,7 @@
   .ref-product-img {
     width: 100% !important;
     height: 100% !important;
-    max-height: none !important;
+    max-height: 100% !important;
     max-width: 100% !important;
     object-fit: cover !important;
     object-position: center !important;
@@ -595,7 +638,7 @@
     line-height: 1.25 !important;
     max-height: 2rem !important;
     height: auto !important;
-    margin-bottom: 2px !important;
+    margin-bottom: 0 !important;
     display: -webkit-box !important;
     -webkit-line-clamp: 1 !important;
     -webkit-box-orient: vertical !important;
@@ -604,24 +647,17 @@
   }
 
   .ref-product-desc {
-    font-size: 0.68rem !important;
-    font-weight: 500 !important;
-    color: #64748b !important;
-    line-height: 1.25 !important;
-    margin: 0 0 2px 0 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 1 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    display: none !important;
   }
 
   .ref-price-row {
     display: flex !important;
-    align-items: baseline !important;
-    gap: 4px !important;
-    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
     margin: 0 !important;
+    width: 100% !important;
   }
 
   .ref-current-price {
@@ -629,6 +665,8 @@
     font-weight: 800 !important;
     color: #1e1b4b !important;
     letter-spacing: -0.02em !important;
+    white-space: nowrap !important;
+    line-height: 1.1 !important;
   }
 
   .ref-original-price {
@@ -636,16 +674,22 @@
     color: #94a3b8 !important;
     text-decoration: line-through !important;
     font-weight: 500 !important;
+    white-space: nowrap !important;
+    line-height: 1.1 !important;
   }
 
+  .ref-price-row .ref-discount-pill,
   .ref-discount-pill {
-    font-size: 0.6rem !important;
+    font-size: 7.5px !important;
     font-weight: 700 !important;
-    padding: 1px 4px !important;
-    border-radius: 4px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
     background: rgba(5, 150, 105, 0.08) !important;
     color: #059669 !important;
-    border: 1px solid rgba(5, 150, 105, 0.2) !important;
+    border: 0.8px solid rgba(5, 150, 105, 0.25) !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
   }
 
   .ref-actions-row {
@@ -655,7 +699,7 @@
 
   .ref-add-cart-btn {
     width: 100% !important;
-    height: 32px !important;
+    height: 30px !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
     border-radius: 8px !important;
@@ -683,7 +727,7 @@
     display: none !important;
   }
 
-  /* Header Row: d-flex side-by-side (Title on left, Timer on right) */
+  /* Header Row: d-flex side-by-side (Title & Timer on left, Explore button on right) */
   .hp-flash-deals-header {
     display: flex !important;
     flex-direction: row !important;
@@ -693,6 +737,37 @@
     gap: 8px !important;
     margin-bottom: 12px !important;
     width: 100% !important;
+  }
+
+  .hp-flash-title-block {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .hp-flash-timer-desktop {
+    display: none !important;
+  }
+
+  .hp-flash-timer-mobile {
+    display: block !important;
+    margin-top: 2px !important;
+  }
+
+  .hp-flash-header-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-shrink: 0 !important;
+    gap: 0 !important;
+  }
+
+  .hp-flash-header-actions .fade-up {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
   }
 
   .hp-flash-deals-section .hp-section-title {
@@ -709,29 +784,31 @@
     display: inline-flex !important;
     align-items: center !important;
     gap: 3px !important;
-    background: #3b0764 !important;
+    background: #1e1b4b !important;
+    border: none !important;
     color: #ffffff !important;
     padding: 3px 8px !important;
     border-radius: 9999px !important;
     font-size: 0.65rem !important;
     font-weight: 800 !important;
     flex-shrink: 0 !important;
-    box-shadow: 0 2px 8px rgba(59, 7, 100, 0.25) !important;
+    box-shadow: 0 2px 8px rgba(30, 27, 75, 0.25) !important;
   }
 
-  .timer-label {
+  .hp-flash-header-timer .timer-label {
     margin-right: 2px !important;
     font-size: 0.58rem !important;
-    color: #d8b4fe !important;
+    color: #a78bfa !important;
     text-transform: uppercase !important;
     font-weight: 700 !important;
     letter-spacing: 0.02em !important;
   }
 
-  .timer-box {
-    background: #1e1b4b !important;
+  .hp-flash-header-timer .timer-box {
+    background: #4338ca !important;
+    border: none !important;
     padding: 1px 4px !important;
-    border-radius: 3px !important;
+    border-radius: 4px !important;
     font-weight: 800 !important;
     font-size: 0.68rem !important;
     min-width: 18px !important;
@@ -739,17 +816,17 @@
     line-height: 1.1 !important;
   }
 
-  .timer-num {
+  .hp-flash-header-timer .timer-num {
     font-size: 0.68rem !important;
     color: #ffffff !important;
   }
 
-  .timer-unit {
+  .hp-flash-header-timer .timer-unit {
     display: none !important;
   }
 
-  .timer-colon {
-    color: #d8b4fe !important;
+  .hp-flash-header-timer .timer-colon {
+    color: #a78bfa !important;
     font-size: 0.68rem !important;
     font-weight: 800 !important;
   }
@@ -797,8 +874,8 @@
     top: 6px !important;
     right: 6px !important;
     z-index: 10 !important;
-    width: 26px !important;
-    height: 26px !important;
+    width: 22px !important;
+    height: 22px !important;
     border-radius: 50% !important;
     background: rgba(255, 255, 255, 0.92) !important;
     border: none !important;
@@ -808,10 +885,16 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
   }
 
+  .spotlight-heart-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
   .spotlight-img-wrap {
-    width: 40% !important;
-    min-width: 120px !important;
-    max-width: 140px !important;
+    width: 42% !important;
+    min-width: 140px !important;
+    max-width: 165px !important;
+    aspect-ratio: 4 / 5 !important;
     height: auto !important;
     flex-shrink: 0 !important;
     position: relative !important;
@@ -821,14 +904,17 @@
     align-items: center !important;
     justify-content: center !important;
     padding: 6px !important;
+    box-sizing: border-box !important;
   }
 
   .spotlight-img {
     width: 100% !important;
     height: 100% !important;
-    max-height: 160px !important;
+    max-height: none !important;
+    aspect-ratio: 4 / 5 !important;
     object-fit: cover !important;
-    border-radius: 10px !important;
+    object-position: center !important;
+    border-radius: 14px !important;
   }
 
   .spotlight-glow {
@@ -1341,6 +1427,7 @@
   .hp-final-title {
     font-size: 1.35rem !important;
     line-height: 1.2 !important;
+    padding-top: 10px !important;
   }
 
   .hp-final-subtitle {
@@ -1356,19 +1443,34 @@
     margin-top: 4px !important;
   }
 
-  .hp-final-cta-outline-btn {
+  .hp-final-cta-outline-btn,
+  .hp-final-cta-outline-btn:hover,
+  .hp-final-cta-outline-btn:active,
+  .hp-final-cta-outline-btn:focus {
     height: 42px !important;
     width: 42px !important;
     padding: 0 !important;
-    font-size: 0.8rem !important;
-    font-weight: 800 !important;
     margin-top: 4px !important;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    color: #25d366 !important;
+    border: 2px solid #25d366 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: none !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
   }
 
-  .hp-final-cta-outline-btn:hover,
-  .hp-final-cta-outline-btn:active {
-    width: 230px !important;
-    padding: 0 14px !important;
+  .hp-final-cta-outline-btn .hp-cta-wa-label,
+  .hp-final-cta-outline-btn:hover .hp-cta-wa-label,
+  .hp-final-cta-outline-btn:active .hp-cta-wa-label,
+  .hp-final-cta-outline-btn:focus .hp-cta-wa-label {
+    display: none !important;
+    max-width: 0 !important;
+    opacity: 0 !important;
+    margin-left: 0 !important;
+    pointer-events: none !important;
   }
 
   /* 12. Footer Mobile Layout */
@@ -1940,3 +2042,554 @@
     font-size: 0.68rem !important;
   }
 }
+
+/* ==========================================================================
+   EXACT FONT SIZES — 3 MOBILE VIEWS REPORT (320px, 375px, 425px)
+   ========================================================================== */
+
+/* ─── 1. Exact Font Sizes — 425px View (414px to 768px Mobile) ─────────── */
+@media (max-width: 768px) and (min-width: 414px) {
+  /* Announcement bar: 11px */
+  .announcement-marquee-bar,
+  .announcement-ticker-text,
+  .announcement-ticker-cta,
+  .top-announcement-bar,
+  .top-announcement-crosh {
+    font-size: 11px !important;
+  }
+
+  /* Header logo: 20px */
+  .mobile-nav-brand-logo,
+  .mobile-nav-brand-logo span,
+  .nav-brand-name {
+    font-size: 20px !important;
+  }
+
+  /* Hero main heading: 34px */
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title {
+    font-size: 34px !important;
+  }
+
+  /* Hero description: 13px */
+  .hero-mobile-eyebrow,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline {
+    font-size: 13px !important;
+  }
+
+  /* Hero price: 14px */
+  .hero-price,
+  .hero-mobile-price,
+  .hero-mobile-highlight {
+    font-size: 14px !important;
+  }
+
+  /* Hero CTA button: 13px */
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn {
+    font-size: 13px !important;
+  }
+
+  /* Section heading: 26px */
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"] {
+    font-size: 26px !important;
+  }
+
+  /* Section subtitle: 13px */
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"] {
+    font-size: 13px !important;
+  }
+
+  /* Category card title: 14px */
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"] {
+    font-size: 14px !important;
+  }
+
+  /* Category product count: 12px */
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  [class*="productCount"],
+  [class*="categoryCount"],
+  [class*="statsCount"] {
+    font-size: 12px !important;
+  }
+
+  /* Budget card price: 22px */
+  [class*="pillTitle"],
+  [class*="budgetCardTitle"],
+  .budget-card-price,
+  .budget-price,
+  .sidebar-budget-row,
+  [class*="budgetPrice"] {
+    font-size: 22px !important;
+  }
+
+  /* Budget CTA: 12px */
+  [class*="pillBtn"],
+  [class*="pillBtn"] span,
+  [class*="budgetCardSubtitle"],
+  .budget-cta,
+  [class*="budgetSelectCard"] span {
+    font-size: 12px !important;
+  }
+
+  /* Product title: 14px */
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  [class*="productTitle"],
+  [class*="productName"] {
+    font-size: 14px !important;
+  }
+
+  /* Product selling price: 18px */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"] {
+    font-size: 18px !important;
+  }
+
+  /* Original price: 12px */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  [class*="origPrice"],
+  [class*="originalPrice"] {
+    font-size: 12px !important;
+  }
+
+  /* Add to Cart button: 13px */
+  .ref-add-cart-btn,
+  .ref-add-cart-btn span,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  .spotlight-cta-btn span {
+    font-size: 13px !important;
+  }
+
+  /* Badge text: 11px */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  [class*="pillBadgeTag"],
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  [class*="badgeText"],
+  [class*="discountBadge"] {
+    font-size: 11px !important;
+  }
+
+  /* Footer heading: 16px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 16px !important;
+  }
+
+  /* Footer links: 13px */
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 13px !important;
+  }
+}
+
+/* ─── 2. Exact Font Sizes — 375px View (350px to 413px Mobile) ─────────── */
+@media (max-width: 413px) and (min-width: 350px) {
+  /* Announcement bar: 10px */
+  .announcement-marquee-bar,
+  .announcement-ticker-text,
+  .announcement-ticker-cta,
+  .top-announcement-bar,
+  .top-announcement-crosh {
+    font-size: 10px !important;
+  }
+
+  /* Header logo: 19px */
+  .mobile-nav-brand-logo,
+  .mobile-nav-brand-logo span,
+  .nav-brand-name {
+    font-size: 19px !important;
+  }
+
+  /* Hero main heading: 30px */
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title {
+    font-size: 30px !important;
+  }
+
+  /* Hero description: 12px */
+  .hero-mobile-eyebrow,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline {
+    font-size: 12px !important;
+  }
+
+  /* Hero price: 13px */
+  .hero-price,
+  .hero-mobile-price,
+  .hero-mobile-highlight {
+    font-size: 13px !important;
+  }
+
+  /* Hero CTA button: 12px */
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn {
+    font-size: 12px !important;
+  }
+
+  /* Section heading: 24px */
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"] {
+    font-size: 24px !important;
+  }
+
+  /* Section subtitle: 12px */
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"] {
+    font-size: 12px !important;
+  }
+
+  /* Category card title: 13px */
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"] {
+    font-size: 13px !important;
+  }
+
+  /* Category product count: 11px */
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  [class*="productCount"],
+  [class*="categoryCount"],
+  [class*="statsCount"] {
+    font-size: 11px !important;
+  }
+
+  /* Budget card price: 20px */
+  [class*="pillTitle"],
+  [class*="budgetCardTitle"],
+  .budget-card-price,
+  .budget-price,
+  .sidebar-budget-row,
+  [class*="budgetPrice"] {
+    font-size: 20px !important;
+  }
+
+  /* Budget CTA: 11px */
+  [class*="pillBtn"],
+  [class*="pillBtn"] span,
+  [class*="budgetCardSubtitle"],
+  .budget-cta,
+  [class*="budgetSelectCard"] span {
+    font-size: 11px !important;
+  }
+
+  /* Product title: 13px */
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  [class*="productTitle"],
+  [class*="productName"] {
+    font-size: 13px !important;
+  }
+
+  /* Product selling price: 16px */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"] {
+    font-size: 16px !important;
+  }
+
+  /* Original price: 11px */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  [class*="origPrice"],
+  [class*="originalPrice"] {
+    font-size: 11px !important;
+  }
+
+  /* Add to Cart button: 12px */
+  .ref-add-cart-btn,
+  .ref-add-cart-btn span,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  .spotlight-cta-btn span {
+    font-size: 12px !important;
+  }
+
+  /* Badge text: 10px */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  [class*="pillBadgeTag"],
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  [class*="badgeText"],
+  [class*="discountBadge"] {
+    font-size: 10px !important;
+  }
+
+  /* Footer heading: 14px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 14px !important;
+  }
+
+  /* Footer links: 12px */
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 12px !important;
+  }
+}
+
+/* ─── 3. Exact Font Sizes — 320px View (<= 349px Mobile) ────────────────── */
+@media (max-width: 349px) {
+  /* Announcement bar: 9px */
+  .announcement-marquee-bar,
+  .announcement-ticker-text,
+  .announcement-ticker-cta,
+  .top-announcement-bar,
+  .top-announcement-crosh {
+    font-size: 9px !important;
+  }
+
+  /* Header logo: 17px */
+  .mobile-nav-brand-logo,
+  .mobile-nav-brand-logo span,
+  .nav-brand-name {
+    font-size: 17px !important;
+  }
+
+  /* Hero main heading: 26px */
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title {
+    font-size: 26px !important;
+  }
+
+  /* Hero description: 11px */
+  .hero-mobile-eyebrow,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline {
+    font-size: 11px !important;
+  }
+
+  /* Hero price: 12px */
+  .hero-price,
+  .hero-mobile-price,
+  .hero-mobile-highlight {
+    font-size: 12px !important;
+  }
+
+  /* Hero CTA button: 11px */
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn {
+    font-size: 11px !important;
+  }
+
+  /* Section heading: 21px */
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"] {
+    font-size: 21px !important;
+  }
+
+  /* Section subtitle: 11px */
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"] {
+    font-size: 11px !important;
+  }
+
+  /* Category card title: 12px */
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"] {
+    font-size: 12px !important;
+  }
+
+  /* Category product count: 10px */
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  [class*="productCount"],
+  [class*="categoryCount"],
+  [class*="statsCount"] {
+    font-size: 10px !important;
+  }
+
+  /* Budget card price: 17px */
+  [class*="pillTitle"],
+  [class*="budgetCardTitle"],
+  .budget-card-price,
+  .budget-price,
+  .sidebar-budget-row,
+  [class*="budgetPrice"] {
+    font-size: 17px !important;
+  }
+
+  /* Budget CTA: 10px */
+  [class*="pillBtn"],
+  [class*="pillBtn"] span,
+  [class*="budgetCardSubtitle"],
+  .budget-cta,
+  [class*="budgetSelectCard"] span {
+    font-size: 10px !important;
+  }
+
+  /* Product title: 12px */
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  [class*="productTitle"],
+  [class*="productName"] {
+    font-size: 12px !important;
+  }
+
+  /* Product selling price: 15px */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"] {
+    font-size: 15px !important;
+  }
+
+  /* Original price: 10px */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  [class*="origPrice"],
+  [class*="originalPrice"] {
+    font-size: 10px !important;
+  }
+
+  /* Add to Cart button: 11px */
+  .ref-add-cart-btn,
+  .ref-add-cart-btn span,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  .spotlight-cta-btn span {
+    font-size: 11px !important;
+  }
+
+  /* Badge text: 9px */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  [class*="pillBadgeTag"],
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  [class*="badgeText"],
+  [class*="discountBadge"] {
+    font-size: 9px !important;
+  }
+
+  /* Footer heading: 13px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 13px !important;
+  }
+
+  /* Footer links: 11px */
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 11px !important;
+  }
+}
+

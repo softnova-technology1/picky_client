@@ -44,6 +44,10 @@ import {
   Play,
   Pause,
   Heart,
+  Award,
+  Headphones,
+  Star,
+  Zap,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Button from '../../../components/ui/Button';
@@ -524,6 +528,28 @@ function ImageUploadControl({ label, value, onChange, onClear }) {
     </div>
   );
 }
+
+// ─── Trust Strip Vector Icon Helper ──────────────────────────────────────────
+const renderTrustStripIcon = (iconName, size = 20) => {
+  const map = {
+    Award: <Award size={size} />,
+    ShoppingBag: <ShoppingBag size={size} />,
+    Truck: <Truck size={size} />,
+    Headphones: <Headphones size={size} />,
+    ShieldCheck: <ShieldCheck size={size} />,
+    Sparkles: <Sparkles size={size} />,
+    RotateCcw: <RotateCcw size={size} />,
+    Heart: <Heart size={size} />,
+    Star: <Star size={size} />,
+    Zap: <Zap size={size} />,
+    CheckCircle2: <CheckCircle2 size={size} />,
+    Tag: <Tag size={size} />,
+    Clock: <Clock size={size} />,
+    Gift: <Gift size={size} />,
+    Package: <Package size={size} />,
+  };
+  return map[iconName] || <Award size={size} />;
+};
 
 // ─── Live Visual Section Preview Component (Shopify Style) ───────────────────
 function LiveSectionPreview({
@@ -1803,6 +1829,86 @@ function LiveSectionPreview({
         );
       })()}
 
+      {/* 8. Best Sellers: Buyer Protection & Trust Strip Preview */}
+      {section.id === 'best_sellers_trust_strip' && (() => {
+        const p1Title = s.pillar1Title ?? 'CAREFULLY SELECTED PRODUCTS';
+        const p1Desc = s.pillar1Desc ?? 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.';
+        const p1Icon = s.pillar1Icon || 'Award';
+        const p1CustomIcon = s.pillar1CustomIcon || '';
+
+        const p2Title = s.pillar2Title ?? 'EASY SHOPPING EXPERIENCE';
+        const p2Desc = s.pillar2Desc ?? 'Simple product discovery, clear pricing, and a smooth shopping journey.';
+        const p2Icon = s.pillar2Icon || 'ShoppingBag';
+        const p2CustomIcon = s.pillar2CustomIcon || '';
+
+        const p3Title = s.pillar3Title ?? 'RELIABLE ORDER UPDATES';
+        const p3Desc = s.pillar3Desc ?? 'Track your order from confirmation to shipping and delivery through your order details.';
+        const p3Icon = s.pillar3Icon || 'Truck';
+        const p3CustomIcon = s.pillar3CustomIcon || '';
+
+        const p4Title = s.pillar4Title ?? 'CUSTOMER SUPPORT';
+        const p4Desc = s.pillar4Desc ?? 'Get help with your order, products, delivery, or other shopping questions.';
+        const p4Icon = s.pillar4Icon || 'Headphones';
+        const p4CustomIcon = s.pillar4CustomIcon || '';
+
+        const pillars = [
+          { num: 1, title: p1Title, desc: p1Desc, icon: p1Icon, customIcon: p1CustomIcon, color: '#7c3aed', bg: '#f3e8ff' },
+          { num: 2, title: p2Title, desc: p2Desc, icon: p2Icon, customIcon: p2CustomIcon, color: '#d97706', bg: '#fef3c7' },
+          { num: 3, title: p3Title, desc: p3Desc, icon: p3Icon, customIcon: p3CustomIcon, color: '#059669', bg: '#d1fae5' },
+          { num: 4, title: p4Title, desc: p4Desc, icon: p4Icon, customIcon: p4CustomIcon, color: '#6366f1', bg: '#ede9fe' },
+        ];
+
+        return (
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '1.25rem 1rem',
+              border: '1.5px solid rgba(216, 180, 254, 0.4)',
+              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.04)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '1rem',
+              textAlign: 'center',
+            }}
+          >
+            {pillars.map((p) => (
+              <div key={p.num} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: '50%',
+                    background: p.bg,
+                    color: p.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {p.customIcon ? (
+                    <img
+                      src={p.customIcon}
+                      alt={p.title}
+                      style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    renderTrustStripIcon(p.icon, 18)
+                  )}
+                </div>
+                <strong style={{ margin: 0, fontWeight: 800, fontSize: '0.74rem', color: '#1e1b4b', lineHeight: 1.25 }}>
+                  {p.title}
+                </strong>
+                <p style={{ margin: 0, fontSize: '0.66rem', color: '#64748b', lineHeight: 1.35 }}>
+                  {p.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* 9. Generic Preview for Other Pages */}
       {section.id !== 'announcement_bar' &&
         section.id !== 'hero_banner' &&
@@ -1812,7 +1918,8 @@ function LiveSectionPreview({
         section.id !== 'free_shipping_goal_bar' &&
         section.id !== 'categories_hero' &&
         section.id !== 'new_arrivals_hero' &&
-        section.id !== 'new_arrivals_marquee' && (
+        section.id !== 'new_arrivals_marquee' &&
+        section.id !== 'best_sellers_trust_strip' && (
           <div
             style={{
               background: '#ffffff',
@@ -4747,14 +4854,28 @@ export default function AdminCustomization() {
                 {currentSection.id === 'catalog_header_banner' && (
                   <>
                     <Input
+                      label="Banner Eyebrow Tag"
+                      value={currentSection.settings?.tag || ''}
+                      placeholder="e.g. HANDPICKED EDIT • MADURAI HUB"
+                      onChange={(e) => handleUpdateSetting('tag', e.target.value)}
+                    />
+                    <Input
                       label="Catalog Headline"
                       value={currentSection.settings?.headline || ''}
+                      placeholder="e.g. Your Style. Your Everyday."
                       onChange={(e) => handleUpdateSetting('headline', e.target.value)}
                     />
                     <Input
                       label="Catalog Subtitle"
                       value={currentSection.settings?.subtitle || ''}
+                      placeholder="e.g. Handcrafted festive silhouettes, breathable linens & authentic temple jewels."
                       onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
+                    />
+                    <Input
+                      label="Explore Button Label"
+                      value={currentSection.settings?.buttonText || ''}
+                      placeholder="e.g. Explore Collection"
+                      onChange={(e) => handleUpdateSetting('buttonText', e.target.value)}
                     />
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
                       <input
@@ -6011,6 +6132,471 @@ export default function AdminCustomization() {
                   );
                 })()}
 
+                {/* ── BEST SELLERS: Buyer Protection & Trust Strip Editor ── */}
+                {currentSection.id === 'best_sellers_trust_strip' && (() => {
+                  const s = currentSection.settings || {};
+
+                  // Read the 4 pillars from settings, with exact fallback defaults matching storefront
+                  const p1Title = s.pillar1Title ?? 'CAREFULLY SELECTED PRODUCTS';
+                  const p1Desc = s.pillar1Desc ?? 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.';
+                  const p1Icon = s.pillar1Icon || 'Award';
+                  const p1CustomIcon = s.pillar1CustomIcon || '';
+
+                  const p2Title = s.pillar2Title ?? 'EASY SHOPPING EXPERIENCE';
+                  const p2Desc = s.pillar2Desc ?? 'Simple product discovery, clear pricing, and a smooth shopping journey.';
+                  const p2Icon = s.pillar2Icon || 'ShoppingBag';
+                  const p2CustomIcon = s.pillar2CustomIcon || '';
+
+                  const p3Title = s.pillar3Title ?? 'RELIABLE ORDER UPDATES';
+                  const p3Desc = s.pillar3Desc ?? 'Track your order from confirmation to shipping and delivery through your order details.';
+                  const p3Icon = s.pillar3Icon || 'Truck';
+                  const p3CustomIcon = s.pillar3CustomIcon || '';
+
+                  const p4Title = s.pillar4Title ?? 'CUSTOMER SUPPORT';
+                  const p4Desc = s.pillar4Desc ?? 'Get help with your order, products, delivery, or other shopping questions.';
+                  const p4Icon = s.pillar4Icon || 'Headphones';
+                  const p4CustomIcon = s.pillar4CustomIcon || '';
+
+                  const availableTrustIcons = [
+                    { id: 'Award', label: 'Award / Quality Badge', icon: <Award size={15} /> },
+                    { id: 'ShoppingBag', label: 'Shopping Bag', icon: <ShoppingBag size={15} /> },
+                    { id: 'Truck', label: 'Delivery Truck', icon: <Truck size={15} /> },
+                    { id: 'Headphones', label: 'Customer Support', icon: <Headphones size={15} /> },
+                    { id: 'ShieldCheck', label: 'Buyer Protection / Shield', icon: <ShieldCheck size={15} /> },
+                    { id: 'Sparkles', label: 'Curated Products / Sparkles', icon: <Sparkles size={15} /> },
+                    { id: 'RotateCcw', label: 'Easy Doorstep Replacement', icon: <RotateCcw size={15} /> },
+                    { id: 'Heart', label: 'Handcrafted with Love', icon: <Heart size={15} /> },
+                    { id: 'Star', label: '5-Star Quality / Top Rated', icon: <Star size={15} /> },
+                    { id: 'Zap', label: 'Express Shipping / Lightning', icon: <Zap size={15} /> },
+                    { id: 'CheckCircle2', label: 'Verified Authenticity', icon: <CheckCircle2 size={15} /> },
+                    { id: 'Tag', label: 'Best Price & Fair Deals', icon: <Tag size={15} /> },
+                    { id: 'Clock', label: 'On-Time Delivery Guarantee', icon: <Clock size={15} /> },
+                    { id: 'Gift', label: 'Artisan Packaging & Perks', icon: <Gift size={15} /> },
+                    { id: 'Package', label: 'Safe Box Transit', icon: <Package size={15} /> },
+                  ];
+
+                  const pillars = [
+                    {
+                      num: 1,
+                      titleKey: 'pillar1Title',
+                      descKey: 'pillar1Desc',
+                      iconKey: 'pillar1Icon',
+                      customIconKey: 'pillar1CustomIcon',
+                      title: p1Title,
+                      desc: p1Desc,
+                      icon: p1Icon,
+                      customIcon: p1CustomIcon,
+                      badgeColor: '#7c3aed',
+                      badgeBg: '#f3e8ff',
+                      defaultName: 'Pillar 1: Product Selection',
+                    },
+                    {
+                      num: 2,
+                      titleKey: 'pillar2Title',
+                      descKey: 'pillar2Desc',
+                      iconKey: 'pillar2Icon',
+                      customIconKey: 'pillar2CustomIcon',
+                      title: p2Title,
+                      desc: p2Desc,
+                      icon: p2Icon,
+                      customIcon: p2CustomIcon,
+                      badgeColor: '#d97706',
+                      badgeBg: '#fef3c7',
+                      defaultName: 'Pillar 2: Shopping Experience',
+                    },
+                    {
+                      num: 3,
+                      titleKey: 'pillar3Title',
+                      descKey: 'pillar3Desc',
+                      iconKey: 'pillar3Icon',
+                      customIconKey: 'pillar3CustomIcon',
+                      title: p3Title,
+                      desc: p3Desc,
+                      icon: p3Icon,
+                      customIcon: p3CustomIcon,
+                      badgeColor: '#059669',
+                      badgeBg: '#d1fae5',
+                      defaultName: 'Pillar 3: Order Updates',
+                    },
+                    {
+                      num: 4,
+                      titleKey: 'pillar4Title',
+                      descKey: 'pillar4Desc',
+                      iconKey: 'pillar4Icon',
+                      customIconKey: 'pillar4CustomIcon',
+                      title: p4Title,
+                      desc: p4Desc,
+                      icon: p4Icon,
+                      customIcon: p4CustomIcon,
+                      badgeColor: '#6366f1',
+                      badgeBg: '#ede9fe',
+                      defaultName: 'Pillar 4: Customer Support',
+                    },
+                  ];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🛡️ Buyer Protection & Trust Pillars (4 Features)
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize each pillar's title, description, and vector icon or uploaded custom image.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {pillars.map((p) => (
+                            <div
+                              key={p.num}
+                              style={{
+                                background: '#faf8fe',
+                                padding: '1.15rem',
+                                borderRadius: '12px',
+                                border: '1.5px solid #ede8f8',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.85rem',
+                              }}
+                            >
+                              {/* Pillar Header with Badge and Icon */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                  <div
+                                    style={{
+                                      width: 36,
+                                      height: 36,
+                                      borderRadius: '50%',
+                                      background: p.badgeBg,
+                                      color: p.badgeColor,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                      boxShadow: '0 2px 5px rgba(0,0,0,0.04)',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    {p.customIcon ? (
+                                      <img
+                                        src={p.customIcon}
+                                        alt={p.title}
+                                        style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                                      />
+                                    ) : (
+                                      renderTrustStripIcon(p.icon, 18)
+                                    )}
+                                  </div>
+                                  <div>
+                                    <strong style={{ fontSize: '0.9rem', color: '#1e1b4b', display: 'block' }}>
+                                      {p.defaultName}
+                                    </strong>
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                      Active Icon:{' '}
+                                      <strong>
+                                        {p.customIcon ? 'Custom Uploaded' : p.icon}
+                                      </strong>
+                                    </span>
+                                  </div>
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    color: p.badgeColor,
+                                    background: p.badgeBg,
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                  }}
+                                >
+                                  Pillar #{p.num}
+                                </span>
+                              </div>
+
+                              {/* Icon Picker: Dropdown & Quick Selection Chips */}
+                              <div>
+                                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.35rem' }}>
+                                  Choose Icon
+                                </label>
+                                <select
+                                  value={p.icon}
+                                  onChange={(e) => handleUpdateSetting(p.iconKey, e.target.value)}
+                                  className="form-input"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    fontSize: '0.84rem',
+                                    background: '#ffffff',
+                                    fontWeight: 600,
+                                    color: '#1e1b4b',
+                                    marginBottom: '0.5rem',
+                                  }}
+                                >
+                                  {availableTrustIcons.map((ic) => (
+                                    <option key={ic.id} value={ic.id}>
+                                      {ic.id} — {ic.label}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                {/* Quick-Pick Icon Chips */}
+                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                  {availableTrustIcons.map((ic) => {
+                                    const isSelected = p.icon === ic.id;
+                                    return (
+                                      <button
+                                        key={ic.id}
+                                        type="button"
+                                        onClick={() => handleUpdateSetting(p.iconKey, ic.id)}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                          padding: '3px 8px',
+                                          borderRadius: '6px',
+                                          border: isSelected ? `1.5px solid ${p.badgeColor}` : '1px solid #e2e8f0',
+                                          background: isSelected ? p.badgeBg : '#ffffff',
+                                          color: isSelected ? p.badgeColor : '#475569',
+                                          fontSize: '0.73rem',
+                                          fontWeight: isSelected ? 700 : 500,
+                                          cursor: 'pointer',
+                                          transition: 'all 0.15s ease',
+                                        }}
+                                      >
+                                        {ic.icon}
+                                        <span>{ic.id}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Manual Custom Icon Upload Box */}
+                                <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px dashed #e2e8f0' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                      <UploadCloud size={14} color="#7c3aed" />
+                                      <span>Or Upload Custom Icon / Image (SVG, PNG, JPG)</span>
+                                    </label>
+                                    {p.customIcon && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateSetting(p.customIconKey, '')}
+                                        style={{
+                                          background: 'none',
+                                          border: 'none',
+                                          color: '#ef4444',
+                                          fontSize: '0.72rem',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '3px',
+                                          padding: '2px 6px',
+                                          borderRadius: '4px',
+                                        }}
+                                        title="Remove custom icon and revert to vector icon"
+                                      >
+                                        <Trash2 size={12} />
+                                        <span>Remove Custom Icon</span>
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {p.customIcon ? (
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        background: '#ffffff',
+                                        border: '1.5px solid #7c3aed',
+                                        borderRadius: '8px',
+                                        padding: '0.5rem 0.75rem',
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: 36,
+                                          height: 36,
+                                          borderRadius: '8px',
+                                          background: p.badgeBg,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          border: '1px solid #e2e8f0',
+                                          overflow: 'hidden',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        <img
+                                          src={p.customIcon}
+                                          alt="Uploaded Icon"
+                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                        />
+                                      </div>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#16a34a', display: 'block' }}>
+                                          ✓ Custom Icon Active
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: '0.68rem',
+                                            color: '#64748b',
+                                            display: 'block',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                          }}
+                                        >
+                                          {p.customIcon}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateSetting(p.customIconKey, '')}
+                                        style={{
+                                          fontSize: '0.72rem',
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '6px',
+                                          background: '#f1f5f9',
+                                          border: '1px solid #cbd5e1',
+                                          color: '#475569',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        Revert to Vector
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <label
+                                          style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.45rem',
+                                            padding: '0.45rem 0.85rem',
+                                            background: '#ffffff',
+                                            border: '1.5px solid #cbd5e1',
+                                            borderRadius: '8px',
+                                            fontSize: '0.78rem',
+                                            fontWeight: 600,
+                                            color: '#1e1b4b',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease',
+                                          }}
+                                        >
+                                          <UploadCloud size={14} color="#7c3aed" />
+                                          <span>Choose File...</span>
+                                          <input
+                                            type="file"
+                                            accept="image/png, image/svg+xml, image/jpeg, image/webp"
+                                            style={{ display: 'none' }}
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (!file) return;
+                                              try {
+                                                const formData = new FormData();
+                                                formData.append('image', file);
+                                                formData.append('folder', 'customization');
+                                                const res = await adminService.uploadImage(formData);
+                                                const uploadedUrl = res?.data?.url || res?.data?.data?.url || res?.url;
+                                                if (uploadedUrl) {
+                                                  handleUpdateSetting(p.customIconKey, uploadedUrl);
+                                                  return;
+                                                }
+                                              } catch (err) {
+                                                console.warn('Backend upload note, using DataURL fallback:', err);
+                                              }
+                                              const reader = new FileReader();
+                                              reader.onload = (re) => {
+                                                if (re.target?.result) {
+                                                  handleUpdateSetting(p.customIconKey, re.target.result);
+                                                }
+                                              };
+                                              reader.readAsDataURL(file);
+                                            }}
+                                          />
+                                        </label>
+                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>or enter image/SVG URL:</span>
+                                      </div>
+                                      <input
+                                        type="text"
+                                        placeholder="https://example.com/icon.svg or /images/icon.png"
+                                        value={p.customIcon || ''}
+                                        onChange={(e) => handleUpdateSetting(p.customIconKey, e.target.value)}
+                                        className="form-input"
+                                        style={{
+                                          width: '100%',
+                                          padding: '0.45rem 0.75rem',
+                                          borderRadius: '8px',
+                                          border: '1.5px solid #cbd5e1',
+                                          fontSize: '0.8rem',
+                                          background: '#ffffff',
+                                          color: '#1e1b4b',
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Title Input */}
+                              <div>
+                                <Input
+                                  label="Title"
+                                  value={p.title}
+                                  onChange={(e) => handleUpdateSetting(p.titleKey, e.target.value)}
+                                  placeholder="Pillar heading text..."
+                                />
+                              </div>
+
+                              {/* Description Textarea */}
+                              <div>
+                                <label
+                                  style={{
+                                    fontSize: '0.82rem',
+                                    fontWeight: 700,
+                                    color: '#1e1b4b',
+                                    display: 'block',
+                                    marginBottom: '0.35rem',
+                                  }}
+                                >
+                                  Description
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  className="adm-cust-textarea"
+                                  value={p.desc}
+                                  onChange={(e) => handleUpdateSetting(p.descKey, e.target.value)}
+                                  placeholder="Pillar description text..."
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.65rem 0.85rem',
+                                    borderRadius: '10px',
+                                    border: '1.5px solid #cbd5e1',
+                                    fontSize: '0.86rem',
+                                    color: '#1e1b4b',
+                                    fontFamily: 'inherit',
+                                    resize: 'vertical',
+                                    boxSizing: 'border-box',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, About Us, Blog & others */}
                 {![
                   'announcement_bar',
@@ -6028,6 +6614,7 @@ export default function AdminCustomization() {
                   'new_arrivals_hero',
                   'new_arrivals_marquee',
                   'best_sellers_hero',
+                  'best_sellers_trust_strip',
                 ].includes(currentSection.id) && currentSection.settings && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.entries(currentSection.settings).map(([key, val]) => {
@@ -6151,48 +6738,7 @@ export default function AdminCustomization() {
               </div>
             </div>
 
-            {/* Section-level Save Button (pinned cleanly to bottom) */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                marginTop: 'auto',
-                gap: '0.75rem',
-                borderTop: '1px solid #f1f5f9',
-                paddingTop: '1.25rem',
-              }}
-            >
-              {lastSavedSectionTimeMap[activeSectionId] && !hasCurrentSectionEdits && (
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    color: '#16a34a',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <CheckCircle2 size={13} color="#16a34a" />
-                  {formatRelativeTime(lastSavedSectionTimeMap[activeSectionId], clockTick)}
-                </span>
-              )}
 
-              <Button
-                onClick={handleSaveCurrentSection}
-                disabled={!hasCurrentSectionEdits || isSavingSection}
-                loading={isSavingSection}
-                style={{
-                  fontWeight: 700,
-                  opacity: !hasCurrentSectionEdits ? 0.6 : 1,
-                  cursor: !hasCurrentSectionEdits ? 'not-allowed' : 'pointer',
-                  padding: '0.55rem 1.4rem',
-                }}
-              >
-                Save Changes to {currentSection.name}
-              </Button>
-            </div>
           </div>
         ) : (
             <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#94a3b8', margin: 'auto' }}>

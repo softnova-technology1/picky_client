@@ -1801,6 +1801,31 @@
   gap: 1.5rem;
 }
 
+.hp-flash-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hp-flash-timer-mobile {
+  display: none;
+}
+
+.hp-flash-timer-desktop {
+  display: block;
+}
+
+.hp-flash-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.hp-flash-header-actions .fade-up {
+  display: flex;
+  align-items: center;
+}
+
 /* High Contrast Header Typography Scoped to Flash Deals */
 .hp-flash-deals-section .hp-section-badge {
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
@@ -2120,6 +2145,16 @@
   box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 5;
+}
+
+.spotlight-heart-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.spotlight-heart-btn svg {
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .minimal-card-heart-btn:hover,
@@ -3055,6 +3090,7 @@
   letter-spacing: -0.02em;
   line-height: 1.15;
   margin: 0;
+  padding-top: 10px;
 }
 
 .hp-final-subtitle {

@@ -14,6 +14,8 @@ import { usePageCustomization } from '../../store/customizationStore';
 import { Search, RotateCcw, ArrowDown, SlidersHorizontal, X, Sparkles, ArrowRight, Check, ChevronRight, ArrowUpDown, Tag } from 'lucide-react';
 import { DEFAULT_PRODUCT_TAGS, extractProductTag } from '../../utils/productTagHelper';
 import { fuzzyFilter } from '../../utils/fuzzySearch';
+import ShopMobileView from '../../components/shop/ShopMobileView';
+import styles from './ProductList.module.css';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();
@@ -533,7 +535,8 @@ export default function ProductList() {
 
   return (
     <PageWrapper>
-      <div style={{ background: '#ffffff', minHeight: '100vh', paddingBottom: '6rem' }}>
+      <div className={styles.desktopOnly}>
+        <div style={{ background: '#ffffff', minHeight: '100vh', paddingBottom: '6rem' }}>
         {/* ── 1. Hero Spotlight: Desktop Only (> 768px) ── */}
         {isEnabled('catalog_header_banner') && (
           <div className="desktop-shop-hero-wrapper">
@@ -1126,6 +1129,25 @@ export default function ProductList() {
         onResetAll={handleResetAll}
         matchingCount={filteredProducts.length}
       />
+      </div>
+
+      <div className={styles.mobileOnly}>
+        <ShopMobileView
+          products={filteredProducts}
+          allProducts={allProducts}
+          loading={loading}
+          totalCount={filteredProducts.length}
+          categories={categories}
+          subcategories={subcategories}
+          selectedCategory={selectedCategory}
+          selectedSubCategory={selectedSubCategory}
+          currentCategoryObj={currentCategoryObj}
+          onCategoryChange={handleCategoryChange}
+          onSubCategoryChange={handleSubCategoryChange}
+          onMaxPriceChange={handleMaxPriceChange}
+          onResetFilters={handleResetAll}
+        />
+      </div>
 
       <style>{`
         .clean-loadmore-btn:hover {

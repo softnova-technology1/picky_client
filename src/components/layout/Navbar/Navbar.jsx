@@ -74,10 +74,13 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isSearchOpen) {
       document.body.style.overflow = 'hidden';
       const handleKeyDown = (e) => {
-        if (e.key === 'Escape') setIsMobileMenuOpen(false);
+        if (e.key === 'Escape') {
+          setIsMobileMenuOpen(false);
+          setIsSearchOpen(false);
+        }
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => {
@@ -87,7 +90,7 @@ export default function Navbar() {
     } else {
       document.body.style.overflow = '';
     }
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isSearchOpen]);
 
   const categoryDropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
@@ -566,14 +569,16 @@ export default function Navbar() {
             <img src="/images/logo.png" alt="Picky Logo" />
           </Link>
 
-          {/* Right Action Icons: Wishlist & Cart */}
+          {/* Right Action Icons: Search & Cart */}
           <div className="mobile-nav-actions">
-            <Link to="/wishlist" className="mobile-nav-icon-link" aria-label="Wishlist">
-              <Heart size={20} color="#1e1b4b" strokeWidth={2} />
-              {totalWishlistCount > 0 && (
-                <span className="mobile-header-badge mobile-badge-rose">{totalWishlistCount}</span>
-              )}
-            </Link>
+            <button
+              type="button"
+              className="mobile-nav-icon-link mobile-nav-search-btn"
+              onClick={() => setIsSearchOpen(true)}
+              aria-label="Search"
+            >
+              <Search size={20} color="#1e1b4b" strokeWidth={2.2} />
+            </button>
 
             <Link to="/cart" className="mobile-nav-icon-link" aria-label="Cart">
               <ShoppingCart size={20} color="#1e1b4b" strokeWidth={2} />
@@ -582,28 +587,6 @@ export default function Navbar() {
               )}
             </Link>
           </div>
-        </div>
-
-        {/* Search Row */}
-        <div className="mobile-nav-search-row">
-          <form onSubmit={handleSearchSubmit} className="mobile-search-form">
-            <Search size={16} className="mobile-search-icon" color="#94a3b8" />
-            <input
-              type="text"
-              className="mobile-search-input"
-              placeholder={searchPlaceholder || "Search products, brands, options, jewelry..."}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button
-              type="button"
-              className="mobile-search-filter-btn"
-              onClick={() => navigate('/products')}
-              aria-label="Filter"
-            >
-              <SlidersHorizontal size={15} color="#64748b" />
-            </button>
-          </form>
         </div>
       </header>
 
