@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { reviewService } from '../services/review.service';
-import { INITIAL_REVIEWS_MODERATION_DATA } from '../data/reviewsModerationMockData';
 
 const VIEWED_REVIEWS_STORAGE_KEY = 'picky_admin_viewed_review_ids';
 const LAST_VIEWED_TIME_KEY = 'picky_admin_reviews_last_viewed_at';

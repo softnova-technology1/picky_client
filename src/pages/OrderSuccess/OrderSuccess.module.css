@@ -175,7 +175,235 @@
   animation: cardFadeIn 0.4s ease-out;
 }
 
-/* Circle Checkmark Icon */
+/* ─── Ultra-Creative Checkmark Hero ─── */
+.creativeCheckHero {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  margin: 0.5rem auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ambient Radial Glow */
+.ambientCheckGlow {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.38) 0%, rgba(5, 150, 105, 0.12) 55%, transparent 75%);
+  filter: blur(14px);
+  animation: ambientBreathe 3s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* Outer Concentric Animated Pulse Ring */
+.pulseRingOuter {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px dashed rgba(52, 211, 153, 0.55);
+  animation: rotateDashed 16s linear infinite, ringPulse 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Middle Translucent Glass Ring */
+.glassRingMiddle {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: rgba(236, 253, 245, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.22);
+}
+
+/* 3D Jewel Emerald Core */
+.emeraldCore {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #34d399 0%, #10b981 38%, #059669 75%, #047857 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 18px 40px -8px rgba(16, 185, 129, 0.5),
+    inset 0 3px 6px rgba(255, 255, 255, 0.65),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.25);
+  animation: popInBounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* Glossy Glass Reflection on Top Edge */
+.coreGlossSpecular {
+  position: absolute;
+  top: 4px;
+  left: 18px;
+  right: 18px;
+  height: 36px;
+  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+/* Animated SVG Vector Checkmark */
+.animatedCheckSvg {
+  width: 52px;
+  height: 52px;
+  position: relative;
+  z-index: 3;
+  filter: drop-shadow(0 2px 5px rgba(4, 120, 87, 0.55));
+}
+
+.svgCircleTrack {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: drawCircle 0.75s ease-out 0.15s forwards;
+}
+
+.svgCheckStroke {
+  stroke-dasharray: 45;
+  stroke-dashoffset: 45;
+  animation: drawCheck 0.55s cubic-bezier(0.65, 0, 0.45, 1) 0.35s forwards;
+}
+
+/* Floating Celebration Sparkles */
+.sparkle {
+  position: absolute;
+  font-size: 1.1rem;
+  user-select: none;
+  pointer-events: none;
+  z-index: 4;
+  animation: sparkleFloat 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.sparkle1 {
+  top: -2px;
+  right: -2px;
+  color: #f59e0b;
+  font-size: 1.35rem;
+  animation-delay: 0.1s;
+}
+
+.sparkle2 {
+  bottom: 6px;
+  left: -4px;
+  color: #10b981;
+  font-size: 1.1rem;
+  animation-delay: 0.7s;
+}
+
+.sparkle3 {
+  top: 18px;
+  left: -12px;
+  color: #8b5cf6;
+  font-size: 1.25rem;
+  animation-delay: 1.2s;
+}
+
+.sparkle4 {
+  bottom: 14px;
+  right: -10px;
+  color: #06b6d4;
+  font-size: 1rem;
+  animation-delay: 1.8s;
+}
+
+/* Verified Pill Badge */
+.confirmedPillBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1.1rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1.5px solid #a7f3d0;
+  color: #047857;
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.15rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+  animation: popInBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+.pillDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35);
+  animation: pillPulse 1.8s infinite;
+}
+
+.topTrackLiveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.topTrackLiveBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+  background: linear-gradient(135deg, #6d28d9 0%, #581c87 100%);
+}
+
+@keyframes drawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes rotateDashed {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ambientBreathe {
+  0% { transform: scale(0.95); opacity: 0.65; }
+  100% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes popInBounce {
+  0% { transform: scale(0.35); opacity: 0; }
+  65% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes sparkleFloat {
+  0%, 100% { transform: translateY(0) scale(0.95); opacity: 0.7; }
+  50% { transform: translateY(-4px) scale(1.15); opacity: 1; }
+}
+
+@keyframes pillPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35); }
+  50% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.15); }
+}
+
+/* Backward compatibility */
 .check-icon-circle {
   width: 80px;
   height: 80px;
@@ -346,11 +574,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   gap: 1rem;
   padding-bottom: 1.25rem;
   border-bottom: 1.5px solid #f1f5f9;
   margin-bottom: 1.5rem;
+}
+
+.orderHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
 }
 
 .orderHeaderLeft {

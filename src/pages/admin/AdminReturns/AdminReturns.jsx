@@ -45,7 +45,7 @@ import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
 // ─── Status, Courier & Reason Configurations ─────────────────────────────
-const RETURN_STATUS_TABS = [
+export const RETURN_STATUS_TABS = [
   { key: 'all',        label: 'All Returns',      icon: RotateCcw,     color: '#7c3aed' },
   { key: 'pending',    label: 'Pending Review',   icon: Clock,         color: '#d97706' },
   { key: 'approved',   label: 'Pickup Scheduled', icon: Truck,         color: '#2563eb' },
@@ -55,7 +55,7 @@ const RETURN_STATUS_TABS = [
   { key: 'rejected',   label: 'Rejected',         icon: XCircle,       color: '#dc2626' },
 ];
 
-const RETURN_STATUS_CONFIG = {
+export const RETURN_STATUS_CONFIG = {
   pending: {
     label: 'Pending Review',
     icon: Clock,
@@ -100,7 +100,7 @@ const RETURN_STATUS_CONFIG = {
   },
 };
 
-const RETURN_REASONS = [
+export const RETURN_REASONS = [
   'Wrong Size / Fit Issue',
   'Fabric Defective / Damaged Piece',
   'Different from Product Image',
@@ -110,7 +110,7 @@ const RETURN_REASONS = [
   'Received Wrong Item',
 ];
 
-const REVERSE_COURIERS = [
+export const REVERSE_COURIERS = [
   'Delhivery Reverse Logistics',
   'Shadowfax Reverse Express',
   'Blue Dart Surface Return',
@@ -118,7 +118,7 @@ const REVERSE_COURIERS = [
   'Ecom Express Reverse',
 ];
 
-const REFUND_METHODS = [
+export const REFUND_METHODS = [
   'Original Payment Method (Razorpay Instant)',
   'Store Wallet / Store Credit',
   'Direct Bank Transfer (NEFT/IMPS)',

@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Spinner from '../../components/ui/Spinner';
 import { orderService } from '../../services/order.service';
@@ -23,7 +21,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
-import AdminInvoice from '../../components/admin/AdminInvoice';
+import AdminInvoice, { AdminInvoiceSheet, generateInvoicePdf } from '../../components/admin/AdminInvoice';
 
 export default function OrderSuccess() {
   const { id } = useParams();
@@ -31,6 +29,7 @@ export default function OrderSuccess() {
   const [loading, setLoading] = useState(true);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const hiddenInvoiceRef = useRef(null);
 
   useEffect(() => {
     async function loadOrder() {
@@ -74,8 +73,23 @@ export default function OrderSuccess() {
     setShowInvoiceModal(true);
   };
 
-  const handleDownloadInvoice = () => {
-    setShowInvoiceModal(true);
+  const handleDownloadInvoice = async () => {
+    if (!order || downloading) return;
+    try {
+      setDownloading(true);
+      if (hiddenInvoiceRef.current) {
+        const orderNum = order.orderNumber || order._id || id || 'PKY';
+        const filename = `Invoice_${orderNum}.pdf`;
+        await generateInvoicePdf(hiddenInvoiceRef.current, filename);
+      } else {
+        setShowInvoiceModal(true);
+      }
+    } catch (err) {
+      console.error('Failed to generate invoice PDF:', err);
+      setShowInvoiceModal(true);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const orderSubtotal = order?.subtotal ?? (order?.total || 0);
@@ -147,9 +161,58 @@ export default function OrderSuccess() {
 
           <div className={`${styles['success-card-wrapper']} ${styles.noPrint} noPrint`}>
             
-            {/* Circle Checkmark Icon */}
-            <div className={styles['check-icon-circle']}>
-              <Check size={42} strokeWidth={3} />
+            {/* ── Ultra-Creative Animated Green Checkmark Hero ── */}
+            <div className={styles.creativeCheckHero}>
+              {/* Ambient Glow */}
+              <div className={styles.ambientCheckGlow} />
+
+              {/* Pulsing Concentric Outer Ring */}
+              <div className={styles.pulseRingOuter} />
+
+              {/* Glassmorphic Aura Ring */}
+              <div className={styles.glassRingMiddle} />
+
+              {/* 3D Jewel Emerald Core */}
+              <div className={styles.emeraldCore}>
+                <div className={styles.coreGlossSpecular} />
+
+                {/* Animated Draw-in Vector SVG Checkmark */}
+                <svg
+                  className={styles.animatedCheckSvg}
+                  viewBox="0 0 52 52"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    className={styles.svgCircleTrack}
+                    cx="26"
+                    cy="26"
+                    r="23"
+                    stroke="rgba(255, 255, 255, 0.3)"
+                    strokeWidth="2.5"
+                  />
+                  <path
+                    className={styles.svgCheckStroke}
+                    d="M15 27.5L22.5 35L37 19.5"
+                    stroke="#ffffff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              {/* Floating Celebration Sparkles */}
+              <div className={`${styles.sparkle} ${styles.sparkle1}`}>✦</div>
+              <div className={`${styles.sparkle} ${styles.sparkle2}`}>★</div>
+              <div className={`${styles.sparkle} ${styles.sparkle3}`}>✦</div>
+              <div className={`${styles.sparkle} ${styles.sparkle4}`}>★</div>
+            </div>
+
+            {/* Order Confirmed Shimmer Badge */}
+            <div className={styles.confirmedPillBadge}>
+              <span className={styles.pillDot} />
+              <span>ORDER CONFIRMED & VERIFIED</span>
             </div>
 
             {/* Thank You Title */}
@@ -182,15 +245,27 @@ export default function OrderSuccess() {
                     </span>
                   </div>
 
-                  {/* ── The 'Print Invoice' Button ── */}
+                  {/* ── Top Action Buttons: Track Order & Print Invoice ── */}
                   <div className={styles.orderHeaderRight}>
+                    {order?.orderNumber && (
+                      <Link
+                        to={`/track-order?id=${order.orderNumber}`}
+                        className={styles.topTrackLiveBtn}
+                        title="Track Real-time Order Status & Delivery"
+                      >
+                        <Truck size={15} strokeWidth={2.4} />
+                        <span>Track Order</span>
+                        <ArrowRight size={14} strokeWidth={2.5} />
+                      </Link>
+                    )}
+
                     <button
                       type="button"
                       onClick={handlePrintInvoice}
                       className={styles.invoiceBtn}
                       title="Print Official Tax Invoice"
                     >
-                      <Printer size={16} />
+                      <Printer size={15} />
                       <span>Print Invoice</span>
                     </button>
                   </div>
@@ -258,10 +333,7 @@ export default function OrderSuccess() {
                       )}
                     </div>
 
-                    <div className={styles.dispatchModePill}>
-                      <Truck size={15} color="#059669" />
-                      <span>Dispatch: <strong>{order.courier || 'Express Courier Service'}</strong></span>
-                    </div>
+
 
                     {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
                       <div className={styles.giftPill}>
@@ -353,16 +425,6 @@ export default function OrderSuccess() {
                 <span>{downloading ? 'Downloading...' : 'Download Invoice'}</span>
               </button>
 
-              {order?.orderNumber && (
-                <Link
-                  to={`/track-order?id=${order.orderNumber}`}
-                  className={`${styles['action-btn']} ${styles['primary']}`}
-                >
-                  <span>Track Live Order Timeline</span>
-                  <ArrowRight size={18} />
-                </Link>
-              )}
-
               <Link
                 to="/products"
                 className={`${styles['action-btn']} ${styles['secondary']}`}
@@ -382,6 +444,24 @@ export default function OrderSuccess() {
               order={order}
               onClose={() => setShowInvoiceModal(false)}
             />
+          )}
+
+          {/* Offscreen A4 invoice container for direct high-resolution PDF download */}
+          {order && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '800px',
+                zIndex: -9999,
+                pointerEvents: 'none',
+                opacity: 1,
+              }}
+              aria-hidden="true"
+            >
+              <AdminInvoiceSheet order={order} ref={hiddenInvoiceRef} />
+            </div>
           )}
 
         </div>
