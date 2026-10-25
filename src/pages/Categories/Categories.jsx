@@ -7,9 +7,11 @@ import CategoryBudgetStore from '../../components/category/CategoryBudgetStore';
 import CategoryFeaturedDrops from '../../components/category/CategoryFeaturedDrops';
 import CategoryPromoBanner from '../../components/category/CategoryPromoBanner';
 import CategoryRecommendedDrops from '../../components/category/CategoryRecommendedDrops';
+import CategoryMobileView from '../../components/category/CategoryMobileView';
 import { useCategoryStore } from '../../store/categoryStore';
 import { usePageCustomization } from '../../store/customizationStore';
 import { Sparkles } from 'lucide-react';
+import styles from './Categories.module.css';
 
 export default function Categories() {
   const { sections, isEnabled, getSetting } = usePageCustomization('categories');
@@ -117,27 +119,35 @@ export default function Categories() {
       ];
 
   return (
-    <PageWrapper>
-      <div
-        style={{
-          background: 'linear-gradient(180deg, #f7f4fc 0%, #f9f7fd 50%, #ffffff 100%)',
-          minHeight: '100vh',
-          paddingBottom: '6rem',
-        }}
-      >
-        {activeSectionsList.map((sec) => {
-          const renderFn = sectionRenderers[sec.id];
-          if (!renderFn) return null;
-          if (sec.id === 'categories_hero') {
-            return <React.Fragment key={sec.id}>{renderFn()}</React.Fragment>;
-          }
-          return (
-            <div key={sec.id} className="container">
-              {renderFn()}
-            </div>
-          );
-        })}
+    <>
+      <div className={styles.desktopOnly}>
+        <PageWrapper>
+          <div
+            style={{
+              background: 'linear-gradient(180deg, #f7f4fc 0%, #f9f7fd 50%, #ffffff 100%)',
+              minHeight: '100vh',
+              paddingBottom: '6rem',
+            }}
+          >
+            {activeSectionsList.map((sec) => {
+              const renderFn = sectionRenderers[sec.id];
+              if (!renderFn) return null;
+              if (sec.id === 'categories_hero') {
+                return <React.Fragment key={sec.id}>{renderFn()}</React.Fragment>;
+              }
+              return (
+                <div key={sec.id} className="container">
+                  {renderFn()}
+                </div>
+              );
+            })}
+          </div>
+        </PageWrapper>
       </div>
-    </PageWrapper>
+
+      <div className={styles.mobileOnly}>
+        <CategoryMobileView />
+      </div>
+    </>
   );
 }

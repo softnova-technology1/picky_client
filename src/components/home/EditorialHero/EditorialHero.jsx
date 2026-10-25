@@ -422,7 +422,7 @@ export default function EditorialHero({ settings: propSettings }) {
                 onClick={() => navigate(slides[currentSlide].ctaLink || '/products')}
               >
                 <span>{slides[currentSlide].ctaText || 'SHOP NOW'}</span>
-                <ArrowRight size={14} strokeWidth={2.5} />
+                <ArrowRight size={12} strokeWidth={2.4} />
               </button>
             </div>
           )}
@@ -531,31 +531,34 @@ export default function EditorialHero({ settings: propSettings }) {
           .hero-mobile-frosted-card {
             position: absolute;
             bottom: 12px;
-            left: 14px;
-            right: 14px;
-            background: rgba(255, 255, 255, 0.9);
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: calc(100% - 48px);
+            max-width: 250px;
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            padding: 12px 16px 14px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            padding: 7px 12px 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             z-index: 5;
           }
           .hero-mobile-eyebrow {
-            font-size: 0.65rem;
+            font-size: 0.56rem;
             font-weight: 800;
             letter-spacing: 0.08em;
             color: #7c3aed;
             text-transform: uppercase;
           }
           .hero-mobile-title {
-            font-size: 1.25rem;
+            font-size: 0.95rem;
             font-weight: 900;
             color: #0f172a;
             letter-spacing: -0.02em;
@@ -570,18 +573,18 @@ export default function EditorialHero({ settings: propSettings }) {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
             background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
             color: #ffffff;
             border: none;
             border-radius: 9999px;
-            padding: 8px 24px;
-            font-size: 0.75rem;
+            padding: 4px 14px;
+            font-size: 0.65rem;
             font-weight: 800;
             letter-spacing: 0.04em;
             cursor: pointer;
-            margin-top: 4px;
-            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+            margin-top: 2px;
+            box-shadow: 0 3px 8px rgba(124, 58, 237, 0.28);
           }
           .hero-mobile-counter {
             position: absolute;

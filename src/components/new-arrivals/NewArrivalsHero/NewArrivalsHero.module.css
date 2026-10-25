@@ -128,9 +128,7 @@
   line-height: 1.1;
   letter-spacing: -0.02em;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #9333ea 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #7c3aed;
 }
 
 /* Subtitle */

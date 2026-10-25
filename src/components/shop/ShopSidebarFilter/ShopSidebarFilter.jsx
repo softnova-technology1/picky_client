@@ -20,6 +20,7 @@ import {
   Store,
   Tag,
 } from 'lucide-react';
+import { getTagDesign } from '../../../utils/productTagHelper';
 
 // Pure Lucide icon mapping for all 10 departments + All Departments
 const CATEGORY_LUCIDE_ICONS = {
@@ -43,6 +44,9 @@ export default function ShopSidebarFilter({
   selectedSubCategory = '',
   onSelectCategory,
   onSelectSubCategory,
+  availableTags = [],
+  selectedTag = '',
+  onSelectTag,
   urlMaxPrice = '',
   onSelectMaxPrice,
   urlMinPrice = '',
@@ -56,8 +60,8 @@ export default function ShopSidebarFilter({
 }) {
   const [openSections, setOpenSections] = useState({
     departments: true,
-    price: true,
-    discounts: true,
+    price: false,
+    discounts: false,
   });
 
   const toggleSection = (key) => {
@@ -585,6 +589,38 @@ export default function ShopSidebarFilter({
         }
         .check-indicator {
           color: #7c3aed;
+        }
+        .sidebar-tag-row {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          padding: 0.32rem 0.55rem;
+          border-radius: 50px;
+          border: 1.5px solid transparent;
+          background: transparent;
+          color: #334155;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-tag-row:hover {
+          background: #fbf9fe;
+          border-color: rgba(221, 214, 254, 0.6);
+        }
+        .row-tag-icon-pod {
+          width: 25px;
+          height: 25px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+          transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-tag-row:hover .row-tag-icon-pod {
+          transform: scale(1.08);
         }
         .sidebar-subcategories-wrap {
           margin: 0.2rem 0 0.35rem 1.1rem;

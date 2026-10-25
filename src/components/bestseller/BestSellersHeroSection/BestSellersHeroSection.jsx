@@ -12,6 +12,9 @@ export default function BestSellersHeroSection() {
     'Discover thousands of top-rated, quality-verified products to elevate your lifestyle with 24h fast dispatch.'
   );
   const ctaText = getSetting('best_sellers_hero', 'ctaText', 'Get started');
+  const titleColor = getSetting('best_sellers_hero', 'titleColor', getSetting('best_sellers_hero', 'textColor', '#111827'));
+  const subtitleColor = getSetting('best_sellers_hero', 'subtitleColor', '#475569');
+  const bgImage = getSetting('best_sellers_hero', 'bannerBgImage', getSetting('best_sellers_hero', 'bannerBgColor', ''));
 
   const scrollToGrid = () => {
     const el = document.getElementById('bestsellers-grid-start');
@@ -21,19 +24,30 @@ export default function BestSellersHeroSection() {
   };
 
   return (
-    <section className="bestseller-playful-hero-wrapper">
+    <section
+      className="bestseller-playful-hero-wrapper"
+      style={
+        bgImage
+          ? {
+              backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(248, 240, 255, 0.25) 100%), url('${bgImage}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+            }
+          : {}
+      }
+    >
       <div className="bestseller-playful-container">
         {/* ── 5. Headline Typography Stack matching reference image ───── */}
         <div className="playful-title-stack">
           {headline && headline !== 'Most Loved South Indian Masterpieces' ? (
-            <div className="playful-title-line">{headline}</div>
+            <div className="playful-title-line" style={{ color: titleColor }}>{headline}</div>
           ) : (
             <>
               {/* Line 1 */}
-              <div className="playful-title-line">The best place to</div>
+              <div className="playful-title-line" style={{ color: titleColor }}>The best place to</div>
 
               {/* Line 2 with Italic Script Purple & Yellow Highlights & Underlines */}
-              <div className="playful-title-line" style={{ marginTop: '0.2rem' }}>
+              <div className="playful-title-line" style={{ marginTop: '0.2rem', color: titleColor }}>
                 <span className="playful-script-purple">
                   discover
                   {/* SVG Wavy Lavender Underline */}
@@ -62,7 +76,7 @@ export default function BestSellersHeroSection() {
               </div>
 
               {/* Line 3 */}
-              <div className="playful-title-line" style={{ marginTop: '0.2rem' }}>
+              <div className="playful-title-line" style={{ marginTop: '0.2rem', color: titleColor }}>
                 for best sellers
               </div>
             </>
@@ -70,7 +84,7 @@ export default function BestSellersHeroSection() {
         </div>
 
         {/* ── 6. Centered Subtitle & Purple Pill CTA Button ──────────── */}
-        <p className="playful-subtitle">
+        <p className="playful-subtitle" style={{ color: subtitleColor }}>
           {subheadline}
         </p>
 

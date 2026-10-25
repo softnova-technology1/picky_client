@@ -9,6 +9,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useCategoryStore } from '../../../store/categoryStore';
+import { usePageCustomization } from '../../../store/customizationStore';
 import styles from './CategoryHeroCarousel.module.css';
 
 // Curated pastel themes for each department card matching reference screenshot
@@ -24,6 +25,43 @@ const PASTEL_THEMES = [
   { bg: '#fae8ea', isLightBtn: false }, // 09 Kids: Soft Rose
   { bg: '#e9efe3', isLightBtn: false }, // 10 Fitness: Soft Olive
 ];
+
+// Helper to format headline text with newlines or smart breaks
+const renderFormattedHeadline = (text) => {
+  if (!text) return 'YOUR EVERYTHING STORE';
+  if (text.includes('\n')) {
+    return text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  }
+  const words = text.split(' ');
+  if (words.length >= 2 && words.length <= 4) {
+    return words.map((w, i, arr) => (
+      <React.Fragment key={i}>
+        {w}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  }
+  return text;
+};
+
+// Helper to format subheadline
+const renderFormattedSubheadline = (text) => {
+  if (!text) return 'Shop Your Daily Essentials & More';
+  if (text.includes('\n')) {
+    return text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  }
+  return text;
+};
 
 // Fallback high-res editorial category photography if DB image is not yet uploaded by admin
 const FALLBACK_CATEGORY_IMAGES = {
@@ -44,6 +82,17 @@ export default function CategoryHeroCarousel({ categories = [] }) {
   const navigate = useNavigate();
   const subcategories = useCategoryStore((state) => state.subcategories);
   const trackRef = useRef(null);
+
+  // Read Live Customization settings for categories_hero
+  const { getSetting } = usePageCustomization('categories');
+  const headline = getSetting('categories_hero', 'headline', 'YOUR EVERYTHING STORE');
+  const subheadline = getSetting('categories_hero', 'subheadline', 'Shop Your Daily Essentials & More');
+  const startingPriceLabel = getSetting('categories_hero', 'startingPriceLabel', 'Starting From');
+  const startingPrice = getSetting('categories_hero', 'startingPrice', '₹129');
+  const buttonText = getSetting('categories_hero', 'buttonText', 'SHOP NOW');
+  const buttonLink = getSetting('categories_hero', 'buttonLink', '/products');
+  const heroImage = getSetting('categories_hero', 'heroImage', '/images/categories_hero_3d.png');
+  const autoplaySpeed = Number(getSetting('categories_hero', 'autoplaySpeed', 4000)) || 3000;
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -123,7 +172,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
         const cardStep = firstCard ? firstCard.offsetWidth + 19 : 250;
         trackRef.current.scrollBy({ left: cardStep, behavior: 'smooth' });
       }
-    }, 2000);
+    }, autoplaySpeed || 3000);
 
     return () => clearInterval(timer);
   }, [isPaused, safeCategories.length]);
@@ -221,33 +270,30 @@ export default function CategoryHeroCarousel({ categories = [] }) {
 
       {/* ── Main Hero Layout Grid ── */}
       <div className={styles.heroGrid}>
-        {/* ── 1. Left Card: YOUR EVERYTHING STORE (Clean Luxury UI) ── */}
+        {/* ── 1. Left Card: Customizable "Everything Store" Banner ── */}
         <div className={styles.everythingCard}>
           <div className={styles.everythingContent}>
-            {/* Bold Headline */}
+            {/* Dynamic Headline */}
             <h1 className={styles.heroHeading}>
-              YOUR<br />
-              EVERYTHING<br />
-              STORE
+              {renderFormattedHeadline(headline)}
             </h1>
 
-            {/* Subheading */}
+            {/* Dynamic Subheading */}
             <p className={styles.heroSubheading}>
-              Shop Your Daily<br />
-              Essentials &amp; More
+              {renderFormattedSubheadline(subheadline)}
             </p>
 
-            {/* Clean Price Callout */}
+            {/* Dynamic Price Callout */}
             <div className={styles.featurePills}>
               <div className={styles.startingPricePill}>
-                <span className={styles.startingLabel}>Starting From</span>
-                <span className={styles.startingAmount}>₹129</span>
+                <span className={styles.startingLabel}>{startingPriceLabel}</span>
+                <span className={styles.startingAmount}>{startingPrice}</span>
               </div>
             </div>
 
-            {/* Primary Action Button */}
-            <Link to="/products" className={styles.shopNowBtn}>
-              <span>SHOP NOW</span>
+            {/* Dynamic Primary Action Button */}
+            <Link to={buttonLink || '/products'} className={styles.shopNowBtn}>
+              <span>{buttonText}</span>
               <ArrowUpRight size={18} strokeWidth={2.6} />
             </Link>
           </div>
@@ -255,10 +301,13 @@ export default function CategoryHeroCarousel({ categories = [] }) {
           {/* 3D Composition Right Graphic */}
           <div className={styles.compositionVisual}>
             <img
-              src="/images/categories_hero_3d.png"
-              alt="Picky Everything Store 3D Products Composition"
+              src={heroImage || '/images/categories_hero_3d.png'}
+              alt={headline || 'Picky Everything Store'}
               className={styles.compositionImg}
               loading="eager"
+              onError={(e) => {
+                e.currentTarget.src = '/images/categories_hero_3d.png';
+              }}
             />
           </div>
         </div>
@@ -289,11 +338,6 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                     ? cat.image
                     : FALLBACK_CATEGORY_IMAGES[cat.slug] || '/images/dept_fashion.jpg';
 
-                const departmentIndexText = `${String(idx + 1).padStart(2, '0')} / ${Math.max(
-                  safeCategories.length,
-                  10
-                )}+ DEPARTMENT`;
-
                 return (
                   <Link
                     key={cat._id || cat.slug || idx}
@@ -303,7 +347,6 @@ export default function CategoryHeroCarousel({ categories = [] }) {
                   >
                     {/* Top Info */}
                     <div className={styles.cardTopInfo}>
-                      <div className={styles.cardMetaNumber}>{departmentIndexText}</div>
                       <h3 className={styles.cardTitle}>{cat.name}</h3>
                       <p className={styles.cardSubtitle} title={subtitle}>
                         {subtitle}

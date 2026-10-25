@@ -29,10 +29,35 @@ import CategoryIcon from '../../common/CategoryIcon';
 import AnnouncementBar from '../../common/AnnouncementBar';
 import Modal from '../../ui/Modal/Modal';
 import { usePageCustomization } from '../../../store/customizationStore';
+import { productService } from '../../../services/product.service';
+import { fuzzyFilter } from '../../../utils/fuzzySearch';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [catalogProducts, setCatalogProducts] = useState([]);
+
+  // Fetch catalog products when search modal opens for fuzzy autocomplete
+  useEffect(() => {
+    if (isSearchOpen && catalogProducts.length === 0) {
+      productService.list({ limit: 50 }).then((res) => {
+        const items = res?.data?.data || res?.data || [];
+        if (Array.isArray(items)) {
+          setCatalogProducts(items);
+        }
+      }).catch(() => {});
+    }
+  }, [isSearchOpen, catalogProducts.length]);
+
+  // Compute live fuzzy suggestions
+  const liveSuggestions = useMemo(() => {
+    if (!searchTerm || searchTerm.trim().length < 1) return [];
+    return fuzzyFilter(catalogProducts, searchTerm.trim(), {
+      keys: ['name', 'tags', 'category.name', 'sku'],
+      threshold: 0.38,
+      limit: 5,
+    });
+  }, [catalogProducts, searchTerm]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -49,10 +74,13 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isSearchOpen) {
       document.body.style.overflow = 'hidden';
       const handleKeyDown = (e) => {
-        if (e.key === 'Escape') setIsMobileMenuOpen(false);
+        if (e.key === 'Escape') {
+          setIsMobileMenuOpen(false);
+          setIsSearchOpen(false);
+        }
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => {
@@ -62,7 +90,7 @@ export default function Navbar() {
     } else {
       document.body.style.overflow = '';
     }
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isSearchOpen]);
 
   const categoryDropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
@@ -541,14 +569,16 @@ export default function Navbar() {
             <img src="/images/logo.png" alt="Picky Logo" />
           </Link>
 
-          {/* Right Action Icons: Wishlist & Cart */}
+          {/* Right Action Icons: Search & Cart */}
           <div className="mobile-nav-actions">
-            <Link to="/wishlist" className="mobile-nav-icon-link" aria-label="Wishlist">
-              <Heart size={20} color="#1e1b4b" strokeWidth={2} />
-              {totalWishlistCount > 0 && (
-                <span className="mobile-header-badge mobile-badge-rose">{totalWishlistCount}</span>
-              )}
-            </Link>
+            <button
+              type="button"
+              className="mobile-nav-icon-link mobile-nav-search-btn"
+              onClick={() => setIsSearchOpen(true)}
+              aria-label="Search"
+            >
+              <Search size={20} color="#1e1b4b" strokeWidth={2.2} />
+            </button>
 
             <Link to="/cart" className="mobile-nav-icon-link" aria-label="Cart">
               <ShoppingCart size={20} color="#1e1b4b" strokeWidth={2} />
@@ -557,28 +587,6 @@ export default function Navbar() {
               )}
             </Link>
           </div>
-        </div>
-
-        {/* Search Row */}
-        <div className="mobile-nav-search-row">
-          <form onSubmit={handleSearchSubmit} className="mobile-search-form">
-            <Search size={16} className="mobile-search-icon" color="#94a3b8" />
-            <input
-              type="text"
-              className="mobile-search-input"
-              placeholder={searchPlaceholder || "Search products, brands, options, jewelry..."}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button
-              type="button"
-              className="mobile-search-filter-btn"
-              onClick={() => navigate('/products')}
-              aria-label="Filter"
-            >
-              <SlidersHorizontal size={15} color="#64748b" />
-            </button>
-          </form>
         </div>
       </header>
 
@@ -655,6 +663,73 @@ export default function Navbar() {
                 </button>
               </div>
             </form>
+
+            {/* Live Fuzzy Autocomplete Suggestions */}
+            {searchTerm.trim().length >= 1 && (
+              <div style={{ marginTop: '0.85rem', marginBottom: '0.85rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                    Matching Products ({liveSuggestions.length})
+                  </span>
+                  {liveSuggestions.length > 0 && (
+                    <span style={{ fontSize: '0.68rem', color: '#7c3aed', background: '#f5f3ff', padding: '1px 6px', borderRadius: '999px', fontWeight: 700 }}>
+                      Fuzzy Match
+                    </span>
+                  )}
+                </div>
+
+                {liveSuggestions.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', maxHeight: '240px', overflowY: 'auto' }}>
+                    {liveSuggestions.map((prod) => {
+                      const img = Array.isArray(prod.images) && prod.images[0] ? prod.images[0] : (prod.image || '/images/dept_fashion.jpg');
+                      const price = prod.discountPrice || prod.price || 0;
+                      return (
+                        <div
+                          key={prod._id || prod.slug}
+                          onClick={() => {
+                            setIsSearchOpen(false);
+                            navigate(`/product/${prod.slug || prod._id}`);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.5rem 0.65rem',
+                            borderRadius: '10px',
+                            background: '#f8fafc',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f3ff')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
+                        >
+                          <img
+                            src={img}
+                            alt={prod.name}
+                            style={{ width: 36, height: 36, borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0', flexShrink: 0 }}
+                          />
+                          <div style={{ flexGrow: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {prod.name}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              {prod.category?.name || 'Catalog'}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#7c3aed', flexShrink: 0 }}>
+                            ₹{Number(price).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ padding: '0.65rem', color: '#94a3b8', fontSize: '0.8rem', textAlign: 'center' }}>
+                    No matching products found. Press Enter to search full catalog.
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="nav-search-quick-tags">
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8' }}>TRENDING:</span>

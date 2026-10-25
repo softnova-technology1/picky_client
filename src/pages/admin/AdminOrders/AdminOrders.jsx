@@ -59,6 +59,7 @@ import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
 import { useOrderStore } from '../../../store/orderStore';
 import { useUiStore } from '../../../store/uiStore';
+import { fuzzyMatchScore } from '../../../utils/fuzzySearch';
 
 // ─── Order Status & Filter Configurations ────────────────────────────────────
 export const STATUS_TABS = [
@@ -645,7 +646,13 @@ export default function AdminOrders() {
       const cust = (o.customer?.name || o.user?.name || o.shippingAddress?.fullName || '').toLowerCase();
       const phone = (o.customer?.phone || o.user?.phone || '').toLowerCase();
       const city = (o.shippingAddress?.city || '').toLowerCase();
-      const matchesSearch = !term || num.includes(term) || cust.includes(term) || phone.includes(term) || city.includes(term);
+      const matchesSearch =
+        !term ||
+        num.includes(term) ||
+        phone.includes(term) ||
+        fuzzyMatchScore(term, cust) >= 0.38 ||
+        fuzzyMatchScore(term, city) >= 0.38 ||
+        fuzzyMatchScore(term, num) >= 0.38;
 
       return (
         matchesTab &&

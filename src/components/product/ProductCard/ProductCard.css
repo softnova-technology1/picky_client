@@ -28,10 +28,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    aspect-ratio: 4 / 5;
-    max-height: 250px;
+    aspect-ratio: 1 / 1;
+    max-height: 220px;
     overflow: hidden;
-    border-radius: 24px;
+    border-radius: 20px;
     z-index: 1;
 }
 
@@ -265,17 +265,19 @@
 .ref-product-desc {
     font-family: var(--font-secondary);
     color: #64748b;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    line-height: 1.35;
+    line-height: 1.32;
     margin: 0 0 2px 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-height: 2.1rem;
     word-break: break-word;
+    overflow-wrap: anywhere;
+    max-height: 2.64em;
 }
 
 /* Price */
@@ -342,72 +344,175 @@
     transform: translateY(-2px);
 }
 
-/* Mobile adjustments */
-/* Mobile adjustments for 2-column layout (320px - 480px) */
-@media (max-width: 480px) {
+/* Mobile adjustments (320px - 768px) */
+@media (max-width: 768px) {
     .ref-product-card {
-        border-radius: 18px;
+        border-radius: 16px;
     }
 
     .ref-card-top {
-        border-radius: 18px;
+        border-radius: 16px;
+        aspect-ratio: 1 / 1;
+        max-height: 135px;
         padding-top: 0;
     }
 
+    .ref-circle-1 {
+        width: 160px;
+        height: 160px;
+    }
+
+    .ref-circle-2 {
+        width: 90px;
+        height: 90px;
+    }
+
+    .ref-circle-3 {
+        width: 110px;
+        height: 110px;
+    }
+
     .ref-top-bar {
-        padding: 8px 8px 0;
+        top: 6px;
+        left: 6px;
+        right: 6px;
+        bottom: 6px;
+        padding: 0;
+        pointer-events: none;
     }
 
     .ref-mega-deal {
-        font-size: 0.62rem;
-        padding: 2px 6px;
-        gap: 3px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        top: auto;
+        padding: 1.5px 5px 1.5px 2px;
+        border-radius: 99px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        max-width: calc(100% - 10px);
+        pointer-events: auto;
+    }
+
+    .ref-deal-icon {
+        width: 12px;
+        height: 12px;
+        margin-right: 2.5px;
+        flex-shrink: 0;
+    }
+
+    .ref-deal-icon svg {
+        width: 7px !important;
+        height: 7px !important;
+    }
+
+    .ref-deal-text {
+        font-size: 7.5px;
+        letter-spacing: 0.15px;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .ref-wishlist-btn {
-        width: 30px;
-        height: 30px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 26px;
+        height: 26px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        pointer-events: auto;
+    }
+
+    .ref-wishlist-btn svg {
+        width: 13px !important;
+        height: 13px !important;
     }
 
     .ref-card-bottom {
-        padding: 8px 10px 10px;
-        gap: 6px;
+        padding: 6px 8px 8px;
+        gap: 4px;
     }
 
     .ref-product-title {
-        font-size: 0.85rem;
-        line-height: 1.25;
+        font-size: 0.82rem;
+        line-height: 1.2;
+        margin: 0 0 2px 0;
     }
 
+    .ref-product-desc {
+        display: none;
+    }
+
+    .ref-price-row,
     .ref-price-tag {
-        gap: 4px;
-        flex-wrap: wrap;
-        align-items: baseline;
+        display: flex;
+        gap: 5px;
+        flex-wrap: nowrap;
+        align-items: center;
+        white-space: nowrap;
     }
 
     .ref-current-price {
-        font-size: 1.05rem;
+        font-size: 0.98rem;
     }
 
     .ref-original-price {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
     }
 
+    .ref-price-row .ref-discount-pill,
     .ref-discount-pill {
-        font-size: 0.62rem;
-        padding: 2px 5px;
-        border-radius: 4px;
+        font-size: 7.5px !important;
+        padding: 1px 3.5px;
+        border-radius: 3px;
+        line-height: 1;
     }
 
     .ref-add-cart-btn {
-        height: 36px;
-        font-size: 0.76rem;
-        border-radius: 10px;
+        height: 30px;
+        font-size: 0.72rem;
+        border-radius: 8px;
         gap: 4px;
     }
 }
 
 @media (max-width: 350px) {
+    .ref-top-bar {
+        top: 6px;
+        left: 6px;
+        right: 6px;
+    }
+
+    .ref-mega-deal {
+        padding: 1.5px 5px 1.5px 1.5px;
+    }
+
+    .ref-deal-icon {
+        width: 13px;
+        height: 13px;
+        margin-right: 3px;
+    }
+
+    .ref-deal-icon svg {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .ref-deal-text {
+        font-size: 0.52rem;
+    }
+
+    .ref-wishlist-btn {
+        width: 24px;
+        height: 24px;
+    }
+
+    .ref-wishlist-btn svg {
+        width: 12px !important;
+        height: 12px !important;
+    }
+
     .ref-card-bottom {
         padding: 6px 8px 8px;
         gap: 4px;
@@ -415,6 +520,10 @@
 
     .ref-product-title {
         font-size: 0.78rem;
+    }
+
+    .ref-product-desc {
+        display: none;
     }
 
     .ref-current-price {

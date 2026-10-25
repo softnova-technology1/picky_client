@@ -35,7 +35,31 @@ import {
   ArrowUpDown,
   ChevronDown,
   X,
+  Clock,
+  Gift,
+  Package,
 } from 'lucide-react';
+
+const renderTrustIcon = (iconName, fallbackIcon, size = 26) => {
+  const iconMap = {
+    Award: <Award size={size} />,
+    ShoppingBag: <ShoppingBag size={size} />,
+    Truck: <Truck size={size} />,
+    Headphones: <Headphones size={size} />,
+    ShieldCheck: <ShieldCheck size={size} />,
+    Sparkles: <Sparkles size={size} />,
+    RotateCcw: <RotateCcw size={size} />,
+    Heart: <Heart size={size} />,
+    Star: <Star size={size} />,
+    Zap: <Zap size={size} />,
+    CheckCircle2: <CheckCircle2 size={size} />,
+    Tag: <Tag size={size} />,
+    Clock: <Clock size={size} />,
+    Gift: <Gift size={size} />,
+    Package: <Package size={size} />,
+  };
+  return iconMap[iconName] || fallbackIcon;
+};
 
 const isBestSellerProduct = (p) => {
   if (!p) return false;
@@ -490,9 +514,18 @@ export default function BestSellers() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  <Award size={26} />
+                  {getSetting('best_sellers_trust_strip', 'pillar1CustomIcon', '') ? (
+                    <img
+                      src={getSetting('best_sellers_trust_strip', 'pillar1CustomIcon', '')}
+                      alt={getSetting('best_sellers_trust_strip', 'pillar1Title', 'CAREFULLY SELECTED PRODUCTS')}
+                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar1Icon', 'Award'), <Award size={26} />)
+                  )}
                 </div>
                 <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
                   {getSetting('best_sellers_trust_strip', 'pillar1Title', 'CAREFULLY SELECTED PRODUCTS')}
@@ -513,9 +546,18 @@ export default function BestSellers() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  <ShoppingBag size={26} />
+                  {getSetting('best_sellers_trust_strip', 'pillar2CustomIcon', '') ? (
+                    <img
+                      src={getSetting('best_sellers_trust_strip', 'pillar2CustomIcon', '')}
+                      alt={getSetting('best_sellers_trust_strip', 'pillar2Title', 'EASY SHOPPING EXPERIENCE')}
+                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar2Icon', 'ShoppingBag'), <ShoppingBag size={26} />)
+                  )}
                 </div>
                 <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
                   {getSetting('best_sellers_trust_strip', 'pillar2Title', 'EASY SHOPPING EXPERIENCE')}
@@ -536,9 +578,18 @@ export default function BestSellers() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  <Truck size={26} />
+                  {getSetting('best_sellers_trust_strip', 'pillar3CustomIcon', '') ? (
+                    <img
+                      src={getSetting('best_sellers_trust_strip', 'pillar3CustomIcon', '')}
+                      alt={getSetting('best_sellers_trust_strip', 'pillar3Title', 'RELIABLE ORDER UPDATES')}
+                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar3Icon', 'Truck'), <Truck size={26} />)
+                  )}
                 </div>
                 <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
                   {getSetting('best_sellers_trust_strip', 'pillar3Title', 'RELIABLE ORDER UPDATES')}
@@ -559,9 +610,18 @@ export default function BestSellers() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  <Headphones size={26} />
+                  {getSetting('best_sellers_trust_strip', 'pillar4CustomIcon', '') ? (
+                    <img
+                      src={getSetting('best_sellers_trust_strip', 'pillar4CustomIcon', '')}
+                      alt={getSetting('best_sellers_trust_strip', 'pillar4Title', 'CUSTOMER SUPPORT')}
+                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar4Icon', 'Headphones'), <Headphones size={26} />)
+                  )}
                 </div>
                 <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
                   {getSetting('best_sellers_trust_strip', 'pillar4Title', 'CUSTOMER SUPPORT')}

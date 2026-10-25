@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Search, X, ArrowUpRight } from 'lucide-react';
 import styles from './ShopSubcategoryCards.module.css';
+import { fuzzyFilter } from '../../../utils/fuzzySearch';
 
 const FALLBACK_CATEGORY_IMAGES = {
   'mobile-accessories': '/images/dept_electronics.jpg',
@@ -37,8 +38,69 @@ export default function ShopSubcategoryCards({
   selectedSubCategory = '',
   onSelectSubCategory,
   allProducts = [],
+  searchQuery = '',
+  onSearchSubmit,
+  onSearchClear,
 }) {
   const trackRef = useRef(null);
+  const searchWrapRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState(searchQuery || '');
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Keep in sync with URL search query
+  useEffect(() => {
+    setSearchTerm(searchQuery || '');
+  }, [searchQuery]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Compute fuzzy autocomplete suggestions
+  const suggestions = useMemo(() => {
+    if (!searchTerm || searchTerm.trim().length < 1) return [];
+    return fuzzyFilter(allProducts, searchTerm.trim(), {
+      keys: ['name', 'tags', 'subCategory', 'sku'],
+      threshold: 0.38,
+      limit: 5,
+    });
+  }, [allProducts, searchTerm]);
+
+  const handleInputChange = (e) => {
+    setSearchTerm(e.target.value);
+    setIsFocused(true);
+  };
+
+  const handleFormSubmit = (e) => {
+    if (e) e.preventDefault();
+    setIsFocused(false);
+    if (onSearchSubmit) {
+      onSearchSubmit(searchTerm.trim());
+    }
+  };
+
+  const handleSelectSuggestion = (productName) => {
+    setSearchTerm(productName);
+    setIsFocused(false);
+    if (onSearchSubmit) {
+      onSearchSubmit(productName);
+    }
+  };
+
+  const handleClear = () => {
+    setSearchTerm('');
+    setIsFocused(false);
+    if (onSearchClear) {
+      onSearchClear();
+    }
+  };
 
   if (
     !currentCategoryObj ||
@@ -70,6 +132,79 @@ export default function ShopSubcategoryCards({
         <div className={styles['header-left']}>
           <h3 className={styles['header-title']}>Explore Subcategories</h3>
           <span className={styles['header-badge']}>Click to filter</span>
+        </div>
+
+        {/* ── Search Bar & Autocomplete in Subcategory Header ── */}
+        <div className={styles['header-search-wrap']} ref={searchWrapRef}>
+          <form
+            className={styles['header-search-form']}
+            onSubmit={handleFormSubmit}
+            role="search"
+          >
+            <div className={styles['header-search-box']}>
+              <Search size={14} className={styles['header-search-icon']} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleInputChange}
+                onFocus={() => setIsFocused(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleFormSubmit(e);
+                  }
+                }}
+                placeholder={`Search ${currentCategoryObj?.name ? `in ${currentCategoryObj.name}` : 'products'}...`}
+                className={styles['header-search-input']}
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className={styles['header-search-clear']}
+                  aria-label="Clear search"
+                  title="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+              <button
+                type="submit"
+                className={styles['header-search-btn']}
+                aria-label="Submit search"
+                title="Search"
+              >
+                Search
+              </button>
+            </div>
+          </form>
+
+          {/* Autocomplete Dropdown */}
+          {isFocused && searchTerm.trim().length >= 1 && suggestions.length > 0 && (
+            <div className={styles['suggestions-dropdown']}>
+              <div className={styles['suggestions-header']}>
+                <span>Suggested Products</span>
+                <span className={styles['suggestions-count']}>{suggestions.length} found</span>
+              </div>
+              {suggestions.map((p) => {
+                const img = Array.isArray(p.images) && p.images[0] ? p.images[0] : (p.image || '/images/dept_fashion.jpg');
+                const price = p.discountPrice || p.price || 0;
+                return (
+                  <div
+                    key={p._id || p.id || p.slug}
+                    className={styles['suggestion-item']}
+                    onClick={() => handleSelectSuggestion(p.name)}
+                  >
+                    <img src={img} alt={p.name} className={styles['suggestion-img']} />
+                    <div className={styles['suggestion-info']}>
+                      <span className={styles['suggestion-name']}>{p.name}</span>
+                      <span className={styles['suggestion-price']}>₹{Number(price).toLocaleString('en-IN')}</span>
+                    </div>
+                    <ArrowUpRight size={13} className={styles['suggestion-arrow']} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className={styles['nav-arrows']}>

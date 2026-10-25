@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 import { useUiStore } from '../../../store/uiStore';
 import { productService } from '../../../services/product.service';
+import { usePageCustomization } from '../../../store/customizationStore';
 import styles from './NewArrivalsHero.module.css';
 
 // Tag check helper for New Arrivals products
@@ -33,10 +34,56 @@ export default function NewArrivalsHero({
   categories = [],
   activeCategory = 'all',
   onSelectCategory,
+  customization: propCustomization,
 }) {
   const navigate = useNavigate();
   const { addItem, setBuyNowItem } = useCartStore();
   const { showToast } = useUiStore();
+  const { getSection } = usePageCustomization('new_arrivals');
+  const heroSection = propCustomization || getSection('new_arrivals_hero');
+  const s = heroSection?.settings || {};
+
+  // Customization field resolution with resilient fallbacks
+  const badgeText = s.badgeText ?? s.badge ?? 'WINTER COLLECTION 2026';
+  const badgeTextColor = s.badgeTextColor || '#6d28d9';
+  const badgeBgColor = s.badgeBgColor || 'rgba(255, 255, 255, 0.92)';
+
+  const rawHeadline = s.headline || 'NEW ARRIVALS';
+  let titlePrefix = s.titlePrefix;
+  let titleHighlight = s.titleHighlight;
+  if (titlePrefix === undefined && titleHighlight === undefined) {
+    const words = rawHeadline.trim().split(/\s+/);
+    if (words.length > 1) {
+      titleHighlight = words.pop();
+      titlePrefix = words.join(' ');
+    } else {
+      titlePrefix = rawHeadline;
+      titleHighlight = '';
+    }
+  } else {
+    titlePrefix = titlePrefix ?? 'NEW';
+    titleHighlight = titleHighlight ?? 'ARRIVALS';
+  }
+
+  const titleColor = s.titleColor || '#1e1b4b';
+  const titleHighlightColor = s.titleHighlightColor || '#7c3aed';
+
+  const subheadline = s.subheadline ?? s.subtitle ?? 'Trendy styles, everyday comfort made for your season.';
+  const subtitleColor = s.subtitleColor || '#4b5563';
+
+  const buttonText = s.buttonText || s.ctaText || 'Discover More';
+  const buttonLink = s.buttonLink || s.ctaLink || '#catalog';
+  const buttonBgColor = s.buttonBgColor || '#250e4a';
+  const buttonTextColor = s.buttonTextColor || '#ffffff';
+
+  const bannerBgImage = s.bannerBgImage || s.bannerBg || s.heroImage || s.imageUrl || '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg';
+  const bannerBgColor = s.bannerBgColor || '#ede7f6';
+
+  const exploreTitle = s.exploreTitle || 'Explore Collection';
+  const exploreSubtitle = s.exploreSubtitle || 'Warm, durable, and made for winter adventures.';
+  const viewAllText = s.viewAllText || 'View All';
+  const viewAllLink = s.viewAllLink || '#catalog';
+
   const [dbProducts, setDbProducts] = useState(propProducts || []);
   const [isLoading, setIsLoading] = useState(propLoading || (!propProducts || propProducts.length === 0));
 
@@ -134,17 +181,65 @@ export default function NewArrivalsHero({
     }
   };
 
+  const handleCtaClick = (e) => {
+    e?.preventDefault?.();
+    const link = buttonLink || '#catalog';
+    if (link === '#catalog' || link === '#collection' || link === 'catalog' || !link) {
+      if (onExploreClick) {
+        onExploreClick();
+      } else {
+        const catalogEl = document.getElementById('catalog') || document.querySelector('[class*="catalog"]');
+        catalogEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else if (link.startsWith('/')) {
+      navigate(link);
+    } else if (link.startsWith('http://') || link.startsWith('https://')) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(`/${link.replace(/^\/?/, '')}`);
+    }
+  };
+
+  const handleViewAllClick = (e) => {
+    e?.preventDefault?.();
+    const link = viewAllLink || '#catalog';
+    if (link === '#catalog' || link === '#collection' || link === 'catalog' || !link) {
+      if (onExploreClick) {
+        onExploreClick();
+      } else {
+        const catalogEl = document.getElementById('catalog') || document.querySelector('[class*="catalog"]');
+        catalogEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else if (link.startsWith('/')) {
+      navigate(link);
+    } else if (link.startsWith('http://') || link.startsWith('https://')) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(`/${link.replace(/^\/?/, '')}`);
+    }
+  };
+
   return (
-    <section className={styles.heroStage} aria-label="New Arrivals Winter Showcase">
+    <section
+      className={styles.heroStage}
+      aria-label="New Arrivals Winter Showcase"
+      style={{ backgroundColor: bannerBgColor }}
+    >
       {/* ── 4K Studio Architectural Background Layer ── */}
       <div className={styles.heroBgContainer} aria-hidden="true">
-        <img
-          src="/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg"
-          alt="New Arrivals Luxury 4K Arch & Studio Showcase"
-          className={styles.heroBgImg}
-          loading="eager"
-          fetchpriority="high"
-        />
+        {bannerBgImage && (
+          <img
+            src={bannerBgImage}
+            alt="New Arrivals Luxury 4K Arch & Studio Showcase"
+            className={styles.heroBgImg}
+            loading="eager"
+            fetchpriority="high"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg';
+            }}
+          />
+        )}
         <div className={styles.heroBgOverlay} />
       </div>
 
@@ -153,32 +248,58 @@ export default function NewArrivalsHero({
         {/* Top Row: Left-Aligned Studio Editorial */}
         <div className={styles.leftEditorial}>
           {/* Top Capsule Badge */}
-          <div className={styles.capsuleBadge}>
-            <span className={styles.capsuleStar}>✦</span>
-            <span className={styles.capsuleText}>WINTER COLLECTION 2026</span>
-          </div>
+          {badgeText && (
+            <div
+              className={styles.capsuleBadge}
+              style={{
+                backgroundColor: badgeBgColor,
+                borderColor: badgeTextColor ? `${badgeTextColor}33` : undefined,
+              }}
+            >
+              <span className={styles.capsuleStar} style={{ color: badgeTextColor }}>✦</span>
+              <span className={styles.capsuleText} style={{ color: badgeTextColor }}>{badgeText}</span>
+            </div>
+          )}
 
           {/* Unified Luxury Display Headline */}
           <h1 className={styles.heroTitle}>
-            <span className={styles.titleWordNew}>NEW</span>
-            <span className={styles.titleWordArrivals}>ARRIVALS</span>
+            <span className={styles.titleWordNew} style={{ color: titleColor }}>
+              {titlePrefix}
+            </span>
+            {titleHighlight && (
+              <span
+                className={styles.titleWordArrivals}
+                style={{ color: titleHighlightColor }}
+              >
+                {titleHighlight}
+              </span>
+            )}
           </h1>
 
           {/* Subtitle */}
-          <p className={styles.heroSubtitle}>
-            Trendy styles, everyday comfort made for your season.
-          </p>
+          {subheadline && (
+            <p className={styles.heroSubtitle} style={{ color: subtitleColor }}>
+              {subheadline}
+            </p>
+          )}
 
           {/* Call to Action Button */}
-          <button
-            type="button"
-            className={styles.discoverBtn}
-            onClick={onExploreClick}
-            aria-label="Discover more new arrivals"
-          >
-            <span>Discover More</span>
-            <ArrowRight size={15} strokeWidth={2.6} className={styles.discoverArrow} />
-          </button>
+          {buttonText && (
+            <button
+              type="button"
+              className={styles.discoverBtn}
+              onClick={handleCtaClick}
+              aria-label={buttonText}
+              style={{
+                backgroundColor: buttonBgColor,
+                color: buttonTextColor,
+                boxShadow: buttonBgColor ? `0 8px 20px ${buttonBgColor}40` : undefined,
+              }}
+            >
+              <span>{buttonText}</span>
+              <ArrowRight size={15} strokeWidth={2.6} className={styles.discoverArrow} style={{ color: buttonTextColor }} />
+            </button>
+          )}
         </div>
 
         {/* ── Bottom Row: "Explore Collection" Live Running Cards Marquee ── */}
@@ -187,20 +308,20 @@ export default function NewArrivalsHero({
           <div className={styles.exploreHeaderRow}>
             <div className={styles.exploreTitleGroup}>
               <div className={styles.exploreHeadingRow}>
-                <h2 className={styles.exploreTitle}>Explore Collection</h2>
+                <h2 className={styles.exploreTitle}>{exploreTitle}</h2>
               </div>
               <p className={styles.exploreSubtitle}>
-                Warm, durable, and made for winter adventures.
+                {exploreSubtitle}
               </p>
             </div>
 
             <button
               type="button"
               className={styles.viewAllLink}
-              onClick={onExploreClick}
-              aria-label="View all items in collection"
+              onClick={handleViewAllClick}
+              aria-label={viewAllText}
             >
-              <span>View All</span>
+              <span>{viewAllText}</span>
               <ArrowRight size={15} strokeWidth={2.4} />
               <span className={styles.viewAllLine} />
             </button>

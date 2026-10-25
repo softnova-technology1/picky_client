@@ -44,6 +44,10 @@ import {
   Play,
   Pause,
   Heart,
+  Award,
+  Headphones,
+  Star,
+  Zap,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Button from '../../../components/ui/Button';
@@ -524,6 +528,28 @@ function ImageUploadControl({ label, value, onChange, onClear }) {
     </div>
   );
 }
+
+// ─── Trust Strip Vector Icon Helper ──────────────────────────────────────────
+const renderTrustStripIcon = (iconName, size = 20) => {
+  const map = {
+    Award: <Award size={size} />,
+    ShoppingBag: <ShoppingBag size={size} />,
+    Truck: <Truck size={size} />,
+    Headphones: <Headphones size={size} />,
+    ShieldCheck: <ShieldCheck size={size} />,
+    Sparkles: <Sparkles size={size} />,
+    RotateCcw: <RotateCcw size={size} />,
+    Heart: <Heart size={size} />,
+    Star: <Star size={size} />,
+    Zap: <Zap size={size} />,
+    CheckCircle2: <CheckCircle2 size={size} />,
+    Tag: <Tag size={size} />,
+    Clock: <Clock size={size} />,
+    Gift: <Gift size={size} />,
+    Package: <Package size={size} />,
+  };
+  return map[iconName] || <Award size={size} />;
+};
 
 // ─── Live Visual Section Preview Component (Shopify Style) ───────────────────
 function LiveSectionPreview({
@@ -1412,13 +1438,488 @@ function LiveSectionPreview({
         </div>
       )}
 
-      {/* 6. Generic Preview for Other Pages */}
+      {/* 6. Categories Hero Showcase Preview */}
+      {section.id === 'categories_hero' && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #fdfbf7 0%, #f6f0ff 100%)',
+            border: '1.5px solid #ede8f8',
+            borderRadius: '16px',
+            padding: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ flex: 1, zIndex: 2 }}>
+            <h4
+              style={{
+                fontFamily: 'serif',
+                fontSize: '1.25rem',
+                fontWeight: 900,
+                color: '#1e1b4b',
+                lineHeight: 1.15,
+                margin: '0 0 0.45rem',
+                whiteSpace: 'pre-line',
+                textTransform: 'uppercase',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {s.headline || 'YOUR EVERYTHING STORE'}
+            </h4>
+            <p
+              style={{
+                fontSize: '0.78rem',
+                color: '#475569',
+                margin: '0 0 0.75rem',
+                lineHeight: 1.35,
+                whiteSpace: 'pre-line',
+              }}
+            >
+              {s.subheadline || 'Shop Your Daily Essentials & More'}
+            </p>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                padding: '3px 8px',
+                borderRadius: '9999px',
+                marginBottom: '0.85rem',
+              }}
+            >
+              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                {s.startingPriceLabel || 'Starting From'}
+              </span>
+              <strong style={{ fontSize: '0.75rem', color: '#7c3aed' }}>
+                {s.startingPrice || '₹129'}
+              </strong>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#0f172a',
+                  color: '#ffffff',
+                  padding: '6px 14px',
+                  borderRadius: '9999px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <span>{s.buttonText || 'SHOP NOW'}</span>
+                <span style={{ fontSize: '11px' }}>↗</span>
+              </div>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: '#7c3aed',
+                  background: '#f5f3ff',
+                  border: '1px solid #ddd6fe',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontWeight: 600,
+                }}
+              >
+                Goes to: {s.buttonLink || '/products'}
+              </span>
+            </div>
+          </div>
+          <div style={{ width: '130px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={s.heroImage || '/images/categories_hero_3d.png'}
+              alt="Preview"
+              style={{ width: '100%', maxHeight: '115px', objectFit: 'contain' }}
+              onError={(e) => {
+                e.currentTarget.src = '/images/categories_hero_3d.png';
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 7. New Arrivals Hero Showcase Live Preview */}
+      {section.id === 'new_arrivals_hero' && (() => {
+        const rawHeadline = s.headline || 'NEW ARRIVALS';
+        let prefix = s.titlePrefix;
+        let highlight = s.titleHighlight;
+        if (prefix === undefined && highlight === undefined) {
+          const words = rawHeadline.trim().split(/\s+/);
+          if (words.length > 1) {
+            highlight = words.pop();
+            prefix = words.join(' ');
+          } else {
+            prefix = rawHeadline;
+            highlight = '';
+          }
+        } else {
+          prefix = prefix ?? 'NEW';
+          highlight = highlight ?? 'ARRIVALS';
+        }
+
+        const titleColor = s.titleColor || '#1e1b4b';
+        const titleHighlightColor = s.titleHighlightColor || '#7c3aed';
+        const subtitle = s.subheadline ?? s.subtitle ?? 'Trendy styles, everyday comfort made for your season.';
+        const subtitleColor = s.subtitleColor || '#4b5563';
+        const badgeText = s.badgeText ?? s.badge ?? 'WINTER COLLECTION 2026';
+        const badgeTextColor = s.badgeTextColor || '#6d28d9';
+        const badgeBgColor = s.badgeBgColor || '#ffffff';
+        const buttonText = s.buttonText || s.ctaText || 'Discover More';
+        const buttonLink = s.buttonLink || s.ctaLink || '#catalog';
+        const buttonBgColor = s.buttonBgColor || '#250e4a';
+        const buttonTextColor = s.buttonTextColor || '#ffffff';
+        const bannerBgImage = s.bannerBgImage || s.bannerBg || s.heroImage || s.imageUrl || '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg';
+        const bannerBgColor = s.bannerBgColor || '#ede7f6';
+
+        return (
+          <div
+            style={{
+              backgroundColor: bannerBgColor,
+              borderRadius: '16px',
+              padding: '1.5rem',
+              position: 'relative',
+              overflow: 'hidden',
+              border: '1.5px solid #ede8f8',
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.06)',
+            }}
+          >
+            {/* Background preview image if available */}
+            {bannerBgImage && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  opacity: 0.35,
+                  backgroundImage: `url(${bannerBgImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'right center',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
+
+            <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: '580px', margin: '0 auto' }}>
+              {/* Capsule Badge Preview */}
+              {badgeText && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '3px 12px',
+                    borderRadius: '9999px',
+                    backgroundColor: badgeBgColor,
+                    border: `1.5px solid ${badgeTextColor}33`,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    marginBottom: '0.65rem',
+                  }}
+                >
+                  <span style={{ color: badgeTextColor, fontSize: '0.75rem' }}>✦</span>
+                  <span
+                    style={{
+                      color: badgeTextColor,
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {badgeText}
+                  </span>
+                </div>
+              )}
+
+              {/* Headline Preview */}
+              <h3
+                style={{
+                  margin: '0 0 0.5rem',
+                  fontFamily: 'serif',
+                  fontSize: '1.65rem',
+                  fontWeight: 900,
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.02em',
+                  textTransform: 'uppercase',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <span style={{ color: titleColor }}>{prefix}</span>
+                {highlight && (
+                  <span style={{ color: titleHighlightColor }}>
+                    {highlight}
+                  </span>
+                )}
+              </h3>
+
+              {/* Subheadline Preview */}
+              {subtitle && (
+                <p
+                  style={{
+                    margin: '0 0 0.95rem',
+                    fontSize: '0.8rem',
+                    color: subtitleColor,
+                    lineHeight: 1.45,
+                    maxWidth: '460px',
+                    marginInline: 'auto',
+                  }}
+                >
+                  {subtitle}
+                </p>
+              )}
+
+              {/* Button Preview & Route Pill */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: buttonBgColor,
+                    color: buttonTextColor,
+                    padding: '7px 18px',
+                    borderRadius: '9999px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    boxShadow: `0 4px 12px ${buttonBgColor}40`,
+                  }}
+                >
+                  <span>{buttonText}</span>
+                  <span style={{ fontSize: '11px' }}>→</span>
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    color: '#6d28d9',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #ddd6fe',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Destination: {buttonLink}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 8. New Arrivals: Best Sellers Live Marquee Preview ── */}
+      {section.id === 'new_arrivals_marquee' && (() => {
+        const badgeText = s.badgeText || 'Best Sellers • Top Customer Picks';
+        const title = s.title || 'All Best Sellers Running Live';
+        const subtitle = s.subtitle || 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.';
+
+        return (
+          <div
+            style={{
+              background: 'linear-gradient(180deg, #fbfaff 0%, #f5f3ff 100%)',
+              border: '1.5px solid #ede9fe',
+              borderRadius: '16px',
+              padding: '1.75rem 1.25rem',
+              textAlign: 'center',
+              boxShadow: '0 4px 18px rgba(124, 58, 237, 0.06)',
+            }}
+          >
+            {/* Badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#f5f3ff',
+                border: '1px solid #ddd6fe',
+                padding: '4px 14px',
+                borderRadius: '9999px',
+                marginBottom: '0.85rem',
+              }}
+            >
+              <Flame size={14} color="#f97316" />
+              <span
+                style={{
+                  color: '#7c3aed',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {badgeText}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3
+              style={{
+                fontFamily: 'serif',
+                fontSize: '1.75rem',
+                fontWeight: 900,
+                color: '#1e1b4b',
+                margin: '0 0 0.5rem',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </h3>
+
+            {/* Subtitle */}
+            <p
+              style={{
+                color: '#64748b',
+                fontSize: '0.85rem',
+                maxWidth: '520px',
+                margin: '0 auto 1.25rem',
+                lineHeight: 1.5,
+              }}
+            >
+              {subtitle}
+            </p>
+
+            {/* Simulated Live Stream Ribbon */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '10px',
+                overflow: 'hidden',
+                justifyContent: 'center',
+                padding: '4px 0',
+              }}
+            >
+              {[
+                { tag: '⭐ 4.9', name: 'Madurai Sungudi Saree', price: '₹1,850' },
+                { tag: '🔥 BESTSELLER', name: 'Handcrafted Brass Vilakku', price: '₹2,490' },
+                { tag: '⭐ 4.8', name: 'Kanchipuram Silk Stole', price: '₹1,299' },
+              ].map((prod, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #ede9fe',
+                    borderRadius: '10px',
+                    padding: '8px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#f97316' }}>{prod.tag}</span>
+                  <strong style={{ color: '#1e1b4b' }}>{prod.name}</strong>
+                  <span style={{ color: '#7c3aed', fontWeight: 700 }}>{prod.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 8. Best Sellers: Buyer Protection & Trust Strip Preview */}
+      {section.id === 'best_sellers_trust_strip' && (() => {
+        const p1Title = s.pillar1Title ?? 'CAREFULLY SELECTED PRODUCTS';
+        const p1Desc = s.pillar1Desc ?? 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.';
+        const p1Icon = s.pillar1Icon || 'Award';
+        const p1CustomIcon = s.pillar1CustomIcon || '';
+
+        const p2Title = s.pillar2Title ?? 'EASY SHOPPING EXPERIENCE';
+        const p2Desc = s.pillar2Desc ?? 'Simple product discovery, clear pricing, and a smooth shopping journey.';
+        const p2Icon = s.pillar2Icon || 'ShoppingBag';
+        const p2CustomIcon = s.pillar2CustomIcon || '';
+
+        const p3Title = s.pillar3Title ?? 'RELIABLE ORDER UPDATES';
+        const p3Desc = s.pillar3Desc ?? 'Track your order from confirmation to shipping and delivery through your order details.';
+        const p3Icon = s.pillar3Icon || 'Truck';
+        const p3CustomIcon = s.pillar3CustomIcon || '';
+
+        const p4Title = s.pillar4Title ?? 'CUSTOMER SUPPORT';
+        const p4Desc = s.pillar4Desc ?? 'Get help with your order, products, delivery, or other shopping questions.';
+        const p4Icon = s.pillar4Icon || 'Headphones';
+        const p4CustomIcon = s.pillar4CustomIcon || '';
+
+        const pillars = [
+          { num: 1, title: p1Title, desc: p1Desc, icon: p1Icon, customIcon: p1CustomIcon, color: '#7c3aed', bg: '#f3e8ff' },
+          { num: 2, title: p2Title, desc: p2Desc, icon: p2Icon, customIcon: p2CustomIcon, color: '#d97706', bg: '#fef3c7' },
+          { num: 3, title: p3Title, desc: p3Desc, icon: p3Icon, customIcon: p3CustomIcon, color: '#059669', bg: '#d1fae5' },
+          { num: 4, title: p4Title, desc: p4Desc, icon: p4Icon, customIcon: p4CustomIcon, color: '#6366f1', bg: '#ede9fe' },
+        ];
+
+        return (
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '1.25rem 1rem',
+              border: '1.5px solid rgba(216, 180, 254, 0.4)',
+              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.04)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '1rem',
+              textAlign: 'center',
+            }}
+          >
+            {pillars.map((p) => (
+              <div key={p.num} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: '50%',
+                    background: p.bg,
+                    color: p.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {p.customIcon ? (
+                    <img
+                      src={p.customIcon}
+                      alt={p.title}
+                      style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    renderTrustStripIcon(p.icon, 18)
+                  )}
+                </div>
+                <strong style={{ margin: 0, fontWeight: 800, fontSize: '0.74rem', color: '#1e1b4b', lineHeight: 1.25 }}>
+                  {p.title}
+                </strong>
+                <p style={{ margin: 0, fontSize: '0.66rem', color: '#64748b', lineHeight: 1.35 }}>
+                  {p.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* 9. Generic Preview for Other Pages */}
       {section.id !== 'announcement_bar' &&
         section.id !== 'hero_banner' &&
         section.id !== 'shop_by_category' &&
         section.id !== 'flash_deals' &&
         section.id !== 'why_picky' &&
-        section.id !== 'free_shipping_goal_bar' && (
+        section.id !== 'free_shipping_goal_bar' &&
+        section.id !== 'categories_hero' &&
+        section.id !== 'new_arrivals_hero' &&
+        section.id !== 'new_arrivals_marquee' &&
+        section.id !== 'best_sellers_trust_strip' && (
           <div
             style={{
               background: '#ffffff',
@@ -1431,10 +1932,10 @@ function LiveSectionPreview({
             }}
           >
             <div>
-              <strong style={{ fontSize: '0.86rem', color: '#1e1b4b' }}>
+              <strong style={{ fontSize: '0.86rem', color: s.titleColor || s.textColor || '#1e1b4b' }}>
                 {s.title || s.headline || s.storyTitle || section.name}
               </strong>
-              <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+              <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: s.subtitleColor || '#64748b' }}>
                 {s.subtitle || s.subheadline || s.storyBody || s.bannerText || section.description}
               </p>
             </div>
@@ -1470,12 +1971,26 @@ export default function AdminCustomization() {
   const validPageIds = useMemo(() => MOCK_CUSTOMIZATION_PAGES.map((p) => p.id), []);
   const firstPageId = MOCK_CUSTOMIZATION_PAGES[0]?.id || 'global_header';
 
+  // Helper to ensure all sections from MOCK_PAGE_SECTIONS are included even if DB has older schema
+  const mergeWithDefaults = (source) => {
+    const merged = { ...(source || {}) };
+    Object.keys(MOCK_PAGE_SECTIONS).forEach((pId) => {
+      const defaults = MOCK_PAGE_SECTIONS[pId] || [];
+      const current = Array.isArray(merged[pId]) ? merged[pId] : [];
+      const missing = defaults.filter((d) => !current.some((c) => c.id === d.id || c.key === d.key));
+      if (missing.length > 0) {
+        merged[pId] = [...current, ...missing];
+      }
+    });
+    return merged;
+  };
+
   // Baseline and Working copies of all page sections
   const [allPageSections, setAllPageSections] = useState(() => {
-    return storePageSections || MOCK_PAGE_SECTIONS;
+    return mergeWithDefaults(storePageSections || MOCK_PAGE_SECTIONS);
   });
   const [savedPageSections, setSavedPageSections] = useState(() => {
-    return storePageSections || MOCK_PAGE_SECTIONS;
+    return mergeWithDefaults(storePageSections || MOCK_PAGE_SECTIONS);
   });
 
   // Active Selected Page (Header, Home, Shop, PDP, Cart, Footer, Content)
@@ -1568,9 +2083,10 @@ export default function AdminCustomization() {
         if (!mounted) return;
         const data = res?.data || res;
         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-          setAllPageSections((prev) => ({ ...prev, ...data }));
-          setSavedPageSections((prev) => ({ ...prev, ...data }));
-          Object.entries(data).forEach(([pId, secs]) => {
+          const mergedData = mergeWithDefaults(data);
+          setAllPageSections((prev) => ({ ...prev, ...mergedData }));
+          setSavedPageSections((prev) => ({ ...prev, ...mergedData }));
+          Object.entries(mergedData).forEach(([pId, secs]) => {
             if (Array.isArray(secs) && secs.length > 0) {
               storeSavePageSections(pId, secs);
             }
@@ -2319,7 +2835,16 @@ export default function AdminCustomization() {
       {/* ─── 3-Panel Unified Grid Layout ────────────────────────────────────── */}
       <div className="adm-cust-3panel-grid">
         {/* ── PANEL 1: Store Area Selector (Left Nav) ── */}
-        <div className="card adm-cust-panel-nav">
+        <div
+          className="card adm-cust-panel-nav"
+          style={{
+            height: '90vh',
+            maxHeight: '90vh',
+            position: 'sticky',
+            top: '80px',
+            overflowY: 'auto',
+          }}
+        >
           <div className="adm-cust-nav-groups">
             {/* Global Store */}
             <div>
@@ -2575,7 +3100,11 @@ export default function AdminCustomization() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            height: '100%',
+            height: '90vh',
+            maxHeight: '90vh',
+            position: 'sticky',
+            top: '80px',
+            overflowY: 'auto',
             marginBottom: 0,
             boxSizing: 'border-box',
           }}
@@ -2744,8 +3273,12 @@ export default function AdminCustomization() {
             padding: '1.5rem',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            height: '100%',
+            justifyContent: 'flex-start',
+            height: '90vh',
+            maxHeight: '90vh',
+            position: 'sticky',
+            top: '80px',
+            overflowY: 'auto',
             marginBottom: 0,
             boxSizing: 'border-box',
           }}
@@ -3403,65 +3936,6 @@ export default function AdminCustomization() {
                   );
                 })()}
 
-                {/* 2. Main Navigation Header */}
-                {currentSection.id === 'main_header_nav' && (
-                  <>
-                    <Input
-                      label="Brand Logo Text"
-                      value={currentSection.settings?.logoText || 'PICKY'}
-                      onChange={(e) => handleUpdateSetting('logoText', e.target.value)}
-                    />
-                    <Input
-                      label="Search Bar Placeholder"
-                      value={currentSection.settings?.searchPlaceholder || ''}
-                      onChange={(e) => handleUpdateSetting('searchPlaceholder', e.target.value)}
-                    />
-                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.isSticky || false}
-                          onChange={(e) => handleUpdateSetting('isSticky', e.target.checked)}
-                        />
-                        Sticky Navigation on Scroll
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showWishlistLink || false}
-                          onChange={(e) => handleUpdateSetting('showWishlistLink', e.target.checked)}
-                        />
-                        Show Wishlist Icon
-                      </label>
-                    </div>
-                  </>
-                )}
-
-                {/* 3. Sticky Quick Bar */}
-                {currentSection.id === 'sticky_action_bar' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="WhatsApp Support Hotline"
-                        value={currentSection.settings?.whatsappNumber || ''}
-                        onChange={(e) => handleUpdateSetting('whatsappNumber', e.target.value)}
-                      />
-                      <Input
-                        label="Support Callout Text"
-                        value={currentSection.settings?.supportCallout || ''}
-                        onChange={(e) => handleUpdateSetting('supportCallout', e.target.value)}
-                      />
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={currentSection.settings?.showMobileBottomNav || false}
-                        onChange={(e) => handleUpdateSetting('showMobileBottomNav', e.target.checked)}
-                      />
-                      Enable Floating Mobile Quick Bar
-                    </label>
-                  </>
-                )}
 
                 {/* 4. Hero Banner (Collage Billboard: 3 Slides & 6 Images) */}
                 {currentSection.id === 'hero_banner' && (() => {
@@ -4380,14 +4854,28 @@ export default function AdminCustomization() {
                 {currentSection.id === 'catalog_header_banner' && (
                   <>
                     <Input
+                      label="Banner Eyebrow Tag"
+                      value={currentSection.settings?.tag || ''}
+                      placeholder="e.g. HANDPICKED EDIT • MADURAI HUB"
+                      onChange={(e) => handleUpdateSetting('tag', e.target.value)}
+                    />
+                    <Input
                       label="Catalog Headline"
                       value={currentSection.settings?.headline || ''}
+                      placeholder="e.g. Your Style. Your Everyday."
                       onChange={(e) => handleUpdateSetting('headline', e.target.value)}
                     />
                     <Input
                       label="Catalog Subtitle"
                       value={currentSection.settings?.subtitle || ''}
+                      placeholder="e.g. Handcrafted festive silhouettes, breathable linens & authentic temple jewels."
                       onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
+                    />
+                    <Input
+                      label="Explore Button Label"
+                      value={currentSection.settings?.buttonText || ''}
+                      placeholder="e.g. Explore Collection"
+                      onChange={(e) => handleUpdateSetting('buttonText', e.target.value)}
                     />
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
                       <input
@@ -4400,123 +4888,8 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {currentSection.id === 'shop_filters_sort' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Default Sorting"
-                        value={currentSection.settings?.defaultSort || 'featured'}
-                        onChange={(e) => handleUpdateSetting('defaultSort', e.target.value)}
-                      />
-                      <Input
-                        label="Desktop Product Columns (3 / 4 / 5)"
-                        type="number"
-                        min="2"
-                        max="5"
-                        value={currentSection.settings?.desktopGridColumns || 4}
-                        onChange={(e) => handleUpdateSetting('desktopGridColumns', Number(e.target.value))}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.enablePriceSlider || false}
-                          onChange={(e) => handleUpdateSetting('enablePriceSlider', e.target.checked)}
-                        />
-                        Enable Price Slider
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.enableDepartmentFilter || false}
-                          onChange={(e) => handleUpdateSetting('enableDepartmentFilter', e.target.checked)}
-                        />
-                        Department Facets
-                      </label>
-                    </div>
-                  </>
-                )}
 
-                {currentSection.id === 'product_card_appearance' && (
-                  <>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showWishlistHeart || false}
-                          onChange={(e) => handleUpdateSetting('showWishlistHeart', e.target.checked)}
-                        />
-                        Show Floating Wishlist Heart Icon
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showQuickAddToCart || false}
-                          onChange={(e) => handleUpdateSetting('showQuickAddToCart', e.target.checked)}
-                        />
-                        Show Instant Add-to-Cart Button
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showDiscountPercentage || false}
-                          onChange={(e) => handleUpdateSetting('showDiscountPercentage', e.target.checked)}
-                        />
-                        Show Discount Percentage Badge
-                      </label>
-                    </div>
-                  </>
-                )}
 
-                {currentSection.id === 'subcategory_pills_bar' && (
-                  <>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showSubcategoryIcons || false}
-                          onChange={(e) => handleUpdateSetting('showSubcategoryIcons', e.target.checked)}
-                        />
-                        Show Category Icons in Pills
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={currentSection.settings?.showProductCountInPill || false}
-                          onChange={(e) => handleUpdateSetting('showProductCountInPill', e.target.checked)}
-                        />
-                        Show Product Count Badge
-                      </label>
-                    </div>
-                  </>
-                )}
-
-                {/* 11. Product Details (PDP) Settings */}
-                {currentSection.id === 'pdp_gallery_settings' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Thumbnail Position (left / bottom)"
-                        value={currentSection.settings?.thumbnailPosition || 'left'}
-                        onChange={(e) => handleUpdateSetting('thumbnailPosition', e.target.value)}
-                      />
-                      <Input
-                        label="Image Aspect Ratio (1:1 / 3:4)"
-                        value={currentSection.settings?.aspectRatio || '1:1'}
-                        onChange={(e) => handleUpdateSetting('aspectRatio', e.target.value)}
-                      />
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.84rem', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={currentSection.settings?.enableMagnifierZoom || false}
-                        onChange={(e) => handleUpdateSetting('enableMagnifierZoom', e.target.checked)}
-                      />
-                      Enable High-Resolution Magnifier Hover Zoom
-                    </label>
-                  </>
-                )}
 
                 {currentSection.id === 'pdp_stock_delivery_pill' && (
                   <>
@@ -4601,23 +4974,6 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {currentSection.id === 'cart_coupon_strip' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Featured Coupon Code"
-                        value={currentSection.settings?.featuredCouponCode || ''}
-                        onChange={(e) => handleUpdateSetting('featuredCouponCode', e.target.value)}
-                      />
-                      <Input
-                        label="Coupon Highlight Blurb"
-                        value={currentSection.settings?.couponHighlightText || ''}
-                        onChange={(e) => handleUpdateSetting('couponHighlightText', e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-
                 {currentSection.id === 'cart_trust_security' && (
                   <>
                     <Input
@@ -4633,192 +4989,1632 @@ export default function AdminCustomization() {
                   </>
                 )}
 
-                {currentSection.id === 'cart_upsell_carousel' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Carousel Title"
-                        value={currentSection.settings?.title || ''}
-                        onChange={(e) => handleUpdateSetting('title', e.target.value)}
-                      />
-                      <Input
-                        label="Maximum Upsell Products"
-                        type="number"
-                        min="1"
-                        max="6"
-                        value={currentSection.settings?.maxItems || 3}
-                        onChange={(e) => handleUpdateSetting('maxItems', Number(e.target.value))}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* 13. Storefront Footer Settings */}
-                {currentSection.id === 'footer_config' && (
-                  <>
-                    <div>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
-                        About Storefront Blurb
-                      </label>
-                      <textarea
-                        value={currentSection.settings?.aboutText || ''}
-                        onChange={(e) => handleUpdateSetting('aboutText', e.target.value)}
-                        rows={2}
+                {currentSection.id === 'categories_hero' && (() => {
+                  const s = currentSection.settings || {};
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* Section 1: Left Card ("Everything Store" Banner) */}
+                      <div
                         style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: '10px',
-                          border: '1px solid #dfd5f5',
-                          fontSize: '0.88rem',
-                          fontFamily: 'inherit',
-                          outline: 'none',
+                          background: '#faf8fe',
+                          border: '1.5px solid #ede8f8',
+                          borderRadius: '12px',
+                          padding: '1.25rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '1rem',
                         }}
-                      />
-                    </div>
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            borderBottom: '1px solid #ede8f8',
+                            paddingBottom: '0.65rem',
+                          }}
+                        >
+                          <div>
+                            <span
+                              style={{
+                                fontSize: '0.92rem',
+                                fontWeight: 800,
+                                color: '#1e1b4b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                              }}
+                            >
+                              🌟 Left Card: "Everything Store" Hero Banner
+                            </span>
+                            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                              Customize title, description, price pill, button text and click navigation path.
+                            </span>
+                          </div>
+                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Newsletter Heading"
-                        value={currentSection.settings?.newsletterTitle || ''}
-                        onChange={(e) => handleUpdateSetting('newsletterTitle', e.target.value)}
-                      />
-                      <Input
-                        label="Support WhatsApp"
-                        value={currentSection.settings?.whatsapp || ''}
-                        onChange={(e) => handleUpdateSetting('whatsapp', e.target.value)}
-                      />
-                    </div>
+                        {/* Title (Headline) & Subheading */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div>
+                            <Input
+                              label="Main Headline Title"
+                              value={s.headline ?? 'YOUR EVERYTHING STORE'}
+                              onChange={(e) => handleUpdateSetting('headline', e.target.value)}
+                              placeholder="e.g. YOUR EVERYTHING STORE"
+                            />
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginTop: '3px' }}>
+                              Tip: You can use spaces or new lines for poster styling.
+                            </span>
+                          </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Support Email"
-                        value={currentSection.settings?.supportEmail || ''}
-                        onChange={(e) => handleUpdateSetting('supportEmail', e.target.value)}
-                      />
-                      <Input
-                        label="Instagram URL"
-                        value={currentSection.settings?.instagram || ''}
-                        onChange={(e) => handleUpdateSetting('instagram', e.target.value)}
-                      />
-                    </div>
+                          <div>
+                            <Input
+                              label="Subtitle / Description"
+                              value={s.subheadline ?? 'Shop Your Daily Essentials & More'}
+                              onChange={(e) => handleUpdateSetting('subheadline', e.target.value)}
+                              placeholder="e.g. Shop Your Daily Essentials & More"
+                            />
+                          </div>
+                        </div>
 
-                    <Input
-                      label="Copyright Notice"
-                      value={currentSection.settings?.copyrightText || ''}
-                      onChange={(e) => handleUpdateSetting('copyrightText', e.target.value)}
-                    />
-                  </>
-                )}
+                        {/* Starting Price Pill: Label & Amount */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <Input
+                            label="Price Pill Label"
+                            value={s.startingPriceLabel ?? 'Starting From'}
+                            onChange={(e) => handleUpdateSetting('startingPriceLabel', e.target.value)}
+                            placeholder="Starting From"
+                          />
+                          <Input
+                            label="Price Amount"
+                            value={s.startingPrice ?? '₹129'}
+                            onChange={(e) => handleUpdateSetting('startingPrice', e.target.value)}
+                            placeholder="₹129"
+                          />
+                        </div>
 
-                {/* 14. Content & Policies Pages Settings */}
-                {currentSection.id === 'about_us_content' && (
-                  <>
-                    <Input
-                      label="Story Headline"
-                      value={currentSection.settings?.storyTitle || ''}
-                      onChange={(e) => handleUpdateSetting('storyTitle', e.target.value)}
-                    />
-                    <div>
-                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
-                        Artisan Story Body
-                      </label>
-                      <textarea
-                        value={currentSection.settings?.storyBody || ''}
-                        onChange={(e) => handleUpdateSetting('storyBody', e.target.value)}
-                        rows={3}
+                        {/* Button Text & Button Link (Path) */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div>
+                            <Input
+                              label="Button Text"
+                              value={s.buttonText ?? 'SHOP NOW'}
+                              onChange={(e) => handleUpdateSetting('buttonText', e.target.value)}
+                              placeholder="SHOP NOW"
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              label="Button Click Path / Target URL"
+                              value={s.buttonLink ?? '/products'}
+                              onChange={(e) => handleUpdateSetting('buttonLink', e.target.value)}
+                              placeholder="/products or /shop"
+                            />
+                            {/* Quick Path Preset Pills */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>Quick paths:</span>
+                              {[
+                                { label: '/products', path: '/products' },
+                                { label: '/shop', path: '/shop' },
+                                { label: '/discounts', path: '/discounts' },
+                                { label: '/categories', path: '/categories' },
+                              ].map((preset) => (
+                                <button
+                                  key={preset.path}
+                                  type="button"
+                                  className="adm-cust-badge-preset-btn no-hover-fx"
+                                  style={{
+                                    fontSize: '0.68rem',
+                                    padding: '2px 8px',
+                                    background: (s.buttonLink || '/products') === preset.path ? '#7c3aed' : '#f1f5f9',
+                                    color: (s.buttonLink || '/products') === preset.path ? '#ffffff' : '#475569',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                  }}
+                                  onClick={() => handleUpdateSetting('buttonLink', preset.path)}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Hero 3D Graphic Image */}
+                        <div>
+                          <ImageUploadControl
+                            label="Card 3D Composition Graphic Image"
+                            value={s.heroImage || '/images/categories_hero_3d.png'}
+                            onChange={(newUrl) => handleUpdateSetting('heroImage', newUrl)}
+                            onClear={() => handleUpdateSetting('heroImage', '/images/categories_hero_3d.png')}
+                          />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                            Default graphic: `/images/categories_hero_3d.png` (3D phone, audio, plants & shopping bags).
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Section 2: Right Carousel Track Settings */}
+                      <div
                         style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: '10px',
-                          border: '1px solid #dfd5f5',
-                          fontSize: '0.88rem',
-                          fontFamily: 'inherit',
-                          outline: 'none',
+                          background: '#faf8fe',
+                          border: '1.5px solid #ede8f8',
+                          borderRadius: '12px',
+                          padding: '1.25rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.85rem',
                         }}
-                      />
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.88rem',
+                            fontWeight: 800,
+                            color: '#1e1b4b',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          🎠 Department Cards Carousel Settings
+                        </span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <Input
+                            label="Autoplay Speed (milliseconds)"
+                            type="number"
+                            value={s.autoplaySpeed ?? 4000}
+                            onChange={(e) => handleUpdateSetting('autoplaySpeed', Number(e.target.value) || 2000)}
+                            placeholder="4000"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Artisan Count Badge"
-                        value={currentSection.settings?.artisanCount || ''}
-                        onChange={(e) => handleUpdateSetting('artisanCount', e.target.value)}
-                      />
-                      <Input
-                        label="Districts Covered Badge"
-                        value={currentSection.settings?.districtsCovered || ''}
-                        onChange={(e) => handleUpdateSetting('districtsCovered', e.target.value)}
-                      />
+                  );
+                })()}
+
+                {/* ── 7. New Arrivals Hero Showcase Visual Editor ── */}
+                {currentSection.id === 'new_arrivals_hero' && (() => {
+                  const s = currentSection.settings || {};
+
+                  // Derive title prefix and highlight
+                  const rawHeadline = s.headline || 'NEW ARRIVALS';
+                  let prefix = s.titlePrefix;
+                  let highlight = s.titleHighlight;
+                  if (prefix === undefined && highlight === undefined) {
+                    const words = rawHeadline.trim().split(/\s+/);
+                    if (words.length > 1) {
+                      highlight = words.pop();
+                      prefix = words.join(' ');
+                    } else {
+                      prefix = rawHeadline;
+                      highlight = '';
+                    }
+                  } else {
+                    prefix = prefix ?? 'NEW';
+                    highlight = highlight ?? 'ARRIVALS';
+                  }
+
+                  const titleColor = s.titleColor || '#1e1b4b';
+                  const titleHighlightColor = s.titleHighlightColor || '#7c3aed';
+                  const subtitle = s.subheadline ?? s.subtitle ?? 'Trendy styles, everyday comfort made for your season.';
+                  const subtitleColor = s.subtitleColor || '#4b5563';
+
+                  const badgeText = s.badgeText ?? s.badge ?? 'WINTER COLLECTION 2026';
+                  const badgeTextColor = s.badgeTextColor || '#6d28d9';
+                  const badgeBgColor = s.badgeBgColor || '#ffffff';
+
+                  const buttonText = s.buttonText || s.ctaText || 'Discover More';
+                  const buttonLink = s.buttonLink || s.ctaLink || '#catalog';
+                  const buttonBgColor = s.buttonBgColor || '#250e4a';
+                  const buttonTextColor = s.buttonTextColor || '#ffffff';
+
+                  const bannerBgImage = s.bannerBgImage || s.bannerBg || s.heroImage || s.imageUrl || '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg';
+                  const bannerBgColor = s.bannerBgColor || '#ede7f6';
+
+                  const exploreTitle = s.exploreTitle || 'Explore Collection';
+                  const exploreSubtitle = s.exploreSubtitle || 'Warm, durable, and made for winter adventures.';
+                  const viewAllText = s.viewAllText || 'View All';
+                  const viewAllLink = s.viewAllLink || '#catalog';
+
+                  const handleUpdateTitleParts = (newPrefix, newHighlight) => {
+                    const combined = `${newPrefix} ${newHighlight}`.trim();
+                    handleUpdateSetting('titlePrefix', newPrefix);
+                    handleUpdateSetting('titleHighlight', newHighlight);
+                    handleUpdateSetting('headline', combined);
+                  };
+
+                  const primaryColorPresets = ['#1e1b4b', '#0f172a', '#111827', '#312e81', '#831843', '#ffffff'];
+                  const accentColorPresets = ['#7c3aed', '#6d28d9', '#9333ea', '#ec4899', '#2563eb', '#059669', '#d97706'];
+                  const subtitleColorPresets = ['#4b5563', '#64748b', '#334155', '#94a3b8', '#1e1b4b'];
+                  const badgeTextPresets = [
+                    'WINTER COLLECTION 2026',
+                    'WEEKLY FRESH DROP',
+                    'HANDCRAFTED LUXURY',
+                    'NEW SEASON ARRIVALS',
+                    'LIMITED EDITION',
+                  ];
+                  const badgeColorPresets = ['#6d28d9', '#7c3aed', '#4338ca', '#b91c1c', '#047857', '#0f172a'];
+                  const badgeBgPresets = ['#ffffff', '#f5f3ff', '#fef2f2', '#ecfdf5', '#1e1b4b'];
+                  const btnBgPresets = ['#250e4a', '#1e1b4b', '#7c3aed', '#0f172a', '#be185d', '#047857'];
+                  const btnTextPresets = ['#ffffff', '#f8fafc', '#fef08a', '#e9d5ff', '#1e1b4b'];
+                  const stageBgPresets = ['#ede7f6', '#f5f3ff', '#f8fafc', '#faf5ff', '#fef2f2', '#f0fdf4'];
+
+                  const quickRoutes = [
+                    { label: 'Catalog (#catalog)', url: '#catalog' },
+                    { label: 'All Products (/shop)', url: '/shop' },
+                    { label: 'Categories Hub (/categories)', url: '/categories' },
+                    { label: 'Discounts & Deals (/discounts)', url: '/discounts' },
+                    { label: 'Best Sellers (/best-sellers)', url: '/best-sellers' },
+                  ];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* ── CARD 1: Capsule Badge Pill Settings ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              ✦ Top Eyebrow Capsule Badge
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the luxury pill tag text and styling above the main headline.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <Input
+                            label="Badge Text"
+                            value={badgeText}
+                            onChange={(e) => handleUpdateSetting('badgeText', e.target.value)}
+                            placeholder="WINTER COLLECTION 2026"
+                          />
+
+                          {/* Quick Badge Presets */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>Presets:</span>
+                            {badgeTextPresets.map((txt) => (
+                              <button
+                                key={txt}
+                                type="button"
+                                className={`adm-cust-badge-preset-btn no-hover-fx ${badgeText === txt ? 'active' : ''}`}
+                                onClick={() => handleUpdateSetting('badgeText', txt)}
+                              >
+                                {txt}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Badge Colors Grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            {/* Badge Text Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Badge Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={badgeTextColor}
+                                  onChange={(e) => handleUpdateSetting('badgeTextColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={badgeTextColor}
+                                  onChange={(e) => handleUpdateSetting('badgeTextColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {badgeColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('badgeTextColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: badgeTextColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Badge Background Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Badge Background Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={badgeBgColor}
+                                  onChange={(e) => handleUpdateSetting('badgeBgColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={badgeBgColor}
+                                  onChange={(e) => handleUpdateSetting('badgeBgColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {badgeBgPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('badgeBgColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: badgeBgColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 2: Headline Typography & Dual-Color Settings ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              ✍️ Headline Typography & Colors
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the two-tone luxury title text, word colors, and description subtitle.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <Input
+                              label="Primary Title Word (Word 1)"
+                              value={prefix}
+                              placeholder="NEW"
+                              onChange={(e) => handleUpdateTitleParts(e.target.value, highlight)}
+                            />
+                            <Input
+                              label="Accent Highlight Word (Word 2)"
+                              value={highlight}
+                              placeholder="ARRIVALS"
+                              onChange={(e) => handleUpdateTitleParts(prefix, e.target.value)}
+                            />
+                          </div>
+
+                          {/* Headline Colors Grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            {/* Title Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Primary Word Color ("{prefix || 'NEW'}")
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={titleColor}
+                                  onChange={(e) => handleUpdateSetting('titleColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={titleColor}
+                                  onChange={(e) => handleUpdateSetting('titleColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {primaryColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('titleColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: titleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Highlight Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Accent Highlight Color ("{highlight || 'ARRIVALS'}")
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={titleHighlightColor}
+                                  onChange={(e) => handleUpdateSetting('titleHighlightColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={titleHighlightColor}
+                                  onChange={(e) => handleUpdateSetting('titleHighlightColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {accentColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('titleHighlightColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: titleHighlightColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Subtitle / Description Text & Color */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginTop: '0.35rem' }}>
+                            <div>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
+                                Subtitle / Description
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={subtitle}
+                                onChange={(e) => {
+                                  handleUpdateSetting('subheadline', e.target.value);
+                                  handleUpdateSetting('subtitle', e.target.value);
+                                }}
+                                style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #dfd5f5', fontSize: '0.88rem', fontFamily: 'inherit', outline: 'none' }}
+                                placeholder="Trendy styles, everyday comfort made for your season."
+                              />
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Subtitle Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {subtitleColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('subtitleColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: subtitleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 3: CTA Button Text, Path & Colors ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🔘 CTA Button (Text, Navigation Link & Colors)
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the hero action button label, target path, and button color palette.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <div>
+                              <Input
+                                label="Button Text"
+                                value={buttonText}
+                                onChange={(e) => {
+                                  handleUpdateSetting('buttonText', e.target.value);
+                                  handleUpdateSetting('ctaText', e.target.value);
+                                }}
+                                placeholder="Discover More"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                label="Button Link / Target Path"
+                                value={buttonLink}
+                                onChange={(e) => {
+                                  handleUpdateSetting('buttonLink', e.target.value);
+                                  handleUpdateSetting('ctaLink', e.target.value);
+                                }}
+                                placeholder="#catalog or /shop"
+                                error={validateRouteUrl(buttonLink)}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Quick Route Selector Pills */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>Quick paths:</span>
+                            {quickRoutes.map((rt) => (
+                              <button
+                                key={rt.url}
+                                type="button"
+                                className={`adm-cust-badge-preset-btn no-hover-fx ${buttonLink === rt.url ? 'active' : ''}`}
+                                onClick={() => {
+                                  handleUpdateSetting('buttonLink', rt.url);
+                                  handleUpdateSetting('ctaLink', rt.url);
+                                }}
+                              >
+                                {rt.label}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Button Colors Grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '0.35rem' }}>
+                            {/* Button Background Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Button Background Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={buttonBgColor}
+                                  onChange={(e) => handleUpdateSetting('buttonBgColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={buttonBgColor}
+                                  onChange={(e) => handleUpdateSetting('buttonBgColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {btnBgPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('buttonBgColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: buttonBgColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Button Text Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Button Text & Icon Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={buttonTextColor}
+                                  onChange={(e) => handleUpdateSetting('buttonTextColor', e.target.value)}
+                                  style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={buttonTextColor}
+                                  onChange={(e) => handleUpdateSetting('buttonTextColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                                {btnTextPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('buttonTextColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: buttonTextColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 4: 4K Showcase Architectural Image & Stage Background ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🖼️ Showcase Background Image & Stage Palette
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Upload a 4K architectural studio photo or provide an image URL with base canvas color.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <ImageUploadControl
+                            label="Hero Showcase Background Image"
+                            value={bannerBgImage}
+                            onChange={(newUrl) => {
+                              handleUpdateSetting('bannerBgImage', newUrl);
+                              handleUpdateSetting('imageUrl', newUrl);
+                            }}
+                            onClear={() => {
+                              handleUpdateSetting('bannerBgImage', '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg');
+                              handleUpdateSetting('imageUrl', '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg');
+                            }}
+                          />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: '-4px' }}>
+                            Default studio image: `/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg` (Luxury arch & studio showcase).
+                          </span>
+
+                          {/* Stage Background Color */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                              Canvas Base Background Color
+                            </label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <input
+                                type="color"
+                                value={bannerBgColor}
+                                onChange={(e) => handleUpdateSetting('bannerBgColor', e.target.value)}
+                                style={{ width: '38px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#ffffff' }}
+                              />
+                              <input
+                                type="text"
+                                value={bannerBgColor}
+                                onChange={(e) => handleUpdateSetting('bannerBgColor', e.target.value)}
+                                className="form-input"
+                                style={{ flex: 1, fontFamily: 'monospace' }}
+                              />
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                              {stageBgPresets.map((c) => (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => handleUpdateSetting('bannerBgColor', c)}
+                                  title={c}
+                                  style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    background: c,
+                                    border: bannerBgColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 5: Bottom "Explore Collection" Row Settings ── */}
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🧭 "Explore Collection" Sub-Header Row
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the title, subtitle, and "View All" link above the running product marquee.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <Input
+                              label="Section Title"
+                              value={exploreTitle}
+                              onChange={(e) => handleUpdateSetting('exploreTitle', e.target.value)}
+                              placeholder="Explore Collection"
+                            />
+                            <Input
+                              label="Section Subtitle"
+                              value={exploreSubtitle}
+                              onChange={(e) => handleUpdateSetting('exploreSubtitle', e.target.value)}
+                              placeholder="Warm, durable, and made for winter adventures."
+                            />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            <Input
+                              label="View All Link Text"
+                              value={viewAllText}
+                              onChange={(e) => handleUpdateSetting('viewAllText', e.target.value)}
+                              placeholder="View All"
+                            />
+                            <Input
+                              label="View All Link Path"
+                              value={viewAllLink}
+                              onChange={(e) => handleUpdateSetting('viewAllLink', e.target.value)}
+                              placeholder="#catalog or /shop"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </>
-                )}
+                  );
+                })()}
 
-                {currentSection.id === 'contact_support_content' && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <Input
-                        label="Support Phone"
-                        value={currentSection.settings?.supportPhone || ''}
-                        onChange={(e) => handleUpdateSetting('supportPhone', e.target.value)}
-                      />
-                      <Input
-                        label="Support Email"
-                        value={currentSection.settings?.supportEmail || ''}
-                        onChange={(e) => handleUpdateSetting('supportEmail', e.target.value)}
-                      />
+                {/* ── NEW ARRIVALS: Best Sellers Live Marquee Text Editor ── */}
+                {currentSection.id === 'new_arrivals_marquee' && (() => {
+                  const s = currentSection.settings || {};
+                  const badgeText = s.badgeText ?? 'Best Sellers • Top Customer Picks';
+                  const title = s.title ?? 'All Best Sellers Running Live';
+                  const subtitle = s.subtitle ?? 'Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore.';
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🔥 Marquee Section Text Content
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the badge, main heading, and subtitle displayed above the live running best sellers stream.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {/* 1. Top Badge Pill Text */}
+                          <div>
+                            <Input
+                              label="Top Badge Pill Text"
+                              value={badgeText}
+                              onChange={(e) => handleUpdateSetting('badgeText', e.target.value)}
+                              placeholder="Best Sellers • Top Customer Picks"
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Small badge pill displayed at the top with the orange flame icon.
+                            </span>
+                          </div>
+
+                          {/* 2. Main Title / Headline */}
+                          <div>
+                            <Input
+                              label="Main Headline / Section Title"
+                              value={title}
+                              onChange={(e) => handleUpdateSetting('title', e.target.value)}
+                              placeholder="All Best Sellers Running Live"
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Primary headline displayed in bold serif typography.
+                            </span>
+                          </div>
+
+                          {/* 3. Subtitle / Description */}
+                          <div>
+                            <label
+                              style={{
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#1e1b4b',
+                                display: 'block',
+                                marginBottom: '0.4rem',
+                              }}
+                            >
+                              Section Subtitle / Description
+                            </label>
+                            <textarea
+                              rows={3}
+                              className="adm-cust-textarea"
+                              value={subtitle}
+                              onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
+                              placeholder="Continuous live stream of our top-rated, best-selling favorites. Hover over any card to pause and explore."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '0.86rem',
+                                color: '#1e1b4b',
+                                fontFamily: 'inherit',
+                                resize: 'vertical',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Descriptive text explaining the hover-to-pause and live stream experience for customers.
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <Input
-                      label="Working Hours Blurb"
-                      value={currentSection.settings?.workingHours || ''}
-                      onChange={(e) => handleUpdateSetting('workingHours', e.target.value)}
-                    />
-                    <Input
-                      label="Headquarters Office Address"
-                      value={currentSection.settings?.officeAddress || ''}
-                      onChange={(e) => handleUpdateSetting('officeAddress', e.target.value)}
-                    />
-                  </>
-                )}
+                  );
+                })()}
 
-                {currentSection.id === 'policies_terms_content' && (
-                  <>
-                    <Input
-                      label="Policy Revision Notice"
-                      value={currentSection.settings?.policyUpdateDate || ''}
-                      onChange={(e) => handleUpdateSetting('policyUpdateDate', e.target.value)}
-                    />
-                    <Input
-                      label="Shipping Turnaround Blurb"
-                      value={currentSection.settings?.shippingTimeline || ''}
-                      onChange={(e) => handleUpdateSetting('shippingTimeline', e.target.value)}
-                    />
-                  </>
-                )}
+                {/* ── BEST SELLERS: Leaderboard Banner Editor ── */}
+                {currentSection.id === 'best_sellers_hero' && (() => {
+                  const s = currentSection.settings || {};
+                  const headline = s.headline ?? 'Most Loved South Indian Masterpieces';
+                  const subheadline = s.subheadline ?? 'Handpicked by thousands of happy homes across India and worldwide.';
+                  const badgeText = s.badgeText ?? 'TOP RATED & VERIFIED';
+                  const titleColor = s.titleColor || s.textColor || '#111827';
+                  const subtitleColor = s.subtitleColor || '#475569';
 
-                {/* 15. Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, Wishlist, About Us, Contact Us, Blog & others */}
+                  const titleColorPresets = [
+                    '#111827', // Obsidian Black (Default)
+                    '#1e1b4b', // Midnight Navy
+                    '#7c3aed', // Royal Purple
+                    '#4c1d95', // Deep Indigo
+                    '#0f172a', // Slate Dark
+                    '#be123c', // Festive Crimson
+                    '#065f46', // Emerald
+                    '#9a3412', // Warm Amber
+                  ];
+
+                  const subtitleColorPresets = [
+                    '#475569', // Slate Gray (Default)
+                    '#64748b', // Muted Gray
+                    '#1e293b', // Deep Charcoal
+                    '#6b21a8', // Soft Purple
+                    '#4b5563', // Neutral Cool
+                  ];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🏆 Leaderboard Banner Content & Colors
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize the headline text, subtitle, badge, and text colors of the Best Sellers Hero Leaderboard.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {/* 1. Headline */}
+                          <div>
+                            <Input
+                              label="Headline"
+                              value={headline}
+                              onChange={(e) => handleUpdateSetting('headline', e.target.value)}
+                              placeholder="Most Loved South Indian Masterpieces"
+                            />
+                          </div>
+
+                          {/* 2. Subheadline */}
+                          <div>
+                            <label
+                              style={{
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#1e1b4b',
+                                display: 'block',
+                                marginBottom: '0.4rem',
+                              }}
+                            >
+                              Subheadline
+                            </label>
+                            <textarea
+                              rows={3}
+                              className="adm-cust-textarea"
+                              value={subheadline}
+                              onChange={(e) => handleUpdateSetting('subheadline', e.target.value)}
+                              placeholder="Handpicked by thousands of happy homes across India and worldwide."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1.5px solid #cbd5e1',
+                                fontSize: '0.86rem',
+                                color: '#1e1b4b',
+                                fontFamily: 'inherit',
+                                resize: 'vertical',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          </div>
+
+                          {/* 3. Badge Text */}
+                          <div>
+                            <Input
+                              label="Badge Text"
+                              value={badgeText}
+                              onChange={(e) => handleUpdateSetting('badgeText', e.target.value)}
+                              placeholder="TOP RATED & VERIFIED"
+                            />
+                          </div>
+
+                          {/* 4. Banner Background Image (Restored) */}
+                          <div>
+                            <ImageUploadControl
+                              label="Banner Background Image"
+                              value={s.bannerBgImage || s.bannerBgColor || ''}
+                              onChange={(newUrl) => {
+                                handleUpdateSetting('bannerBgImage', newUrl);
+                                handleUpdateSetting('bannerBgColor', newUrl);
+                              }}
+                              onClear={(currUrl) => {
+                                handleClearSectionImage('bannerBgImage', currUrl);
+                                handleUpdateSetting('bannerBgColor', '');
+                              }}
+                            />
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                              Supports JPG, PNG, WEBP or SVG (instant live preview). Default: <code>/images/bestseller_category_bg.jpg</code>.
+                            </span>
+                          </div>
+
+                          {/* 5. Text Colors Grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid #ede8f8' }}>
+                            {/* Headline Text Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Headline Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={titleColor}
+                                  onChange={(e) => {
+                                    handleUpdateSetting('titleColor', e.target.value);
+                                    handleUpdateSetting('textColor', e.target.value);
+                                  }}
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={titleColor}
+                                  onChange={(e) => {
+                                    handleUpdateSetting('titleColor', e.target.value);
+                                    handleUpdateSetting('textColor', e.target.value);
+                                  }}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                {titleColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => {
+                                      handleUpdateSetting('titleColor', c);
+                                      handleUpdateSetting('textColor', c);
+                                    }}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: titleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                      boxShadow: titleColor === c ? '0 0 0 2px #ddd6fe' : 'none',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                Changes the main headline font color.
+                              </span>
+                            </div>
+
+                            {/* Subtitle Text Color */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b' }}>
+                                Subtitle Text Color
+                              </label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                  type="color"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    padding: '2px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    cursor: 'pointer',
+                                    background: '#ffffff',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={subtitleColor}
+                                  onChange={(e) => handleUpdateSetting('subtitleColor', e.target.value)}
+                                  className="form-input"
+                                  style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                {subtitleColorPresets.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdateSetting('subtitleColor', c)}
+                                    title={c}
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: c,
+                                      border: subtitleColor === c ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                                      cursor: 'pointer',
+                                      boxShadow: subtitleColor === c ? '0 0 0 2px #ddd6fe' : 'none',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                Changes the paragraph subtitle font color.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── BEST SELLERS: Buyer Protection & Trust Strip Editor ── */}
+                {currentSection.id === 'best_sellers_trust_strip' && (() => {
+                  const s = currentSection.settings || {};
+
+                  // Read the 4 pillars from settings, with exact fallback defaults matching storefront
+                  const p1Title = s.pillar1Title ?? 'CAREFULLY SELECTED PRODUCTS';
+                  const p1Desc = s.pillar1Desc ?? 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.';
+                  const p1Icon = s.pillar1Icon || 'Award';
+                  const p1CustomIcon = s.pillar1CustomIcon || '';
+
+                  const p2Title = s.pillar2Title ?? 'EASY SHOPPING EXPERIENCE';
+                  const p2Desc = s.pillar2Desc ?? 'Simple product discovery, clear pricing, and a smooth shopping journey.';
+                  const p2Icon = s.pillar2Icon || 'ShoppingBag';
+                  const p2CustomIcon = s.pillar2CustomIcon || '';
+
+                  const p3Title = s.pillar3Title ?? 'RELIABLE ORDER UPDATES';
+                  const p3Desc = s.pillar3Desc ?? 'Track your order from confirmation to shipping and delivery through your order details.';
+                  const p3Icon = s.pillar3Icon || 'Truck';
+                  const p3CustomIcon = s.pillar3CustomIcon || '';
+
+                  const p4Title = s.pillar4Title ?? 'CUSTOMER SUPPORT';
+                  const p4Desc = s.pillar4Desc ?? 'Get help with your order, products, delivery, or other shopping questions.';
+                  const p4Icon = s.pillar4Icon || 'Headphones';
+                  const p4CustomIcon = s.pillar4CustomIcon || '';
+
+                  const availableTrustIcons = [
+                    { id: 'Award', label: 'Award / Quality Badge', icon: <Award size={15} /> },
+                    { id: 'ShoppingBag', label: 'Shopping Bag', icon: <ShoppingBag size={15} /> },
+                    { id: 'Truck', label: 'Delivery Truck', icon: <Truck size={15} /> },
+                    { id: 'Headphones', label: 'Customer Support', icon: <Headphones size={15} /> },
+                    { id: 'ShieldCheck', label: 'Buyer Protection / Shield', icon: <ShieldCheck size={15} /> },
+                    { id: 'Sparkles', label: 'Curated Products / Sparkles', icon: <Sparkles size={15} /> },
+                    { id: 'RotateCcw', label: 'Easy Doorstep Replacement', icon: <RotateCcw size={15} /> },
+                    { id: 'Heart', label: 'Handcrafted with Love', icon: <Heart size={15} /> },
+                    { id: 'Star', label: '5-Star Quality / Top Rated', icon: <Star size={15} /> },
+                    { id: 'Zap', label: 'Express Shipping / Lightning', icon: <Zap size={15} /> },
+                    { id: 'CheckCircle2', label: 'Verified Authenticity', icon: <CheckCircle2 size={15} /> },
+                    { id: 'Tag', label: 'Best Price & Fair Deals', icon: <Tag size={15} /> },
+                    { id: 'Clock', label: 'On-Time Delivery Guarantee', icon: <Clock size={15} /> },
+                    { id: 'Gift', label: 'Artisan Packaging & Perks', icon: <Gift size={15} /> },
+                    { id: 'Package', label: 'Safe Box Transit', icon: <Package size={15} /> },
+                  ];
+
+                  const pillars = [
+                    {
+                      num: 1,
+                      titleKey: 'pillar1Title',
+                      descKey: 'pillar1Desc',
+                      iconKey: 'pillar1Icon',
+                      customIconKey: 'pillar1CustomIcon',
+                      title: p1Title,
+                      desc: p1Desc,
+                      icon: p1Icon,
+                      customIcon: p1CustomIcon,
+                      badgeColor: '#7c3aed',
+                      badgeBg: '#f3e8ff',
+                      defaultName: 'Pillar 1: Product Selection',
+                    },
+                    {
+                      num: 2,
+                      titleKey: 'pillar2Title',
+                      descKey: 'pillar2Desc',
+                      iconKey: 'pillar2Icon',
+                      customIconKey: 'pillar2CustomIcon',
+                      title: p2Title,
+                      desc: p2Desc,
+                      icon: p2Icon,
+                      customIcon: p2CustomIcon,
+                      badgeColor: '#d97706',
+                      badgeBg: '#fef3c7',
+                      defaultName: 'Pillar 2: Shopping Experience',
+                    },
+                    {
+                      num: 3,
+                      titleKey: 'pillar3Title',
+                      descKey: 'pillar3Desc',
+                      iconKey: 'pillar3Icon',
+                      customIconKey: 'pillar3CustomIcon',
+                      title: p3Title,
+                      desc: p3Desc,
+                      icon: p3Icon,
+                      customIcon: p3CustomIcon,
+                      badgeColor: '#059669',
+                      badgeBg: '#d1fae5',
+                      defaultName: 'Pillar 3: Order Updates',
+                    },
+                    {
+                      num: 4,
+                      titleKey: 'pillar4Title',
+                      descKey: 'pillar4Desc',
+                      iconKey: 'pillar4Icon',
+                      customIconKey: 'pillar4CustomIcon',
+                      title: p4Title,
+                      desc: p4Desc,
+                      icon: p4Icon,
+                      customIcon: p4CustomIcon,
+                      badgeColor: '#6366f1',
+                      badgeBg: '#ede9fe',
+                      defaultName: 'Pillar 4: Customer Support',
+                    },
+                  ];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div className="adm-cust-form-card">
+                        <div className="adm-cust-form-card-header">
+                          <div>
+                            <h4 className="adm-cust-form-card-title">
+                              🛡️ Buyer Protection & Trust Pillars (4 Features)
+                            </h4>
+                            <p className="adm-cust-form-card-desc">
+                              Customize each pillar's title, description, and vector icon or uploaded custom image.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="adm-cust-form-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {pillars.map((p) => (
+                            <div
+                              key={p.num}
+                              style={{
+                                background: '#faf8fe',
+                                padding: '1.15rem',
+                                borderRadius: '12px',
+                                border: '1.5px solid #ede8f8',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.85rem',
+                              }}
+                            >
+                              {/* Pillar Header with Badge and Icon */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                  <div
+                                    style={{
+                                      width: 36,
+                                      height: 36,
+                                      borderRadius: '50%',
+                                      background: p.badgeBg,
+                                      color: p.badgeColor,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                      boxShadow: '0 2px 5px rgba(0,0,0,0.04)',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    {p.customIcon ? (
+                                      <img
+                                        src={p.customIcon}
+                                        alt={p.title}
+                                        style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                                      />
+                                    ) : (
+                                      renderTrustStripIcon(p.icon, 18)
+                                    )}
+                                  </div>
+                                  <div>
+                                    <strong style={{ fontSize: '0.9rem', color: '#1e1b4b', display: 'block' }}>
+                                      {p.defaultName}
+                                    </strong>
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                      Active Icon:{' '}
+                                      <strong>
+                                        {p.customIcon ? 'Custom Uploaded' : p.icon}
+                                      </strong>
+                                    </span>
+                                  </div>
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    color: p.badgeColor,
+                                    background: p.badgeBg,
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                  }}
+                                >
+                                  Pillar #{p.num}
+                                </span>
+                              </div>
+
+                              {/* Icon Picker: Dropdown & Quick Selection Chips */}
+                              <div>
+                                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.35rem' }}>
+                                  Choose Icon
+                                </label>
+                                <select
+                                  value={p.icon}
+                                  onChange={(e) => handleUpdateSetting(p.iconKey, e.target.value)}
+                                  className="form-input"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    fontSize: '0.84rem',
+                                    background: '#ffffff',
+                                    fontWeight: 600,
+                                    color: '#1e1b4b',
+                                    marginBottom: '0.5rem',
+                                  }}
+                                >
+                                  {availableTrustIcons.map((ic) => (
+                                    <option key={ic.id} value={ic.id}>
+                                      {ic.id} — {ic.label}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                {/* Quick-Pick Icon Chips */}
+                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                  {availableTrustIcons.map((ic) => {
+                                    const isSelected = p.icon === ic.id;
+                                    return (
+                                      <button
+                                        key={ic.id}
+                                        type="button"
+                                        onClick={() => handleUpdateSetting(p.iconKey, ic.id)}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                          padding: '3px 8px',
+                                          borderRadius: '6px',
+                                          border: isSelected ? `1.5px solid ${p.badgeColor}` : '1px solid #e2e8f0',
+                                          background: isSelected ? p.badgeBg : '#ffffff',
+                                          color: isSelected ? p.badgeColor : '#475569',
+                                          fontSize: '0.73rem',
+                                          fontWeight: isSelected ? 700 : 500,
+                                          cursor: 'pointer',
+                                          transition: 'all 0.15s ease',
+                                        }}
+                                      >
+                                        {ic.icon}
+                                        <span>{ic.id}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Manual Custom Icon Upload Box */}
+                                <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px dashed #e2e8f0' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                      <UploadCloud size={14} color="#7c3aed" />
+                                      <span>Or Upload Custom Icon / Image (SVG, PNG, JPG)</span>
+                                    </label>
+                                    {p.customIcon && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateSetting(p.customIconKey, '')}
+                                        style={{
+                                          background: 'none',
+                                          border: 'none',
+                                          color: '#ef4444',
+                                          fontSize: '0.72rem',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '3px',
+                                          padding: '2px 6px',
+                                          borderRadius: '4px',
+                                        }}
+                                        title="Remove custom icon and revert to vector icon"
+                                      >
+                                        <Trash2 size={12} />
+                                        <span>Remove Custom Icon</span>
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {p.customIcon ? (
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        background: '#ffffff',
+                                        border: '1.5px solid #7c3aed',
+                                        borderRadius: '8px',
+                                        padding: '0.5rem 0.75rem',
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: 36,
+                                          height: 36,
+                                          borderRadius: '8px',
+                                          background: p.badgeBg,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          border: '1px solid #e2e8f0',
+                                          overflow: 'hidden',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        <img
+                                          src={p.customIcon}
+                                          alt="Uploaded Icon"
+                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                        />
+                                      </div>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#16a34a', display: 'block' }}>
+                                          ✓ Custom Icon Active
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: '0.68rem',
+                                            color: '#64748b',
+                                            display: 'block',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                          }}
+                                        >
+                                          {p.customIcon}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateSetting(p.customIconKey, '')}
+                                        style={{
+                                          fontSize: '0.72rem',
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '6px',
+                                          background: '#f1f5f9',
+                                          border: '1px solid #cbd5e1',
+                                          color: '#475569',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        Revert to Vector
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <label
+                                          style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.45rem',
+                                            padding: '0.45rem 0.85rem',
+                                            background: '#ffffff',
+                                            border: '1.5px solid #cbd5e1',
+                                            borderRadius: '8px',
+                                            fontSize: '0.78rem',
+                                            fontWeight: 600,
+                                            color: '#1e1b4b',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease',
+                                          }}
+                                        >
+                                          <UploadCloud size={14} color="#7c3aed" />
+                                          <span>Choose File...</span>
+                                          <input
+                                            type="file"
+                                            accept="image/png, image/svg+xml, image/jpeg, image/webp"
+                                            style={{ display: 'none' }}
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (!file) return;
+                                              try {
+                                                const formData = new FormData();
+                                                formData.append('image', file);
+                                                formData.append('folder', 'customization');
+                                                const res = await adminService.uploadImage(formData);
+                                                const uploadedUrl = res?.data?.url || res?.data?.data?.url || res?.url;
+                                                if (uploadedUrl) {
+                                                  handleUpdateSetting(p.customIconKey, uploadedUrl);
+                                                  return;
+                                                }
+                                              } catch (err) {
+                                                console.warn('Backend upload note, using DataURL fallback:', err);
+                                              }
+                                              const reader = new FileReader();
+                                              reader.onload = (re) => {
+                                                if (re.target?.result) {
+                                                  handleUpdateSetting(p.customIconKey, re.target.result);
+                                                }
+                                              };
+                                              reader.readAsDataURL(file);
+                                            }}
+                                          />
+                                        </label>
+                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>or enter image/SVG URL:</span>
+                                      </div>
+                                      <input
+                                        type="text"
+                                        placeholder="https://example.com/icon.svg or /images/icon.png"
+                                        value={p.customIcon || ''}
+                                        onChange={(e) => handleUpdateSetting(p.customIconKey, e.target.value)}
+                                        className="form-input"
+                                        style={{
+                                          width: '100%',
+                                          padding: '0.45rem 0.75rem',
+                                          borderRadius: '8px',
+                                          border: '1.5px solid #cbd5e1',
+                                          fontSize: '0.8rem',
+                                          background: '#ffffff',
+                                          color: '#1e1b4b',
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Title Input */}
+                              <div>
+                                <Input
+                                  label="Title"
+                                  value={p.title}
+                                  onChange={(e) => handleUpdateSetting(p.titleKey, e.target.value)}
+                                  placeholder="Pillar heading text..."
+                                />
+                              </div>
+
+                              {/* Description Textarea */}
+                              <div>
+                                <label
+                                  style={{
+                                    fontSize: '0.82rem',
+                                    fontWeight: 700,
+                                    color: '#1e1b4b',
+                                    display: 'block',
+                                    marginBottom: '0.35rem',
+                                  }}
+                                >
+                                  Description
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  className="adm-cust-textarea"
+                                  value={p.desc}
+                                  onChange={(e) => handleUpdateSetting(p.descKey, e.target.value)}
+                                  placeholder="Pillar description text..."
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.65rem 0.85rem',
+                                    borderRadius: '10px',
+                                    border: '1.5px solid #cbd5e1',
+                                    fontSize: '0.86rem',
+                                    color: '#1e1b4b',
+                                    fontFamily: 'inherit',
+                                    resize: 'vertical',
+                                    boxSizing: 'border-box',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, About Us, Blog & others */}
                 {![
                   'announcement_bar',
-                  'main_header_nav',
-                  'sticky_action_bar',
                   'hero_banner',
                   'flash_deals',
                   'shop_by_category',
                   'why_picky',
                   'catalog_header_banner',
-                  'shop_filters_sort',
-                  'product_card_appearance',
-                  'subcategory_pills_bar',
-                  'pdp_gallery_settings',
                   'pdp_stock_delivery_pill',
                   'pdp_trust_guarantee',
                   'pdp_related_products',
                   'free_shipping_goal_bar',
-                  'cart_coupon_strip',
                   'cart_trust_security',
-                  'cart_upsell_carousel',
-                  'footer_config',
-                  'about_us_content',
-                  'contact_support_content',
-                  'policies_terms_content',
+                  'categories_hero',
+                  'new_arrivals_hero',
+                  'new_arrivals_marquee',
+                  'best_sellers_hero',
+                  'best_sellers_trust_strip',
                 ].includes(currentSection.id) && currentSection.settings && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.entries(currentSection.settings).map(([key, val]) => {
@@ -4942,48 +6738,7 @@ export default function AdminCustomization() {
               </div>
             </div>
 
-            {/* Section-level Save Button (pinned cleanly to bottom) */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                marginTop: 'auto',
-                gap: '0.75rem',
-                borderTop: '1px solid #f1f5f9',
-                paddingTop: '1.25rem',
-              }}
-            >
-              {lastSavedSectionTimeMap[activeSectionId] && !hasCurrentSectionEdits && (
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    color: '#16a34a',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <CheckCircle2 size={13} color="#16a34a" />
-                  {formatRelativeTime(lastSavedSectionTimeMap[activeSectionId], clockTick)}
-                </span>
-              )}
 
-              <Button
-                onClick={handleSaveCurrentSection}
-                disabled={!hasCurrentSectionEdits || isSavingSection}
-                loading={isSavingSection}
-                style={{
-                  fontWeight: 700,
-                  opacity: !hasCurrentSectionEdits ? 0.6 : 1,
-                  cursor: !hasCurrentSectionEdits ? 'not-allowed' : 'pointer',
-                  padding: '0.55rem 1.4rem',
-                }}
-              >
-                Save Changes to {currentSection.name}
-              </Button>
-            </div>
           </div>
         ) : (
             <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#94a3b8', margin: 'auto' }}>
