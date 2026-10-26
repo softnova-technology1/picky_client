@@ -46,8 +46,8 @@ export default function ShopMobileView({
   // Admin Customization for Mobile Hero Banner
   const { getSetting } = usePageCustomization('shop');
   const bannerTag = getSetting('catalog_header_banner', 'tag', 'HANDPICKED EDIT • MADURAI HUB');
-  const bannerHeadline = getSetting('catalog_header_banner', 'headline', 'Your Style. Your Everyday.');
-  const bannerSubtitle = getSetting('catalog_header_banner', 'subtitle', 'Handcrafted festive silhouettes, breathable linens & authentic temple jewels.');
+  const bannerHeadline = getSetting('catalog_header_banner', 'headline', 'Explore Curated Collections');
+  const bannerSubtitle = getSetting('catalog_header_banner', 'subtitle', 'Discover handpicked, verified products directly dispatched from our Madurai hub.');
   const bannerBtnText = getSetting('catalog_header_banner', 'buttonText', 'Explore Collection');
 
   // Category State

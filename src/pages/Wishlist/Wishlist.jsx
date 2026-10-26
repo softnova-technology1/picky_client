@@ -368,7 +368,7 @@ export default function Wishlist() {
           {displayItems.length === 0 ? (
             <div className={styles['empty-card']}>
               <div className={styles['empty-icon-bubble']}>
-                <Heart size={38} />
+                <Heart size={38} className={styles['empty-icon']} />
               </div>
               <h2 className={styles['empty-title']}>Your Wishlist is Empty</h2>
               <p className={styles['empty-desc']}>
@@ -376,10 +376,10 @@ export default function Wishlist() {
               </p>
               <Link
                 to="/products"
-                className="btn btn-primary btn-lg"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                className={`btn btn-primary ${styles['empty-store-btn']}`}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
               >
-                Explore Store <ArrowRight size={18} />
+                <span>Explore Store</span> <ArrowRight size={16} />
               </Link>
 
               <div>

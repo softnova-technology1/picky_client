@@ -1455,6 +1455,28 @@ function LiveSectionPreview({
           }}
         >
           <div style={{ flex: 1, zIndex: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.35rem' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#7c3aed' }}></span>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#6d28d9', letterSpacing: '0.04em' }}>
+                {s.sectionBadge || s.title || 'Curated Heritage Spotlight'}
+              </span>
+            </div>
+            <span
+              style={{
+                display: 'inline-block',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                color: '#7c3aed',
+                background: '#ede9fe',
+                padding: '2px 8px',
+                borderRadius: '9999px',
+                marginBottom: '0.45rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {s.badge || s.eyebrow || 'Direct from Artisans'}
+            </span>
             <h4
               style={{
                 fontFamily: 'serif',
@@ -1468,7 +1490,7 @@ function LiveSectionPreview({
                 letterSpacing: '0.02em',
               }}
             >
-              {s.headline || 'YOUR EVERYTHING STORE'}
+              {s.headline || 'Heritage Collections Of South India'}
             </h4>
             <p
               style={{
@@ -1479,7 +1501,7 @@ function LiveSectionPreview({
                 whiteSpace: 'pre-line',
               }}
             >
-              {s.subheadline || 'Shop Your Daily Essentials & More'}
+              {s.subheadline || 'Curated direct from multigenerational handloom weavers & brass artisans.'}
             </p>
             <div
               style={{
@@ -5033,14 +5055,41 @@ export default function AdminCustomization() {
                           </div>
                         </div>
 
+                        {/* Header Spotlight Title & Card Eyebrow Tag */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div>
+                            <Input
+                              label="Header Spotlight Title / Badge"
+                              value={s.sectionBadge ?? s.title ?? 'Curated Heritage Spotlight'}
+                              onChange={(e) => handleUpdateSetting('sectionBadge', e.target.value)}
+                              placeholder="e.g. Curated Heritage Spotlight"
+                            />
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginTop: '3px' }}>
+                              Appears above the carousel (e.g. Curated Heritage Spotlight).
+                            </span>
+                          </div>
+
+                          <div>
+                            <Input
+                              label="Card Eyebrow Badge"
+                              value={s.badge ?? s.eyebrow ?? 'Direct from Artisans'}
+                              onChange={(e) => handleUpdateSetting('badge', e.target.value)}
+                              placeholder="e.g. Direct from Artisans"
+                            />
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginTop: '3px' }}>
+                              Appears inside the hero card pill (e.g. Direct from Artisans).
+                            </span>
+                          </div>
+                        </div>
+
                         {/* Title (Headline) & Subheading */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                           <div>
                             <Input
                               label="Main Headline Title"
-                              value={s.headline ?? 'YOUR EVERYTHING STORE'}
+                              value={s.headline ?? 'Heritage Collections Of South India'}
                               onChange={(e) => handleUpdateSetting('headline', e.target.value)}
-                              placeholder="e.g. YOUR EVERYTHING STORE"
+                              placeholder="e.g. Heritage Collections Of South India"
                             />
                             <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginTop: '3px' }}>
                               Tip: You can use spaces or new lines for poster styling.
@@ -5050,9 +5099,9 @@ export default function AdminCustomization() {
                           <div>
                             <Input
                               label="Subtitle / Description"
-                              value={s.subheadline ?? 'Shop Your Daily Essentials & More'}
+                              value={s.subheadline ?? 'Curated direct from multigenerational handloom weavers & brass artisans.'}
                               onChange={(e) => handleUpdateSetting('subheadline', e.target.value)}
-                              placeholder="e.g. Shop Your Daily Essentials & More"
+                              placeholder="e.g. Curated direct from multigenerational handloom weavers & brass artisans."
                             />
                           </div>
                         </div>
@@ -5067,9 +5116,9 @@ export default function AdminCustomization() {
                           />
                           <Input
                             label="Price Amount"
-                            value={s.startingPrice ?? '₹129'}
+                            value={s.startingPrice ?? '₹200'}
                             onChange={(e) => handleUpdateSetting('startingPrice', e.target.value)}
-                            placeholder="₹129"
+                            placeholder="₹200"
                           />
                         </div>
 

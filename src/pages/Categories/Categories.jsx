@@ -119,35 +119,33 @@ export default function Categories() {
       ];
 
   return (
-    <>
+    <PageWrapper>
       <div className={styles.desktopOnly}>
-        <PageWrapper>
-          <div
-            style={{
-              background: 'linear-gradient(180deg, #f7f4fc 0%, #f9f7fd 50%, #ffffff 100%)',
-              minHeight: '100vh',
-              paddingBottom: '6rem',
-            }}
-          >
-            {activeSectionsList.map((sec) => {
-              const renderFn = sectionRenderers[sec.id];
-              if (!renderFn) return null;
-              if (sec.id === 'categories_hero') {
-                return <React.Fragment key={sec.id}>{renderFn()}</React.Fragment>;
-              }
-              return (
-                <div key={sec.id} className="container">
-                  {renderFn()}
-                </div>
-              );
-            })}
-          </div>
-        </PageWrapper>
+        <div
+          style={{
+            background: 'linear-gradient(180deg, #f7f4fc 0%, #f9f7fd 50%, #ffffff 100%)',
+            minHeight: '100vh',
+            paddingBottom: '6rem',
+          }}
+        >
+          {activeSectionsList.map((sec) => {
+            const renderFn = sectionRenderers[sec.id];
+            if (!renderFn) return null;
+            if (sec.id === 'categories_hero') {
+              return <React.Fragment key={sec.id}>{renderFn()}</React.Fragment>;
+            }
+            return (
+              <div key={sec.id} className="container">
+                {renderFn()}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className={styles.mobileOnly}>
         <CategoryMobileView />
       </div>
-    </>
+    </PageWrapper>
   );
 }
