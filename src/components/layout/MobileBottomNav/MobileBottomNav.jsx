@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, LayoutGrid, Sparkles, Heart, ShoppingBag } from 'lucide-react';
-import { useCartStore } from '../../../store/cartStore';
+import { Home, LayoutGrid, Sparkles, Heart, User } from 'lucide-react';
+import { useAuthStore } from '../../../store/authStore';
 import { useWishlistStore } from '../../../store/wishlistStore';
 import { usePageCustomization } from '../../../store/customizationStore';
 import './MobileBottomNav.css';
@@ -11,10 +11,9 @@ export default function MobileBottomNav() {
   const showMobileBottomNav = isEnabled('sticky_action_bar', true) && getSetting('sticky_action_bar', 'showMobileBottomNav', true) !== false;
 
   const location = useLocation();
-  const { items: cartItems } = useCartStore();
+  const { isLoggedIn } = useAuthStore();
   const { items: wishlistItems } = useWishlistStore();
 
-  const totalCartCount = (cartItems || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
   const totalWishlistCount = (wishlistItems || []).length;
 
   const currentPath = location.pathname;
@@ -23,6 +22,12 @@ export default function MobileBottomNav() {
     if (path === '/') return currentPath === '/';
     return currentPath.startsWith(path);
   };
+
+  const isProfileActive =
+    isActive('/profile') ||
+    isActive('/account') ||
+    isActive('/orders') ||
+    (!isLoggedIn && (isActive('/login') || isActive('/signup')));
 
   if (!showMobileBottomNav) {
     return null;
@@ -58,7 +63,7 @@ export default function MobileBottomNav() {
         {/* 3. Deals (Special highlighted center button) */}
         <Link
           to="/products?sort=discount"
-          className={`mobile-nav-tab mobile-nav-deals-tab ${currentPath.includes('deals') ? 'active' : ''}`}
+          className={`mobile-nav-tab mobile-nav-deals-tab ${currentPath.includes('deals') || currentPath.includes('discount') ? 'active' : ''}`}
           aria-label="Deals"
         >
           <div className="mobile-deals-bubble">
@@ -82,19 +87,17 @@ export default function MobileBottomNav() {
           <span className="mobile-nav-label">Saved</span>
         </Link>
 
-        {/* 5. Cart */}
+        {/* 5. Profile */}
         <Link
-          to="/cart"
-          className={`mobile-nav-tab ${isActive('/cart') ? 'active' : ''}`}
-          aria-label="Cart"
+          to={isLoggedIn ? '/profile' : '/login'}
+          state={!isLoggedIn ? { from: { pathname: '/profile' } } : undefined}
+          className={`mobile-nav-tab ${isProfileActive ? 'active' : ''}`}
+          aria-label="Profile"
         >
           <div className="mobile-nav-icon-wrap">
-            <ShoppingBag size={20} strokeWidth={isActive('/cart') ? 2.5 : 2} />
-            {totalCartCount > 0 && (
-              <span className="mobile-nav-badge cart-badge">{totalCartCount}</span>
-            )}
+            <User size={20} strokeWidth={isProfileActive ? 2.5 : 2} />
           </div>
-          <span className="mobile-nav-label">Cart</span>
+          <span className="mobile-nav-label">Profile</span>
         </Link>
       </div>
     </nav>

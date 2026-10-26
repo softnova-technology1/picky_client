@@ -687,16 +687,17 @@ export default function Checkout() {
           const rzInitRes = await orderService.createRazorpayOrder({
             shippingAddress: formData,
             items: cartPayload,
-            total: finalPayable,
-            totalAmount: finalPayable,
-            subtotal,
-            discountAmount: couponDiscount || 0,
+            couponCode: coupon || null,
+            deliveryMode,
             giftWrapFee,
             giftWrap: {
               isGiftWrapped: isGiftWrap,
               fee: giftWrapFee,
               message: isGiftWrap ? giftMessage.trim() : '',
             },
+            sessionId: sessionIdRef.current,
+            isBuyNow: Boolean(isBuyNow),
+            fromCart: Boolean(fromCart),
           });
 
           const rzData = rzInitRes?.data?.data || rzInitRes?.data;
@@ -722,35 +723,9 @@ export default function Checkout() {
                 setLoading(true);
                 try {
                   const verifyPayload = {
-                    shippingAddress: {
-                      street: formData.street,
-                      city: formData.city,
-                      state: formData.state,
-                      pincode: formData.pincode,
-                      landmark: formData.landmark || '',
-                      fullName: formData.fullName,
-                      phone: formData.phone,
-                    },
-                    items: cartPayload,
-                    subtotal,
-                    shippingFee: deliveryFee,
-                    deliveryFee,
-                    convenienceFee: 2,
-                    giftWrapFee,
-                    giftWrap: {
-                      isGiftWrapped: isGiftWrap,
-                      fee: giftWrapFee,
-                      message: isGiftWrap ? giftMessage.trim() : '',
-                    },
-                    discountAmount: couponDiscount || 0,
-                    total: finalPayable,
-                    totalAmount: finalPayable,
                     razorpayOrderId: response.razorpay_order_id,
                     razorpayPaymentId: response.razorpay_payment_id,
                     razorpaySignature: response.razorpay_signature,
-                    deliveryMode: deliveryMode === 'pickup' ? 'Self Pickup' : 'Standard Delivery',
-                    isBuyNow: Boolean(isBuyNow),
-                    fromCart: Boolean(fromCart),
                   };
 
                   const verifyRes = await orderService.verifyRazorpayPayment(verifyPayload);

@@ -382,7 +382,7 @@ export default function Wishlist() {
                 <span>Explore Store</span> <ArrowRight size={16} />
               </Link>
 
-              <div>
+              <div className={styles['empty-demo-wrapper']}>
                 <button
                   type="button"
                   onClick={handleLoadSampleItems}
