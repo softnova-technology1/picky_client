@@ -344,7 +344,7 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
         <div className="ref-actions-row">
           <button className="ref-add-cart-btn" onClick={handleQuickAdd}>
             {justAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
-            <span>{justAdded ? 'Added' : 'Add to Cart'}</span>
+            <span>{justAdded ? 'Added' : (actionText || 'Add to Cart')}</span>
           </button>
         </div>
       </div>

@@ -54,6 +54,7 @@ export const useUiStore = create((set) => ({
     set({ toast: { message, type } });
     setTimeout(() => set({ toast: null }), 3500);
   },
+  hideToast: () => set({ toast: null }),
   openModal: (id, props = {}) => set({ modal: { id, props } }),
   closeModal: () => set({ modal: null }),
 

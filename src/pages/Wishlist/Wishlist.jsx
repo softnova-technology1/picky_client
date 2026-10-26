@@ -118,8 +118,6 @@ export default function Wishlist() {
   const { stockMap } = useMockStockStore();
 
   const [sortBy, setSortBy] = useState('recent');
-  const [productToRemove, setProductToRemove] = useState(null);
-  const [addedFeedback, setAddedFeedback] = useState({});
   const [recommendedProducts, setRecommendedProducts] = useState([]);
 
   // Fetch recommended trending drops for running marquee showcase
@@ -230,55 +228,6 @@ export default function Wishlist() {
   }, 0);
 
 
-  const handleRemoveItem = (product) => {
-    if (!product) return;
-    if (typeof product === 'object') {
-      setProductToRemove(product);
-    } else {
-      const found = displayItems.find((i) => (i._id || i.id) === product);
-      setProductToRemove(found || { _id: product, id: product, name: 'Product' });
-    }
-  };
-
-  const confirmRemove = async () => {
-    if (!productToRemove) return;
-    const pId = productToRemove._id || productToRemove.id;
-    const pName = productToRemove.name || 'Item';
-
-    removeItem(pId);
-    if (isLoggedIn) {
-      try {
-        await wishlistService.remove(pId);
-      } catch (_) {}
-    }
-
-    showToast(`Removed "${pName}" from wishlist`, 'info');
-    setProductToRemove(null);
-  };
-
-  const handleMoveToCart = (product) => {
-    const pId = product._id || product.id || product.slug;
-    const stock = getProductStock(product);
-
-    if (stock <= 0) {
-      showToast(`"${product.name}" is currently out of stock.`, 'error');
-      return;
-    }
-
-    addItem({
-      ...product,
-      selectedSize: null,
-      selectedColor: null,
-    }, 1);
-
-    setAddedFeedback((prev) => ({ ...prev, [pId]: true }));
-    setTimeout(() => {
-      setAddedFeedback((prev) => ({ ...prev, [pId]: false }));
-    }, 1600);
-
-    showToast(`Added "${product.name}" to cart! Select size in bag.`, 'success');
-  };
-
   const handleMoveAllToCart = async () => {
     if (items.length === 0) return;
 
@@ -323,11 +272,9 @@ export default function Wishlist() {
       <div className={styles['wishlist-wrapper']}>
         <div className={styles['container']}>
           {/* ── Luxury Stats Strip (Page Header) ── */}
-          {isEnabled('wishlist_stats') && (
           <div className={styles['stats-strip']}>
             <div className={styles['stats-cards-row']}>
               {/* Stat 1 – Total Items */}
-              {getSetting('wishlist_stats', 'showTotalItems', true) && (
               <div className={`${styles['stat-card-wrapper']} ${styles['active-wrapper']}`}>
                 <div className={`${styles['stat-card']} ${styles['stat-card-active']}`}>
                   <div className={styles['stat-icon-wrap']}>
@@ -340,18 +287,14 @@ export default function Wishlist() {
                   <div className={styles['stat-underline']} />
                 </div>
               </div>
-              )}
 
-              {getSetting('wishlist_stats', 'showTotalItems', true) && getSetting('wishlist_stats', 'showWishlistValue', true) && (
               <div className={styles['stat-connector']}>
                 <span className={styles['connector-dot']} />
                 <div className={styles['connector-line']} />
                 <span className={styles['connector-dot']} />
               </div>
-              )}
 
               {/* Stat 2 – Wishlist Value */}
-              {getSetting('wishlist_stats', 'showWishlistValue', true) && (
               <div className={styles['stat-card-wrapper']}>
                 <div className={styles['stat-card']}>
                   <div className={styles['stat-icon-wrap']}>
@@ -364,18 +307,14 @@ export default function Wishlist() {
                   <div className={styles['stat-underline']} />
                 </div>
               </div>
-              )}
 
-              {getSetting('wishlist_stats', 'showWishlistValue', true) && getSetting('wishlist_stats', 'showPotentialSavings', true) && (
               <div className={styles['stat-connector']}>
                 <span className={styles['connector-dot']} />
                 <div className={styles['connector-line']} />
                 <span className={styles['connector-dot']} />
               </div>
-              )}
 
               {/* Stat 3 – Potential Savings */}
-              {getSetting('wishlist_stats', 'showPotentialSavings', true) && (
               <div className={styles['stat-card-wrapper']}>
                 <div className={styles['stat-card']}>
                   <div className={styles['stat-icon-wrap']}>
@@ -388,10 +327,8 @@ export default function Wishlist() {
                   <div className={styles['stat-underline']} />
                 </div>
               </div>
-              )}
             </div>
           </div>
-          )}
 
           {/* ── Controls Bar ── */}
           {displayItems.length > 0 && (
@@ -428,24 +365,21 @@ export default function Wishlist() {
           )}
 
           {/* ── Product Grid or Empty State ── */}
-          {isEnabled('wishlist_grid') && (
-            displayItems.length === 0 ? (
+          {displayItems.length === 0 ? (
             <div className={styles['empty-card']}>
               <div className={styles['empty-icon-bubble']}>
                 <Heart size={38} />
               </div>
-              <h2 className={styles['empty-title']}>
-                {getSetting('wishlist_grid', 'emptyTitle', 'Your Wishlist is Empty')}
-              </h2>
+              <h2 className={styles['empty-title']}>Your Wishlist is Empty</h2>
               <p className={styles['empty-desc']}>
-                {getSetting('wishlist_grid', 'emptySubtitle', 'Explore our festive collections and tap the heart icon to save your favorites!')}
+                Explore our festive collections and tap the heart icon to save your favorites!
               </p>
               <Link
                 to="/products"
                 className="btn btn-primary btn-lg"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
               >
-                {getSetting('wishlist_grid', 'shopButtonText', 'Explore Store')} <ArrowRight size={18} />
+                Explore Store <ArrowRight size={18} />
               </Link>
 
               <div>
@@ -460,195 +394,28 @@ export default function Wishlist() {
             </div>
           ) : (
             <div className={styles['wishlist-grid']}>
-              {displayItems.map((product) => {
-                const pId = product._id || product.id || product.slug;
-                const stock = getProductStock(product);
-                const isOutOfStock = stock <= 0;
-                const isLowStock = stock > 0 && stock <= 5;
-                const isAdded = !!addedFeedback[pId];
-
-                const currentPrice = product.discountPrice || product.price || 0;
-                const originalPrice = product.originalPrice || product.price || 0;
-                const hasDiscount = originalPrice > currentPrice;
-                const discountPercent = hasDiscount
-                  ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-                  : 0;
-
-                const badgeInfo = isOutOfStock
-                  ? { text: 'OUT OF STOCK', icon: Zap, color: '#dc2626', bg: '#fef2f2', border: '#fecaca' }
-                  : isLowStock
-                  ? { text: `ONLY ${stock} LEFT`, icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' }
-                  : discountPercent >= 50
-                  ? { text: 'MEGA DEAL', icon: Zap, color: '#6d28d9', bg: '#f3e8ff', border: '#d8b4fe' }
-                  : discountPercent >= 25
-                  ? { text: 'TRENDING', icon: Flame, color: '#e11d48', bg: '#ffe4e6', border: '#fecdd3' }
-                  : { text: 'SELLING FAST', icon: Zap, color: '#d97706', bg: '#fef3c7', border: '#fde68a' };
-
-                const BadgeIcon = badgeInfo.icon;
-
-                return (
-                  <div
-                    key={pId}
-                    className={`${styles['wishlist-card']} ${isOutOfStock ? styles['card-out-of-stock'] : ''}`}
-                  >
-                    {/* Top Image Section with Shop styling */}
-                    <div className={styles['card-top']}>
-                      {/* Background decorative circles */}
-                      <div className={`${styles['ref-bg-circle']} ${styles['ref-circle-1']}`}></div>
-                      <div className={`${styles['ref-bg-circle']} ${styles['ref-circle-2']}`}></div>
-                      <div className={`${styles['ref-bg-circle']} ${styles['ref-circle-3']}`}></div>
-
-                      {/* Sparkles */}
-                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-1']}`}>✦</div>
-                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-2']}`}>✦</div>
-                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-3']}`}>✦</div>
-                      <div className={`${styles['ref-sparkle']} ${styles['ref-sparkle-4']}`}>✦</div>
-
-                      {/* Top Bar with Badge & Wishlist Heart */}
-                      <div className={styles['ref-top-bar']}>
-                        <div
-                          className={styles['ref-mega-deal']}
-                          style={{
-                            color: badgeInfo.color,
-                            background: badgeInfo.bg,
-                            border: `1px solid ${badgeInfo.border}`,
-                          }}
-                        >
-                          <span className={styles['ref-deal-icon']}>
-                            <BadgeIcon size={12} fill={badgeInfo.color} color={badgeInfo.color} />
-                          </span>
-                          <span className={styles['ref-deal-text']} style={{ color: badgeInfo.color }}>
-                            {badgeInfo.text}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          className={styles['ref-wishlist-btn']}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleRemoveItem(product);
-                          }}
-                          title="Remove from wishlist"
-                          aria-label="Remove from wishlist"
-                        >
-                          <Heart size={16} color="#6d28d9" fill="#e11d48" strokeWidth={0} />
-                        </button>
-                      </div>
-
-                      {/* Product Image */}
-                      <Link to={`/products/${product.slug || pId}`} className={styles['ref-img-wrapper']}>
-                        <img
-                          src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=700'}
-                          alt={product.name}
-                          className={styles['ref-product-img']}
-                          loading="lazy"
-                        />
-                      </Link>
-                    </div>
-
-                    {/* Bottom Info Section */}
-                    <div className={styles['ref-card-bottom']}>
-                      <div className={styles['ref-title-rating']}>
-                        <div className={styles['ref-title-section']}>
-                          <Link to={`/products/${product.slug || pId}`} className={styles['ref-title-link']}>
-                            <h3 className={styles['ref-product-title']} title={product.name}>
-                              {product.name}
-                            </h3>
-                          </Link>
-                          {(product.shortDescription || product.description) && (
-                            <p
-                              className={styles['ref-product-desc']}
-                              title={product.shortDescription || product.description}
-                            >
-                              {product.shortDescription || product.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={styles['ref-price-row']}>
-                        <span className={styles['ref-current-price']}>
-                          ₹{currentPrice.toLocaleString('en-IN')}
-                        </span>
-                        {hasDiscount && (
-                          <>
-                            <span className={styles['ref-original-price']}>
-                              ₹{originalPrice.toLocaleString('en-IN')}
-                            </span>
-                            <span className={styles['ref-discount-pill']}>
-                              {discountPercent}% OFF
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Action Buttons Row */}
-                      <div className={styles['ref-actions-row']}>
-                        <button
-                          type="button"
-                          className={styles['ref-add-cart-btn']}
-                          onClick={() => handleMoveToCart(product)}
-                          disabled={isOutOfStock}
-                        >
-                          {isOutOfStock ? (
-                            <span>Out of Stock</span>
-                          ) : isAdded ? (
-                            <>
-                              <Check size={15} />
-                              <span>Added</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingCart size={15} />
-                              <span>Move to Bag</span>
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          className={styles['ref-delete-btn']}
-                          onClick={() => handleRemoveItem(product)}
-                          title="Remove item"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {displayItems.map((product) => (
+                <ProductCard
+                  key={product._id || product.id || product.slug}
+                  product={product}
+                />
+              ))}
             </div>
-          )
-        )}
+          )}
 
           {/* ── Recommended Products Running Showcase (Infinite 1-Row Marquee Loop) ── */}
-          {isEnabled('wishlist_recommended') && marqueeRecommended.length > 0 && (
+          {marqueeRecommended.length > 0 && (
             <section className={styles['recommended-section']} aria-label="Recommended Products">
               <div className={styles['recommended-header']}>
                 <div className={styles['recommended-badge']}>
                   <Sparkles size={14} className={styles['recommended-sparkle']} />
-                  <span>{getSetting('wishlist_recommended', 'badgeText', 'CURATED PICKS FOR YOU')}</span>
+                  <span>CURATED PICKS FOR YOU</span>
                 </div>
                 <h3 className={styles['recommended-title']}>
-                  {(() => {
-                    const title = getSetting('wishlist_recommended', 'title', 'Recommended Products');
-                    const words = title.split(' ');
-                    if (words.length > 1) {
-                      return (
-                        <>
-                          {words[0]} <span>{words.slice(1).join(' ')}</span>
-                        </>
-                      );
-                    }
-                    return title;
-                  })()}
+                  Recommended <span>Products</span>
                 </h3>
                 <p className={styles['recommended-subtitle']}>
-                  {getSetting('wishlist_recommended', 'subtitle', 'Trending favorites and top-rated drops handpicked to match your style.')}
+                  Trending favorites and top-rated drops handpicked to match your style.
                 </p>
               </div>
 
@@ -670,7 +437,6 @@ export default function Wishlist() {
         </div>
 
         {/* ── 4. Luxury Picky E-Commerce Curated Parallax Banner (100% Full Width & Fixed BG) ── */}
-        {isEnabled('wishlist_parallax_banner') && (
         <section
           className={styles['wardrobe-banner-section']}
           aria-label="Curate Your Entire Wardrobe"
@@ -680,29 +446,27 @@ export default function Wishlist() {
           <div className={styles['wardrobe-banner-content']}>
             <span className={styles['wardrobe-atelier-tag']}>
               <Sparkles size={13} />
-              <span>{getSetting('wishlist_parallax_banner', 'tagText', 'THE PICKY FLAGSHIP ATELIER')}</span>
+              <span>THE PICKY FLAGSHIP ATELIER</span>
             </span>
 
             <h2 className={styles['wardrobe-title']}>
-              {getSetting('wishlist_parallax_banner', 'title', 'Curate Your Entire Wardrobe')}
+              Curate Your Entire Wardrobe
             </h2>
 
             <div className={styles['wardrobe-sparkle-divider']}>✦</div>
 
             <p className={styles['wardrobe-desc']}>
-              {getSetting('wishlist_parallax_banner', 'desc', 'Explore our latest arrivals across Fashion, Tech, Jewellery, and Lifestyle. Handcrafted and handpicked for your statement aesthetic.')}
+              Explore our latest arrivals across Fashion, Tech, Jewellery, and Lifestyle. Handcrafted and handpicked for your statement aesthetic.
             </p>
 
-            <Link to={getSetting('wishlist_parallax_banner', 'ctaLink', '/new-arrivals')} className={styles['wardrobe-cta-btn']}>
-              <span>{getSetting('wishlist_parallax_banner', 'ctaText', 'DISCOVER NEW ARRIVALS')}</span>
+            <Link to="/new-arrivals" className={styles['wardrobe-cta-btn']}>
+              <span>DISCOVER NEW ARRIVALS</span>
               <ArrowRight size={16} />
             </Link>
           </div>
         </section>
-        )}
 
         {/* ── 5. The Picky Assurance & Quality Guarantee Section ── */}
-        {isEnabled('wishlist_assurance') && (
         <section
           className={styles['assurance-section']}
           aria-label="The Picky Assurance & Quality Guarantee"
@@ -710,10 +474,10 @@ export default function Wishlist() {
           <div className={styles['container']}>
             <div className={styles['assurance-header']}>
               <span className={styles['assurance-tag']}>
-                {getSetting('wishlist_assurance', 'tagText', 'THE PICKY ASSURANCE')}
+                THE PICKY ASSURANCE
               </span>
               <h2 className={styles['assurance-title']}>
-                {getSetting('wishlist_assurance', 'title', 'Authentic Service & Quality Guarantee')}
+                Authentic Service & Quality Guarantee
               </h2>
             </div>
 
@@ -733,39 +497,7 @@ export default function Wishlist() {
             </div>
           </div>
         </section>
-        )}
       </div>
-
-      {/* ── Remove Confirmation Modal ── */}
-      {productToRemove && (
-        <div className={styles['modal-overlay']} onClick={() => setProductToRemove(null)}>
-          <div className={styles['modal-card']} onClick={(e) => e.stopPropagation()}>
-            <div className={styles['modal-icon-box']}>
-              <AlertTriangle size={28} strokeWidth={2.3} />
-            </div>
-            <h3 className={styles['modal-title']}>Remove from Wishlist?</h3>
-            <p className={styles['modal-text']}>
-              Are you sure you want to remove <strong>"{productToRemove.name}"</strong> from your saved wishlist?
-            </p>
-            <div className={styles['modal-actions']}>
-              <button
-                type="button"
-                className={styles['modal-cancel-btn']}
-                onClick={() => setProductToRemove(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles['modal-confirm-btn']}
-                onClick={confirmRemove}
-              >
-                Remove Item
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </PageWrapper>
   );
 }

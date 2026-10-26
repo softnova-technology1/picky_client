@@ -67,6 +67,20 @@ export async function generateInvoicePdf(element, fileName = 'Invoice.pdf') {
     logging: false,
     backgroundColor: '#ffffff',
     windowWidth: 800,
+    onclone: (clonedDoc, clonedElement) => {
+      if (clonedElement.parentElement) {
+        clonedElement.parentElement.style.position = 'static';
+        clonedElement.parentElement.style.left = '0';
+        clonedElement.parentElement.style.top = '0';
+        clonedElement.parentElement.style.opacity = '1';
+        clonedElement.parentElement.style.visibility = 'visible';
+      }
+      clonedElement.style.position = 'static';
+      clonedElement.style.left = '0';
+      clonedElement.style.top = '0';
+      clonedElement.style.opacity = '1';
+      clonedElement.style.visibility = 'visible';
+    },
   });
 
   const imgData = canvas.toDataURL('image/jpeg', 0.98);

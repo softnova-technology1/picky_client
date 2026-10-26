@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
 import AdminInvoice, { AdminInvoiceSheet, generateInvoicePdf } from '../../components/admin/AdminInvoice';
+import { playOrderSuccessSound } from '../../utils/soundEffects';
+import { useUiStore } from '../../store/uiStore';
 
 export default function OrderSuccess() {
   const { id } = useParams();
@@ -30,6 +32,14 @@ export default function OrderSuccess() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const hiddenInvoiceRef = useRef(null);
+  const hasPlayedSoundRef = useRef(false);
+
+  // Immediately suppress any side/top toast popups on order confirmation page
+  useEffect(() => {
+    try {
+      useUiStore.setState({ toast: null });
+    } catch (_) {}
+  }, []);
 
   useEffect(() => {
     async function loadOrder() {
@@ -69,6 +79,15 @@ export default function OrderSuccess() {
     if (id) loadOrder();
   }, [id]);
 
+  // Synchronized Green Tick Audio Effect (Fires automatically when the green tick animates in)
+  useEffect(() => {
+    const soundTimer = setTimeout(() => {
+      playOrderSuccessSound(1.0);
+    }, 150);
+
+    return () => clearTimeout(soundTimer);
+  }, []);
+
   const handlePrintInvoice = () => {
     setShowInvoiceModal(true);
   };
@@ -77,6 +96,9 @@ export default function OrderSuccess() {
     if (!order || downloading) return;
     try {
       setDownloading(true);
+      // Wait for React to mount the hidden offscreen AdminInvoiceSheet
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
       if (hiddenInvoiceRef.current) {
         const orderNum = order.orderNumber || order._id || id || 'PKY';
         const filename = `Invoice_${orderNum}.pdf`;
@@ -446,17 +468,17 @@ export default function OrderSuccess() {
             />
           )}
 
-          {/* Offscreen A4 invoice container for direct high-resolution PDF download */}
-          {order && (
+          {/* Offscreen A4 invoice container - mounted ONLY during active PDF generation */}
+          {downloading && order && (
             <div
               style={{
                 position: 'fixed',
-                top: 0,
-                left: 0,
+                left: '-9999px',
+                top: '-9999px',
                 width: '800px',
-                zIndex: -9999,
+                opacity: 0,
                 pointerEvents: 'none',
-                opacity: 1,
+                zIndex: -9999,
               }}
               aria-hidden="true"
             >

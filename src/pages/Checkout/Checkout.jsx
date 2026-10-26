@@ -10,6 +10,7 @@ import { settingsService } from '../../services/settings.service';
 import { authService } from '../../services/auth.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { calculateShippingFee, isTamilNaduPincode } from '../../utils/shippingCalculator';
+import { primeAudio } from '../../utils/soundEffects';
 import { useCouponStore } from '../../store/couponStore';
 import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
@@ -668,6 +669,7 @@ export default function Checkout() {
 
   // Step 2 Payment Initiation
   const handleInitiatePayment = async () => {
+    primeAudio();
     setLoading(true);
 
     try {
@@ -772,7 +774,6 @@ export default function Checkout() {
                     updateUser({ phone: cleanPhone });
                   }
                   setLoading(false);
-                  showToast('🎉 Payment Successful! Order placed and marked as Sold.', 'success');
                   navigate(`/order-success/${placedOrder._id || placedOrder.id}`);
                   return;
                 } catch (verifyErr) {
@@ -837,6 +838,7 @@ export default function Checkout() {
 
   // Confirm Payment in Modal
   const handleConfirmSimulatedPayment = async () => {
+    primeAudio();
     setShowRzModal(false);
     const currentSessionId = rzSessionId || sessionIdRef.current;
     const startTime = Date.now();
@@ -905,7 +907,6 @@ export default function Checkout() {
         await new Promise((r) => setTimeout(r, remainingDelay));
       }
       setLoading(false);
-      showToast('🎉 Order placed successfully! Marked as Sold.', 'success');
       navigate(`/order-success/${apiOrder._id || apiOrder.id}`);
     } catch (apiErr) {
       orderCompletedRef.current = false;

@@ -81,7 +81,8 @@ export default function LoginPopupModal() {
     const isExcluded =
       currentPath.startsWith('/softpicky-sn2026') ||
       currentPath.startsWith('/login') ||
-      currentPath.startsWith('/signup');
+      currentPath.startsWith('/signup') ||
+      currentPath.startsWith('/order-success');
 
     if (isExcluded) return;
 
@@ -92,7 +93,8 @@ export default function LoginPopupModal() {
       const isRouteExcluded =
         activePath.startsWith('/softpicky-sn2026') ||
         activePath.startsWith('/login') ||
-        activePath.startsWith('/signup');
+        activePath.startsWith('/signup') ||
+        activePath.startsWith('/order-success');
 
       const userLoggedIn = useAuthStore.getState().isLoggedIn;
 
