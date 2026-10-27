@@ -426,8 +426,60 @@
   transform: scale(1.08);
 }
 
+/* ── Spotlight Card Layout Components (for desktop & mobile) ── */
+.mobileHeroCard {
+  display: none;
+}
+
+.spotlightTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.spotlightTagPill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.spotlightPriceVal {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.spotlightThumbBox {
+  width: 100%;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #faf5ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.spotlightThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotlightBottomBox {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 /* ── Mobile and Tablet Responsiveness ── */
-@media (max-width: 960px) {
+@media (max-width: 960px) and (min-width: 769px) {
   .heroStage {
     padding: 1.5rem 0 1rem;
   }
@@ -460,3 +512,310 @@
     width: 270px;
   }
 }
+
+/* ==========================================================================
+   NEW ARRIVALS HERO — MOBILE VIEW ENGINE (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .heroStage {
+    padding: 0.75rem 0 0.5rem !important;
+    background: transparent !important;
+  }
+
+  .heroBgContainer,
+  .leftEditorial {
+    display: none !important;
+  }
+
+  .heroContainer {
+    padding: 0 1rem !important;
+    gap: 0 !important;
+  }
+
+  /* Full-bleed hero card matching prototype */
+  .mobileHeroCard {
+    display: flex !important;
+    position: relative !important;
+    height: 280px !important;
+    width: 100% !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 20px -2px rgba(124, 58, 237, 0.08) !important;
+    border: 1px solid rgba(225, 198, 250, 0.8) !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 1rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobileHeroBgImg {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    z-index: 1 !important;
+  }
+
+  .mobileHeroGradient {
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(to top, rgba(26, 13, 51, 0.95) 0%, rgba(26, 13, 51, 0.70) 50%, rgba(124, 58, 237, 0.15) 75%, transparent 100%) !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+  }
+
+  .mobileHeroTopBar {
+    position: relative !important;
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  .mobileFreshBadge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: rgba(22, 11, 41, 0.65) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    color: #e9d5ff !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    padding: 4px 12px !important;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+  }
+
+  .pulseDot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #c084fc !important;
+    animation: pulseGlow 2s infinite !important;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  .mobileHeroBottomContent {
+    position: relative !important;
+    z-index: 10 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 6px !important;
+    padding-top: 0 !important;
+    padding-bottom: 1.25rem !important;
+    width: 100% !important;
+  }
+
+  .mobileHeroTitle {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-size: 1.85rem !important;
+    font-weight: 900 !important;
+    color: #ffffff;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .mobileHeroTitleItalic {
+    font-style: italic !important;
+    font-weight: 400 !important;
+  }
+
+  .mobileHeroSubtitle {
+    font-size: 12px !important;
+    color: rgba(243, 232, 255, 0.95);
+    font-weight: 400 !important;
+    line-height: 1.45 !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+  }
+
+  .mobileCtaRow {
+    padding-top: 4px !important;
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  .mobileDiscoverBtn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: #7c3aed;
+    color: #ffffff;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    padding: 8px 18px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(216, 180, 254, 0.3) !important;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
+    cursor: pointer !important;
+  }
+
+  .mobileDiscoverBtn:active {
+    transform: scale(0.96) !important;
+  }
+
+  /* ── Explore Collection Strip (Hidden on Mobile, Retained on Desktop) ── */
+  .exploreCollectionSection {
+    display: none !important;
+  }
+
+  .exploreHeaderRow {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.6rem !important;
+  }
+
+  .exploreTitle {
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+  }
+
+  .exploreSubtitle {
+    font-size: 11px !important;
+    color: #64748b !important;
+    margin: 2px 0 0 !important;
+  }
+
+  .viewAllLink {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #7c3aed !important;
+    background: transparent !important;
+    border: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+  }
+
+  .cardsMarqueeWrapper {
+    width: 100% !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+
+  .cardsMarqueeWrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .cardsMarqueeTrack {
+    display: flex !important;
+    gap: 12px !important;
+    width: max-content !important;
+    animation: none !important; /* Swipeable touch strip on mobile */
+  }
+
+  /* 165px Shop page card parity rule */
+  .spotlightCard {
+    width: 165px !important;
+    min-width: 165px !important;
+    max-width: 165px !important;
+    border-radius: 16px !important;
+    padding: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #eedffc !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.05) !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    scroll-snap-align: start !important;
+  }
+
+  .spotlightCardTitle {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    text-transform: capitalize !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-bottom: 6px !important;
+  }
+
+  .buyNowBtn {
+    width: 100% !important;
+    height: 28px !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .buyNowBtn:active {
+    transform: scale(0.96) !important;
+  }
+}
+
+/* ── 3 Mobile Tiers Typography & Sizing for Hero ── */
+@media (max-width: 768px) and (min-width: 414px) {
+  .mobileHeroCard {
+    height: 285px !important;
+  }
+  .mobileHeroTitle {
+    font-size: 28px !important;
+  }
+  .mobileHeroSubtitle {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 413px) and (min-width: 350px) {
+  .mobileHeroCard {
+    height: 265px !important;
+  }
+  .mobileHeroTitle {
+    font-size: 24px !important;
+  }
+  .mobileHeroSubtitle {
+    font-size: 11.5px !important;
+  }
+}
+
+@media (max-width: 349px) {
+  .mobileHeroCard {
+    height: 250px !important;
+    padding: 0.75rem !important;
+  }
+  .mobileHeroTitle {
+    font-size: 20px !important;
+  }
+  .mobileHeroSubtitle {
+    font-size: 10.5px !important;
+  }
+}
+

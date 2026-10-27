@@ -502,146 +502,57 @@ export default function Cart() {
 
                   return (
                     <div key={itemId || Math.random()} className={styles['cart-item-row']}>
-                      {/* Image Box */}
-                      <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-img-box']}>
-                        <img
-                          src={
-                            item.images?.[0] ||
-                            item.image ||
-                            'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300'
-                          }
-                          alt={item.name}
-                          className={styles['item-img']}
-                          loading="lazy"
-                        />
-                      </Link>
+                      <div className={styles['cart-item-top']}>
+                        {/* Image Box */}
+                        <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-img-box']}>
+                          <img
+                            src={
+                              item.images?.[0] ||
+                              item.image ||
+                              'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300'
+                            }
+                            alt={item.name}
+                            className={styles['item-img']}
+                            loading="lazy"
+                          />
+                        </Link>
 
-                      {/* Info & Quantity Controls */}
-                      <div className={styles['item-info']}>
-                        {/* Top Header Row: Title on Left, Price on Right */}
-                        <div className={styles['item-header-row']}>
-                          <div className={styles['item-title-col']}>
-                            <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-title']}>
-                              {item.name}
-                            </Link>
+                        {/* Info & Quantity Controls */}
+                        <div className={styles['item-info']}>
+                          {/* Top Header Row: Title on Left, Price on Right */}
+                          <div className={styles['item-header-row']}>
+                            <div className={styles['item-title-col']}>
+                              <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-title']}>
+                                {item.name}
+                              </Link>
+                            </div>
+
+                            {/* Right Price Column (Top-aligned with title) */}
+                            <div className={styles['item-price-col']}>
+                              <div className={styles['price-main']}>
+                                {formatPrice(itemPrice * (item.quantity || 1))}
+                              </div>
+                            </div>
                           </div>
 
-                          {/* Right Price Column (Top-aligned with title) */}
-                          <div className={styles['item-price-col']}>
-                            <div className={styles['price-main']}>
-                              {formatPrice(itemPrice * (item.quantity || 1))}
-                            </div>
+                          {/* Price sub-row: Strikethrough & Discount % badge */}
+                          <div className={styles['price-sub-wrap']}>
                             {hasDiscount && (
-                              <div className={styles['price-sub-wrap']}>
+                              <>
                                 <span className={styles['price-old']}>
                                   {formatPrice(originalPrice * (item.quantity || 1))}
                                 </span>
                                 <span className={styles['discount-badge']}>
                                   {discountPercent}% OFF
                                 </span>
-                              </div>
+                              </>
                             )}
                           </div>
-                        </div>
 
-                        {/* Interactive Variant Selectors inside Cart (Horizontal Flow) */}
-                        {(sizes.length > 0 || colors.length > 0) && (
-                          <div className={`${styles['cart-variants-box']} ${isMissing ? styles['missing-variant-alert'] : ''}`}>
-                            {/* Size Selector */}
-                            {sizes.length > 0 && (
-                              <div className={styles['cart-variant-group']}>
-                                <span className={styles['variant-label']}>Size:</span>
-                                <div className={styles['variant-chips-wrap']}>
-                                  {sizes.map((s) => (
-                                    <button
-                                      key={s}
-                                      type="button"
-                                      className={`${styles['cart-chip']} ${item.selectedSize === s ? styles['cart-chip-active'] : ''}`}
-                                      onClick={() => {
-                                        updateVariant(item, { selectedSize: s });
-                                        showToast(`Selected size "${s}" for ${item.name}`, 'info');
-                                      }}
-                                    >
-                                      {s}
-                                    </button>
-                                  ))}
-                                </div>
-                                {!item.selectedSize && (
-                                  <span className={styles['variant-required-pill']}>Select Size *</span>
-                                )}
-                              </div>
-                            )}
-
-                            {sizes.length > 0 && colors.length > 0 && (
-                              <span className={styles['variant-inline-divider']} />
-                            )}
-
-                            {/* Color Selector */}
-                            {colors.length > 0 && (
-                              <div className={styles['cart-variant-group']}>
-                                <span className={styles['variant-label']}>Color:</span>
-                                <div className={styles['color-chips-wrap']}>
-                                  {colors.map((c, i) => (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      className={`${styles['cart-color-chip']} ${item.selectedColor === c ? styles['cart-color-active'] : ''}`}
-                                      style={{ backgroundColor: c }}
-                                      onClick={() => {
-                                        updateVariant(item, { selectedColor: c });
-                                        showToast(`Selected color for ${item.name}`, 'info');
-                                      }}
-                                      title={c}
-                                      aria-label={`Color ${c}`}
-                                    />
-                                  ))}
-                                </div>
-                                {!item.selectedColor && (
-                                  <span className={styles['variant-required-pill']}>Select Color *</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Actions Row: Left Secondary Actions, Right Quantity Stepper */}
-                        <div className={styles['item-actions-row']}>
-                          <div className={styles['secondary-actions-group']}>
-                            {/* Buy Now Single Item Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleBuyNowSingleItem(item)}
-                              className={styles['buy-now-single-btn']}
-                              title={`Buy only ${item.name} now`}
-                            >
-                              <ShoppingBag size={13} strokeWidth={2.2} /> Buy Now
-                            </button>
-
-                            {/* Save to Wishlist Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleMoveToWishlist(item)}
-                              className={styles['wishlist-action-btn']}
-                              title="Move to Wishlist"
-                            >
-                              <Heart size={14} className={styles['heart-icon']} /> Save to Wishlist
-                            </button>
-
-                            {/* Remove from Cart */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(item)}
-                              className={styles['remove-btn']}
-                              title="Remove from Cart"
-                            >
-                              <Trash2 size={13} /> Remove
-                            </button>
-                          </div>
-
-                          {/* Right Aligned Quantity Stepper */}
+                          {/* Stepper Row inside Product Details */}
                           <div className={styles['qty-stepper-wrap']}>
-                            <span className={styles['qty-label']}>Qty:</span>
-                            <div className={styles['qty-stepper']}>
+                            <span className={styles['qty-label']}>Quantity:</span>
+                            <div className={styles['qty-stepper']} role="group" aria-label="Item quantity stepper">
                               <button
                                 type="button"
                                 onClick={() => handleUpdateQty(item, (item.quantity || 1) - 1)}
@@ -661,6 +572,104 @@ export default function Cart() {
                               </button>
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Interactive Variant Selectors inside Cart (Horizontal Flow) */}
+                      {(sizes.length > 0 || colors.length > 0) && (
+                        <div className={`${styles['cart-variants-box']} ${isMissing ? styles['missing-variant-alert'] : ''}`}>
+                          {/* Size Selector */}
+                          {sizes.length > 0 && (
+                            <div className={styles['cart-variant-group']}>
+                              <span className={styles['variant-label']}>Size:</span>
+                              <div className={styles['variant-chips-wrap']}>
+                                {sizes.map((s) => (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    className={`${styles['cart-chip']} ${item.selectedSize === s ? styles['cart-chip-active'] : ''}`}
+                                    onClick={() => {
+                                      updateVariant(item, { selectedSize: s });
+                                      showToast(`Selected size "${s}" for ${item.name}`, 'info');
+                                    }}
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                              {!item.selectedSize && (
+                                <span className={styles['variant-required-pill']}>Select Size *</span>
+                              )}
+                            </div>
+                          )}
+
+                          {sizes.length > 0 && colors.length > 0 && (
+                            <span className={styles['variant-inline-divider']} />
+                          )}
+
+                          {/* Color Selector */}
+                          {colors.length > 0 && (
+                            <div className={styles['cart-variant-group']}>
+                              <span className={styles['variant-label']}>Color:</span>
+                              <div className={styles['color-chips-wrap']}>
+                                {colors.map((c, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    className={`${styles['cart-color-chip']} ${item.selectedColor === c ? styles['cart-color-active'] : ''}`}
+                                    style={{ backgroundColor: c }}
+                                    onClick={() => {
+                                      updateVariant(item, { selectedColor: c });
+                                      showToast(`Selected color for ${item.name}`, 'info');
+                                    }}
+                                    title={c}
+                                    aria-label={`Color ${c}`}
+                                  />
+                                ))}
+                              </div>
+                              {!item.selectedColor && (
+                                <span className={styles['variant-required-pill']}>Select Color *</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Quick Action Buttons: 3 Columns Grid (Buy Now | Wishlist | Remove) */}
+                      <div className={styles['item-actions-row']}>
+                        <div className={styles['secondary-actions-group']}>
+                          {/* Buy Now Single Item Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleBuyNowSingleItem(item)}
+                            className={styles['buy-now-single-btn']}
+                            title={`Buy only ${item.name} now`}
+                          >
+                            <span className={styles['btn-emoji']}>⚡</span>
+                            <span>Buy Now</span>
+                          </button>
+
+                          {/* Save to Wishlist Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleMoveToWishlist(item)}
+                            className={styles['wishlist-action-btn']}
+                            title="Move to Wishlist"
+                          >
+                            <Heart size={14} className={styles['heart-icon']} />
+                            <span>Wishlist</span>
+                          </button>
+
+                          {/* Remove from Cart */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item)}
+                            className={styles['remove-btn']}
+                            title="Remove from Cart"
+                          >
+                            <Trash2 size={13} />
+                            <span>Remove</span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -813,6 +822,33 @@ export default function Cart() {
           {/* ── 3 Trust Badges Section - Placed right above footer across full width ── */}
           {isEnabled('cart_trust_security') && renderTrustBadges()}
         </div>
+
+        {/* ── Sticky Mobile Checkout Bar ── */}
+        <aside className={styles['sticky-mobile-bar']} aria-label="Floating Checkout Action">
+          <div className={styles['sticky-bar-inner']}>
+            <div className={styles['sticky-bar-info']}>
+              <span className={styles['sticky-bar-label']}>
+                Total ({items.length} {items.length === 1 ? 'item' : 'items'})
+              </span>
+              <div className={styles['sticky-bar-price-row']}>
+                <span className={styles['sticky-bar-price']}>{formatPrice(total)}</span>
+                {(productSavings > 0 || couponDiscount > 0) && (
+                  <span className={styles['sticky-bar-saved']}>
+                    Saved {formatPrice(productSavings + (couponDiscount || 0))}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleProceedToCheckout}
+              className={`${styles['sticky-bar-btn']} ${missingVariantItems.length > 0 ? styles['checkout-btn-blocked'] : ''}`}
+            >
+              <span>Checkout</span>
+              <ArrowRight size={15} strokeWidth={2.4} />
+            </button>
+          </div>
+        </aside>
       </div>
 
       <Modal isOpen={!!itemToRemove} onClose={() => setItemToRemove(null)} title="Remove Item">

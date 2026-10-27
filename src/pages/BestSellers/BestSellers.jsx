@@ -290,7 +290,7 @@ export default function BestSellers() {
 
         {/* ── 2. Catalog & Interactive Filter Grid Anchor ── */}
         {isEnabled('best_sellers_feed') && (
-          <div className="container" id="bestsellers-grid-start" ref={catalogRef} style={{ scrollMarginTop: '90px', paddingTop: '4.5rem' }}>
+          <div className="container bestsellers-catalog-container" id="bestsellers-grid-start" ref={catalogRef}>
             {/* Header Title Section */}
             <div className="bestsellers-catalog-header">
               <div className="bestsellers-badge-kicker">
@@ -305,124 +305,106 @@ export default function BestSellers() {
               </p>
             </div>
 
-            {/* ── Unified Premium Filter & Search Hub ── */}
-            <div className="bestsellers-premium-hub">
-              {/* Top Tier: Budget Quick Filters */}
-              <div className="bestsellers-hub-top-row">
-                <div className="bestsellers-filter-label-group">
-                  <span className="bestsellers-filter-label-icon">₹</span>
-                  <span>BUDGET</span>
+            {/* ── 1. Filter & Budget Pill Bar (Horizontal Scrollable) ── */}
+            {getSetting('best_sellers_feed', 'showBudgetFilters', true) && (
+              <div className="bestsellers-budget-pill-bar">
+                <div className="bestsellers-budget-label-pill">
+                  <span className="budget-currency-icon">₹</span>
+                  <span>{getSetting('best_sellers_feed', 'budgetLabel', 'BUDGET')}</span>
                 </div>
-                <div className="bestsellers-price-filter-cluster" role="group" aria-label="Filter by price">
+                <div className="bestsellers-budget-scroll-track no-scrollbar" role="group" aria-label="Filter by price">
                   {PRICE_FILTERS.map((f) => {
                     const isActive = selectedPriceFilter === f.id;
                     return (
                       <button
                         key={f.id}
                         type="button"
-                        className={`bestsellers-price-pill ${isActive ? 'active' : ''}`}
+                        className={`bestsellers-budget-pill ${isActive ? 'active' : ''}`}
                         onClick={() => setSelectedPriceFilter(isActive && f.id !== 'all' ? 'all' : f.id)}
                         title={`Filter: ${f.label}`}
                         aria-pressed={isActive}
                       >
-                        <span className="price-pill-dot">₹</span>
-                        <span className="price-pill-label">{f.label}</span>
+                        {f.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
+            )}
 
-              {/* Hub Divider */}
-              <div className="bestsellers-hub-divider" />
-
-              {/* Bottom Tier: Search & Controls Bar */}
-              <div className="bestsellers-hub-controls-row">
-                {/* Premium Search Bar with Glowing Icon */}
-                <div className="bestsellers-search-premium">
-                  <div className="bestsellers-search-icon-badge">
-                    <Search size={17} strokeWidth={2.4} />
+            {/* ── 2. Category & Sort By Selectors Card ── */}
+            <div className="bestsellers-compact-controls-box">
+              {/* Category & Sort By Selectors in 2-Column Grid */}
+              <div className="bestsellers-compact-selectors-grid">
+                {/* Category Selector */}
+                <div className="bestsellers-compact-select-btn">
+                  <div className="bestsellers-select-btn-content">
+                    <span className="bestsellers-select-btn-label">CATEGORY</span>
+                    <span className="bestsellers-select-btn-value">
+                      {filterTabs.find((t) => t.id === activeCategory)?.label || 'All Best Sellers'}
+                    </span>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search top products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bestsellers-search-input"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="bestsellers-search-clear-btn"
-                      title="Clear search"
-                    >
-                      <X size={13} />
-                    </button>
-                  )}
+                  <ChevronDown size={14} className="bestsellers-select-btn-chevron" />
+                  <select
+                    value={activeCategory}
+                    onChange={(e) => setActiveCategory(e.target.value)}
+                    className="bestsellers-invisible-native-select"
+                    aria-label="Filter by category"
+                  >
+                    {filterTabs.map((tab) => (
+                      <option key={tab.id} value={tab.id}>
+                        {tab.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Right Controls: Category, Sort, Reset */}
-                <div className="bestsellers-hub-right-controls">
-                  {/* Category Select Dropdown */}
-                  <div className="bestsellers-select-wrapper">
-                    <div className="bestsellers-select-icon">
-                      <Filter size={15} strokeWidth={2.2} />
-                    </div>
-                    <div className="bestsellers-select-content">
-                      <span className="bestsellers-select-label">CATEGORY</span>
-                      <select
-                        value={activeCategory}
-                        onChange={(e) => setActiveCategory(e.target.value)}
-                        className="bestsellers-custom-select"
-                      >
-                        {filterTabs.map((tab) => (
-                          <option key={tab.id} value={tab.id}>
-                            {tab.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <ChevronDown size={14} className="bestsellers-select-chevron" />
+                {/* Sort By Selector */}
+                <div className="bestsellers-compact-select-btn">
+                  <div className="bestsellers-select-btn-content">
+                    <span className="bestsellers-select-btn-label">SORT BY</span>
+                    <span className="bestsellers-select-btn-value">
+                      {sortBy === 'popular'
+                        ? 'Best Selling'
+                        : sortBy === 'newest'
+                        ? 'Newest'
+                        : sortBy === 'price-low'
+                        ? 'Price Low → High'
+                        : sortBy === 'price-high'
+                        ? 'Price High → Low'
+                        : 'Best Selling'}
+                    </span>
                   </div>
-
-                  {/* Sort Selector Dropdown */}
-                  <div className="bestsellers-select-wrapper">
-                    <div className="bestsellers-select-icon">
-                      <ArrowUpDown size={15} strokeWidth={2.2} />
-                    </div>
-                    <div className="bestsellers-select-content">
-                      <span className="bestsellers-select-label">SORT BY</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="bestsellers-custom-select"
-                      >
-                        <option value="popular">Best Selling</option>
-                        <option value="newest">Newest</option>
-                        <option value="price-low">Price Low → High</option>
-                        <option value="price-high">Price High → Low</option>
-                      </select>
-                    </div>
-                    <ChevronDown size={14} className="bestsellers-select-chevron" />
-                  </div>
-
-                  {/* Reset Filters */}
-                  {hasActiveFilters && (
-                    <button
-                      type="button"
-                      onClick={handleResetFilters}
-                      className="bestsellers-reset-btn"
-                      title="Reset all filters"
-                    >
-                      <RotateCcw size={14} />
-                      <span>Reset</span>
-                    </button>
-                  )}
+                  <ChevronDown size={14} className="bestsellers-select-btn-chevron" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="bestsellers-invisible-native-select"
+                    aria-label="Sort products"
+                  >
+                    <option value="popular">Best Selling</option>
+                    <option value="newest">Newest</option>
+                    <option value="price-low">Price Low → High</option>
+                    <option value="price-high">Price High → Low</option>
+                  </select>
                 </div>
               </div>
-            </div>
 
+              {/* Reset active filters */}
+              {hasActiveFilters && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="bestsellers-reset-btn"
+                    title="Reset all filters"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Reset Filters</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Products Grid */}
             {loading ? (
@@ -487,200 +469,155 @@ export default function BestSellers() {
           </div>
         )}
 
-        <div className="container">
-          {/* ── 3. Quality Guarantee & Buyer Trust Strip ── */}
+        <div className="container" style={{ maxWidth: '640px', margin: '0 auto', padding: '0 1rem' }}>
+          {/* ── 3. Buyer Value Proposition (Trust 4 Features Card) ── */}
           {isEnabled('best_sellers_trust_strip') && (
-            <div
-              style={{
-                background: '#ffffff',
-                borderRadius: '28px',
-                padding: '2.5rem 2rem',
-                boxShadow: '0 15px 40px rgba(124, 58, 237, 0.05)',
-                border: '1.5px solid rgba(216, 180, 254, 0.4)',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '2rem',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: '50%',
-                    background: '#f3e8ff',
-                    color: '#7c3aed',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
+            <div className="bestsellers-trust-card">
+              {/* Feature 1 */}
+              <div className="bestsellers-trust-item">
+                <div className="trust-squircle-badge purple">
                   {getSetting('best_sellers_trust_strip', 'pillar1CustomIcon', '') ? (
                     <img
                       src={getSetting('best_sellers_trust_strip', 'pillar1CustomIcon', '')}
                       alt={getSetting('best_sellers_trust_strip', 'pillar1Title', 'CAREFULLY SELECTED PRODUCTS')}
-                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                      className="trust-custom-img"
                     />
                   ) : (
-                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar1Icon', 'Award'), <Award size={26} />)
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar1Icon', 'Award'), <Award size={20} />, 20)
                   )}
                 </div>
-                <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar1Title', 'CAREFULLY SELECTED PRODUCTS')}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar1Desc', 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.')}
-                </p>
+                <div className="trust-text-wrap">
+                  <h4 className="trust-pillar-title">
+                    {getSetting('best_sellers_trust_strip', 'pillar1Title', 'CAREFULLY SELECTED PRODUCTS')}
+                  </h4>
+                  <p className="trust-pillar-desc">
+                    {getSetting('best_sellers_trust_strip', 'pillar1Desc', 'Thoughtfully selected products for fashion, home, lifestyle, and everyday needs.')}
+                  </p>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: '50%',
-                    background: '#fef3c7',
-                    color: '#d97706',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
+              {/* Feature 2 */}
+              <div className="bestsellers-trust-item border-top">
+                <div className="trust-squircle-badge amber">
                   {getSetting('best_sellers_trust_strip', 'pillar2CustomIcon', '') ? (
                     <img
                       src={getSetting('best_sellers_trust_strip', 'pillar2CustomIcon', '')}
                       alt={getSetting('best_sellers_trust_strip', 'pillar2Title', 'EASY SHOPPING EXPERIENCE')}
-                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                      className="trust-custom-img"
                     />
                   ) : (
-                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar2Icon', 'ShoppingBag'), <ShoppingBag size={26} />)
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar2Icon', 'ShoppingBag'), <ShoppingBag size={20} />, 20)
                   )}
                 </div>
-                <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar2Title', 'EASY SHOPPING EXPERIENCE')}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar2Desc', 'Simple product discovery, clear pricing, and a smooth shopping journey.')}
-                </p>
+                <div className="trust-text-wrap">
+                  <h4 className="trust-pillar-title">
+                    {getSetting('best_sellers_trust_strip', 'pillar2Title', 'EASY SHOPPING EXPERIENCE')}
+                  </h4>
+                  <p className="trust-pillar-desc">
+                    {getSetting('best_sellers_trust_strip', 'pillar2Desc', 'Simple product discovery, clear pricing, and a smooth shopping journey.')}
+                  </p>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: '50%',
-                    background: '#d1fae5',
-                    color: '#059669',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
+              {/* Feature 3 */}
+              <div className="bestsellers-trust-item border-top">
+                <div className="trust-squircle-badge emerald">
                   {getSetting('best_sellers_trust_strip', 'pillar3CustomIcon', '') ? (
                     <img
                       src={getSetting('best_sellers_trust_strip', 'pillar3CustomIcon', '')}
                       alt={getSetting('best_sellers_trust_strip', 'pillar3Title', 'RELIABLE ORDER UPDATES')}
-                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                      className="trust-custom-img"
                     />
                   ) : (
-                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar3Icon', 'Truck'), <Truck size={26} />)
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar3Icon', 'Truck'), <Truck size={20} />, 20)
                   )}
                 </div>
-                <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar3Title', 'RELIABLE ORDER UPDATES')}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar3Desc', 'Track your order from confirmation to shipping and delivery through your order details.')}
-                </p>
+                <div className="trust-text-wrap">
+                  <h4 className="trust-pillar-title">
+                    {getSetting('best_sellers_trust_strip', 'pillar3Title', 'RELIABLE ORDER UPDATES')}
+                  </h4>
+                  <p className="trust-pillar-desc">
+                    {getSetting('best_sellers_trust_strip', 'pillar3Desc', 'Track your order from confirmation to shipping and delivery through your order details.')}
+                  </p>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: '50%',
-                    background: '#ede9fe',
-                    color: '#6366f1',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
+              {/* Feature 4 */}
+              <div className="bestsellers-trust-item border-top">
+                <div className="trust-squircle-badge indigo">
                   {getSetting('best_sellers_trust_strip', 'pillar4CustomIcon', '') ? (
                     <img
                       src={getSetting('best_sellers_trust_strip', 'pillar4CustomIcon', '')}
                       alt={getSetting('best_sellers_trust_strip', 'pillar4Title', 'CUSTOMER SUPPORT')}
-                      style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                      className="trust-custom-img"
                     />
                   ) : (
-                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar4Icon', 'Headphones'), <Headphones size={26} />)
+                    renderTrustIcon(getSetting('best_sellers_trust_strip', 'pillar4Icon', 'Headphones'), <Headphones size={20} />, 20)
                   )}
                 </div>
-                <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.98rem', color: '#1e1b4b' }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar4Title', 'CUSTOMER SUPPORT')}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                  {getSetting('best_sellers_trust_strip', 'pillar4Desc', 'Get help with your order, products, delivery, or other shopping questions.')}
-                </p>
+                <div className="trust-text-wrap">
+                  <h4 className="trust-pillar-title">
+                    {getSetting('best_sellers_trust_strip', 'pillar4Title', 'CUSTOMER SUPPORT')}
+                  </h4>
+                  <p className="trust-pillar-desc">
+                    {getSetting('best_sellers_trust_strip', 'pillar4Desc', 'Get help with your order, products, delivery, or other shopping questions.')}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* ── 4. Final Community CTA Banner ── */}
-          {isEnabled('best_sellers_community') && (
-            <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
-              <div className="hp-final-cta-container" style={{ padding: 0 }}>
-                <div className="hp-final-cta-box">
-                  <span className="hp-final-cta-badge">{getSetting('best_sellers_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
-                  <h2 className="hp-final-title">{getSetting('best_sellers_community', 'title', 'Connect With Us @picky.co.in')}</h2>
-                  <p className="hp-final-subtitle">
-                    {getSetting('best_sellers_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
-                  </p>
-                  <div className="hp-final-cta-btn-group no-hover-fx">
-                    <button
-                      type="button"
-                      className="hp-final-cta-btn no-hover-fx"
-                      onClick={() => window.open(getSetting('best_sellers_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                      </svg>
-                      <span>Follow on Instagram</span>
-                      <ArrowRight size={16} />
-                    </button>
+          {/* ── 4. Illustrated Shopping Divider ── */}
+          <div className="bestsellers-illustrated-divider" aria-hidden="true">
+            <div className="bestsellers-illustrated-divider-track">
+              <span className="divider-icon">🛒</span>
+              <span className="divider-icon">🛍️</span>
+              <span className="divider-icon">📦</span>
+              <span className="divider-icon">🏷️</span>
+              <span className="divider-icon">🛍️</span>
+              <span className="divider-icon">🛒</span>
+              <span className="divider-icon">🎁</span>
+            </div>
+          </div>
 
-                    <button
-                      type="button"
-                      className="hp-final-cta-outline-btn no-hover-fx"
-                      onClick={() => {
-                        const waNum = getSetting('best_sellers_community', 'whatsappNumber', '918300295721').replace(/\D/g, '');
-                        window.open(`https://wa.me/${waNum}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer');
-                      }}
-                      aria-label="Join WhatsApp Group"
-                      title="Join WhatsApp Group"
-                    >
-                      <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                        <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                      </svg>
-                      <span className="hp-cta-wa-label">
-                        <span>Join WhatsApp Group</span>
-                        <ArrowRight size={16} />
-                      </span>
-                    </button>
-                  </div>
+          {/* ── 5. Community Connection Banner ── */}
+          {isEnabled('best_sellers_community') && (
+            <div className="bestsellers-community-section">
+              <div className="bestsellers-editorial-card">
+                <div className="bestsellers-glow-ambient" />
+                <div className="bestsellers-community-badge">
+                  {getSetting('best_sellers_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}
+                </div>
+                <h3 className="bestsellers-community-title">
+                  {getSetting('best_sellers_community', 'title', 'Connect With Us @picky.co.in')}
+                </h3>
+                <p className="bestsellers-community-desc">
+                  {getSetting('best_sellers_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration and exclusive drops.')}
+                </p>
+                <div className="bestsellers-community-actions">
+                  <a
+                    className="bestsellers-ig-btn"
+                    href={getSetting('best_sellers_community', 'instagramLink', 'https://instagram.com/picky.co.in')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span>Follow on Instagram</span>
+                    <ArrowRight size={14} />
+                  </a>
+                  <a
+                    aria-label="WhatsApp Community"
+                    className="bestsellers-wa-bubble"
+                    href={`https://wa.me/${getSetting('best_sellers_community', 'whatsappNumber', '918300295721').replace(/\D/g, '')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <svg className="wa-bubble-icon" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.149.929 3.182 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.768-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.124-.531-1.745-.724-2.87-2.484-2.957-2.6-.088-.115-.705-.939-.705-1.792 0-.853.448-1.272.607-1.446.16-.175.348-.219.464-.219.116 0 .232.001.333.006.107.005.25-.041.391.298.144.348.493 1.202.536 1.29.043.087.072.189.014.304-.058.116-.087.189-.174.29-.087.102-.183.228-.261.306-.087.087-.178.182-.077.355.101.174.45 7.42 1.488 1.933.268.239.494.391.668.447.175.056.333.049.458.03.14-.021.433-.177.494-.348zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.662 1.435 5.176L2 22l4.982-1.308C8.423 21.536 10.151 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
+                    </svg>
+                  </a>
                 </div>
               </div>
-            </section>
+            </div>
           )}
         </div>
       </div>
