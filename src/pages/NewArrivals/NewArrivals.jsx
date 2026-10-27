@@ -6,6 +6,7 @@ import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
 import { productService } from '../../services/product.service';
 import { SLUG_ALIAS_MAP } from '../../data/data';
+import { fuzzyFilter } from '../../utils/fuzzySearch';
 import {
   Sparkles,
   ArrowRight,
@@ -202,17 +203,11 @@ export default function NewArrivals() {
   const processedProducts = useMemo(() => {
     let list = [...products];
 
-    // 1. Search Filter: Search by Product Name or SKU
-    const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter((p) => {
-        const nameMatch = (p.name || '').toLowerCase().includes(q);
-        const skuMatch = (p.sku || '').toLowerCase().includes(q);
-        const idMatch =
-          (p._id || '').toLowerCase().includes(q) ||
-          String(p.id || '').toLowerCase() === q;
-        const slugMatch = (p.slug || '').toLowerCase().includes(q);
-        return nameMatch || skuMatch || idMatch || slugMatch;
+    // 1. Search Filter: Fuzzy Search with typo tolerance
+    if (searchQuery && searchQuery.trim()) {
+      list = fuzzyFilter(list, searchQuery.trim(), {
+        keys: ['name', 'shortDescription', 'description', 'category.name', 'tags', 'sku', 'slug'],
+        threshold: 0.38,
       });
     }
 
@@ -549,6 +544,29 @@ export default function NewArrivals() {
                     }}
                   />
                 </button>
+              </div>
+
+              {/* Center Group: Live Fuzzy Search Input */}
+              <div className="new-arrivals-search-box">
+                <Search size={15} className="search-box-icon" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search new arrivals..."
+                  className="new-arrivals-search-input"
+                  aria-label="Search new arrivals"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="search-clear-btn"
+                    title="Clear search"
+                  >
+                    <X size={11} strokeWidth={2.5} />
+                  </button>
+                )}
               </div>
 
               {/* Right Group: Sort Selector & Clear All */}
@@ -1263,8 +1281,7 @@ export default function NewArrivals() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
-          flex-wrap: wrap;
+          gap: 1.25rem;
           margin-bottom: 1.25rem;
           padding: 0.25rem 0;
         }
@@ -1273,15 +1290,14 @@ export default function NewArrivals() {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          flex-wrap: wrap;
-          flex: 1 1 auto;
+          flex-shrink: 0;
         }
 
         .bar-right-group {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          margin-left: auto;
+          flex-shrink: 0;
         }
 
         .sort-pill {
@@ -1360,10 +1376,11 @@ export default function NewArrivals() {
           background: #ffffff;
           border: 1.5px solid #ede9fe;
           border-radius: 9999px;
-          padding: 0.45rem 0.95rem;
-          min-width: 280px;
-          max-width: 360px;
-          flex: 1 1 280px;
+          padding: 0.48rem 1rem;
+          min-width: 260px;
+          max-width: 520px;
+          flex: 1 1 360px;
+          margin: 0 auto;
           transition: all 0.2s ease;
           box-shadow: 0 2px 6px rgba(124, 58, 237, 0.04);
         }
@@ -2014,11 +2031,21 @@ export default function NewArrivals() {
             box-shadow: none;
             margin-bottom: 1rem;
             display: flex;
-            flex-direction: row;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
             gap: 0.5rem;
             width: 100%;
+          }
+          .new-arrivals-search-box {
+            order: 3;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            flex: 1 1 100%;
+            margin: 0.25rem 0 0 0;
+            height: 38px;
+            border-radius: 12px;
           }
           .bar-left-group {
             display: flex;
@@ -2181,8 +2208,9 @@ export default function NewArrivals() {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 0.75rem !important;
+            gap: 8px !important;
             flex-direction: row !important;
+            flex-wrap: nowrap !important;
             margin-top: 0.5rem !important;
             width: 100% !important;
           }

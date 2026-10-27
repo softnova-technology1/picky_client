@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import BestSellersHeroSection from '../../components/bestseller/BestSellersHeroSection';
@@ -38,6 +39,10 @@ import {
   Clock,
   Gift,
   Package,
+  SlidersHorizontal,
+  Layers,
+  Coins,
+  Check,
 } from 'lucide-react';
 
 const renderTrustIcon = (iconName, fallbackIcon, size = 26) => {
@@ -89,6 +94,13 @@ const PRICE_FILTERS = [
   { id: 'above-499', label: 'Above ₹499', min: 499 },
 ];
 
+const SORT_OPTIONS = [
+  { id: 'popular', label: 'Best Selling' },
+  { id: 'newest', label: 'Newest' },
+  { id: 'price-low', label: 'Price Low → High' },
+  { id: 'price-high', label: 'Price High → Low' },
+];
+
 export default function BestSellers() {
   const { isEnabled, getSetting } = usePageCustomization('best_sellers');
   const [allProducts, setAllProducts] = useState([]);
@@ -97,6 +109,7 @@ export default function BestSellers() {
   const [sortBy, setSortBy] = useState(() => getSetting('best_sellers_feed', 'defaultSort', 'popular'));
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('all');
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const catalogRef = useRef(null);
   const tabsScrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -275,6 +288,52 @@ export default function BestSellers() {
 
   const hasActiveFilters = activeCategory !== 'all' || searchQuery.trim() !== '' || sortBy !== 'popular' || selectedPriceFilter !== 'all';
 
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (activeCategory !== 'all') count++;
+    if (selectedPriceFilter !== 'all') count++;
+    if (sortBy !== 'popular') count++;
+    return count;
+  }, [activeCategory, selectedPriceFilter, sortBy]);
+
+  const handleScrollToCatalog = () => {
+    if (catalogRef.current) {
+      catalogRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  useEffect(() => {
+    if (isFilterDrawerOpen) {
+      const scrollY = window.scrollY;
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+      const originalBodyPosition = document.body.style.position;
+      const originalBodyTop = document.body.style.top;
+      const originalBodyWidth = document.body.style.width;
+
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') setIsFilterDrawerOpen(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        document.body.style.position = originalBodyPosition;
+        document.body.style.top = originalBodyTop;
+        document.body.style.width = originalBodyWidth;
+        window.scrollTo(0, scrollY);
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isFilterDrawerOpen]);
+
   const handleResetFilters = () => {
     setActiveCategory('all');
     setSearchQuery('');
@@ -332,12 +391,52 @@ export default function BestSellers() {
               </div>
             )}
 
-            {/* ── 2. Category & Sort By Selectors Card ── */}
+            {/* ── 2. Category & Sort By Selectors Card with Search ── */}
             <div className="bestsellers-compact-controls-box">
-              {/* Category & Sort By Selectors in 2-Column Grid */}
+              {/* Search Row */}
+              <div className="bestsellers-compact-search-row">
+                <Search size={15} className="bestsellers-compact-search-icon" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search top products..."
+                  className="bestsellers-compact-search-input"
+                  aria-label="Search top products"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '2px',
+                    }}
+                    aria-label="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Category & Sort By Selectors in Flex/Grid */}
               <div className="bestsellers-compact-selectors-grid">
                 {/* Category Selector */}
-                <div className="bestsellers-compact-select-btn">
+                <div
+                  className="bestsellers-compact-select-btn"
+                  onClick={() => setIsFilterDrawerOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Filter by category"
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="bestsellers-select-btn-content">
                     <span className="bestsellers-select-btn-label">CATEGORY</span>
                     <span className="bestsellers-select-btn-value">
@@ -345,18 +444,6 @@ export default function BestSellers() {
                     </span>
                   </div>
                   <ChevronDown size={14} className="bestsellers-select-btn-chevron" />
-                  <select
-                    value={activeCategory}
-                    onChange={(e) => setActiveCategory(e.target.value)}
-                    className="bestsellers-invisible-native-select"
-                    aria-label="Filter by category"
-                  >
-                    {filterTabs.map((tab) => (
-                      <option key={tab.id} value={tab.id}>
-                        {tab.label}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {/* Sort By Selector */}
@@ -364,15 +451,7 @@ export default function BestSellers() {
                   <div className="bestsellers-select-btn-content">
                     <span className="bestsellers-select-btn-label">SORT BY</span>
                     <span className="bestsellers-select-btn-value">
-                      {sortBy === 'popular'
-                        ? 'Best Selling'
-                        : sortBy === 'newest'
-                        ? 'Newest'
-                        : sortBy === 'price-low'
-                        ? 'Price Low → High'
-                        : sortBy === 'price-high'
-                        ? 'Price High → Low'
-                        : 'Best Selling'}
+                      {SORT_OPTIONS.find((s) => s.id === sortBy)?.label || 'Best Selling'}
                     </span>
                   </div>
                   <ChevronDown size={14} className="bestsellers-select-btn-chevron" />
@@ -382,17 +461,16 @@ export default function BestSellers() {
                     className="bestsellers-invisible-native-select"
                     aria-label="Sort products"
                   >
-                    <option value="popular">Best Selling</option>
-                    <option value="newest">Newest</option>
-                    <option value="price-low">Price Low → High</option>
-                    <option value="price-high">Price High → Low</option>
+                    {SORT_OPTIONS.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
-              </div>
 
-              {/* Reset active filters */}
-              {hasActiveFilters && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                {/* Reset active filters */}
+                {hasActiveFilters && (
                   <button
                     type="button"
                     onClick={handleResetFilters}
@@ -400,11 +478,179 @@ export default function BestSellers() {
                     title="Reset all filters"
                   >
                     <RotateCcw size={13} />
-                    <span>Reset Filters</span>
+                    <span>Reset</span>
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
+
+            {/* ── Slide-Over Side Filter Drawer (Exact New Arrivals Design) ── */}
+            {isFilterDrawerOpen &&
+              typeof document !== 'undefined' &&
+              createPortal(
+                <div className="filter-drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)}>
+                  <div
+                    className="filter-drawer-container"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Drawer Header */}
+                    <div className="drawer-header">
+                      <div className="drawer-header-title">
+                        <div className="drawer-icon-box">
+                          <SlidersHorizontal size={18} color="#7c3aed" />
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <h3 className="drawer-title">Filters</h3>
+                            {activeFiltersCount > 0 && (
+                              <span className="drawer-active-badge">
+                                {activeFiltersCount}
+                              </span>
+                            )}
+                          </div>
+                          <p className="drawer-subtitle">
+                            Refine by category, price & deals
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsFilterDrawerOpen(false)}
+                        className="drawer-close-btn"
+                        title="Close filters"
+                        aria-label="Close filters"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    {/* Drawer Body - Clean Scrollable Stack */}
+                    <div className="drawer-body">
+                      {/* 1. Category Section */}
+                      <div className="drawer-section">
+                        <div className="drawer-section-header">
+                          <div className="drawer-section-label">
+                            <Layers size={14} color="#7c3aed" />
+                            <span>Category</span>
+                          </div>
+                          {activeCategory !== 'all' && (
+                            <button
+                              onClick={() => setActiveCategory('all')}
+                              className="drawer-section-clear"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="drawer-pills-list">
+                          {filterTabs.map((cat) => {
+                            const isSelected = activeCategory === cat.id;
+                            return (
+                              <button
+                                key={cat.id}
+                                onClick={() => setActiveCategory(cat.id)}
+                                className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                              >
+                                <span>{cat.label}</span>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. Price Range Section */}
+                      <div className="drawer-section">
+                        <div className="drawer-section-header">
+                          <div className="drawer-section-label">
+                            <Coins size={14} color="#7c3aed" />
+                            <span>Price Range</span>
+                          </div>
+                          {selectedPriceFilter !== 'all' && (
+                            <button
+                              onClick={() => setSelectedPriceFilter('all')}
+                              className="drawer-section-clear"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="drawer-pills-list">
+                          {PRICE_FILTERS.map((item) => {
+                            const isSelected = selectedPriceFilter === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => setSelectedPriceFilter(item.id)}
+                                className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                              >
+                                <span>{item.label === 'All' ? 'All Prices' : item.label}</span>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 3. Sort By Section */}
+                      <div className="drawer-section">
+                        <div className="drawer-section-header">
+                          <div className="drawer-section-label">
+                            <ArrowUpDown size={14} color="#7c3aed" />
+                            <span>Sort By</span>
+                          </div>
+                          {sortBy !== 'popular' && (
+                            <button
+                              onClick={() => setSortBy('popular')}
+                              className="drawer-section-clear"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="drawer-pills-list">
+                          {SORT_OPTIONS.map((s) => {
+                            const isSelected = sortBy === s.id;
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={() => setSortBy(s.id)}
+                                className={`drawer-pill ${isSelected ? 'active' : ''}`}
+                              >
+                                <span>{s.label}</span>
+                                {isSelected && <Check size={12} strokeWidth={3} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Drawer Sticky Footer */}
+                    <div className="drawer-footer">
+                      {activeFiltersCount > 0 && (
+                        <button
+                          onClick={handleResetFilters}
+                          className="drawer-reset-btn"
+                        >
+                          <RotateCcw size={13} />
+                          <span>Reset</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setIsFilterDrawerOpen(false);
+                          handleScrollToCatalog();
+                        }}
+                        className="drawer-apply-btn"
+                      >
+                        <span>Show {filteredProducts.length} Items</span>
+                        <ArrowRight size={15} />
+                      </button>
+                    </div>
+                  </div>
+                </div>,
+                document.body
+              )}
 
             {/* Products Grid */}
             {loading ? (
@@ -469,7 +715,7 @@ export default function BestSellers() {
           </div>
         )}
 
-        <div className="container" style={{ maxWidth: '640px', margin: '0 auto', padding: '0 1rem' }}>
+        <div className="container bestsellers-bottom-content-container">
           {/* ── 3. Buyer Value Proposition (Trust 4 Features Card) ── */}
           {isEnabled('best_sellers_trust_strip') && (
             <div className="bestsellers-trust-card">
@@ -567,57 +813,96 @@ export default function BestSellers() {
             </div>
           )}
 
-          {/* ── 4. Illustrated Shopping Divider ── */}
-          <div className="bestsellers-illustrated-divider" aria-hidden="true">
-            <div className="bestsellers-illustrated-divider-track">
-              <span className="divider-icon">🛒</span>
-              <span className="divider-icon">🛍️</span>
-              <span className="divider-icon">📦</span>
-              <span className="divider-icon">🏷️</span>
-              <span className="divider-icon">🛍️</span>
-              <span className="divider-icon">🛒</span>
-              <span className="divider-icon">🎁</span>
-            </div>
-          </div>
 
           {/* ── 5. Community Connection Banner ── */}
           {isEnabled('best_sellers_community') && (
-            <div className="bestsellers-community-section">
-              <div className="bestsellers-editorial-card">
-                <div className="bestsellers-glow-ambient" />
-                <div className="bestsellers-community-badge">
-                  {getSetting('best_sellers_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}
-                </div>
-                <h3 className="bestsellers-community-title">
-                  {getSetting('best_sellers_community', 'title', 'Connect With Us @picky.co.in')}
-                </h3>
-                <p className="bestsellers-community-desc">
-                  {getSetting('best_sellers_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration and exclusive drops.')}
-                </p>
-                <div className="bestsellers-community-actions">
-                  <a
-                    className="bestsellers-ig-btn"
-                    href={getSetting('best_sellers_community', 'instagramLink', 'https://instagram.com/picky.co.in')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span>Follow on Instagram</span>
-                    <ArrowRight size={14} />
-                  </a>
-                  <a
-                    aria-label="WhatsApp Community"
-                    className="bestsellers-wa-bubble"
-                    href={`https://wa.me/${getSetting('best_sellers_community', 'whatsappNumber', '918300295721').replace(/\D/g, '')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <svg className="wa-bubble-icon" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.149.929 3.182 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.768-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.062-2.124-.531-1.745-.724-2.87-2.484-2.957-2.6-.088-.115-.705-.939-.705-1.792 0-.853.448-1.272.607-1.446.16-.175.348-.219.464-.219.116 0 .232.001.333.006.107.005.25-.041.391.298.144.348.493 1.202.536 1.29.043.087.072.189.014.304-.058.116-.087.189-.174.29-.087.102-.183.228-.261.306-.087.087-.178.182-.077.355.101.174.45 7.42 1.488 1.933.268.239.494.391.668.447.175.056.333.049.458.03.14-.021.433-.177.494-.348zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.662 1.435 5.176L2 22l4.982-1.308C8.423 21.536 10.151 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
-                    </svg>
-                  </a>
+            <section className="hp-final-cta-section" style={{ width: '100%', margin: '2rem 0 1rem 0' }}>
+              <div className="hp-final-cta-container">
+                <div className="hp-final-cta-box">
+                  <span className="hp-final-cta-badge">
+                    {getSetting('best_sellers_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}
+                  </span>
+                  <h2 className="hp-final-title">
+                    {getSetting('best_sellers_community', 'title', 'Connect With Us @picky.co.in')}
+                  </h2>
+                  <p className="hp-final-subtitle">
+                    {getSetting(
+                      'best_sellers_community',
+                      'subtitle',
+                      'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.'
+                    )}
+                  </p>
+                  <div className="hp-final-cta-btn-group no-hover-fx">
+                    <button
+                      type="button"
+                      className="hp-final-cta-btn no-hover-fx"
+                      onClick={() =>
+                        window.open(
+                          getSetting('best_sellers_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'),
+                          '_blank',
+                          'noopener,noreferrer'
+                        )
+                      }
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ marginRight: '6px' }}
+                      >
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                      </svg>
+                      <span>Follow on Instagram</span>
+                      <ArrowRight size={16} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hp-final-cta-outline-btn no-hover-fx"
+                      onClick={() =>
+                        window.open(
+                          `https://wa.me/${getSetting(
+                            'best_sellers_community',
+                            'whatsappNumber',
+                            '918300295721'
+                          ).replace(/\D/g, '')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`,
+                          '_blank',
+                          'noopener,noreferrer'
+                        )
+                      }
+                      aria-label="Join WhatsApp Group"
+                      title="Join WhatsApp Group"
+                    >
+                      <svg
+                        className="hp-cta-wa-icon"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                        <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                      </svg>
+                      <span className="hp-cta-wa-label">
+                        <span>Join WhatsApp Group</span>
+                        <ArrowRight size={16} />
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
           )}
         </div>
       </div>

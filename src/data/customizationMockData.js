@@ -603,7 +603,7 @@ export const MOCK_PAGE_SECTIONS = {
       settings: {
         badgeText: '✦ JOIN OUR COMMUNITY',
         title: 'Connect With Us @picky.co.in',
-        subtitle: 'Follow us on Instagram & WhatsApp for daily style inspiration and exclusive drops.',
+        subtitle: 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.',
         instagramLink: 'https://www.instagram.com/picky.co.in/',
         whatsappNumber: '918300295721',
       },

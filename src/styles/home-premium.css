@@ -3084,8 +3084,9 @@
 }
 
 .hp-final-title {
+  font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(2.2rem, 4.2vw, 3.6rem);
-  font-weight: 300;
+  font-weight: 600;
   color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -3110,6 +3111,15 @@
   gap: 1.25rem;
   flex-wrap: wrap;
   transform: none !important;
+}
+
+@media (max-width: 768px) {
+  .hp-final-cta-btn-group {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
 }
 
 .hp-final-cta-btn-group:hover {

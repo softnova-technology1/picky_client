@@ -5,7 +5,8 @@ import '../../../styles/bestseller_hero.css';
 
 export default function BestSellersHeroSection() {
   const { getSetting } = usePageCustomization('best_sellers');
-  const headline = getSetting('best_sellers_hero', 'headline', 'Most Loved South Indian Masterpieces');
+  const rawHeadline = getSetting('best_sellers_hero', 'headline', 'The best place to discover and shop for best sellers');
+  const headline = rawHeadline === 'Most Loved South Indian Masterpieces' ? 'The best place to discover and shop for best sellers' : (rawHeadline || 'The best place to discover and shop for best sellers');
   const subheadline = getSetting(
     'best_sellers_hero',
     'subheadline',
@@ -17,7 +18,7 @@ export default function BestSellersHeroSection() {
   const badgeText = getSetting(
     'best_sellers_hero',
     'badgeText',
-    'Authentic Handloom, Brassware & Curated Daily Essentials'
+    ''
   );
   const bgImage = getSetting('best_sellers_hero', 'bannerBgImage', getSetting('best_sellers_hero', 'bannerBgColor', ''));
 
@@ -26,6 +27,33 @@ export default function BestSellersHeroSection() {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const formatHeadline = (text) => {
+    if (!text) return null;
+    const lower = text.toLowerCase();
+    if (lower.includes('discover') || lower.includes('shop')) {
+      const parts = text.split(/(discover|shop)/gi);
+      return parts.map((part, idx) => {
+        const pLower = part.toLowerCase();
+        if (pLower === 'discover') {
+          return (
+            <span key={idx} className="playful-script-purple">
+              {part}
+            </span>
+          );
+        }
+        if (pLower === 'shop') {
+          return (
+            <span key={idx} className="playful-script-yellow">
+              {part}
+            </span>
+          );
+        }
+        return <span key={idx}>{part}</span>;
+      });
+    }
+    return text;
   };
 
   return (
@@ -45,7 +73,7 @@ export default function BestSellersHeroSection() {
         {/* Dynamic Headline Stack */}
         <div className="playful-title-stack">
           <h1 className="playful-title-line" style={{ color: titleColor }}>
-            {headline}
+            {formatHeadline(headline)}
           </h1>
         </div>
 

@@ -1435,22 +1435,49 @@
     line-height: 1.35 !important;
   }
 
+  .hp-final-cta-btn-group {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .hp-final-cta-btn {
+    flex: 0 1 auto !important;
     height: 42px !important;
-    padding: 0 18px !important;
+    padding: 0 16px !important;
     font-size: 0.8rem !important;
-    font-weight: 800 !important;
-    margin-top: 4px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  .hp-final-cta-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
   }
 
   .hp-final-cta-outline-btn,
   .hp-final-cta-outline-btn:hover,
   .hp-final-cta-outline-btn:active,
   .hp-final-cta-outline-btn:focus {
+    flex-shrink: 0 !important;
     height: 42px !important;
     width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
     padding: 0 !important;
-    margin-top: 4px !important;
+    margin: 0 !important;
     border-radius: 50% !important;
     background-color: transparent !important;
     color: #25d366 !important;
