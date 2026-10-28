@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../components/layout/PageWrapper';
 import { useUiStore } from '../../../store/uiStore';
 import { usePageCustomization } from '../../../store/customizationStore';
 import { contactService } from '../../../services/contact.service';
 import { settingsService } from '../../../services/settings.service';
+import { productService } from '../../../services/product.service';
 import './Contact.css';
 import '../../../styles/home-premium.css';
 import {
@@ -142,20 +143,78 @@ export default function Contact() {
     }
   };
 
+  // Real DB products for promo slider (No dummy or hardcoded images!)
+  const [dbPromoProducts, setDbPromoProducts] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPromoProducts() {
+      try {
+        const res = await productService.list({ limit: 12, sort: 'newest' });
+        const data = res?.data || res;
+        const items = Array.isArray(data)
+          ? data
+          : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.products) ? data.products : []));
+        if (isMounted && items.length > 0) {
+          setDbPromoProducts(items);
+        }
+      } catch (err) {
+        console.warn('Could not fetch DB products for promo slider:', err);
+      }
+    }
+    fetchPromoProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const promoSlidesList = useMemo(() => {
+    const realDbImages = dbPromoProducts
+      .map((p) => (Array.isArray(p.images) && p.images[0]) || p.image)
+      .filter(Boolean);
+
+    return [
+      {
+        id: 1,
+        tag: 'NEW ARRIVALS',
+        subtitle: 'Discover trending seasonal drops & modern curated accessories',
+        btnText: 'Shop New Arrivals',
+        link: '/new-arrivals',
+        image: realDbImages[0] || promoSlides[0].image
+      },
+      {
+        id: 2,
+        tag: 'BESTSELLERS',
+        subtitle: 'Our highest-rated customer favorites and everyday essentials',
+        btnText: 'Explore Best Sellers',
+        link: '/best-sellers',
+        image: realDbImages[1] || realDbImages[0] || promoSlides[1].image
+      },
+      {
+        id: 3,
+        tag: 'SHOP ALL ITEMS',
+        subtitle: 'Browse through our full catalog of lifestyle, home & wellness goods',
+        btnText: 'Shop All Items',
+        link: '/shop',
+        image: realDbImages[2] || realDbImages[0] || promoSlides[2].image
+      }
+    ];
+  }, [dbPromoProducts]);
+
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % promoSlidesList.length);
     }, 4500);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, promoSlidesList.length]);
 
   const handlePrevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + promoSlides.length) % promoSlides.length);
+    setCurrentSlide((prev) => (prev - 1 + promoSlidesList.length) % promoSlidesList.length);
   };
 
   const handleNextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+    setCurrentSlide((prev) => (prev + 1) % promoSlidesList.length);
   };
 
   const [uploadStatus, setUploadStatus] = useState('');
@@ -289,6 +348,17 @@ export default function Contact() {
           {/* Top subtle glow/curves can be added via CSS before/after */}
           <div className="k-container k-hero-grid">
             <div className="k-hero-content">
+              {/* Mobile Heritage Pills (Visible only on mobile <= 768px) */}
+              <div className="k-hero-mobile-pills">
+                <span className="k-hero-pill-item">
+                  <span className="k-pill-dot-emerald"></span>
+                  Tamil Nadu Heritage Care
+                </span>
+                <span className="k-hero-pill-item">
+                  Always Listening
+                </span>
+              </div>
+
               <div className="k-eyebrow-container">
                 <span className="k-eyebrow">{getSetting('contact_hero', 'eyebrow', 'GET IN TOUCH')}</span>
                 <div className="k-eyebrow-line"></div>
@@ -477,6 +547,58 @@ export default function Contact() {
                 </div>
               </div>
             </div>
+
+            {/* Mobile View (<= 768px): 2x2 Contact Orbs (Matching Design & Real Data) */}
+            <div className="k-mobile-contact-grid">
+              {/* Call Orb */}
+              <a href={`tel:${rawCleanPhone || '+918300295721'}`} className="k-mobile-contact-card">
+                <div className="k-orb-icon-circle k-orb-purple">
+                  <Phone size={19} strokeWidth={2.4} />
+                </div>
+                <span className="k-orb-title">{displayPhone}</span>
+                <span className="k-orb-sub">Customer Care & Support</span>
+                <span className="k-orb-badge k-orb-badge-purple">Mon - Sat, 9AM - 8PM</span>
+              </a>
+
+              {/* Email Orb */}
+              <a href={`mailto:${displayEmail}`} className="k-mobile-contact-card">
+                <div className="k-orb-icon-circle k-orb-teal">
+                  <Mail size={19} strokeWidth={2.4} />
+                </div>
+                <span className="k-orb-title">{displayEmail}</span>
+                <span className="k-orb-sub">Drop us an email</span>
+                <span className="k-orb-badge k-orb-badge-teal">We reply within 24hrs</span>
+              </a>
+
+              {/* Store Orb */}
+              <a href="#store-map-section" className="k-mobile-contact-card">
+                <div className="k-orb-icon-circle k-orb-rose">
+                  <MapPin size={19} strokeWidth={2.4} />
+                </div>
+                <span className="k-orb-title">{displayStoreName}</span>
+                <span className="k-orb-sub">Main Road, Peravurani</span>
+                <span className="k-orb-badge k-orb-badge-rose">Thanjavur Dist, TN</span>
+              </a>
+
+              {/* Instagram Orb */}
+              <a
+                href={getSetting('contact_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="k-mobile-contact-card"
+              >
+                <div className="k-orb-icon-circle k-orb-magenta">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </div>
+                <span className="k-orb-title">@picky.co.in</span>
+                <span className="k-orb-sub">Follow on Instagram</span>
+                <span className="k-orb-badge k-orb-badge-purple">For daily updates</span>
+              </a>
+            </div>
           </div>
         </section>
         )}
@@ -597,13 +719,13 @@ export default function Contact() {
               </form>
             </div>
 
-            {/* Right: 3-Images Interactive Slide Section (1:1 Ratio & Enhanced Animation) */}
+            {/* Right: 3-Images Interactive Slide Section (Dynamic Real DB Images) */}
             <div
               className="k-promo-slider-container"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
             >
-              {promoSlides.map((slide, idx) => {
+              {promoSlidesList.map((slide, idx) => {
                 const isActive = currentSlide === idx;
                 return (
                   <div
@@ -626,12 +748,13 @@ export default function Contact() {
                           <span>{slide.tag}</span>
                         </span>
                         <span className="k-promo-slide-counter">
-                          0{idx + 1} / 0{promoSlides.length}
+                          0{idx + 1} / 0{promoSlidesList.length}
                         </span>
                       </div>
 
                       {/* Bottom Floating Action Card */}
                       <div className="k-promo-slide-footer">
+                        <h3 className="k-promo-slide-title-mobile">{slide.tag}</h3>
                         <p className="k-promo-slide-desc">{slide.subtitle}</p>
                         <button
                           type="button"
@@ -667,7 +790,7 @@ export default function Contact() {
 
               {/* Pagination Dots */}
               <div className="k-promo-dots">
-                {promoSlides.map((_, idx) => (
+                {promoSlidesList.map((_, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -704,16 +827,27 @@ export default function Contact() {
 
           {/* Full-width Satellite Map Container with Floating Store Details Badge */}
           <div className="k-store-map-wrapper k-store-map-fullwidth">
-            <iframe
-              title="Softnova Picky Store Location - Satellite View"
-              src="https://www.google.com/maps/embed?pb=!1m12!1m8!1m3!1d2200!2d79.20430085807035!3d10.292564423223569!3m2!1i1024!2i768!4f13.1!2m1!1ssoftnova!5e1!3m2!1sen!2sin!4v1791799524428!5m2!1sen!2sin"
-              width="100%"
-              height="100%"
-              style={{ border: 0, width: '100%', height: '100%', display: 'block' }}
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-            ></iframe>
+            <div className="k-store-map-iframe-box">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=10.292564423223569,79.20430085807035"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="k-map-open-btn-floating"
+              >
+                <span>Open in Maps</span>
+                <ExternalLink size={13} />
+              </a>
+              <iframe
+                title="Softnova Picky Store Location - Satellite View"
+                src="https://www.google.com/maps/embed?pb=!1m12!1m8!1m3!1d2200!2d79.20430085807035!3d10.292564423223569!3m2!1i1024!2i768!4f13.1!2m1!1ssoftnova!5e1!3m2!1sen!2sin!4v1791799524428!5m2!1sen!2sin"
+                width="100%"
+                height="100%"
+                style={{ border: 0, width: '100%', height: '100%', display: 'block' }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+              ></iframe>
+            </div>
 
             {/* Store Details Card Overlay */}
             <div className="k-store-map-badge">
