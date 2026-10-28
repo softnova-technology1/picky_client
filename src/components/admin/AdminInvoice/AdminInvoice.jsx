@@ -10,8 +10,10 @@ import {
   Globe,
   ShieldCheck,
   Download,
+  Check,
 } from 'lucide-react';
 import styles from './AdminInvoice.module.css';
+import './AdminInvoiceMobile.css';
 
 /**
  * Helper to convert numbers to Indian Rupee Words
@@ -417,48 +419,366 @@ export default function AdminInvoice({ order, onClose }) {
     window.print();
   };
 
+  const invoiceNumber = `PKY-INV-${order.orderNumber || order._id || '000000'}`;
+  const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }) : new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  const customerName =
+    order.customer?.name ||
+    order.user?.name ||
+    order.shippingAddress?.fullName ||
+    order.shippingAddress?.name ||
+    (order.shippingAddress?.firstName ? `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName || ''}`.trim() : 'Customer');
+
+  const customerPhone =
+    order.customer?.phone ||
+    order.user?.phone ||
+    order.shippingAddress?.phone ||
+    order.phoneNumber ||
+    '';
+
+  const customerEmail =
+    order.customer?.email ||
+    order.user?.email ||
+    order.shippingAddress?.email ||
+    order.email ||
+    '';
+
+  const addr = order.shippingAddress || order.address || {};
+  const streetPart = addr.street || addr.address || addr.addressLine1 || '';
+  const landmarkPart = addr.landmark || addr.addressLine2 || '';
+  const pinPart = addr.pincode || addr.pinCode || addr.postalCode || addr.zip || '';
+
+  const fullAddress = [
+    streetPart,
+    landmarkPart,
+    addr.city,
+    addr.state,
+    pinPart ? `PIN: ${pinPart}` : '',
+  ]
+    .filter(Boolean)
+    .join(', ') || 'Tamil Nadu, India';
+
+  const items = (order.items && order.items.length > 0)
+    ? order.items.map(it => ({
+        ...it,
+        name: it.name || it.title || it.productId?.name || it.product?.name || 'Handloom Apparel',
+        price: Number(it.price || it.unitPrice || 0),
+        quantity: Number(it.quantity || it.qty || 1),
+        hsn: it.hsn || it.hsnCode || '5208',
+      }))
+    : [
+        {
+          name: 'Handloom Cotton Apparel',
+          hsn: '5208',
+          quantity: 1,
+          price: Number(order.totalAmount || order.total || 0),
+        },
+      ];
+
+  const grandTotal = Number(order.totalAmount || order.total || order.grandTotal || 0);
+  const deliveryCharge = Number(order.deliveryFee || order.shippingFee || 0);
+
+  // Derive GST breakdown (5% GST: 2.5% CGST + 2.5% SGST)
+  const taxableValue = Math.round((grandTotal / 1.05) * 100) / 100;
+  const totalGst = Math.round((grandTotal - taxableValue) * 100) / 100;
+  const paymentMode = order.paymentMethod ? String(order.paymentMethod).toUpperCase() : 'RAZORPAY';
+
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-        {/* Top Control Bar (Hidden during print) */}
-        <div className={styles.modalHeaderBar}>
-          <div className={styles.headerTitleCluster}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#7c3aed' }} />
-            <div>
-              <h3 className={styles.headerTitle}>Official Tax Invoice Preview</h3>
-              <p className={styles.headerSubtitle}>Order #{order.orderNumber || order._id} • A4 Standard Print & PDF</p>
+      {/* ── DESKTOP INVOICE PREVIEW (Screens > 768px ONLY - 100% Intact) ── */}
+      <div className="desktop-invoice-preview">
+        <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          {/* Top Control Bar (Hidden during print) */}
+          <div className={styles.modalHeaderBar}>
+            <div className={styles.headerTitleCluster}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#7c3aed' }} />
+              <div>
+                <h3 className={styles.headerTitle}>Official Tax Invoice Preview</h3>
+                <p className={styles.headerSubtitle}>Order #{order.orderNumber || order._id} • A4 Standard Print & PDF</p>
+              </div>
+            </div>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.downloadPdfBtn}
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+                title="Download Invoice as PDF"
+              >
+                <Download size={16} />
+                <span>{downloading ? 'Downloading...' : 'Download PDF'}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.printBtn}
+                onClick={handlePrint}
+                title="Print Invoice"
+              >
+                <Printer size={16} />
+                <span>Print Invoice</span>
+              </button>
+              <button type="button" className={styles.closeBtn} onClick={onClose} title="Close Preview">
+                <X size={18} />
+              </button>
             </div>
           </div>
-          <div className={styles.modalActions}>
+
+          {/* Scrollable Preview Container */}
+          <div className={styles.previewBody}>
+            <AdminInvoiceSheet order={order} ref={sheetRef} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE INVOICE PREVIEW (Screens <= 768px ONLY - Matches Requested Specification) ── */}
+      <div className="mobile-invoice-preview" onClick={(e) => e.stopPropagation()}>
+        {/* Top Control Bar */}
+        <header className="mobile-inv-topbar">
+          <div className="mobile-inv-topbar-left">
+            <span className="mobile-inv-pulse-dot" />
+            <div className="mobile-inv-topbar-titles">
+              <h1 className="mobile-inv-title">Tax Invoice Preview</h1>
+              <p className="mobile-inv-ordernum">#{order.orderNumber || order._id}</p>
+            </div>
+          </div>
+          <div className="mobile-inv-topbar-actions">
             <button
               type="button"
-              className={styles.downloadPdfBtn}
+              className="mobile-inv-btn-download"
               onClick={handleDownloadPdf}
               disabled={downloading}
-              title="Download Invoice as PDF"
+              title="Download PDF"
             >
-              <Download size={16} />
-              <span>{downloading ? 'Downloading...' : 'Download PDF'}</span>
+              <Download size={15} />
             </button>
             <button
               type="button"
-              className={styles.printBtn}
+              className="mobile-inv-btn-print"
               onClick={handlePrint}
               title="Print Invoice"
             >
-              <Printer size={16} />
-              <span>Print Invoice</span>
+              <Printer size={15} />
             </button>
-            <button type="button" className={styles.closeBtn} onClick={onClose} title="Close Preview">
-              <X size={18} />
+            <button
+              type="button"
+              className="mobile-inv-btn-close"
+              onClick={onClose}
+              title="Close Preview"
+            >
+              <X size={15} />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Scrollable Preview Container */}
-        <div className={styles.previewBody}>
-          <AdminInvoiceSheet order={order} ref={sheetRef} />
-        </div>
+        {/* Invoice Document Body */}
+        <main className="mobile-inv-body">
+          {/* Header: Logo, Company Info & TAX INVOICE */}
+          <div className="mobile-inv-header-block">
+            <div className="mobile-inv-brand-top">
+              <div>
+                <div className="mobile-inv-brand-logo-wrap">
+                  <div className="mobile-inv-brand-icon">
+                    <svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                  </div>
+                  <span className="mobile-inv-brand-name">PICKY</span>
+                </div>
+                <div className="mobile-inv-company-details">
+                  <p className="mobile-inv-company-bold" style={{ margin: 0 }}>PICKY RETAIL PRIVATE LIMITED</p>
+                  <p style={{ margin: 0 }}>No. 123, 1st Cross Street, OMR Road, Thoraipakkam</p>
+                  <p style={{ margin: 0 }}>Chennai, Tamil Nadu — 600097</p>
+                  <p style={{ margin: 0 }}>CIN: U52100TN2024PTC158921 • Support: +91 83002 95721</p>
+                </div>
+              </div>
+              <h2 className="mobile-inv-heading-tag">TAX INVOICE</h2>
+            </div>
+
+            {/* Metadata Box */}
+            <div className="mobile-inv-metadata-box">
+              <div className="mobile-inv-meta-row">
+                <span className="mobile-inv-meta-label">Invoice No:</span>
+                <span className="mobile-inv-meta-val mobile-inv-meta-mono">{invoiceNumber}</span>
+              </div>
+              <div className="mobile-inv-meta-row">
+                <span className="mobile-inv-meta-label">Order ID:</span>
+                <span className="mobile-inv-meta-val mobile-inv-meta-mono">{order.orderNumber || order._id}</span>
+              </div>
+              <div className="mobile-inv-meta-row">
+                <span className="mobile-inv-meta-label">Date:</span>
+                <span className="mobile-inv-meta-val">{orderDate}</span>
+              </div>
+              <div className="mobile-inv-meta-row">
+                <span className="mobile-inv-meta-label">Place of Supply:</span>
+                <span className="mobile-inv-meta-val">{addr.state || 'Tamil Nadu'} (33)</span>
+              </div>
+              <div className="mobile-inv-meta-divider" />
+              <div className="mobile-inv-meta-row">
+                <span className="mobile-inv-meta-label" style={{ fontWeight: 600 }}>GSTIN:</span>
+                <span className="mobile-inv-gstin-badge">33AAAAA0000A1Z5</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Addresses Section */}
+          <div className="mobile-inv-addresses-grid">
+            {/* Bill To */}
+            <div className="mobile-inv-address-card">
+              <span className="mobile-inv-address-tag">Bill To (Buyer)</span>
+              <div className="mobile-inv-customer-name">{customerName}</div>
+              <div className="mobile-inv-address-line">{fullAddress}</div>
+              {customerPhone && (
+                <div className="mobile-inv-address-contact">
+                  Phone: <span className="mobile-inv-contact-val">{customerPhone}</span>
+                </div>
+              )}
+              {customerEmail && (
+                <div className="mobile-inv-address-contact" style={{ wordBreak: 'break-all' }}>
+                  Email: <span className="mobile-inv-contact-val">{customerEmail}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Ship To */}
+            <div className="mobile-inv-address-card">
+              <span className="mobile-inv-address-tag">Ship To (Delivery)</span>
+              <div className="mobile-inv-customer-name">{customerName}</div>
+              <div className="mobile-inv-address-line">{fullAddress}</div>
+              {customerPhone && (
+                <div className="mobile-inv-address-contact">
+                  Phone: <span className="mobile-inv-contact-val">{customerPhone}</span>
+                </div>
+              )}
+              <div className="mobile-inv-address-contact">
+                State: <span className="mobile-inv-contact-val">{addr.state || 'Tamil Nadu'} (33)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Item Details */}
+          <div className="mobile-inv-items-wrap">
+            <h3 className="mobile-inv-section-title">Item Details</h3>
+            {items.map((it, idx) => {
+              const itQty = it.quantity || 1;
+              const itRate = it.price || 0;
+              const itTotal = itRate * itQty;
+              const itTaxable = Math.round((itTotal / 1.05) * 100) / 100;
+              const itGst = Math.round((itTotal - itTaxable) * 100) / 100;
+              const itCgst = Math.round((itGst / 2) * 100) / 100;
+              const itSgst = Math.round((itGst - itCgst) * 100) / 100;
+
+              return (
+                <div key={idx} className="mobile-inv-item-card">
+                  <div className="mobile-inv-item-top">
+                    <div className="mobile-inv-item-top-left">
+                      <span className="mobile-inv-item-idx">{idx + 1}</span>
+                      <div className="mobile-inv-item-name-block">
+                        <span className="mobile-inv-item-title">{it.name}</span>
+                        <span className="mobile-inv-item-hsn">
+                          HSN/SAC: <strong style={{ fontFamily: 'monospace', color: '#334155' }}>{it.hsn || '5208'}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <span className="mobile-inv-item-price-pill">₹{itTotal.toLocaleString('en-IN')}</span>
+                  </div>
+
+                  {/* Calculation Grid */}
+                  <div className="mobile-inv-item-grid">
+                    <div className="mobile-inv-grid-cell">
+                      <span className="mobile-inv-cell-label">Qty:</span>
+                      <span className="mobile-inv-cell-val">{itQty}</span>
+                    </div>
+                    <div className="mobile-inv-grid-cell">
+                      <span className="mobile-inv-cell-label">Rate:</span>
+                      <span className="mobile-inv-cell-val">₹{itRate.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="mobile-inv-grid-cell">
+                      <span className="mobile-inv-cell-label">Taxable Val:</span>
+                      <span className="mobile-inv-cell-val">₹{itTaxable.toFixed(2)}</span>
+                    </div>
+                    <div className="mobile-inv-grid-cell">
+                      <span className="mobile-inv-cell-label">CGST (2.5%):</span>
+                      <span className="mobile-inv-cell-val">₹{itCgst.toFixed(2)}</span>
+                    </div>
+                    <div className="mobile-inv-grid-cell">
+                      <span className="mobile-inv-cell-label">SGST (2.5%):</span>
+                      <span className="mobile-inv-cell-val">₹{itSgst.toFixed(2)}</span>
+                    </div>
+                    <div className="mobile-inv-grid-cell highlight">
+                      <span style={{ fontWeight: 600 }}>Total:</span>
+                      <span style={{ fontWeight: 800 }}>₹{itTotal.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Amount in Words */}
+          <div className="mobile-inv-words-card">
+            <p className="mobile-inv-words-label">Invoice Amount in Words</p>
+            <p className="mobile-inv-words-text">{numberToIndianWords(grandTotal)}</p>
+            <div className="mobile-inv-words-footer">
+              <span className="mobile-inv-mode-text">
+                Payment Mode: <strong style={{ color: '#0f172a' }}>{paymentMode}</strong>
+              </span>
+              <span className="mobile-inv-confirmed-pill">
+                <Check size={11} strokeWidth={3} />
+                <span>CONFIRMED</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Summary Totals */}
+          <div className="mobile-inv-summary-wrap">
+            <div className="mobile-inv-summary-line">
+              <span>Items Subtotal:</span>
+              <span className="mobile-inv-summary-line-val">₹{taxableValue.toFixed(2)}</span>
+            </div>
+            <div className="mobile-inv-summary-line">
+              <span>Total Tax (CGST + SGST):</span>
+              <span className="mobile-inv-summary-line-val">₹{totalGst.toFixed(2)}</span>
+            </div>
+            <div className="mobile-inv-summary-line">
+              <span>Delivery Charges:</span>
+              <span className="mobile-inv-summary-line-val">
+                {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
+              </span>
+            </div>
+
+            {/* Grand Total Highlight */}
+            <div className="mobile-inv-grand-total-card">
+              <div className="mobile-inv-grand-total-left">
+                <span className="mobile-inv-grand-total-caption">Grand Total</span>
+                <span className="mobile-inv-grand-total-sub">Incl. GST</span>
+              </div>
+              <span className="mobile-inv-grand-total-price">₹{grandTotal.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          {/* Footer Signoff */}
+          <div className="mobile-inv-footer-wrap">
+            <div className="mobile-inv-signoff-row">
+              <div className="mobile-inv-computer-gen">
+                <p style={{ margin: 0 }}>Computer generated invoice.</p>
+                <p style={{ margin: 0 }}>No signature required.</p>
+              </div>
+              <div className="mobile-inv-signatory-wrap">
+                <span className="mobile-inv-signature-script">Picky Retail</span>
+                <span className="mobile-inv-signatory-label">Authorised Signatory</span>
+              </div>
+            </div>
+            <p className="mobile-inv-thanks-text">Thank you for shopping with Picky!</p>
+          </div>
+        </main>
       </div>
     </div>
   );

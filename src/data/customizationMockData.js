@@ -670,9 +670,9 @@ export const MOCK_PAGE_SECTIONS = {
       type: 'pdp_related',
       description: 'Curated related products displayed at the bottom of the product page.',
       settings: {
-        sectionTitle: 'Expand Your Arsenal',
-        viewAllLinkText: 'Access Database',
-        displayLimit: 4,
+        sectionTitle: 'You May Also Love',
+        viewAllLinkText: 'Shop Now',
+        displayLimit: 12,
       },
     },
   ],
