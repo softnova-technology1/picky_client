@@ -1585,18 +1585,26 @@
    Matching User Reference Screenshot & Real Data Workflow
    ========================================================================== */
 @media (max-width: 768px) {
-  /* 1. HERO SECTION */
+  /* 1. HERO SECTION (High-Contrast Mobile Background & Typography Rules) */
+  .k-hero-section::before,
+  .k-hero-section::after {
+    display: none !important;
+  }
+
   .k-hero-section {
-    background: linear-gradient(180deg, #2e1065 0%, #4c1d95 50%, #1e1136 100%) !important;
+    background: url('/images/contact_hero_mobile_bg.jpg') center top / cover no-repeat !important;
     min-height: auto !important;
     padding: 34px 16px 46px !important;
     text-align: center !important;
     color: #ffffff !important;
+    position: relative !important;
+    box-sizing: border-box !important;
   }
 
   .k-hero-grid {
     justify-content: center !important;
     text-align: center !important;
+    width: 100% !important;
   }
 
   .k-hero-content {
@@ -1614,7 +1622,7 @@
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
-    margin-bottom: 14px !important;
+    margin-bottom: 12px !important;
   }
 
   .k-hero-pill-item {
@@ -1625,11 +1633,13 @@
     border-radius: 9999px !important;
     font-size: 11px !important;
     font-weight: 600 !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    line-height: 1.2 !important;
+    background: rgba(255, 255, 255, 0.12) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     color: #e9d5ff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
   }
 
   .k-pill-dot-emerald {
@@ -1648,6 +1658,7 @@
     color: #d8b4fe !important;
     font-size: 11px !important;
     font-weight: 700 !important;
+    line-height: 1.2 !important;
     letter-spacing: 2px !important;
   }
 
@@ -1656,12 +1667,13 @@
   }
 
   .k-hero-title {
-    font-size: 29px !important;
+    font-size: 32px !important;
     font-family: serif !important;
-    font-weight: 600 !important;
-    line-height: 1.25 !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
     margin: 0 0 12px !important;
     color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
   }
 
   .k-hero-title span {
@@ -1673,11 +1685,11 @@
 
   .k-hero-desc {
     font-size: 13.5px !important;
-    color: rgba(233, 213, 255, 0.8) !important;
-    line-height: 1.6 !important;
+    color: rgba(243, 232, 255, 0.9) !important;
+    line-height: 1.5 !important;
     max-width: 340px !important;
     margin: 0 auto 24px !important;
-    text-shadow: none !important;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25) !important;
     font-weight: 400 !important;
   }
 
@@ -1685,12 +1697,14 @@
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: center !important;
     gap: 12px !important;
     margin-bottom: 0 !important;
   }
 
   .k-hero-btn-primary {
     width: 100% !important;
+    max-width: 320px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1701,11 +1715,13 @@
     border-radius: 9999px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
+    line-height: 1.2 !important;
     box-shadow: 0 10px 25px rgba(88, 28, 135, 0.45) !important;
   }
 
   .k-hero-btn-secondary {
     width: 100% !important;
+    max-width: 320px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1717,11 +1733,19 @@
     border-radius: 9999px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
+    line-height: 1.2 !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
   }
 
   .k-hero-wave {
     display: none !important;
+  }
+
+  .k-section-title {
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    margin: 0 0 12px !important;
   }
 
   /* 2. CONTACT INFORMATION (2x2 Orbs) */
@@ -1920,40 +1944,9 @@
     justify-content: center !important;
   }
 
-  /* 4. PROMO SLIDER SECTION */
+  /* 4. PROMO SLIDER SECTION (Hidden on Mobile) */
   .k-promo-slider-container {
-    min-height: 360px !important;
-    max-height: 400px !important;
-    border-radius: 20px !important;
-    margin-top: 24px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-  }
-
-  .k-promo-slide-overlay {
-    padding: 18px !important;
-  }
-
-  .k-promo-slide-title-mobile {
-    display: block !important;
-    font-size: 18px !important;
-    font-weight: 800 !important;
-    color: #ffffff !important;
-    margin: 0 0 6px !important;
-    letter-spacing: 0.5px !important;
-    text-transform: uppercase !important;
-  }
-
-  .k-promo-slide-desc {
-    font-size: 12.5px !important;
-    margin-bottom: 12px !important;
-    line-height: 1.4 !important;
-    max-width: 280px !important;
-  }
-
-  .k-promo-slide-btn {
-    padding: 10px 18px !important;
-    font-size: 12.5px !important;
-    border-radius: 9999px !important;
+    display: none !important;
   }
 
   /* 5. STORE MAP SECTION */
