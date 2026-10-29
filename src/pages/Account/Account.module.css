@@ -410,3 +410,30 @@
     /* filter: blur(0); */
   }
 }
+
+
+/* ==========================================================================
+   MOBILE PROFILE VIEW SWITCHER (320px to 768px)
+   Strictly isolates mobile view from desktop view
+   ========================================================================== */
+.mobileAccountContainer {
+  display: none;
+}
+
+.desktopAccountContainer {
+  display: block;
+  width: 100%;
+}
+
+@media (min-width: 320px) and (max-width: 768px) {
+  .mobileAccountContainer {
+    display: block;
+    width: 100%;
+    min-height: auto;
+    background-color: #f8fafc;
+  }
+
+  .desktopAccountContainer {
+    display: none !important;
+  }
+}

@@ -575,7 +575,7 @@
 
   .ref-mega-deal .ref-deal-text,
   .ref-deal-text {
-    font-size: 7.5px !important;
+    font-size: 10px !important;
     font-weight: 800 !important;
     line-height: 1 !important;
     letter-spacing: 0.15px !important;
@@ -680,7 +680,7 @@
 
   .ref-price-row .ref-discount-pill,
   .ref-discount-pill {
-    font-size: 7.5px !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
     padding: 1px 3.5px !important;
     border-radius: 3px !important;
@@ -2071,59 +2071,66 @@
 }
 
 /* ==========================================================================
-   EXACT FONT SIZES — 3 MOBILE VIEWS REPORT (320px, 375px, 425px)
+   PICKY OFFICIAL MOBILE TYPOGRAPHY & SPACING SCALE SYSTEM
+   Strictly scoped: 320px, 375px (Primary), 425px
+   Desktop view (> 768px) is 100% UNTOUCHED
    ========================================================================== */
 
-/* ─── 1. Exact Font Sizes — 425px View (414px to 768px Mobile) ─────────── */
+/* ──────────────────────────────────────────────────────────────────────────
+   1. 425px MOBILE SCALE (414px to 768px Mobile Screen Width)
+   ────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) and (min-width: 414px) {
-  /* Announcement bar: 11px */
-  .announcement-marquee-bar,
-  .announcement-ticker-text,
-  .announcement-ticker-cta,
-  .top-announcement-bar,
-  .top-announcement-crosh {
-    font-size: 11px !important;
+  :root {
+    --m-font-h1: 26px;
+    --m-font-h2: 22px;
+    --m-font-h3: 15px;
+    --m-font-price: 18px;
+    --m-font-mrp: 12px;
+    --m-font-body: 14px;
+    --m-font-btn: 14px;
+    --m-font-badge: 11px;
+    --m-font-micro: 11px;
+    --m-font-nav: 13px;
+    --m-font-input: 15px;
+    --m-font-helper: 12px;
+
+    --m-pad-page: 18px;
+    --m-pad-card: 16px;
+    --m-gap-section: 28px;
+    --m-btn-min-height: 44px;
   }
 
-  /* Header logo: 20px */
-  .mobile-nav-brand-logo,
-  .mobile-nav-brand-logo span,
-  .nav-brand-name {
-    font-size: 20px !important;
+  /* Spacing & Page Container */
+  .container,
+  .section,
+  .page-container,
+  [class*="pageContainer"],
+  [class*="mainContent"] {
+    padding-inline: 18px !important;
   }
 
-  /* Hero main heading: 34px */
+  /* H1 — Main page heading: 26px | 700-800 | 1.2 */
+  h1,
   .hero-mobile-title,
   .hero-mobile-title *,
   .hero-headline,
-  .hero-title {
-    font-size: 34px !important;
+  .hero-title,
+  .product-detail-title,
+  .checkout-page-title,
+  .cart-page-title,
+  [class*="mainTitle"],
+  [class*="pageTitle"],
+  [class*="productDetailTitle"],
+  [class*="checkoutTitle"],
+  [class*="cartTitle"] {
+    font-size: 26px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
   }
 
-  /* Hero description: 13px */
-  .hero-mobile-eyebrow,
-  .hero-description,
-  .hero-subtitle,
-  .hero-subheadline {
-    font-size: 13px !important;
-  }
-
-  /* Hero price: 14px */
-  .hero-price,
-  .hero-mobile-price,
-  .hero-mobile-highlight {
-    font-size: 14px !important;
-  }
-
-  /* Hero CTA button: 13px */
-  .hero-mobile-cta,
-  .hero-mobile-cta span,
-  .hero-cta,
-  .carousel-cta-btn {
-    font-size: 13px !important;
-  }
-
-  /* Section heading: 26px */
+  /* H2 — Section heading: 22px | 650-700 | 1.3 */
+  h2,
   .hp-section-title,
   .section-title,
   .section-heading,
@@ -2132,484 +2139,865 @@
   .hp-new-arrivals-header .hp-section-title,
   .hp-bestsellers-section .hp-section-title,
   [class*="sectionTitle"],
-  [class*="sectionHeading"] {
-    font-size: 26px !important;
-  }
-
-  /* Section subtitle: 13px */
-  .hp-section-subtitle,
-  .section-subtitle,
-  .hp-section-desc,
-  .section-subheading,
-  [class*="sectionSubtitle"],
-  [class*="sectionDesc"] {
-    font-size: 13px !important;
-  }
-
-  /* Category card title: 14px */
-  .hp-category-name,
-  .category-card-title,
-  .hp-category-title,
-  [class*="categoryCardTitle"],
-  [class*="categoryName"],
-  [class*="featuredTitle"],
-  [class*="companionTitle"] {
-    font-size: 14px !important;
-  }
-
-  /* Category product count: 12px */
-  .hp-category-count,
-  .category-product-count,
-  .category-count,
-  [class*="productCount"],
-  [class*="categoryCount"],
-  [class*="statsCount"] {
-    font-size: 12px !important;
-  }
-
-  /* Budget card price: 22px */
-  [class*="pillTitle"],
-  [class*="budgetCardTitle"],
-  .budget-card-price,
-  .budget-price,
-  .sidebar-budget-row,
-  [class*="budgetPrice"] {
+  [class*="sectionHeading"],
+  [class*="headingText"],
+  [class*="heroTitle"],
+  [class*="blockHeading"],
+  [class*="drawerTitle"],
+  [class*="sheetTitle"] {
     font-size: 22px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
   }
 
-  /* Budget CTA: 12px */
-  [class*="pillBtn"],
-  [class*="pillBtn"] span,
-  [class*="budgetCardSubtitle"],
-  .budget-cta,
-  [class*="budgetSelectCard"] span {
-    font-size: 12px !important;
-  }
-
-  /* Product title: 14px */
-  .ref-product-title,
-  .product-card-title,
-  .spotlight-title,
-  [class*="productTitle"],
-  [class*="productName"] {
-    font-size: 14px !important;
-  }
-
-  /* Product selling price: 18px */
-  .ref-current-price,
-  .product-card-price,
-  .spotlight-current-price,
-  [class*="sellingPrice"],
-  [class*="currentPrice"] {
-    font-size: 18px !important;
-  }
-
-  /* Original price: 12px */
-  .ref-original-price,
-  .product-card-original-price,
-  .spotlight-orig-price,
-  [class*="origPrice"],
-  [class*="originalPrice"] {
-    font-size: 12px !important;
-  }
-
-  /* Add to Cart button: 13px */
-  .ref-add-cart-btn,
-  .ref-add-cart-btn span,
-  .product-card-add-btn,
-  [class*="addCartBtn"],
-  .spotlight-cta-btn,
-  .spotlight-cta-btn span {
-    font-size: 13px !important;
-  }
-
-  /* Badge text: 11px */
-  .hp-section-badge,
-  .ref-deal-text,
-  .announcement-ticker-badge,
-  [class*="pillBadgeTag"],
-  .mobile-header-badge,
-  .spotlight-category,
-  .spotlight-tag,
-  .badge,
-  [class*="badgeText"],
-  [class*="discountBadge"] {
-    font-size: 11px !important;
-  }
-
-  /* Footer heading: 16px */
-  .footer-heading,
-  .footer-col h3,
-  .footer-col h4,
-  [class*="footerHeading"] {
-    font-size: 16px !important;
-  }
-
-  /* Footer links: 13px */
-  .footer-link,
-  .footer-link-item,
-  .footer-links-list a,
-  .footer-newsletter-text,
-  .footer-copyright,
-  [class*="footerLink"] {
-    font-size: 13px !important;
-  }
-}
-
-/* ─── 2. Exact Font Sizes — 375px View (350px to 413px Mobile) ─────────── */
-@media (max-width: 413px) and (min-width: 350px) {
-  /* Announcement bar: 10px */
-  .announcement-marquee-bar,
-  .announcement-ticker-text,
-  .announcement-ticker-cta,
-  .top-announcement-bar,
-  .top-announcement-crosh {
-    font-size: 10px !important;
-  }
-
-  /* Header logo: 19px */
-  .mobile-nav-brand-logo,
-  .mobile-nav-brand-logo span,
-  .nav-brand-name {
-    font-size: 19px !important;
-  }
-
-  /* Hero main heading: 30px */
-  .hero-mobile-title,
-  .hero-mobile-title *,
-  .hero-headline,
-  .hero-title {
-    font-size: 30px !important;
-  }
-
-  /* Hero description: 12px */
-  .hero-mobile-eyebrow,
-  .hero-description,
-  .hero-subtitle,
-  .hero-subheadline {
-    font-size: 12px !important;
-  }
-
-  /* Hero price: 13px */
-  .hero-price,
-  .hero-mobile-price,
-  .hero-mobile-highlight {
-    font-size: 13px !important;
-  }
-
-  /* Hero CTA button: 12px */
-  .hero-mobile-cta,
-  .hero-mobile-cta span,
-  .hero-cta,
-  .carousel-cta-btn {
-    font-size: 12px !important;
-  }
-
-  /* Section heading: 24px */
-  .hp-section-title,
-  .section-title,
-  .section-heading,
-  .hp-section-heading,
-  .hp-flash-deals-section .hp-section-title,
-  .hp-new-arrivals-header .hp-section-title,
-  .hp-bestsellers-section .hp-section-title,
-  [class*="sectionTitle"],
-  [class*="sectionHeading"] {
-    font-size: 24px !important;
-  }
-
-  /* Section subtitle: 12px */
-  .hp-section-subtitle,
-  .section-subtitle,
-  .hp-section-desc,
-  .section-subheading,
-  [class*="sectionSubtitle"],
-  [class*="sectionDesc"] {
-    font-size: 12px !important;
-  }
-
-  /* Category card title: 13px */
+  /* H3 — Card / item title: 15px | 600-700 | 1.3 */
+  h3,
+  h4,
   .hp-category-name,
   .category-card-title,
   .hp-category-title,
-  [class*="categoryCardTitle"],
-  [class*="categoryName"],
-  [class*="featuredTitle"],
-  [class*="companionTitle"] {
-    font-size: 13px !important;
-  }
-
-  /* Category product count: 11px */
-  .hp-category-count,
-  .category-product-count,
-  .category-count,
-  [class*="productCount"],
-  [class*="categoryCount"],
-  [class*="statsCount"] {
-    font-size: 11px !important;
-  }
-
-  /* Budget card price: 20px */
-  [class*="pillTitle"],
-  [class*="budgetCardTitle"],
-  .budget-card-price,
-  .budget-price,
-  .sidebar-budget-row,
-  [class*="budgetPrice"] {
-    font-size: 20px !important;
-  }
-
-  /* Budget CTA: 11px */
-  [class*="pillBtn"],
-  [class*="pillBtn"] span,
-  [class*="budgetCardSubtitle"],
-  .budget-cta,
-  [class*="budgetSelectCard"] span {
-    font-size: 11px !important;
-  }
-
-  /* Product title: 13px */
   .ref-product-title,
   .product-card-title,
   .spotlight-title,
-  [class*="productTitle"],
-  [class*="productName"] {
-    font-size: 13px !important;
-  }
-
-  /* Product selling price: 16px */
-  .ref-current-price,
-  .product-card-price,
-  .spotlight-current-price,
-  [class*="sellingPrice"],
-  [class*="currentPrice"] {
-    font-size: 16px !important;
-  }
-
-  /* Original price: 11px */
-  .ref-original-price,
-  .product-card-original-price,
-  .spotlight-orig-price,
-  [class*="origPrice"],
-  [class*="originalPrice"] {
-    font-size: 11px !important;
-  }
-
-  /* Add to Cart button: 12px */
-  .ref-add-cart-btn,
-  .ref-add-cart-btn span,
-  .product-card-add-btn,
-  [class*="addCartBtn"],
-  .spotlight-cta-btn,
-  .spotlight-cta-btn span {
-    font-size: 12px !important;
-  }
-
-  /* Badge text: 10px */
-  .hp-section-badge,
-  .ref-deal-text,
-  .announcement-ticker-badge,
-  [class*="pillBadgeTag"],
-  .mobile-header-badge,
-  .spotlight-category,
-  .spotlight-tag,
-  .badge,
-  [class*="badgeText"],
-  [class*="discountBadge"] {
-    font-size: 10px !important;
-  }
-
-  /* Footer heading: 14px */
-  .footer-heading,
-  .footer-col h3,
-  .footer-col h4,
-  [class*="footerHeading"] {
-    font-size: 14px !important;
-  }
-
-  /* Footer links: 12px */
-  .footer-link,
-  .footer-link-item,
-  .footer-links-list a,
-  .footer-newsletter-text,
-  .footer-copyright,
-  [class*="footerLink"] {
-    font-size: 12px !important;
-  }
-}
-
-/* ─── 3. Exact Font Sizes — 320px View (<= 349px Mobile) ────────────────── */
-@media (max-width: 349px) {
-  /* Announcement bar: 9px */
-  .announcement-marquee-bar,
-  .announcement-ticker-text,
-  .announcement-ticker-cta,
-  .top-announcement-bar,
-  .top-announcement-crosh {
-    font-size: 9px !important;
-  }
-
-  /* Header logo: 17px */
-  .mobile-nav-brand-logo,
-  .mobile-nav-brand-logo span,
-  .nav-brand-name {
-    font-size: 17px !important;
-  }
-
-  /* Hero main heading: 26px */
-  .hero-mobile-title,
-  .hero-mobile-title *,
-  .hero-headline,
-  .hero-title {
-    font-size: 26px !important;
-  }
-
-  /* Hero description: 11px */
-  .hero-mobile-eyebrow,
-  .hero-description,
-  .hero-subtitle,
-  .hero-subheadline {
-    font-size: 11px !important;
-  }
-
-  /* Hero price: 12px */
-  .hero-price,
-  .hero-mobile-price,
-  .hero-mobile-highlight {
-    font-size: 12px !important;
-  }
-
-  /* Hero CTA button: 11px */
-  .hero-mobile-cta,
-  .hero-mobile-cta span,
-  .hero-cta,
-  .carousel-cta-btn {
-    font-size: 11px !important;
-  }
-
-  /* Section heading: 21px */
-  .hp-section-title,
-  .section-title,
-  .section-heading,
-  .hp-section-heading,
-  .hp-flash-deals-section .hp-section-title,
-  .hp-new-arrivals-header .hp-section-title,
-  .hp-bestsellers-section .hp-section-title,
-  [class*="sectionTitle"],
-  [class*="sectionHeading"] {
-    font-size: 21px !important;
-  }
-
-  /* Section subtitle: 11px */
-  .hp-section-subtitle,
-  .section-subtitle,
-  .hp-section-desc,
-  .section-subheading,
-  [class*="sectionSubtitle"],
-  [class*="sectionDesc"] {
-    font-size: 11px !important;
-  }
-
-  /* Category card title: 12px */
-  .hp-category-name,
-  .category-card-title,
-  .hp-category-title,
   [class*="categoryCardTitle"],
   [class*="categoryName"],
-  [class*="featuredTitle"],
-  [class*="companionTitle"] {
-    font-size: 12px !important;
-  }
-
-  /* Category product count: 10px */
-  .hp-category-count,
-  .category-product-count,
-  .category-count,
-  [class*="productCount"],
-  [class*="categoryCount"],
-  [class*="statsCount"] {
-    font-size: 10px !important;
-  }
-
-  /* Budget card price: 17px */
-  [class*="pillTitle"],
-  [class*="budgetCardTitle"],
-  .budget-card-price,
-  .budget-price,
-  .sidebar-budget-row,
-  [class*="budgetPrice"] {
-    font-size: 17px !important;
-  }
-
-  /* Budget CTA: 10px */
-  [class*="pillBtn"],
-  [class*="pillBtn"] span,
-  [class*="budgetCardSubtitle"],
-  .budget-cta,
-  [class*="budgetSelectCard"] span {
-    font-size: 10px !important;
-  }
-
-  /* Product title: 12px */
-  .ref-product-title,
-  .product-card-title,
-  .spotlight-title,
   [class*="productTitle"],
-  [class*="productName"] {
-    font-size: 12px !important;
-  }
-
-  /* Product selling price: 15px */
-  .ref-current-price,
-  .product-card-price,
-  .spotlight-current-price,
-  [class*="sellingPrice"],
-  [class*="currentPrice"] {
+  [class*="productName"],
+  [class*="userNameHeading"],
+  [class*="orderNumber"],
+  [class*="recipientName"],
+  [class*="cardTitle"],
+  [class*="itemTitle"],
+  [class*="addCardTitle"],
+  [class*="trustHeading"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"],
+  [class*="kycTitle"] {
     font-size: 15px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
   }
 
-  /* Original price: 10px */
+  /* Main price / Total Paid: 18px | 700-800 | 1.2 (Purple & Bold) */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"],
+  [class*="productPrice"],
+  [class*="totalPaid"],
+  [class*="totalAmount"],
+  [class*="orderTotal"],
+  [class*="paidAmount"],
+  [class*="cartTotal"],
+  [class*="checkoutTotal"],
+  [class*="priceText"],
+  [class*="itemPrice"] {
+    font-size: 18px !important;
+    font-weight: 750 !important;
+    color: #7c3aed !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Date / Time: 12px | 400-500 | 1.3 */
   .ref-original-price,
   .product-card-original-price,
   .spotlight-orig-price,
   [class*="origPrice"],
-  [class*="originalPrice"] {
-    font-size: 10px !important;
+  [class*="originalPrice"],
+  [class*="strikethroughPrice"],
+  [class*="mrpPrice"],
+  [class*="orderDate"],
+  [class*="orderTime"],
+  [class*="placedDate"],
+  [class*="subDate"],
+  [class*="timestamp"],
+  [class*="publishDate"] {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
   }
 
-  /* Add to Cart button: 11px */
+  /* Body description / Notes: 14px | 400-500 | 1.5 */
+  p,
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline,
+  .hero-mobile-eyebrow,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"],
+  [class*="heroSubtitle"],
+  [class*="sectionDescription"],
+  [class*="subHeadingText"],
+  [class*="bannerMetaText"],
+  [class*="addressRow"],
+  [class*="productDescription"],
+  [class*="bodyDesc"],
+  [class*="trustDesc"],
+  [class*="addCardSubtitle"] {
+    font-size: 14px !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Button text / CTA: 14px | 600-700 | 1.2 (Min-height: 44px) */
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn,
   .ref-add-cart-btn,
-  .ref-add-cart-btn span,
   .product-card-add-btn,
   [class*="addCartBtn"],
   .spotlight-cta-btn,
-  .spotlight-cta-btn span {
-    font-size: 11px !important;
+  [class*="ctaBtn"],
+  [class*="primaryBtn"],
+  [class*="signOutBtn"],
+  [class*="editBtn"],
+  [class*="actionBtn"],
+  [class*="orderTrackBtn"],
+  [class*="setPrimaryBtn"],
+  [class*="submitBtn"],
+  [class*="btnPrimary"],
+  [class*="applyFiltersBtn"],
+  .budget-cta {
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    min-height: 44px;
   }
 
-  /* Badge text: 9px */
+  /* Badges / Status pills: 11px | 600-700 | 1.2 (No text clipping) */
   .hp-section-badge,
   .ref-deal-text,
   .announcement-ticker-badge,
-  [class*="pillBadgeTag"],
   .mobile-header-badge,
   .spotlight-category,
   .spotlight-tag,
   .badge,
+  [class*="pillBadgeTag"],
   [class*="badgeText"],
-  [class*="discountBadge"] {
-    font-size: 9px !important;
+  [class*="discountBadge"],
+  [class*="userIdBadge"],
+  [class*="orderBadge"],
+  [class*="statusBadge"],
+  [class*="primaryPill"],
+  [class*="verifiedBadge"],
+  [class*="statusPill"],
+  [class*="tagPill"] {
+    font-size: 11px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
   }
 
-  /* Footer heading: 13px */
+  /* Micro labels / Form labels: 11px | 500-600 | 1.2 */
+  label,
+  .field-label,
+  .input-label,
+  [class*="fieldLabel"],
+  [class*="formLabel"],
+  [class*="microLabel"],
+  [class*="statusLabel"],
+  [class*="pincodeStamp"],
+  [class*="filterGroupLabel"],
+  [class*="toggleLabelDesc"],
+  [class*="metaLabel"],
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  [class*="categoryCount"],
+  [class*="productCount"],
+  [class*="statsCount"] {
+    font-size: 11px !important;
+    font-weight: 550 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Navigation labels: 13px | 500-600 | 1.2 */
+  [class*="accountTabBtn"],
+  [class*="mobileNavLabel"],
+  [class*="tabButtonActive"],
+  [class*="tabButtonInactive"],
+  [class*="filterChipActive"],
+  [class*="filterChipInactive"],
+  [class*="filterPillActive"],
+  [class*="filterPillInactive"],
+  .mobile-bottom-nav a span {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Input text: 15px | 400-500 */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea,
+  [class*="inputField"],
+  [class*="formInput"],
+  [class*="fieldValue"],
+  [class*="fieldValueEmail"],
+  [class*="fieldValuePhone"] {
+    font-size: 15px !important;
+    font-weight: 450 !important;
+  }
+
+  /* Helper / Secondary text: 12px | 400-500 | 1.4 */
+  [class*="helperText"],
+  [class*="secondaryText"],
+  [class*="fieldHint"],
+  [class*="verifiedSubtitle"],
+  [class*="phoneChip"],
+  [class*="metaSub"],
+  [class*="budgetCardSubtitle"],
+  .announcement-marquee-bar,
+  .announcement-ticker-text {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links: 12px | Micro labels: 10-11px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+  }
+
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   2. 375px MOBILE SCALE (350px to 413px Mobile) — PRIMARY DESIGN WIDTH
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 413px) and (min-width: 350px) {
+  :root {
+    --m-font-h1: 24px;
+    --m-font-h2: 20px;
+    --m-font-h3: 14px;
+    --m-font-price: 17px;
+    --m-font-mrp: 11px;
+    --m-font-body: 13px;
+    --m-font-btn: 13px;
+    --m-font-badge: 10px;
+    --m-font-micro: 10px;
+    --m-font-nav: 12px;
+    --m-font-input: 14px;
+    --m-font-helper: 12px;
+
+    --m-pad-page: 16px;
+    --m-pad-card: 14px;
+    --m-gap-section: 24px;
+    --m-btn-min-height: 42px;
+  }
+
+  /* Spacing & Page Container */
+  .container,
+  .section,
+  .page-container,
+  [class*="pageContainer"],
+  [class*="mainContent"] {
+    padding-inline: 16px !important;
+  }
+
+  /* H1 — Main page heading: 24px | 700-800 | 1.2 */
+  h1,
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title,
+  .product-detail-title,
+  .checkout-page-title,
+  .cart-page-title,
+  [class*="mainTitle"],
+  [class*="pageTitle"],
+  [class*="productDetailTitle"],
+  [class*="checkoutTitle"],
+  [class*="cartTitle"] {
+    font-size: 24px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* H2 — Section heading: 20px | 650-700 | 1.3 */
+  h2,
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"],
+  [class*="headingText"],
+  [class*="heroTitle"],
+  [class*="blockHeading"],
+  [class*="drawerTitle"],
+  [class*="sheetTitle"] {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  /* H3 — Card / item title: 14px | 600-700 | 1.3 */
+  h3,
+  h4,
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="productTitle"],
+  [class*="productName"],
+  [class*="userNameHeading"],
+  [class*="orderNumber"],
+  [class*="recipientName"],
+  [class*="cardTitle"],
+  [class*="itemTitle"],
+  [class*="addCardTitle"],
+  [class*="trustHeading"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"],
+  [class*="kycTitle"] {
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Main price / Total Paid: 17px | 700-800 | 1.2 (Purple & Bold) */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"],
+  [class*="productPrice"],
+  [class*="totalPaid"],
+  [class*="totalAmount"],
+  [class*="orderTotal"],
+  [class*="paidAmount"],
+  [class*="cartTotal"],
+  [class*="checkoutTotal"],
+  [class*="priceText"],
+  [class*="itemPrice"] {
+    font-size: 17px !important;
+    font-weight: 750 !important;
+    color: #7c3aed !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Date / Time: 11px | 400-500 | 1.3 */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  [class*="origPrice"],
+  [class*="originalPrice"],
+  [class*="strikethroughPrice"],
+  [class*="mrpPrice"],
+  [class*="orderDate"],
+  [class*="orderTime"],
+  [class*="placedDate"],
+  [class*="subDate"],
+  [class*="timestamp"],
+  [class*="publishDate"] {
+    font-size: 11px !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Body description / Notes: 13px | 400-500 | 1.5 */
+  p,
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline,
+  .hero-mobile-eyebrow,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"],
+  [class*="heroSubtitle"],
+  [class*="sectionDescription"],
+  [class*="subHeadingText"],
+  [class*="bannerMetaText"],
+  [class*="addressRow"],
+  [class*="productDescription"],
+  [class*="bodyDesc"],
+  [class*="trustDesc"],
+  [class*="addCardSubtitle"] {
+    font-size: 13px !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Button text / CTA: 13px | 600-700 | 1.2 (Min-height: 42px) */
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn,
+  .ref-add-cart-btn,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  [class*="ctaBtn"],
+  [class*="primaryBtn"],
+  [class*="signOutBtn"],
+  [class*="editBtn"],
+  [class*="actionBtn"],
+  [class*="orderTrackBtn"],
+  [class*="setPrimaryBtn"],
+  [class*="submitBtn"],
+  [class*="btnPrimary"],
+  [class*="applyFiltersBtn"],
+  .budget-cta {
+    font-size: 13px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    min-height: 42px;
+  }
+
+  /* Badges / Status pills: 10px | 600-700 | 1.2 (No text clipping) */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  [class*="pillBadgeTag"],
+  [class*="badgeText"],
+  [class*="discountBadge"],
+  [class*="userIdBadge"],
+  [class*="orderBadge"],
+  [class*="statusBadge"],
+  [class*="primaryPill"],
+  [class*="verifiedBadge"],
+  [class*="statusPill"],
+  [class*="tagPill"] {
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Micro labels / Form labels: 10px | 500-600 | 1.2 */
+  label,
+  .field-label,
+  .input-label,
+  [class*="fieldLabel"],
+  [class*="formLabel"],
+  [class*="microLabel"],
+  [class*="statusLabel"],
+  [class*="pincodeStamp"],
+  [class*="filterGroupLabel"],
+  [class*="toggleLabelDesc"],
+  [class*="metaLabel"],
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  [class*="categoryCount"],
+  [class*="productCount"],
+  [class*="statsCount"] {
+    font-size: 10px !important;
+    font-weight: 550 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Navigation labels: 12px | 500-600 | 1.2 */
+  [class*="accountTabBtn"],
+  [class*="mobileNavLabel"],
+  [class*="tabButtonActive"],
+  [class*="tabButtonInactive"],
+  [class*="filterChipActive"],
+  [class*="filterChipInactive"],
+  [class*="filterPillActive"],
+  [class*="filterPillInactive"],
+  .mobile-bottom-nav a span {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Input text: 14px | 400-500 */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea,
+  [class*="inputField"],
+  [class*="formInput"],
+  [class*="fieldValue"],
+  [class*="fieldValueEmail"],
+  [class*="fieldValuePhone"] {
+    font-size: 14px !important;
+    font-weight: 450 !important;
+  }
+
+  /* Helper / Secondary text: 12px | 400-500 | 1.4 */
+  [class*="helperText"],
+  [class*="secondaryText"],
+  [class*="fieldHint"],
+  [class*="verifiedSubtitle"],
+  [class*="phoneChip"],
+  [class*="metaSub"],
+  [class*="budgetCardSubtitle"],
+  .announcement-marquee-bar,
+  .announcement-ticker-text {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links: 12px | Micro labels: 10px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   3. 320px NARROW MOBILE SCALE (<= 349px Mobile Width)
+   Rule: Never drop important text below 10px; adjust wrapping & padding
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 349px) {
+  :root {
+    --m-font-h1: 22px;
+    --m-font-h2: 18px;
+    --m-font-h3: 13px;
+    --m-font-price: 16px;
+    --m-font-mrp: 11px;
+    --m-font-body: 12px;
+    --m-font-btn: 12px;
+    --m-font-badge: 10px;
+    --m-font-micro: 10px;
+    --m-font-nav: 11px;
+    --m-font-input: 13px;
+    --m-font-helper: 11px;
+
+    --m-pad-page: 14px;
+    --m-pad-card: 12px;
+    --m-gap-section: 20px;
+    --m-btn-min-height: 40px;
+  }
+
+  /* Spacing & Page Container */
+  .container,
+  .section,
+  .page-container,
+  [class*="pageContainer"],
+  [class*="mainContent"] {
+    padding-inline: 14px !important;
+  }
+
+  /* H1 — Main page heading: 22px | 700-800 | 1.2 */
+  h1,
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title,
+  .product-detail-title,
+  .checkout-page-title,
+  .cart-page-title,
+  [class*="mainTitle"],
+  [class*="pageTitle"],
+  [class*="productDetailTitle"],
+  [class*="checkoutTitle"],
+  [class*="cartTitle"] {
+    font-size: 22px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* H2 — Section heading: 18px | 650-700 | 1.3 */
+  h2,
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"],
+  [class*="headingText"],
+  [class*="heroTitle"],
+  [class*="blockHeading"],
+  [class*="drawerTitle"],
+  [class*="sheetTitle"] {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  /* H3 — Card / item title: 13px | 600-700 | 1.3 */
+  h3,
+  h4,
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="productTitle"],
+  [class*="productName"],
+  [class*="userNameHeading"],
+  [class*="orderNumber"],
+  [class*="recipientName"],
+  [class*="cardTitle"],
+  [class*="itemTitle"],
+  [class*="addCardTitle"],
+  [class*="trustHeading"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"],
+  [class*="kycTitle"] {
+    font-size: 13px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Main price / Total Paid: 16px | 700-800 | 1.2 (Purple & Bold) */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"],
+  [class*="productPrice"],
+  [class*="totalPaid"],
+  [class*="totalAmount"],
+  [class*="orderTotal"],
+  [class*="paidAmount"],
+  [class*="cartTotal"],
+  [class*="checkoutTotal"],
+  [class*="priceText"],
+  [class*="itemPrice"] {
+    font-size: 16px !important;
+    font-weight: 750 !important;
+    color: #7c3aed !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Date / Time: 11px | 400-500 | 1.3 (Never below 10px) */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  [class*="origPrice"],
+  [class*="originalPrice"],
+  [class*="strikethroughPrice"],
+  [class*="mrpPrice"],
+  [class*="orderDate"],
+  [class*="orderTime"],
+  [class*="placedDate"],
+  [class*="subDate"],
+  [class*="timestamp"],
+  [class*="publishDate"] {
+    font-size: 11px !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Body description / Notes: 12px | 400-500 | 1.5 */
+  p,
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline,
+  .hero-mobile-eyebrow,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"],
+  [class*="heroSubtitle"],
+  [class*="sectionDescription"],
+  [class*="subHeadingText"],
+  [class*="bannerMetaText"],
+  [class*="addressRow"],
+  [class*="productDescription"],
+  [class*="bodyDesc"],
+  [class*="trustDesc"],
+  [class*="addCardSubtitle"] {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Button text / CTA: 12px | 600-700 | 1.2 (Min-height: 40px) */
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn,
+  .ref-add-cart-btn,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  [class*="ctaBtn"],
+  [class*="primaryBtn"],
+  [class*="signOutBtn"],
+  [class*="editBtn"],
+  [class*="actionBtn"],
+  [class*="orderTrackBtn"],
+  [class*="setPrimaryBtn"],
+  [class*="submitBtn"],
+  [class*="btnPrimary"],
+  [class*="applyFiltersBtn"],
+  .budget-cta {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    min-height: 40px;
+  }
+
+  /* Badges / Status pills: 10px | 600-700 | 1.2 (Never below 10px) */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  [class*="pillBadgeTag"],
+  [class*="badgeText"],
+  [class*="discountBadge"],
+  [class*="userIdBadge"],
+  [class*="orderBadge"],
+  [class*="statusBadge"],
+  [class*="primaryPill"],
+  [class*="verifiedBadge"],
+  [class*="statusPill"],
+  [class*="tagPill"] {
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Micro labels / Form labels: 10px | 500-600 | 1.2 */
+  label,
+  .field-label,
+  .input-label,
+  [class*="fieldLabel"],
+  [class*="formLabel"],
+  [class*="microLabel"],
+  [class*="statusLabel"],
+  [class*="pincodeStamp"],
+  [class*="filterGroupLabel"],
+  [class*="toggleLabelDesc"],
+  [class*="metaLabel"],
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  [class*="categoryCount"],
+  [class*="productCount"],
+  [class*="statsCount"] {
+    font-size: 10px !important;
+    font-weight: 550 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Navigation labels: 11px | 500-600 | 1.2 */
+  [class*="accountTabBtn"],
+  [class*="mobileNavLabel"],
+  [class*="tabButtonActive"],
+  [class*="tabButtonInactive"],
+  [class*="filterChipActive"],
+  [class*="filterChipInactive"],
+  [class*="filterPillActive"],
+  [class*="filterPillInactive"],
+  .mobile-bottom-nav a span {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Input text: 13px | 400-500 */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea,
+  [class*="inputField"],
+  [class*="formInput"],
+  [class*="fieldValue"],
+  [class*="fieldValueEmail"],
+  [class*="fieldValuePhone"] {
+    font-size: 13px !important;
+    font-weight: 450 !important;
+  }
+
+  /* Helper / Secondary text: 11px | 400-500 | 1.4 */
+  [class*="helperText"],
+  [class*="secondaryText"],
+  [class*="fieldHint"],
+  [class*="verifiedSubtitle"],
+  [class*="phoneChip"],
+  [class*="metaSub"],
+  [class*="budgetCardSubtitle"],
+  .announcement-marquee-bar,
+  .announcement-ticker-text {
+    font-size: 11px !important;
+    font-weight: 450 !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links: 11px | Micro labels: 10px */
   .footer-heading,
   .footer-col h3,
   .footer-col h4,
   [class*="footerHeading"] {
     font-size: 13px !important;
+    font-weight: 700 !important;
   }
 
-  /* Footer links: 11px */
   .footer-link,
   .footer-link-item,
   .footer-links-list a,
@@ -2617,6 +3005,6 @@
   .footer-copyright,
   [class*="footerLink"] {
     font-size: 11px !important;
+    line-height: 1.4 !important;
   }
 }
-

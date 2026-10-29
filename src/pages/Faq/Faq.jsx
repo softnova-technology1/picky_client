@@ -19,6 +19,20 @@ import {
 } from 'lucide-react';
 import styles from './Faq.module.css';
 
+const WhatsAppIcon = ({ size = 20, color = '#ffffff', className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    className={className}
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+  >
+    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.12-.533-1.666-.693-2.73-2.39-2.813-2.5-.083-.11-.664-.882-.664-1.682 0-.8.419-1.194.568-1.356.148-.162.325-.202.434-.202.108 0 .216.002.311.007.1.005.234-.038.366.279.136.327.464 1.132.505 1.215.041.083.068.18.014.288-.054.11-.081.18-.162.275-.081.095-.17.212-.243.285-.081.082-.166.172-.072.334.095.162.421.694.904 1.124.622.554 1.146.726 1.309.807.162.081.257.068.351-.041.095-.108.405-.473.514-.635.108-.162.216-.135.365-.081.148.054.946.446 1.109.527.162.081.27.122.311.19.041.067.041.391-.103.796z" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.98-1.398C8.423 21.503 10.151 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.61 0-3.13-.45-4.43-1.23l-.32-.19-3.27.92.93-3.18-.21-.34C3.84 14.86 3.4 13.48 3.4 12c0-4.74 3.86-8.6 8.6-8.6s8.6 3.86 8.6 8.6-3.86 8.6-8.6 8.6z" />
+  </svg>
+);
+
 const FAQ_CATEGORIES = [
   { id: 'all', label: 'All Questions', icon: HelpCircle },
   { id: 'orders', label: 'Orders & Tracking', icon: Truck },
@@ -221,41 +235,41 @@ export default function Faq() {
 
             {/* Quick Suggestion Pills */}
             <div className={styles.quickPills}>
-              <span className={styles.quickPillLabel}>Popular topics:</span>
+              <span className={styles.quickPillLabel}>POPULAR:</span>
               <button
                 type="button"
                 className={styles.quickPill}
                 onClick={() => handleQuickSearch('track order')}
               >
-                📦 Track Order
+                Track Order
               </button>
               <button
                 type="button"
                 className={styles.quickPill}
                 onClick={() => handleQuickSearch('return')}
               >
-                🔄 7-Day Returns
+                7-Day Returns
               </button>
               <button
                 type="button"
                 className={styles.quickPill}
                 onClick={() => handleQuickSearch('cod')}
               >
-                💵 Cash on Delivery
+                Cash on Delivery
               </button>
               <button
                 type="button"
                 className={styles.quickPill}
                 onClick={() => handleQuickSearch('saree length')}
               >
-                📐 Saree Measurements
+                Saree Measurements
               </button>
               <button
                 type="button"
                 className={styles.quickPill}
                 onClick={() => handleQuickSearch('invoice')}
               >
-                📄 GST Tax Invoice
+                GST Tax Invoice
               </button>
             </div>
           </div>
@@ -277,7 +291,7 @@ export default function Faq() {
                     isActive ? styles.categoryTabActive : ''
                   }`}
                 >
-                  <Icon size={16} />
+                  <span className={styles.tabIcon}><Icon size={15} /></span>
                   <span>{cat.label}</span>
                 </button>
               );
@@ -304,28 +318,30 @@ export default function Faq() {
                     >
                       <div className={styles.questionLeft}>
                         <div className={styles.qIconBox}>
-                          <HelpCircle size={18} />
+                          <span className={styles.qMark}>?</span>
                         </div>
                         <span className={styles.questionText}>
                           {faq.question}
                         </span>
                       </div>
-                      <ChevronDown
-                        size={20}
-                        className={`${styles.chevronIcon} ${
-                          isOpen ? styles.chevronRotated : ''
-                        }`}
-                      />
+                      <div className={styles.chevronWrap}>
+                        <ChevronDown
+                          size={16}
+                          className={`${styles.chevronIcon} ${
+                            isOpen ? styles.chevronRotated : ''
+                          }`}
+                        />
+                      </div>
                     </button>
 
                     {isOpen && (
                       <div className={styles.faqAnswer}>
-                        <p style={{ margin: 0, whiteSpace: 'pre-line' }}>
+                        <p className={styles.answerText} style={{ margin: 0, whiteSpace: 'pre-line' }}>
                           {faq.answer}
                         </p>
                         {faq.highlight && (
                           <div className={styles.answerHighlight}>
-                            <strong>Key Point:</strong> {faq.highlight}
+                            <strong className={styles.highlightTag}>Key Point:</strong> {faq.highlight}
                           </div>
                         )}
                       </div>
@@ -355,7 +371,9 @@ export default function Faq() {
           )}
 
           {/* Quick Policy Navigation Cards */}
-          <div className={styles.quickNavGrid}>
+          <div className={styles.resourcesSection}>
+            <div className={styles.resourcesHeading}>SELF-SERVICE RESOURCES</div>
+            <div className={styles.quickNavGrid}>
             <Link to="/returns" className={styles.quickNavCard}>
               <div className={styles.quickNavIcon}>
                 <RotateCcw size={20} />
@@ -395,6 +413,7 @@ export default function Faq() {
                 <div className={styles.quickNavSub}>Buyer protection & store policies</div>
               </div>
             </Link>
+            </div>
           </div>
 
           {/* Live Support Banner */}
@@ -412,7 +431,7 @@ export default function Faq() {
                 rel="noopener noreferrer"
                 className={styles.whatsappBtn}
               >
-                <MessageCircle size={18} /> Chat on WhatsApp
+                <WhatsAppIcon size={19} color="#ffffff" /> <span>Chat on WhatsApp</span>
               </a>
               <Link to="/contact" className={styles.callBtn}>
                 <PhoneCall size={18} /> Contact Support
