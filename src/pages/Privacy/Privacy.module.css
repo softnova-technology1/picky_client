@@ -1,3 +1,5 @@
+/* ─── Privacy.module.css — Picky Legal & Privacy Policy Styles ─── */
+
 .calendar-icon {
   color: #7c3aed;
 }
@@ -33,4 +35,677 @@
   color: #10b981;
   display: inline;
   margin-right: 6px;
+}
+
+/* ─── Desktop Isolation (> 768px) ─── */
+.desktopWrapper {
+  display: block;
+}
+
+.mobileWrapper {
+  display: none;
+}
+
+/* ─── Mobile View (Strictly 320px - 768px) ─── */
+@media (max-width: 768px) {
+  .desktopWrapper {
+    display: none !important;
+  }
+
+  .mobileWrapper {
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: #F8F9FC;
+    color: #1A1A2E;
+    font-family: inherit;
+    padding-bottom: 2.5rem;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Mobile Hero Header */
+  .mobileHero {
+    padding: 1.15rem 1rem 1rem;
+    background: linear-gradient(145deg, #150B2E 0%, #24114d 60%, #3e167a 100%);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(135, 56, 245, 0.2);
+  }
+
+  .mobileHeroBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(135, 56, 245, 0.25);
+    border: 1px solid rgba(135, 56, 245, 0.45);
+    color: #d8b4fe;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.45rem;
+  }
+
+  .mobileHeroTitle {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin: 0 0 0.35rem;
+  }
+
+  .mobileHeroSubtitle {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: #cbd5e1;
+    margin: 0 0 0.65rem;
+  }
+
+  .mobileHeroMeta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #c4b5fd;
+  }
+
+  /* 1. Horizontal Quick Jump Rail (Sticky / Scrollable) */
+  .stickyRail {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(248, 249, 252, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid #ede9fe;
+    padding: 0.65rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .railScroll {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.15rem 0 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .railScroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .railPill {
+    flex-shrink: 0;
+    padding: 0.38rem 0.8rem;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #ede9fe;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .railPill:hover {
+    border-color: #8738F5;
+  }
+
+  .railPillActive {
+    background: #8738F5 !important;
+    color: #ffffff !important;
+    border-color: #8738F5 !important;
+    box-shadow: 0 3px 10px rgba(135, 56, 245, 0.3) !important;
+  }
+
+  .railPillActive svg {
+    color: #ffffff !important;
+  }
+
+  /* 2. Main Clauses Container */
+  .mainClauses {
+    padding: 0.5rem 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Clause Cards */
+  .clauseCard {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #f3e8ff;
+    box-shadow: 0 2px 8px rgba(88, 28, 135, 0.04);
+    position: relative;
+    box-sizing: border-box;
+    scroll-margin-top: 85px;
+  }
+
+  .cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .cardHeaderBetween {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .clauseNumberBadge {
+    width: 2rem;
+    height: 1.75rem;
+    border-radius: 8px;
+    background: #f5f3ff;
+    color: #8738F5;
+    font-weight: 900;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ede9fe;
+    flex-shrink: 0;
+  }
+
+  .clauseTitle {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .clauseParagraph {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #475569;
+    margin: 0 0 0.75rem;
+  }
+
+  .clauseParagraph:last-child {
+    margin-bottom: 0;
+  }
+
+  .clauseParagraph strong {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .purpleLink {
+    color: #8738F5;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  /* Section 01: Lavender Callout with Left Border */
+  .zeroThirdPartyCallout {
+    background: rgba(245, 243, 255, 0.75);
+    border-radius: 12px;
+    padding: 0.85rem;
+    border-left: 4px solid #8738F5;
+    margin-top: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .calloutHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 12px;
+    font-weight: 700;
+    color: #4c1d95;
+  }
+
+  .calloutHeader svg {
+    color: #8738F5;
+    flex-shrink: 0;
+  }
+
+  .calloutText {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #2e1065;
+    margin: 0;
+  }
+
+  /* Section 02: 4 Data Tiles */
+  .dataTilesStack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-top: 0.5rem;
+  }
+
+  .dataTileItem {
+    padding: 0.75rem 0.85rem;
+    background: rgba(248, 250, 252, 0.85);
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .dataTileIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .iconBlue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .iconAmber {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .iconPurple {
+    background: #f3e8ff;
+    color: #8738F5;
+  }
+
+  .iconIndigo {
+    background: #e0e7ff;
+    color: #4f46e5;
+  }
+
+  .dataTileTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 2px;
+  }
+
+  .dataTileDesc {
+    font-size: 11px;
+    line-height: 1.4;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Section 03: Verified Green Badge & WhatsApp Alert Box */
+  .verifiedBadge {
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+
+  .whatsappAlertBox {
+    background: rgba(236, 253, 245, 0.5);
+    border-radius: 12px;
+    padding: 0.85rem;
+    border: 1px solid #d1fae5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .whatsappItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #064e3b;
+  }
+
+  .whatsappItem svg {
+    color: #059669;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Section 04: Operation Purpose Items */
+  .purposeStack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+  }
+
+  .purposeItem {
+    padding: 0.65rem 0.75rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+  }
+
+  .purposeItem svg {
+    color: #8738F5;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .purposeText {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #475569;
+    margin: 0;
+  }
+
+  /* Section 05: Single-Vendor Dark Midnight Card */
+  .darkMidnightCard {
+    background: #150B2E;
+    border-radius: 16px;
+    padding: 1.25rem;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(21, 11, 46, 0.25);
+    position: relative;
+    box-sizing: border-box;
+    scroll-margin-top: 85px;
+  }
+
+  .clauseNumberBadgePurple {
+    width: 2rem;
+    height: 1.75rem;
+    border-radius: 8px;
+    background: #8738F5;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .clauseTitleWhite {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #ffffff;
+    margin: 0;
+  }
+
+  .clauseParagraphLight {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #cbd5e1;
+    margin: 0 0 0.85rem;
+  }
+
+  .clauseParagraphLight strong {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .darkGlassBox {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .darkGlassBox svg {
+    color: #d8b4fe;
+    flex-shrink: 0;
+  }
+
+  .darkGlassText {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  .darkGlassText strong {
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  /* Section 06: Amber Cookies Callout */
+  .amberCalloutBox {
+    background: rgba(254, 243, 199, 0.55);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid rgba(251, 191, 36, 0.6);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-top: 0.65rem;
+  }
+
+  .amberCalloutBox svg {
+    color: #d97706;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .amberCalloutText {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #78350f;
+    margin: 0;
+  }
+
+  /* Section 07: Purple Payment Callout */
+  .purpleCalloutBox {
+    background: rgba(245, 243, 255, 0.75);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #ede9fe;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-top: 0.65rem;
+  }
+
+  .purpleCalloutBox svg {
+    color: #8738F5;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .purpleCalloutText {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #3b0764;
+    margin: 0;
+  }
+
+  /* Section 08: Gray Rights Callout */
+  .grayCalloutBox {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-top: 0.65rem;
+  }
+
+  .grayCalloutBox svg {
+    color: #64748b;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .grayCalloutText {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #475569;
+    margin: 0;
+  }
+
+  /* Section 11: Official DPO Card */
+  .dpoOfficeCard {
+    background: rgba(245, 243, 255, 0.7);
+    border-radius: 12px;
+    padding: 0.85rem;
+    border: 1px solid #ede9fe;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+  }
+
+  .dpoOfficeHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dpoOfficeTitle {
+    font-weight: 700;
+    color: #4c1d95;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .officialBadge {
+    padding: 0.15rem 0.45rem;
+    border-radius: 9999px;
+    font-size: 9.5px;
+    font-weight: 800;
+    background: #8738F5;
+    color: #ffffff;
+    text-transform: uppercase;
+  }
+
+  .contactGrid {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 0.35rem;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .contactLabel {
+    color: #64748b;
+  }
+
+  .contactVal {
+    color: #1e293b;
+    font-weight: 500;
+  }
+
+  /* Bottom DPO Action Box */
+  .bottomDpoBox {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.35rem 1.25rem;
+    border: 1px solid #ede9fe;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(88, 28, 135, 0.04);
+  }
+
+  .bottomDpoPrompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    color: #8738F5;
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 0.3rem;
+  }
+
+  .bottomDpoPrompt svg {
+    color: #8738F5;
+  }
+
+  .bottomDpoSubtitle {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0 0 0.85rem;
+  }
+
+  .bottomButtonsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .whatsappDpoBtn {
+    padding: 0.65rem 0.75rem;
+    background: #25D366;
+    color: #ffffff;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: filter 0.2s ease, transform 0.1s ease;
+  }
+
+  .whatsappDpoBtn:active {
+    transform: scale(0.98);
+  }
+
+  .emailDpoBtn {
+    padding: 0.65rem 0.75rem;
+    background: #8738F5;
+    color: #ffffff;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(135, 56, 245, 0.25);
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+
+  .emailDpoBtn:active {
+    transform: scale(0.98);
+  }
 }
