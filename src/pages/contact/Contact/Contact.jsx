@@ -146,6 +146,15 @@ export default function Contact() {
   // Real DB products for promo slider (No dummy or hardcoded images!)
   const [dbPromoProducts, setDbPromoProducts] = useState([]);
 
+  // Hero section background image (Preserves the original Purple Flower Vase background)
+  const heroDbImage = useMemo(() => {
+    return (
+      getSetting('contact_hero', 'backgroundImage') ||
+      getSetting('contact_hero', 'imageUrl') ||
+      '/images/contact_hero_bg.png'
+    );
+  }, [getSetting]);
+
   useEffect(() => {
     let isMounted = true;
     async function fetchPromoProducts() {
@@ -344,7 +353,7 @@ export default function Contact() {
         {/* 1. HERO SECTION                                                */}
         {/* ============================================================== */}
         {isEnabled('contact_hero') && (
-        <section className="k-hero-section">
+        <section className="k-hero-section" style={heroDbImage ? { '--k-hero-bg': `url("${heroDbImage}")` } : undefined}>
           {/* Top subtle glow/curves can be added via CSS before/after */}
           <div className="k-container k-hero-grid">
             <div className="k-hero-content">

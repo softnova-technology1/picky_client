@@ -132,7 +132,13 @@ export default function EditorialHero({ settings: propSettings }) {
               }}
             >
               <img
-                src={slide.leftImage}
+                src={slide.leftImage || `/images/slide_${(index % 3) + 1}_left.jpg`}
+                onError={(e) => {
+                  const fb = `/images/slide_${(index % 3) + 1}_left.jpg`;
+                  if (e.currentTarget.src !== fb && !e.currentTarget.src.endsWith(fb)) {
+                    e.currentTarget.src = fb;
+                  }
+                }}
                 alt={`${slide.title} Left`}
                 className={isActive ? 'active-zoom-bg' : ''}
                 style={{
@@ -159,7 +165,13 @@ export default function EditorialHero({ settings: propSettings }) {
               }}
             >
               <img
-                src={slide.rightImage}
+                src={slide.rightImage || `/images/slide_${(index % 3) + 1}_right.jpg`}
+                onError={(e) => {
+                  const fb = `/images/slide_${(index % 3) + 1}_right.jpg`;
+                  if (e.currentTarget.src !== fb && !e.currentTarget.src.endsWith(fb)) {
+                    e.currentTarget.src = fb;
+                  }
+                }}
                 alt={`${slide.title} Right`}
                 className={isActive ? 'active-zoom-bg' : ''}
                 style={{
@@ -395,11 +407,17 @@ export default function EditorialHero({ settings: propSettings }) {
                 className={`hero-mobile-slide ${isActive ? 'active' : ''}`}
               >
                 <img
-                  src={slide.leftImage || slide.image}
+                  src={slide.leftImage || slide.image || slide.rightImage || `/images/slide_${(idx % 3) + 1}_left.jpg`}
+                  onError={(e) => {
+                    const fallback = `/images/slide_${(idx % 3) + 1}_left.jpg`;
+                    if (e.currentTarget.src !== fallback && !e.currentTarget.src.endsWith(fallback)) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
                   alt={slide.title}
                   className="hero-mobile-img"
                 />
-                <div className="hero-mobile-overlay" />
+                <div className="hero-mobile-scrim" />
               </div>
             );
           })}
@@ -507,26 +525,36 @@ export default function EditorialHero({ settings: propSettings }) {
             background: #181432;
           }
           .hero-mobile-slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            visibility: hidden;
+            position: absolute !important;
+            inset: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
             transition: opacity 0.4s ease, visibility 0.4s ease;
+            z-index: 1 !important;
+            overflow: hidden !important;
           }
           .hero-mobile-slide.active {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 2 !important;
           }
           .hero-mobile-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center 20%;
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: center 20% !important;
+            display: block !important;
+            z-index: 1 !important;
           }
-          .hero-mobile-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);
+          .hero-mobile-scrim {
+            position: absolute !important;
+            inset: 0 !important;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.45) 100%) !important;
+            background-color: transparent !important;
+            pointer-events: none !important;
+            z-index: 2 !important;
           }
           .hero-mobile-frosted-card {
             position: absolute;
@@ -548,22 +576,23 @@ export default function EditorialHero({ settings: propSettings }) {
             flex-direction: column;
             align-items: center;
             gap: 2px;
-            z-index: 5;
+            z-index: 5 !important;
           }
           .hero-mobile-eyebrow {
-            font-size: 0.56rem;
-            font-weight: 800;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.2;
             letter-spacing: 0.08em;
             color: #7c3aed;
             text-transform: uppercase;
           }
           .hero-mobile-title {
-            font-size: 0.95rem;
-            font-weight: 900;
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.15;
             color: #0f172a;
             letter-spacing: -0.02em;
             margin: 0;
-            line-height: 1.15;
             text-transform: uppercase;
           }
           .hero-mobile-highlight {
@@ -578,9 +607,10 @@ export default function EditorialHero({ settings: propSettings }) {
             color: #ffffff;
             border: none;
             border-radius: 9999px;
-            padding: 4px 14px;
-            font-size: 0.65rem;
-            font-weight: 800;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.2;
             letter-spacing: 0.04em;
             cursor: pointer;
             margin-top: 2px;

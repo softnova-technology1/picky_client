@@ -23,7 +23,8 @@
 
 @media (max-width: 768px) {
   /* On mobile, remove outer modal padding so the mobile invoice takes full width */
-  div[class*="overlay"] {
+  div[class*="AdminInvoice_overlay"],
+  div[class*="overlay"]:has(> .mobile-invoice-preview) {
     padding: 0 !important;
     align-items: flex-start !important;
     background: #0f172a !important;

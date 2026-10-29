@@ -840,3 +840,345 @@
   padding: 3rem 2rem 2.5rem 2rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
+
+/* ==========================================================================
+   MOBILE NATIVE APP EXPERIENCE (<= 768px)
+   Active strictly on mobile. Above 768px (Desktop/Tablet) 100% untouched.
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 1. Hero Section: Native Mobile App Sheet with Custom Generated Mobile Background */
+  .about-hero-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding: 2.5rem 1rem 2.25rem 1rem !important;
+    background:
+      linear-gradient(180deg, rgba(250, 245, 255, 0.86) 0%, rgba(243, 232, 255, 0.8) 45%, rgba(237, 233, 254, 0.92) 100%),
+      url('/images/about_hero_mobile_bg.jpg') center top / cover no-repeat !important;
+    border-radius: 0 0 28px 28px !important;
+    margin-bottom: 2rem !important;
+    border-bottom: 1.5px solid rgba(192, 132, 252, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.08) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .about-hero-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .about-hero-pill-badge {
+    padding: 0.38rem 1.15rem !important;
+    font-size: 0.74rem !important;
+    margin-bottom: 1rem !important;
+    background: rgba(124, 58, 237, 0.1) !important;
+    border: 1px solid rgba(124, 58, 237, 0.25) !important;
+    color: #7c3aed !important;
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.08) !important;
+  }
+
+  .about-hero-title {
+    font-size: 2rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0.85rem !important;
+    letter-spacing: -0.025em !important;
+    font-weight: 850 !important;
+    color: #1e1b4b !important;
+    text-shadow: none !important;
+  }
+
+  .about-hero-subtitle {
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+    margin: 0 auto 1.35rem auto !important;
+    color: #581c87 !important;
+    font-weight: 500 !important;
+    text-shadow: none !important;
+  }
+
+  .about-hero-wave {
+    margin-bottom: 1.75rem !important;
+  }
+
+  /* 4 Feature Items: 2x2 Native App Bento Grid */
+  .about-hero-features {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .about-hero-features-badge {
+    grid-column: span 2 !important;
+    position: static !important;
+    transform: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 0.4rem auto !important;
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.85rem !important;
+    background: #ffffff !important;
+    border: 1px solid #e9d5ff !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08) !important;
+    color: #7c3aed !important;
+  }
+
+  .about-feature-item {
+    background: #ffffff !important;
+    border: 1.5px solid #ede8f8 !important;
+    border-radius: 18px !important;
+    padding: 1.05rem 0.9rem !important;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.05) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.55rem !important;
+    border-right: 1.5px solid #ede8f8 !important;
+    text-align: left !important;
+  }
+
+  .about-feature-icon-wrapper {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%) !important;
+    color: #7c3aed !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    border: 1px solid rgba(168, 85, 247, 0.2) !important;
+  }
+
+  .about-feature-title {
+    font-size: 0.84rem !important;
+    font-weight: 750 !important;
+    color: #1e1b4b !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+    margin: 0 !important;
+  }
+
+  /* 2. Feature Section (Showroom & Checklist) */
+  .about-feature-block-wrapper {
+    padding: 0.5rem 0 1.5rem !important;
+  }
+
+  .about-feature-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    padding: 0 1rem !important;
+  }
+
+  .about-feature-image-col {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .about-feature-image-backdrop {
+    display: none !important;
+  }
+
+  .about-feature-image-box {
+    border-radius: 22px !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.09) !important;
+    border: 1.5px solid #ede8f8 !important;
+    transform: none !important;
+  }
+
+  .about-feature-img {
+    height: 230px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 20px !important;
+  }
+
+  .about-feature-content-col {
+    padding: 0 !important;
+  }
+
+  .about-feature-tag {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    color: #7c3aed !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .about-feature-main-heading {
+    font-size: 1.7rem !important;
+    line-height: 1.25 !important;
+    margin: 0.35rem 0 0.65rem 0 !important;
+    color: #1e1b4b !important;
+  }
+
+  .about-feature-lead {
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+    margin-bottom: 0.65rem !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+  }
+
+  .about-feature-description {
+    font-size: 0.86rem !important;
+    line-height: 1.6 !important;
+    margin-bottom: 1.25rem !important;
+    color: #64748b !important;
+  }
+
+  .about-feature-checklist {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    padding: 0 !important;
+    list-style: none !important;
+    margin: 0 !important;
+  }
+
+  .about-feature-check-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+    background: #faf5ff !important;
+    border: 1.5px solid #ede8f8 !important;
+    border-radius: 16px !important;
+    padding: 0.85rem 1rem !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.03) !important;
+  }
+
+  .check-icon-wrapper {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .check-text-content {
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: #1e1b4b !important;
+  }
+
+  .check-subtext-content {
+    font-size: 0.76rem !important;
+    color: #7c3aed !important;
+    font-weight: 600 !important;
+    margin-top: 0.15rem !important;
+  }
+
+  /* 3. Parallax Mission & Vision Section: Mobile App Dark Sheet */
+  .about-parallax-mission-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    background: radial-gradient(circle at 20% 20%, #2b0b4e 0%, #17072d 60%, #0a0117 100%) !important;
+    background-attachment: scroll !important;
+    padding: 2.5rem 1rem !important;
+    margin: 2rem 0 !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(192, 132, 252, 0.25) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .about-parallax-mission-overlay {
+    display: none !important;
+  }
+
+  .about-parallax-glass-card {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* 4. Glass Counters: Native Mobile Bento Metric 2x2 Grid */
+  .glass-counters-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    margin-top: 2rem !important;
+    padding: 0 !important;
+    justify-content: stretch !important;
+  }
+
+  .glass-counter-disc {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1.5px solid rgba(216, 180, 254, 0.22) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+    padding: 1rem 0.75rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .disc-gloss-highlight {
+    display: none !important;
+  }
+
+  .disc-top-badge {
+    position: static !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    background: rgba(168, 85, 247, 0.25) !important;
+    border: 1px solid rgba(216, 180, 254, 0.4) !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .disc-center-content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+
+  .disc-number {
+    font-size: 1.45rem !important;
+    font-weight: 850 !important;
+    color: #ffffff !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    line-height: 1.15 !important;
+  }
+
+  .disc-number-text {
+    font-size: 0.95rem !important;
+  }
+
+  .disc-label {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.05em !important;
+    color: #e9d5ff !important;
+    font-weight: 700 !important;
+    max-width: 100% !important;
+    margin-top: 0.2rem !important;
+  }
+}
+
