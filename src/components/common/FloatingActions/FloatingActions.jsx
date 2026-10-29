@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, ArrowUp } from 'lucide-react';
 import { useCartStore } from '../../../store/cartStore';
 
@@ -19,6 +19,13 @@ const WhatsAppIcon = ({ size = 22, color = '#ffffff', className = '' }) => (
 
 export default function FloatingActions() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Hide floating action buttons on checkout to prevent covering bottom actions
+  if (location.pathname.startsWith('/checkout') || location.pathname.startsWith('/order-success')) {
+    return null;
+  }
+
   const cartItems = useCartStore((s) => s.items) || [];
   const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 

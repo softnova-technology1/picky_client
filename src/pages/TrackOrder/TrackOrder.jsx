@@ -24,6 +24,7 @@ import {
   BadgeCheck,
   XCircle,
   Printer,
+  Loader2,
 } from 'lucide-react';
 import styles from './TrackOrder.module.css';
 import AdminInvoice from '../../components/admin/AdminInvoice';
@@ -370,9 +371,12 @@ export default function TrackOrder() {
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <>Searching Order Records...</>
+                    <>
+                      <Loader2 size={15} className={styles.btnSpinner} />
+                      <span>LOCATING...</span>
+                    </>
                   ) : (
-                    <>LOCATE SHIPMENT</>
+                    <span>LOCATE SHIPMENT</span>
                   )}
                 </button>
               </div>
