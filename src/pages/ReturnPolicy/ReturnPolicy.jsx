@@ -5,36 +5,30 @@ import {
   RotateCcw,
   ShieldCheck,
   Truck,
-  CheckCircle2,
   Clock,
-  HelpCircle,
   AlertTriangle,
   CreditCard,
   MessageCircle,
-  FileText,
-  ArrowRight,
+  Mail,
   PackageCheck,
   RefreshCw,
-  ShoppingBag,
 } from 'lucide-react';
 import { usePageCustomization } from '../../store/customizationStore';
 import '../../styles/legal.css';
 
 const RETURN_SECTIONS = [
-  { id: 'overview', label: 'Policy Overview', icon: RotateCcw },
-  { id: 'eligibility', label: '7-Day Return Eligibility', icon: ShieldCheck },
-  { id: 'non-returnable', label: 'Non-Returnable Items', icon: AlertTriangle },
-  { id: 'damaged', label: 'Damaged or Defective Items', icon: PackageCheck },
-  { id: 'process', label: 'How to Initiate a Return', icon: RefreshCw },
-  { id: 'refunds', label: 'Refund Timeline & Mode', icon: CreditCard },
-  { id: 'cancellation', label: 'Order Cancellation', icon: Clock },
-  { id: 'contact', label: 'Help Desk & Contact', icon: MessageCircle },
+  { id: 'overview', num: '01', label: 'Policy Overview & Our Commitment', icon: RotateCcw },
+  { id: 'eligibility', num: '02', label: '7-Day Return Eligibility', icon: ShieldCheck },
+  { id: 'non-returnable', num: '03', label: 'Non-Returnable Items', icon: AlertTriangle },
+  { id: 'damaged', num: '04', label: 'Damaged or Defective Items', icon: PackageCheck },
+  { id: 'process', num: '05', label: 'How to Initiate a Return', icon: RefreshCw },
+  { id: 'refunds', num: '06', label: 'Refund Timeline & Modes', icon: CreditCard },
+  { id: 'cancellation', num: '07', label: 'Order Cancellation', icon: Clock },
+  { id: 'contact', num: '08', label: 'Help Desk & Contact', icon: MessageCircle },
 ];
 
 export default function ReturnPolicy() {
   const { isEnabled, getSetting } = usePageCustomization('content_pages');
-  const returnDays = getSetting('policy_return_content', 'returnDays', 7);
-  const returnBlurb = getSetting('policy_return_content', 'returnBlurb', 'Enjoy a hassle-free 7-day replacement and transparent refund guarantee.');
   const [activeSection, setActiveSection] = useState('overview');
 
   useEffect(() => {
@@ -74,106 +68,65 @@ export default function ReturnPolicy() {
         <header className="legal-hero-wrapper">
           <div className="legal-hero-container">
             <div className="legal-badge-pill">
-              <RotateCcw size={14} className="legal-badge-icon" />
+              <RotateCcw size={13} className="legal-badge-icon" />
               <span>100% BUYER SATISFACTION GUARANTEE</span>
             </div>
             <h1 className="legal-hero-title">
-              Return, Replacement &<br />
+              Return, Replacement &amp;<br />
               <span className="legal-hero-highlight">Refund Policy</span>
             </h1>
             <p className="legal-hero-subtitle">
               We stand behind the heritage craftsmanship of every handloom saree, brass vilakku, and native item. Enjoy a hassle-free 7-day replacement and transparent refund guarantee.
             </p>
             <div className="legal-meta-row">
-              <span className="legal-meta-pill">
-                <Clock size={13} /> Effective: October 2026
-              </span>
-              <span className="legal-meta-pill">
-                <ShieldCheck size={13} /> 7-Day Window
-              </span>
-              <span className="legal-meta-pill">
-                <CreditCard size={13} /> Instant UPI & Bank Refunds
-              </span>
+              <span>Effective: October 2024</span>
+              <span className="legal-meta-dot">•</span>
+              <span>7-Day Replacement Policy</span>
+              <span className="legal-meta-dot">•</span>
+              <span>100% Bank Refunds</span>
             </div>
           </div>
         </header>
 
         {/* ── 2. Quick Highlight 4-Card Grid ─────────────────────────────── */}
-        <div className="legal-grid-container" style={{ marginTop: '-2.5rem', position: 'relative', zIndex: 10 }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '1rem',
-            marginBottom: '2.5rem',
-          }}>
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '1.25rem',
-              border: '1.5px solid #ede8f8',
-              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.06)',
-            }}>
-              <div style={{ color: '#7c3aed', marginBottom: '0.65rem' }}>
-                <Clock size={28} />
+        <div className="legal-grid-container" style={{ marginTop: '-2.75rem', position: 'relative', zIndex: 10 }}>
+          <div className="legal-highlights-grid">
+            <div className="legal-highlight-card">
+              <div className="legal-card-icon-wrap purple">
+                <Clock size={22} />
               </div>
-              <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 700, color: '#1e1b4b' }}>
-                7-Day Replacement
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
+              <h4 className="legal-card-title">7-Day Replacement</h4>
+              <p className="legal-card-desc">
                 Free replacement or exchange if items arrive damaged, defective, or mismatch expectations.
               </p>
             </div>
 
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '1.25rem',
-              border: '1.5px solid #ede8f8',
-              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.06)',
-            }}>
-              <div style={{ color: '#16a34a', marginBottom: '0.65rem' }}>
-                <Truck size={28} />
+            <div className="legal-highlight-card">
+              <div className="legal-card-icon-wrap green">
+                <Truck size={22} />
               </div>
-              <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 700, color: '#1e1b4b' }}>
-                Doorstep Reverse Pickup
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
+              <h4 className="legal-card-title">Doorstep Reverse Pickup</h4>
+              <p className="legal-card-desc">
                 Our courier partners (DTDC, Blue Dart) arrange doorstep pickup directly from your address.
               </p>
             </div>
 
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '1.25rem',
-              border: '1.5px solid #ede8f8',
-              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.06)',
-            }}>
-              <div style={{ color: '#0284c7', marginBottom: '0.65rem' }}>
-                <CreditCard size={28} />
+            <div className="legal-highlight-card">
+              <div className="legal-card-icon-wrap blue">
+                <CreditCard size={22} />
               </div>
-              <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 700, color: '#1e1b4b' }}>
-                3-5 Days Direct Refund
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                Funds returned directly to your original payment method, UPI account, or direct bank transfer.
+              <h4 className="legal-card-title">3-5 Days Direct Refund</h4>
+              <p className="legal-card-desc">
+                Funds reversed directly to your original payment method, UPI account, or direct bank transfer.
               </p>
             </div>
 
-            <div style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '1.25rem',
-              border: '1.5px solid #ede8f8',
-              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.06)',
-            }}>
-              <div style={{ color: '#d97706', marginBottom: '0.65rem' }}>
-                <MessageCircle size={28} />
+            <div className="legal-highlight-card">
+              <div className="legal-card-icon-wrap gold">
+                <MessageCircle size={22} />
               </div>
-              <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 700, color: '#1e1b4b' }}>
-                Direct WhatsApp Help
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
+              <h4 className="legal-card-title">Direct WhatsApp Help</h4>
+              <p className="legal-card-desc">
                 Chat live with human support at +91 83002 95721 with photo proof for instant approvals.
               </p>
             </div>
@@ -191,7 +144,6 @@ export default function ReturnPolicy() {
                 </div>
                 <div className="legal-nav-list">
                   {RETURN_SECTIONS.map((sec) => {
-                    const Icon = sec.icon;
                     const isActive = activeSection === sec.id;
                     return (
                       <button
@@ -200,8 +152,8 @@ export default function ReturnPolicy() {
                         onClick={() => scrollToSection(sec.id)}
                         className={`legal-nav-btn ${isActive ? 'active' : ''}`}
                       >
-                        <Icon size={16} className="legal-nav-icon" />
-                        <span>{sec.label}</span>
+                        <span className="legal-nav-num">{sec.num}</span>
+                        <span className="legal-nav-label">{sec.label}</span>
                       </button>
                     );
                   })}
@@ -211,35 +163,35 @@ export default function ReturnPolicy() {
 
             {/* Main Policy Text Article */}
             <main className="legal-content-card">
-              {/* Section 1 */}
+              {/* Section 01 */}
               <section id="overview" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">01</div>
-                  <h2 className="legal-section-title">Policy Overview & Our Commitment</h2>
+                  <span className="legal-section-num">01</span>
+                  <h2 className="legal-section-title">Policy Overview &amp; Our Commitment</h2>
                 </div>
                 <p className="legal-paragraph">
-                  At <strong>Picky</strong>, we celebrate authentic South Indian craftsmanship — bringing Madurai Sungudi sarees, Nachiarkoil brass lamps, and traditional handmade goods directly into your homes. We inspect every single item prior to dispatch to ensure pure quality.
+                  At Picky, we celebrate authentic South Indian craftsmanship — bringing Madurai Sungudi sarees, Nachiarkoil brass lamps, and traditional handmade goods directly into your homes. We inspect every single item prior to dispatch to ensure pure quality.
                 </p>
                 <p className="legal-paragraph">
                   However, if you are not fully delighted with your purchase due to a manufacturing defect, transit damage, or size mismatch, our return and replacement process is designed to be effortless, transparent, and completely fair to you.
                 </p>
               </section>
 
-              {/* Section 2 */}
+              {/* Section 02 */}
               <section id="eligibility" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">02</div>
-                  <h2 className="legal-section-title">7-Day Replacement & Return Eligibility</h2>
+                  <span className="legal-section-num">02</span>
+                  <h2 className="legal-section-title">7-Day Replacement &amp; Return Eligibility</h2>
                 </div>
                 <p className="legal-paragraph">
                   You may request a return or replacement within <strong>7 calendar days</strong> from the date your order is successfully delivered by our courier partners.
                 </p>
                 <ul className="legal-list">
                   <li>
-                    <strong>Unused & Unaltered Condition:</strong> Sarees, apparel, and home decor must be unworn, unwashed, and free of stains, perfumes, or tailoring alterations.
+                    <strong>Unworn &amp; Unaltered Condition:</strong> Sarees, apparel, and home decor must be unworn, unwashed, and free of stains, perfumes, or tailoring alterations.
                   </li>
                   <li>
-                    <strong>Original Tags & Packaging:</strong> Original brand labels, tags, and artisan authentication cards must remain intact.
+                    <strong>Original Tags &amp; Packaging:</strong> Original brand labels, tags, and artisan authentication cards must remain intact.
                   </li>
                   <li>
                     <strong>Complete Inclusions:</strong> Any accessories, complimentary items, or brass accessories included in the original package must be returned together.
@@ -247,138 +199,132 @@ export default function ReturnPolicy() {
                 </ul>
               </section>
 
-              {/* Section 3 */}
+              {/* Section 03 */}
               <section id="non-returnable" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">03</div>
-                  <h2 className="legal-section-title">Non-Returnable & Exempted Items</h2>
+                  <span className="legal-section-num">03</span>
+                  <h2 className="legal-section-title">Non-Returnable &amp; Exempted Items</h2>
                 </div>
                 <p className="legal-paragraph">
                   For hygiene and safety reasons, certain categories cannot be returned once delivered:
                 </p>
-                <div style={{
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '12px',
-                  padding: '1rem 1.25rem',
-                  marginBottom: '1rem',
-                }}>
-                  <p style={{ margin: 0, fontSize: '0.86rem', color: '#991b1b', lineHeight: 1.5 }}>
-                    <strong>Exempted Items:</strong>
-                    <br />• <strong>Native Sweets & Snacks:</strong> Traditional food items, podis, and sweets once seal is broken (unless damaged/expired upon arrival).
-                    <br />• <strong>Personalized / Custom Stitched:</strong> Sarees stitched with fall/pico or blouses tailored to personal measurements.
-                    <br />• <strong>Fragrance & Kumkum:</strong> Unsealed pooja oils, dhoop, and kumkum powders.
-                  </p>
+                <div className="policy-callout-warning">
+                  <div className="policy-callout-warning-title">Exempted Items:</div>
+                  <ul className="policy-callout-list">
+                    <li>
+                      <strong>Native Sweets &amp; Snacks:</strong> Traditional food items, podis, and sweets once sold &amp; broken (unless damaged/expired upon arrival).
+                    </li>
+                    <li>
+                      <strong>Personalized / Custom Stitched:</strong> Sarees stitched with bespoke fall/pico or blouses tailored to personalized measurements.
+                    </li>
+                    <li>
+                      <strong>Fragrance &amp; Kumkum:</strong> Unsealed pooja oils, dhoop, and kumkum powders.
+                    </li>
+                  </ul>
                 </div>
               </section>
 
-              {/* Section 4 */}
+              {/* Section 04 */}
               <section id="damaged" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">04</div>
+                  <span className="legal-section-num">04</span>
                   <h2 className="legal-section-title">Damaged or Defective Items Received</h2>
                 </div>
                 <p className="legal-paragraph">
                   In the rare event that your product arrives defective, damaged during transit, or missing a part:
                 </p>
-                <ol className="legal-list">
+                <ol className="policy-numbered-list">
                   <li>
-                    Please inform us within <strong>48 hours of delivery</strong> with unboxing photos or a short video showing the outer courier label and defect.
+                    Please inform us within <strong>48 hours of delivery</strong> with unboxing photos or a short video showing the outer courier seal and defect.
                   </li>
                   <li>
                     You can share the images via WhatsApp at <strong>+91 83002 95721</strong> or email <strong>care@pickystore.in</strong>.
                   </li>
                   <li>
-                    Our quality team will review within 2 to 4 hours and immediately dispatch a brand-new replacement at zero additional delivery charge.
+                    Our quality team will review within <strong>2 to 4 hours</strong> and immediately dispatch a brand-new replacement at zero additional delivery charge.
                   </li>
                 </ol>
               </section>
 
-              {/* Section 5 */}
+              {/* Section 05 */}
               <section id="process" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">05</div>
+                  <span className="legal-section-num">05</span>
                   <h2 className="legal-section-title">How to Initiate a Return</h2>
                 </div>
                 <p className="legal-paragraph">
                   You can initiate a return directly online or via WhatsApp:
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ede8f8', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
-                      1
-                    </div>
-                    <div>
-                      <strong style={{ color: '#1e1b4b' }}>Via Your Account:</strong> Navigate to <Link to="/orders" style={{ color: '#7c3aed', textDecoration: 'underline' }}>My Orders</Link>, open your order detail page, and click <strong>"Request Return / Replacement"</strong>.
+                <div className="policy-steps-list">
+                  <div className="policy-step-item">
+                    <div className="policy-step-badge">1</div>
+                    <div className="policy-step-text">
+                      <strong>Via Your Account:</strong> Navigate to <Link to="/orders" className="legal-link">My Orders</Link>, open your order detail page, and click <strong>"Request Return / Replacement"</strong>.
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ede8f8', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
-                      2
-                    </div>
-                    <div>
-                      <strong style={{ color: '#1e1b4b' }}>Via WhatsApp:</strong> Send your Order Number (e.g. <code>PKY-202610-001</code>) to <strong>+91 83002 95721</strong>.
+                  <div className="policy-step-item">
+                    <div className="policy-step-badge">2</div>
+                    <div className="policy-step-text">
+                      <strong>Via WhatsApp:</strong> Send your Order Number (e.g. <code>#PK-2024-8192</code>) to <a href="https://wa.me/918300295721" target="_blank" rel="noreferrer" className="legal-link"><strong>+91 83002 95721</strong></a>.
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ede8f8', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>
-                      3
-                    </div>
-                    <div>
-                      <strong style={{ color: '#1e1b4b' }}>Doorstep Pickup:</strong> Our courier executive will collect the item from your home within 24–48 hours. Keep the box ready.
+                  <div className="policy-step-item">
+                    <div className="policy-step-badge">3</div>
+                    <div className="policy-step-text">
+                      <strong>Doorstep Pickup:</strong> Our courier executive will collect the item from your home within <strong>24–48 hours</strong>. Keep the box ready.
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* Section 6 */}
+              {/* Section 06 */}
               <section id="refunds" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">06</div>
-                  <h2 className="legal-section-title">Refund Processing Timelines & Modes</h2>
+                  <span className="legal-section-num">06</span>
+                  <h2 className="legal-section-title">Refund Processing Timelines &amp; Modes</h2>
                 </div>
                 <p className="legal-paragraph">
                   Once your returned package reaches our fulfillment center and passes basic verification, your refund will be credited according to your original payment mode:
                 </p>
-                <div style={{ overflowX: 'auto', marginBottom: '1.25rem' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', border: '1px solid #ede8f8' }}>
+                <div className="policy-table-wrapper">
+                  <table className="policy-table">
                     <thead>
-                      <tr style={{ background: '#f5f0fe', color: '#5b21b6', textAlign: 'left' }}>
-                        <th style={{ padding: '0.75rem 1rem' }}>Payment Method</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Refund Mode</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Expected Timeline</th>
+                      <tr>
+                        <th>Payment Method</th>
+                        <th>Refund Mode</th>
+                        <th>Expected Timeline</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr style={{ borderBottom: '1px solid #f1eafa' }}>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>UPI (GPay / PhonePe / Paytm)</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>Direct UPI Reverse Transfer</td>
-                        <td style={{ padding: '0.75rem 1rem', color: '#16a34a', fontWeight: 700 }}>24 - 48 Hours</td>
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #f1eafa' }}>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Credit / Debit Card</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>Original Bank Card Account</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>3 - 5 Business Days</td>
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #f1eafa' }}>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Net Banking</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>Original Bank Account</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>3 - 5 Business Days</td>
+                      <tr>
+                        <td className="policy-table-cell-bold">UPI (GPay / PhonePe / Paytm)</td>
+                        <td>Direct UPI Reverse / Refund</td>
+                        <td><span className="timeline-pill-success">24 - 48 Hours</span></td>
                       </tr>
                       <tr>
-                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Cash on Delivery (COD)</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>Bank NEFT / Direct UPI Transfer</td>
-                        <td style={{ padding: '0.75rem 1rem' }}>2 - 4 Business Days</td>
+                        <td className="policy-table-cell-bold">Credit / Debit Card</td>
+                        <td>Original Bank Card Account</td>
+                        <td>3 - 5 Business Days</td>
+                      </tr>
+                      <tr>
+                        <td className="policy-table-cell-bold">Net Banking</td>
+                        <td>Original Bank Account</td>
+                        <td>3 - 5 Business Days</td>
+                      </tr>
+                      <tr>
+                        <td className="policy-table-cell-bold">Cash on Delivery (COD)</td>
+                        <td>Bank NEFT / Direct UPI Transfer</td>
+                        <td>3 - 4 Business Days</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </section>
 
-              {/* Section 7 */}
+              {/* Section 07 */}
               <section id="cancellation" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">07</div>
+                  <span className="legal-section-num">07</span>
                   <h2 className="legal-section-title">Order Cancellation Policy</h2>
                 </div>
                 <p className="legal-paragraph">
@@ -386,7 +332,7 @@ export default function ReturnPolicy() {
                 </p>
                 <ul className="legal-list">
                   <li>
-                    <strong>Before Dispatch:</strong> If your order status is <code>Confirmed</code> or <code>Packing</code>, you can cancel directly from <Link to="/orders" style={{ color: '#7c3aed', textDecoration: 'underline' }}>My Orders</Link> with zero cancellation charges. Instant 100% refund is initiated immediately.
+                    <strong>Before Dispatch:</strong> If your order status is <code>Confirmed</code> or <code>Packing</code>, you can cancel directly from <Link to="/orders" className="legal-link">My Orders</Link> with zero cancellation charges. Instant 100% refund is initiated immediately.
                   </li>
                   <li>
                     <strong>After Dispatch:</strong> If the package has already been handed over to DTDC or Blue Dart, it cannot be cancelled in transit. You may decline delivery when the courier arrives, or initiate a standard return upon receipt.
@@ -394,34 +340,26 @@ export default function ReturnPolicy() {
                 </ul>
               </section>
 
-              {/* Section 8 */}
+              {/* Section 08 */}
               <section id="contact" className="legal-section">
                 <div className="legal-section-header">
-                  <div className="legal-section-num">08</div>
-                  <h2 className="legal-section-title">Customer Care & Support Helpdesk</h2>
+                  <span className="legal-section-num">08</span>
+                  <h2 className="legal-section-title">Customer Care &amp; Support Helpdesk</h2>
                 </div>
                 <p className="legal-paragraph">
-                  Have questions regarding your return or refund status? Our dedicated support team is available Mon–Sat from 9:30 AM to 7:00 PM IST:
+                  Have questions regarding your return or refund status? Our dedicated support team is available Mon-Sat from 9:30 AM to 7:00 PM IST.
                 </p>
-                <div style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #e2e8f0',
-                  borderRadius: '16px',
-                  padding: '1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <MessageCircle size={18} color="#16a34a" />
+                <div className="policy-helpdesk-card">
+                  <div className="policy-helpdesk-row">
+                    <MessageCircle size={18} color="#16a34a" className="policy-helpdesk-icon" />
                     <span><strong>WhatsApp Support:</strong> <a href="https://wa.me/918300295721" target="_blank" rel="noreferrer" style={{ color: '#16a34a', fontWeight: 700 }}>+91 83002 95721</a></span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <FileText size={18} color="#7c3aed" />
+                  <div className="policy-helpdesk-row">
+                    <Mail size={18} color="#7c3aed" className="policy-helpdesk-icon" />
                     <span><strong>Email:</strong> <a href="mailto:care@pickystore.in" style={{ color: '#7c3aed', fontWeight: 700 }}>care@pickystore.in</a></span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <Clock size={18} color="#0284c7" />
+                  <div className="policy-helpdesk-row">
+                    <Clock size={18} color="#0284c7" className="policy-helpdesk-icon" />
                     <span><strong>Working Hours:</strong> Monday – Saturday: 9:30 AM – 7:00 PM IST</span>
                   </div>
                 </div>
