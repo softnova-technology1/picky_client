@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { categoryService } from '../services/category.service';
 import { PICKY_CATEGORIES } from '../data/categoriesData';
+import { getCatalogSyncChannel } from '../utils/realtimeSync';
 
 export const useCategoryStore = create((set, get) => ({
   categories: [],
@@ -8,8 +9,10 @@ export const useCategoryStore = create((set, get) => ({
   loading: false,
   fetched: false,
   
-  fetchCategories: async () => {
-    if (get().fetched || get().loading) return; // Prevent multiple fetches
+  fetchCategories: async (force = false) => {
+    // Prevent redundant fetches only if we already have loaded categories
+    if (!force && get().loading) return;
+    if (!force && get().fetched && get().categories.length > 0) return;
     
     set({ loading: true });
     try {
@@ -32,16 +35,18 @@ export const useCategoryStore = create((set, get) => ({
         });
 
       const sList = subRes?.data?.data || subRes?.data || [];
+      const hasCategories = cList.length > 0;
       
       set({ 
         categories: cList, 
         subcategories: sList,
-        fetched: true,
+        fetched: hasCategories,
         loading: false
       });
     } catch (err) {
       console.error("Error fetching categories:", err);
-      set({ loading: false, fetched: true });
+      // Keep fetched false so it retries automatically when DB comes online
+      set({ loading: false, fetched: false });
     }
   },
   
@@ -57,3 +62,19 @@ export const useCategoryStore = create((set, get) => ({
     });
   }
 }));
+
+// Real-Time Cross-Tab & Window Listener for Catalog Updates
+if (typeof window !== 'undefined') {
+  const ch = getCatalogSyncChannel();
+  if (ch) {
+    ch.onmessage = (event) => {
+      if (event?.data?.type === 'CATALOG_UPDATED') {
+        useCategoryStore.getState().fetchCategories(true);
+      }
+    };
+  }
+
+  window.addEventListener('picky_catalog_updated', () => {
+    useCategoryStore.getState().fetchCategories(true);
+  });
+}

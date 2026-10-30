@@ -27,7 +27,44 @@ import {
   Upload,
   Loader2,
   Image as ImageIcon,
+  Truck,
+  CheckCircle,
+  Heart,
+  Award,
+  Zap,
+  Clock,
+  Users,
+  ThumbsUp,
+  Gift,
+  Shield,
+  BadgePercent,
 } from 'lucide-react';
+
+const METRIC_ICON_OPTIONS = [
+  { name: 'Video', label: 'Video Guide', icon: Video },
+  { name: 'ShieldCheck', label: 'Verified Quality', icon: ShieldCheck },
+  { name: 'ShoppingBag', label: 'Instant Bag', icon: ShoppingBag },
+  { name: 'Star', label: 'Top Rating', icon: Star },
+  { name: 'Sparkles', label: 'Premium Finds', icon: Sparkles },
+  { name: 'Truck', label: 'Fast Delivery', icon: Truck },
+  { name: 'CheckCircle', label: 'Guaranteed', icon: CheckCircle },
+  { name: 'Heart', label: 'Customer Loved', icon: Heart },
+  { name: 'Award', label: 'Award Winning', icon: Award },
+  { name: 'Zap', label: 'Lightning Fast', icon: Zap },
+  { name: 'Clock', label: 'Quick Response', icon: Clock },
+  { name: 'Smile', label: 'Happy Shoppers', icon: Smile },
+  { name: 'Users', label: 'Community', icon: Users },
+  { name: 'ThumbsUp', label: 'Recommended', icon: ThumbsUp },
+  { name: 'Gift', label: 'Special Perks', icon: Gift },
+  { name: 'Shield', label: 'Buyer Protection', icon: Shield },
+  { name: 'BadgePercent', label: 'Best Offers', icon: BadgePercent },
+  { name: 'Gem', label: 'Luxury & Silk', icon: Gem },
+];
+
+const METRIC_ICONS_MAP = METRIC_ICON_OPTIONS.reduce((acc, curr) => {
+  acc[curr.name] = curr.icon;
+  return acc;
+}, {});
 import AdminLayout from '../../../components/layout/AdminLayout';
 import { useBlogStore, INITIAL_BLOG_DATA } from '../../../store/blogStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -69,11 +106,13 @@ export default function AdminBlog() {
             ...prev,
             isBlogPageEnabled: apiData.isBlogPageEnabled !== undefined ? apiData.isBlogPageEnabled : prev.isBlogPageEnabled,
             hero: apiData.hero ? { ...prev.hero, ...apiData.hero } : prev.hero,
+            metrics: apiData.metrics ? { ...prev.metrics, ...apiData.metrics } : prev.metrics,
           }));
           setBlogData((prev) => ({
             ...prev,
             isBlogPageEnabled: apiData.isBlogPageEnabled !== undefined ? apiData.isBlogPageEnabled : prev.isBlogPageEnabled,
             hero: apiData.hero ? { ...prev.hero, ...apiData.hero } : prev.hero,
+            metrics: apiData.metrics ? { ...prev.metrics, ...apiData.metrics } : prev.metrics,
           }));
         }
       })
@@ -469,53 +508,215 @@ export default function AdminBlog() {
             <div className="admin-blog-card-header">
               <div className="admin-blog-card-title-group">
                 <h3>Trust & Credibility Metrics Bar</h3>
-                <p>The 4-item credibility grid placed immediately below the Hero banner.</p>
+                <p>Curate credibility badges with custom icons, highlight values, and sub-labels displayed below the Hero banner.</p>
               </div>
 
-              <div className="section-toggle-switch" onClick={() => toggleSectionState('metrics')}>
-                <span>{formData.metrics.enabled ? 'Section Active' : 'Section Hidden'}</span>
-                <div className={`switch-track ${formData.metrics.enabled ? 'on' : ''}`}>
-                  <div className="switch-thumb"></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn-add-item"
+                  onClick={() => {
+                    const newId = 'm-' + Date.now();
+                    const newMetric = {
+                      id: newId,
+                      value: '100% Quality Guaranteed',
+                      label: 'Verified Shopper Experience',
+                      iconName: 'ShieldCheck',
+                    };
+                    setFormData((p) => ({
+                      ...p,
+                      metrics: {
+                        ...p.metrics,
+                        items: [...(p.metrics?.items || []), newMetric],
+                      },
+                    }));
+                    showToast('New Trust Metric added! Click Save to persist to DB.', 'success');
+                  }}
+                >
+                  <Plus size={14} /> Add New Metric
+                </button>
+
+                <div className="section-toggle-switch" onClick={() => toggleSectionState('metrics')}>
+                  <span>{formData.metrics?.enabled ? 'Section Active' : 'Section Hidden'}</span>
+                  <div className={`switch-track ${formData.metrics?.enabled ? 'on' : ''}`}>
+                    <div className="switch-thumb"></div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="sub-items-list">
-              {formData.metrics.items.map((m, idx) => (
-                <div key={m.id} className="sub-item-card">
-                  <div className="sub-item-header">
-                    <span className="sub-item-title">Metric #{idx + 1}</span>
-                  </div>
-                  <div className="admin-form-grid">
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Highlight Value (e.g. 50+ Guides)</label>
-                      <input
-                        type="text"
-                        className="admin-form-input"
-                        value={m.value}
-                        onChange={(e) => {
-                          const updated = [...formData.metrics.items];
-                          updated[idx].value = e.target.value;
-                          setFormData((p) => ({ ...p, metrics: { ...p.metrics, items: updated } }));
+              {(formData.metrics?.items || []).map((m, idx) => {
+                const CurrentIconComp = METRIC_ICONS_MAP[m.iconName] || Sparkles;
+                return (
+                  <div key={m.id || idx} className="sub-item-card">
+                    <div className="sub-item-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <div
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            background: 'rgba(124, 58, 237, 0.1)',
+                            color: '#7c3aed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <CurrentIconComp size={18} />
+                        </div>
+                        <span className="sub-item-title">
+                          Metric #{idx + 1}: {m.value || 'Untitled Metric'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-remove-item"
+                        title="Delete this metric"
+                        onClick={() => {
+                          if ((formData.metrics?.items || []).length <= 1) {
+                            showToast('You must keep at least 1 trust metric!', 'warning');
+                            return;
+                          }
+                          const updated = (formData.metrics?.items || []).filter((_, i) => i !== idx);
+                          setFormData((p) => ({
+                            ...p,
+                            metrics: { ...p.metrics, items: updated },
+                          }));
+                          showToast('Metric removed', 'info');
                         }}
-                      />
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Sub Label Description</label>
-                      <input
-                        type="text"
-                        className="admin-form-input"
-                        value={m.label}
-                        onChange={(e) => {
-                          const updated = [...formData.metrics.items];
-                          updated[idx].label = e.target.value;
-                          setFormData((p) => ({ ...p, metrics: { ...p.metrics, items: updated } }));
-                        }}
-                      />
+
+                    <div className="admin-form-grid">
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Highlight Value (e.g. 50+ Shoppable Guides)</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={m.value || ''}
+                          placeholder="e.g. 50+ Shoppable Guides"
+                          onChange={(e) => {
+                            const updated = [...(formData.metrics?.items || [])];
+                            updated[idx].value = e.target.value;
+                            setFormData((p) => ({ ...p, metrics: { ...p.metrics, items: updated } }));
+                          }}
+                        />
+                      </div>
+
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Sub Label Description</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={m.label || ''}
+                          placeholder="e.g. Tested & Curated by Editors"
+                          onChange={(e) => {
+                            const updated = [...(formData.metrics?.items || [])];
+                            updated[idx].label = e.target.value;
+                            setFormData((p) => ({ ...p, metrics: { ...p.metrics, items: updated } }));
+                          }}
+                        />
+                      </div>
+
+                      {/* Icon Selector / Picker */}
+                      <div className="admin-form-group" style={{ gridColumn: 'span 2' }}>
+                        <label className="admin-form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>Select Icon for this Metric</span>
+                          <span style={{ fontSize: '0.8rem', color: '#7c3aed', fontWeight: 700 }}>
+                            Selected Icon: {m.iconName || 'Sparkles'}
+                          </span>
+                        </label>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.45rem',
+                            marginTop: '0.35rem',
+                            background: '#f8fafc',
+                            padding: '0.65rem',
+                            borderRadius: '10px',
+                            border: '1px solid #e2e8f0',
+                          }}
+                        >
+                          {METRIC_ICON_OPTIONS.map((opt) => {
+                            const IconComp = opt.icon;
+                            const isSelected = (m.iconName || 'Sparkles') === opt.name;
+                            return (
+                              <button
+                                key={opt.name}
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...(formData.metrics?.items || [])];
+                                  updated[idx].iconName = opt.name;
+                                  setFormData((p) => ({ ...p, metrics: { ...p.metrics, items: updated } }));
+                                }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  padding: '0.4rem 0.65rem',
+                                  borderRadius: '8px',
+                                  border: isSelected ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+                                  background: isSelected ? 'rgba(124, 58, 237, 0.12)' : '#ffffff',
+                                  color: isSelected ? '#7c3aed' : '#475569',
+                                  fontSize: '0.82rem',
+                                  fontWeight: isSelected ? 700 : 500,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                title={opt.label}
+                              >
+                                <IconComp size={15} />
+                                <span>{opt.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+
+            {/* Bottom Add Metric Button */}
+            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px dashed #e2e8f0' }}>
+              <button
+                type="button"
+                className="btn-add-item"
+                style={{
+                  background: '#f8fafc',
+                  color: '#7c3aed',
+                  border: '1.5px dashed #cbd5e1',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                }}
+                onClick={() => {
+                  const newId = 'm-' + Date.now();
+                  const newMetric = {
+                    id: newId,
+                    value: '100% Quality Guaranteed',
+                    label: 'Verified Shopper Experience',
+                    iconName: 'ShieldCheck',
+                  };
+                  setFormData((p) => ({
+                    ...p,
+                    metrics: {
+                      ...p.metrics,
+                      items: [...(p.metrics?.items || []), newMetric],
+                    },
+                  }));
+                  showToast('New Trust Metric added! Click Save to persist to DB.', 'success');
+                }}
+              >
+                <Plus size={15} /> Add Another Trust Metric
+              </button>
             </div>
           </div>
         )}

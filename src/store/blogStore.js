@@ -391,7 +391,8 @@ export const useBlogStore = create(
 
       fetchBlogFromApi: async () => {
         try {
-          const res = await fetch('http://localhost:5000/api/v1/blog');
+          const apiUrl = (import.meta.env?.VITE_API_URL || 'http://localhost:5000/api/v1') + '/blog';
+          const res = await fetch(apiUrl);
           const json = await res.json();
           if (json?.success && json?.data) {
             const apiData = json.data;
@@ -400,6 +401,7 @@ export const useBlogStore = create(
                 ...state.blogData,
                 isBlogPageEnabled: apiData.isBlogPageEnabled !== undefined ? apiData.isBlogPageEnabled : state.blogData.isBlogPageEnabled,
                 hero: apiData.hero ? { ...state.blogData.hero, ...apiData.hero } : state.blogData.hero,
+                metrics: apiData.metrics ? { ...state.blogData.metrics, ...apiData.metrics } : state.blogData.metrics,
               };
               broadcastBlogUpdate(updated);
               return { blogData: updated };

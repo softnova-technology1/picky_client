@@ -1,4 +1,5 @@
 import api from './api';
+import { broadcastCatalogUpdate } from '../utils/realtimeSync';
 
 export const adminService = {
   // Reports
@@ -13,25 +14,25 @@ export const adminService = {
   updateOrderStatus: (id, data) => api.patch(`/orders/admin/${id}/status`, data),
   deleteOrder: (id) => api.delete(`/orders/admin/${id}`),
 
-  // Products
-  createProduct: (formData) => api.post('/products', formData),
-  updateProduct: (id, formData) => api.put(`/products/${id}`, formData),
-  toggleProduct: (id) => api.patch(`/products/${id}/toggle`),
-  deleteProduct: (id) => api.delete(`/products/${id}`),
+  // Products (Instant Live Sync to Storefront)
+  createProduct: (formData) => api.post('/products', formData).then((res) => { broadcastCatalogUpdate('PRODUCT_CREATED'); return res; }),
+  updateProduct: (id, formData) => api.put(`/products/${id}`, formData).then((res) => { broadcastCatalogUpdate('PRODUCT_UPDATED'); return res; }),
+  toggleProduct: (id) => api.patch(`/products/${id}/toggle`).then((res) => { broadcastCatalogUpdate('PRODUCT_TOGGLED'); return res; }),
+  deleteProduct: (id) => api.delete(`/products/${id}`).then((res) => { broadcastCatalogUpdate('PRODUCT_DELETED'); return res; }),
 
-  // Categories
-  createCategory: (formData) => api.post('/categories', formData),
-  updateCategory: (id, formData) => api.put(`/categories/${id}`, formData),
+  // Categories (Instant Live Sync to Storefront)
+  createCategory: (formData) => api.post('/categories', formData).then((res) => { broadcastCatalogUpdate('CATEGORY_CREATED'); return res; }),
+  updateCategory: (id, formData) => api.put(`/categories/${id}`, formData).then((res) => { broadcastCatalogUpdate('CATEGORY_UPDATED'); return res; }),
   uploadCategoryImage: (formData) => api.post('/categories/upload-image', formData),
   updateCategoryCharacteristics: (id, characteristics) => api.patch(`/categories/${id}/characteristics`, { characteristics }),
-  deleteCategory: (id) => api.delete(`/categories/${id}`),
+  deleteCategory: (id) => api.delete(`/categories/${id}`).then((res) => { broadcastCatalogUpdate('CATEGORY_DELETED'); return res; }),
 
-  // SubCategories
+  // SubCategories (Instant Live Sync to Storefront)
   getSubCategories: (params) => api.get('/subcategories', { params }),
-  createSubCategory: (data) => api.post('/subcategories', data),
-  updateSubCategory: (id, data) => api.put(`/subcategories/${id}`, data),
-  deleteSubCategory: (id) => api.delete(`/subcategories/${id}`),
-  bulkDeleteSubCategories: (ids) => api.post('/subcategories/bulk-delete', { ids }),
+  createSubCategory: (data) => api.post('/subcategories', data).then((res) => { broadcastCatalogUpdate('SUBCATEGORY_CREATED'); return res; }),
+  updateSubCategory: (id, data) => api.put(`/subcategories/${id}`, data).then((res) => { broadcastCatalogUpdate('SUBCATEGORY_UPDATED'); return res; }),
+  deleteSubCategory: (id) => api.delete(`/subcategories/${id}`).then((res) => { broadcastCatalogUpdate('SUBCATEGORY_DELETED'); return res; }),
+  bulkDeleteSubCategories: (ids) => api.post('/subcategories/bulk-delete', { ids }).then((res) => { broadcastCatalogUpdate('SUBCATEGORIES_BULK_DELETED'); return res; }),
   uploadSubCategoryImage: (formData) => api.post('/subcategories/upload-image', formData),
 
   // Coupons
@@ -60,10 +61,10 @@ export const adminService = {
 
   // Inventory
   getInventory: (params) => api.get('/inventory', { params }),
-  updateInventoryStock: (productId, data) => api.patch(`/inventory/${productId}`, data),
-  deleteInventory: (productId) => api.delete(`/inventory/${productId}`),
+  updateInventoryStock: (productId, data) => api.patch(`/inventory/${productId}`, data).then((res) => { broadcastCatalogUpdate('INVENTORY_UPDATED'); return res; }),
+  deleteInventory: (productId) => api.delete(`/inventory/${productId}`).then((res) => { broadcastCatalogUpdate('INVENTORY_DELETED'); return res; }),
   toggleProductStatus: (id) =>
-    api.patch(`/products/${id}/toggle`).catch(() => api.patch(`/inventory/${id}/toggle-status`)),
+    api.patch(`/products/${id}/toggle`).catch(() => api.patch(`/inventory/${id}/toggle-status`)).then((res) => { broadcastCatalogUpdate('INVENTORY_TOGGLED'); return res; }),
 
   // Customization
   getCustomizations: () => api.get('/customization'),
@@ -79,4 +80,3 @@ export const adminService = {
   updateBlogData: (data) => api.put('/blog', data),
   uploadBlogImage: (formData) => api.post('/blog/upload-image', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
-

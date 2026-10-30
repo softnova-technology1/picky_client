@@ -3,7 +3,8 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import { 
   Sparkles, Play, Pause, Check, X, Volume2, Maximize2, Settings, MoreVertical, 
   ArrowRight, Video, ShieldCheck, ShoppingBag, Star, LayoutGrid, Shirt, UtensilsCrossed, 
-  Gem, Smartphone, Flame, Coffee, Home, Smile, Dumbbell 
+  Gem, Smartphone, Flame, Coffee, Home, Smile, Dumbbell,
+  Truck, CheckCircle, Heart, Award, Zap, Clock, Users, ThumbsUp, Gift, Shield, BadgePercent
 } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useBlogStore, INITIAL_BLOG_DATA } from '../../store/blogStore';
@@ -26,6 +27,17 @@ const ICON_MAP = {
   ShieldCheck,
   ShoppingBag,
   Star,
+  Truck,
+  CheckCircle,
+  Heart,
+  Award,
+  Zap,
+  Clock,
+  Users,
+  ThumbsUp,
+  Gift,
+  Shield,
+  BadgePercent,
 };
 
 export default function Blog() {
