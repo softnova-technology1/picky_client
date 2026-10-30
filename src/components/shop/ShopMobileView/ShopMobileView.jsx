@@ -673,7 +673,7 @@ export default function ShopMobileView({
                       }`}
                       onClick={() => setActiveBudget(b.id)}
                     >
-                      <div>
+                      <div className={styles.budgetCardContent}>
                         <div
                           className={
                             isBudgetActive ? styles.budgetCardTitleActive : styles.budgetCardTitle

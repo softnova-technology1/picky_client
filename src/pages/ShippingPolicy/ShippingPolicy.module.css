@@ -1,21 +1,30 @@
-/* ─── ShippingPolicy.module.css — Picky Legal & Shipping Policy Styles ─── */
+/* ══════════════════════════════════════════════════════════════════════════
+   ShippingPolicy.module.css — Picky Legal & Shipping Policy Styles
+   Strictly follows PICKY Mobile Typography Scale & Spacing System.
+   Desktop view (> 768px) is 100% untouched.
+   ══════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Desktop Isolation (> 768px) ─── */
-.desktopWrapper {
+/* Desktop view wrapper: visible only on desktop */
+.desktopWrapper,
+.desktopView {
   display: block;
 }
 
-.mobileWrapper {
+/* Mobile view wrapper: hidden on desktop, active on mobile */
+.mobileWrapper,
+.mobileView {
   display: none;
 }
 
 /* ─── Mobile View (Strictly 320px - 768px) ─── */
 @media (max-width: 768px) {
-  .desktopWrapper {
+  .desktopWrapper,
+  .desktopView {
     display: none !important;
   }
 
-  .mobileWrapper {
+  .mobileWrapper,
+  .mobileView {
     display: block !important;
     width: 100%;
     max-width: 100%;
@@ -30,20 +39,32 @@
 
   /* ── 0. Mobile Hero Header ── */
   .mobileHero {
-    padding: 1.25rem 1rem 1.15rem;
+    position: relative;
+    padding: 1.5rem 1rem 1.35rem;
     background: linear-gradient(145deg, #150B2E 0%, #24114d 60%, #3e167a 100%);
     color: #ffffff;
     border-bottom: 1px solid rgba(135, 56, 245, 0.2);
+    overflow: hidden;
   }
 
-  .heroBadge {
+  .mobileHero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .heroBadge,
+  .badgePill {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     background: rgba(135, 56, 245, 0.25);
     border: 1px solid rgba(135, 56, 245, 0.45);
     color: #d8b4fe;
-    font-size: 10px;
+    font-size: var(--m-font-badge, 10px);
     font-weight: 700;
     line-height: 1.2;
     padding: 0.25rem 0.65rem;
@@ -54,7 +75,8 @@
   }
 
   .heroTitle {
-    font-size: 22px;
+    position: relative;
+    font-size: var(--m-font-h1, 22px);
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.01em;
@@ -62,23 +84,34 @@
     margin: 0 0 0.45rem;
   }
 
+  .heroTitleHighlight {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    color: #D8B4FE;
+    display: inline-block;
+  }
+
   .heroSubtitle {
-    font-size: 12px;
+    position: relative;
+    font-size: var(--m-font-body, 12px);
     font-weight: 400;
     line-height: 1.45;
     color: #cbd5e1;
     margin: 0 0 0.75rem;
   }
 
-  .heroPillsRow {
+  .heroPillsRow,
+  .metaPillsRow {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     gap: 0.45rem;
     align-items: center;
   }
 
-  .heroPill {
-    font-size: 10.5px;
+  .heroPill,
+  .metaPill {
+    font-size: var(--m-font-micro, 10.5px);
     font-weight: 600;
     color: #e9d5ff;
     background: rgba(255, 255, 255, 0.08);
@@ -98,17 +131,21 @@
   }
 
   /* ── 1. 2x2 Interactive Logistics Trust Pillars Grid ── */
-  .trustPillarsGrid {
+  .trustPillarsGrid,
+  .trustGrid {
+    position: relative;
+    z-index: 10;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.625rem;
     padding: 0.85rem 1rem 0.45rem;
   }
 
-  .pillarCard {
+  .pillarCard,
+  .trustCard {
     background: #ffffff;
     border-radius: 16px;
-    padding: 0.85rem;
+    padding: var(--m-pad-card, 0.85rem);
     border: 1px solid #f3e8ff;
     box-shadow: 0 1px 3px rgba(88, 28, 135, 0.04);
     display: flex;
@@ -117,13 +154,17 @@
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
-  .pillarCard:active {
+  .pillarCard:active,
+  .trustCard:active {
     transform: scale(0.98);
   }
 
-  .pillarIconWrap {
+  .pillarIconWrap,
+  .trustIconWrap {
     width: 2rem;
     height: 2rem;
+    min-width: 2rem;
+    min-height: 2rem;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -132,370 +173,414 @@
     flex-shrink: 0;
   }
 
-  .pillarIconPurple {
-    background: #f5f3ff;
-    color: #8738F5;
-    border: 1px solid #ede9fe;
-  }
-
-  .pillarIconAmber {
-    background: #fffbeb;
+  .pillarIconWrapAmber,
+  .iconAmber,
+  .iconAmberDark {
+    background: #fef3c7;
     color: #d97706;
-    border: 1px solid #fef3c7;
   }
 
-  .pillarIconEmerald {
+  .pillarIconWrapEmerald,
+  .iconEmerald {
     background: #ecfdf5;
     color: #059669;
-    border: 1px solid #d1fae5;
   }
 
-  .pillarTitle {
-    font-size: 12px;
+  .pillarIconWrapPurple,
+  .iconPurple {
+    background: #f5f3ff;
+    color: #8738F5;
+  }
+
+  .pillarTitle,
+  .trustCardTitle {
+    font-size: var(--m-font-h3, 12px);
     font-weight: 700;
-    line-height: 1.25;
     color: #111827;
+    line-height: 1.25;
     margin: 0 0 0.2rem;
   }
 
-  .pillarDesc {
+  .pillarText,
+  .trustCardDesc {
     font-size: 10px;
-    font-weight: 400;
-    line-height: 1.4;
+    line-height: 1.35;
     color: #6b7280;
     margin: 0;
   }
 
   /* ── 2. Sticky Horizontal Quick Policy Jumps Rail ── */
-  .stickyRail {
+  .stickyRail,
+  .jumpNavRail {
     position: sticky;
     top: 0;
     z-index: 30;
     background: rgba(250, 248, 255, 0.96);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid #ede9fe;
-    padding: 0.65rem 1rem;
-    margin-bottom: 0.75rem;
+    padding: 0.45rem 1rem;
+    box-sizing: border-box;
   }
 
-  .railInner {
+  .railInner,
+  .jumpNavScroll {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.4rem;
     overflow-x: auto;
-    padding: 0.15rem 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
-  .railInner::-webkit-scrollbar {
+  .railInner::-webkit-scrollbar,
+  .jumpNavScroll::-webkit-scrollbar {
     display: none;
   }
 
   .jumpToLabel {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 800;
-    color: #8738F5;
+    color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     flex-shrink: 0;
     margin-right: 0.15rem;
   }
 
-  .railPill {
+  .railPill,
+  .jumpNavBtn {
     flex-shrink: 0;
-    padding: 0.35rem 0.8rem;
+    padding: 0.32rem 0.75rem;
     border-radius: 9999px;
-    font-size: 11.5px;
+    font-size: var(--m-font-nav, 11px);
     font-weight: 600;
-    line-height: 1.2;
     background: #ffffff;
-    color: #374151;
+    color: #4b5563;
     border: 1px solid #ede9fe;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 2px rgba(88, 28, 135, 0.04);
     cursor: pointer;
-    text-decoration: none;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
   }
 
-  .railPill:hover {
-    border-color: #8738F5;
-  }
-
-  .railPillActive {
+  .railPillActive,
+  .jumpNavBtnActive {
     background: #8738F5 !important;
     color: #ffffff !important;
     border-color: #8738F5 !important;
-    box-shadow: 0 3px 10px rgba(135, 56, 245, 0.3) !important;
+    box-shadow: 0 2px 6px rgba(135, 56, 245, 0.3) !important;
   }
 
-  /* ── 3. Main Clauses Container ── */
-  .mainClauses {
-    padding: 0 1rem;
+  /* ── 3. Main Clauses List ── */
+  .mainClauses,
+  .clausesContainer {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem 1.5rem;
   }
 
-  /* Clause Cards */
-  .clauseCard {
+  .clauseCard,
+  .clauseArticle {
     background: #ffffff;
     border-radius: 16px;
-    padding: 1.25rem;
-    border: 1px solid #f3e8ff;
-    box-shadow: 0 2px 8px rgba(88, 28, 135, 0.04);
-    scroll-margin-top: 85px;
-    box-sizing: border-box;
+    padding: 1rem;
+    border: 1px solid #ede9fe;
+    box-shadow: 0 1px 3px rgba(88, 28, 135, 0.03);
+    scroll-margin-top: 55px;
   }
 
-  .cardHeader {
+  .cardHeader,
+  .clauseHeader {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
   }
 
-  .cardNumBadge {
-    width: 2rem;
-    height: 1.75rem;
+  .cardNumBadge,
+  .numBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
     border-radius: 8px;
     background: #f5f3ff;
     color: #8738F5;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #ede9fe;
     flex-shrink: 0;
   }
 
-  .cardTitle {
-    font-size: 15px;
+  .cardTitle,
+  .clauseTitle {
+    font-size: var(--m-font-h2, 13.5px);
     font-weight: 700;
-    line-height: 1.25;
     color: #111827;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .cardText,
+  .clauseText {
+    font-size: var(--m-font-body, 12px);
+    line-height: 1.5;
+    color: #4b5563;
+    margin: 0 0 0.5rem;
+  }
+
+  .clauseSubtext {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #6b7280;
     margin: 0;
   }
 
-  .cardText {
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #4b5563;
-    margin: 0 0 0.75rem;
-  }
-
-  .cardText:last-child {
-    margin-bottom: 0;
-  }
-
-  /* ── Bullet Lists in Cards ── */
+  /* Bullet lists */
   .bulletList {
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.45rem;
+    margin-top: 0.4rem;
   }
 
   .bulletItem {
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
-    font-size: 11px;
+    font-size: var(--m-font-body, 11px);
     line-height: 1.45;
     color: #4b5563;
+  }
+
+  .bulletIndicator {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #8738F5;
+    margin-top: 6px;
+    flex-shrink: 0;
   }
 
   .bulletDot {
-    color: #8738F5;
-    font-weight: 800;
-    font-size: 13px;
-    line-height: 1;
-    margin-top: 0.15rem;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #8738F5;
     flex-shrink: 0;
+    margin-top: 6px;
   }
 
-  .checkItem {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.55rem;
-    font-size: 11px;
-    line-height: 1.45;
-    color: #4b5563;
-  }
-
-  .checkIconWrap {
-    color: #8738F5;
-    flex-shrink: 0;
-    margin-top: 0.15rem;
-  }
-
-  /* ── Section 02 Delivery Timelines List ── */
-  .timelineCardsList {
+  /* 02 Delivery Timelines */
+  .timelineCardsList,
+  .timelineList {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
   }
 
-  .timelineCard {
-    padding: 0.75rem 0.85rem;
-    background: rgba(245, 243, 255, 0.5);
-    border-radius: 12px;
-    border: 1px solid #ede9fe;
+  .timelineCard,
+  .timelineRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    background: #fdfcff;
+    border: 1px solid #ede9fe;
+    border-radius: 12px;
   }
 
-  .timelineCardTitle {
-    font-size: 12px;
+  .timelineRegion {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timelineRegionTitle {
+    font-size: 11.5px;
     font-weight: 700;
     color: #111827;
-    margin: 0;
   }
 
-  .timelineCardSub {
-    font-size: 10px;
+  .timelineCarrier {
+    font-size: 9.5px;
     color: #6b7280;
-    margin: 0.15rem 0 0;
+    margin-top: 0.1rem;
   }
 
-  .timePill {
-    padding: 0.25rem 0.65rem;
-    border-radius: 9999px;
-    font-size: 11px;
+  .timelineBadge,
+  .timelinePill {
+    font-size: 10.5px;
     font-weight: 700;
-    flex-shrink: 0;
+    padding: 0.22rem 0.6rem;
+    border-radius: 9999px;
     white-space: nowrap;
   }
 
-  .timePillEmerald {
-    background: #d1fae5;
-    color: #047857;
-  }
-
-  .timePillPurple {
-    background: #ede9fe;
-    color: #8738F5;
-  }
-
-  /* ── Section 03 Free Shipping Card ── */
-  .freeShippingBanner {
-    padding: 0.85rem;
+  .timelineBadgeEmerald,
+  .pillEmerald {
     background: #ecfdf5;
-    border-radius: 12px;
+    color: #059669;
     border: 1px solid #a7f3d0;
+  }
+
+  .timelineBadgePurple,
+  .pillPurple {
+    background: #f5f3ff;
+    color: #8738F5;
+    border: 1px solid #ddd6fe;
+  }
+
+  .timelineBadgeAmber,
+  .pillAmber {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .timelineBadgeBlue,
+  .pillSky {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+  }
+
+  /* 03 Free Shipping Banner */
+  .freeShippingBanner,
+  .highlightBanner {
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+    border: 1px solid #a7f3d0;
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    gap: 0.65rem;
+    margin: 0.5rem 0;
   }
 
-  .freeShippingCheckCircle {
-    width: 1.25rem;
-    height: 1.25rem;
+  .freeShippingIconWrap {
+    width: 1.6rem;
+    height: 1.6rem;
     border-radius: 50%;
     background: #10b981;
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 800;
     flex-shrink: 0;
-    margin-top: 0.1rem;
+    margin-top: 1px;
   }
 
   .freeShippingTitle {
     font-size: 12px;
     font-weight: 700;
     color: #064e3b;
-    margin: 0 0 0.15rem;
+    margin: 0 0 0.2rem;
   }
 
-  .freeShippingDesc {
-    font-size: 11px;
-    color: #047857;
+  .freeShippingText,
+  .highlightDesc {
+    font-size: 10.5px;
     line-height: 1.4;
+    color: #047857;
     margin: 0;
   }
 
-  .belowThresholdNote {
-    font-size: 11px;
-    color: #6b7280;
-    line-height: 1.45;
-    background: rgba(245, 243, 255, 0.4);
-    padding: 0.75rem 0.85rem;
-    border-radius: 12px;
-    border: 1px solid #ede9fe;
-    margin: 0;
+  .highlightTag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #065F46;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: block;
+    margin-bottom: 0.2rem;
   }
 
-  /* ── Section 05 Packaging Specialty Boxes ── */
+  /* 05 Packaging Boxes */
   .packagingBoxesList {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
   }
 
   .packagingBox {
     padding: 0.75rem 0.85rem;
-    background: rgba(245, 243, 255, 0.4);
     border-radius: 12px;
-    border: 1px solid #ede9fe;
+    border: 1px solid #f1f5f9;
   }
 
-  .packagingBoxHeader {
+  .packagingBoxPurple,
+  .packagingPurple {
+    background: rgba(245, 238, 255, 0.45);
+    border: 1px solid #EDE8F8;
+  }
+
+  .packagingBoxEmerald,
+  .packagingEmerald {
+    background: rgba(236, 253, 245, 0.45);
+    border: 1px solid #A7F3D0;
+  }
+
+  .packagingBoxAmber {
+    background: #fffbeb;
+    border-color: #fef3c7;
+  }
+
+  .packagingHeader {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     margin-bottom: 0.35rem;
-  }
-
-  .packagingIconWrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
   }
 
   .packagingTitle {
     font-size: 12px;
     font-weight: 700;
-    color: #111827;
+    color: #19152B;
     margin: 0;
   }
 
-  .packagingText {
+  .packagingDesc {
     font-size: 11px;
     line-height: 1.45;
-    color: #6b7280;
+    color: #4B5563;
+    padding-left: 1.45rem;
     margin: 0;
-    padding-left: 1.5rem;
   }
 
-  /* ── Section 07 Amber Reschedule Callout ── */
+  /* Amber Callout */
   .amberCallout {
-    padding: 0.85rem;
     background: #fffbeb;
-    border-radius: 12px;
     border: 1px solid #fef3c7;
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
     font-size: 11px;
     line-height: 1.45;
     color: #78350f;
+    margin-top: 0.5rem;
   }
 
-  /* ── Section 08 Helpdesk Contacts ── */
+  .amberCalloutTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #19152B;
+    margin: 0 0 0.25rem;
+  }
+
+  /* 08 Shipping Helpdesk */
   .helpdeskList {
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
   }
 
   .helpdeskRow {
-    padding: 0.75rem 0.85rem;
+    padding: 0.7rem 0.85rem;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -505,7 +590,18 @@
     transition: all 0.2s ease;
   }
 
-  .helpdeskRowEmerald {
+  .helpdeskRowCard {
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .helpdeskRowEmerald,
+  .helpdeskWa {
     background: #ecfdf5;
     border: 1px solid #a7f3d0;
   }
@@ -514,12 +610,14 @@
     border-color: #6ee7b7;
   }
 
-  .helpdeskRowPurple {
+  .helpdeskRowPurple,
+  .helpdeskPhone {
     background: rgba(245, 243, 255, 0.5);
     border: 1px solid #ede9fe;
   }
 
-  .helpdeskRowGray {
+  .helpdeskRowGray,
+  .helpdeskHub {
     background: #f9fafb;
     border: 1px solid #f3f4f6;
   }
@@ -538,6 +636,33 @@
 
   .helpdeskIcon {
     flex-shrink: 0;
+  }
+
+  .helpdeskIconWrap {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .iconBgGreen {
+    background: #25D366;
+    color: #ffffff;
+  }
+
+  .iconBgPurple {
+    background: #8738F5;
+    color: #ffffff;
+  }
+
+  .iconBgRed {
+    background: #FEE2E2;
+    color: #DC2626;
   }
 
   .helpdeskTitle {
@@ -584,10 +709,143 @@
     flex-shrink: 0;
   }
 
+  .helpdeskLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: block;
+    margin-bottom: 0.1rem;
+  }
+
+  .helpdeskValGreen {
+    font-size: 12px;
+    font-weight: 700;
+    color: #059669;
+    margin: 0;
+  }
+
+  .helpdeskValDark {
+    font-size: 12px;
+    font-weight: 700;
+    color: #19152B;
+    margin: 0;
+  }
+
+  .helpdeskValMuted {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.4;
+    margin: 0;
+  }
+
   .linkAccent {
     color: #8738F5;
     font-weight: 700;
     text-decoration: underline;
   }
+
+  /* Urgent Pooja & Wedding Orders Bottom Banner */
+  .urgentBanner {
+    background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+    border-radius: 16px;
+    padding: 1rem 1.15rem;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .urgentEyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #D1FAE5;
+    display: block;
+  }
+
+  .urgentHeading {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0.15rem 0 0;
+    line-height: 1.25;
+  }
+
+  .urgentChatBtn {
+    padding: 0.55rem 0.95rem;
+    min-height: var(--m-btn-min-height, 42px);
+    background: #ffffff;
+    color: #047857;
+    border-radius: 12px;
+    font-size: var(--m-font-btn, 12.5px);
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .urgentChatBtn:hover {
+    background: #F0FDF4;
+  }
 }
 
+/* ── 320px Specific Optimizations (Small Mobile) ── */
+@media (max-width: 349px) {
+  .heroTitle {
+    font-size: var(--m-font-h1, 22px);
+  }
+
+  .heroSubtitle {
+    font-size: var(--m-font-body, 12px);
+  }
+
+  .pillarTitle,
+  .trustCardTitle {
+    font-size: var(--m-font-h3, 11.5px);
+  }
+
+  .pillarText,
+  .trustCardDesc {
+    font-size: 9.5px;
+  }
+
+  .railPill,
+  .jumpNavBtn {
+    font-size: 10px;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .cardTitle,
+  .clauseTitle {
+    font-size: 13px;
+  }
+
+  .cardText,
+  .clauseText {
+    font-size: 11.5px;
+  }
+
+  .clauseSubtext,
+  .highlightDesc,
+  .packagingDesc {
+    font-size: 10px;
+  }
+
+  .urgentChatBtn {
+    min-height: 38px;
+    font-size: 11.5px;
+    padding: 0.45rem 0.75rem;
+  }
+}
