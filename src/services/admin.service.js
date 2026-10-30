@@ -73,5 +73,10 @@ export const adminService = {
   // Upload & S3 Storage
   uploadImage: (formData) => api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   deleteImage: (urlOrKey) => api.delete('/upload', { data: { url: urlOrKey } }).catch(() => api.post('/upload/delete', { url: urlOrKey })),
+
+  // Blog Page (MongoDB & S3)
+  getBlogData: () => api.get('/blog'),
+  updateBlogData: (data) => api.put('/blog', data),
+  uploadBlogImage: (formData) => api.post('/blog/upload-image', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 

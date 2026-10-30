@@ -57,6 +57,7 @@ import AdminBroadcast from './pages/admin/AdminBroadcast';
 import AdminFlashSales from './pages/admin/AdminFlashSales';
 import AdminNotifications from './pages/admin/AdminNotifications';
 import AdminInquiries from './pages/admin/AdminInquiries';
+import AdminBlog from './pages/admin/AdminBlog';
 
 const ADMIN = '/softpicky-sn2026';
 const ADMIN_ALT = '/softpicky_sn2026';
@@ -223,6 +224,8 @@ export default function App() {
           <Route path={`${ADMIN_ALT}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
           <Route path={`${ADMIN_ALT}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/blog`} element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/blog`} element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
 
 
           {/* ── Catch-all 404 Page ───────────────────── */}
