@@ -558,3 +558,21 @@
   line-height: 1.6;
   margin: 0;
 }
+
+/* ── PICKY Mobile Typography Standard ── */
+@media (max-width: 768px) {
+  .footer-contact-title,
+  .footer-contact-sub,
+  .footer-contact-item,
+  .footer-links-list a,
+  .picky-footer-body a {
+    font-size: var(--p-font-helper, 12px) !important;
+  }
+
+  .footer-trust-chips,
+  .trust-chip-item,
+  .footer-copyright,
+  .footer-social-title {
+    font-size: var(--p-font-micro, 10px) !important;
+  }
+}

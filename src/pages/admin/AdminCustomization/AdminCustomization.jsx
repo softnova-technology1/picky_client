@@ -1931,7 +1931,96 @@ function LiveSectionPreview({
         );
       })()}
 
-      {/* 9. Generic Preview for Other Pages */}
+      {/* 9. Best Sellers Leaderboard Banner Live Preview */}
+      {section.id === 'best_sellers_hero' && (() => {
+        const headline = s.headline || 'Most Loved South Indian Masterpieces';
+        const subheadline = s.subheadline || 'Handpicked by thousands of happy homes across India and worldwide.';
+        const badgeText = s.badgeText || 'TOP RATED & VERIFIED';
+        const titleColor = s.titleColor || s.textColor || '#111827';
+        const subtitleColor = s.subtitleColor || '#475569';
+        const bgImage = s.bannerBgImage || s.bannerBgColor || '/images/bestseller_category_bg.jpg';
+        const ctaText = s.ctaText || 'Get started';
+
+        return (
+          <div
+            style={{
+              position: 'relative',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              border: '1.5px solid #e9d5ff',
+              padding: '2rem 1.5rem',
+              textAlign: 'center',
+              background: `linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(248, 240, 255, 0.5) 100%), url('${bgImage}') center/cover no-repeat`,
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.06)',
+            }}
+          >
+            <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <h2
+                style={{
+                  margin: '0 0 0.6rem 0',
+                  fontSize: '1.5rem',
+                  fontWeight: 800,
+                  color: titleColor,
+                  lineHeight: 1.25,
+                }}
+              >
+                {headline}
+              </h2>
+              {subheadline && (
+                <p
+                  style={{
+                    margin: '0 0 1rem 0',
+                    fontSize: '0.82rem',
+                    color: subtitleColor,
+                    lineHeight: 1.5,
+                    fontWeight: 600,
+                    maxWidth: '460px',
+                  }}
+                >
+                  {subheadline}
+                </p>
+              )}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 16px',
+                  borderRadius: '50px',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                }}
+              >
+                <span>{ctaText}</span>
+              </div>
+              {badgeText && (
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '3px 10px',
+                    borderRadius: '50px',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    border: '1px solid #e9d5ff',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    color: '#6b21a8',
+                  }}
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                  <span>{badgeText}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 10. Generic Preview for Other Pages */}
       {section.id !== 'announcement_bar' &&
         section.id !== 'hero_banner' &&
         section.id !== 'shop_by_category' &&
@@ -1941,7 +2030,8 @@ function LiveSectionPreview({
         section.id !== 'categories_hero' &&
         section.id !== 'new_arrivals_hero' &&
         section.id !== 'new_arrivals_marquee' &&
-        section.id !== 'best_sellers_trust_strip' && (
+        section.id !== 'best_sellers_trust_strip' &&
+        section.id !== 'best_sellers_hero' && (
           <div
             style={{
               background: '#ffffff',
@@ -2262,8 +2352,8 @@ export default function AdminCustomization() {
     }
   };
 
-  // Section Field Update Handler
-  const handleUpdateSetting = (field, value) => {
+  // Section Field Update Handler (supports single field/value or object patch)
+  const handleUpdateSetting = (fieldOrObj, value) => {
     setLastSavedSectionTimeMap((prev) => {
       if (!prev[activeSectionId]) return prev;
       const copy = { ...prev };
@@ -2271,26 +2361,34 @@ export default function AdminCustomization() {
       return copy;
     });
 
-    const updated = currentSections.map((s) => {
-      if (s.id === activeSectionId) {
-        return {
-          ...s,
-          settings: {
-            ...s.settings,
-            [field]: value,
-          },
-        };
-      }
-      return s;
-    });
+    const patch = typeof fieldOrObj === 'object' && fieldOrObj !== null
+      ? fieldOrObj
+      : { [fieldOrObj]: value };
 
-    setAllPageSections((prev) => ({
-      ...prev,
-      [activePageId]: updated,
-    }));
-    // Instant live preview broadcast and store sync to all open storefront tabs
-    storeSavePageSections(activePageId, updated);
-    broadcastLivePreview(activePageId, updated);
+    setAllPageSections((prev) => {
+      const pageSections = prev[activePageId] || [];
+      const updated = pageSections.map((s) => {
+        if (s.id === activeSectionId) {
+          return {
+            ...s,
+            settings: {
+              ...s.settings,
+              ...patch,
+            },
+          };
+        }
+        return s;
+      });
+
+      // Instant live preview broadcast and store sync to all open storefront tabs
+      storeSavePageSections(activePageId, updated);
+      broadcastLivePreview(activePageId, updated);
+
+      return {
+        ...prev,
+        [activePageId]: updated,
+      };
+    });
   };
 
 
@@ -3368,7 +3466,31 @@ export default function AdminCustomization() {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleSaveCurrentSection}
+                    disabled={isSavingSection || !hasCurrentSectionEdits}
+                    id="btn-save-current-section"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0.42rem 0.95rem',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      background: hasCurrentSectionEdits ? 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)' : '#f1f5f9',
+                      color: hasCurrentSectionEdits ? '#ffffff' : '#94a3b8',
+                      cursor: hasCurrentSectionEdits ? 'pointer' : 'default',
+                      border: hasCurrentSectionEdits ? 'none' : '1px solid #e2e8f0',
+                      transition: 'all 0.2s ease',
+                      boxShadow: hasCurrentSectionEdits ? '0 2px 8px rgba(124, 58, 237, 0.25)' : 'none',
+                    }}
+                  >
+                    <Save size={14} />
+                    <span>{isSavingSection ? 'Saving...' : 'Save Section'}</span>
+                  </button>
                   <AccessibleToggleSwitch
                     enabled={currentSection.enabled}
                     onToggle={(e) => handleToggleEnable(currentSection.id, e)}
@@ -6047,8 +6169,10 @@ export default function AdminCustomization() {
                               label="Banner Background Image"
                               value={s.bannerBgImage || s.bannerBgColor || ''}
                               onChange={(newUrl) => {
-                                handleUpdateSetting('bannerBgImage', newUrl);
-                                handleUpdateSetting('bannerBgColor', newUrl);
+                                handleUpdateSetting({
+                                  bannerBgImage: newUrl,
+                                  bannerBgColor: newUrl,
+                                });
                               }}
                               onClear={(currUrl) => {
                                 handleClearSectionImage('bannerBgImage', currUrl);
@@ -6072,8 +6196,10 @@ export default function AdminCustomization() {
                                   type="color"
                                   value={titleColor}
                                   onChange={(e) => {
-                                    handleUpdateSetting('titleColor', e.target.value);
-                                    handleUpdateSetting('textColor', e.target.value);
+                                    handleUpdateSetting({
+                                      titleColor: e.target.value,
+                                      textColor: e.target.value,
+                                    });
                                   }}
                                   style={{
                                     width: '38px',
@@ -6089,8 +6215,10 @@ export default function AdminCustomization() {
                                   type="text"
                                   value={titleColor}
                                   onChange={(e) => {
-                                    handleUpdateSetting('titleColor', e.target.value);
-                                    handleUpdateSetting('textColor', e.target.value);
+                                    handleUpdateSetting({
+                                      titleColor: e.target.value,
+                                      textColor: e.target.value,
+                                    });
                                   }}
                                   className="form-input"
                                   style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
@@ -6102,8 +6230,10 @@ export default function AdminCustomization() {
                                     key={c}
                                     type="button"
                                     onClick={() => {
-                                      handleUpdateSetting('titleColor', c);
-                                      handleUpdateSetting('textColor', c);
+                                      handleUpdateSetting({
+                                        titleColor: c,
+                                        textColor: c,
+                                      });
                                     }}
                                     title={c}
                                     style={{

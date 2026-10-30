@@ -1,0 +1,699 @@
+/* ==========================================================================
+   PICKY - MY ORDERS SECTION COMPONENT (CSS MODULE)
+   STRICT MOBILE TARGET: 320px to 768px
+   ========================================================================== */
+
+.ordersContainer {
+  width: 100%;
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #f8fafc;
+  color: #1e293b;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* 1. Section Heading & Icon */
+.headerCard {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerIconBox {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: #f3e8ff;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headingText {
+    font-size: 20px; /* Section heading: 24–28px */
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.subHeadingText {
+  font-size: 13px; /* Body description: 13–14px */
+  font-weight: 400;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+/* 2. Status Filter Pills */
+.filterPillsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filterPillsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.filterPillActive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  background-color: #6d28d9;
+  color: #ffffff;
+  border: none;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 600;
+  line-height: 1.2;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(109, 40, 217, 0.25);
+  transition: transform 0.1s ease;
+}
+
+.filterPillActive:active {
+  transform: scale(0.96);
+}
+
+.filterPillInactive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 600;
+  line-height: 1.2;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.filterPillInactive:hover {
+  background-color: #f8fafc;
+}
+
+.filterPillInactive:active {
+  transform: scale(0.96);
+}
+
+.statusIndicatorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pillBadgeActive {
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background-color: rgba(76, 29, 149, 0.45);
+  color: #ffffff;
+  font-size: 11px; /* Category count: 11–12px */
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.pillBadgeInactive {
+  color: #64748b;
+  font-size: 11px; /* Category count: 11–12px */
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* 3. Order Cards List */
+.cardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.orderCard {
+  background-color: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.orderCard:hover {
+  border-color: #c4b5fd;
+}
+
+/* Card Header */
+.cardHeader {
+  padding: 14px 15px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.orderIdGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.orderNumber {
+  font-size: 13px; /* Category card title / Item title: 14–16px */
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px; /* Badge text: 10–11px */
+  font-weight: 600;
+  line-height: 1.2;
+  background-color: #faf5ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.copyBtn:hover {
+  background-color: #f3e8ff;
+}
+
+.placedDateText {
+  font-size: 11px; /* Original price / sub-date: 11–12px */
+  color: #94a3b8;
+  margin: 3px 0 0;
+  line-height: 1.3;
+}
+
+/* Status Badges */
+.badgePlaced {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 10px; /* Badge text: 10–11px */
+  font-weight: 700;
+  line-height: 1.2;
+  background-color: #f3e8ff;
+  color: #7c3aed;
+  border: 1px solid #e9d5ff;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.badgeCancelled {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 10px; /* Badge text: 10–11px */
+  font-weight: 700;
+  line-height: 1.2;
+  background-color: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.badgeDelivered {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 10px; /* Badge text: 10–11px */
+  font-weight: 700;
+  line-height: 1.2;
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.badgeShipping {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 10px; /* Badge text: 10–11px */
+  font-weight: 700;
+  line-height: 1.2;
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.badgeConfirmed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 10px; /* Badge text: 10–11px */
+  font-weight: 700;
+  line-height: 1.2;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.badgeBullet {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Card Items Area */
+.cardItemsArea {
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.itemDivider {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 10px;
+}
+
+.itemThumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.itemImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemFallbackBox {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c3aed;
+  background-color: #f5f3ff;
+  letter-spacing: 0.02em;
+}
+
+.itemDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: 14px; /* Product name: 13–15px */
+  font-weight: 600; /* 500–600 */
+  line-height: 1.35;
+  color: #1e293b;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemQty {
+  font-size: 12px; /* Category count / body: 11–13px */
+  font-weight: 400;
+  line-height: 1.4;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.itemQtyBold {
+  font-weight: 600;
+  color: #334155;
+}
+
+.itemPrice {
+  font-size: 14px; /* Product price / item price: 14px */
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+  margin: 2px 0 0;
+}
+
+/* Card Footer Tray */
+.cardFooter {
+  padding: 10px 15px;
+  background-color: rgba(248, 250, 252, 0.75);
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.totalLabel {
+  font-size: 11px; /* Badge text: 10–11px */
+  font-weight: 400;
+  line-height: 1.3;
+  color: #64748b;
+  display: block;
+}
+
+.totalPrice {
+  font-size: 16px; /* Product price: 16–18px */
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.footerActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.invoiceBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.invoiceBtn:hover {
+  background-color: #f1f5f9;
+}
+
+.trackBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  background-color: #6d28d9;
+  color: #ffffff;
+  border: none;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(109, 40, 217, 0.2);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.trackBtn:hover {
+  background-color: #5b21b6;
+}
+
+.trackBtn:active {
+  transform: scale(0.97);
+}
+
+/* Delivered Card Multi-Action Stack */
+.deliveredFooterStack {
+  padding: 14px 15px;
+  background-color: rgba(248, 250, 252, 0.75);
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deliveredTotalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.deliveredTotalLabel {
+  font-size: 13px; /* Body description: 13–14px */
+  font-weight: 500;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.deliveredTotalPrice {
+  font-size: 17px; /* Product price: 16–18px */
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.deliveredButtonsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.deliveredInvoiceBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.returnExchBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #fde68a;
+  background-color: #fef3c7;
+  color: #92400e;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.returnExchBtn:hover {
+  background-color: #fde68a;
+}
+
+.deliveredTrackFullBtn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #6d28d9;
+  color: #ffffff;
+  border: none;
+  font-size: 13px; /* Button text: 13–15px */
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 1px 2px rgba(109, 40, 217, 0.2);
+}
+
+.deliveredTrackFullBtn:hover {
+  background-color: #5b21b6;
+}
+
+/* Empty State */
+.emptyOrdersState {
+  text-align: center;
+  padding: 40px 16px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #f1f5f9;
+}
+
+.emptyText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ==========================================================================
+   STRICT MOBILE MEDIA QUERY (320px to 768px)
+   Enforces exact typography and boundary constraints
+   ========================================================================== */
+@media (min-width: 320px) and (max-width: 768px) {
+  .ordersContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* Section heading: 24–28px | 700 | 1.2 */
+  .headingText {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Body description: 13–14px | 400 | 1.5 */
+  .subHeadingText {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* Button text: 13–15px | 600 | 1.2 */
+  .filterPillActive,
+  .filterPillInactive {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* Category count: 11–12px | 400–500 | 1.3 */
+  .pillBadgeActive,
+  .pillBadgeInactive {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  /* Category card title / Item title: 14–16px | 600–700 | 1.3 */
+  .orderNumber {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Badge text: 10–11px | 600–700 | 1.2 */
+  .badgePlaced,
+  .badgeCancelled,
+  .badgeDelivered,
+  .badgeShipping,
+  .badgeConfirmed,
+  .copyBtn {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Original price / sub-date: 11–12px | 400 | 1.3 */
+  .placedDateText {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  /* Product name: 13–15px | 500–600 | 1.35 */
+  .itemName {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  /* Body description: 13–14px | 400 | 1.5 */
+  .itemQty {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  /* Product price: 16–18px | 700 | 1.2 */
+  .totalPrice,
+  .deliveredTotalPrice {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .itemPrice {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Button text: 13–15px | 600 | 1.2 */
+  .invoiceBtn,
+  .trackBtn,
+  .deliveredInvoiceBtn,
+  .returnExchBtn,
+  .deliveredTrackFullBtn {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+}
+

@@ -378,6 +378,7 @@ export default function Login({ initialTab = 'login' }) {
           <button
             type="button"
             className="picky-auth-close-btn"
+            style={{ position: "absolute" }}
             onClick={handleClose}
             aria-label="Close"
           >

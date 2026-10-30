@@ -1,0 +1,705 @@
+/* ==========================================================================
+   PICKY - PROFILE SECTION COMPONENT (CSS MODULE)
+   STRICT MOBILE TARGET: 320px to 768px
+   ========================================================================== */
+
+.profileContainer {
+  width: 100%;
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #f8fafc;
+  color: #1e293b;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* 1. Top Breadcrumb & Sign Out */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 0;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #64748b;
+}
+
+.breadcrumbSlash {
+  color: #cbd5e1;
+}
+
+.breadcrumbCurrent {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.signOutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid #ddd6fe;
+  background-color: #ffffff;
+  color: #7c3aed;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.signOutBtn:hover {
+  background-color: #f5f3ff;
+}
+
+.signOutBtn:active {
+  transform: scale(0.96);
+}
+
+/* 2. Profile Identity Banner */
+.bannerCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 50%, #ede9fe 100%);
+  padding: 16px;
+  border: 1px solid #e9d5ff;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.06);
+}
+
+.bannerDecorativeCircle {
+  position: absolute;
+  right: -24px;
+  bottom: -32px;
+  width: 144px;
+  height: 144px;
+  border-radius: 50%;
+  background-color: rgba(192, 132, 252, 0.25);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.bannerContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 1;
+}
+
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatarCircle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed 0%, #3730a3 100%);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
+  outline: 4px solid rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.statusDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid #ffffff;
+}
+
+.bannerUserInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.bannerNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.userNameHeading {
+    font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.userIdBadge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background-color: rgba(221, 214, 254, 0.8);
+  color: #6b21a8;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.bannerMetaText {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #475569;
+  margin: 4px 0 0;
+}
+
+.activeTierTag {
+  color: #047857;
+  font-weight: 600;
+}
+
+/* 3. Horizontal Navigation Tabs */
+.tabsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.tabButtonActive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background-color: #6d28d9;
+  color: #ffffff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(109, 40, 217, 0.25);
+  transition: transform 0.1s ease;
+}
+
+.tabButtonActive:active {
+  transform: scale(0.96);
+}
+
+.tabButtonInactive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.tabButtonInactive:hover {
+  background-color: #f8fafc;
+}
+
+.tabButtonInactive:active {
+  transform: scale(0.96);
+}
+
+.tabIconPurple {
+  color: #7c3aed;
+}
+
+.tabCountBadge {
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background-color: #f3e8ff;
+  color: #6d28d9;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* 4. Personal Profile Section Card */
+.profileCard {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionTitleGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sectionAccentBar {
+  width: 4px;
+  height: 22px;
+  border-radius: 9999px;
+  background-color: #6d28d9;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.sectionHeading {
+    font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.sectionDescription {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.dotMatrix {
+  display: grid;
+  grid-template-columns: repeat(3, 4px);
+  grid-gap: 3px;
+  padding: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.matrixDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #c084fc;
+}
+
+/* Profile Fields List */
+.fieldsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fieldItem {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.fieldItem:hover {
+  border-color: #ddd6fe;
+}
+
+.fieldLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fieldIconBox {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fieldData {
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin: 0 0 2px;
+}
+
+.fieldValue {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fieldValueEmail {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+  margin: 0;
+  word-break: break-all;
+  white-space: normal;
+}
+
+.fieldValuePhone {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0f172a;
+  margin: 0;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd6fe;
+  color: #7c3aed;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  background-color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.editBtn:hover {
+  background-color: #f5f3ff;
+}
+
+.editBtn:active {
+  transform: scale(0.96);
+}
+
+/* Field 4 (Mobile Field with WhatsApp subtitle) */
+.mobileFieldItem {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.mobileFieldItem:hover {
+  border-color: #ddd6fe;
+}
+
+.mobileFieldTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  border: 1px solid #a7f3d0;
+  flex-shrink: 0;
+}
+
+.verifiedSubtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 46px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
+}
+
+.greenBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* 5. KYC & Purchase Protection Badge */
+.kycCard {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #ede9fe;
+  background-color: rgba(245, 243, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kycLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.kycIconBox {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: #7c3aed;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.2);
+}
+
+.kycTitle {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+  margin: 0;
+}
+
+.kycSubtitle {
+  font-size: 10px;
+  color: #6d28d9;
+  font-weight: 500;
+  line-height: 1.3;
+  margin: 2px 0 0;
+}
+
+.safeBadge {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd6fe;
+  color: #6b21a8;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+/* ==========================================================================
+   STRICT MOBILE MEDIA QUERY (320px to 768px)
+   Enforces exact typography and boundary constraints
+   ========================================================================== */
+@media (min-width: 320px) and (max-width: 768px) {
+  .profileContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* Navigation label: 10–12px | 500–600 | 1.2 */
+  .breadcrumb {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .breadcrumbCurrent {
+    font-weight: 600;
+  }
+
+  /* Button text: 13–15px | 600 | 1.2 */
+  .signOutBtn {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* Category card title / Item title: 14–16px | 600–700 | 1.3 */
+  .userNameHeading {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Badge text: 10–11px | 600–700 | 1.2 */
+  .userIdBadge {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Body description: 13–14px | 400 | 1.5 */
+  .bannerMetaText {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* Button text: 13–15px | 600 | 1.2 */
+  .tabButtonActive,
+  .tabButtonInactive {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* Category count: 11–12px | 400–500 | 1.3 */
+  .tabCountBadge {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  /* Section heading: 24–28px | 700 | 1.2 */
+  .sectionHeading {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Body description: 13–14px | 400 | 1.5 */
+  .sectionDescription {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* Badge text / Sub-label: 10–11px | 600–700 | 1.2 */
+  .fieldLabel {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Product name / Primary field text: 13–15px | 500–600 | 1.35 */
+  .fieldValue {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .fieldValueEmail {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .fieldValuePhone {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  /* Button text: 13–15px | 600 | 1.2 */
+  .editBtn {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* Badge text: 10–11px | 600–700 | 1.2 */
+  .verifiedBadge {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Body description: 13–14px | 400 | 1.5 */
+  .verifiedSubtitle {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* Item title: 13–15px | 600–700 | 1.3 */
+  .kycTitle {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Badge text: 10–11px | 600–700 | 1.2 */
+  .safeBadge {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+}
+

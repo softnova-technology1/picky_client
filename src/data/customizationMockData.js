@@ -506,7 +506,7 @@ export const MOCK_PAGE_SECTIONS = {
       description: 'Dynamic grid showing newest products with instant sorting and view mode.',
       settings: {
         title: 'Explore Fresh Arrivals',
-        viewCatalogText: 'View Full Store Catalog',
+        viewCatalogText: 'View All',
         defaultSort: 'newest',
         itemsPerPage: 12,
         showJustInBadge: true,
@@ -556,12 +556,13 @@ export const MOCK_PAGE_SECTIONS = {
       type: 'banner',
       description: 'High-converting social proof banner showcasing our top-rated creations.',
       settings: {
-        headline: 'Most Loved South Indian Masterpieces',
+        headline: 'The best place to discover and shop for best sellers',
         subheadline: 'Handpicked by thousands of happy homes across India and worldwide.',
-        badgeText: 'TOP RATED & VERIFIED',
-        titleColor: '#111827',
+        badgeText: 'Authentic Handloom, Brassware & Curated Daily Essentials',
+        ctaText: 'Get started',
+        titleColor: '#0f172a',
         subtitleColor: '#475569',
-        bannerBgImage: '/images/bestseller_category_bg.jpg',
+        bannerBgImage: '',
       },
     },
     {
@@ -602,7 +603,7 @@ export const MOCK_PAGE_SECTIONS = {
       settings: {
         badgeText: '✦ JOIN OUR COMMUNITY',
         title: 'Connect With Us @picky.co.in',
-        subtitle: 'Follow us on Instagram & WhatsApp for daily style inspiration and exclusive drops.',
+        subtitle: 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.',
         instagramLink: 'https://www.instagram.com/picky.co.in/',
         whatsappNumber: '918300295721',
       },
@@ -669,9 +670,9 @@ export const MOCK_PAGE_SECTIONS = {
       type: 'pdp_related',
       description: 'Curated related products displayed at the bottom of the product page.',
       settings: {
-        sectionTitle: 'Expand Your Arsenal',
-        viewAllLinkText: 'Access Database',
-        displayLimit: 4,
+        sectionTitle: 'You May Also Love',
+        viewAllLinkText: 'Shop Now',
+        displayLimit: 12,
       },
     },
   ],

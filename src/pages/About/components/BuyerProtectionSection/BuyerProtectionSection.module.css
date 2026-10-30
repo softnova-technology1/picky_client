@@ -265,23 +265,65 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .protectionSection {
-    padding: 4.5rem 1rem 6rem;
+    padding: 2.75rem 1rem 3.5rem !important;
   }
 
-  .infographicGrid {
-    grid-template-columns: 1fr;
-    gap: 2.75rem;
-    padding-bottom: 2.5rem;
+  .headerWrapper {
+    margin-bottom: 2rem !important;
   }
 
   .mainTitle {
-    font-size: 1.85rem;
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .subTitle {
+    font-size: 0.88rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .infographicGrid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  .cardItem {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .cardBackplate {
+    display: none !important;
   }
 
   .frontCard {
-    min-height: auto;
-    padding: 2rem 1.35rem 2.85rem;
+    padding: 1.35rem 1.2rem 2rem 1.2rem !important;
+    border-radius: 20px !important;
+    min-height: auto !important;
+    border: 1.5px solid #ede8f8 !important;
+    box-shadow: 0 4px 18px rgba(124, 58, 237, 0.06) !important;
+  }
+
+  .stepDisc {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 0.85rem !important;
+    bottom: -19px !important;
+    border-width: 3px !important;
+  }
+
+  .cardTitle {
+    font-size: 1.05rem !important;
+    margin: 0.4rem 0 0.35rem 0 !important;
+  }
+
+  .cardDesc {
+    font-size: 0.84rem !important;
+    line-height: 1.55 !important;
   }
 }
+

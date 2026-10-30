@@ -11,6 +11,9 @@ import Spinner from '../../components/ui/Spinner';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import AccountProfile from '../../components/account/AccountProfile';
+import ProfileSection from '../../components/account/ProfileSection';
+import OrdersSection from '../../components/account/OrdersSection';
+import MobileAccountTabs from '../../components/account/MobileAccountTabs';
 import AccountAddresses from '../../components/account/AccountAddresses';
 import AccountSecurity from '../../components/account/AccountSecurity';
 import styles from './Account.module.css';
@@ -217,6 +220,112 @@ export default function Account() {
 
   return (
     <PageWrapper>
+      {/* ── Mobile View: 320px to 768px ── */}
+      <div className={styles.mobileAccountContainer}>
+        {currentTab === 'profile' ? (
+          <ProfileSection
+            user={user}
+            ordersCount={orders.length}
+            activeTab={currentTab}
+            onTabChange={handleTabChange}
+            onSignOut={() => setLogoutModalOpen(true)}
+          />
+        ) : currentTab === 'orders' ? (
+          <div>
+            {/* Top Bar for Mobile Navigation & Sign Out */}
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '12px 16px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 0 10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setLogoutModalOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '9999px', border: '1px solid #ddd6fe', backgroundColor: '#fff', color: '#7c3aed', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+
+              {/* Mobile Tabs Switcher */}
+              <MobileAccountTabs
+                activeTab={currentTab}
+                ordersCount={orders.length}
+                onTabChange={handleTabChange}
+              />
+            </div>
+
+            <OrdersSection
+              orders={orders}
+              activeFilter={orderFilter}
+              onFilterChange={setOrderFilter}
+              onCopyOrderId={handleCopyOrderId}
+              onInvoiceClick={(order) => setSelectedInvoiceOrder(order)}
+              onTrackOrder={(order) => navigate('/track-order?orderId=' + (order.orderNumber || order._id))}
+              onReturnExchange={(order) => setActiveReturnOrderId(order._id)}
+            />
+          </div>
+        ) : currentTab === 'addresses' ? (
+          <div>
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '12px 16px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 0 10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setLogoutModalOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '9999px', border: '1px solid #ddd6fe', backgroundColor: '#fff', color: '#7c3aed', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+
+              <MobileAccountTabs
+                activeTab={currentTab}
+                ordersCount={orders.length}
+                onTabChange={handleTabChange}
+              />
+            </div>
+
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '0 16px 16px' }}>
+              <AccountAddresses />
+            </div>
+          </div>
+        ) : currentTab === 'password' ? (
+          <div>
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '12px 16px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 0 10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setLogoutModalOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '9999px', border: '1px solid #ddd6fe', backgroundColor: '#fff', color: '#7c3aed', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+
+              <MobileAccountTabs
+                activeTab={currentTab}
+                ordersCount={orders.length}
+                onTabChange={handleTabChange}
+              />
+            </div>
+
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '0 16px 16px' }}>
+              <AccountSecurity />
+            </div>
+          </div>
+        ) : (
+          <ProfileSection
+            user={user}
+            ordersCount={orders.length}
+            activeTab={currentTab}
+            onTabChange={handleTabChange}
+            onSignOut={() => setLogoutModalOpen(true)}
+          />
+        )}
+      </div>
+
+      {/* ── Desktop View: > 768px ── */}
+      <div className={styles.desktopAccountContainer}>
       <div className="section" style={{ background: 'linear-gradient(135deg, #faf7ff 0%, #f4effe 50%, #f8f5fe 100%)', minHeight: '85vh', padding: '2.5rem 0 5rem' }}>
         <div className="container" style={{ maxWidth: '1440px' }}>
           {/* Executive Top Profile Header & Navigation Bar */}
@@ -1384,6 +1493,7 @@ export default function Account() {
               )}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Sign Out Confirmation Modal */}

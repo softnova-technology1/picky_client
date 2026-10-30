@@ -210,11 +210,13 @@ export default function Home() {
   const { showToast } = useUiStore();
   const categories = useCategoryStore((state) => state.categories);
   const storeReviews = useReviewStore((state) => state.reviews);
-  const fetchReviews = useReviewStore((state) => state.fetchReviews);
+  const fetchPublicReviews = useReviewStore((state) => state.fetchPublicReviews);
 
   useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
+    if (fetchPublicReviews) {
+      fetchPublicReviews();
+    }
+  }, [fetchPublicReviews]);
 
   // Dynamic vibrant gradient palette for authentic customer initial badges
   const BADGE_GRADIENTS = useMemo(

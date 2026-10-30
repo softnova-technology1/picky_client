@@ -6,6 +6,7 @@ import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
 import { productService } from '../../services/product.service';
 import { SLUG_ALIAS_MAP } from '../../data/data';
+import { fuzzyFilter } from '../../utils/fuzzySearch';
 import {
   Sparkles,
   ArrowRight,
@@ -202,17 +203,11 @@ export default function NewArrivals() {
   const processedProducts = useMemo(() => {
     let list = [...products];
 
-    // 1. Search Filter: Search by Product Name or SKU
-    const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter((p) => {
-        const nameMatch = (p.name || '').toLowerCase().includes(q);
-        const skuMatch = (p.sku || '').toLowerCase().includes(q);
-        const idMatch =
-          (p._id || '').toLowerCase().includes(q) ||
-          String(p.id || '').toLowerCase() === q;
-        const slugMatch = (p.slug || '').toLowerCase().includes(q);
-        return nameMatch || skuMatch || idMatch || slugMatch;
+    // 1. Search Filter: Fuzzy Search with typo tolerance
+    if (searchQuery && searchQuery.trim()) {
+      list = fuzzyFilter(list, searchQuery.trim(), {
+        keys: ['name', 'shortDescription', 'description', 'category.name', 'tags', 'sku', 'slug'],
+        threshold: 0.38,
       });
     }
 
@@ -443,53 +438,26 @@ export default function NewArrivals() {
 
         {/* ── 2. New Arrivals Catalog Section ── */}
         {isEnabled('new_arrivals_feed') && (
-          <div className="container" ref={catalogRef} style={{ scrollMarginTop: '100px', marginTop: '2.5rem' }}>
+          <div className="container" id="browse-catalog" ref={catalogRef} style={{ scrollMarginTop: '100px', marginTop: '2.5rem' }}>
             {/* Header Row: Title & Active Count */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '1rem',
-                marginBottom: '1.5rem',
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    fontSize: 'clamp(1.8rem, 3.2vw, 2.5rem)',
-                    fontWeight: 900,
-                    color: '#1e1b4b',
-                    margin: 0,
-                    letterSpacing: '-0.02em',
-                  }}
-                >
+            <div className="new-arrivals-catalog-heading-wrap">
+              <div className="catalog-heading-text-group">
+                <h2 className="new-arrivals-catalog-title">
                   {getSetting('new_arrivals_feed', 'title', 'Explore Fresh Arrivals')}
                 </h2>
               </div>
 
               <Link
                 to="/products"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.65rem 1.4rem',
-                  borderRadius: '9999px',
-                  background: '#ffffff',
-                  color: '#7c3aed',
-                  fontWeight: 800,
-                  fontSize: '0.85rem',
-                  textDecoration: 'none',
-                  border: '1.5px solid #ede9fe',
-                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
-                  transition: 'all 0.2s ease',
-                }}
                 className="view-catalog-link"
               >
-                <span>{getSetting('new_arrivals_feed', 'viewCatalogText', 'View Full Store Catalog')}</span>
-                <ArrowRight size={15} />
+                <span>
+                  {(() => {
+                    const txt = getSetting('new_arrivals_feed', 'viewCatalogText', 'View All');
+                    return txt === 'View Full Store Catalog' ? 'View All' : (txt || 'View All');
+                  })()}
+                </span>
+                <ArrowRight size={14} className="view-catalog-arrow" />
               </Link>
             </div>
 
@@ -553,9 +521,9 @@ export default function NewArrivals() {
               </div>
             </div>
 
-            {/* ── Filter Bar & Product Search ── */}
+            {/* ── Filter Bar & Sort Selector (Search Bar removed as requested) ── */}
             <div className="sort-filter-bar">
-              {/* Left Group: Folder Toggle Button & Product Search Field */}
+              {/* Left Group: Folder Toggle Button */}
               <div className="bar-left-group">
                 <button
                   onClick={() => setIsFilterFolderOpen((prev) => !prev)}
@@ -576,28 +544,29 @@ export default function NewArrivals() {
                     }}
                   />
                 </button>
+              </div>
 
-                {/* Product Search Field by Name or SKU */}
-                <div className="new-arrivals-search-box">
-                  <Search size={16} className="search-box-icon" />
-                  <input
-                    type="text"
-                    placeholder="Search by Product Name or SKU..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="new-arrivals-search-input"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="search-clear-btn"
-                      title="Clear search"
-                      type="button"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
+              {/* Center Group: Live Fuzzy Search Input */}
+              <div className="new-arrivals-search-box">
+                <Search size={15} className="search-box-icon" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search new arrivals..."
+                  className="new-arrivals-search-input"
+                  aria-label="Search new arrivals"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="search-clear-btn"
+                    title="Clear search"
+                  >
+                    <X size={11} strokeWidth={2.5} />
+                  </button>
+                )}
               </div>
 
               {/* Right Group: Sort Selector & Clear All */}
@@ -648,6 +617,7 @@ export default function NewArrivals() {
                   <button
                     onClick={handleResetAllFilters}
                     className="active-tags-clear-link"
+                    title="Clear all filters"
                   >
                     Clear All
                   </button>
@@ -984,10 +954,6 @@ export default function NewArrivals() {
           <div className="container">
             <section className="new-arrivals-marquee-section" aria-label="Best Sellers Live Showcase">
               <div className="new-arrivals-marquee-header-wrap">
-                <div className="marquee-badge-pill">
-                  <Flame size={14} className="marquee-sparkle-icon" color="#f97316" />
-                  <span>{getSetting('new_arrivals_marquee', 'badgeText', 'Best Sellers • Top Customer Picks')}</span>
-                </div>
                 <h3 className="new-arrivals-marquee-title">
                   {getSetting('new_arrivals_marquee', 'title', 'All Best Sellers Running Live')}
                 </h3>
@@ -1009,61 +975,106 @@ export default function NewArrivals() {
                   ))}
                 </div>
               </div>
+
             </section>
           </div>
         )}
 
         {/* ── 4. Final Community CTA Banner (Exact Home Page Section) ── */}
         {isEnabled('new_arrivals_community') && (
-          <div className="container">
-            <section className="hp-final-cta-section" style={{ paddingTop: '3.5rem', paddingBottom: '0.5rem' }}>
-              <div className="hp-final-cta-container" style={{ padding: 0 }}>
-                <div className="hp-final-cta-box">
-                  <span className="hp-final-cta-badge">{getSetting('new_arrivals_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
-                  <h2 className="hp-final-title">{getSetting('new_arrivals_community', 'title', 'Connect With Us @picky.co.in')}</h2>
-                  <p className="hp-final-subtitle">
-                    {getSetting('new_arrivals_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
-                  </p>
-                  <div className="hp-final-cta-btn-group no-hover-fx">
-                    <button
-                      type="button"
-                      className="hp-final-cta-btn no-hover-fx"
-                      onClick={() => window.open(getSetting('new_arrivals_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                      </svg>
-                      <span>Follow on Instagram</span>
-                      <ArrowRight size={16} />
-                    </button>
+          <section className="hp-final-cta-section">
+            <div className="hp-final-cta-container">
+              <div className="hp-final-cta-box">
+                <span className="hp-final-cta-badge">{getSetting('new_arrivals_community', 'badgeText', '✦ JOIN OUR COMMUNITY')}</span>
+                <h2 className="hp-final-title">{getSetting('new_arrivals_community', 'title', 'Connect With Us @picky.co.in')}</h2>
+                <p className="hp-final-subtitle">
+                  {getSetting('new_arrivals_community', 'subtitle', 'Follow us on Instagram & WhatsApp for daily style inspiration, exclusive drops, and behind-the-scenes stories.')}
+                </p>
+                <div className="hp-final-cta-btn-group no-hover-fx">
+                  <button
+                    type="button"
+                    className="hp-final-cta-btn no-hover-fx"
+                    onClick={() => window.open(getSetting('new_arrivals_community', 'instagramLink', 'https://www.instagram.com/picky.co.in/'), '_blank', 'noopener,noreferrer')}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                    </svg>
+                    <span>Follow on Instagram</span>
+                    <ArrowRight size={16} />
+                  </button>
 
-                    <button
-                      type="button"
-                      className="hp-final-cta-outline-btn no-hover-fx"
-                      onClick={() => window.open(`https://wa.me/${getSetting('new_arrivals_community', 'whatsappNumber', '918300295721')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer')}
-                      aria-label="Join WhatsApp Group"
-                      title="Join WhatsApp Group"
-                    >
-                      <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                        <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                      </svg>
-                      <span className="hp-cta-wa-label">
-                        <span>Join WhatsApp Group</span>
-                        <ArrowRight size={16} />
-                      </span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="hp-final-cta-outline-btn no-hover-fx"
+                    onClick={() => window.open(`https://wa.me/${getSetting('new_arrivals_community', 'whatsappNumber', '918300295721')}?text=Hi%20Picky!%20I%20would%20like%20to%20join%20the%20community.`, '_blank', 'noopener,noreferrer')}
+                    aria-label="Join WhatsApp Group"
+                    title="Join WhatsApp Group"
+                  >
+                    <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                      <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+                    </svg>
+                    <span className="hp-cta-wa-label">
+                      <span>Join WhatsApp Group</span>
+                      <ArrowRight size={16} />
+                    </span>
+                  </button>
                 </div>
               </div>
-            </section>
-          </div>
+            </div>
+          </section>
         )}
+
+
       </div>
 
       <style>{`
+        .new-arrivals-catalog-heading-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+        .new-arrivals-catalog-title {
+          font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+          font-weight: 900;
+          color: #1e1b4b;
+          margin: 0;
+          letter-spacing: -0.02em;
+        }
+        .new-arrivals-catalog-subtitle {
+          font-size: 0.92rem;
+          color: #64748b;
+          margin: 0.25rem 0 0 0;
+          font-weight: 500;
+        }
+        .view-catalog-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.65rem 1.4rem;
+          border-radius: 9999px;
+          background: #ffffff;
+          color: #7c3aed;
+          font-weight: 800;
+          font-size: 0.85rem;
+          text-decoration: none;
+          border: 1.5px solid #ede9fe;
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.08);
+          transition: all 0.2s ease;
+        }
+        .view-catalog-link:hover {
+          background: #7c3aed !important;
+          color: #ffffff !important;
+          border-color: #7c3aed !important;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3) !important;
+        }
+
         .new-arrivals-product-grid {
           display: grid;
           grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1083,13 +1094,7 @@ export default function NewArrivals() {
           }
         }
 
-        .view-catalog-link:hover {
-          background: #7c3aed !important;
-          color: #ffffff !important;
-          border-color: #7c3aed !important;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3) !important;
-        }
+
 
         /* ── 7 Circular Category Stories Bar ── */
         .circular-categories-wrapper {
@@ -1276,8 +1281,7 @@ export default function NewArrivals() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
-          flex-wrap: wrap;
+          gap: 1.25rem;
           margin-bottom: 1.25rem;
           padding: 0.25rem 0;
         }
@@ -1286,15 +1290,14 @@ export default function NewArrivals() {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          flex-wrap: wrap;
-          flex: 1 1 auto;
+          flex-shrink: 0;
         }
 
         .bar-right-group {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          margin-left: auto;
+          flex-shrink: 0;
         }
 
         .sort-pill {
@@ -1373,10 +1376,11 @@ export default function NewArrivals() {
           background: #ffffff;
           border: 1.5px solid #ede9fe;
           border-radius: 9999px;
-          padding: 0.45rem 0.95rem;
-          min-width: 280px;
-          max-width: 360px;
-          flex: 1 1 280px;
+          padding: 0.48rem 1rem;
+          min-width: 260px;
+          max-width: 520px;
+          flex: 1 1 360px;
+          margin: 0 auto;
           transition: all 0.2s ease;
           box-shadow: 0 2px 6px rgba(124, 58, 237, 0.04);
         }
@@ -1844,31 +1848,6 @@ export default function NewArrivals() {
           }
         }
 
-        @media (max-width: 640px) {
-          .sort-filter-bar {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.75rem;
-          }
-          .bar-left-group {
-            flex-direction: column;
-            align-items: stretch;
-            width: 100%;
-          }
-          .new-arrivals-search-box {
-            min-width: 100%;
-            max-width: 100%;
-          }
-          .bar-right-group {
-            justify-content: space-between;
-            width: 100%;
-            margin-left: 0;
-          }
-          .filter-drawer-container {
-            max-width: 100%;
-          }
-        }
-
         /* ── Continuous Running Marquee Section Styles ── */
         .new-arrivals-marquee-section {
           margin-top: 3.5rem;
@@ -1963,6 +1942,10 @@ export default function NewArrivals() {
           transform: translateY(-4px);
         }
 
+        .marquee-mobile-dots {
+          display: none;
+        }
+
         @keyframes newArrivalsMarqueeRun {
           0% {
             transform: translateX(0);
@@ -1972,19 +1955,368 @@ export default function NewArrivals() {
           }
         }
 
+        /* ── Comprehensive Mobile View (max-width: 768px) ── */
         @media (max-width: 768px) {
+          .new-arrivals-catalog-heading-wrap {
+            margin-bottom: 0.85rem;
+            align-items: flex-end;
+          }
+          .new-arrivals-catalog-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+          }
+          .new-arrivals-catalog-subtitle {
+            font-size: 0.69rem;
+            color: #64748b;
+            margin-top: 0.15rem;
+          }
+          .view-catalog-link {
+            font-size: 0.69rem;
+            font-weight: 700;
+            color: #7c3aed;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            border-bottom: 1.5px solid rgba(124, 58, 237, 0.4) !important;
+            border-radius: 0 !important;
+          }
+          .view-catalog-arrow {
+            display: none;
+          }
+
+          /* Circular Categories Wheel */
+          .circular-categories-wrapper {
+            margin: 0.25rem 0 1.25rem 0;
+          }
+          .circular-categories-track {
+            padding: 0.25rem 0 0.5rem 0;
+            gap: 0.75rem;
+            justify-content: flex-start;
+          }
+          .category-story-item {
+            flex: 0 0 60px;
+            min-width: 60px;
+            max-width: 60px;
+            gap: 0.35rem;
+          }
+          .story-circle-pod {
+            width: 56px;
+            height: 56px;
+            border: 1px solid #e9d5ff;
+            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.06);
+          }
+          .category-story-item.active .story-circle-pod {
+            border: 2px solid #7c3aed !important;
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25) !important;
+          }
+          .story-label-text {
+            font-size: 0.65rem;
+            line-height: 1.15;
+            max-width: 60px;
+            color: #334155;
+          }
+          .category-story-item.active .story-label-text {
+            color: #6d28d9;
+            font-weight: 800;
+          }
+
+          /* Filter & Sort Toolbar Mobile */
+          .sort-filter-bar {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            width: 100%;
+          }
+          .new-arrivals-search-box {
+            order: 3;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            flex: 1 1 100%;
+            margin: 0.25rem 0 0 0;
+            height: 38px;
+            border-radius: 12px;
+          }
+          .bar-left-group {
+            display: flex;
+            flex: 1;
+            width: auto;
+          }
+          .folder-toggle-btn {
+            width: 100%;
+            height: 38px;
+            border-radius: 12px !important;
+            background: #f5edff !important;
+            border: 1px solid #d8b4fe !important;
+            color: #6d28d9 !important;
+            font-size: 0.75rem !important;
+            justify-content: center;
+          }
+          .bar-right-group {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 0;
+          }
+          .bar-sort-selector {
+            flex: 1;
+            height: 38px;
+            background: #ffffff;
+            border: 1px solid #e9d5ff;
+            border-radius: 12px;
+            padding: 0 0.6rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+          }
+          .bar-sort-label {
+            display: none;
+          }
+          .bar-sort-select {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #334155;
+            background: transparent;
+            border: none;
+            width: 100%;
+          }
+          .clear-all-pill-btn {
+            height: 38px;
+            padding: 0 0.75rem;
+            font-size: 0.72rem;
+            border-radius: 12px;
+          }
+          .filter-drawer-container {
+            max-width: 100%;
+          }
+
+          /* Product Grid 2-Column Mobile */
+          .new-arrivals-product-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.65rem !important;
+            margin-bottom: 2rem !important;
+          }
+
+          /* Best Sellers Live Marquee Card Size Parity 165px Rule */
           .new-arrivals-marquee-card-item {
-            flex: 0 0 190px;
-            width: 190px;
-            min-width: 190px;
+            flex: 0 0 165px !important;
+            width: 165px !important;
+            min-width: 165px !important;
+            max-width: 165px !important;
           }
           .new-arrivals-marquee-track {
-            gap: 1rem;
+            gap: 0.85rem !important;
             animation-duration: 25s;
           }
           .new-arrivals-marquee-section {
-            margin-top: 2.5rem;
+            margin-top: 2rem;
             margin-bottom: 1.5rem;
+          }
+          .new-arrivals-marquee-header-wrap {
+            text-align: left;
+            padding: 0;
+            margin-bottom: 0.85rem;
+          }
+          .marquee-badge-pill {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.6rem;
+            margin-bottom: 0.35rem;
+          }
+          .new-arrivals-marquee-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 0.2rem;
+          }
+          .new-arrivals-marquee-subtitle {
+            font-size: 0.69rem;
+            line-height: 1.35;
+            margin: 0;
+          }
+          /* Community Banner Mobile */
+          .hp-final-cta-section {
+            padding: 1.5rem 0 2rem 0 !important;
+            width: 100% !important;
+            overflow: hidden !important;
+          }
+          .hp-final-cta-container {
+            padding: 0 14px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .hp-final-cta-box {
+            background: linear-gradient(135deg, #1b0c36 0%, #2f1066 50%, #4c1d95 100%) !important;
+            border: 1px solid rgba(168, 85, 247, 0.35) !important;
+            border-radius: 24px !important;
+            padding: 1.75rem 1.25rem !important;
+            box-shadow: 0 16px 40px -10px rgba(76, 29, 149, 0.45) !important;
+            text-align: center !important;
+            position: relative !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 0.65rem !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .hp-final-cta-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(255, 255, 255, 0.14) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            color: #ffffff !important;
+            font-size: 0.66rem !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            padding: 0.3rem 0.9rem !important;
+            border-radius: 9999px !important;
+            text-transform: uppercase !important;
+            margin-bottom: 0.15rem !important;
+          }
+          .hp-final-title {
+            font-family: 'Playfair Display', Georgia, serif !important;
+            font-size: 1.35rem !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+            line-height: 1.2 !important;
+            margin: 0 !important;
+            padding-top: 4px !important;
+          }
+          .hp-final-subtitle {
+            font-size: 0.78rem !important;
+            line-height: 1.4 !important;
+            max-width: 320px !important;
+            margin: 0 auto 0.5rem auto !important;
+            color: rgba(255, 255, 255, 0.88) !important;
+            font-weight: 400 !important;
+          }
+          .hp-final-cta-btn-group {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            margin-top: 0.5rem !important;
+            width: 100% !important;
+          }
+          .hp-final-cta-btn {
+            background-color: #ffffff !important;
+            color: #6d28d9 !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            height: 42px !important;
+            padding: 0 1.25rem !important;
+            border-radius: 9999px !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.45rem !important;
+            border: none !important;
+            cursor: pointer !important;
+          }
+          .hp-final-cta-outline-btn {
+            height: 42px !important;
+            width: 42px !important;
+            min-width: 42px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            background-color: transparent !important;
+            color: #25d366 !important;
+            border: 2px solid #25d366 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 4px 14px rgba(37, 211, 102, 0.25) !important;
+            cursor: pointer !important;
+          }
+          .hp-final-cta-outline-btn .hp-cta-wa-label {
+            display: none !important;
+          }
+        }
+
+        /* ── 3-Tier Mobile Typography Standard ── */
+        /* Tier 1 - Large Mobile (max-width: 425px) */
+        @media (max-width: 425px) {
+          .new-arrivals-catalog-title {
+            font-size: 15.5px !important;
+          }
+          .new-arrivals-marquee-title {
+            font-size: 15.5px !important;
+          }
+          .new-arrivals-marquee-subtitle {
+            font-size: 11px !important;
+          }
+          .hp-final-title {
+            font-size: 18px !important;
+          }
+          .hp-final-subtitle {
+            font-size: 11.5px !important;
+          }
+        }
+
+        /* Tier 2 - Standard Mobile (max-width: 375px) */
+        @media (max-width: 375px) {
+          .new-arrivals-catalog-title {
+            font-size: 14.5px !important;
+          }
+          .new-arrivals-marquee-title {
+            font-size: 14.5px !important;
+          }
+          .new-arrivals-marquee-subtitle {
+            font-size: 10.5px !important;
+          }
+          .hp-final-title {
+            font-size: 16.5px !important;
+          }
+          .hp-final-subtitle {
+            font-size: 10.5px !important;
+          }
+        }
+
+        /* Tier 3 - Compact Mobile (max-width: 320px) */
+        @media (max-width: 320px) {
+          .new-arrivals-catalog-title {
+            font-size: 13px !important;
+          }
+          .new-arrivals-marquee-title {
+            font-size: 13px !important;
+          }
+          .new-arrivals-marquee-subtitle {
+            font-size: 9.5px !important;
+          }
+          .hp-final-title {
+            font-size: 15px !important;
+          }
+          .hp-final-subtitle {
+            font-size: 9.5px !important;
+          }
+          .story-circle-pod {
+            width: 48px !important;
+            height: 48px !important;
+          }
+          .category-story-item {
+            flex: 0 0 52px !important;
+            min-width: 52px !important;
+            max-width: 52px !important;
+          }
+          .story-label-text {
+            font-size: 9px !important;
           }
         }
 

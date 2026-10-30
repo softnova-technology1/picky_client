@@ -14,6 +14,7 @@ import { primeAudio } from '../../utils/soundEffects';
 import { useCouponStore } from '../../store/couponStore';
 import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
+import './CheckoutMobile.css';
 import {
   CreditCard,
   Lock,
@@ -370,6 +371,8 @@ export default function Checkout() {
   const [upiId, setUpiId] = useState('');
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [showCancelPaymentConfirm, setShowCancelPaymentConfirm] = useState(false);
+
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -914,7 +917,9 @@ export default function Checkout() {
 
   return (
     <PageWrapper>
-      <div className={styles['checkout-wrapper']}>
+      {/* ── DESKTOP VIEW (Screens > 768px ONLY - 100% Preserved) ── */}
+      <div className="desktop-checkout-container">
+        <div className={styles['checkout-wrapper']}>
         <div className={styles['container']}>
 
           {/* ── BREADCRUMB ── */}
@@ -1834,6 +1839,760 @@ export default function Checkout() {
               </div>
 
           </div>
+        </div>
+      </div>
+      </div>{/* end .desktop-checkout-container */}
+
+      {/* ── MOBILE VIEW (Screens <= 768px ONLY - Matches Requested Specification) ── */}
+      <div className="mobile-checkout-container">
+        
+        {/* Top Floating Stepper Pill */}
+        <div className="mobile-checkout-stepper">
+          {/* Step 1: ITEM */}
+          <Link to="/cart" className="mobile-stepper-node">
+            <div className="mobile-stepper-circle completed">
+              <Check size={12} strokeWidth={3} />
+            </div>
+            <span className="mobile-stepper-label completed">ITEM</span>
+          </Link>
+
+          <div className="mobile-stepper-line active" />
+
+          {/* Step 2: CHECKOUT */}
+          <div
+            className="mobile-stepper-node"
+            onClick={() => {
+              if (checkoutStep > 1) setShowBackConfirm(true);
+            }}
+            style={{ cursor: checkoutStep > 1 ? 'pointer' : 'default' }}
+          >
+            <div className={`mobile-stepper-circle ${checkoutStep === 1 ? 'active' : 'completed'}`}>
+              {checkoutStep > 1 ? <Check size={12} strokeWidth={3} /> : '2'}
+            </div>
+            <span className={`mobile-stepper-label ${checkoutStep === 1 ? 'active' : 'completed'}`}>
+              CHECKOUT
+            </span>
+          </div>
+
+          <div className={`mobile-stepper-line ${checkoutStep === 2 ? 'active' : ''}`} />
+
+          {/* Step 3: PAYMENT */}
+          <div className="mobile-stepper-node">
+            <div className={`mobile-stepper-circle ${checkoutStep === 2 ? 'active' : 'inactive'}`}>
+              3
+            </div>
+            <span className={`mobile-stepper-label ${checkoutStep === 2 ? 'active' : 'inactive'}`}>
+              PAYMENT
+            </span>
+          </div>
+
+          <div className="mobile-stepper-line" />
+
+          {/* Step 4: CONFIRM */}
+          <div className="mobile-stepper-node">
+            <div className="mobile-stepper-circle inactive">
+              4
+            </div>
+            <span className="mobile-stepper-label inactive">
+              CONFIRM
+            </span>
+          </div>
+        </div>
+
+        {/* ── STEP 1: SHIPPING & DELIVERY ── */}
+        {checkoutStep === 1 && (
+          <>
+            {/* 1. Shipping Details Section */}
+            <div className="mobile-checkout-card">
+              <div className="mobile-checkout-card-header">
+                <h2 className="mobile-checkout-card-title">
+                  {isAddingNewAddress ? 'Add Address' : 'Shipping Details'}
+                </h2>
+                {savedAddresses.length > 0 && !isAddingNewAddress ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingNewAddress(true);
+                      setFormData({
+                        fullName: user?.name || '',
+                        email: user?.email || '',
+                        phone: user?.phone || '',
+                        pincode: '',
+                        street: '',
+                        landmark: '',
+                        city: '',
+                        state: '',
+                      });
+                    }}
+                    className="mobile-btn-add-address"
+                  >
+                    <Plus size={14} strokeWidth={2.5} /> Add Address
+                  </button>
+                ) : savedAddresses.length > 0 && isAddingNewAddress ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingNewAddress(false);
+                      const matched = savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0];
+                      if (matched) {
+                        setFormData({
+                          fullName: matched.fullName || '',
+                          email: matched.email || user?.email || '',
+                          phone: matched.phone || '',
+                          pincode: matched.pincode || '',
+                          street: matched.street || '',
+                          landmark: matched.landmark || '',
+                          city: matched.city || '',
+                          state: matched.state || '',
+                        });
+                      }
+                    }}
+                    style={{
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      padding: '0.35rem 0.75rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                ) : null}
+              </div>
+
+              {!isAddingNewAddress && (
+                <p className="mobile-checkout-card-desc">Select a delivery address or add a new one</p>
+              )}
+
+              {/* Show saved address list or add new address form */}
+              {savedAddresses.length > 0 && !isAddingNewAddress ? (
+                <div>
+                  {savedAddresses.map((addr) => {
+                    const isSelected = selectedAddressId === addr.id;
+                    return (
+                      <div
+                        key={addr.id}
+                        onClick={() => {
+                          setSelectedAddressId(addr.id);
+                          setFormData({
+                            fullName: addr.fullName,
+                            email: addr.email || user?.email || '',
+                            phone: addr.phone,
+                            pincode: addr.pincode,
+                            street: addr.street,
+                            landmark: addr.landmark || '',
+                            city: addr.city,
+                            state: addr.state,
+                          });
+                        }}
+                        className={isSelected ? 'mobile-address-box-active' : 'mobile-address-box-inactive'}
+                      >
+                        <div className="mobile-address-header-row">
+                          <span className="mobile-address-name">{addr.fullName}</span>
+                          {addr.isDefault && (
+                            <span className="mobile-badge-default">DEFAULT</span>
+                          )}
+                        </div>
+                        <p className="mobile-address-street">
+                          {addr.street}{addr.landmark ? `, Near ${addr.landmark}` : ''} {addr.city}, {addr.state} — {addr.pincode}
+                        </p>
+                        <div className="mobile-address-phone-row">
+                          <Phone size={13} style={{ color: '#7c3aed' }} />
+                          <span>{addr.phone}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Add New Address Form */
+                <form onSubmit={handleConfirmDetails} id="mobile-checkout-form">
+                  <div className="mobile-address-form-grid">
+                    <div>
+                      <label className="mobile-input-label">FULL NAME *</label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        required
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        placeholder="Enter your full name"
+                        className="mobile-input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="mobile-input-label">EMAIL ADDRESS *</label>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="Enter your email"
+                        className="mobile-input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="mobile-input-label">PHONE NUMBER *</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        required
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="10-digit mobile number"
+                        className="mobile-input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="mobile-input-label">PIN CODE *</label>
+                      <input
+                        type="text"
+                        name="pincode"
+                        required
+                        value={formData.pincode}
+                        onChange={handleInputChange}
+                        placeholder="6-digit PIN code"
+                        className="mobile-input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="mobile-input-label">FLAT, HOUSE NO., APARTMENT *</label>
+                      <input
+                        type="text"
+                        name="street"
+                        required
+                        value={formData.street}
+                        onChange={handleInputChange}
+                        placeholder="House / Flat No., Street"
+                        className="mobile-input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="mobile-input-label">LANDMARK (OPTIONAL)</label>
+                      <input
+                        type="text"
+                        name="landmark"
+                        value={formData.landmark}
+                        onChange={handleInputChange}
+                        placeholder="E.g. Near Park / Temple"
+                        className="mobile-input-field"
+                      />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                      <div>
+                        <label className="mobile-input-label">CITY *</label>
+                        <input
+                          type="text"
+                          name="city"
+                          required
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          placeholder="City"
+                          className="mobile-input-field"
+                        />
+                      </div>
+                      <div>
+                        <label className="mobile-input-label">STATE *</label>
+                        <input
+                          type="text"
+                          name="state"
+                          required
+                          value={formData.state}
+                          onChange={handleInputChange}
+                          placeholder="State"
+                          className="mobile-input-field"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* 2. Delivery Mode Section */}
+            <div className="mobile-checkout-card">
+              <h2 className="mobile-checkout-card-title" style={{ marginBottom: '0.75rem' }}>
+                Delivery Mode
+              </h2>
+              <div className="mobile-delivery-mode-card">
+                <div className="mobile-delivery-mode-left">
+                  <Truck size={20} style={{ color: '#7c3aed', marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div className="mobile-delivery-mode-title">STANDARD DELIVERY</div>
+                    <div className="mobile-delivery-mode-subtitle">
+                      {deliveryInfo.daysText} • <span className="mobile-delivery-mode-highlight">{deliveryInfo.zone || 'Delivery'} ({activePincode || formData.pincode || '614602'})</span>
+                    </div>
+                  </div>
+                </div>
+                <span className="mobile-delivery-mode-price">
+                  {deliveryFee === 0 ? 'FREE' : formatPrice(deliveryFee)}
+                </span>
+              </div>
+            </div>
+
+            {/* 3. Gift Wrap Option Section */}
+            {giftWrapConfig?.enabled !== false && (
+              <div className="mobile-checkout-card">
+                <div className="mobile-gift-wrap-card">
+                  <div className="mobile-gift-wrap-left">
+                    <div className="mobile-gift-wrap-icon-box">
+                      <Gift size={20} />
+                    </div>
+                    <div>
+                      <div className="mobile-gift-wrap-title-row">
+                        <span className="mobile-gift-wrap-title">GIFT WRAP OPTION</span>
+                        <span className="mobile-gift-wrap-fee-badge">₹{giftWrapConfig.fee || 30}</span>
+                      </div>
+                      <p className="mobile-gift-wrap-desc">
+                        Add premium gift box packaging and a personalized greeting card.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsGiftWrap((prev) => !prev)}
+                    className={`mobile-gift-wrap-toggle-btn ${isGiftWrap ? 'on' : 'off'}`}
+                  >
+                    {isGiftWrap ? 'On' : 'Off'}
+                  </button>
+                </div>
+
+                {isGiftWrap && (
+                  <div className="mobile-gift-wrap-message-box">
+                    <textarea
+                      rows={2}
+                      maxLength={200}
+                      value={giftMessage}
+                      onChange={(e) => setGiftMessage(e.target.value)}
+                      placeholder="Type your gift message here (optional)..."
+                      className="mobile-gift-wrap-textarea"
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#6d28d9', marginTop: '3px' }}>
+                      <span>Greeting card inside box</span>
+                      <span>{giftMessage.length}/200</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4. Back Button (Between Gift Wrap and Order Summary as shown in screenshot) */}
+            <button
+              type="button"
+              onClick={() => (isBuyNow ? navigate(-1) : navigate('/cart'))}
+              className="mobile-checkout-back-pill"
+            >
+              <ArrowLeft size={14} /> Back
+            </button>
+
+            {/* 5. Order Summary Section */}
+            <div className="mobile-checkout-card">
+              <h2 className="mobile-checkout-card-title" style={{ marginBottom: '1rem' }}>
+                Order Summary
+              </h2>
+
+              {/* Product Items */}
+              {checkoutItems.map((item, index) => {
+                const price = item.discountPrice || item.price || 0;
+                const origPrice = item.price && item.discountPrice && item.price > item.discountPrice
+                  ? item.price
+                  : Math.round(price * 1.25);
+                const qty = item.quantity || 1;
+                const maxStock = typeof item.stock === 'number' ? item.stock : (typeof item.countInStock === 'number' ? item.countInStock : 10);
+                const isMaxReached = qty >= maxStock;
+
+                return (
+                  <div key={item._id || item.id || index} className="mobile-summary-item-row">
+                    <div className="mobile-summary-item-left">
+                      <img
+                        src={item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=100&auto=format&fit=crop&q=60'}
+                        alt={item.name}
+                        className="mobile-summary-item-img"
+                      />
+                      <div className="mobile-summary-item-details">
+                        <span className="mobile-summary-item-name">{item.name}</span>
+                        {(item.selectedSize || item.selectedColor) && (
+                          <span className="mobile-summary-item-variant">
+                            {item.selectedSize ? `Size: ${item.selectedSize}` : ''}
+                            {item.selectedSize && item.selectedColor ? ' • ' : ''}
+                            {item.selectedColor ? `Color: ${item.selectedColor}` : ''}
+                          </span>
+                        )}
+                        <div className="mobile-summary-item-qty-row">
+                          <span>QTY:</span>
+                          <div className="mobile-summary-qty-stepper">
+                            <button
+                              type="button"
+                              className="mobile-summary-qty-btn"
+                              disabled={qty <= 1}
+                              onClick={() => handleUpdateItemQty(item, qty - 1)}
+                              aria-label="Decrease quantity"
+                            >
+                              -
+                            </button>
+                            <span className="mobile-summary-qty-val">{qty}</span>
+                            <button
+                              type="button"
+                              className="mobile-summary-qty-btn"
+                              disabled={isMaxReached}
+                              onClick={() => {
+                                if (isMaxReached) {
+                                  showToast('Maximum available quantity reached', 'info');
+                                  return;
+                                }
+                                handleUpdateItemQty(item, qty + 1);
+                              }}
+                              aria-label="Increase quantity"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mobile-summary-item-pricing">
+                      <div className="mobile-summary-item-price">{formatPrice(price * qty)}</div>
+                      <div className="mobile-summary-item-mrp">{formatPrice(origPrice * qty)}</div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Promo Code Input */}
+              {coupon ? (
+                <div className="mobile-promo-applied-box">
+                  <span>Coupon <strong>{coupon}</strong> (-{formatPrice(couponDiscount)})</span>
+                  <button type="button" onClick={handleRemovePromo} className="mobile-btn-remove-promo">
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyPromo} className="mobile-promo-row">
+                  <div className="mobile-promo-input-wrap">
+                    <Tag size={15} className="mobile-promo-icon" />
+                    <input
+                      type="text"
+                      value={promoCodeInput}
+                      onChange={(e) => {
+                        setPromoCodeInput(e.target.value);
+                        setPromoError('');
+                      }}
+                      placeholder="ENTER PROMO CODE"
+                      className="mobile-promo-input"
+                    />
+                  </div>
+                  <button type="submit" className="mobile-btn-apply-promo">
+                    Apply
+                  </button>
+                </form>
+              )}
+              {promoError && <div className="mobile-promo-error">{promoError}</div>}
+
+              {/* Price Breakdown */}
+              <div className="mobile-breakdown-list">
+                <div className="mobile-breakdown-row">
+                  <span>Subtotal</span>
+                  <span className="mobile-breakdown-val">{formatPrice(subtotal)}</span>
+                </div>
+                <div className="mobile-breakdown-row">
+                  <span>Shipping & Delivery</span>
+                  <span className={`mobile-breakdown-val ${deliveryFee === 0 ? 'free' : ''}`}>
+                    {deliveryFee === 0 ? 'FREE' : formatPrice(deliveryFee)}
+                  </span>
+                </div>
+                <div className="mobile-breakdown-row">
+                  <span>Convenience Fee</span>
+                  <span className="mobile-breakdown-val">₹{convenienceFee}</span>
+                </div>
+                {isGiftWrap && giftWrapFee > 0 && (
+                  <div className="mobile-breakdown-row" style={{ color: '#db2777' }}>
+                    <span>Gift Wrapping</span>
+                    <span className="mobile-breakdown-val" style={{ color: '#db2777' }}>+{formatPrice(giftWrapFee)}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="mobile-breakdown-row" style={{ color: '#10b981' }}>
+                    <span>Coupon Discount</span>
+                    <span className="mobile-breakdown-val discount">-{formatPrice(couponDiscount)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Final Payable */}
+              <div className="mobile-final-payable-row">
+                <span className="mobile-final-payable-label">Final Payable</span>
+                <span className="mobile-final-payable-val">{formatPrice(finalPayable)}</span>
+              </div>
+
+              {/* Confirm Details Action Button */}
+              <button
+                type="button"
+                onClick={handleConfirmDetails}
+                disabled={loading || isSavingAddress}
+                className="mobile-btn-confirm-details"
+              >
+                <span>{isSavingAddress ? 'SAVING DETAILS...' : 'CONFIRM DETAILS'}</span>
+                <ArrowRight size={16} strokeWidth={2.5} />
+              </button>
+
+              {/* Security Footer */}
+              <div className="mobile-security-badge">
+                <Lock size={13} strokeWidth={2.5} />
+                <span>100% SECURE TRANSACTIONS</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── STEP 2: ADDRESS REVIEW & PAYMENT (Mobile) ── */}
+        {checkoutStep === 2 && (
+          <>
+            {/* Delivery & Contact Information Review Card - Innovative Luxury Redesign */}
+            <div className="mobile-review-luxury-card">
+              <div className="mobile-review-card-topbar">
+                <div className="mobile-review-title-group">
+                  <div className="mobile-review-header-icon">
+                    <MapPin size={17} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h2 className="mobile-review-card-heading">Delivery & Contact Info</h2>
+                    <span className="mobile-review-verified-tag">
+                      <ShieldCheck size={11} strokeWidth={3} /> Verified Shipping Destination
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowBackConfirm(true)}
+                  className="mobile-review-btn-edit"
+                  title="Edit shipping address"
+                >
+                  <Edit3 size={13} strokeWidth={2.2} />
+                  <span>Edit</span>
+                </button>
+              </div>
+
+              {/* 1. Recipient Profile & Contact Tile */}
+              <div className="mobile-review-recipient-tile">
+                <div className="mobile-review-avatar">
+                  {(() => {
+                    const initials = (formData.fullName || 'DG')
+                      .trim()
+                      .split(' ')
+                      .filter(Boolean)
+                      .map((w) => w[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase();
+                    return initials || 'DG';
+                  })()}
+                </div>
+                <div className="mobile-review-recipient-info">
+                  <div className="mobile-review-recipient-name">
+                    {formData.fullName}
+                  </div>
+                  <div className="mobile-review-contact-chips">
+                    {formData.phone && (
+                      <span className="mobile-review-chip">
+                        <Phone size={11} />
+                        <span>{formData.phone}</span>
+                      </span>
+                    )}
+                    {formData.email && (
+                      <span className="mobile-review-chip">
+                        <Mail size={11} />
+                        <span className="mobile-review-chip-email">{formData.email}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Delivery Destination Tile */}
+              <div className="mobile-review-address-tile">
+                <div className="mobile-review-address-header">
+                  <span className="mobile-review-section-caption">Shipping Destination</span>
+                  {formData.pincode && (
+                    <span className="mobile-review-pin-badge">
+                      PIN: {formData.pincode}
+                    </span>
+                  )}
+                </div>
+                <p className="mobile-review-address-text">
+                  {formData.street}{formData.landmark ? `, Near ${formData.landmark}` : ''}, {formData.city}, {formData.state}
+                </p>
+              </div>
+
+              {/* 3. Logistics & Special Options Tile */}
+              <div className="mobile-review-logistic-grid">
+                <div className="mobile-review-mode-badge">
+                  <div className="mobile-review-mode-left">
+                    <div className="mobile-review-truck-circle">
+                      <Truck size={14} strokeWidth={2.4} />
+                    </div>
+                    <div>
+                      <div className="mobile-review-mode-name">STANDARD DELIVERY</div>
+                      <div className="mobile-review-mode-est">5-7 Business Days</div>
+                    </div>
+                  </div>
+                  <span className="mobile-review-mode-price">
+                    {deliveryFee === 0 ? 'FREE' : formatPrice(deliveryFee)}
+                  </span>
+                </div>
+
+                {isGiftWrap && (
+                  <div className="mobile-review-gift-banner">
+                    <div className="mobile-review-gift-left">
+                      <div className="mobile-review-gift-circle">
+                        <Gift size={13} strokeWidth={2.4} />
+                      </div>
+                      <div>
+                        <div className="mobile-review-gift-title">Gift Packaging Active</div>
+                        {giftMessage.trim() ? (
+                          <div className="mobile-review-gift-msg">"{giftMessage.trim()}"</div>
+                        ) : (
+                          <div className="mobile-review-gift-msg">Luxury box & greeting card included</div>
+                        )}
+                      </div>
+                    </div>
+                    <span className="mobile-review-gift-price">+{formatPrice(giftWrapFee)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+
+            {/* Back to Step 1 Button */}
+            <button
+              type="button"
+              onClick={() => setShowBackConfirm(true)}
+              className="mobile-checkout-back-pill"
+            >
+              <ArrowLeft size={14} /> Back to Shipping
+            </button>
+
+            {/* Order Summary & Complete Order Card */}
+            <div className="mobile-checkout-card">
+              <h2 className="mobile-checkout-card-title" style={{ marginBottom: '1rem' }}>
+                Order Summary
+              </h2>
+
+              {checkoutItems.map((item, index) => {
+                const price = item.discountPrice || item.price || 0;
+                const qty = item.quantity || 1;
+                return (
+                  <div key={item._id || item.id || index} className="mobile-summary-item-row">
+                    <div className="mobile-summary-item-left">
+                      <img
+                        src={item.image || item.images?.[0] || 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=100&auto=format&fit=crop&q=60'}
+                        alt={item.name}
+                        className="mobile-summary-item-img"
+                      />
+                      <div className="mobile-summary-item-details">
+                        <span className="mobile-summary-item-name">{item.name}</span>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Qty: {qty}</span>
+                      </div>
+                    </div>
+                    <div className="mobile-summary-item-pricing">
+                      <div className="mobile-summary-item-price">{formatPrice(price * qty)}</div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="mobile-breakdown-list">
+                <div className="mobile-breakdown-row">
+                  <span>Subtotal</span>
+                  <span className="mobile-breakdown-val">{formatPrice(subtotal)}</span>
+                </div>
+                <div className="mobile-breakdown-row">
+                  <span>Shipping & Delivery</span>
+                  <span className={`mobile-breakdown-val ${deliveryFee === 0 ? 'free' : ''}`}>
+                    {deliveryFee === 0 ? 'FREE' : formatPrice(deliveryFee)}
+                  </span>
+                </div>
+                <div className="mobile-breakdown-row">
+                  <span>Convenience Fee</span>
+                  <span className="mobile-breakdown-val">₹{convenienceFee}</span>
+                </div>
+                {isGiftWrap && giftWrapFee > 0 && (
+                  <div className="mobile-breakdown-row" style={{ color: '#db2777' }}>
+                    <span>Gift Wrapping</span>
+                    <span className="mobile-breakdown-val" style={{ color: '#db2777' }}>+{formatPrice(giftWrapFee)}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="mobile-breakdown-row" style={{ color: '#10b981' }}>
+                    <span>Coupon Discount</span>
+                    <span className="mobile-breakdown-val discount">-{formatPrice(couponDiscount)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mobile-final-payable-row">
+                <span className="mobile-final-payable-label">Final Payable</span>
+                <span className="mobile-final-payable-val">{formatPrice(finalPayable)}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleInitiatePayment}
+                disabled={loading}
+                className="mobile-btn-confirm-details"
+              >
+                <span>{loading ? 'Processing...' : 'COMPLETE ORDER'}</span>
+                <Lock size={16} />
+              </button>
+
+              <div className="mobile-security-badge">
+                <Lock size={13} strokeWidth={2.5} />
+                <span>100% SECURE TRANSACTIONS</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── 9. Fixed Bottom Purchase & Confirm Dock (Mobile Sticky Bar) ── */}
+        <div className="mobile-checkout-sticky-dock">
+          <div className="mobile-checkout-dock-price-group">
+            <span className="mobile-checkout-dock-label">
+              {checkoutStep === 1 ? 'Total Payable' : 'Final Payable'}
+            </span>
+            <span className="mobile-checkout-dock-main-price">
+              {formatPrice(finalPayable)}
+            </span>
+            {originalSubtotal > subtotal && (
+              <span className="mobile-checkout-dock-sub-price">
+                {formatPrice(originalSubtotal + deliveryFee + convenienceFee + giftWrapFee)}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={checkoutStep === 1 ? handleConfirmDetails : handleInitiatePayment}
+            disabled={loading || (checkoutStep === 1 && isSavingAddress)}
+            className="mobile-checkout-dock-btn"
+          >
+            {loading ? (
+              <span>Processing...</span>
+            ) : checkoutStep === 1 ? (
+              <>
+                <span>{isSavingAddress ? 'SAVING...' : 'CONFIRM DETAILS'}</span>
+                <ArrowRight size={15} strokeWidth={2.5} />
+              </>
+            ) : (
+              <>
+                <span>COMPLETE ORDER</span>
+                <Lock size={15} />
+              </>
+            )}
+          </button>
         </div>
       </div>
 

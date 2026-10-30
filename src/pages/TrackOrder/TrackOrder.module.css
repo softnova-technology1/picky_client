@@ -162,19 +162,23 @@
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  padding: 1rem 2.6rem;
+  height: 48px;
+  min-width: 220px;
+  max-width: 220px;
+  padding: 0 1.5rem;
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
   box-shadow: 0 4px 16px rgba(124, 58, 237, 0.24);
+  box-sizing: border-box;
 }
 
 .locateBtn:hover:not(:disabled) {
@@ -188,8 +192,22 @@
 }
 
 .locateBtn:disabled {
-  opacity: 0.7;
+  opacity: 0.85;
   cursor: not-allowed;
+  transform: none;
+}
+
+.btnSpinner {
+  animation: spinBtn 1s linear infinite;
+}
+
+@keyframes spinBtn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Sample Quick-test pills */
@@ -858,16 +876,25 @@
   font-size: 0.88rem;
   color: #64748b;
   margin-top: 0.2rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
 }
 
 .estimatePrefix {
   color: #64748b;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .estimateDates {
   color: #7c3aed;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .headerRightCol {
@@ -1297,33 +1324,120 @@
   box-shadow: 0 6px 18px rgba(22, 163, 74, 0.38);
 }
 
-/* Responsive Breakpoints */
+/* Responsive Breakpoints & Mobile Typography System */
 @media (max-width: 768px) {
   .mainContainer {
-    padding: 3rem 1rem 2rem;
+    padding: 2.2rem 1rem 2rem;
   }
 
   .mainTitle {
-    font-size: 2.7rem;
+    font-size: 1.65rem;
+    line-height: 1.25;
+  }
+
+  .subTitle {
+    font-size: 0.8125rem;
   }
 
   .searchCard {
-    padding: 2.2rem 1.6rem;
+    padding: 1.8rem 1.2rem;
   }
 
   .inputsGrid {
     grid-template-columns: 1fr;
-    gap: 1.8rem;
+    gap: 1.4rem;
+  }
+
+  .inputLabel {
+    font-size: 0.72rem;
+  }
+
+  .inputField {
+    font-size: 0.875rem;
+  }
+
+  .trackSubmitBtn {
+    font-size: 0.8125rem;
   }
 
   .trackingCard,
   .itemsCard {
-    padding: 1.8rem 1.4rem;
+    padding: 1.4rem 1.15rem;
   }
 
+  /* ── Result Card 1 Header Mobile ── */
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .headerLeftCol {
+    width: 100%;
+    gap: 0.25rem;
+  }
+
+  .orderTitleRow {
+    width: 100%;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .orderTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+
+  .trackingPill {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .estimatedArrivalRow {
+    font-size: 0.76rem;
+    line-height: 1.4;
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.28rem;
+  }
+
+  .estimatePrefix {
+    font-size: 0.76rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .estimateDates {
+    font-size: 0.76rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .headerRightCol {
+    margin-top: 0.2rem;
+  }
+
+  .statusOutlineBadge {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.65rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Result Card 1 Stepper Mobile ── */
   .stepperSection {
-    margin: 1.4rem 0;
-    padding: 1.2rem 1.1rem 1.4rem;
+    margin: 1.2rem 0;
+    padding: 1.1rem 1rem 1.25rem;
+  }
+
+  .orderProgressLabel {
+    font-size: 0.6875rem;
   }
 
   .stepperRail {
@@ -1369,23 +1483,258 @@
     padding-top: 0.2rem;
   }
 
+  .stepMainLabel {
+    font-size: 0.8125rem;
+  }
+
   .stepSubLabel {
+    font-size: 0.6875rem;
     text-align: left;
   }
 
+  /* ── Result Card 1 Meta Grid Mobile ── */
   .metaGrid {
     grid-template-columns: 1fr;
-    gap: 1.6rem;
+    gap: 1.4rem;
+    padding-top: 1.4rem;
+    margin-top: 1.4rem;
+  }
+
+  .metaLabel {
+    font-size: 0.6875rem;
+  }
+
+  .metaCourierName,
+  .metaRecipientName {
+    font-size: 0.875rem;
+  }
+
+  .metaTrackingRow,
+  .metaAddressText {
+    font-size: 0.8125rem;
+  }
+
+  /* ── Result Card 2 Items Mobile ── */
+  .itemsCardHeader {
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .itemsCountTitle {
+    font-size: 0.875rem;
+  }
+
+  .itemsTotalPaid {
+    font-size: 0.875rem;
+  }
+
+  .itemsListContainer {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .orderItemName {
+    font-size: 0.875rem;
+  }
+
+  .orderItemSku {
+    font-size: 0.7rem;
+  }
+
+  .orderItemQtyPrice {
+    font-size: 0.75rem;
+  }
+
+  .orderItemTotalPrice {
+    font-size: 0.875rem;
+  }
+
+  /* ── Result Card 2 Pricing Breakdown Mobile ── */
+  .pricingBreakdownBox {
+    padding: 1rem 1.15rem;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .breakdownRow {
+    font-size: 0.8125rem;
+  }
+
+  .breakdownTotalRow {
+    font-size: 1rem;
   }
 
   .cardActionsRow {
     flex-direction: column;
     width: 100%;
+    gap: 0.75rem;
   }
 
   .printInvoiceBtn,
   .whatsappSupportBtn {
     width: 100%;
     justify-content: center;
+    font-size: 0.8125rem;
+    padding: 0.65rem 1rem;
+  }
+}
+
+/* ─── Exact Font Sizes — 375px Mobile View (350px to 413px) ─── */
+@media (max-width: 413px) and (min-width: 350px) {
+  .mainTitle {
+    font-size: 1.5rem;
+  }
+
+  .orderTitle {
+    font-size: 1.02rem;
+  }
+
+  .estimatedArrivalRow,
+  .estimatePrefix,
+  .estimateDates {
+    font-size: 0.71rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .statusOutlineBadge {
+    font-size: 0.625rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  .orderProgressLabel {
+    font-size: 0.625rem;
+  }
+
+  .stepMainLabel {
+    font-size: 0.75rem;
+  }
+
+  .stepSubLabel {
+    font-size: 0.65rem;
+  }
+
+  .metaLabel {
+    font-size: 0.625rem;
+  }
+
+  .metaCourierName,
+  .metaRecipientName {
+    font-size: 0.8125rem;
+  }
+
+  .metaTrackingRow,
+  .metaAddressText {
+    font-size: 0.75rem;
+  }
+
+  .itemsCountTitle,
+  .itemsTotalPaid {
+    font-size: 0.8125rem;
+  }
+
+  .orderItemName {
+    font-size: 0.8125rem;
+  }
+
+  .orderItemQtyPrice {
+    font-size: 0.7rem;
+  }
+
+  .orderItemTotalPrice {
+    font-size: 0.8125rem;
+  }
+
+  .breakdownRow {
+    font-size: 0.75rem;
+  }
+
+  .breakdownTotalRow {
+    font-size: 0.95rem;
+  }
+
+  .printInvoiceBtn,
+  .whatsappSupportBtn {
+    font-size: 0.75rem;
+  }
+}
+
+/* ─── Exact Font Sizes — 320px Mobile View (<= 349px) ─── */
+@media (max-width: 349px) {
+  .mainTitle {
+    font-size: 1.3rem;
+  }
+
+  .orderTitle {
+    font-size: 0.9rem;
+  }
+
+  .estimatedArrivalRow,
+  .estimatePrefix,
+  .estimateDates {
+    font-size: 0.63rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .statusOutlineBadge {
+    font-size: 0.5625rem;
+    padding: 0.18rem 0.45rem;
+  }
+
+  .orderProgressLabel {
+    font-size: 0.5625rem;
+  }
+
+  .stepMainLabel {
+    font-size: 0.6875rem;
+  }
+
+  .stepSubLabel {
+    font-size: 0.6rem;
+  }
+
+  .metaLabel {
+    font-size: 0.5625rem;
+  }
+
+  .metaCourierName,
+  .metaRecipientName {
+    font-size: 0.75rem;
+  }
+
+  .metaTrackingRow,
+  .metaAddressText {
+    font-size: 0.6875rem;
+  }
+
+  .itemsCountTitle,
+  .itemsTotalPaid {
+    font-size: 0.75rem;
+  }
+
+  .orderItemName {
+    font-size: 0.75rem;
+  }
+
+  .orderItemQtyPrice {
+    font-size: 0.65rem;
+  }
+
+  .orderItemTotalPrice {
+    font-size: 0.75rem;
+  }
+
+  .breakdownRow {
+    font-size: 0.6875rem;
+  }
+
+  .breakdownTotalRow {
+    font-size: 0.875rem;
+  }
+
+  .printInvoiceBtn,
+  .whatsappSupportBtn {
+    font-size: 0.6875rem;
   }
 }

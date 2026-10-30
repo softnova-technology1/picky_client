@@ -1,0 +1,317 @@
+/* ==========================================================================
+   PICKY MOBILE TYPOGRAPHY & DESIGN SYSTEM SCALE
+   Strictly scoped to mobile view (<= 768px).
+   Desktop view (> 768px) is 100% untouched and unaffected.
+
+   Responsive Breakpoints:
+   1. 320px Mobile: (max-width: 359px)
+   2. 375px Mobile: (360px - 399px) — Primary Mobile Baseline
+   3. 425px Mobile: (400px - 768px) — Large Mobile / Small Phablet
+   ========================================================================== */
+
+/* ─── 1. Primary Baseline (375px Mobile) ─────────────────────────────────── */
+@media (max-width: 768px) {
+  :root {
+    /* Font Sizes */
+    --p-font-h1: 24px;
+    --p-font-h2: 20px;
+    --p-font-h3: 14px;
+    --p-font-price: 17px;
+    --p-font-mrp: 11px;
+    --p-font-body: 13px;
+    --p-font-btn: 13px;
+    --p-font-badge: 10px;
+    --p-font-micro: 10px;
+    --p-font-nav: 12px;
+    --p-font-input: 14px;
+    --p-font-helper: 12px;
+
+    /* Weights */
+    --p-weight-h1: 750;
+    --p-weight-h2: 700;
+    --p-weight-h3: 650;
+    --p-weight-price: 750;
+    --p-weight-body: 400;
+    --p-weight-btn: 650;
+    --p-weight-badge: 700;
+    --p-weight-micro: 550;
+
+    /* Line Heights */
+    --p-lh-h1: 1.2;
+    --p-lh-h2: 1.3;
+    --p-lh-body: 1.5;
+
+    /* Spacing & Touch */
+    --p-page-padding: 16px;
+    --p-card-padding: 14px;
+    --p-section-gap: 24px;
+    --p-btn-height: 42px;
+    --p-touch-target: 44px;
+
+    /* Color Constants */
+    --p-price-color: #7c3aed;
+    --p-mrp-color: #94a3b8;
+  }
+}
+
+/* ─── 2. Small Mobile Scale (320px Mobile: <= 359px) ─────────────────────── */
+@media (max-width: 359px) {
+  :root {
+    --p-font-h1: 22px;
+    --p-font-h2: 18px;
+    --p-font-h3: 13px;
+    --p-font-price: 16px;
+    --p-font-mrp: 11px;
+    --p-font-body: 12px;
+    --p-font-btn: 12px;
+    --p-font-badge: 10px;
+    --p-font-micro: 10px;
+    --p-font-nav: 11px;
+    --p-font-input: 13px;
+    --p-font-helper: 11px;
+
+    --p-page-padding: 14px;
+    --p-card-padding: 12px;
+    --p-section-gap: 20px;
+    --p-btn-height: 40px;
+  }
+}
+
+/* ─── 3. Large Mobile Scale (425px Mobile: 400px - 768px) ─────────────────── */
+@media (min-width: 400px) and (max-width: 768px) {
+  :root {
+    --p-font-h1: 26px;
+    --p-font-h2: 22px;
+    --p-font-h3: 15px;
+    --p-font-price: 18px;
+    --p-font-mrp: 12px;
+    --p-font-body: 14px;
+    --p-font-btn: 14px;
+    --p-font-badge: 11px;
+    --p-font-micro: 11px;
+    --p-font-nav: 13px;
+    --p-font-input: 15px;
+    --p-font-helper: 12px;
+
+    --p-page-padding: 18px;
+    --p-card-padding: 16px;
+    --p-section-gap: 28px;
+    --p-btn-height: 44px;
+  }
+}
+
+/* ─── 4. Global Mobile Typography & Component Application ────────────────── */
+@media (max-width: 768px) {
+
+  /* Text overflow & Tamil word wrapping guard */
+  body, p, h1, h2, h3, h4, span, a, label {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  /* H1 — Main page / Hero headings */
+  h1,
+  .mobile-page-title,
+  .hero-main-title,
+  .legal-hero-title,
+  [class*="heroTitle"],
+  [class*="HeroTitle"] {
+    font-size: var(--p-font-h1) !important;
+    font-weight: var(--p-weight-h1) !important;
+    line-height: var(--p-lh-h1) !important;
+    letter-spacing: -0.015em;
+  }
+
+  /* H2 — Section headings */
+  h2,
+  .mobile-section-heading,
+  .hp-section-title,
+  .legal-section-title,
+  [class*="sectionTitle"],
+  [class*="SectionTitle"],
+  [class*="cardTitle"] {
+    font-size: var(--p-font-h2) !important;
+    font-weight: var(--p-weight-h2) !important;
+    line-height: var(--p-lh-h2) !important;
+    letter-spacing: -0.01em;
+  }
+
+  /* H3 — Card / Item / Product titles */
+  h3,
+  .mobile-card-title,
+  .hp-card-title,
+  .hp-horizontal-card-title,
+  .ref-product-title,
+  .mobile-pdp-product-title,
+  [class*="productTitle"],
+  [class*="ProductTitle"],
+  [class*="itemTitle"],
+  [class*="pillarTitle"] {
+    font-size: var(--p-font-h3) !important;
+    font-weight: var(--p-weight-h3) !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Product Main Price / Total Paid */
+  .mobile-main-price,
+  .hp-deal-price,
+  .ref-product-price,
+  .mobile-pdp-main-price,
+  .order-total-price,
+  [class*="mainPrice"],
+  [class*="MainPrice"],
+  [class*="currentPrice"],
+  [class*="totalPaid"] {
+    font-size: var(--p-font-price) !important;
+    font-weight: var(--p-weight-price) !important;
+    color: var(--p-price-color) !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Original Price / Strike-through / Date / Time */
+  .mobile-mrp-price,
+  .hp-deal-mrp,
+  .ref-product-mrp,
+  .mobile-pdp-mrp,
+  .order-date-text,
+  [class*="mrpPrice"],
+  [class*="oldPrice"],
+  [class*="strikePrice"],
+  [class*="orderDate"] {
+    font-size: var(--p-font-mrp) !important;
+    font-weight: 400 !important;
+    color: var(--p-mrp-color) !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Body Descriptions & Notes */
+  p,
+  .mobile-body-desc,
+  .hp-trust-desc,
+  .mobile-pdp-short-desc,
+  .legal-paragraph,
+  [class*="cardText"],
+  [class*="bodyText"],
+  [class*="description"] {
+    font-size: var(--p-font-body) !important;
+    font-weight: var(--p-weight-body) !important;
+    line-height: var(--p-lh-body) !important;
+  }
+
+  /* Buttons & CTAs */
+  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]),
+  .mobile-cta-btn,
+  .hp-view-all-mobile,
+  .spotlight-btn-mobile,
+  [class*="btnPrimary"],
+  [class*="btnSecondary"],
+  [class*="ctaBtn"],
+  [class*="actionBtn"]:not([class*="icon"]) {
+    font-size: var(--p-font-btn) !important;
+    font-weight: var(--p-weight-btn) !important;
+    min-height: var(--p-btn-height) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  /* Badges & Status Pills (Prevent Text Clipping) */
+  .mobile-badge,
+  .mobile-status-pill,
+  .hp-cat-badge,
+  .mobile-pdp-discount-badge,
+  .mobile-pdp-rating-badge,
+  .legal-badge-pill,
+  [class*="badge"]:not(.mobile-header-badge),
+  [class*="Badge"]:not(.mobile-header-badge),
+  [class*="pill"]:not([class*="rail"]),
+  [class*="Pill"]:not([class*="rail"]) {
+    font-size: var(--p-font-badge) !important;
+    font-weight: var(--p-weight-badge) !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Micro Labels & Form Labels */
+  label,
+  .mobile-form-label,
+  .mobile-micro-label,
+  [class*="microLabel"],
+  [class*="formLabel"],
+  [class*="kicker"] {
+    font-size: var(--p-font-micro) !important;
+    font-weight: var(--p-weight-micro) !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Navigation Labels (Tabs, Quick Jumps, Bottom Nav) */
+  .mobile-nav-label,
+  .railPill,
+  [class*="railPill"],
+  [class*="navLabel"],
+  [class*="tabLabel"] {
+    font-size: var(--p-font-nav) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Inputs, Selects, Textareas */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="search"],
+  select,
+  textarea,
+  .mobile-input-control {
+    font-size: var(--p-font-input) !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Helper & Secondary Text */
+  small,
+  .mobile-helper-text,
+  .mobile-pdp-rating-meta,
+  [class*="helperText"],
+  [class*="metaText"],
+  [class*="secondaryText"],
+  [class*="timestamp"] {
+    font-size: var(--p-font-helper) !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links & Micro Labels */
+  .picky-footer-body a,
+  .footer-contact-item,
+  .footer-links a,
+  [class*="footer"] a {
+    font-size: var(--p-font-helper) !important;
+  }
+
+  .footer-copyright,
+  .footer-social-title,
+  .footer-trust-chips {
+    font-size: var(--p-font-micro) !important;
+  }
+
+  /* Global Touch Targets */
+  a, button, input, select, .mobile-nav-tab, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* 320px Small Mobile Rule: No critical text below 10px, wrap gracefully */
+  @media (max-width: 359px) {
+    * {
+      min-width: 0;
+    }
+    .mobile-nav-brand-logo img {
+      max-height: 30px !important;
+    }
+  }
+}
+

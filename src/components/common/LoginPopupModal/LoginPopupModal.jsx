@@ -314,8 +314,9 @@ export default function LoginPopupModal() {
           className={styles.closeButton}
           onClick={handleClose}
         >
-          <svg className={styles.closeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-            <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" />
+          <svg className={styles.closeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" strokeWidth="2.2" strokeLinecap="round" />
+            <line x1="6" y1="6" x2="18" y2="18" strokeWidth="2.2" strokeLinecap="round" />
           </svg>
         </button>
 
@@ -419,7 +420,7 @@ export default function LoginPopupModal() {
                     <span className={styles.sparkle}>✦</span>
                   </span>
                 </h1>
-                <p className={styles.subtitleText}>
+                <p className={`${styles.subtitleText} ${styles.welcomeSubtitle}`}>
                   Your next favourite find is just one step.
                 </p>
               </section>

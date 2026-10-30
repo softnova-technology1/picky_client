@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Gallery from '../../components/product/Gallery';
+import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
 import { productService } from '../../services/product.service';
 import { wishlistService } from '../../services/wishlist.service';
@@ -30,7 +31,14 @@ import {
   UploadCloud,
   X,
   Loader2,
+  Heart,
+  Share2,
+  ShoppingBag,
+  Tag,
+  MapPin,
+  Banknote,
 } from 'lucide-react';
+import './ProductDetailMobile.css';
 
 const DEFAULT_CAPACITIES = ['128GB', '256GB', '512GB'];
 
@@ -53,6 +61,38 @@ export default function ProductDetail() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [apiReviews, setApiReviews] = useState([]);
   const [activeReviewLightbox, setActiveReviewLightbox] = useState(null);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+
+  // Mobile Gallery state & helpers
+  const [mobileSelectedImgIdx, setMobileSelectedImgIdx] = useState(0);
+
+  useEffect(() => {
+    setMobileSelectedImgIdx(0);
+  }, [slug]);
+
+  const productImages = useMemo(() => {
+    if (!product) return [];
+    if (Array.isArray(product.images) && product.images.length > 0) return product.images;
+    if (product.image) return [product.image];
+    return ['/images/about_showroom_featured.jpg'];
+  }, [product]);
+
+  const activeMobileImg = productImages[mobileSelectedImgIdx] || productImages[0] || '/images/about_showroom_featured.jpg';
+
+  const handleMobileShare = async (e) => {
+    if (e) e.stopPropagation();
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: product?.name || 'Picky Product',
+          url: window.location.href,
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Product link copied to clipboard!', 'success');
+      }
+    } catch (_) {}
+  };
 
   // Variant & Color states: null by default, only set if configured in DB
   const [selectedColor, setSelectedColor] = useState(null);
@@ -237,20 +277,64 @@ export default function ProductDetail() {
             setSelectedColor(null);
           }
 
-          // Fetch real related products from DB matching category
+          // Fetch real related products from DB matching subCategory & category
           try {
             const catId = typeof item.category === 'object' ? (item.category?._id || item.category?.id) : item.category;
-            const relatedRes = await productService.list(catId ? { category: catId, limit: 6 } : { limit: 6 });
-            let rItems = relatedRes?.data?.data || relatedRes?.data || [];
-            if (!Array.isArray(rItems) || rItems.length <= 1) {
-              const allRes = await productService.list({ limit: 6 });
-              rItems = allRes?.data?.data || allRes?.data || [];
+            const subCategoryName = item.subCategory ? String(item.subCategory).trim() : null;
+            const currentId = item._id || item.id || slug;
+            let matchedItems = [];
+
+            // 1. First priority: Fetch products from the SAME sub-category
+            if (subCategoryName) {
+              try {
+                const subRes = await productService.list({ subCategory: subCategoryName, limit: 20 });
+                const rawSub = subRes?.data?.data || subRes?.data || [];
+                if (Array.isArray(rawSub)) {
+                  matchedItems = rawSub.filter((p) => {
+                    const pid = String(p._id || p.id || p.slug);
+                    return pid !== String(currentId);
+                  });
+                }
+              } catch (subErr) {
+                console.warn('Subcategory fetch error:', subErr);
+              }
             }
-            if (Array.isArray(rItems)) {
-              const currentId = item._id || item.id || slug;
-              const filtered = rItems.filter((p) => (p._id || p.id || p.slug) !== currentId);
-              setRelatedProducts(filtered.slice(0, 4));
+
+            // 2. Second priority: If sub-category has less than 6 products, supplement with products from the same category
+            if (matchedItems.length < 6 && catId) {
+              try {
+                const catRes = await productService.list({ category: catId, limit: 20 });
+                const rawCat = catRes?.data?.data || catRes?.data || [];
+                if (Array.isArray(rawCat)) {
+                  const existingIds = new Set(matchedItems.map((p) => String(p._id || p.id || p.slug)));
+                  const extraFromCat = rawCat.filter((p) => {
+                    const pid = String(p._id || p.id || p.slug);
+                    return pid !== String(currentId) && !existingIds.has(pid);
+                  });
+                  matchedItems = [...matchedItems, ...extraFromCat];
+                }
+              } catch (catErr) {
+                console.warn('Category fetch error:', catErr);
+              }
             }
+
+            // 3. Third priority: Fallback to general store products if still low
+            if (matchedItems.length < 4) {
+              try {
+                const allRes = await productService.list({ limit: 20 });
+                const rawAll = allRes?.data?.data || allRes?.data || [];
+                if (Array.isArray(rawAll)) {
+                  const existingIds = new Set(matchedItems.map((p) => String(p._id || p.id || p.slug)));
+                  const extraAll = rawAll.filter((p) => {
+                    const pid = String(p._id || p.id || p.slug);
+                    return pid !== String(currentId) && !existingIds.has(pid);
+                  });
+                  matchedItems = [...matchedItems, ...extraAll];
+                }
+              } catch (_) {}
+            }
+
+            setRelatedProducts(matchedItems);
           } catch (rErr) {
             console.warn('Could not load related products:', rErr);
             setRelatedProducts([]);
@@ -407,10 +491,107 @@ export default function ProductDetail() {
   const availableColors = hasColorVariants ? product.variants.colors : [];
   const availableSizes = hasDbVariants ? product.variants.options : [];
 
+  const renderRelatedProductsRunningSection = (isMobile = false) => {
+    if (!isEnabled('pdp_related_products')) return null;
+
+    const baseList = relatedProducts && relatedProducts.length > 0 ? relatedProducts : [
+      {
+        _id: 'rel-1',
+        id: 'rel-1',
+        slug: product.slug || 'product',
+        name: 'Vantage Mobile Model-2',
+        price: 98,
+        discountPrice: 78,
+        tags: ['BEST SELLERS'],
+        images: [product.images?.[0] || product.image || '/images/about_showroom_featured.jpg'],
+      },
+      {
+        _id: 'rel-2',
+        id: 'rel-2',
+        slug: product.slug || 'product',
+        name: 'Vantage Mobile Model-3',
+        price: 2450,
+        discountPrice: 1960,
+        tags: ['TRENDING NOW'],
+        images: [product.images?.[1] || product.images?.[0] || product.image || '/images/about_showroom_featured.jpg'],
+      },
+      {
+        _id: 'rel-3',
+        id: 'rel-3',
+        slug: product.slug || 'product',
+        name: 'Legacy Mobile Model-4',
+        price: 1486,
+        discountPrice: 1189,
+        tags: ['TOP PRODUCT'],
+        images: [product.images?.[2] || product.images?.[0] || product.image || '/images/about_showroom_featured.jpg'],
+      },
+      {
+        _id: 'rel-4',
+        id: 'rel-4',
+        slug: product.slug || 'product',
+        name: 'Vantage Mobile Model-5',
+        price: 2077,
+        discountPrice: 1662,
+        tags: ['LIMITED DEALS'],
+        images: [product.images?.[0] || product.image || '/images/about_showroom_featured.jpg'],
+      },
+    ];
+
+    // Ensure at least 6 items for smooth infinite loop
+    let loopItems = [...baseList];
+    while (loopItems.length < 6) {
+      loopItems = [...loopItems, ...baseList];
+    }
+    const marqueeItems = [...loopItems, ...loopItems];
+
+    const rawLinkText = getSetting('pdp_related_products', 'viewAllLinkText', 'Shop Now');
+    const displayLinkText = (!rawLinkText || rawLinkText === 'Access Database') ? 'Shop Now' : rawLinkText;
+    const rawHeading = getSetting('pdp_related_products', 'sectionTitle', 'You May Also Love');
+    const sectionHeading = (!rawHeading || rawHeading === 'Expand Your Arsenal') ? 'You May Also Love' : rawHeading;
+
+    return (
+      <div className={isMobile ? 'mobile-pdp-arsenal-wrap' : styles['arsenal-section']}>
+        <div className={styles['arsenal-header-row']}>
+          <h2 className={styles['arsenal-main-heading']}>
+            {sectionHeading}
+          </h2>
+          <Link to="/products" className={styles['access-db-link']}>
+            <span>{displayLinkText}</span>
+            <ChevronRight size={16} strokeWidth={2.5} />
+          </Link>
+        </div>
+
+        <div
+          className={styles['arsenal-running-wrapper']}
+          onMouseEnter={() => setCarouselPaused(true)}
+          onMouseLeave={() => setCarouselPaused(false)}
+          onTouchStart={() => setCarouselPaused(true)}
+          onTouchEnd={() => setCarouselPaused(false)}
+        >
+          <div
+            className={styles['arsenal-running-track']}
+            style={{ animationPlayState: carouselPaused ? 'paused' : 'running' }}
+          >
+            {marqueeItems.map((item, idx) => (
+              <div
+                key={`${item._id || item.id || 'p'}-${idx}`}
+                className={styles['arsenal-card-wrapper']}
+              >
+                <ProductCard product={item} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <PageWrapper>
-      <div className={styles['product-detail-wrapper']}>
-        <div className={styles['container']}>
+      {/* ── DESKTOP VIEW (Screens > 768px ONLY - 100% Preserved) ── */}
+      <div className="desktop-pdp-container">
+        <div className={styles['product-detail-wrapper']}>
+          <div className={styles['container']}>
 
           {/* ═══════════════════════════════════════════════════════════════
               1. MAIN TOP SECTION: Gallery (Left) + Product Info (Right)
@@ -994,132 +1175,427 @@ export default function ProductDetail() {
 
 
           {/* ═══════════════════════════════════════════════════════════════
-              3. BOTTOM SECTION: "Expand Your Arsenal" (Related Products)
+              3. BOTTOM SECTION: "You May Also Love" (Running Carousel)
              ═══════════════════════════════════════════════════════════════ */}
-          {isEnabled('pdp_related_products') && (
-          <div className={styles['arsenal-section']}>
-            <div className={styles['arsenal-header-row']}>
-              <h2 className={styles['arsenal-main-heading']}>{getSetting('pdp_related_products', 'sectionTitle', 'Expand Your Arsenal')}</h2>
-              <Link to="/products" className={styles['access-db-link']}>
-                <span>{getSetting('pdp_related_products', 'viewAllLinkText', 'Access Database')}</span>
-                <ChevronRight size={16} strokeWidth={2.5} />
-              </Link>
+          {renderRelatedProductsRunningSection(false)}
+
+        </div>{/* end .container */}
+      </div>{/* end .product-detail-wrapper */}
+    </div>{/* end .desktop-pdp-container */}
+
+    {/* ═══════════════════════════════════════════════════════════════════
+        MOBILE VIEW (max-width: 768px ONLY - Matches ShopApp Design)
+       ═══════════════════════════════════════════════════════════════════ */}
+    <div className="mobile-pdp-container">
+      {/* ── 1. Image Gallery Showcase ── */}
+      <div className="mobile-pdp-gallery-card">
+        {hasDiscount && (
+          <div className="mobile-pdp-discount-badge">
+            {discountPercent}% OFF
+          </div>
+        )}
+
+        <div className="mobile-pdp-gallery-actions">
+          <button
+            type="button"
+            onClick={handleToggleWishlist}
+            className="mobile-pdp-action-btn"
+            aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart
+              size={18}
+              fill={inWishlist ? '#e11d48' : 'none'}
+              color={inWishlist ? '#e11d48' : '#630ed4'}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={handleMobileShare}
+            className="mobile-pdp-action-btn"
+            aria-label="Share product"
+            title="Share product"
+          >
+            <Share2 size={17} color="#630ed4" />
+          </button>
+        </div>
+
+        <div className="mobile-pdp-main-img-box">
+          <img
+            src={activeMobileImg}
+            alt={product.name}
+            className="mobile-pdp-main-img"
+            loading="eager"
+          />
+        </div>
+
+        {productImages.length > 1 && (
+          <div className="mobile-pdp-dots-row">
+            {productImages.map((_, idx) => (
+              <span
+                key={idx}
+                className={`mobile-pdp-dot ${mobileSelectedImgIdx === idx ? 'active' : ''}`}
+                onClick={() => setMobileSelectedImgIdx(idx)}
+              />
+            ))}
+          </div>
+        )}
+
+        {productImages.length > 1 && (
+          <div className="mobile-pdp-thumbs-row">
+            {productImages.map((img, idx) => (
+              <div
+                key={idx}
+                className={`mobile-pdp-thumb-item ${mobileSelectedImgIdx === idx ? 'active' : ''}`}
+                onClick={() => setMobileSelectedImgIdx(idx)}
+              >
+                <img
+                  src={img}
+                  alt={`${product.name} view ${idx + 1}`}
+                  className="mobile-pdp-thumb-img"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── 2. Title, Pricing & Offers Card ── */}
+      <div className="mobile-pdp-card">
+        <div className="mobile-pdp-category-kicker">
+          {typeof product.category === 'object'
+            ? (product.category?.name || product.brand || 'PICKY LUXURY')
+            : (product.category || product.brand || 'PICKY LUXURY')}
+        </div>
+
+        <h2 className="mobile-pdp-product-title">
+          {product.name}
+        </h2>
+
+        {(product.shortDescription || product.description) && (
+          <p className="mobile-pdp-short-desc">
+            {product.shortDescription || product.description}
+          </p>
+        )}
+
+        <div className="mobile-pdp-rating-row">
+          <div className="mobile-pdp-rating-badge">
+            <span>{ratingDistribution.average || 4.2}</span>
+            <Star size={11} fill="#ffffff" color="#ffffff" />
+          </div>
+          <span className="mobile-pdp-rating-meta">
+            {activeReviews.length > 0
+              ? `${activeReviews.length * 12 + 100} Ratings & ${activeReviews.length} Reviews`
+              : '15,482 Ratings & 1,290 Reviews'}
+          </span>
+        </div>
+
+        <div className="mobile-pdp-price-row">
+          <span className="mobile-pdp-main-price">{formattedPrice}</span>
+          {hasDiscount && (
+            <>
+              <span className="mobile-pdp-strike-price">₹{originalPrice.toLocaleString('en-IN')}</span>
+              <span className="mobile-pdp-discount-text">{discountPercent}% OFF</span>
+            </>
+          )}
+        </div>
+        <p className="mobile-pdp-tax-note">Inclusive of all taxes</p>
+
+      </div>
+
+      {/* ── 3. Variants & Purchase Actions Card ── */}
+      <div className="mobile-pdp-card">
+        <div className="mobile-pdp-variants-wrap">
+          {hasColorVariants && (
+            <div>
+              <span className="mobile-pdp-section-label">SELECT COLOR VARIANT</span>
+              <div className="mobile-pdp-swatches-row">
+                {availableColors.map((swatch) => {
+                  const swatchId = swatch.id || swatch.color || swatch;
+                  return (
+                    <button
+                      key={swatchId}
+                      type="button"
+                      onClick={() => setSelectedColor(swatchId)}
+                      className={`mobile-pdp-swatch-circle ${selectedColor === swatchId ? 'active' : ''}`}
+                      style={{ backgroundColor: swatch.color || swatch }}
+                      title={swatch.name || swatch}
+                      aria-label={swatch.name || swatch}
+                    />
+                  );
+                })}
+              </div>
             </div>
+          )}
 
-            {/* 4 Cards Grid Matching Reference Image */}
-            <div className={styles['arsenal-cards-grid']}>
-              {(relatedProducts.length > 0 ? relatedProducts : [
-                {
-                  id: 'rel-1',
-                  name: 'Vantage Mobile Model-2',
-                  price: 98,
-                  discountPrice: 78,
-                  saveAmount: 19.5,
-                  rating: 4.8,
-                  reviewsCount: 124,
-                  image: product.images?.[0] || product.image,
-                },
-                {
-                  id: 'rel-2',
-                  name: 'Vantage Mobile Model-3',
-                  price: 2450,
-                  discountPrice: 1960,
-                  saveAmount: 490,
-                  rating: 4.9,
-                  reviewsCount: 124,
-                  image: product.images?.[1] || product.images?.[0] || product.image,
-                },
-                {
-                  id: 'rel-3',
-                  name: 'Legacy Mobile Model-4',
-                  price: 1486,
-                  discountPrice: 1189,
-                  saveAmount: 297.25,
-                  rating: 4.7,
-                  reviewsCount: 124,
-                  image: product.images?.[2] || product.images?.[0] || product.image,
-                },
-                {
-                  id: 'rel-4',
-                  name: 'Vantage Mobile Model-5',
-                  price: 2077,
-                  discountPrice: 1662,
-                  saveAmount: 415.5,
-                  rating: 4.9,
-                  reviewsCount: 124,
-                  image: product.images?.[0] || product.image,
-                },
-              ]).slice(0, 4).map((item, idx) => {
-                const itemPrice = item.discountPrice || item.price || 999;
-                const itemOrigPrice = item.price && item.discountPrice ? item.price : Math.round(itemPrice * 1.25);
-                const itemSavings = item.saveAmount || (itemOrigPrice - itemPrice);
-                const itemImg = item.images?.[0] || item.image || product.images?.[0] || product.image;
+          {hasDbVariants && (
+            <div>
+              <span className="mobile-pdp-section-label">
+                {product?.variants?.type === 'weight'
+                  ? 'SELECT WEIGHT'
+                  : product?.variants?.type === 'liquid' || product?.variants?.type === 'volume'
+                  ? 'SELECT VOLUME'
+                  : product?.variants?.type === 'storage'
+                  ? 'STORAGE CAPACITY'
+                  : 'SELECT SIZE'}
+              </span>
+              <div className="mobile-pdp-pills-row">
+                {availableSizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSize(size);
+                      setSelectedVariant(size);
+                    }}
+                    className={`mobile-pdp-size-btn ${
+                      (selectedSize === size || selectedVariant === size) ? 'active' : ''
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-                return (
-                  <div key={item._id || item.id || idx} className={styles['arsenal-card']}>
-                    {/* Top Image Box with SAVE Pill */}
-                    <div className={styles['arsenal-img-box']}>
-                      <span className={styles['save-pill-badge']}>
-                        SAVE ₹{Number(itemSavings).toFixed(0)}
-                      </span>
-                      <img
-                        src={itemImg}
-                        alt={item.name}
-                        className={styles['arsenal-card-img']}
-                      />
-                    </div>
+          <div className="mobile-pdp-qty-row">
+            <span className="mobile-pdp-section-label" style={{ marginBottom: 0 }}>Quantity</span>
+            <div className="mobile-pdp-qty-stepper">
+              <button
+                type="button"
+                disabled={quantity <= 1 || isOutOfStock}
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="mobile-pdp-qty-btn"
+                aria-label="Decrease quantity"
+              >
+                –
+              </button>
+              <span className="mobile-pdp-qty-val">
+                {isOutOfStock ? 0 : quantity}
+              </span>
+              <button
+                type="button"
+                disabled={quantity >= maxStock || isOutOfStock}
+                onClick={() => setQuantity((q) => Math.min(maxStock, q + 1))}
+                className="mobile-pdp-qty-btn"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+          </div>
 
-                    {/* Card Content */}
-                    <div className={styles['arsenal-card-body']}>
-                      <h4 className={styles['arsenal-card-title']} title={item.name}>
-                        {item.name}
-                      </h4>
+          {!isOutOfStock && quantity >= maxStock && (
+            <span style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>
+              Max stock reached ({maxStock} available)
+            </span>
+          )}
 
-                      {/* Rating & In-Stock */}
-                      <div className={styles['arsenal-rating-row']}>
-                        <div className={styles['stars-gold-row']}>
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} size={12} fill="#f59e0b" color="#f59e0b" />
-                          ))}
-                        </div>
-                        <span className={styles['card-reviews-count']}>
-                          ({item.reviewsCount || 124})
-                        </span>
-                      </div>
+        </div>
+      </div>
 
-                      <div className={styles['in-stock-line']}>
-                        <span className={styles['tiny-green-dot']} />
-                        <span>IN STOCK</span>
-                      </div>
 
-                      {/* Price Row */}
-                      <div className={styles['arsenal-price-row']}>
-                        <strong className={styles['arsenal-bold-price']}>
-                          ₹{itemPrice.toLocaleString('en-IN')}
-                        </strong>
-                        <span className={styles['arsenal-strike-price']}>
-                          ₹{itemOrigPrice.toLocaleString('en-IN')}
-                        </span>
-                      </div>
+      {/* ── 6. Segmented Tabs Hub Card (Description, Specifications, Reviews) ── */}
+      <div className="mobile-pdp-card">
+        <div className="mobile-pdp-tabs-nav">
+          <button
+            type="button"
+            onClick={() => setActiveDetailTab('description')}
+            className={`mobile-pdp-tab-btn ${activeDetailTab === 'description' ? 'active' : ''}`}
+          >
+            Description
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveDetailTab('specs')}
+            className={`mobile-pdp-tab-btn ${activeDetailTab === 'specs' ? 'active' : ''}`}
+          >
+            Specifications
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveDetailTab('reviews')}
+            className={`mobile-pdp-tab-btn ${activeDetailTab === 'reviews' ? 'active' : ''}`}
+          >
+            Reviews ({activeReviews.length})
+          </button>
+        </div>
 
-                      {/* SHOP NOW Button */}
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/products/${item.slug || item.id || slug}`)}
-                        className={styles['btn-shop-now']}
-                      >
-                        SHOP NOW
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+        {activeDetailTab === 'description' && (
+          <div>
+            <p className="mobile-pdp-desc-text">
+              {product.description ||
+                `This ${product.name} is a standout item on Picky, crafted with precision and authentic attention to detail.`}
+            </p>
+            <div className="mobile-pdp-highlights-grid">
+              <div className="mobile-pdp-highlight-box">
+                <ShieldCheck size={20} color="#630ed4" />
+                <strong>100% Authenticity</strong>
+                <span>Direct verified sourcing from certified makers.</span>
+              </div>
+              <div className="mobile-pdp-highlight-box">
+                <Truck size={20} color="#630ed4" />
+                <strong>Express Delivery</strong>
+                <span>Priority transit to your doorstep.</span>
+              </div>
             </div>
           </div>
         )}
 
-        </div>{/* end .container */}
-      </div>{/* end .product-detail-wrapper */}
+        {activeDetailTab === 'specs' && (
+          <div>
+            {product.characteristics && product.characteristics.length > 0 ? (
+              <table className="mobile-pdp-specs-table">
+                <tbody>
+                  {product.characteristics.map((c, i) => (
+                    <tr key={i}>
+                      <td className="mobile-pdp-spec-label">{c.key || c.name || 'Feature'}</td>
+                      <td className="mobile-pdp-spec-val">
+                        {Array.isArray(c.value) ? c.value.join(', ') : String(c.value || '—')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '1.5rem', color: '#7b7487', fontSize: '0.8rem' }}>
+                Specifications have not been added for this item yet.
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeDetailTab === 'reviews' && (
+          <div>
+            <div className="mobile-pdp-reviews-header">
+              <span className="mobile-pdp-section-label" style={{ marginBottom: 0 }}>Ratings &amp; Reviews</span>
+              <button
+                type="button"
+                onClick={() => setShowWriteReviewModal(true)}
+                className="mobile-pdp-rate-btn"
+              >
+                Rate Product
+              </button>
+            </div>
+
+            <div className="mobile-pdp-review-score-box">
+              <div className="mobile-pdp-score-left">
+                <span className="mobile-pdp-big-score">{ratingDistribution.average || 4.2}</span>
+                <div className="mobile-pdp-score-stars">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
+                  ))}
+                </div>
+                <span className="mobile-pdp-score-count">
+                  {activeReviews.length > 0 ? `${activeReviews.length} Ratings` : '15.4k Ratings'}
+                </span>
+              </div>
+
+              <div className="mobile-pdp-score-right">
+                {[5, 4, 3, 2, 1].map((star) => (
+                  <div key={star} className="mobile-pdp-progress-row">
+                    <span style={{ width: '10px' }}>{star}</span>
+                    <div className="mobile-pdp-progress-track">
+                      <div
+                        className="mobile-pdp-progress-fill"
+                        style={{ width: `${ratingDistribution[star]}%` }}
+                      />
+                    </div>
+                    <span style={{ width: '28px', textAlign: 'right' }}>{ratingDistribution[star]}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {activeReviews.some((r) => Array.isArray(r.photos) && r.photos.length > 0) && (
+              <div className="mobile-pdp-photos-strip">
+                {activeReviews.flatMap((r) => r.photos || []).slice(0, 8).map((photoUrl, pIdx) => (
+                  <div
+                    key={pIdx}
+                    className="mobile-pdp-photo-thumb"
+                    onClick={() => setActiveReviewLightbox(photoUrl)}
+                  >
+                    <img src={photoUrl} alt="Review thumb" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeReviews.length > 0 ? (
+              activeReviews.slice(0, 5).map((rev) => {
+                const custName = rev.customer?.name || 'Verified Customer';
+                const revStars = Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 5)));
+                const dateFormatted = rev.createdAt
+                  ? new Date(rev.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : 'Recent';
+
+                return (
+                  <div key={rev.id || rev._id} className="mobile-pdp-review-card">
+                    <div className="mobile-pdp-review-top">
+                      <div className="mobile-pdp-reviewer-wrap">
+                        <span className="mobile-pdp-rev-star-badge">
+                          <span>{revStars}</span>
+                          <Star size={9} fill="#ffffff" color="#ffffff" />
+                        </span>
+                        <span className="mobile-pdp-rev-author">{custName}</span>
+                      </div>
+                      <span className="mobile-pdp-rev-date">{dateFormatted}</span>
+                    </div>
+                    <p className="mobile-pdp-rev-comment">"{rev.comment}"</p>
+                    <div className="mobile-pdp-verified-buyer">
+                      <CheckCircle2 size={13} color="#047857" />
+                      <span>Certified Buyer</span>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ textAlign: 'center', padding: '1.25rem', color: '#7b7487', fontSize: '0.78rem' }}>
+                No reviews yet. Be the first to share your experience!
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── 7. Related Products ("You May Also Love" Running Carousel) ── */}
+      {renderRelatedProductsRunningSection(true)}
+    </div>
+
+    {/* ── 8. Fixed Bottom Purchase Dock (Mobile Only) ── */}
+    <div className="mobile-pdp-sticky-dock">
+      <div className="mobile-pdp-dock-price-group">
+        <span className="mobile-pdp-dock-main-price">{formattedPrice}</span>
+        {hasDiscount && (
+          <span className="mobile-pdp-dock-sub-price">
+            ₹{originalPrice.toLocaleString('en-IN')} ({discountPercent}% OFF)
+          </span>
+        )}
+      </div>
+      <div className="mobile-pdp-dock-actions">
+        <button
+          type="button"
+          disabled={isOutOfStock}
+          onClick={handleAddToCart}
+          className="mobile-pdp-dock-btn-bag"
+        >
+          Add to Bag
+        </button>
+        <button
+          type="button"
+          disabled={isOutOfStock}
+          onClick={handleBuyNow}
+          className="mobile-pdp-dock-btn-buy"
+        >
+          Buy Now
+        </button>
+      </div>
+    </div>
 
       {/* ── Modal for Write a Review ── */}
       {showWriteReviewModal && (

@@ -21,6 +21,12 @@ export const reviewService = {
     return res?.data || res;
   },
 
+  // 3.1 Public: Get published & featured reviews for storefront
+  getPublicReviews: async () => {
+    const res = await api.get('/reviews/public');
+    return res?.data || res;
+  },
+
   // 4. Admin: Get all reviews with status & KPI stats
   getAdminReviews: async (params = {}) => {
     const res = await api.get('/reviews/admin', { params });

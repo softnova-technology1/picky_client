@@ -10,6 +10,7 @@ import {
   Package,
   Truck,
   ArrowRight,
+  ArrowLeft,
   ShoppingBag,
   Gift,
   FileText,
@@ -19,8 +20,12 @@ import {
   MapPin,
   CreditCard,
   ShieldCheck,
+  CheckCircle2,
+  Receipt,
+  Phone,
 } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
+import './OrderSuccessMobile.css';
 import AdminInvoice, { AdminInvoiceSheet, generateInvoicePdf } from '../../components/admin/AdminInvoice';
 import { playOrderSuccessSound } from '../../utils/soundEffects';
 import { useUiStore } from '../../store/uiStore';
@@ -124,9 +129,11 @@ export default function OrderSuccess() {
   return (
     <PageWrapper>
       <div className={styles['success-section']}>
-        <div className={styles['container']}>
+        {/* ── DESKTOP VIEW (Screens > 768px ONLY - 100% Preserved) ── */}
+        <div className="desktop-order-success-container">
+          <div className={styles['container']}>
 
-          {/* ── 4-STEP STEPPER HEADER BAR WITH CONFIRM ACTIVE ── */}
+            {/* ── 4-STEP STEPPER HEADER BAR WITH CONFIRM ACTIVE ── */}
           <div className={`${styles['stepper-wrapper']} ${styles.noPrint} noPrint`}>
             <div className={styles['stepper-header']}>
               <div className={`${styles['step-item']} ${styles['completed']}`}>
@@ -457,38 +464,254 @@ export default function OrderSuccess() {
             </div>
 
           </div>
+        </div>
+      </div>{/* end .desktop-order-success-container */}
 
-          {/* ══════════════════════════════════════════════════════════════════
-              OFFICIAL GST TAX INVOICE (UNIFIED ADMIN & STOREFRONT INVOICE)
-             ══════════════════════════════════════════════════════════════════ */}
-          {showInvoiceModal && order && (
-            <AdminInvoice
-              order={order}
-              onClose={() => setShowInvoiceModal(false)}
-            />
-          )}
+      {/* ── MOBILE VIEW (Screens <= 768px ONLY - Matches Requested Specification) ── */}
+      <div className="mobile-order-success-container">
+        {/* Card 1: Order Success & Verification Section */}
+        <div className="mobile-success-hero-card">
+          <div className="mobile-success-blur-blob" />
+          <div className="mobile-success-icon-wrap">
+            <CheckCircle2 size={30} strokeWidth={2.4} />
+          </div>
+          <div className="mobile-success-pill-badge">
+            Order Confirmed & Verified
+          </div>
+          <h1 className="mobile-success-heading">
+            Thank You for Choosing Picky Store
+          </h1>
+          <p className="mobile-success-quote">
+            "Your order has been successfully placed and is getting ready for lightning-fast dispatch."
+          </p>
+        </div>
 
-          {/* Offscreen A4 invoice container - mounted ONLY during active PDF generation */}
-          {downloading && order && (
-            <div
-              style={{
-                position: 'fixed',
-                left: '-9999px',
-                top: '-9999px',
-                width: '800px',
-                opacity: 0,
-                pointerEvents: 'none',
-                zIndex: -9999,
-              }}
-              aria-hidden="true"
-            >
-              <AdminInvoiceSheet order={order} ref={hiddenInvoiceRef} />
+        {/* Card 2: Order Details & Summary Card */}
+        {loading && !order ? (
+          <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
+            <Spinner size={32} />
+          </div>
+        ) : order ? (
+          <div className="mobile-success-details-card">
+            {/* Order Header */}
+            <div className="mobile-success-order-header">
+              <div className="mobile-success-order-meta">
+                <span className="mobile-success-order-label">Order Number</span>
+                <span className="mobile-success-order-id">
+                  {order.orderNumber || order._id || id}
+                </span>
+                <span className="mobile-success-order-date">
+                  Placed On: {formatDate(order.createdAt || new Date())}
+                </span>
+              </div>
+
+              <div className="mobile-success-top-actions">
+                {order.orderNumber && (
+                  <Link
+                    to={`/track-order?id=${order.orderNumber}`}
+                    className="mobile-success-btn-track"
+                    title="Track Real-time Order Status & Delivery"
+                  >
+                    <Truck size={14} strokeWidth={2.4} />
+                    <span>Track Order</span>
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={handlePrintInvoice}
+                  className="mobile-success-btn-print"
+                  title="Print Official Tax Invoice"
+                >
+                  <Printer size={14} />
+                  <span>Print</span>
+                </button>
+              </div>
             </div>
-          )}
 
+            {/* Ordered Items */}
+            {Array.isArray(order.items) && order.items.length > 0 && (
+              <div className="mobile-success-items-section">
+                <div className="mobile-success-section-title-row">
+                  <span className="mobile-success-section-title">Ordered Items</span>
+                  <span className="mobile-success-count-badge">
+                    {order.items.length} {order.items.length === 1 ? 'Item' : 'Items'}
+                  </span>
+                </div>
+
+                <div className="mobile-success-items-list">
+                  {order.items.map((item, idx) => {
+                    const itemImg = item.image || item.product?.image || item.product?.images?.[0] || 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=100&auto=format&fit=crop&q=60';
+                    const itemPrice = (item.price || 0) * (item.quantity || 1);
+                    return (
+                      <div key={item._id || item.id || idx} className="mobile-success-item-row">
+                        <div className="mobile-success-item-left">
+                          <img
+                            src={itemImg}
+                            alt={item.name}
+                            className="mobile-success-item-img"
+                          />
+                          <div className="mobile-success-item-info">
+                            <div className="mobile-success-item-name">{item.name}</div>
+                            <div className="mobile-success-item-qty">Qty: {item.quantity || 1}</div>
+                          </div>
+                        </div>
+                        <div className="mobile-success-item-price">
+                          {formatPrice(itemPrice)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Details */}
+            <div className="mobile-success-delivery-section">
+              <div className="mobile-success-subheading">
+                <MapPin size={15} className="mobile-success-subheading-icon" />
+                <span>Delivery Details</span>
+              </div>
+
+              <div className="mobile-success-delivery-box">
+                <div className="mobile-success-delivery-name">
+                  {order.shippingAddress?.fullName || order.shippingAddress?.name || order.user?.name || 'Customer'}
+                </div>
+                <div className="mobile-success-delivery-address">
+                  {order.shippingAddress?.street || order.shippingAddress?.address || 'Street Address'}
+                  {order.shippingAddress?.city ? `, ${order.shippingAddress.city}` : ''}
+                  {order.shippingAddress?.state ? `, ${order.shippingAddress.state}` : ''}
+                  {order.shippingAddress?.pincode ? ` - ${order.shippingAddress.pincode}` : ''}
+                </div>
+                {(order.shippingAddress?.phone || order.user?.phone) && (
+                  <div className="mobile-success-delivery-phone">
+                    <Phone size={12} />
+                    <span>{order.shippingAddress?.phone || order.user?.phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Payment & Summary */}
+            <div className="mobile-success-payment-section">
+              <div className="mobile-success-subheading">
+                <Receipt size={15} className="mobile-success-subheading-icon" />
+                <span>Payment & Summary</span>
+              </div>
+
+              <div className="mobile-success-summary-rows">
+                <div className="mobile-success-summary-row">
+                  <span>Subtotal</span>
+                  <span className="mobile-success-summary-val">{formatPrice(orderSubtotal)}</span>
+                </div>
+
+                {orderDiscount > 0 && (
+                  <div className="mobile-success-summary-row discount">
+                    <span>Discount Applied</span>
+                    <span className="mobile-success-summary-val discount">-{formatPrice(orderDiscount)}</span>
+                  </div>
+                )}
+
+                <div className="mobile-success-summary-row">
+                  <span>Shipping Fee</span>
+                  <span className="mobile-success-summary-val">{orderShipping > 0 ? formatPrice(orderShipping) : 'FREE'}</span>
+                </div>
+
+                {convenienceFee > 0 && (
+                  <div className="mobile-success-summary-row">
+                    <span>Platform Fee</span>
+                    <span className="mobile-success-summary-val">{formatPrice(convenienceFee)}</span>
+                  </div>
+                )}
+
+                {giftWrapFee > 0 && (
+                  <div className="mobile-success-summary-row">
+                    <span>Gift Wrap Fee</span>
+                    <span className="mobile-success-summary-val">{formatPrice(giftWrapFee)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Total Paid */}
+              <div className="mobile-success-total-paid-row">
+                <span className="mobile-success-total-paid-label">Total Paid</span>
+                <span className="mobile-success-total-paid-val">{formatPrice(orderTotal)}</span>
+              </div>
+
+              {/* Payment Verified */}
+              <div className="mobile-success-verified-banner">
+                <div className="mobile-success-verified-left">
+                  <CheckCircle2 size={15} strokeWidth={2.5} />
+                  <span>Payment Verified</span>
+                </div>
+                <span className="mobile-success-gateway-badge">
+                  {order.paymentMethod ? order.paymentMethod.toUpperCase() : 'RAZORPAY'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '2.5rem 1.5rem', background: '#ffffff', borderRadius: '16px', border: '1.5px dashed #ddd6fe', margin: '1rem 0' }}>
+            <Package size={36} color="#7c3aed" style={{ marginBottom: '0.5rem' }} />
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.35rem 0' }}>Order #{id} Confirmed!</h3>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>
+              Your order has been recorded successfully.
+            </p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mobile-success-actions-wrap">
+          <button
+            type="button"
+            onClick={handleDownloadInvoice}
+            disabled={downloading}
+            className="mobile-success-btn-download"
+            title="Download Official Tax Invoice as PDF"
+          >
+            <Download size={16} strokeWidth={2.4} />
+            <span>{downloading ? 'Downloading...' : 'Download Invoice'}</span>
+          </button>
+
+          <Link
+            to="/products"
+            className="mobile-success-btn-continue"
+          >
+            <ArrowLeft size={16} strokeWidth={2.4} />
+            <span>Continue Shopping</span>
+          </Link>
         </div>
       </div>
-    </PageWrapper>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          OFFICIAL GST TAX INVOICE (UNIFIED ADMIN & STOREFRONT INVOICE)
+         ══════════════════════════════════════════════════════════════════ */}
+      {showInvoiceModal && order && (
+        <AdminInvoice
+          order={order}
+          onClose={() => setShowInvoiceModal(false)}
+        />
+      )}
+
+      {/* Offscreen A4 invoice container - mounted ONLY during active PDF generation */}
+      {downloading && order && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '-9999px',
+            top: '-9999px',
+            width: '800px',
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: -9999,
+          }}
+          aria-hidden="true"
+        >
+          <AdminInvoiceSheet order={order} ref={hiddenInvoiceRef} />
+        </div>
+      )}
+
+    </div>
+  </PageWrapper>
   );
 }
 

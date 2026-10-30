@@ -76,7 +76,9 @@ export default function NewArrivalsHero({
   const buttonBgColor = s.buttonBgColor || '#250e4a';
   const buttonTextColor = s.buttonTextColor || '#ffffff';
 
-  const bannerBgImage = s.bannerBgImage || s.bannerBg || s.heroImage || s.imageUrl || '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg';
+  const adminCustomImage = s.bannerBgImage || s.bannerBg || s.heroImage || s.imageUrl || s.image || s.bgImage;
+  const bannerBgImage = adminCustomImage || '/images/new-arrivals-hero/new_arrivals_hero_bg_4k.jpg';
+  const mobileBannerBgImage = s.mobileBannerBgImage || adminCustomImage || '/images/new-arrivals-hero/new_arrivals_hero_bg_mobile.jpg';
   const bannerBgColor = s.bannerBgColor || '#ede7f6';
 
   const exploreTitle = s.exploreTitle || 'Explore Collection';
@@ -225,7 +227,71 @@ export default function NewArrivalsHero({
       aria-label="New Arrivals Winter Showcase"
       style={{ backgroundColor: bannerBgColor }}
     >
-      {/* ── 4K Studio Architectural Background Layer ── */}
+      {/* ── Mobile Full-Bleed Card View (Hidden on desktop > 768px) ── */}
+      <div className={styles.mobileHeroCard}>
+        {mobileBannerBgImage && (
+          <img
+            src={mobileBannerBgImage}
+            alt={rawHeadline || 'New Arrivals Showcase'}
+            className={styles.mobileHeroBgImg}
+            loading="eager"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = bannerBgImage || '/images/new-arrivals-hero/new_arrivals_hero_bg_mobile.jpg';
+            }}
+          />
+        )}
+        <div className={styles.mobileHeroGradient} />
+
+
+        {/* Bottom Content: Headline, Description, & Direct CTA */}
+        <div className={styles.mobileHeroBottomContent}>
+          <h1 className={styles.mobileHeroTitle} style={{ color: titleColor || '#ffffff' }}>
+            <span>{titlePrefix} </span>
+            {titleHighlight && (
+              <span
+                className={styles.mobileHeroTitleItalic}
+                style={{
+                  color: titleHighlightColor || '#e9d5ff',
+                  WebkitTextFillColor: titleHighlightColor || '#e9d5ff',
+                }}
+              >
+                {titleHighlight}
+              </span>
+            )}
+          </h1>
+          {subheadline && (
+            <p
+              className={styles.mobileHeroSubtitle}
+              style={{
+                color:
+                  subtitleColor && subtitleColor !== '#64748b' && subtitleColor !== '#4b5563'
+                    ? subtitleColor
+                    : 'rgba(243, 232, 255, 0.95)',
+              }}
+            >
+              {subheadline}
+            </p>
+          )}
+          <div className={styles.mobileCtaRow}>
+            <button
+              type="button"
+              className={styles.mobileDiscoverBtn}
+              onClick={handleCtaClick}
+              aria-label={buttonText}
+              style={{
+                backgroundColor: buttonBgColor || '#250e4a',
+                color: buttonTextColor || '#ffffff',
+              }}
+            >
+              <span>{buttonText}</span>
+              <ArrowRight size={14} strokeWidth={2.4} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 4K Studio Architectural Background Layer (Desktop > 768px) ── */}
       <div className={styles.heroBgContainer} aria-hidden="true">
         {bannerBgImage && (
           <img
@@ -243,23 +309,10 @@ export default function NewArrivalsHero({
         <div className={styles.heroBgOverlay} />
       </div>
 
-      {/* ── Inner Content Container (Elevated, Compact & Aligned) ── */}
+      {/* ── Inner Content Container (Desktop > 768px) ── */}
       <div className={styles.heroContainer}>
         {/* Top Row: Left-Aligned Studio Editorial */}
         <div className={styles.leftEditorial}>
-          {/* Top Capsule Badge */}
-          {badgeText && (
-            <div
-              className={styles.capsuleBadge}
-              style={{
-                backgroundColor: badgeBgColor,
-                borderColor: badgeTextColor ? `${badgeTextColor}33` : undefined,
-              }}
-            >
-              <span className={styles.capsuleStar} style={{ color: badgeTextColor }}>✦</span>
-              <span className={styles.capsuleText} style={{ color: badgeTextColor }}>{badgeText}</span>
-            </div>
-          )}
 
           {/* Unified Luxury Display Headline */}
           <h1 className={styles.heroTitle}>
@@ -322,7 +375,7 @@ export default function NewArrivalsHero({
               aria-label={viewAllText}
             >
               <span>{viewAllText}</span>
-              <ArrowRight size={15} strokeWidth={2.4} />
+              <ArrowRight size={14} strokeWidth={2.4} />
               <span className={styles.viewAllLine} />
             </button>
           </div>
@@ -343,9 +396,28 @@ export default function NewArrivalsHero({
                     if (e.key === 'Enter') onExploreClick?.();
                   }}
                 >
-                  <div className={styles.spotlightCardLeft}>
+                  <div className={styles.spotlightTopRow}>
+                    <span className={styles.spotlightTagPill}>
+                      {idx % 3 === 0 ? 'Pure' : idx % 3 === 1 ? 'New' : 'Restock'}
+                    </span>
+                    <span className={styles.spotlightPriceVal}>{prod.displayPrice}</span>
+                  </div>
+
+                  <div className={styles.spotlightThumbBox}>
+                    <img
+                      src={prod.image}
+                      alt={prod.title}
+                      className={styles.spotlightThumbImg}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/placeholder-product.png';
+                      }}
+                    />
+                  </div>
+
+                  <div className={styles.spotlightBottomBox}>
                     <div className={styles.spotlightCardTitle}>{prod.title}</div>
-                    <div className={styles.spotlightCardPrice}>{prod.displayPrice}</div>
                     <button
                       type="button"
                       className={styles.buyNowBtn}
@@ -354,19 +426,6 @@ export default function NewArrivalsHero({
                     >
                       Buy Now
                     </button>
-                  </div>
-
-                  <div className={styles.spotlightCardRight}>
-                    <img
-                      src={prod.image}
-                      alt={prod.title}
-                      className={styles.spotlightCardImg}
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/placeholder-product.png';
-                      }}
-                    />
                   </div>
                 </div>
               ))}

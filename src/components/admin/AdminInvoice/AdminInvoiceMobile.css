@@ -1,0 +1,652 @@
+/* ==========================================================================
+   OFFICIAL TAX INVOICE - MOBILE VIEW (Screens <= 768px ONLY)
+   Matches Picky Mobile Tax Invoice Specification exactly:
+   - Sticky Top Control Bar (Pulsing live badge, Invoice #, Download, Print & Close buttons)
+   - Header with Logo, Company Details & TAX INVOICE title
+   - Metadata Box (Invoice No, Order ID, Date, Place of Supply, GSTIN)
+   - Dual Addresses (Bill To & Ship To)
+   - Stacked Item Details Cards with Calculation Grids
+   - Invoice Amount in Words with Payment Mode & Confirmed Pill
+   - Summary Totals & Purple Grand Total Highlight
+   - Computer-generated Signoff & Footer
+   ========================================================================== */
+
+/* Hidden on desktop (> 768px) */
+.mobile-invoice-preview {
+  display: none;
+}
+
+.desktop-invoice-preview {
+  display: block;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  /* On mobile, remove outer modal padding so the mobile invoice takes full width */
+  div[class*="AdminInvoice_overlay"],
+  div[class*="overlay"]:has(> .mobile-invoice-preview) {
+    padding: 0 !important;
+    align-items: flex-start !important;
+    background: #0f172a !important;
+  }
+
+  /* On mobile, hide the desktop modal card layout and display full mobile view */
+  .desktop-invoice-preview {
+    display: none !important;
+  }
+
+  .mobile-invoice-preview {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    box-sizing: border-box;
+  }
+
+  /* ── 1. Sticky Top Control Bar ── */
+  .mobile-inv-topbar {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .mobile-inv-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .mobile-inv-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    flex-shrink: 0;
+    animation: invPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes invPulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.85);
+    }
+  }
+
+  .mobile-inv-topbar-titles {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .mobile-inv-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-inv-ordernum {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    margin: 1px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-inv-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .mobile-inv-btn-download {
+    background: #7c3aed;
+    color: #ffffff;
+    padding: 0.45rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .mobile-inv-btn-download:active {
+    background: #5b21b6;
+  }
+
+  .mobile-inv-btn-download:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .mobile-inv-btn-print {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 0.45rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .mobile-inv-btn-print:active {
+    background: #334155;
+  }
+
+  .mobile-inv-btn-close {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 0.45rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .mobile-inv-btn-close:active {
+    background: #334155;
+  }
+
+  /* ── 2. Document Body ── */
+  .mobile-inv-body {
+    padding: 1rem 1rem 2.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    background: #ffffff;
+    box-sizing: border-box;
+  }
+
+  /* Header Row: Company Logo & TAX INVOICE */
+  .mobile-inv-header-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .mobile-inv-brand-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .mobile-inv-brand-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .mobile-inv-brand-icon {
+    width: 28px;
+    height: 28px;
+    background: #7c3aed;
+    color: #ffffff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-inv-brand-name {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+
+  .mobile-inv-heading-tag {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+    text-align: right;
+  }
+
+  .mobile-inv-company-details {
+    font-size: 0.68rem;
+    color: #64748b;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .mobile-inv-company-bold {
+    font-weight: 700;
+    color: #334155;
+  }
+
+  /* Metadata Box */
+  .mobile-inv-metadata-box {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 0.75rem;
+    font-size: 0.68rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .mobile-inv-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-inv-meta-label {
+    color: #64748b;
+  }
+
+  .mobile-inv-meta-val {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .mobile-inv-meta-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.68rem;
+  }
+
+  .mobile-inv-meta-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 2px 0;
+  }
+
+  .mobile-inv-gstin-badge {
+    background: #ede9fe;
+    color: #7c3aed;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── 3. Dual Address Cards ── */
+  .mobile-inv-addresses-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .mobile-inv-address-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .mobile-inv-address-tag {
+    display: inline-block;
+    background: #ede9fe;
+    color: #7c3aed;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    width: fit-content;
+    margin-bottom: 2px;
+  }
+
+  .mobile-inv-customer-name {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: capitalize;
+  }
+
+  .mobile-inv-address-line {
+    color: #475569;
+    line-height: 1.4;
+    font-size: 0.72rem;
+  }
+
+  .mobile-inv-address-contact {
+    color: #64748b;
+    font-size: 0.7rem;
+    margin-top: 2px;
+  }
+
+  .mobile-inv-contact-val {
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  /* ── 4. Item Details Stacked Cards ── */
+  .mobile-inv-items-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-inv-section-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .mobile-inv-item-card {
+    border: 1px solid rgba(124, 58, 237, 0.18);
+    background: rgba(245, 243, 255, 0.5);
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .mobile-inv-item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+    padding-bottom: 0.5rem;
+  }
+
+  .mobile-inv-item-top-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-inv-item-idx {
+    width: 20px;
+    height: 20px;
+    background: #7c3aed;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .mobile-inv-item-name-block {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .mobile-inv-item-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+  }
+
+  .mobile-inv-item-hsn {
+    font-size: 0.68rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .mobile-inv-item-price-pill {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: #0f172a;
+    padding: 3px 8px;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    flex-shrink: 0;
+  }
+
+  /* Item Calculation Grid */
+  .mobile-inv-item-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+  }
+
+  .mobile-inv-grid-cell {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 6px;
+    padding: 0.4rem 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-inv-grid-cell.highlight {
+    background: #ede9fe;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    color: #5b21b6;
+    font-weight: 800;
+  }
+
+  .mobile-inv-cell-label {
+    color: #64748b;
+  }
+
+  .mobile-inv-cell-val {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  /* ── 5. Amount in Words ── */
+  .mobile-inv-words-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .mobile-inv-words-label {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .mobile-inv-words-text {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  .mobile-inv-words-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.45rem;
+    margin-top: 2px;
+    font-size: 0.68rem;
+  }
+
+  .mobile-inv-mode-text {
+    color: #475569;
+  }
+
+  .mobile-inv-confirmed-pill {
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── 6. Summary Totals ── */
+  .mobile-inv-summary-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .mobile-inv-summary-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #475569;
+  }
+
+  .mobile-inv-summary-line-val {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  /* Grand Total Highlight Pill */
+  .mobile-inv-grand-total-card {
+    background: #7c3aed;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+    margin-top: 0.45rem;
+  }
+
+  .mobile-inv-grand-total-left {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-inv-grand-total-caption {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #e9d5ff;
+  }
+
+  .mobile-inv-grand-total-sub {
+    font-size: 10px;
+    color: #e9d5ff;
+    margin-top: 1px;
+  }
+
+  .mobile-inv-grand-total-price {
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── 7. Footer Signoff ── */
+  .mobile-inv-footer-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 0.85rem;
+    text-align: center;
+  }
+
+  .mobile-inv-signoff-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+
+  .mobile-inv-computer-gen {
+    font-size: 9px;
+    color: #94a3b8;
+    text-align: left;
+    line-height: 1.35;
+  }
+
+  .mobile-inv-signatory-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .mobile-inv-signature-script {
+    font-family: 'Brush Script MT', cursive, serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #334155;
+    font-style: italic;
+  }
+
+  .mobile-inv-signatory-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 2px;
+    margin-top: 2px;
+  }
+
+  .mobile-inv-thanks-text {
+    font-size: 10px;
+    color: #94a3b8;
+    margin: 0;
+  }
+}

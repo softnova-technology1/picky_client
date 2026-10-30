@@ -272,6 +272,15 @@
 }
 
 /* Responsive Tweak */
+.bestsellers-mobile-br {
+  display: block;
+}
+@media (min-width: 769px) {
+  .bestsellers-mobile-br {
+    display: inline;
+  }
+}
+
 @media (max-width: 860px) {
   .playful-left-cutout-wrap,
   .playful-right-cutout-wrap,
@@ -279,8 +288,114 @@
   .playful-concentric-doodle {
     display: none;
   }
+}
+
+@media (max-width: 768px) {
   .bestseller-playful-hero-wrapper {
-    padding: 6rem 1rem 3.5rem 1rem;
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    min-height: 480px !important;
+    height: auto !important;
+    padding: 3.25rem 1.25rem 2.25rem 1.25rem !important;
+    background-size: 190% !important;
+    background-position: center 30% !important;
+    background-repeat: no-repeat !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+  .bestseller-playful-container {
+    max-width: 440px !important;
+    width: 100% !important;
+    padding: 0 0.25rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .playful-title-stack {
+    margin: 0 auto 0.65rem auto !important;
+    max-width: 360px !important;
+    line-height: 1.2 !important;
+  }
+  .playful-title-line {
+    font-size: clamp(1.95rem, 6.8vw, 2.35rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.025em !important;
+    text-align: center !important;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7) !important;
+  }
+  .playful-script-purple {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-style: italic !important;
+    font-weight: 500 !important;
+    color: #7c3aed !important;
+    position: relative !important;
+    display: inline-block !important;
+    margin: 0 0.15rem !important;
+  }
+  .playful-script-yellow {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-style: italic !important;
+    font-weight: 500 !important;
+    color: #d97706 !important;
+    position: relative !important;
+    display: inline-block !important;
+    margin: 0 0.15rem !important;
+  }
+  .playful-subtitle {
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+    color: #475569 !important;
+    max-width: 320px !important;
+    margin: 0.85rem auto 1.45rem auto !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+  }
+  .playful-cta-pill {
+    padding: 0.72rem 1.75rem !important;
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    border-radius: 9999px !important;
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    gap: 0.5rem !important;
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border: none !important;
+  }
+  .playful-cta-arrow-circle {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #7c3aed !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .bestsellers-hero-badge-pill {
+    margin-top: 1.45rem !important;
+    padding: 0.45rem 1.1rem !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    color: #334155 !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(233, 213, 255, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.05) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    max-width: 95% !important;
+    text-align: center !important;
   }
 }
 
@@ -696,6 +811,8 @@
   .bestsellers-search-premium {
     max-width: 100%;
     width: 100%;
+    flex: 0 0 44px !important;
+    height: 44px !important;
   }
   .bestsellers-hub-right-controls {
     width: 100%;
@@ -705,39 +822,272 @@
 }
 
 @media (max-width: 768px) {
+  .bestsellers-catalog-container {
+    padding-top: 1.5rem !important;
+  }
+  .bestsellers-catalog-header {
+    margin-top: 1.5rem !important;
+    margin-bottom: 1.25rem !important;
+    text-align: left !important;
+    align-items: flex-start !important;
+  }
+  .bestsellers-badge-kicker {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.68rem !important;
+    padding: 0.22rem 0.75rem !important;
+    border-radius: 9999px !important;
+    background: rgba(124, 58, 237, 0.08) !important;
+    color: #7c3aed !important;
+    font-weight: 800 !important;
+  }
+  .bestsellers-main-title {
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+    color: #0f172a !important;
+    text-align: left !important;
+    margin: 0 0 0.35rem 0 !important;
+  }
+  .bestsellers-main-subtitle {
+    font-size: 0.78rem !important;
+    color: #64748b !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Filter Hub: Transparent outer wrapper on mobile so budget pills sit directly above card */
   .bestsellers-premium-hub {
-    padding: 1rem;
-    border-radius: 16px;
-    gap: 0.85rem;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin-bottom: 1.75rem !important;
+    gap: 0.75rem !important;
   }
+
+  /* Top Tier: Horizontally Scrollable Budget Pills */
   .bestsellers-hub-top-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.65rem;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    overflow-x: auto !important;
+    padding-bottom: 0.5rem !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
   }
+  .bestsellers-hub-top-row::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .bestsellers-filter-label-group {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 0.25rem 0 0 !important;
+    color: #7c3aed !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    flex-shrink: 0 !important;
+  }
+  .bestsellers-filter-label-icon {
+    color: #7c3aed !important;
+    font-weight: 800 !important;
+    margin-right: 2px !important;
+  }
+
   .bestsellers-price-filter-cluster {
-    width: 100%;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 0.35rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    flex: 1 !important;
   }
   .bestsellers-price-filter-cluster::-webkit-scrollbar {
-    display: none;
+    display: none !important;
   }
+
   .bestsellers-price-pill {
-    padding: 0.38rem 0.8rem;
-    font-size: 0.78rem;
-    flex-shrink: 0;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.36rem 0.95rem !important;
+    border-radius: 9999px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #334155 !important;
+    font-size: 0.76rem !important;
+    font-weight: 500 !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transform: none !important;
   }
+  .bestsellers-price-pill:hover {
+    background: #f8fafc !important;
+    transform: none !important;
+  }
+  .bestsellers-price-pill.active {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    border-color: #7c3aed !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.28) !important;
+    transform: none !important;
+  }
+  .bestsellers-price-pill .price-pill-dot {
+    display: none !important;
+  }
+
+  .bestsellers-hub-divider {
+    display: none !important;
+  }
+
+  /* The Search & Filter Card on mobile */
+  .bestsellers-hub-controls-row {
+    background: #ffffff !important;
+    border: 1.5px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 18px !important;
+    padding: 0.75rem !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Search Bar */
+  .bestsellers-search-premium {
+    flex: 0 0 42px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    background: rgba(248, 250, 252, 0.8) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 0 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+  .bestsellers-search-premium:focus-within {
+    background: #ffffff !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1) !important;
+  }
+  .bestsellers-search-icon-badge {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #94a3b8 !important;
+    width: auto !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+  .bestsellers-search-input {
+    font-size: 0.82rem !important;
+    color: #0f172a !important;
+    padding: 0 0.5rem !important;
+    height: 100% !important;
+    flex: 1 1 auto !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+  }
+  .bestsellers-search-input::placeholder {
+    color: #94a3b8 !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+  }
+  .bestsellers-search-clear-btn {
+    width: 22px !important;
+    height: 22px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Category & Sort Grid: 2 columns */
   .bestsellers-hub-right-controls {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+    margin-left: 0 !important;
   }
+
   .bestsellers-select-wrapper {
-    width: 100%;
-    justify-content: space-between;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 48px !important;
+    background: rgba(248, 250, 252, 0.75) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 0.4rem 1.6rem 0.4rem 0.65rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    position: relative !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+  }
+  .bestsellers-select-wrapper:focus-within {
+    background: #ffffff !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1) !important;
+  }
+  .bestsellers-select-icon {
+    display: none !important;
+  }
+  .bestsellers-select-content {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .bestsellers-select-label {
+    font-size: 0.6rem !important;
+    font-weight: 800 !important;
+    color: #94a3b8 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 2px !important;
+    display: block !important;
+  }
+  .bestsellers-custom-select {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    background: transparent !important;
+  }
+  .bestsellers-select-chevron {
+    position: absolute !important;
+    right: 0.65rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #94a3b8 !important;
+    pointer-events: none !important;
+  }
+
+  .bestsellers-reset-btn {
+    grid-column: span 2 !important;
+    height: 38px !important;
+    justify-content: center !important;
+    font-size: 0.78rem !important;
+    border-radius: 10px !important;
+    margin-top: 0.25rem !important;
   }
 }
+
 

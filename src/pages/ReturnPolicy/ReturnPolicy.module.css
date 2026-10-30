@@ -1,0 +1,910 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ReturnPolicy.module.css — Picky Legal & Return Policy Styles
+   Strictly follows PICKY Mobile Typography Scale & Spacing System.
+   Desktop view (> 768px) is 100% untouched.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Desktop view wrapper: visible only on desktop */
+.desktopWrapper,
+.desktopView {
+  display: block;
+}
+
+/* Mobile view wrapper: hidden on desktop, active on mobile */
+.mobileWrapper,
+.mobileView {
+  display: none;
+}
+
+/* ─── Mobile View (Strictly 320px - 768px) ─── */
+@media (max-width: 768px) {
+  .desktopWrapper,
+  .desktopView {
+    display: none !important;
+  }
+
+  .mobileWrapper,
+  .mobileView {
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: #FAF8FF;
+    color: #1A1A2E;
+    font-family: inherit;
+    padding-bottom: 2.5rem;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── 0. Mobile Hero Header ── */
+  .mobileHero {
+    position: relative;
+    padding: 1.5rem 1rem 1.35rem;
+    background: linear-gradient(145deg, #150B2E 0%, #24114d 60%, #3e167a 100%);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(135, 56, 245, 0.2);
+    overflow: hidden;
+  }
+
+  .mobileHero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .heroBadge,
+  .badgePill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(135, 56, 245, 0.25);
+    border: 1px solid rgba(135, 56, 245, 0.45);
+    color: #d8b4fe;
+    font-size: var(--m-font-badge, 10px);
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.55rem;
+  }
+
+  .heroTitle {
+    position: relative;
+    font-size: var(--m-font-h1, 22px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin: 0 0 0.45rem;
+  }
+
+  .heroTitleHighlight {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    color: #D8B4FE;
+    display: inline-block;
+  }
+
+  .heroSubtitle {
+    position: relative;
+    font-size: var(--m-font-body, 12px);
+    font-weight: 400;
+    line-height: 1.45;
+    color: #cbd5e1;
+    margin: 0 0 0.75rem;
+  }
+
+  .heroPillsRow,
+  .metaPillsRow {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .heroPill,
+  .metaPill {
+    font-size: var(--m-font-micro, 10.5px);
+    font-weight: 600;
+    color: #e9d5ff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.22rem 0.6rem;
+    border-radius: 9999px;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .heroPillActive {
+    background: #8738F5;
+    border-color: #a855f7;
+    color: #ffffff;
+  }
+
+  .heroPillGreen {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+  }
+
+  /* ── 1. 2x2 Interactive Trust Pillar Tiles ── */
+  .trustPillarsGrid,
+  .trustGrid {
+    position: relative;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+    padding: 0.85rem 1rem 0.45rem;
+  }
+
+  .pillarCard,
+  .trustCard {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: var(--m-pad-card, 0.85rem);
+    border: 1px solid #f3e8ff;
+    box-shadow: 0 1px 3px rgba(88, 28, 135, 0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .pillarCard:active,
+  .trustCard:active {
+    transform: scale(0.98);
+  }
+
+  .pillarIconWrap,
+  .trustIconWrap {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    min-height: 2rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .pillarIconPurple,
+  .iconPurple {
+    background: #f5f3ff;
+    color: #8738F5;
+    border: 1px solid #ede9fe;
+  }
+
+  .pillarIconAmber,
+  .iconAmber {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fef3c7;
+  }
+
+  .pillarIconEmerald,
+  .iconEmerald {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+  }
+
+  .pillarTitle,
+  .trustCardTitle {
+    font-size: var(--m-font-h3, 12px);
+    font-weight: 700;
+    line-height: 1.25;
+    color: #111827;
+    margin: 0 0 0.2rem;
+  }
+
+  .pillarDesc,
+  .trustCardDesc {
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  /* ── 2. Sticky Horizontal Quick Jump Rail ── */
+  .stickyRail,
+  .jumpNavRail {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(250, 248, 255, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid #ede9fe;
+    padding: 0.65rem 1rem;
+    margin-bottom: 0.75rem;
+    box-sizing: border-box;
+  }
+
+  .railInner,
+  .jumpNavScroll {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.15rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .railInner::-webkit-scrollbar,
+  .jumpNavScroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .jumpToLabel {
+    font-size: 10px;
+    font-weight: 800;
+    color: #8738F5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-right: 0.15rem;
+  }
+
+  .railPill,
+  .jumpNavBtn {
+    flex-shrink: 0;
+    padding: 0.35rem 0.8rem;
+    border-radius: 9999px;
+    font-size: var(--m-font-nav, 11.5px);
+    font-weight: 600;
+    line-height: 1.2;
+    background: #ffffff;
+    color: #374151;
+    border: 1px solid #ede9fe;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .railPill:hover,
+  .jumpNavBtn:hover {
+    border-color: #8738F5;
+  }
+
+  .railPillActive,
+  .jumpNavBtnActive {
+    background: #8738F5 !important;
+    color: #ffffff !important;
+    border-color: #8738F5 !important;
+    box-shadow: 0 3px 10px rgba(135, 56, 245, 0.3) !important;
+  }
+
+  /* ── 3. Main Clauses Container ── */
+  .mainClauses,
+  .clausesContainer {
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Clause Cards */
+  .clauseCard,
+  .clauseArticle {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: var(--m-pad-card, 1.25rem);
+    border: 1px solid #f3e8ff;
+    box-shadow: 0 2px 8px rgba(88, 28, 135, 0.04);
+    scroll-margin-top: 85px;
+    box-sizing: border-box;
+  }
+
+  .cardHeader,
+  .clauseHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .cardNumBadge,
+  .numBadge {
+    width: 2rem;
+    height: 1.75rem;
+    border-radius: 8px;
+    background: #f5f3ff;
+    color: #8738F5;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ede9fe;
+    flex-shrink: 0;
+  }
+
+  .cardNumBadgeAmber {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fde68a;
+  }
+
+  .cardTitle,
+  .clauseTitle {
+    font-size: var(--m-font-h2, 14.5px);
+    font-weight: 700;
+    line-height: 1.25;
+    color: #111827;
+    margin: 0;
+  }
+
+  .cardText,
+  .clauseText {
+    font-size: var(--m-font-body, 12.5px);
+    font-weight: 400;
+    line-height: 1.5;
+    color: #4b5563;
+    margin: 0 0 0.75rem;
+  }
+
+  .cardText:last-child {
+    margin-bottom: 0;
+  }
+
+  .clauseSubtext {
+    font-size: 11px;
+    color: #64748B;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  /* ── Clause 02 Checklist Box ── */
+  .checklistWrap,
+  .checklist {
+    background: rgba(245, 243, 255, 0.45);
+    padding: 0.85rem;
+    border-radius: 12px;
+    border: 1px solid #ede9fe;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .checklistItem,
+  .checkItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #374151;
+  }
+
+  .checkIcon {
+    color: #059669;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+
+  .checkIconWrap {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #F5EEFF;
+    color: #8738F5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Clause 03 Amber Warning Box ── */
+  .amberWarningBox,
+  .warningCallout {
+    background: rgba(254, 243, 199, 0.7);
+    border-radius: 12px;
+    padding: 0.85rem;
+    border: 1px solid rgba(253, 230, 138, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .amberItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #451a03;
+  }
+
+  .amberDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #d97706;
+    flex-shrink: 0;
+    margin-top: 0.45rem;
+  }
+
+  .warningHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 0.45rem;
+  }
+
+  .warningList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 10.5px;
+    color: #78350F;
+    line-height: 1.4;
+  }
+
+  /* ── Clause 04 & 05 Steps List ── */
+  .stepsList,
+  .numberedSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .stepRow {
+    padding: 0.75rem 0.85rem;
+    background: rgba(245, 243, 255, 0.5);
+    border-radius: 12px;
+    border: 1px solid #ede9fe;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .stepBadge,
+  .stepCircle {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: #8738F5;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+
+  .stepContent {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #4b5563;
+  }
+
+  .stepContentTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.15rem;
+  }
+
+  .stepCardsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+  }
+
+  .stepCard {
+    background: rgba(245, 238, 255, 0.45);
+    border: 1px solid #EDE8F8;
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .stepCardBadge {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #8738F5;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .stepCardTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #19152B;
+    margin-bottom: 0.15rem;
+  }
+
+  .stepCardDesc {
+    font-size: 10.5px;
+    color: #64748B;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .linkAccent {
+    color: #8738F5;
+    font-weight: 700;
+    text-decoration: underline;
+  }
+
+  /* ── Clause 06 Refund Modes ── */
+  .refundModesList,
+  .paymentPillsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .refundModeCard,
+  .paymentPillCard {
+    padding: 0.75rem 0.85rem;
+    background: rgba(245, 243, 255, 0.5);
+    border-radius: 12px;
+    border: 1px solid #ede9fe;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .refundModeCardEmerald {
+    background: rgba(236, 253, 245, 0.6);
+    border-color: rgba(167, 243, 208, 0.8);
+  }
+
+  .refundModeTitle,
+  .paymentTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  .refundModeSub,
+  .paymentSub {
+    font-size: 10px;
+    color: #6b7280;
+    margin: 0.15rem 0 0;
+  }
+
+  .refundTimePill,
+  .timelinePill {
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .refundTimePillEmerald,
+  .timePillGreen,
+  .pillGreen {
+    background: #d1fae5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+  }
+
+  .refundTimePillPurple,
+  .timePillPurple,
+  .pillPurple {
+    background: #ede9fe;
+    color: #8738F5;
+    border: 1px solid #ddd6fe;
+  }
+
+  .timePillAmber {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+
+  .timePillGray {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* ── Clause 07 Order Cancellation ── */
+  .cancellationBoxPurple,
+  .cancelBefore {
+    padding: 0.75rem 0.85rem;
+    background: rgba(245, 243, 255, 0.6);
+    border-radius: 12px;
+    border: 1px solid #ede9fe;
+    margin-bottom: 0.65rem;
+  }
+
+  .cancellationBoxGray,
+  .cancelAfter {
+    padding: 0.75rem 0.85rem;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+  }
+
+  .cancelCardsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .cancelCard {
+    border-radius: 12px;
+    padding: 0.75rem;
+  }
+
+  .cancelCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .dotIndicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .dotPurple {
+    background: #8738F5;
+  }
+
+  .dotGray {
+    background: #94A3B8;
+  }
+
+  .cancellationTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.15rem;
+  }
+
+  .cancellationText {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #4b5563;
+    margin: 0;
+  }
+
+  /* ── Clause 08 Helpdesk & Contacts ── */
+  .helpdeskContacts,
+  .helpdeskCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+  }
+
+  .contactRow,
+  .helpdeskRow {
+    padding: 0.75rem 0.85rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .contactRowGreen {
+    background: rgba(236, 253, 245, 0.7);
+    border: 1px solid #a7f3d0;
+  }
+
+  .contactRowGreen:hover {
+    border-color: #6ee7b7;
+  }
+
+  .contactRowPurple {
+    background: rgba(245, 243, 255, 0.6);
+    border: 1px solid #ede9fe;
+  }
+
+  .contactRowGray {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+  }
+
+  .contactIconBox {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .contactIconBoxGreen {
+    background: #25D366;
+    color: #ffffff;
+  }
+
+  .contactIconBoxPurple {
+    background: #8738F5;
+    color: #ffffff;
+  }
+
+  .contactIconBoxGray {
+    background: #e5e7eb;
+    color: #4b5563;
+  }
+
+  .contactLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.1rem;
+  }
+
+  .contactVal {
+    font-size: 12px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .contactValGreen,
+  .helpdeskLinkGreen {
+    color: #047857;
+    font-weight: 700;
+  }
+
+  .contactValDark {
+    color: #111827;
+  }
+
+  .contactValMedium {
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .helpdeskLinkPurple {
+    color: #8738F5;
+    font-weight: 700;
+  }
+
+  /* ── Instant Help & Approval Banners ── */
+  .instantHelpBanner,
+  .instantApprovalBanner {
+    background: #150B2E;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(21, 11, 46, 0.15);
+  }
+
+  .instantHelpTitle,
+  .bannerTitle {
+    font-size: var(--m-font-h3, 12.5px);
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.15rem;
+  }
+
+  .instantHelpSub,
+  .bannerDesc {
+    font-size: 10px;
+    color: #cbd5e1;
+    margin: 0;
+  }
+
+  .instantHelpBtn,
+  .bannerWaBtn {
+    padding: 0.5rem 0.85rem;
+    min-height: var(--m-btn-min-height, 40px);
+    background: #25D366;
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: var(--m-font-btn, 12px);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    text-decoration: none;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(37, 211, 102, 0.25);
+    transition: transform 0.15s ease, filter 0.15s ease;
+    box-sizing: border-box;
+  }
+
+  .instantHelpBtn:active,
+  .bannerWaBtn:active {
+    transform: scale(0.96);
+  }
+}
+
+/* ── 320px Specific Optimizations (Small Mobile) ── */
+@media (max-width: 349px) {
+  .heroTitle {
+    font-size: var(--m-font-h1, 22px);
+  }
+
+  .heroSubtitle {
+    font-size: var(--m-font-body, 12px);
+  }
+
+  .pillarTitle,
+  .trustCardTitle {
+    font-size: var(--m-font-h3, 11.5px);
+  }
+
+  .pillarDesc,
+  .trustCardDesc {
+    font-size: 9.5px;
+  }
+
+  .railPill,
+  .jumpNavBtn {
+    font-size: 10px;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .cardTitle,
+  .clauseTitle {
+    font-size: 13.5px;
+  }
+
+  .cardText,
+  .clauseText {
+    font-size: 12px;
+  }
+
+  .clauseSubtext,
+  .stepCardDesc,
+  .warningList {
+    font-size: 10px;
+  }
+
+  .instantHelpBtn,
+  .bannerWaBtn {
+    min-height: 38px;
+    font-size: 11.5px;
+    padding: 0.45rem 0.75rem;
+  }
+}
