@@ -53,6 +53,7 @@ import {
   SlidersHorizontal,
   Check,
   Sparkles,
+  Newspaper,
   TrendingUp,
   Sun,
   Moon,
@@ -234,8 +235,8 @@ const SIDEBAR_CONFIG_GROUPS = [
     ],
   },
   {
-    title: 'Storefront & System',
-    description: 'CMS customization, alerts feed and core configuration',
+    title: 'Site Pages',
+    description: 'CMS customization, storefront layout, and blog page manager',
     items: [
       {
         key: 'customization',
@@ -244,6 +245,19 @@ const SIDEBAR_CONFIG_GROUPS = [
         path: '/softpicky-sn2026/customization',
         icon: Palette,
       },
+      {
+        key: 'blog',
+        name: 'Blog Page',
+        desc: 'Customize blog hero, video reels, interactive hotspots guides, reviews & banner',
+        path: '/softpicky-sn2026/blog',
+        icon: Newspaper,
+      },
+    ],
+  },
+  {
+    title: 'System & Settings',
+    description: 'System alerts, activity feed, and core store preferences',
+    items: [
       {
         key: 'notifications',
         name: 'Notifications',

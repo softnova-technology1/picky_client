@@ -57,6 +57,7 @@ import AdminBroadcast from './pages/admin/AdminBroadcast';
 import AdminFlashSales from './pages/admin/AdminFlashSales';
 import AdminNotifications from './pages/admin/AdminNotifications';
 import AdminInquiries from './pages/admin/AdminInquiries';
+import AdminBlog from './pages/admin/AdminBlog';
 
 const ADMIN = '/softpicky-sn2026';
 const ADMIN_ALT = '/softpicky_sn2026';
@@ -67,12 +68,14 @@ import { useCustomizationStore } from './store/customizationStore';
 import { adminService } from './services/admin.service';
 import { settingsService } from './services/settings.service';
 import { useCategoryStore } from './store/categoryStore';
+import { getSocket } from './services/socket';
 
 export default function App() {
   useButtonHoverFX();
   const { setSections, setPageSections } = useCustomizationStore();
 
   useEffect(() => {
+    try { getSocket(); } catch (_) {}
     const fetchLatestCustomizations = () => {
       adminService
         .getCustomizations()
@@ -101,18 +104,25 @@ export default function App() {
     const handleRevalidate = () => {
       if (document.visibilityState === 'visible') {
         fetchLatestCustomizations();
+        settingsService.getSettings().catch(() => {});
+        useCategoryStore.getState().fetchCategories(true);
+        window.dispatchEvent(new CustomEvent('picky_catalog_updated'));
       }
     };
 
     window.addEventListener('visibilitychange', handleRevalidate);
     window.addEventListener('focus', handleRevalidate);
 
-    // 4. Lightweight background sync poll (every 4 seconds when tab is active)
+    // 4. Lightweight background sync & DB auto-reconnect poll (every 3.5s when tab is active)
     const pollInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         fetchLatestCustomizations();
+        // If DB was offline on initial load and categories are still empty, keep auto-retrying!
+        if (useCategoryStore.getState().categories.length === 0) {
+          useCategoryStore.getState().fetchCategories(true);
+        }
       }
-    }, 4000);
+    }, 3500);
 
     return () => {
       window.removeEventListener('visibilitychange', handleRevalidate);
@@ -223,6 +233,8 @@ export default function App() {
           <Route path={`${ADMIN_ALT}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
           <Route path={`${ADMIN_ALT}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/blog`} element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/blog`} element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
 
 
           {/* ── Catch-all 404 Page ───────────────────── */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -37,6 +37,7 @@ import {
   MessageSquareText,
   Sun,
   Moon,
+  Newspaper,
 } from 'lucide-react';
 import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -85,6 +86,39 @@ export default function AdminLayout({ children, title }) {
   const [searchLoading, setSearchLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const sidebarNavRef = useRef(null);
+
+  // Preserve and restore sidebar scroll position across navigation, preventing scroll jumps to the top
+  useLayoutEffect(() => {
+    const navEl = sidebarNavRef.current;
+    if (!navEl) return;
+
+    // Restore saved scroll position
+    const savedScroll = sessionStorage.getItem('picky_admin_sidebar_scroll');
+    if (savedScroll !== null) {
+      navEl.scrollTop = parseInt(savedScroll, 10);
+    }
+
+    // Ensure active nav item is visible within the sidebar viewport without snapping
+    const activeItem = navEl.querySelector('.admin-nav-item.active');
+    if (activeItem) {
+      const navRect = navEl.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+      if (itemRect.top < navRect.top || itemRect.bottom > navRect.bottom) {
+        activeItem.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      }
+    }
+  }, [location.pathname]);
+
+  const handleSidebarNavScroll = (e) => {
+    sessionStorage.setItem('picky_admin_sidebar_scroll', e.currentTarget.scrollTop);
+  };
+
+  const handleSidebarNavClick = () => {
+    if (sidebarNavRef.current) {
+      sessionStorage.setItem('picky_admin_sidebar_scroll', sidebarNavRef.current.scrollTop);
+    }
+  };
 
   // Admin Theme Mode (Light / Dark) State
   const [themeMode, setThemeMode] = useState(() => {
@@ -417,7 +451,12 @@ export default function AdminLayout({ children, title }) {
         </div>
 
         {/* Navigation List - Structured SaaS Luxury Sidebar */}
-        <nav className="admin-sidebar-nav">
+        <nav
+          ref={sidebarNavRef}
+          onScroll={handleSidebarNavScroll}
+          onClick={handleSidebarNavClick}
+          className="admin-sidebar-nav"
+        >
           {/* ── OVERVIEW ── */}
           {isPageVisible('dashboard') && (
             <>
@@ -720,15 +759,15 @@ export default function AdminLayout({ children, title }) {
             </>
           )}
 
-          {/* ── STOREFRONT & SYSTEM ── */}
-          {(isPageVisible('customization') || isPageVisible('notifications') || isPageVisible('settings')) && (
+          {/* ── SITE PAGES ── */}
+          {(isPageVisible('customization') || isPageVisible('blog')) && (
             <>
-              {!collapsed && <div className="admin-nav-section-title">Storefront & System</div>}
+              {!collapsed && <div className="admin-nav-section-title">Site Pages</div>}
               {isPageVisible('customization') && (
                 <NavLink
                   to={`${ADMIN}/customization`}
                   className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-                  title="Store Customization"
+                  title="Store Customization (CMS)"
                 >
                   <div className="admin-nav-icon-wrap">
                     <Palette size={19} />
@@ -737,6 +776,25 @@ export default function AdminLayout({ children, title }) {
                 </NavLink>
               )}
 
+              {isPageVisible('blog') && (
+                <NavLink
+                  to={`${ADMIN}/blog`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Blog Page"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Newspaper size={19} />
+                  </div>
+                  {!collapsed && <span className="admin-nav-label">Blog Page</span>}
+                </NavLink>
+              )}
+            </>
+          )}
+
+          {/* ── SYSTEM & SETTINGS ── */}
+          {(isPageVisible('notifications') || isPageVisible('settings')) && (
+            <>
+              {!collapsed && <div className="admin-nav-section-title">System & Settings</div>}
               {isPageVisible('notifications') && (
                 <NavLink
                   to={`${ADMIN}/notifications`}
