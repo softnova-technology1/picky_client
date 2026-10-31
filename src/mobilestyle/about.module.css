@@ -1,0 +1,63 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY MOBILE ABOUT PAGE
+   Module: about.module.css
+   Covers: Community CTA Mobile App Action Sheet
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* ── About Page Community CTA Mobile App Action Sheet ── */
+  .hp-final-cta-section {
+    padding: 2.25rem 1rem !important;
+  }
+
+  .hp-final-cta-container {
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .hp-final-cta-box {
+    padding: 2rem 1.25rem !important;
+    border-radius: 24px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .hp-final-cta-badge {
+    font-size: 0.72rem !important;
+    padding: 0.35rem 0.95rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .hp-final-title {
+    font-size: 1.55rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .hp-final-subtitle {
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .hp-final-cta-btn-group {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.75rem !important;
+  }
+
+  .hp-final-cta-btn,
+  .hp-final-cta-outline-btn {
+    width: 100% !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    font-size: 0.88rem !important;
+    font-weight: 750 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+}

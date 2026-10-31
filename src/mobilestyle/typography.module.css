@@ -1,0 +1,1254 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY MOBILE TYPOGRAPHY & GLOBAL SCREEN BOUNDARY SYSTEM
+   Module: typography.module.css
+   Covers: 320px, 375px, 425px scales & overflow-x prevention
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ==========================================================================
+   PICKY E-COMMERCE — MOBILE RESPONSIVE UI STYLESHEET
+   Active strictly from 320px to 768px ONLY.
+   Above 768px (Desktop): 100% unaffected. ZERO changes to desktop.
+   ========================================================================== */
+
+/* ─── Desktop Isolation Defaults (> 768px) ──────────────────────────────── */
+.mobile-nav-only,
+.shop-mobile-center-header {
+  display: none !important;
+}
+
+.hp-eyebrow-mobile,
+.hp-title-mobile,
+.hp-view-all-mobile,
+.spotlight-btn-mobile {
+  display: none !important;
+}
+
+/* ─── 320px - 768px Mobile Responsive Boundary ─────────────────────────── */
+
+@media (max-width: 768px) {
+  /* 1. Global Screen Boundary — Zero Horizontal Overflow */
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: clip !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box !important;
+  }
+
+  /* Responsive Containers */
+  .container,
+  .hp-category-container,
+  .hp-horizontal-inner,
+  .hp-flash-deals-container,
+  .hp-new-arrivals-container,
+  .hp-bestsellers-inner,
+  .hp-trust-container,
+  .hp-reviews-container,
+  .hp-final-cta-container,
+  .footer-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: auto !important;
+    padding-inline: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Universal text wrapping to prevent any overflow */
+  .ref-product-title,
+  .spotlight-title,
+  .spotlight-desc,
+  .hp-trust-title,
+  .hp-trust-desc,
+  .hp-review-text,
+  .hp-section-title,
+  .hp-cat-title {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    min-width: 0 !important;
+  }
+
+  /* Universal flex/grid child min-width reset */
+  .hp-horizontal-card,
+  .hp-flash-minimal-card,
+  .hp-trust-item,
+  .ref-product-card,
+  .hp-new-arrivals-grid > div,
+  .product-grid-5 > div {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Text Toggles */
+  .desktop-nav-only,
+  .hp-eyebrow-desktop,
+  .hp-title-desktop,
+  .hp-view-all-desktop,
+  .spotlight-btn-desktop {
+    display: none !important;
+  }
+
+  .mobile-nav-only {
+    display: block !important;
+  }
+
+  .hp-eyebrow-mobile,
+  .hp-title-mobile,
+  .hp-view-all-mobile,
+  .spotlight-btn-mobile {
+    display: inline-flex !important;
+  }
+
+}
+
+/* ==========================================================================
+   PICKY OFFICIAL MOBILE TYPOGRAPHY & SPACING SCALE SYSTEM
+   Strictly scoped: 320px, 375px (Primary), 425px
+   Desktop view (> 768px) is 100% UNTOUCHED
+   ========================================================================== */
+
+/* ──────────────────────────────────────────────────────────────────────────
+   1. 425px MOBILE SCALE (414px to 768px Mobile Screen Width)
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) and (min-width: 414px) {
+  :root {
+    --m-font-h1: 26px;
+    --m-font-h2: 22px;
+    --m-font-h3: 15px;
+    --m-font-price: 18px;
+    --m-font-mrp: 12px;
+    --m-font-body: 14px;
+    --m-font-btn: 14px;
+    --m-font-badge: 11px;
+    --m-font-micro: 11px;
+    --m-font-nav: 13px;
+    --m-font-input: 15px;
+    --m-font-helper: 12px;
+
+    --p-font-h1: 26px;
+    --p-font-h2: 22px;
+    --p-font-h3: 15px;
+    --p-font-price: 18px;
+    --p-font-mrp: 12px;
+    --p-font-body: 14px;
+    --p-font-btn: 14px;
+    --p-font-badge: 11px;
+    --p-font-micro: 11px;
+    --p-font-nav: 13px;
+    --p-font-input: 15px;
+    --p-font-helper: 12px;
+
+    --m-pad-page: 18px;
+    --m-pad-card: 16px;
+    --m-gap-section: 28px;
+    --m-btn-min-height: 44px;
+  }
+
+  /* Spacing & Page Container */
+  .container,
+  .section,
+  .page-container,
+  .hp-category-container,
+  .hp-horizontal-inner,
+  .hp-flash-deals-container,
+  .hp-new-arrivals-container,
+  .hp-bestsellers-inner,
+  .hp-trust-container,
+  .hp-reviews-container,
+  .hp-final-cta-container,
+  .footer-container,
+  [class*="pageContainer"],
+  [class*="mainContent"] {
+    padding-inline: 18px !important;
+  }
+
+  .hp-flash-deals-section,
+  .hp-new-arrivals-section,
+  .hp-bestsellers-section,
+  .hp-trust-section,
+  .hp-reviews-section {
+    margin-bottom: 28px !important;
+  }
+
+  /* H1 — Main page heading: 26px | 700-800 | 1.2 */
+  h1,
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title,
+  .mobile-page-title,
+  .legal-hero-title,
+  .product-detail-title,
+  .checkout-page-title,
+  .cart-page-title,
+  [class*="mainTitle"],
+  [class*="pageTitle"],
+  [class*="productDetailTitle"],
+  [class*="checkoutTitle"],
+  [class*="cartTitle"],
+  [class*="heroTitle"],
+  [class*="HeroTitle"] {
+    font-size: 26px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* H2 — Section heading: 22px | 650-700 | 1.3 */
+  h2,
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  .legal-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"],
+  [class*="headingText"],
+  [class*="heroTitle"],
+  [class*="blockHeading"],
+  [class*="drawerTitle"],
+  [class*="sheetTitle"],
+  [class*="cardTitle"] {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  /* H3 — Card / item title: 15px | 600-700 | 1.3 */
+  h3,
+  h4,
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  .mobile-pdp-product-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="productTitle"],
+  [class*="productName"],
+  [class*="userNameHeading"],
+  [class*="orderNumber"],
+  [class*="recipientName"],
+  [class*="cardTitle"],
+  [class*="itemTitle"],
+  [class*="addCardTitle"],
+  [class*="trustHeading"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"],
+  [class*="kycTitle"],
+  [class*="pillarTitle"] {
+    font-size: 15px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Main price / Total Paid: 18px | 700-800 | 1.2 (Purple & Bold) */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  .budget-card-price,
+  .budget-price,
+  .mobile-pdp-main-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"],
+  [class*="budgetPrice"],
+  [class*="mainPrice"],
+  [class*="productPrice"],
+  [class*="totalPaid"],
+  [class*="totalAmount"],
+  [class*="orderTotal"],
+  [class*="paidAmount"],
+  [class*="cartTotal"],
+  [class*="checkoutTotal"],
+  [class*="priceText"],
+  [class*="itemPrice"] {
+    font-size: 18px !important;
+    font-weight: 750 !important;
+    color: #7c3aed !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Date / Time: 12px | 400-500 | 1.3 */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  .mobile-pdp-strike-price,
+  .order-date-text,
+  [class*="origPrice"],
+  [class*="originalPrice"],
+  [class*="strikePrice"],
+  [class*="strikethroughPrice"],
+  [class*="mrpPrice"],
+  [class*="orderDate"],
+  [class*="orderTime"],
+  [class*="placedDate"],
+  [class*="subDate"],
+  [class*="timestamp"],
+  [class*="publishDate"] {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Body description / Notes: 14px | 400-500 | 1.5 */
+  p,
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline,
+  .hero-mobile-eyebrow,
+  .hp-trust-desc,
+  .mobile-pdp-short-desc,
+  .legal-paragraph,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"],
+  [class*="heroSubtitle"],
+  [class*="sectionDescription"],
+  [class*="subHeadingText"],
+  [class*="bannerMetaText"],
+  [class*="addressRow"],
+  [class*="productDescription"],
+  [class*="bodyDesc"],
+  [class*="trustDesc"],
+  [class*="addCardSubtitle"],
+  [class*="cardText"],
+  [class*="bodyText"] {
+    font-size: 14px !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Button text / CTA: 14px | 600-700 | 1.2 (Min-height: 44px) */
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn,
+  .ref-add-cart-btn,
+  .ref-add-cart-btn span,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  .spotlight-cta-btn span,
+  [class*="ctaBtn"],
+  [class*="primaryBtn"],
+  [class*="signOutBtn"],
+  [class*="editBtn"],
+  [class*="actionBtn"],
+  [class*="orderTrackBtn"],
+  [class*="setPrimaryBtn"],
+  [class*="submitBtn"],
+  [class*="btnPrimary"],
+  [class*="applyFiltersBtn"],
+  [class*="pillBtn"],
+  .mobile-pdp-dock-btn-bag,
+  .mobile-pdp-dock-btn-buy,
+  .mobile-checkout-dock-btn,
+  .budget-cta {
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    min-height: 44px;
+  }
+
+  /* Badges / Status pills: 11px | 600-700 | 1.2 (No text clipping) */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  .mobile-pdp-discount-badge,
+  .mobile-pdp-rating-badge,
+  [class*="pillBadgeTag"],
+  [class*="badgeText"],
+  [class*="discountBadge"],
+  [class*="userIdBadge"],
+  [class*="orderBadge"],
+  [class*="statusBadge"],
+  [class*="primaryPill"],
+  [class*="verifiedBadge"],
+  [class*="statusPill"],
+  [class*="tagPill"] {
+    font-size: 11px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Micro labels / Form labels: 11px | 500-600 | 1.2 */
+  label,
+  .field-label,
+  .input-label,
+  [class*="fieldLabel"],
+  [class*="formLabel"],
+  [class*="microLabel"],
+  [class*="statusLabel"],
+  [class*="pincodeStamp"],
+  [class*="filterGroupLabel"],
+  [class*="toggleLabelDesc"],
+  [class*="metaLabel"],
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  .mobile-form-label,
+  [class*="categoryCount"],
+  [class*="productCount"],
+  [class*="statsCount"] {
+    font-size: 11px !important;
+    font-weight: 550 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Navigation labels: 13px | 500-600 | 1.2 */
+  [class*="accountTabBtn"],
+  [class*="mobileNavLabel"],
+  [class*="tabButtonActive"],
+  [class*="tabButtonInactive"],
+  [class*="filterChipActive"],
+  [class*="filterChipInactive"],
+  [class*="filterPillActive"],
+  [class*="filterPillInactive"],
+  .mobile-bottom-nav a span,
+  .mobile-nav-label,
+  .railPill,
+  [class*="railPill"],
+  [class*="navLabel"] {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Input text: 15px | 400-500 */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea,
+  .mobile-search-input,
+  [class*="inputField"],
+  [class*="formInput"],
+  [class*="fieldValue"],
+  [class*="fieldValueEmail"],
+  [class*="fieldValuePhone"] {
+    font-size: 15px !important;
+    font-weight: 450 !important;
+  }
+
+  /* Helper / Secondary text: 12px | 400-500 | 1.4 */
+  [class*="helperText"],
+  [class*="secondaryText"],
+  [class*="fieldHint"],
+  [class*="verifiedSubtitle"],
+  [class*="phoneChip"],
+  [class*="metaSub"],
+  [class*="budgetCardSubtitle"],
+  .announcement-marquee-bar,
+  .announcement-ticker-text,
+  .mobile-pdp-rating-meta,
+  .mobile-pdp-tax-note {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links: 12px | Micro labels: 10-11px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+  }
+
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   2. 375px MOBILE SCALE (350px to 413px Mobile) — PRIMARY DESIGN WIDTH
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 413px) and (min-width: 350px) {
+  :root {
+    --m-font-h1: 24px;
+    --m-font-h2: 20px;
+    --m-font-h3: 14px;
+    --m-font-price: 17px;
+    --m-font-mrp: 11px;
+    --m-font-body: 13px;
+    --m-font-btn: 13px;
+    --m-font-badge: 10px;
+    --m-font-micro: 10px;
+    --m-font-nav: 12px;
+    --m-font-input: 14px;
+    --m-font-helper: 12px;
+
+    --p-font-h1: 24px;
+    --p-font-h2: 20px;
+    --p-font-h3: 14px;
+    --p-font-price: 17px;
+    --p-font-mrp: 11px;
+    --p-font-body: 13px;
+    --p-font-btn: 13px;
+    --p-font-badge: 10px;
+    --p-font-micro: 10px;
+    --p-font-nav: 12px;
+    --p-font-input: 14px;
+    --p-font-helper: 12px;
+
+    --m-pad-page: 16px;
+    --m-pad-card: 14px;
+    --m-gap-section: 24px;
+    --m-btn-min-height: 42px;
+  }
+
+  /* Spacing & Page Container */
+  .container,
+  .section,
+  .page-container,
+  .hp-category-container,
+  .hp-horizontal-inner,
+  .hp-flash-deals-container,
+  .hp-new-arrivals-container,
+  .hp-bestsellers-inner,
+  .hp-trust-container,
+  .hp-reviews-container,
+  .hp-final-cta-container,
+  .footer-container,
+  [class*="pageContainer"],
+  [class*="mainContent"] {
+    padding-inline: 16px !important;
+  }
+
+  .hp-flash-deals-section,
+  .hp-new-arrivals-section,
+  .hp-bestsellers-section,
+  .hp-trust-section,
+  .hp-reviews-section {
+    margin-bottom: 24px !important;
+  }
+
+  /* H1 — Main page heading: 24px | 700-800 | 1.2 */
+  h1,
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title,
+  .mobile-page-title,
+  .legal-hero-title,
+  .product-detail-title,
+  .checkout-page-title,
+  .cart-page-title,
+  [class*="mainTitle"],
+  [class*="pageTitle"],
+  [class*="productDetailTitle"],
+  [class*="checkoutTitle"],
+  [class*="cartTitle"],
+  [class*="heroTitle"],
+  [class*="HeroTitle"] {
+    font-size: 24px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* H2 — Section heading: 20px | 650-700 | 1.3 */
+  h2,
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  .legal-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"],
+  [class*="headingText"],
+  [class*="heroTitle"],
+  [class*="blockHeading"],
+  [class*="drawerTitle"],
+  [class*="sheetTitle"],
+  [class*="cardTitle"] {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  /* H3 — Card / item title: 14px | 600-700 | 1.3 */
+  h3,
+  h4,
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  .mobile-pdp-product-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="productTitle"],
+  [class*="productName"],
+  [class*="userNameHeading"],
+  [class*="orderNumber"],
+  [class*="recipientName"],
+  [class*="cardTitle"],
+  [class*="itemTitle"],
+  [class*="addCardTitle"],
+  [class*="trustHeading"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"],
+  [class*="kycTitle"],
+  [class*="pillarTitle"] {
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Main price / Total Paid: 17px | 700-800 | 1.2 (Purple & Bold) */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  .budget-card-price,
+  .budget-price,
+  .mobile-pdp-main-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"],
+  [class*="budgetPrice"],
+  [class*="mainPrice"],
+  [class*="productPrice"],
+  [class*="totalPaid"],
+  [class*="totalAmount"],
+  [class*="orderTotal"],
+  [class*="paidAmount"],
+  [class*="cartTotal"],
+  [class*="checkoutTotal"],
+  [class*="priceText"],
+  [class*="itemPrice"] {
+    font-size: 17px !important;
+    font-weight: 750 !important;
+    color: #7c3aed !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Date / Time: 11px | 400-500 | 1.3 */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  .mobile-pdp-strike-price,
+  .order-date-text,
+  [class*="origPrice"],
+  [class*="originalPrice"],
+  [class*="strikePrice"],
+  [class*="strikethroughPrice"],
+  [class*="mrpPrice"],
+  [class*="orderDate"],
+  [class*="orderTime"],
+  [class*="placedDate"],
+  [class*="subDate"],
+  [class*="timestamp"],
+  [class*="publishDate"] {
+    font-size: 11px !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Body description / Notes: 13px | 400-500 | 1.5 */
+  p,
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline,
+  .hero-mobile-eyebrow,
+  .hp-trust-desc,
+  .mobile-pdp-short-desc,
+  .legal-paragraph,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"],
+  [class*="heroSubtitle"],
+  [class*="sectionDescription"],
+  [class*="subHeadingText"],
+  [class*="bannerMetaText"],
+  [class*="addressRow"],
+  [class*="productDescription"],
+  [class*="bodyDesc"],
+  [class*="trustDesc"],
+  [class*="addCardSubtitle"],
+  [class*="cardText"],
+  [class*="bodyText"] {
+    font-size: 13px !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Button text / CTA: 13px | 600-700 | 1.2 (Min-height: 42px) */
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn,
+  .ref-add-cart-btn,
+  .ref-add-cart-btn span,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  .spotlight-cta-btn span,
+  [class*="ctaBtn"],
+  [class*="primaryBtn"],
+  [class*="signOutBtn"],
+  [class*="editBtn"],
+  [class*="actionBtn"],
+  [class*="orderTrackBtn"],
+  [class*="setPrimaryBtn"],
+  [class*="submitBtn"],
+  [class*="btnPrimary"],
+  [class*="applyFiltersBtn"],
+  [class*="pillBtn"],
+  .mobile-pdp-dock-btn-bag,
+  .mobile-pdp-dock-btn-buy,
+  .mobile-checkout-dock-btn,
+  .budget-cta {
+    font-size: 13px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    min-height: 42px;
+  }
+
+  /* Badges / Status pills: 10px | 600-700 | 1.2 (No text clipping) */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  .mobile-pdp-discount-badge,
+  .mobile-pdp-rating-badge,
+  [class*="pillBadgeTag"],
+  [class*="badgeText"],
+  [class*="discountBadge"],
+  [class*="userIdBadge"],
+  [class*="orderBadge"],
+  [class*="statusBadge"],
+  [class*="primaryPill"],
+  [class*="verifiedBadge"],
+  [class*="statusPill"],
+  [class*="tagPill"] {
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Micro labels / Form labels: 10px | 500-600 | 1.2 */
+  label,
+  .field-label,
+  .input-label,
+  [class*="fieldLabel"],
+  [class*="formLabel"],
+  [class*="microLabel"],
+  [class*="statusLabel"],
+  [class*="pincodeStamp"],
+  [class*="filterGroupLabel"],
+  [class*="toggleLabelDesc"],
+  [class*="metaLabel"],
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  .mobile-form-label,
+  [class*="categoryCount"],
+  [class*="productCount"],
+  [class*="statsCount"] {
+    font-size: 10px !important;
+    font-weight: 550 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Navigation labels: 12px | 500-600 | 1.2 */
+  [class*="accountTabBtn"],
+  [class*="mobileNavLabel"],
+  [class*="tabButtonActive"],
+  [class*="tabButtonInactive"],
+  [class*="filterChipActive"],
+  [class*="filterChipInactive"],
+  [class*="filterPillActive"],
+  [class*="filterPillInactive"],
+  .mobile-bottom-nav a span,
+  .mobile-nav-label,
+  .railPill,
+  [class*="railPill"],
+  [class*="navLabel"] {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Input text: 14px | 400-500 */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea,
+  .mobile-search-input,
+  [class*="inputField"],
+  [class*="formInput"],
+  [class*="fieldValue"],
+  [class*="fieldValueEmail"],
+  [class*="fieldValuePhone"] {
+    font-size: 14px !important;
+    font-weight: 450 !important;
+  }
+
+  /* Helper / Secondary text: 12px | 400-500 | 1.4 */
+  [class*="helperText"],
+  [class*="secondaryText"],
+  [class*="fieldHint"],
+  [class*="verifiedSubtitle"],
+  [class*="phoneChip"],
+  [class*="metaSub"],
+  [class*="budgetCardSubtitle"],
+  .announcement-marquee-bar,
+  .announcement-ticker-text,
+  .mobile-pdp-rating-meta,
+  .mobile-pdp-tax-note {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links: 12px | Micro labels: 10px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   3. 320px NARROW MOBILE SCALE (<= 349px Mobile Width)
+   Rule: Never drop important text below 10px; adjust wrapping & padding
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 349px) {
+  :root {
+    --m-font-h1: 22px;
+    --m-font-h2: 18px;
+    --m-font-h3: 13px;
+    --m-font-price: 16px;
+    --m-font-mrp: 11px;
+    --m-font-body: 12px;
+    --m-font-btn: 12px;
+    --m-font-badge: 10px;
+    --m-font-micro: 10px;
+    --m-font-nav: 11px;
+    --m-font-input: 13px;
+    --m-font-helper: 11px;
+
+    --p-font-h1: 22px;
+    --p-font-h2: 18px;
+    --p-font-h3: 13px;
+    --p-font-price: 16px;
+    --p-font-mrp: 11px;
+    --p-font-body: 12px;
+    --p-font-btn: 12px;
+    --p-font-badge: 10px;
+    --p-font-micro: 10px;
+    --p-font-nav: 11px;
+    --p-font-input: 13px;
+    --p-font-helper: 11px;
+
+    --m-pad-page: 12px;
+    --m-pad-card: 12px;
+    --m-gap-section: 18px;
+    --m-btn-min-height: 40px;
+  }
+
+  /* Spacing & Page Container */
+  .container,
+  .section,
+  .page-container,
+  .hp-category-container,
+  .hp-horizontal-inner,
+  .hp-flash-deals-container,
+  .hp-new-arrivals-container,
+  .hp-bestsellers-inner,
+  .hp-trust-container,
+  .hp-reviews-container,
+  .hp-final-cta-container,
+  .footer-container,
+  [class*="pageContainer"],
+  [class*="mainContent"] {
+    padding-inline: 12px !important;
+  }
+
+  .hp-flash-deals-section,
+  .hp-new-arrivals-section,
+  .hp-bestsellers-section,
+  .hp-trust-section,
+  .hp-reviews-section {
+    margin-bottom: 18px !important;
+  }
+
+  /* H1 — Main page heading: 22px | 700-800 | 1.2 */
+  h1,
+  .hero-mobile-title,
+  .hero-mobile-title *,
+  .hero-headline,
+  .hero-title,
+  .mobile-page-title,
+  .legal-hero-title,
+  .product-detail-title,
+  .checkout-page-title,
+  .cart-page-title,
+  [class*="mainTitle"],
+  [class*="pageTitle"],
+  [class*="productDetailTitle"],
+  [class*="checkoutTitle"],
+  [class*="cartTitle"],
+  [class*="heroTitle"],
+  [class*="HeroTitle"] {
+    font-size: 22px !important;
+    font-weight: 750 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  /* H2 — Section heading: 18px | 650-700 | 1.3 */
+  h2,
+  .hp-section-title,
+  .section-title,
+  .section-heading,
+  .hp-section-heading,
+  .hp-flash-deals-section .hp-section-title,
+  .hp-new-arrivals-header .hp-section-title,
+  .hp-bestsellers-section .hp-section-title,
+  .legal-section-title,
+  [class*="sectionTitle"],
+  [class*="sectionHeading"],
+  [class*="headingText"],
+  [class*="heroTitle"],
+  [class*="blockHeading"],
+  [class*="drawerTitle"],
+  [class*="sheetTitle"],
+  [class*="cardTitle"] {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  /* H3 — Card / item title: 13px | 600-700 | 1.3 */
+  h3,
+  h4,
+  .hp-category-name,
+  .category-card-title,
+  .hp-category-title,
+  .ref-product-title,
+  .product-card-title,
+  .spotlight-title,
+  .mobile-pdp-product-title,
+  [class*="categoryCardTitle"],
+  [class*="categoryName"],
+  [class*="productTitle"],
+  [class*="productName"],
+  [class*="userNameHeading"],
+  [class*="orderNumber"],
+  [class*="recipientName"],
+  [class*="cardTitle"],
+  [class*="itemTitle"],
+  [class*="addCardTitle"],
+  [class*="trustHeading"],
+  [class*="featuredTitle"],
+  [class*="companionTitle"],
+  [class*="kycTitle"],
+  [class*="pillarTitle"] {
+    font-size: 13px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Main price / Total Paid: 16px | 700-800 | 1.2 (Purple & Bold) */
+  .ref-current-price,
+  .product-card-price,
+  .spotlight-current-price,
+  .budget-card-price,
+  .budget-price,
+  .mobile-pdp-main-price,
+  [class*="sellingPrice"],
+  [class*="currentPrice"],
+  [class*="budgetPrice"],
+  [class*="mainPrice"],
+  [class*="productPrice"],
+  [class*="totalPaid"],
+  [class*="totalAmount"],
+  [class*="orderTotal"],
+  [class*="paidAmount"],
+  [class*="cartTotal"],
+  [class*="checkoutTotal"],
+  [class*="priceText"],
+  [class*="itemPrice"] {
+    font-size: 16px !important;
+    font-weight: 750 !important;
+    color: #7c3aed !important;
+    line-height: 1.2 !important;
+  }
+
+  /* MRP / Date / Time: 11px | 400-500 | 1.3 */
+  .ref-original-price,
+  .product-card-original-price,
+  .spotlight-orig-price,
+  .mobile-pdp-strike-price,
+  .order-date-text,
+  [class*="origPrice"],
+  [class*="originalPrice"],
+  [class*="strikePrice"],
+  [class*="strikethroughPrice"],
+  [class*="mrpPrice"],
+  [class*="orderDate"],
+  [class*="orderTime"],
+  [class*="placedDate"],
+  [class*="subDate"],
+  [class*="timestamp"],
+  [class*="publishDate"] {
+    font-size: 11px !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Body description / Notes: 12px | 400-500 | 1.5 */
+  p,
+  .hp-section-subtitle,
+  .section-subtitle,
+  .hp-section-desc,
+  .section-subheading,
+  .hero-description,
+  .hero-subtitle,
+  .hero-subheadline,
+  .hero-mobile-eyebrow,
+  .hp-trust-desc,
+  .mobile-pdp-short-desc,
+  .legal-paragraph,
+  [class*="sectionSubtitle"],
+  [class*="sectionDesc"],
+  [class*="heroSubtitle"],
+  [class*="sectionDescription"],
+  [class*="subHeadingText"],
+  [class*="bannerMetaText"],
+  [class*="addressRow"],
+  [class*="productDescription"],
+  [class*="bodyDesc"],
+  [class*="trustDesc"],
+  [class*="addCardSubtitle"],
+  [class*="cardText"],
+  [class*="bodyText"] {
+    font-size: 12px !important;
+    font-weight: 450 !important;
+    line-height: 1.5 !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Button text / CTA: 12px | 600-700 | 1.2 (Min-height: 40px) */
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
+  .hero-mobile-cta,
+  .hero-mobile-cta span,
+  .hero-cta,
+  .carousel-cta-btn,
+  .ref-add-cart-btn,
+  .ref-add-cart-btn span,
+  .product-card-add-btn,
+  [class*="addCartBtn"],
+  .spotlight-cta-btn,
+  .spotlight-cta-btn span,
+  [class*="ctaBtn"],
+  [class*="primaryBtn"],
+  [class*="signOutBtn"],
+  [class*="editBtn"],
+  [class*="actionBtn"],
+  [class*="orderTrackBtn"],
+  [class*="setPrimaryBtn"],
+  [class*="submitBtn"],
+  [class*="btnPrimary"],
+  [class*="applyFiltersBtn"],
+  [class*="pillBtn"],
+  .mobile-pdp-dock-btn-bag,
+  .mobile-pdp-dock-btn-buy,
+  .mobile-checkout-dock-btn,
+  .budget-cta {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    min-height: 40px;
+  }
+
+  /* Badges / Status pills: 10px | 600-700 | 1.2 (Never below 10px) */
+  .hp-section-badge,
+  .ref-deal-text,
+  .announcement-ticker-badge,
+  .mobile-header-badge,
+  .spotlight-category,
+  .spotlight-tag,
+  .badge,
+  .mobile-pdp-discount-badge,
+  .mobile-pdp-rating-badge,
+  [class*="pillBadgeTag"],
+  [class*="badgeText"],
+  [class*="discountBadge"],
+  [class*="userIdBadge"],
+  [class*="orderBadge"],
+  [class*="statusBadge"],
+  [class*="primaryPill"],
+  [class*="verifiedBadge"],
+  [class*="statusPill"],
+  [class*="tagPill"] {
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Micro labels / Form labels: 10px | 500-600 | 1.2 */
+  label,
+  .field-label,
+  .input-label,
+  [class*="fieldLabel"],
+  [class*="formLabel"],
+  [class*="microLabel"],
+  [class*="statusLabel"],
+  [class*="pincodeStamp"],
+  [class*="filterGroupLabel"],
+  [class*="toggleLabelDesc"],
+  [class*="metaLabel"],
+  .hp-category-count,
+  .category-product-count,
+  .category-count,
+  .mobile-form-label,
+  [class*="categoryCount"],
+  [class*="productCount"],
+  [class*="statsCount"] {
+    font-size: 10px !important;
+    font-weight: 550 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Navigation labels: 11px | 500-600 | 1.2 */
+  [class*="accountTabBtn"],
+  [class*="mobileNavLabel"],
+  [class*="tabButtonActive"],
+  [class*="tabButtonInactive"],
+  [class*="filterChipActive"],
+  [class*="filterChipInactive"],
+  [class*="filterPillActive"],
+  [class*="filterPillInactive"],
+  .mobile-bottom-nav a span,
+  .mobile-nav-label,
+  .railPill,
+  [class*="railPill"],
+  [class*="navLabel"] {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Input text: 13px | 400-500 */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea,
+  .mobile-search-input,
+  [class*="inputField"],
+  [class*="formInput"],
+  [class*="fieldValue"],
+  [class*="fieldValueEmail"],
+  [class*="fieldValuePhone"] {
+    font-size: 13px !important;
+    font-weight: 450 !important;
+  }
+
+  /* Helper / Secondary text: 11px | 400-500 | 1.4 */
+  [class*="helperText"],
+  [class*="secondaryText"],
+  [class*="fieldHint"],
+  [class*="verifiedSubtitle"],
+  [class*="phoneChip"],
+  [class*="metaSub"],
+  [class*="budgetCardSubtitle"],
+  .announcement-marquee-bar,
+  .announcement-ticker-text,
+  .mobile-pdp-rating-meta,
+  .mobile-pdp-tax-note {
+    font-size: 11px !important;
+    font-weight: 450 !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Footer Links: 11px | Micro labels: 10px */
+  .footer-heading,
+  .footer-col h3,
+  .footer-col h4,
+  [class*="footerHeading"] {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+
+  .footer-link,
+  .footer-link-item,
+  .footer-links-list a,
+  .footer-newsletter-text,
+  .footer-copyright,
+  [class*="footerLink"] {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+}
+

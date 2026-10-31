@@ -14,7 +14,7 @@ import { primeAudio } from '../../utils/soundEffects';
 import { useCouponStore } from '../../store/couponStore';
 import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
-import './CheckoutMobile.css';
+import '../../mobilestyle/checkout.module.css';
 import {
   CreditCard,
   Lock,

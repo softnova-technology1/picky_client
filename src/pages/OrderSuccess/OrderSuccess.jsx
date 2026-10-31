@@ -25,7 +25,7 @@ import {
   Phone,
 } from 'lucide-react';
 import styles from './OrderSuccess.module.css';
-import './OrderSuccessMobile.css';
+import '../../mobilestyle/orderSuccess.module.css';
 import AdminInvoice, { AdminInvoiceSheet, generateInvoicePdf } from '../../components/admin/AdminInvoice';
 import { playOrderSuccessSound } from '../../utils/soundEffects';
 import { useUiStore } from '../../store/uiStore';

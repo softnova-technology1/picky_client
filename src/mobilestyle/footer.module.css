@@ -1,0 +1,230 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY MOBILE FOOTER & FLOATING ACTIONS
+   Module: footer.module.css
+   Covers: Footer links, columns, payment badges, WhatsApp floating CTA
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* 12. Footer Mobile Layout */
+  .picky-footer-root {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .footer-skyline-canvas-wrap {
+    width: 100% !important;
+    overflow: hidden !important;
+    background: transparent !important;
+  }
+
+  .footer-skyline-img {
+    height: 60px !important;
+  }
+
+  .picky-footer-body {
+    padding: 24px 14px calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+  }
+
+  .footer-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    margin-bottom: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .footer-col-newsletter {
+    width: 100% !important;
+    max-width: 100% !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .footer-heading {
+    font-size: 1rem !important;
+    margin-bottom: 4px !important;
+  }
+
+  .footer-newsletter-text {
+    font-size: 0.75rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .footer-newsletter-form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .footer-input-wrap {
+    width: 100% !important;
+  }
+
+  .footer-newsletter-input {
+    height: 38px !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .footer-newsletter-btn {
+    height: 38px !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+  }
+
+  .footer-col-links,
+  .footer-col-contact {
+    width: 100% !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .footer-heading {
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .footer-col {
+    margin-bottom: 20px !important;
+  }
+
+  /* Remove icons from footer links in mobile view */
+  .footer-link .footer-icon-accent,
+  .footer-link .footer-icon-green,
+  .footer-link .footer-icon-cyan,
+  .footer-link .footer-icon-blue,
+  .footer-links-list li .footer-link svg:not(.footer-link-all svg) {
+    display: none !important;
+  }
+
+  .footer-links-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .footer-links-list li {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .footer-link {
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    color: #cbd5e1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    text-decoration: none !important;
+    padding: 2px 0 !important;
+    text-align: left !important;
+  }
+
+  .footer-link-badge {
+    display: none !important;
+  }
+
+  .footer-link-all {
+    margin-top: 4px !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    color: #c084fc !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .footer-link-all svg {
+    display: inline-block !important;
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .footer-link-item {
+    font-size: 0.75rem !important;
+  }
+
+  .footer-bottom-bar {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 14px !important;
+    padding-top: 18px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    width: 100% !important;
+  }
+
+  .footer-trust-chips {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+    width: 100% !important;
+  }
+
+  .trust-chip-item {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    padding: 8px 12px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    color: #e2e8f0 !important;
+  }
+
+  .trust-chip-item .trust-icon,
+  .trust-chip-item svg {
+    display: none !important;
+  }
+
+  .footer-copyright {
+    font-size: 0.72rem !important;
+    line-height: 1.55 !important;
+    color: #94a3b8 !important;
+    text-align: center !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+  }
+
+  /* 13. Floating Action Buttons */
+  .picky-float-stack-right {
+    bottom: 74px !important;
+    right: 12px !important;
+  }
+
+  .picky-float-scroll {
+    bottom: 74px !important;
+    left: 12px !important;
+  }
+
+}
