@@ -131,8 +131,15 @@ button:disabled:hover,
 [class*="nav-btn"]:hover,
 [class*="carousel"]:hover,
 [class*="slider"]:hover,
-[class*="swiper"]:hover {
+[class*="swiper"]:hover,
+.admin-auth-page button:hover,
+.admin-auth-page [class*="btn"]:hover {
   transform: none !important;
+}
+
+.admin-auth-eye-btn,
+.admin-auth-eye-btn:hover {
+  transform: translateY(-50%) !important;
 }
 
 .picky-float-btn:hover {
@@ -212,8 +219,16 @@ button:disabled:hover,
 .announcement-link::after,
 .admin-layout button::before,
 .admin-layout button::after,
+.admin-auth-page button::before,
+.admin-auth-page button::after,
+.admin-auth-page *::before,
+.admin-auth-page *::after,
+.admin-auth-eye-btn::before,
+.admin-auth-eye-btn::after,
 .no-hover-fx::before,
-.no-hover-fx::after {
+.no-hover-fx::after,
+.no-hover-fx *::before,
+.no-hover-fx *::after {
   display: none !important;
   content: none !important;
 }

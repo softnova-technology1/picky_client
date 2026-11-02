@@ -78,6 +78,21 @@
   box-sizing: border-box;
 }
 
+/* Stationary Center Seam Divider on Desktop */
+@media (min-width: 961px) {
+  .picky-auth-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    z-index: 10;
+    pointer-events: none;
+  }
+}
+
 /* Fixed Universal Close Button (Always Top-Right of Card) */
 .picky-auth-card .picky-auth-close-btn,
 .picky-auth-close-btn {
@@ -121,45 +136,66 @@
   box-sizing: border-box !important;
   transition: transform 0.65s cubic-bezier(0.65, 0, 0.35, 1);
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Default / LOGIN Mode: Visual Panel Left (0%), Form Panel Right (0%) */
 .picky-auth-card.is-login .picky-auth-left {
-  transform: translateX(0%);
+  transform: translate3d(0%, 0, 0);
   z-index: 2;
 }
 .picky-auth-card.is-login .picky-auth-right {
-  transform: translateX(0%);
+  transform: translate3d(0%, 0, 0);
   z-index: 2;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: none;
+  border: none !important;
 }
 
 /* SIGNUP Mode: Visual Panel slides to Right (+100%), Form Panel slides to Left (-100%) */
 .picky-auth-card.is-signup .picky-auth-left {
-  transform: translateX(100%);
+  transform: translate3d(100%, 0, 0);
   z-index: 2;
 }
 .picky-auth-card.is-signup .picky-auth-right {
-  transform: translateX(-100%);
+  transform: translate3d(-100%, 0, 0);
   z-index: 2;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: none;
+  border: none !important;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
    LEFT PANEL — CURATED LUXURY VISUALS & BADGES
    ────────────────────────────────────────────────────────────────────────── */
 .picky-auth-left {
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 2.2rem 2.4rem;
-  overflow: visible;
+  overflow: hidden;
   isolation: isolate;
+  position: relative;
+}
+
+/* Dual-Layer Cross-Fade Visual Layers */
+.picky-auth-visual-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  transition: opacity 0.65s cubic-bezier(0.65, 0, 0.35, 1), transform 0.65s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: opacity, transform;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.picky-auth-visual-login {
+  background-image: url('/images/auth_luxury_concept.jpg?v=2');
+}
+
+.picky-auth-visual-signup {
+  background-image: url('/images/auth_signup_concept.jpg?v=1');
 }
 
 /* Rich Tint & Vignette Overlay */
@@ -431,6 +467,7 @@
   flex-direction: column;
   box-sizing: border-box;
   height: 100%;
+  overflow: hidden;
 }
 
 .picky-auth-right-content {
@@ -441,30 +478,51 @@
   height: 100%;
   width: 100%;
   box-sizing: border-box;
+  justify-content: space-between;
 }
 
-/* ── LOGIN MODE: Balanced Vertical Centering (ELIMINATES LARGE GAP!) ── */
-.picky-auth-card.is-login .picky-auth-right-content {
-  justify-content: center;
-  gap: 0;
-}
-
-.picky-auth-card.is-login .picky-form-top-section {
+.picky-form-top-section {
   width: 100%;
-  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
-.picky-auth-card.is-login .picky-auth-header {
+/* ── UNIFIED HEADER & TABS: Anchored Y-Position (Zero Vertical / Horizontal Shift) ── */
+.picky-auth-header {
   margin-bottom: 1.1rem;
-  padding-right: 2.6rem;
+  padding-right: 2.6rem; /* Consistent on both login & signup */
+  min-height: 72px;      /* Locks header height so tabs never jump */
+  box-sizing: border-box;
 }
 
-.picky-auth-card.is-login .picky-auth-tabs {
+.picky-auth-tabs {
   margin-bottom: 1.15rem;
 }
 
+/* ── SMOOTH FADING CONTAINER FOR SWITCHING FORMS ── */
+.picky-auth-form-animated {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  animation: authFormFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes authFormFadeIn {
+  from {
+    opacity: 0.25;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── BALANCED INNER FORM SPACING ── */
 .picky-auth-card.is-login .picky-auth-form {
   gap: 0.95rem;
+  margin-top: 0.35rem;
 }
 
 .picky-auth-card.is-login .picky-auth-submit-btn {
@@ -475,40 +533,19 @@
   margin-top: 1.25rem;
 }
 
-.picky-auth-card.is-login .picky-auth-footer {
-  margin-top: 1.25rem;
-}
-
-/* ── SIGNUP MODE: Space-between Distribution for 3 Inputs ── */
-.picky-auth-card.is-signup .picky-auth-right-content {
-  justify-content: space-between;
-}
-
-.picky-auth-card.is-signup .picky-form-top-section {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.picky-auth-card.is-signup .picky-auth-header {
-  margin-bottom: 1.1rem;
-  padding-right: 0; /* No offset on left */
-}
-
-.picky-auth-card.is-signup .picky-auth-tabs {
-  margin-bottom: 1.15rem;
-}
-
 .picky-auth-card.is-signup .picky-auth-form {
-  gap: 0.8rem;
+  gap: 0.72rem;
+  margin-top: 0;
 }
 
 .picky-auth-card.is-signup .picky-auth-terms {
-  margin-top: 1.15rem;
+  margin-top: 0.95rem;
 }
 
-.picky-auth-card.is-signup .picky-auth-footer {
-  margin-top: 1.15rem;
+/* ── UNIFIED FOOTER: Anchored to Bottom ── */
+.picky-auth-footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
 }
 
 /* Shared Typography & Headers */
@@ -551,7 +588,7 @@
   text-transform: uppercase;
   color: #94a3b8;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -565,12 +602,12 @@
 }
 
 .picky-auth-tab-btn.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.2),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

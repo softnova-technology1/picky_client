@@ -23,6 +23,8 @@ import {
   RotateCcw as ReturnIcon,
   Headphones,
   CheckCircle2,
+  Star,
+  Ticket,
 } from 'lucide-react';
 import { usePageCustomization } from '../../store/customizationStore';
 
@@ -106,20 +108,39 @@ export default function Discounts() {
     });
   }, [activeDiscountProducts]);
 
-  // Live countdown timer: ONLY active if a real DB offer with future end date exists
+  // Admin Customization Settings for Timer:
+  const showCountdownTimerSetting = getSetting('discounts_hero', 'showCountdownTimer', true);
+  const timerLabelSetting = getSetting('discounts_hero', 'timerLabel', 'ENDS IN:');
+  const timerEndTimeSetting = getSetting('discounts_hero', 'timerEndTime', '');
+
+  // Effective Target End Time (supports Admin Customization picker + DB fallback)
+  const effectiveEndMs = useMemo(() => {
+    if (timerEndTimeSetting) {
+      const parsed = new Date(timerEndTimeSetting).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    if (activeOfferWithEnd) {
+      const end = activeOfferWithEnd.offerEndDate || activeOfferWithEnd.validTill || activeOfferWithEnd.endDate;
+      const parsed = new Date(end).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    // Default fallback: 7 days from now
+    return Date.now() + 7 * 24 * 60 * 60 * 1000;
+  }, [timerEndTimeSetting, activeOfferWithEnd]);
+
+  // Live countdown timer state (controlled via Admin Customization)
   const [countdown, setCountdown] = useState(null);
 
+
+
   useEffect(() => {
-    if (!activeOfferWithEnd) {
+    if (!showCountdownTimerSetting || !effectiveEndMs) {
       setCountdown(null);
       return;
     }
 
-    const end = activeOfferWithEnd.offerEndDate || activeOfferWithEnd.validTill || activeOfferWithEnd.endDate;
-    const targetMs = new Date(end).getTime();
-
     const updateTimer = () => {
-      const diff = targetMs - Date.now();
+      const diff = effectiveEndMs - Date.now();
       if (diff <= 0) {
         setCountdown(null);
         return;
@@ -131,10 +152,10 @@ export default function Discounts() {
       setCountdown({ days, hours, minutes, seconds });
     };
 
-    updateTimer();
+        updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [activeOfferWithEnd]);
+  }, [showCountdownTimerSetting, effectiveEndMs]);
 
   // Navigate directly to Product Detail page when clicking any hero product card
   const handleProductClick = (p) => {
@@ -294,472 +315,407 @@ export default function Discounts() {
   return (
     <PageWrapper>
       <div style={{ background: '#ffffff', minHeight: '100vh', color: '#1e293b' }}>
-        {/* ── 1. Hero Section: Editorial Limited-Time Deals Banner ── */}
+        {/* ── 1. Hero Section: Limited Deals Full-Width Purple Gradient Banner ── */}
         {isEnabled('discounts_hero') && (
-        <section
-          style={{
-            background: 'linear-gradient(135deg, #faf7fe 0%, #f4eefa 50%, #eee8f8 100%)',
-            borderBottom: '1px solid #ede9fe',
-            padding: '3.5rem 1.5rem 4rem',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Subtle Ambient Glow */}
-          <div
+          <section
             style={{
-              position: 'absolute',
-              top: '-30%',
-              right: '15%',
-              width: '550px',
-              height: '550px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          <div
-            style={{
-              maxWidth: '1280px',
-              margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: activeDiscountProducts.length > 0 ? 'repeat(auto-fit, minmax(320px, 1fr))' : '1fr',
-              gap: '3rem',
-              alignItems: 'center',
+              width: '100%',
+              background: 'linear-gradient(135deg, #150348 0%, #2b0b66 25%, #4a1590 55%, #6d28d9 80%, #7c3aed 100%)',
+              borderBottom: '1px solid rgba(168, 85, 247, 0.35)',
+              padding: '4rem 1.5rem 3.5rem',
               position: 'relative',
-              zIndex: 2,
+              overflow: 'hidden',
             }}
           >
-            {/* Left Column: Headlines, Timer (Only if offer active), CTAs & Value Props */}
-            <div>
-              {/* Campaign Pill */}
+            {/* Ambient Purple Luminous Glows */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-15%',
+                left: '10%',
+                width: '600px',
+                height: '600px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 65%)',
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-20%',
+                right: '5%',
+                width: '550px',
+                height: '550px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(192, 132, 252, 0.22) 0%, transparent 65%)',
+                pointerEvents: 'none',
+              }}
+            />
+
+            <style>{`
+              @keyframes heroSilkyFloat {
+                0% {
+                  transform: translateY(0px) rotate(0deg);
+                }
+                50% {
+                  transform: translateY(-16px) rotate(-1.2deg);
+                }
+                100% {
+                  transform: translateY(0px) rotate(0deg);
+                }
+              }
+
+              @keyframes auraGlowPulse {
+                0%, 100% {
+                  transform: scale(0.95);
+                  opacity: 0.35;
+                }
+                50% {
+                  transform: scale(1.1);
+                  opacity: 0.65;
+                }
+              }
+
+
+
+              @keyframes subtleBadgePulse {
+                0%, 100% {
+                  transform: scale(1);
+                  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(168, 85, 247, 0.4);
+                }
+                50% {
+                  transform: scale(1.05);
+                  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 25px rgba(168, 85, 247, 0.6);
+                }
+              }
+
+              @media (max-width: 960px) {
+                .hero-grid-purple {
+                  grid-template-columns: 1fr !important;
+                  gap: 2.5rem !important;
+                  text-align: center !important;
+                }
+                .hero-left-col {
+                  order: 1 !important;
+                }
+                .hero-right-col {
+                  order: 2 !important;
+                }
+                .hero-right-col p {
+                  margin-left: auto !important;
+                  margin-right: auto !important;
+                }
+                .hero-cta-wrap {
+                  justify-content: center !important;
+                }
+                .hero-trust-wrap {
+                  justify-content: center !important;
+                }
+              }
+            `}</style>
+
+            <div
+              style={{
+                maxWidth: '1360px',
+                margin: '0 auto',
+                position: 'relative',
+                zIndex: 2,
+              }}
+            >
+              {/* Main Content Grid: Left (Luxury 3D Gift Box) & Right (Headlines & CTAs) */}
               <div
+                className="hero-grid-purple"
                 style={{
-                  display: 'inline-flex',
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(320px, 1.05fr) minmax(340px, 1.25fr)',
+                  gap: '3.5rem',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.35rem 0.95rem',
-                  borderRadius: '999px',
-                  background: '#ede9fe',
-                  color: '#6b21a8',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  marginBottom: '1.25rem',
                 }}
               >
-                <Sparkles size={13} color="#7c3aed" />
-                <span>{getSetting('discounts_hero', 'badgeText', 'EXCLUSIVE CAMPAIGN')}</span>
-              </div>
-
-              {/* Title */}
-              <h1
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)',
-                  fontWeight: 800,
-                  color: '#1e1b4b',
-                  lineHeight: 1.15,
-                  margin: '0 0 1.25rem',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {(() => {
-                  const title = getSetting('discounts_hero', 'title', 'Limited–Time Deals');
-                  const words = title.split(' ');
-                  if (words.length > 1) {
-                    return (
-                      <>
-                        {words.slice(0, -1).join(' ')}{' '}
-                        <span style={{ color: '#6d28d9' }}>{words[words.length - 1]}</span>
-                      </>
-                    );
-                  }
-                  return title;
-                })()}
-              </h1>
-
-              {/* Subtitle */}
-              <p
-                style={{
-                  fontSize: '1rem',
-                  color: '#64748b',
-                  lineHeight: 1.65,
-                  margin: '0 0 1.75rem',
-                  maxWidth: '520px',
-                }}
-              >
-                {getSetting(
-                  'discounts_hero',
-                  'subtitle',
-                  'Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at steep promotional tiers.'
-                )}
-              </p>
-
-              {/* Live Countdown Pill: ONLY shown if real active offer with end date exists */}
-              {activeOfferWithEnd && countdown && (
+                {/* ── Left Column: Luxury 3D Gift Box with Silky Smooth Levitation ── */}
                 <div
+                  className="hero-left-col"
                   style={{
-                    display: 'inline-flex',
+                    position: 'relative',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '0.65rem',
-                    padding: '0.45rem 1.15rem',
-                    borderRadius: '999px',
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    color: '#1e1b4b',
-                    marginBottom: '2rem',
+                    justifyContent: 'center',
+                    minHeight: '420px',
                   }}
                 >
-                  <span
+                  {/* Purple Ambient Light Halo */}
+                  <div
                     style={{
-                      width: '8px',
-                      height: '8px',
+                      position: 'absolute',
+                      width: '420px',
+                      height: '420px',
                       borderRadius: '50%',
-                      background: '#ef4444',
-                      boxShadow: '0 0 8px #ef4444',
-                      display: 'inline-block',
-                      flexShrink: 0,
+                      background: 'radial-gradient(circle, rgba(192, 132, 252, 0.35) 0%, rgba(124, 58, 237, 0.18) 45%, transparent 70%)',
+                      filter: 'blur(45px)',
+                      pointerEvents: 'none',
+                      animation: 'auraGlowPulse 6s ease-in-out infinite',
                     }}
                   />
-                  <span>
-                    ENDS IN:&nbsp;&nbsp;
-                    <span style={{ color: '#4338ca', fontWeight: 800 }}>
-                      {countdown.days > 0 ? `${countdown.days} d : ` : ''}
-                      {String(countdown.hours).padStart(2, '0')} h : {String(countdown.minutes).padStart(2, '0')} m : {String(countdown.seconds).padStart(2, '0')} s
-                    </span>
-                  </span>
-                  <Clock size={14} color="#64748b" style={{ marginLeft: '2px' }} />
-                </div>
-              )}
 
-              {/* Action Button: Explore Deals */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                <a
-                  href="#curated-catalog"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.8rem 2rem',
-                    borderRadius: '999px',
-                    background: '#2e1065',
-                    color: '#ffffff',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 14px rgba(46, 16, 101, 0.25)',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-                >
-                  <span>Explore Deals</span>
-                  <ArrowDown size={15} />
-                </a>
-              </div>
-
-              {/* Trust Micro-Badges */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
-                  <CheckCircle2 size={16} color="#6d28d9" />
-                  <span>100% Genuine Provenance</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
-                  <Truck size={16} color="#6d28d9" />
-                  <span>Same-Day Dispatch</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: 3 Overlapping Floating Cards Cluster with 1-Minute Rotation */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', width: '100%' }}>
-              <div
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '480px',
-                  height: '380px',
-                  background: 'linear-gradient(145deg, #f3f0ff 0%, #ebe5fb 100%)',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  boxShadow: 'inset 0 1px 3px rgba(255, 255, 255, 0.8), 0 10px 30px -10px rgba(109, 40, 217, 0.08)',
-                  opacity: isCardTransitioning ? 0.35 : 1,
-                  transform: isCardTransitioning ? 'scale(0.985)' : 'scale(1)',
-                  transition: 'opacity 0.4s ease, transform 0.4s ease',
-                }}
-              >
-                {/* ── CARD 1: Left / Main Featured Card ── */}
-                {card1Product && (
+                  {/* Circular "LIMITED TIME" badge matching reference layout */}
                   <div
-                    onClick={() => handleProductClick(card1Product)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card1Product); }}
                     style={{
                       position: 'absolute',
-                      top: '20px',
-                      left: '20px',
-                      width: '230px',
-                      background: '#ffffff',
-                      borderRadius: '16px',
-                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      zIndex: 2,
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.14)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)';
+                      top: '12px',
+                      left: '12px',
+                      width: '84px',
+                      height: '84px',
+                      borderRadius: '50%',
+                      border: '1.5px dashed rgba(233, 213, 255, 0.85)',
+                      background: 'rgba(22, 5, 58, 0.88)',
+                      backdropFilter: 'blur(8px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      color: '#ffffff',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      lineHeight: '1.25',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(168, 85, 247, 0.4)',
+                      zIndex: 5,
+                      animation: 'subtleBadgePulse 3.5s ease-in-out infinite',
                     }}
                   >
-                    <div style={{ position: 'relative', width: '100%', height: '145px', background: '#f8fafc', overflow: 'hidden' }}>
-                      <img
-                        src={getProductImage(card1Product)}
-                        alt={card1Product.name || 'Deal'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '10px',
-                          left: '10px',
-                          background: '#991b1b',
-                          color: '#ffffff',
-                          fontSize: '0.66rem',
-                          fontWeight: 800,
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                        }}
-                      >
-                        {getCardBadge(card1Product, 'UP TO 60% OFF')}
-                      </div>
-                    </div>
-                    <div style={{ padding: '12px 14px 14px' }}>
-                      <h3
-                        style={{
-                          fontSize: '0.86rem',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: '0 0 6px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        title={card1Product.name}
-                      >
-                        {card1Product.name}
-                      </h3>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>
-                          {formatPrice(card1Product.discountPrice || card1Product.price || 0)}
-                        </span>
-                        {card1Product.price && (
-                          <span style={{ fontSize: '0.76rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                            {formatPrice(
-                              card1Product.discountPrice && card1Product.price > card1Product.discountPrice
-                                ? card1Product.price
-                                : Math.round(card1Product.price * 1.4)
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <span>LIMITED</span>
+                    <span>TIME</span>
                   </div>
-                )}
 
-                {/* ── CARD 2: Top-Right Card ── */}
-                {card2Product && (
+                  {/* 3D Box Container with Silky Smooth Floating Levitation */}
                   <div
-                    onClick={() => handleProductClick(card2Product)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card2Product); }}
                     style={{
-                      position: 'absolute',
-                      top: '24px',
-                      right: '20px',
-                      width: '205px',
-                      background: '#ffffff',
-                      borderRadius: '16px',
-                      boxShadow: '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      zIndex: 1,
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 16px 32px -4px rgba(0, 0, 0, 0.12)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)';
-                    }}
-                  >
-                    <div style={{ position: 'relative', width: '100%', height: '125px', background: '#f8fafc', overflow: 'hidden' }}>
-                      <img
-                        src={getProductImage(card2Product)}
-                        alt={card2Product.name || 'Deal'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '8px',
-                          background: '#4f46e5',
-                          color: '#ffffff',
-                          fontSize: '0.62rem',
-                          fontWeight: 800,
-                          padding: '3px 7px',
-                          borderRadius: '5px',
-                          letterSpacing: '0.03em',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                        }}
-                      >
-                        {getCardBadge(card2Product, '57% OFF')}
-                      </div>
-                    </div>
-                    <div style={{ padding: '10px 12px 12px' }}>
-                      <h3
-                        style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: '0 0 4px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        title={card2Product.name}
-                      >
-                        {card2Product.name}
-                      </h3>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#6d28d9' }}>
-                          {formatPrice(card2Product.discountPrice || card2Product.price || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── CARD 3: Bottom-Right Horizontal Mini Card ── */}
-                {card3Product && (
-                  <div
-                    onClick={() => handleProductClick(card3Product)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card3Product); }}
-                    style={{
-                      position: 'absolute',
-                      bottom: '22px',
-                      right: '20px',
-                      width: '240px',
-                      background: '#ffffff',
-                      borderRadius: '14px',
-                      boxShadow: '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)',
-                      padding: '8px 10px',
+                      position: 'relative',
+                      zIndex: 3,
+                      maxWidth: '450px',
+                      width: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      cursor: 'pointer',
-                      zIndex: 3,
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      border: '1px solid rgba(226, 232, 240, 0.9)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.16)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)';
+                      justifyContent: 'center',
+                      animation: 'heroSilkyFloat 5.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite',
+                      willChange: 'transform',
                     }}
                   >
                     <img
-                      src={getProductImage(card3Product)}
-                      alt={card3Product.name || 'Item'}
+                      src="/images/limited-deals/gift_box_hero.jpg"
+                      alt="Luxury Limited Deals Gift Box"
                       style={{
-                        width: '52px',
-                        height: '52px',
-                        borderRadius: '10px',
-                        objectFit: 'cover',
-                        flexShrink: 0,
-                        background: '#f1f5f9',
+                        width: '100%',
+                        maxHeight: '430px',
+                        objectFit: 'contain',
+                        display: 'block',
+                        borderRadius: '28px',
+                        maskImage: 'radial-gradient(circle at 50% 50%, black 46%, transparent 74%)',
+                        WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 46%, transparent 74%)',
+                        filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.55))',
                       }}
                     />
-                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                  </div>
+                </div>
+
+                {/* ── Right Column: Campaign Badge, Heading, Subtitle, Countdown, Button & Trust ── */}
+                <div className="hero-right-col">
+                  {/* Campaign Pill */}
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.42rem 1.05rem',
+                      borderRadius: '999px',
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      border: '1px solid rgba(255, 255, 255, 0.28)',
+                      color: '#ffffff',
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      marginBottom: '1.25rem',
+                      backdropFilter: 'blur(8px)',
+                    }}
+                  >
+                    <Sparkles size={14} color="#f5d0fe" />
+                    <span>{getSetting('discounts_hero', 'badgeText', 'LIMITED DEALS • LIVE NOW')}</span>
+                  </div>
+
+                  {/* Title */}
+                  <h1
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: 'clamp(2.4rem, 4.4vw, 3.8rem)',
+                      fontWeight: 800,
+                      color: '#ffffff',
+                      lineHeight: 1.15,
+                      margin: '0 0 1.25rem',
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {(() => {
+                      const title = getSetting('discounts_hero', 'title', 'Limited Deals');
+                      const words = title.split(' ');
+                      if (words.length > 1) {
+                        return (
+                          <>
+                            {words.slice(0, -1).join(' ')}{' '}
+                            <span style={{ color: '#f0abfc' }}>{words[words.length - 1]}</span>
+                          </>
+                        );
+                      }
+                      return title;
+                    })()}
+                  </h1>
+
+                  {/* Subtitle */}
+                  <p
+                    style={{
+                      fontSize: '1.05rem',
+                      color: '#e9d5ff',
+                      lineHeight: 1.65,
+                      margin: '0 0 2rem',
+                      maxWidth: '540px',
+                    }}
+                  >
+                    {getSetting(
+                      'discounts_hero',
+                      'subtitle',
+                      'Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.'
+                    )}
+                  </p>
+
+                  {/* Live Countdown Pill: Configurable & Controllable via Admin Customization */}
+                  {showCountdownTimerSetting && countdown && (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '0.55rem 1.35rem',
+                        borderRadius: '999px',
+                        background: 'rgba(255, 255, 255, 0.14)',
+                        border: '1px solid rgba(255, 255, 255, 0.28)',
+                        backdropFilter: 'blur(12px)',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                        marginBottom: '1.75rem',
+                      }}
+                    >
                       <span
                         style={{
-                          display: 'inline-block',
-                          background: '#ede9fe',
-                          color: '#6d28d9',
-                          fontSize: '0.62rem',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          marginBottom: '3px',
-                          maxWidth: '100%',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          fontSize: '0.76rem',
+                          fontWeight: 800,
+                          color: '#fed7aa',
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
                         }}
                       >
-                        {card3Product.category?.name || card3Product.subCategory || 'Gourmet Box'}
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#f97316',
+                            boxShadow: '0 0 10px #f97316',
+                            display: 'inline-block',
+                          }}
+                        />
+                        {timerLabelSetting}
                       </span>
-                      <h4
+
+                      <div
                         style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: '0 0 3px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          lineHeight: 1.2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontWeight: 800,
+                          fontSize: '0.92rem',
+                          color: '#ffffff',
                         }}
-                        title={card3Product.name}
                       >
-                        {card3Product.name}
-                      </h4>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#6d28d9' }}>
-                          {formatPrice(card3Product.discountPrice || card3Product.price || 0)}
+                        <span style={{ background: 'rgba(255, 255, 255, 0.18)', padding: '2px 7px', borderRadius: '6px' }}>
+                          {String(countdown.days).padStart(2, '0')}d
                         </span>
-                        {card3Product.price && (
-                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                            {formatPrice(
-                              card3Product.discountPrice && card3Product.price > card3Product.discountPrice
-                                ? card3Product.price
-                                : Math.round(card3Product.price * 1.4)
-                            )}
-                          </span>
-                        )}
+                        <span>:</span>
+                        <span style={{ background: 'rgba(255, 255, 255, 0.18)', padding: '2px 7px', borderRadius: '6px' }}>
+                          {String(countdown.hours).padStart(2, '0')}h
+                        </span>
+                        <span>:</span>
+                        <span style={{ background: 'rgba(255, 255, 255, 0.18)', padding: '2px 7px', borderRadius: '6px' }}>
+                          {String(countdown.minutes).padStart(2, '0')}m
+                        </span>
+                        <span>:</span>
+                        <span style={{ background: 'rgba(255, 255, 255, 0.24)', padding: '2px 7px', borderRadius: '6px', color: '#fef08a' }}>
+                          {String(countdown.seconds).padStart(2, '0')}s
+                        </span>
                       </div>
+
+                      <Clock size={15} color="#fef08a" />
+                    </div>
+                  )}
+
+                  {/* Action Button: Explore Deals */}
+                  <div
+                    className="hero-cta-wrap"
+                    style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.75rem' }}
+                  >
+                    <a
+                      href="#curated-catalog"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        padding: '0.85rem 2.2rem',
+                        borderRadius: '999px',
+                        background: '#ffffff',
+                        color: '#4c1d95',
+                        fontSize: '0.95rem',
+                        fontWeight: 800,
+                        textDecoration: 'none',
+                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.25)',
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.35)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.25)';
+                      }}
+                    >
+                      <span>Explore Deals</span>
+                      <ArrowRight size={16} />
+                    </a>
+                  </div>
+
+                  {/* Trust Micro-Badges */}
+                  <div
+                    className="hero-trust-wrap"
+                    style={{ display: 'flex', alignItems: 'center', gap: '1.75rem', flexWrap: 'wrap' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#f3e8ff' }}>
+                      <CheckCircle2 size={16} color="#f5d0fe" />
+                      <span>100% Genuine Provenance</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#f5d0fe' }}>
+                      <Truck size={16} color="#f5d0fe" />
+                      <span>Same-Day Dispatch</span>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* ── 2. High Urgency Vault: Flash Deals (Rendered ONLY if active offer with countdown exists) ── */}

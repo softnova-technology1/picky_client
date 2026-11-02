@@ -1,1 +1,36 @@
 /* AdminProtectedRoute CSS Module */
+
+:global(.admin-auth-page) :global(button::before),
+:global(.admin-auth-page) :global(button::after),
+:global(.admin-auth-page) :global(.btn::before),
+:global(.admin-auth-page) :global(.btn::after),
+:global(.admin-auth-page) :global(*::before),
+:global(.admin-auth-page) :global(*::after) {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+:global(.admin-auth-page) :global(button:hover),
+:global(.admin-auth-page) :global(.btn:hover) {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+:global(.admin-auth-eye-btn),
+:global(.admin-auth-eye-btn:hover),
+:global(.admin-auth-eye-btn:active) {
+  transform: translateY(-50%) !important;
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+:global(.admin-auth-submit-btn:hover) {
+  background-color: #6d28d9 !important;
+  border-color: #6d28d9 !important;
+  transform: none !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4) !important;
+}
