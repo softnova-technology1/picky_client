@@ -100,6 +100,34 @@
     display: inline-flex !important;
   }
 
+    /* Wishlist Button: Perfectly circular 28px, Never oval */
+  .ref-wishlist-btn,
+  .spotlight-heart-btn,
+  button.ref-wishlist-btn,
+  button.spotlight-heart-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .ref-wishlist-btn svg,
+  .spotlight-heart-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
   /* 2. Mobile Header & Search Bar */
   .mobile-nav-header {
     position: -webkit-sticky;
@@ -1015,6 +1043,8 @@
   .spotlight-cta-btn {
     margin-top: 3px !important;
     height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
     width: 100% !important;
     font-size: 0.72rem !important;
     font-weight: 800 !important;
@@ -1026,7 +1056,19 @@
     align-items: center !important;
     justify-content: center !important;
     gap: 4px !important;
+    padding: 0 12px !important;
     cursor: pointer !important;
+  }
+
+  .spotlight-btn-mobile {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    min-height: unset !important;
+    height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   /* 4 Flash Deals Mini Cards (2x2 Grid) */
@@ -1178,7 +1220,10 @@
     background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
     color: #ffffff !important;
     border: none !important;
-    padding: 6px 12px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    padding: 0 12px !important;
     border-radius: 9999px !important;
     font-size: 0.68rem !important;
     font-weight: 800 !important;
@@ -1186,11 +1231,22 @@
     box-shadow: 0 3px 10px rgba(124, 58, 237, 0.25) !important;
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 4px !important;
     cursor: pointer !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
+    line-height: 1 !important;
     margin: 0 !important;
+  }
+
+  .hp-view-all-mobile {
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    min-height: unset !important;
+    height: auto !important;
+    display: inline !important;
   }
 
   .hp-view-all-btn:active,
@@ -2315,13 +2371,11 @@
   }
 
   /* Button text / CTA: 14px | 600-700 | 1.2 (Min-height: 44px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,
   [class*="addCartBtn"],
-  .spotlight-cta-btn,
-  .spotlight-cta-btn span,
   [class*="ctaBtn"],
   [class*="primaryBtn"],
   [class*="signOutBtn"],
@@ -2689,13 +2743,11 @@
   }
 
   /* Button text / CTA: 13px | 600-700 | 1.2 (Min-height: 42px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,
   [class*="addCartBtn"],
-  .spotlight-cta-btn,
-  .spotlight-cta-btn span,
   [class*="ctaBtn"],
   [class*="primaryBtn"],
   [class*="signOutBtn"],
@@ -3066,13 +3118,11 @@
   }
 
   /* Button text / CTA: 12px | 600-700 | 1.2 (Min-height: 40px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,
   [class*="addCartBtn"],
-  .spotlight-cta-btn,
-  .spotlight-cta-btn span,
   [class*="ctaBtn"],
   [class*="primaryBtn"],
   [class*="signOutBtn"],

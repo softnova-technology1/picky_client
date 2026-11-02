@@ -415,13 +415,24 @@
     }
 
     .ref-wishlist-btn {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 26px;
-        height: 26px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        pointer-events: auto;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        max-width: 28px !important;
+        min-height: 28px !important;
+        max-height: 28px !important;
+        border-radius: 50% !important;
+        aspect-ratio: 1 / 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        pointer-events: auto !important;
     }
 
     .ref-wishlist-btn svg {
