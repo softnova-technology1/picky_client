@@ -31,11 +31,13 @@ import Modal from '../../ui/Modal/Modal';
 import { usePageCustomization } from '../../../store/customizationStore';
 import { productService } from '../../../services/product.service';
 import { fuzzyFilter } from '../../../utils/fuzzySearch';
+import { useBlogStore } from '../../../store/blogStore';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [catalogProducts, setCatalogProducts] = useState([]);
+  const isBlogPageEnabled = useBlogStore((s) => s.blogData?.isBlogPageEnabled !== false);
 
   // Fetch catalog products when search modal opens for fuzzy autocomplete
   useEffect(() => {
@@ -337,15 +339,17 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Blog */}
-            <div className="nav-item-rel">
-              <Link
-                to="/blog"
-                className={`nav-pill-link ${isNavActive('/blog') ? 'active' : ''}`}
-              >
-                <span>Blog</span>
-              </Link>
-            </div>
+            {/* Blog (Controlled by Admin Blog Master Switch) */}
+            {isBlogPageEnabled && (
+              <div className="nav-item-rel">
+                <Link
+                  to="/blog"
+                  className={`nav-pill-link ${isNavActive('/blog') ? 'active' : ''}`}
+                >
+                  <span>Blog</span>
+                </Link>
+              </div>
+            )}
           </nav>
 
           {/* Right Action Icons, Elongated Search & Auth */}

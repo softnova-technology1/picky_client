@@ -95,19 +95,18 @@ export default function ProductList() {
     fetchCategories();
   }, []);
 
-  // Fetch or filter products based on query and sort
+  // Fetch or filter products based on query and sort (with Instant Load & Live Revalidation)
   useEffect(() => {
     let isMounted = true;
-    async function load() {
-      const startTime = Date.now();
+    let plRetryTimer = null;
+
+    async function load(isBackground = false) {
       try {
-        setLoading(true);
+        if (!isBackground) setLoading(true);
         const params = { sort: sort === 'all' ? 'newest' : sort };
         if (selectedCategory) params.category = selectedCategory;
         if (selectedSubCategory) params.subCategory = selectedSubCategory;
 
-        // The API paginates (max 50 per page) while price/budget filters are applied
-        // client-side, so load every page to make sure no matching product is missed.
         const fetchAllPages = async (fetcher) => {
           const all = [];
           for (let page = 1; page <= 20; page++) {
@@ -131,24 +130,51 @@ export default function ProductList() {
         }
 
         if (isMounted) {
-          setAllProducts(Array.isArray(items) ? items : []);
+          if (Array.isArray(items) && items.length > 0) {
+            setAllProducts(items);
+            if (plRetryTimer) clearTimeout(plRetryTimer);
+          } else {
+            // Auto-retry in 3.5 seconds if DB is starting up
+            if (plRetryTimer) clearTimeout(plRetryTimer);
+            plRetryTimer = setTimeout(() => {
+              if (isMounted) load(true);
+            }, 3500);
+          }
         }
       } catch (err) {
         if (isMounted) {
-          setAllProducts([]);
+          if (plRetryTimer) clearTimeout(plRetryTimer);
+          plRetryTimer = setTimeout(() => {
+            if (isMounted) load(true);
+          }, 3500);
         }
       } finally {
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((r) => setTimeout(r, remainingDelay));
-        }
-        if (isMounted) setLoading(false);
+        if (isMounted && !isBackground) setLoading(false);
       }
     }
+
     load();
+
+    const handleCatalogUpdate = () => {
+      if (isMounted) load(true);
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && isMounted) {
+        load(true);
+      }
+    };
+
+    window.addEventListener('picky_catalog_updated', handleCatalogUpdate);
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleCatalogUpdate);
+
     return () => {
       isMounted = false;
+      if (plRetryTimer) clearTimeout(plRetryTimer);
+      window.removeEventListener('picky_catalog_updated', handleCatalogUpdate);
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleCatalogUpdate);
     };
   }, [selectedCategory, selectedSubCategory, searchQuery, sort]);
 

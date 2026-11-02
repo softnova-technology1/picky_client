@@ -103,12 +103,12 @@ export default function ReturnPolicy() {
 
   return (
     <PageWrapper>
-      {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-          DESKTOP VIEW (> 768px) ΓÇö 100% UNTOUCHED & INTACT
-          ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          DESKTOP VIEW (> 768px) — 100% UNTOUCHED & INTACT
+          ═══════════════════════════════════════════════════════════════════ */}
       <div className={styles.desktopWrapper}>
         <div className="legal-page-wrapper">
-          {/* ΓöÇΓöÇ 1. Hero Banner ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ── 1. Hero Banner ──────────────────────────────────────────────── */}
           <header className="legal-hero-wrapper">
             <div className="legal-hero-container">
               <div className="legal-badge-pill">
@@ -124,15 +124,15 @@ export default function ReturnPolicy() {
               </p>
               <div className="legal-meta-row">
                 <span>Effective: October 2024</span>
-                <span className="legal-meta-dot">ΓÇó</span>
+                <span className="legal-meta-dot">•</span>
                 <span>7-Day Replacement Policy</span>
-                <span className="legal-meta-dot">ΓÇó</span>
+                <span className="legal-meta-dot">•</span>
                 <span>100% Bank Refunds</span>
               </div>
             </div>
           </header>
 
-          {/* ΓöÇΓöÇ 2. Quick Highlight 4-Card Grid ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ── 2. Quick Highlight 4-Card Grid ─────────────────────────────── */}
           <div className="legal-grid-container" style={{ marginTop: '-2.75rem', position: 'relative', zIndex: 10 }}>
             <div className="legal-highlights-grid">
               <div className="legal-highlight-card">
@@ -177,7 +177,7 @@ export default function ReturnPolicy() {
             </div>
           </div>
 
-          {/* ΓöÇΓöÇ 3. Main Policy Content & Sticky Sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ── 3. Main Policy Content & Sticky Sidebar ────────────────────── */}
           <div className="legal-grid-container">
             <div className="legal-layout-grid">
               {/* Sticky Navigation Sidebar */}
@@ -214,7 +214,7 @@ export default function ReturnPolicy() {
                     <h2 className="legal-section-title">Policy Overview &amp; Our Commitment</h2>
                   </div>
                   <p className="legal-paragraph">
-                    At Picky, we celebrate authentic South Indian craftsmanship ΓÇö bringing Madurai Sungudi sarees, Nachiarkoil brass lamps, and traditional handmade goods directly into your homes. We inspect every single item prior to dispatch to ensure pure quality.
+                    At Picky, we celebrate authentic South Indian craftsmanship — bringing Madurai Sungudi sarees, Nachiarkoil brass lamps, and traditional handmade goods directly into your homes. We inspect every single item prior to dispatch to ensure pure quality.
                   </p>
                   <p className="legal-paragraph">
                     However, if you are not fully delighted with your purchase due to a manufacturing defect, transit damage, or size mismatch, our return and replacement process is designed to be effortless, transparent, and completely fair to you.
@@ -315,7 +315,7 @@ export default function ReturnPolicy() {
                     <div className="policy-step-item">
                       <div className="policy-step-badge">3</div>
                       <div className="policy-step-text">
-                        <strong>Doorstep Pickup:</strong> Our courier executive will collect the item from your home within <strong>24ΓÇô48 hours</strong>. Keep the box ready.
+                        <strong>Doorstep Pickup:</strong> Our courier executive will collect the item from your home within <strong>24–48 hours</strong>. Keep the box ready.
                       </div>
                     </div>
                   </div>
@@ -404,7 +404,7 @@ export default function ReturnPolicy() {
                     </div>
                     <div className="policy-helpdesk-row">
                       <Clock size={18} color="#0284c7" className="policy-helpdesk-icon" />
-                      <span><strong>Working Hours:</strong> Monday ΓÇô Saturday: 9:30 AM ΓÇô 7:00 PM IST</span>
+                      <span><strong>Working Hours:</strong> Monday – Saturday: 9:30 AM – 7:00 PM IST</span>
                     </div>
                   </div>
                 </section>
@@ -414,11 +414,11 @@ export default function ReturnPolicy() {
         </div>
       </div>
 
-      {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-          MOBILE VIEW (<= 768px) ΓÇö OPTIMIZED CARDS & ZERO INFORMAL EMOJIS
-          ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE VIEW (<= 768px) — OPTIMIZED CARDS & ZERO INFORMAL EMOJIS
+          ═══════════════════════════════════════════════════════════════════ */}
       <div className={styles.mobileWrapper}>
-        {/* ΓöÇΓöÇ 0. Mobile Hero Header ΓöÇΓöÇ */}
+        {/* ── 0. Mobile Hero Header ── */}
         <header className={styles.mobileHero}>
           <div className={styles.heroBadge}>
             <ShieldCheck size={11} />
@@ -437,7 +437,7 @@ export default function ReturnPolicy() {
           </div>
         </header>
 
-        {/* ΓöÇΓöÇ 1. 2x2 Interactive Trust Pillar Tiles ΓöÇΓöÇ */}
+        {/* ── 1. 2x2 Interactive Trust Pillar Tiles ── */}
         <section className={styles.trustPillarsGrid}>
           {/* Pillar 1 */}
           <div className={styles.pillarCard}>
@@ -471,7 +471,7 @@ export default function ReturnPolicy() {
               <CreditCard size={16} />
             </div>
             <div>
-              <h4 className={styles.pillarTitle}>3ΓÇô5 Days Direct Refund</h4>
+              <h4 className={styles.pillarTitle}>3–5 Days Direct Refund</h4>
               <p className={styles.pillarDesc}>
                 Funds reversed directly to your original payment method, UPI account, or direct bank transfer.
               </p>
@@ -492,7 +492,7 @@ export default function ReturnPolicy() {
           </div>
         </section>
 
-        {/* ΓöÇΓöÇ 2. Sticky Horizontal "Policy Navigation" Quick Jump Rail ΓöÇΓöÇ */}
+        {/* ── 2. Sticky Horizontal "Policy Navigation" Quick Jump Rail ── */}
         <nav className={styles.stickyRail} aria-label="Policy Navigation Quick Jump">
           <div className={styles.railInner}>
             <span className={styles.jumpToLabel}>JUMP TO:</span>
@@ -509,7 +509,7 @@ export default function ReturnPolicy() {
           </div>
         </nav>
 
-        {/* ΓöÇΓöÇ 3. Policy Clauses Cards Container (01 to 08) ΓöÇΓöÇ */}
+        {/* ── 3. Policy Clauses Cards Container (01 to 08) ── */}
         <main className={styles.mainClauses}>
           {/* 01 Policy Overview & Our Commitment */}
           <article id="sec-01" className={styles.clauseCard}>
@@ -518,7 +518,7 @@ export default function ReturnPolicy() {
               <h2 className={styles.cardTitle}>Policy Overview &amp; Our Commitment</h2>
             </div>
             <p className={styles.cardText}>
-              At Picky, we celebrate authentic South Indian craftsmanship ΓÇö bringing Madurai Sungudi sarees, Nachiarkoil brass lamps, and traditional handmade goods directly into your homes. We inspect every single item prior to dispatch to ensure pure quality.
+              At Picky, we celebrate authentic South Indian craftsmanship — bringing Madurai Sungudi sarees, Nachiarkoil brass lamps, and traditional handmade goods directly into your homes. We inspect every single item prior to dispatch to ensure pure quality.
             </p>
             <p className={styles.cardText}>
               However, if you are not fully delighted with your purchase due to a manufacturing defect, transit damage, or size mismatch, our return and replacement process is designed to be effortless, transparent, and completely fair to you.
@@ -651,7 +651,7 @@ export default function ReturnPolicy() {
                 <div className={styles.stepContent}>
                   <div className={styles.stepContentTitle}>Doorstep Pickup</div>
                   <div>
-                    Our courier executive will collect the item from your home within <strong style={{ color: '#111827', fontWeight: 600 }}>24ΓÇô48 hours</strong>. Keep the box ready.
+                    Our courier executive will collect the item from your home within <strong style={{ color: '#111827', fontWeight: 600 }}>24–48 hours</strong>. Keep the box ready.
                   </div>
                 </div>
               </div>
@@ -736,7 +736,7 @@ export default function ReturnPolicy() {
               <h2 className={styles.cardTitle}>Customer Care &amp; Support Helpdesk</h2>
             </div>
             <p className={styles.cardText}>
-              Have questions regarding your return or refund status? Our dedicated support team is available MonΓÇôSat from 9:30 AM to 7:00 PM IST.
+              Have questions regarding your return or refund status? Our dedicated support team is available Mon–Sat from 9:30 AM to 7:00 PM IST.
             </p>
 
             <div className={styles.helpdeskContacts}>
@@ -769,7 +769,7 @@ export default function ReturnPolicy() {
                 </div>
                 <div>
                   <span className={styles.contactLabel}>Working Hours</span>
-                  <p className={`${styles.contactVal} ${styles.contactValMedium}`}>Monday ΓÇô Saturday: 9:30 AM ΓÇô 7:00 PM IST</p>
+                  <p className={`${styles.contactVal} ${styles.contactValMedium}`}>Monday – Saturday: 9:30 AM – 7:00 PM IST</p>
                 </div>
               </div>
             </div>

@@ -17,6 +17,7 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import styles from './AdminDashboard.module.css';
+import { joinAdminRoom, subscribeToOrders } from '../../../services/socket';
 
 const ADMIN = '/softpicky-sn2026';
 
@@ -683,6 +684,11 @@ export default function AdminDashboard() {
       }
     }
     fetchStats();
+    try {
+      joinAdminRoom();
+      const unsub = subscribeToOrders(() => { fetchStats(); });
+      return () => { unsub(); };
+    } catch (_) {}
   }, []);
 
   // Dynamically map real summary data or fallback to config

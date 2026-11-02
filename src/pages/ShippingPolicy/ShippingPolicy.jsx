@@ -111,12 +111,12 @@ export default function ShippingPolicy() {
 
   return (
     <PageWrapper>
-      {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-          DESKTOP VIEW (> 768px) ΓÇö 100% UNTOUCHED & INTACT
-          ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          DESKTOP VIEW (> 768px) — 100% UNTOUCHED & INTACT
+          ═══════════════════════════════════════════════════════════════════ */}
       <div className={styles.desktopWrapper}>
         <div className="legal-page-wrapper">
-          {/* ΓöÇΓöÇ 1. Hero Banner ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ── 1. Hero Banner ──────────────────────────────────────────────── */}
           <header className="legal-hero-wrapper">
             <div className="legal-hero-container">
               <div className="legal-badge-pill">
@@ -144,7 +144,7 @@ export default function ShippingPolicy() {
             </div>
           </header>
 
-          {/* ΓöÇΓöÇ 2. Quick Highlight 4-Card Grid ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ── 2. Quick Highlight 4-Card Grid ─────────────────────────────── */}
           <div className="legal-grid-container" style={{ marginTop: '-2.5rem', position: 'relative', zIndex: 10 }}>
             <div style={{
               display: 'grid',
@@ -163,7 +163,7 @@ export default function ShippingPolicy() {
                   <Zap size={28} />
                 </div>
                 <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 700, color: '#1e1b4b' }}>
-                  24ΓÇô48h Dispatch
+                  24–48h Dispatch
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
                   Orders packaged and handed to primary courier logistics within 1 to 2 business days.
@@ -181,10 +181,10 @@ export default function ShippingPolicy() {
                   <CreditCard size={28} />
                 </div>
                 <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 700, color: '#1e1b4b' }}>
-                  FREE Shipping &gt; Γé╣999
+                  FREE Shipping &gt; ₹999
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                  Zero shipping charge on all prepaid and COD orders valued above Γé╣999 across India.
+                  Zero shipping charge on all prepaid and COD orders valued above ₹999 across India.
                 </p>
               </div>
 
@@ -226,7 +226,7 @@ export default function ShippingPolicy() {
             </div>
           </div>
 
-          {/* ΓöÇΓöÇ 3. Main Content & Sticky Sidebar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ── 3. Main Content & Sticky Sidebar ────────────────────────────── */}
           <div className="legal-grid-container">
             <div className="legal-layout-grid">
               {/* Sticky Navigation Sidebar */}
@@ -268,7 +268,7 @@ export default function ShippingPolicy() {
                   </p>
                   <ul className="legal-list">
                     <li>
-                      <strong>Standard Processing:</strong> Orders confirmed before 1:00 PM IST on business days are usually dispatched on the same day or next business morning (24ΓÇô48 hours).
+                      <strong>Standard Processing:</strong> Orders confirmed before 1:00 PM IST on business days are usually dispatched on the same day or next business morning (24–48 hours).
                     </li>
                     <li>
                       <strong>Festive Seasons:</strong> During Diwali, Pongal, and festive drops, high-volume artisanal items might require up to 48 hours for special packaging.
@@ -300,22 +300,22 @@ export default function ShippingPolicy() {
                       <tbody>
                         <tr style={{ borderBottom: '1px solid #f1eafa' }}>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Tamil Nadu (All 38 Districts)</td>
-                          <td style={{ padding: '0.75rem 1rem', color: '#16a34a', fontWeight: 700 }}>2 ΓÇô 4 Business Days</td>
+                          <td style={{ padding: '0.75rem 1rem', color: '#16a34a', fontWeight: 700 }}>2 – 4 Business Days</td>
                           <td style={{ padding: '0.75rem 1rem' }}>DTDC, Blue Dart, Professional Couriers</td>
                         </tr>
                         <tr style={{ borderBottom: '1px solid #f1eafa' }}>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>South India (KL, KA, AP, TS)</td>
-                          <td style={{ padding: '0.75rem 1rem', color: '#16a34a', fontWeight: 700 }}>3 ΓÇô 5 Business Days</td>
+                          <td style={{ padding: '0.75rem 1rem', color: '#16a34a', fontWeight: 700 }}>3 – 5 Business Days</td>
                           <td style={{ padding: '0.75rem 1rem' }}>Blue Dart Surface &amp; Air, DTDC</td>
                         </tr>
                         <tr style={{ borderBottom: '1px solid #f1eafa' }}>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Metro Cities (Mumbai, Delhi, Kolkata)</td>
-                          <td style={{ padding: '0.75rem 1rem', color: '#0284c7', fontWeight: 700 }}>3 ΓÇô 6 Business Days</td>
+                          <td style={{ padding: '0.75rem 1rem', color: '#0284c7', fontWeight: 700 }}>3 – 6 Business Days</td>
                           <td style={{ padding: '0.75rem 1rem' }}>Blue Dart Air Express</td>
                         </tr>
                         <tr>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Rest of India &amp; Remote Areas</td>
-                          <td style={{ padding: '0.75rem 1rem', color: '#0284c7', fontWeight: 700 }}>4 ΓÇô 7 Business Days</td>
+                          <td style={{ padding: '0.75rem 1rem', color: '#0284c7', fontWeight: 700 }}>4 – 7 Business Days</td>
                           <td style={{ padding: '0.75rem 1rem' }}>India Post Speed Post, DTDC</td>
                         </tr>
                       </tbody>
@@ -344,14 +344,14 @@ export default function ShippingPolicy() {
                   }}>
                     <CheckCircle2 size={24} color="#16a34a" style={{ flexShrink: 0 }} />
                     <div>
-                      <strong style={{ color: '#15803d', fontSize: '0.95rem' }}>FREE SHIPPING on Orders Above Γé╣999</strong>
+                      <strong style={{ color: '#15803d', fontSize: '0.95rem' }}>FREE SHIPPING on Orders Above ₹999</strong>
                       <p style={{ margin: '0.2rem 0 0', fontSize: '0.84rem', color: '#166534' }}>
-                        Add products worth Γé╣999 or more to your cart to automatically qualify for complimentary free delivery.
+                        Add products worth ₹999 or more to your cart to automatically qualify for complimentary free delivery.
                       </p>
                     </div>
                   </div>
                   <p className="legal-paragraph">
-                    For orders below Γé╣999, a nominal standard handling and courier charge of <strong>Γé╣40</strong> is applied at checkout to cover safe transit and packaging.
+                    For orders below ₹999, a nominal standard handling and courier charge of <strong>₹40</strong> is applied at checkout to cover safe transit and packaging.
                   </p>
                 </section>
 
@@ -394,7 +394,7 @@ export default function ShippingPolicy() {
                       <strong>Sungudi Sarees &amp; Handlooms:</strong> Sealed in moisture-barrier virgin polybags to guard against rain, dust, and humidity during transit.
                     </li>
                     <li>
-                      <strong>Gift Wrapping:</strong> If you select Gift Wrap (+Γé╣30) at checkout, your items are dressed in premium textured paper and accompanied by your printed personalized greeting message.
+                      <strong>Gift Wrapping:</strong> If you select Gift Wrap (+₹30) at checkout, your items are dressed in premium textured paper and accompanied by your printed personalized greeting message.
                     </li>
                   </ul>
                 </section>
@@ -473,11 +473,11 @@ export default function ShippingPolicy() {
         </div>
       </div>
 
-      {/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-          MOBILE VIEW (<= 768px) ΓÇö OPTIMIZED CARDS & ZERO INFORMAL EMOJIS
-          ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE VIEW (<= 768px) — OPTIMIZED CARDS & ZERO INFORMAL EMOJIS
+          ═══════════════════════════════════════════════════════════════════ */}
       <div className={styles.mobileWrapper}>
-        {/* ΓöÇΓöÇ 0. Mobile Hero Header ΓöÇΓöÇ */}
+        {/* ── 0. Mobile Hero Header ── */}
         <header className={styles.mobileHero}>
           <div className={styles.heroBadge}>
             <ShieldCheck size={11} />
@@ -491,18 +491,18 @@ export default function ShippingPolicy() {
           </p>
           <div className={styles.heroPillsRow}>
             <span className={styles.heroPill}>
-              <Clock size={11} /> Dispatch: 24 ΓÇô 48 Hours
+              <Clock size={11} /> Dispatch: 24 – 48 Hours
             </span>
             <span className={`${styles.heroPill} ${styles.heroPillActive}`}>
               <ShieldCheck size={11} /> Insured Shipments
             </span>
             <span className={styles.heroPill}>
-              <Truck size={11} /> Blue Dart ΓÇó DTDC ΓÇó India Post
+              <Truck size={11} /> Blue Dart • DTDC • India Post
             </span>
           </div>
         </header>
 
-        {/* ΓöÇΓöÇ 1. 2x2 Interactive Logistics Trust Pillars Grid ΓöÇΓöÇ */}
+        {/* ── 1. 2x2 Interactive Logistics Trust Pillars Grid ── */}
         <section className={styles.trustPillarsGrid}>
           {/* Pillar 1: 24-48h Dispatch */}
           <div className={styles.pillarCard}>
@@ -510,18 +510,18 @@ export default function ShippingPolicy() {
               <Zap size={16} />
             </div>
             <div>
-              <h4 className={styles.pillarTitle}>24ΓÇô48h Dispatch</h4>
-              <p className={styles.pillarDesc}>Handed to primary logistics in 1ΓÇô2 business days.</p>
+              <h4 className={styles.pillarTitle}>24–48h Dispatch</h4>
+              <p className={styles.pillarDesc}>Handed to primary logistics in 1–2 business days.</p>
             </div>
           </div>
 
-          {/* Pillar 2: FREE Shipping > Γé╣999 */}
+          {/* Pillar 2: FREE Shipping > ₹999 */}
           <div className={styles.pillarCard}>
             <div className={`${styles.pillarIconWrap} ${styles.pillarIconEmerald}`}>
               <Gift size={16} />
             </div>
             <div>
-              <h4 className={styles.pillarTitle}>FREE Shipping &gt; Γé╣999</h4>
+              <h4 className={styles.pillarTitle}>FREE Shipping &gt; ₹999</h4>
               <p className={styles.pillarDesc}>Zero fee on prepaid &amp; COD across India.</p>
             </div>
           </div>
@@ -549,7 +549,7 @@ export default function ShippingPolicy() {
           </div>
         </section>
 
-        {/* ΓöÇΓöÇ 2. Sticky Horizontal "Quick Policy Jumps" Navigation Rail ΓöÇΓöÇ */}
+        {/* ── 2. Sticky Horizontal "Quick Policy Jumps" Navigation Rail ── */}
         <nav className={styles.stickyRail} aria-label="Quick Policy Jumps">
           <div className={styles.railInner}>
             <span className={styles.jumpToLabel}>QUICK JUMPS:</span>
@@ -566,7 +566,7 @@ export default function ShippingPolicy() {
           </div>
         </nav>
 
-        {/* ΓöÇΓöÇ 3. Policy Clauses Container (01 to 08) ΓöÇΓöÇ */}
+        {/* ── 3. Policy Clauses Container (01 to 08) ── */}
         <main className={styles.mainClauses}>
           {/* 01 Order Dispatch & Processing */}
           <article id="sec-01" className={styles.clauseCard}>
@@ -579,19 +579,19 @@ export default function ShippingPolicy() {
             </p>
             <div className={styles.bulletList}>
               <div className={styles.bulletItem}>
-                <span className={styles.bulletDot}>ΓÇó</span>
+                <span className={styles.bulletDot}>•</span>
                 <p style={{ margin: 0 }}>
-                  <strong style={{ color: '#111827', fontWeight: 600 }}>Standard Processing:</strong> Orders confirmed before 1:00 PM IST on business days are usually dispatched on the same day or next business morning (24ΓÇô48 hours).
+                  <strong style={{ color: '#111827', fontWeight: 600 }}>Standard Processing:</strong> Orders confirmed before 1:00 PM IST on business days are usually dispatched on the same day or next business morning (24–48 hours).
                 </p>
               </div>
               <div className={styles.bulletItem}>
-                <span className={styles.bulletDot}>ΓÇó</span>
+                <span className={styles.bulletDot}>•</span>
                 <p style={{ margin: 0 }}>
                   <strong style={{ color: '#111827', fontWeight: 600 }}>Festive Seasons:</strong> During Diwali, Pongal, and festive drops, high-volume artisanal items might require up to 48 hours for special packaging.
                 </p>
               </div>
               <div className={styles.bulletItem}>
-                <span className={styles.bulletDot}>ΓÇó</span>
+                <span className={styles.bulletDot}>•</span>
                 <p style={{ margin: 0 }}>
                   <strong style={{ color: '#111827', fontWeight: 600 }}>Sunday &amp; Public Holidays:</strong> Couriers do not operate dispatch on Sundays and national public holidays; processing resumes on the next working morning.
                 </p>
@@ -616,7 +616,7 @@ export default function ShippingPolicy() {
                   <h4 className={styles.timelineCardTitle}>Tamil Nadu (All 38 Districts)</h4>
                   <p className={styles.timelineCardSub}>Courier: DTDC, Blue Dart, Professional Couriers</p>
                 </div>
-                <span className={`${styles.timePill} ${styles.timePillEmerald}`}>2 ΓÇô 4 Days</span>
+                <span className={`${styles.timelineBadge} ${styles.timelineBadgeEmerald}`}>2 – 4 Days</span>
               </div>
 
               {/* South India */}
@@ -625,7 +625,7 @@ export default function ShippingPolicy() {
                   <h4 className={styles.timelineCardTitle}>South India (KL, KA, AP, TS)</h4>
                   <p className={styles.timelineCardSub}>Courier: Blue Dart Surface &amp; Air, DTDC</p>
                 </div>
-                <span className={`${styles.timePill} ${styles.timePillPurple}`}>3 ΓÇô 5 Days</span>
+                <span className={`${styles.timelineBadge} ${styles.timelineBadgePurple}`}>3 – 5 Days</span>
               </div>
 
               {/* Metro Cities */}
@@ -634,7 +634,7 @@ export default function ShippingPolicy() {
                   <h4 className={styles.timelineCardTitle}>Metro Cities (Mumbai, Delhi, Kolkata)</h4>
                   <p className={styles.timelineCardSub}>Courier: Blue Dart Air Express</p>
                 </div>
-                <span className={`${styles.timePill} ${styles.timePillPurple}`}>3 ΓÇô 6 Days</span>
+                <span className={`${styles.timelineBadge} ${styles.timelineBadgePurple}`}>3 – 6 Days</span>
               </div>
 
               {/* Rest of India */}
@@ -643,7 +643,7 @@ export default function ShippingPolicy() {
                   <h4 className={styles.timelineCardTitle}>Rest of India &amp; Remote Areas</h4>
                   <p className={styles.timelineCardSub}>Courier: India Post Speed Post, DTDC</p>
                 </div>
-                <span className={`${styles.timePill} ${styles.timePillPurple}`}>4 ΓÇô 7 Days</span>
+                <span className={`${styles.timelineBadge} ${styles.timelineBadgePurple}`}>4 – 7 Days</span>
               </div>
             </div>
           </article>
@@ -664,15 +664,15 @@ export default function ShippingPolicy() {
                 <Check size={12} />
               </div>
               <div>
-                <h4 className={styles.freeShippingTitle}>FREE SHIPPING on Orders Above Γé╣999</h4>
+                <h4 className={styles.freeShippingTitle}>FREE SHIPPING on Orders Above ₹999</h4>
                 <p className={styles.freeShippingDesc}>
-                  Add products worth Γé╣999 or more to your cart to automatically qualify for complimentary free delivery across India.
+                  Add products worth ₹999 or more to your cart to automatically qualify for complimentary free delivery across India.
                 </p>
               </div>
             </div>
 
             <p className={styles.belowThresholdNote}>
-              For orders below Γé╣999, a nominal standard handling and courier charge of <strong style={{ color: '#111827', fontWeight: 600 }}>Γé╣40</strong> is applied at checkout to cover safe transit and packaging.
+              For orders below ₹999, a nominal standard handling and courier charge of <strong style={{ color: '#111827', fontWeight: 600 }}>₹40</strong> is applied at checkout to cover safe transit and packaging.
             </p>
           </article>
 
@@ -744,10 +744,10 @@ export default function ShippingPolicy() {
               <div className={styles.packagingBox}>
                 <div className={styles.packagingBoxHeader}>
                   <Gift size={16} color="#d97706" className={styles.packagingIconWrap} />
-                  <h4 className={styles.packagingTitle}>Gift Wrapping (+Γé╣30)</h4>
+                  <h4 className={styles.packagingTitle}>Gift Wrapping (+₹30)</h4>
                 </div>
                 <p className={styles.packagingText}>
-                  If you select Gift Wrap (+Γé╣30) at checkout, your items are dressed in premium textured paper and accompanied by your printed personalized greeting message.
+                  If you select Gift Wrap (+₹30) at checkout, your items are dressed in premium textured paper and accompanied by your printed personalized greeting message.
                 </p>
               </div>
             </div>
@@ -764,19 +764,19 @@ export default function ShippingPolicy() {
             </p>
             <div className={styles.bulletList}>
               <div className={styles.bulletItem}>
-                <span className={styles.bulletDot}>ΓÇó</span>
+                <span className={styles.bulletDot}>•</span>
                 <p style={{ margin: 0 }}>
                   COD orders may receive an automated verification SMS/WhatsApp confirmation prior to dispatch.
                 </p>
               </div>
               <div className={styles.bulletItem}>
-                <span className={styles.bulletDot}>ΓÇó</span>
+                <span className={styles.bulletDot}>•</span>
                 <p style={{ margin: 0 }}>
                   Please ensure the exact cash amount is ready at the time of delivery. Many delivery partners also accept <strong style={{ color: '#111827', fontWeight: 600 }}>UPI QR payment</strong> at your doorstep upon delivery.
                 </p>
               </div>
               <div className={styles.bulletItem}>
-                <span className={styles.bulletDot}>ΓÇó</span>
+                <span className={styles.bulletDot}>•</span>
                 <p style={{ margin: 0 }}>
                   Open-delivery is not permitted before payment as per standard courier carrier guidelines; however, you are fully covered under our <Link to="/returns" className={styles.linkAccent}>7-Day Replacement Policy</Link>.
                 </p>

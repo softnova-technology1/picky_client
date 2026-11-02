@@ -367,10 +367,13 @@ export default function Home() {
 
 
 
+  const retryTimerRef = useRef(null);
+
   useEffect(() => {
-    async function loadData() {
-      const startTime = Date.now();
-      setLoading(true);
+    let isMounted = true;
+
+    async function loadData(isBackground = false) {
+      if (!isBackground) setLoading(true);
       try {
         const prodRes = await productService.list({ limit: 50 });
         const pItems = prodRes?.data?.data || prodRes?.data || [];
@@ -391,19 +394,19 @@ export default function Home() {
           const trending = pItems.filter(
             (p) => hasTag(p, 'trend') || Boolean(p.isTrending)
           );
-          setTrendingProducts(trending);
+          if (isMounted) setTrendingProducts(trending);
 
           // 2. Best Sellers filter (strictly matches 'best sellers', 'best', 'seller', or isBestSeller)
           const bestSellers = pItems.filter(
             (p) => hasTag(p, 'best') || hasTag(p, 'seller') || Boolean(p.isBestSeller)
           );
-          setFeaturedProducts(bestSellers);
+          if (isMounted) setFeaturedProducts(bestSellers);
 
           // 3. New Arrivals filter (strictly matches 'new arrivals', 'new', 'arrival', or isNewArrival)
           const arrivals = pItems.filter(
             (p) => hasTag(p, 'new') || hasTag(p, 'arrival') || Boolean(p.isNewArrival)
           );
-          setNewArrivals(arrivals);
+          if (isMounted) setNewArrivals(arrivals);
 
           // 4. Limited Deals filter: products with ACTIVE discounts from Discounts page, followed by tagged deal products
           const now = Date.now();
@@ -426,29 +429,56 @@ export default function Home() {
               ),
             ]
             : tagDeals;
-          setDealProducts(deals);
+          if (isMounted) setDealProducts(deals);
+
+          // Success: Clear any pending auto-retry
+          if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
         } else {
-          setFeaturedProducts([]);
-          setTrendingProducts([]);
-          setNewArrivals([]);
-          setDealProducts([]);
+          // If DB is warming up or empty, retry automatically every 3.5 seconds
+          if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+          retryTimerRef.current = setTimeout(() => {
+            if (isMounted) loadData(true);
+          }, 3500);
         }
       } catch (err) {
-        console.error('Home load error:', err);
-        setFeaturedProducts([]);
-        setTrendingProducts([]);
-        setNewArrivals([]);
-        setDealProducts([]);
+        console.warn('Home load attempt error:', err?.message || err);
+        // If DB is not ready yet, auto-retry automatically every 3.5 seconds
+        if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = setTimeout(() => {
+          if (isMounted) loadData(true);
+        }, 3500);
       } finally {
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((r) => setTimeout(r, remainingDelay));
+        if (isMounted && !isBackground) {
+          setLoading(false);
         }
-        setLoading(false);
       }
     }
+
+    // 1. Initial Load immediately (no artificial lag delay!)
     loadData();
+
+    // 2. Real-Time DB & Catalog Event Listeners
+    const handleLiveCatalogUpdate = () => {
+      if (isMounted) loadData(true);
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && isMounted) {
+        loadData(true);
+      }
+    };
+
+    window.addEventListener('picky_catalog_updated', handleLiveCatalogUpdate);
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleLiveCatalogUpdate);
+
+    return () => {
+      isMounted = false;
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      window.removeEventListener('picky_catalog_updated', handleLiveCatalogUpdate);
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleLiveCatalogUpdate);
+    };
   }, []);
 
   const filteredArrivals = useMemo(() => {

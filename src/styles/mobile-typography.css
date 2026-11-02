@@ -199,10 +199,8 @@
   }
 
   /* Buttons & CTAs */
-  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]),
+  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]):not([class*="dot"]):not([class*="Dot"]):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .mobile-cta-btn,
-  .hp-view-all-mobile,
-  .spotlight-btn-mobile,
   [class*="btnPrimary"],
   [class*="btnSecondary"],
   [class*="ctaBtn"],
@@ -214,6 +212,191 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+  }
+
+  /* Compact Product Card Button — Single Row, Zero Wrap */
+  .ref-add-cart-btn {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    font-size: 0.72rem !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .ref-add-cart-btn span {
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+  }
+
+  .ref-add-cart-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Compact Hero Banner CTA */
+  .hero-mobile-cta {
+    min-height: 30px !important;
+    max-height: 30px !important;
+    height: 30px !important;
+    font-size: 11.5px !important;
+    padding: 4px 14px !important;
+  }
+
+  /* ── Original Proportional Mobile Buttons ── */
+  /* Wishlist Heart Button — Circular 28px, Never Oval */
+  .ref-wishlist-btn,
+  .spotlight-heart-btn,
+  button.ref-wishlist-btn,
+  button.spotlight-heart-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .ref-wishlist-btn svg,
+  .spotlight-heart-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Section Header View All / Explore Pill Button (Old Compact Size) */
+  .hp-view-all-btn,
+  button.hp-view-all-btn {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    padding: 0 12px !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+    letter-spacing: 0.03em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+  }
+
+  .hp-view-all-mobile {
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    min-height: unset !important;
+    height: auto !important;
+    display: inline !important;
+  }
+
+  .hp-view-all-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Flash Spotlight View Deal Button (Old Compact Size) */
+  .spotlight-cta-btn,
+  button.spotlight-cta-btn {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    width: 100% !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 0 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .spotlight-btn-mobile {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    min-height: unset !important;
+    height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .spotlight-btn-mobile svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
+    /* Carousel Navigation Buttons & Category View All */
+  .hp-carousel-nav-btn,
+  button.hp-carousel-nav-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .hp-cat-view-all-btn,
+  button.hp-cat-view-all-btn {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    padding: 0 12px !important;
+    border-radius: 9999px !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.03em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+  }
+
+  /* Disable Card Hover Lift on Mobile */
+  .ref-product-card:hover,
+  .ref-product-card:active,
+  .hp-horizontal-card:hover,
+  .hp-horizontal-card:active,
+  .hp-flash-minimal-card:hover,
+  .hp-flash-minimal-card:active {
+    transform: none !important;
   }
 
   /* Badges & Status Pills (Prevent Text Clipping) */

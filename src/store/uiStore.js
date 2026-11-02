@@ -19,6 +19,7 @@ export const DEFAULT_SIDEBAR_PAGES = {
   broadcast: true,
   flashSales: true,
   inquiries: true,
+  blog: true,
   customization: true,
   notifications: true,
   settings: true,
