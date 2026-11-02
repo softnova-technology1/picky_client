@@ -213,7 +213,15 @@ button:disabled:hover,
 .admin-layout button::before,
 .admin-layout button::after,
 .no-hover-fx::before,
-.no-hover-fx::after {
+.no-hover-fx::after,
+button.no-hover-fx::before,
+button.no-hover-fx::after,
+button[title*="password"]::before,
+button[title*="password"]::after,
+button[aria-label*="password"]::before,
+button[aria-label*="password"]::after,
+.picky-input-end-btn::before,
+.picky-input-end-btn::after {
   display: none !important;
   content: none !important;
 }

@@ -131,6 +131,7 @@ export function AdminProtectedRoute({ children }) {
               />
               <button
                 type="button"
+                className="no-hover-fx icon-btn"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
