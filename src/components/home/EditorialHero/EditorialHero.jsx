@@ -599,22 +599,25 @@ export default function EditorialHero({ settings: propSettings }) {
             color: #7c3aed;
           }
           .hero-mobile-cta {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 9999px;
-            padding: 6px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            line-height: 1.2;
-            letter-spacing: 0.04em;
-            cursor: pointer;
-            margin-top: 2px;
-            box-shadow: 0 3px 8px rgba(124, 58, 237, 0.28);
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 9999px !important;
+            padding: 5px 14px !important;
+            font-size: 11.5px !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            letter-spacing: 0.04em !important;
+            cursor: pointer !important;
+            margin-top: 2px !important;
+            height: 30px !important;
+            min-height: 30px !important;
+            max-height: 30px !important;
+            box-shadow: 0 3px 8px rgba(124, 58, 237, 0.28) !important;
           }
           .hero-mobile-counter {
             position: absolute;

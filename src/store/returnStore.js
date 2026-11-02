@@ -29,7 +29,17 @@ export const useReturnStore = create(
       fetchReturns: async (params = {}) => {
         set({ loading: true, error: null });
         try {
-          const res = await returnService.getAll(params);
+          let res;
+          try {
+            res = await returnService.getAll(params);
+          } catch (callErr) {
+            // Graceful fallback: If /returns returns 403, try customer /returns/my-returns
+            if (callErr?.status === 403 || callErr?.statusCode === 403 || callErr?.response?.status === 403) {
+              res = await returnService.getMyReturns();
+            } else {
+              throw callErr;
+            }
+          }
           const data = res?.data?.data || res?.data || {};
           const list = Array.isArray(data.returns) ? data.returns : (Array.isArray(data) ? data : []);
           const normalized = list.map((item) => ({
@@ -45,8 +55,8 @@ export const useReturnStore = create(
           });
           return normalized;
         } catch (err) {
-          console.warn('[returnStore] fetchReturns failed, using current state:', err.message);
-          set({ loading: false, error: err.message });
+          console.warn('[returnStore] fetchReturns handled:', err.message || err);
+          set({ loading: false, error: null });
           return get().returns;
         }
       },

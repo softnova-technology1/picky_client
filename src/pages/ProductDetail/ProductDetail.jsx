@@ -38,7 +38,7 @@ import {
   MapPin,
   Banknote,
 } from 'lucide-react';
-import '../../mobilestyle/productDetail.module.css';
+import './ProductDetailMobile.css';
 
 const DEFAULT_CAPACITIES = ['128GB', '256GB', '512GB'];
 

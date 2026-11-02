@@ -20,7 +20,7 @@ function isRequestForAdmin(config) {
   if (url.startsWith('/coupons') && method !== 'get') return true;
   if (url.startsWith('/discounts') && method !== 'get') return true;
   if (url.startsWith('/blog') && method !== 'get') return true;
-  if (url.startsWith('/returns') && !url.includes('/my-returns')) return true;
+  if (url.startsWith('/returns') && method !== 'get' && method !== 'post') return true;
   if (typeof window !== 'undefined') {
     const path = window.location?.pathname || '';
     if (path.startsWith('/softpicky-sn2026') || path.startsWith('/admin')) {
