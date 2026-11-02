@@ -128,6 +128,32 @@
     flex-shrink: 0 !important;
   }
 
+    /* ── Mobile Touch: Disable Card Hover Lift / Jiggle ── */
+  .ref-product-card:hover,
+  .ref-product-card:active,
+  .ref-product-card:focus,
+  .hp-horizontal-card:hover,
+  .hp-horizontal-card:active,
+  .hp-flash-minimal-card:hover,
+  .hp-flash-minimal-card:active,
+  .hp-flash-spotlight-card:hover,
+  .hp-flash-spotlight-card:active,
+  .hp-category-item:hover,
+  .hp-category-item:active,
+  .hp-trust-item:hover,
+  .hp-trust-item:active,
+  .hp-review-card:hover,
+  .hp-review-card:active,
+  .product-card:hover,
+  .product-card:active,
+  [class*="productCard"]:hover,
+  [class*="productCard"]:active,
+  [class*="ProductCard"]:hover,
+  [class*="ProductCard"]:active {
+    transform: none !important;
+    transition: none !important;
+  }
+
   /* 2. Mobile Header & Search Bar */
   .mobile-nav-header {
     position: -webkit-sticky;
@@ -344,11 +370,15 @@
     display: none !important;
   }
 
-  .hp-cat-view-all-btn {
+  .hp-cat-view-all-btn,
+  button.hp-cat-view-all-btn {
     background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
     color: #ffffff !important;
     border: none !important;
-    padding: 6px 12px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    padding: 0 12px !important;
     border-radius: 9999px !important;
     font-size: 0.68rem !important;
     font-weight: 800 !important;
@@ -356,10 +386,12 @@
     box-shadow: 0 3px 10px rgba(124, 58, 237, 0.25) !important;
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 4px !important;
     cursor: pointer !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
+    line-height: 1 !important;
     margin: 0 !important;
   }
 
@@ -487,19 +519,32 @@
     gap: 6px !important;
   }
 
-  .hp-carousel-nav-btn {
+  .hp-carousel-nav-btn,
+  button.hp-carousel-nav-btn {
     width: 28px !important;
     height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
     border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     color: #64748b !important;
     padding: 0 !important;
+    margin: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .hp-carousel-nav-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
   }
 
   /* Trending Auto-Running Carousel (Shows exactly 2 cards per view in continuous smooth loop) */
@@ -2371,7 +2416,7 @@
   }
 
   /* Button text / CTA: 14px | 600-700 | 1.2 (Min-height: 44px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,
@@ -2743,7 +2788,7 @@
   }
 
   /* Button text / CTA: 13px | 600-700 | 1.2 (Min-height: 42px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,
@@ -3118,7 +3163,7 @@
   }
 
   /* Button text / CTA: 12px | 600-700 | 1.2 (Min-height: 40px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,

@@ -199,7 +199,7 @@
   }
 
   /* Buttons & CTAs */
-  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]):not([class*="dot"]):not([class*="Dot"]):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.spotlight-cta-btn),
+  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]):not([class*="dot"]):not([class*="Dot"]):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .mobile-cta-btn,
   [class*="btnPrimary"],
   [class*="btnSecondary"],
@@ -350,6 +350,53 @@
     width: 14px !important;
     height: 14px !important;
     flex-shrink: 0 !important;
+  }
+
+    /* Carousel Navigation Buttons & Category View All */
+  .hp-carousel-nav-btn,
+  button.hp-carousel-nav-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .hp-cat-view-all-btn,
+  button.hp-cat-view-all-btn {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    padding: 0 12px !important;
+    border-radius: 9999px !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.03em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+  }
+
+  /* Disable Card Hover Lift on Mobile */
+  .ref-product-card:hover,
+  .ref-product-card:active,
+  .hp-horizontal-card:hover,
+  .hp-horizontal-card:active,
+  .hp-flash-minimal-card:hover,
+  .hp-flash-minimal-card:active {
+    transform: none !important;
   }
 
   /* Badges & Status Pills (Prevent Text Clipping) */

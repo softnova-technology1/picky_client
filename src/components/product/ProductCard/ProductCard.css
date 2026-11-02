@@ -350,6 +350,13 @@
         border-radius: 16px;
     }
 
+    .ref-product-card:hover,
+    .ref-product-card:active,
+    .ref-product-card:focus {
+        transform: none !important;
+        box-shadow: 0 4px 16px rgba(124, 58, 237, 0.08) !important;
+    }
+
     .ref-card-top {
         border-radius: 16px;
         aspect-ratio: 1 / 1;
