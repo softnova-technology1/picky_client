@@ -199,7 +199,7 @@
   }
 
   /* Buttons & CTAs */
-  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]),
+  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]):not([class*="dot"]):not([class*="Dot"]):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
   .mobile-cta-btn,
   .hp-view-all-mobile,
   .spotlight-btn-mobile,
@@ -214,6 +214,43 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+  }
+
+  /* Compact Product Card Button — Single Row, Zero Wrap */
+  .ref-add-cart-btn {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    font-size: 0.72rem !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .ref-add-cart-btn span {
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+  }
+
+  .ref-add-cart-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Compact Hero Banner CTA */
+  .hero-mobile-cta {
+    min-height: 30px !important;
+    max-height: 30px !important;
+    height: 30px !important;
+    font-size: 11.5px !important;
+    padding: 4px 14px !important;
   }
 
   /* Badges & Status Pills (Prevent Text Clipping) */

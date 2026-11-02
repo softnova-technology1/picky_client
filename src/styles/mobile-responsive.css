@@ -699,19 +699,37 @@
 
   .ref-add-cart-btn {
     width: 100% !important;
-    height: 30px !important;
-    font-size: 0.75rem !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    font-size: 0.72rem !important;
     font-weight: 700 !important;
     border-radius: 8px !important;
     background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%) !important;
     color: #ffffff !important;
     border: none !important;
     display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 4px !important;
+    white-space: nowrap !important;
+    gap: 5px !important;
+    padding: 0 8px !important;
     cursor: pointer !important;
     box-shadow: 0 4px 12px rgba(109, 40, 217, 0.2) !important;
+  }
+
+  .ref-add-cart-btn span {
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+  }
+
+  .ref-add-cart-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
   }
 
   /* 6. Limited Time Deals Section */
@@ -2297,13 +2315,9 @@
   }
 
   /* Button text / CTA: 14px | 600-700 | 1.2 (Min-height: 44px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
-  .hero-mobile-cta,
-  .hero-mobile-cta span,
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
   .hero-cta,
   .carousel-cta-btn,
-  .ref-add-cart-btn,
-  .ref-add-cart-btn span,
   .product-card-add-btn,
   [class*="addCartBtn"],
   .spotlight-cta-btn,
@@ -2675,13 +2689,9 @@
   }
 
   /* Button text / CTA: 13px | 600-700 | 1.2 (Min-height: 42px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
-  .hero-mobile-cta,
-  .hero-mobile-cta span,
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
   .hero-cta,
   .carousel-cta-btn,
-  .ref-add-cart-btn,
-  .ref-add-cart-btn span,
   .product-card-add-btn,
   [class*="addCartBtn"],
   .spotlight-cta-btn,
@@ -3056,13 +3066,9 @@
   }
 
   /* Button text / CTA: 12px | 600-700 | 1.2 (Min-height: 40px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="close"]):not([class*="Close"]),
-  .hero-mobile-cta,
-  .hero-mobile-cta span,
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]),
   .hero-cta,
   .carousel-cta-btn,
-  .ref-add-cart-btn,
-  .ref-add-cart-btn span,
   .product-card-add-btn,
   [class*="addCartBtn"],
   .spotlight-cta-btn,
@@ -3251,22 +3257,49 @@
 
   .hp-final-cta-btn-group {
     display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 0.75rem !important;
-  }
-
-  .hp-final-cta-btn,
-  .hp-final-cta-outline-btn {
-    width: 100% !important;
-    height: 48px !important;
-    border-radius: 14px !important;
-    font-size: 0.88rem !important;
-    font-weight: 750 !important;
-    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .hp-final-cta-btn {
+    height: 42px !important;
+    padding: 0 18px !important;
+    border-radius: 9999px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    width: auto !important;
+    background: #ffffff !important;
+    color: #5b21b6 !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  .hp-final-cta-outline-btn {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: 2px solid #25d366 !important;
+    color: #25d366 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
     margin: 0 !important;
-    box-sizing: border-box !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .hp-final-cta-outline-btn .hp-cta-wa-label {
+    display: none !important;
   }
 }

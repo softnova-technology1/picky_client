@@ -470,10 +470,31 @@
     }
 
     .ref-add-cart-btn {
-        height: 30px;
-        font-size: 0.72rem;
-        border-radius: 8px;
-        gap: 4px;
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        font-size: 0.72rem !important;
+        border-radius: 8px !important;
+        gap: 5px !important;
+        white-space: nowrap !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        padding: 0 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .ref-add-cart-btn span {
+        white-space: nowrap !important;
+        font-size: 0.72rem !important;
+        line-height: 1 !important;
+    }
+
+    .ref-add-cart-btn svg {
+        flex-shrink: 0 !important;
+        width: 13px !important;
+        height: 13px !important;
     }
 }
 
@@ -531,8 +552,12 @@
     }
 
     .ref-add-cart-btn {
-        height: 32px;
-        font-size: 0.7rem;
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+        font-size: 0.68rem !important;
+        white-space: nowrap !important;
+        flex-direction: row !important;
     }
 }
 
