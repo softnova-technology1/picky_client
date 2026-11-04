@@ -175,6 +175,15 @@ p { font-family: var(--font-secondary); line-height: 1.6; color: var(--color-tex
   z-index: 2;   /* above text but blended via mix-blend-mode, never blocks */
 }
 
+/* ── Strictly disable hover pseudo-effects in admin auth & no-hover-fx ── */
+.admin-auth-page .btn::before,
+.admin-auth-page .btn::after,
+.no-hover-fx .btn::before,
+.no-hover-fx .btn::after {
+  content: none !important;
+  display: none !important;
+}
+
 /* ── Button text / children sit at z:1 — above spotlight, below shimmer blend ── */
 .btn > * { position: relative; z-index: 1; }
 

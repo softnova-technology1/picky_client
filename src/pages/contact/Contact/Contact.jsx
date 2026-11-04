@@ -143,9 +143,6 @@ export default function Contact() {
     }
   };
 
-  // Real DB products for promo slider (No dummy or hardcoded images!)
-  const [dbPromoProducts, setDbPromoProducts] = useState([]);
-
   // Hero section background image (Preserves the original Purple Flower Vase background)
   const heroDbImage = useMemo(() => {
     return (
@@ -155,33 +152,7 @@ export default function Contact() {
     );
   }, [getSetting]);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchPromoProducts() {
-      try {
-        const res = await productService.list({ limit: 12, sort: 'newest' });
-        const data = res?.data || res;
-        const items = Array.isArray(data)
-          ? data
-          : (Array.isArray(data?.data) ? data.data : (Array.isArray(data?.products) ? data.products : []));
-        if (isMounted && items.length > 0) {
-          setDbPromoProducts(items);
-        }
-      } catch (err) {
-        console.warn('Could not fetch DB products for promo slider:', err);
-      }
-    }
-    fetchPromoProducts();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const promoSlidesList = useMemo(() => {
-    const realDbImages = dbPromoProducts
-      .map((p) => (Array.isArray(p.images) && p.images[0]) || p.image)
-      .filter(Boolean);
-
     return [
       {
         id: 1,
@@ -189,7 +160,7 @@ export default function Contact() {
         subtitle: 'Discover trending seasonal drops & modern curated accessories',
         btnText: 'Shop New Arrivals',
         link: '/new-arrivals',
-        image: realDbImages[0] || promoSlides[0].image
+        image: getSetting('contact_slides', 'slide1_image') || promoSlides[0].image
       },
       {
         id: 2,
@@ -197,7 +168,7 @@ export default function Contact() {
         subtitle: 'Our highest-rated customer favorites and everyday essentials',
         btnText: 'Explore Best Sellers',
         link: '/best-sellers',
-        image: realDbImages[1] || realDbImages[0] || promoSlides[1].image
+        image: getSetting('contact_slides', 'slide2_image') || promoSlides[1].image
       },
       {
         id: 3,
@@ -205,10 +176,10 @@ export default function Contact() {
         subtitle: 'Browse through our full catalog of lifestyle, home & wellness goods',
         btnText: 'Shop All Items',
         link: '/shop',
-        image: realDbImages[2] || realDbImages[0] || promoSlides[2].image
+        image: getSetting('contact_slides', 'slide3_image') || promoSlides[2].image
       }
     ];
-  }, [dbPromoProducts]);
+  }, [getSetting]);
 
   useEffect(() => {
     if (isPaused) return;

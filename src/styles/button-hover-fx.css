@@ -224,4 +224,4 @@ button[aria-label*="password"]::after,
 .picky-input-end-btn::after {
   display: none !important;
   content: none !important;
-}
+}

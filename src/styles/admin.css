@@ -3801,17 +3801,60 @@
   transform: scale(1.05);
 }
 
-/* ── Prevent button-hover-fx sheen/glare animations inside Admin panels & previews ── */
+/* ── Prevent button-hover-fx sheen/glare animations inside Admin panels, auth & previews ── */
 .admin-layout button::before,
 .admin-layout button::after,
 .admin-layout [class*="preview"] button::before,
 .admin-layout [class*="preview"] button::after,
 .admin-layout [class*="preview"] *::before,
-.admin-layout [class*="preview"] *::after {
+.admin-layout [class*="preview"] *::after,
+.admin-auth-page button::before,
+.admin-auth-page button::after,
+.admin-auth-page .btn::before,
+.admin-auth-page .btn::after,
+.admin-auth-page *::before,
+.admin-auth-page *::after,
+.admin-auth-eye-btn::before,
+.admin-auth-eye-btn::after,
+.admin-auth-eye-btn:hover::before,
+.admin-auth-eye-btn:hover::after,
+.no-hover-fx *::before,
+.no-hover-fx *::after {
   content: none !important;
   display: none !important;
   animation: none !important;
   transform: none !important;
+  transition: none !important;
+}
+
+/* Strictly eliminate jumping/bobbing transforms on hover in admin auth */
+.admin-auth-page button:hover,
+.admin-auth-page .btn:hover,
+.admin-auth-page button:active,
+.admin-auth-page .btn:active,
+.no-hover-fx button:hover,
+.no-hover-fx .btn:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.admin-auth-page .admin-auth-eye-btn,
+.admin-auth-page .admin-auth-eye-btn:hover,
+.admin-auth-page .admin-auth-eye-btn:active {
+  transform: translateY(-50%) !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.admin-auth-page .admin-auth-eye-btn:hover {
+  color: #c084fc !important;
+}
+
+.admin-auth-page .admin-auth-submit-btn:hover {
+  background: #6d28d9 !important;
+  border-color: #6d28d9 !important;
+  transform: none !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4) !important;
 }
 
 /* ── Unified Admin In-Page Header System ── */

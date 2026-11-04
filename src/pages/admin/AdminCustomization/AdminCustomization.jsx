@@ -6776,6 +6776,265 @@ export default function AdminCustomization() {
                   );
                 })()}
 
+                
+                {/* ── DISCOUNTS HERO BILLBOARD & LIVE COUNTDOWN TIMER EDITOR ── */}
+                {currentSection.id === 'discounts_hero' && (() => {
+                  const s = currentSection.settings || {};
+                  const showTimer = s.showCountdownTimer !== false;
+                  const timerLabel = s.timerLabel || 'ENDS IN:';
+                  const timerEndTime = s.timerEndTime || '';
+
+                  // Quick 1-click preset helper
+                  const setPresetHours = (hours) => {
+                    const d = new Date(Date.now() + hours * 60 * 60 * 1000);
+                    const pad = (n) => String(n).padStart(2, '0');
+                    const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                    handleUpdateSetting({
+                      showCountdownTimer: true,
+                      timerEndTime: formatted,
+                    });
+                  };
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* ── CARD 1: Headline & Content ── */}
+                      <div
+                        style={{
+                          background: '#ffffff',
+                          borderRadius: '16px',
+                          border: '1px solid #ede8f8',
+                          padding: '1.25rem 1.4rem',
+                          boxShadow: '0 2px 10px rgba(124, 58, 237, 0.04)',
+                        }}
+                      >
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1e1b4b', margin: '0 0 1rem' }}>
+                          Billboard Content & Messaging
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <Input
+                            label="Badge Text"
+                            value={s.badgeText || ''}
+                            onChange={(e) => handleUpdateSetting('badgeText', e.target.value)}
+                            placeholder="LIMITED DEALS • LIVE NOW"
+                          />
+                          <Input
+                            label="Title"
+                            value={s.title || ''}
+                            onChange={(e) => handleUpdateSetting('title', e.target.value)}
+                            placeholder="Limited Deals"
+                          />
+                          <Input
+                            label="Hero Background Image URL"
+                            value={s.bgImage || ''}
+                            onChange={(e) => handleUpdateSetting('bgImage', e.target.value)}
+                            placeholder="/images/limited-deals/limited_deals_hero_bg.jpg"
+                          />
+                          <div>
+                            <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
+                              Subtitle Description
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={s.subtitle || ''}
+                              onChange={(e) => handleUpdateSetting('subtitle', e.target.value)}
+                              placeholder="Discover curated artisanal luxury..."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '10px',
+                                border: '1px solid #dfd5f5',
+                                fontSize: '0.88rem',
+                                fontFamily: 'inherit',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── CARD 2: Countdown Timer Control (Core Feature requested!) ── */}
+                      <div
+                        style={{
+                          background: '#ffffff',
+                          borderRadius: '16px',
+                          border: '1.5px solid #d8b4fe',
+                          padding: '1.25rem 1.4rem',
+                          boxShadow: '0 4px 18px rgba(124, 58, 237, 0.08)',
+                          position: 'relative',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                          <div>
+                            <h4 style={{ fontSize: '0.96rem', fontWeight: 800, color: '#4c1d95', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                              <span>⏱️</span> Limited Deals Countdown Timer
+                            </h4>
+                            <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                              Manage the real-time countdown timer shown on the Limited Deals hero section.
+                            </p>
+                          </div>
+                          <AccessibleToggleSwitch
+                            enabled={showTimer}
+                            onToggle={() => handleUpdateSetting('showCountdownTimer', !showTimer)}
+                            label="Enable Countdown Timer"
+                            id="toggle_discounts_timer"
+                          />
+                        </div>
+
+                        {showTimer && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px dashed #e9d5ff' }}>
+                            {/* Timer Label Input */}
+                            <Input
+                              label="Timer Label / Callout"
+                              value={timerLabel}
+                              onChange={(e) => handleUpdateSetting('timerLabel', e.target.value)}
+                              placeholder="ENDS IN: or LIMITED TIME OFFER:"
+                            />
+
+                            {/* Datetime Local Picker */}
+                            <div>
+                              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
+                                Deal End Date & Time (Target Countdown)
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={timerEndTime ? timerEndTime.slice(0, 16) : ''}
+                                onChange={(e) => handleUpdateSetting('timerEndTime', e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.65rem 0.85rem',
+                                  borderRadius: '10px',
+                                  border: '1.5px solid #c084fc',
+                                  fontSize: '0.9rem',
+                                  color: '#1e1b4b',
+                                  fontFamily: 'inherit',
+                                  outline: 'none',
+                                  background: '#faf5ff',
+                                  boxSizing: 'border-box',
+                                }}
+                              />
+                            </div>
+
+                            {/* Quick Presets */}
+                            <div>
+                              <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#6b21a8', display: 'block', marginBottom: '0.45rem' }}>
+                                ⚡ Quick 1-Click Presets:
+                              </span>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setPresetHours(24)}
+                                  style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '8px',
+                                    background: '#f3e8ff',
+                                    border: '1px solid #d8b4fe',
+                                    color: '#6b21a8',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  +24 Hours
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPresetHours(72)}
+                                  style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '8px',
+                                    background: '#f3e8ff',
+                                    border: '1px solid #d8b4fe',
+                                    color: '#6b21a8',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  +3 Days
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPresetHours(168)}
+                                  style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '8px',
+                                    background: '#f3e8ff',
+                                    border: '1px solid #d8b4fe',
+                                    color: '#6b21a8',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  +7 Days
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const now = new Date();
+                                    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                                    const pad = (n) => String(n).padStart(2, '0');
+                                    const formatted = `${endOfMonth.getFullYear()}-${pad(endOfMonth.getMonth() + 1)}-${pad(endOfMonth.getDate())}T23:59`;
+                                    handleUpdateSetting({
+                                      showCountdownTimer: true,
+                                      timerEndTime: formatted,
+                                    });
+                                  }}
+                                  style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '8px',
+                                    background: '#f3e8ff',
+                                    border: '1px solid #d8b4fe',
+                                    color: '#6b21a8',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  End of Month
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Current Target Status Info */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.6rem 0.85rem',
+                                background: '#faf5ff',
+                                borderRadius: '8px',
+                                border: '1px solid #ede9fe',
+                                fontSize: '0.8rem',
+                                color: '#581c87',
+                                fontWeight: 600,
+                              }}
+                            >
+                              <Clock size={15} color="#7c3aed" />
+                              <span>
+                                {(() => {
+                                  if (!timerEndTime) return 'No timer end date set yet. Select a date above or click a preset!';
+                                  const diff = new Date(timerEndTime).getTime() - Date.now();
+                                  if (diff <= 0) return '⚠️ The selected date has passed. Please select a future date.';
+                                  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                  const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                                  const m = Math.floor((diff / (1000 * 60)) % 60);
+                                  return `Active Countdown: ~${d}d ${h}h ${m}m remaining on storefront hero!`;
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      
+                    </div>
+                  );
+                })()}
+
+
                 {/* Dynamic Settings Editor for Categories, New Arrivals, Best Sellers, Discounts, About Us, Blog & others */}
                 {![
                   'announcement_bar',
@@ -6794,6 +7053,7 @@ export default function AdminCustomization() {
                   'new_arrivals_marquee',
                   'best_sellers_hero',
                   'best_sellers_trust_strip',
+                  'discounts_hero',
                 ].includes(currentSection.id) && currentSection.settings && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {Object.entries(currentSection.settings).map(([key, val]) => {

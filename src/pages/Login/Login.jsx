@@ -386,15 +386,22 @@ export default function Login({ initialTab = 'login' }) {
           </button>
 
         {/* ── VISUAL PANEL: LUXURY FASHION CURATION & BADGES ── */}
-        <div
-          className="picky-auth-left"
-          style={{ 
-            backgroundImage: `url('/images/auth_luxury_concept.jpg')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            transition: 'background-image 0.65s ease-in-out'
-          }}
-        >
+        <div className="picky-auth-left">
+          {/* Dual Layer Cross-Fading Images */}
+          <div
+            className="picky-auth-visual-layer picky-auth-visual-login"
+            style={{
+              opacity: activeTab === 'login' ? 1 : 0,
+              transform: activeTab === 'login' ? 'scale(1)' : 'scale(1.05)',
+            }}
+          />
+          <div
+            className="picky-auth-visual-layer picky-auth-visual-signup"
+            style={{
+              opacity: activeTab === 'signup' ? 1 : 0,
+              transform: activeTab === 'signup' ? 'scale(1)' : 'scale(1.05)',
+            }}
+          />
 
           <div className="picky-auth-left-content">
             {/* Top Spacer (Rating Badge Removed as requested) */}
@@ -465,8 +472,10 @@ export default function Login({ initialTab = 'login' }) {
               )}
 
 
-              {/* ── 1. CUSTOMER LOGIN (WHATSAPP OTP) ── */}
-              {!isAdminMode && activeTab === 'login' && (
+              {/* Form Views Animated Container */}
+              <div key={activeTab + (isAdminMode ? '-admin' : '')} className="picky-auth-form-animated">
+                {/* ── 1. CUSTOMER LOGIN (WHATSAPP OTP) ── */}
+                {!isAdminMode && activeTab === 'login' && (
                 <>
                   {step === 'phone' ? (
                     <>
@@ -806,6 +815,7 @@ export default function Login({ initialTab = 'login' }) {
                   </button>
                 </form>
               )}
+              </div>
 
               {/* Terms & Privacy */}
               {!isAdminMode && (

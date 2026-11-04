@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
+import Select from '../../components/ui/Select';
 import { productService } from '../../services/product.service';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useUiStore } from '../../store/uiStore';
@@ -23,6 +24,8 @@ import {
   RotateCcw as ReturnIcon,
   Headphones,
   CheckCircle2,
+  Star,
+  Ticket,
 } from 'lucide-react';
 import { usePageCustomization } from '../../store/customizationStore';
 
@@ -106,20 +109,39 @@ export default function Discounts() {
     });
   }, [activeDiscountProducts]);
 
-  // Live countdown timer: ONLY active if a real DB offer with future end date exists
+  // Admin Customization Settings for Timer:
+  const showCountdownTimerSetting = getSetting('discounts_hero', 'showCountdownTimer', true);
+  const timerLabelSetting = getSetting('discounts_hero', 'timerLabel', 'ENDS IN:');
+  const timerEndTimeSetting = getSetting('discounts_hero', 'timerEndTime', '');
+
+  // Effective Target End Time (supports Admin Customization picker + DB fallback)
+  const effectiveEndMs = useMemo(() => {
+    if (timerEndTimeSetting) {
+      const parsed = new Date(timerEndTimeSetting).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    if (activeOfferWithEnd) {
+      const end = activeOfferWithEnd.offerEndDate || activeOfferWithEnd.validTill || activeOfferWithEnd.endDate;
+      const parsed = new Date(end).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    // Default fallback: 7 days from now
+    return Date.now() + 7 * 24 * 60 * 60 * 1000;
+  }, [timerEndTimeSetting, activeOfferWithEnd]);
+
+  // Live countdown timer state (controlled via Admin Customization)
   const [countdown, setCountdown] = useState(null);
 
+
+
   useEffect(() => {
-    if (!activeOfferWithEnd) {
+    if (!showCountdownTimerSetting || !effectiveEndMs) {
       setCountdown(null);
       return;
     }
 
-    const end = activeOfferWithEnd.offerEndDate || activeOfferWithEnd.validTill || activeOfferWithEnd.endDate;
-    const targetMs = new Date(end).getTime();
-
     const updateTimer = () => {
-      const diff = targetMs - Date.now();
+      const diff = effectiveEndMs - Date.now();
       if (diff <= 0) {
         setCountdown(null);
         return;
@@ -131,10 +153,10 @@ export default function Discounts() {
       setCountdown({ days, hours, minutes, seconds });
     };
 
-    updateTimer();
+        updateTimer();
     const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [activeOfferWithEnd]);
+  }, [showCountdownTimerSetting, effectiveEndMs]);
 
   // Navigate directly to Product Detail page when clicking any hero product card
   const handleProductClick = (p) => {
@@ -229,6 +251,32 @@ export default function Discounts() {
     return Array.from(catMap.entries()).map(([id, label]) => ({ id, label }));
   }, [activeDiscountProducts]);
 
+  const categoryOptions = useMemo(() => {
+    const list = [
+      { value: 'all', label: `All Categories (${activeDiscountProducts.length})` },
+    ];
+    availableCategories.forEach((cat) => {
+      const count = activeDiscountProducts.filter((p) => {
+        const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
+        const catName = typeof p.category === 'object' && p.category?.name ? p.category.name : p.subCategory || p.category;
+        return catSlug === cat.id || catName === cat.id;
+      }).length;
+      list.push({
+        value: cat.id,
+        label: `${cat.label} (${count})`,
+      });
+    });
+    return list;
+  }, [availableCategories, activeDiscountProducts]);
+
+  const sortOptions = useMemo(() => [
+    { value: 'recommended', label: 'Sort: Recommended' },
+    { value: 'highest-discount', label: 'Highest Discount (% OFF)' },
+    { value: 'price-low', label: 'Price: Low to High' },
+    { value: 'price-high', label: 'Price: High to Low' },
+    { value: 'newest', label: 'Newest Deals' },
+  ], []);
+
   // Filtered & Sorted products for the main catalog
   const filteredProducts = useMemo(() => {
     let result = activeDiscountProducts;
@@ -294,472 +342,248 @@ export default function Discounts() {
   return (
     <PageWrapper>
       <div style={{ background: '#ffffff', minHeight: '100vh', color: '#1e293b' }}>
-        {/* ── 1. Hero Section: Editorial Limited-Time Deals Banner ── */}
+        {/* ── 1. Hero Section: Limited Deals Full-Width Luxury Background Banner ── */}
         {isEnabled('discounts_hero') && (
-        <section
-          style={{
-            background: 'linear-gradient(135deg, #faf7fe 0%, #f4eefa 50%, #eee8f8 100%)',
-            borderBottom: '1px solid #ede9fe',
-            padding: '3.5rem 1.5rem 4rem',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Subtle Ambient Glow */}
-          <div
+          <section
+            className="discounts-hero-section"
             style={{
-              position: 'absolute',
-              top: '-30%',
-              right: '15%',
-              width: '550px',
-              height: '550px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          <div
-            style={{
-              maxWidth: '1280px',
-              margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: activeDiscountProducts.length > 0 ? 'repeat(auto-fit, minmax(320px, 1fr))' : '1fr',
-              gap: '3rem',
-              alignItems: 'center',
+              width: '100%',
+              backgroundImage: `url(${getSetting('discounts_hero', 'bgImage', '/images/limited-deals/limited_deals_hero_bg.jpg')})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat',
+              backgroundColor: '#fbfaff',
+              borderBottom: '1px solid rgba(124, 58, 237, 0.12)',
+              padding: '4.5rem 1.5rem 4rem',
               position: 'relative',
-              zIndex: 2,
+              overflow: 'hidden',
             }}
           >
-            {/* Left Column: Headlines, Timer (Only if offer active), CTAs & Value Props */}
-            <div>
-              {/* Campaign Pill */}
+            {/* Soft Central Scrim so 3D Cart (Left) and Podiums (Right) are 100% Crisp */}
+            <div
+              className="discounts-hero-scrim"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 30%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0.45) 70%, rgba(255, 255, 255, 0) 100%)',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+
+            <div
+              style={{
+                maxWidth: '1360px',
+                margin: '0 auto',
+                position: 'relative',
+                zIndex: 2,
+              }}
+            >
+              {/* Centered Billboard: Clean E-Commerce Showcase */}
               <div
                 style={{
-                  display: 'inline-flex',
+                  maxWidth: '740px',
+                  margin: '0 auto',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.35rem 0.95rem',
-                  borderRadius: '999px',
-                  background: '#ede9fe',
-                  color: '#6b21a8',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  marginBottom: '1.25rem',
                 }}
               >
-                <Sparkles size={13} color="#7c3aed" />
-                <span>{getSetting('discounts_hero', 'badgeText', 'EXCLUSIVE CAMPAIGN')}</span>
-              </div>
-
-              {/* Title */}
-              <h1
-                style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)',
-                  fontWeight: 800,
-                  color: '#1e1b4b',
-                  lineHeight: 1.15,
-                  margin: '0 0 1.25rem',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {(() => {
-                  const title = getSetting('discounts_hero', 'title', 'Limited–Time Deals');
-                  const words = title.split(' ');
-                  if (words.length > 1) {
-                    return (
-                      <>
-                        {words.slice(0, -1).join(' ')}{' '}
-                        <span style={{ color: '#6d28d9' }}>{words[words.length - 1]}</span>
-                      </>
-                    );
-                  }
-                  return title;
-                })()}
-              </h1>
-
-              {/* Subtitle */}
-              <p
-                style={{
-                  fontSize: '1rem',
-                  color: '#64748b',
-                  lineHeight: 1.65,
-                  margin: '0 0 1.75rem',
-                  maxWidth: '520px',
-                }}
-              >
-                {getSetting(
-                  'discounts_hero',
-                  'subtitle',
-                  'Discover exclusive offers on your everyday favourites. Handpicked artisanal heritage, gold-plated heirloom jewels, and pure pantry elixirs at steep promotional tiers.'
-                )}
-              </p>
-
-              {/* Live Countdown Pill: ONLY shown if real active offer with end date exists */}
-              {activeOfferWithEnd && countdown && (
+                {/* Campaign Pill */}
                 <div
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.65rem',
+                    gap: '0.5rem',
                     padding: '0.45rem 1.15rem',
                     borderRadius: '999px',
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                    fontSize: '0.82rem',
+                    background: 'rgba(124, 58, 237, 0.08)',
+                    border: '1.5px solid rgba(124, 58, 237, 0.22)',
+                    color: '#6d28d9',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
-                    color: '#1e1b4b',
-                    marginBottom: '2rem',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    marginBottom: '1.25rem',
+                    backdropFilter: 'blur(8px)',
                   }}
                 >
-                  <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: '#ef4444',
-                      boxShadow: '0 0 8px #ef4444',
-                      display: 'inline-block',
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span>
-                    ENDS IN:&nbsp;&nbsp;
-                    <span style={{ color: '#4338ca', fontWeight: 800 }}>
-                      {countdown.days > 0 ? `${countdown.days} d : ` : ''}
-                      {String(countdown.hours).padStart(2, '0')} h : {String(countdown.minutes).padStart(2, '0')} m : {String(countdown.seconds).padStart(2, '0')} s
-                    </span>
-                  </span>
-                  <Clock size={14} color="#64748b" style={{ marginLeft: '2px' }} />
+                  <Sparkles size={14} color="#7c3aed" />
+                  <span>{getSetting('discounts_hero', 'badgeText', 'LIMITED DEALS • LIVE NOW')}</span>
                 </div>
-              )}
 
-              {/* Action Button: Explore Deals */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                <a
-                  href="#curated-catalog"
+                {/* Title */}
+                <h1
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.8rem 2rem',
-                    borderRadius: '999px',
-                    background: '#2e1065',
-                    color: '#ffffff',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 14px rgba(46, 16, 101, 0.25)',
-                    transition: 'all 0.15s ease',
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: 'clamp(2.4rem, 4.6vw, 3.8rem)',
+                    fontWeight: 800,
+                    color: '#09090b',
+                    lineHeight: 1.15,
+                    margin: '0 0 1.25rem',
+                    letterSpacing: '-0.02em',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
-                  <span>Explore Deals</span>
-                  <ArrowDown size={15} />
-                </a>
-              </div>
+                  {(() => {
+                    const title = getSetting('discounts_hero', 'title', 'Limited Deals');
+                    const words = title.split(' ');
+                    if (words.length > 1) {
+                      return (
+                        <>
+                          {words.slice(0, -1).join(' ')}{' '}
+                          <span style={{ color: '#7c3aed' }}>{words[words.length - 1]}</span>
+                        </>
+                      );
+                    }
+                    return title;
+                  })()}
+                </h1>
 
-              {/* Trust Micro-Badges */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
-                  <CheckCircle2 size={16} color="#6d28d9" />
-                  <span>100% Genuine Provenance</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
-                  <Truck size={16} color="#6d28d9" />
-                  <span>Same-Day Dispatch</span>
-                </div>
-              </div>
-            </div>
+                {/* Subtitle */}
+                <p
+                  className="discounts-hero-subtitle"
+                  style={{
+                    fontSize: '1.08rem',
+                    color: '#09090b',
+                    fontWeight: 600,
+                    lineHeight: 1.65,
+                    margin: '0 auto 2rem',
+                    maxWidth: '640px',
+                    textShadow: '0 1px 3px rgba(255, 255, 255, 0.85)',
+                  }}
+                >
+                  {getSetting(
+                    'discounts_hero',
+                    'subtitle',
+                    'Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.'
+                  )}
+                </p>
 
-            {/* Right Column: 3 Overlapping Floating Cards Cluster with 1-Minute Rotation */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', width: '100%' }}>
-              <div
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '480px',
-                  height: '380px',
-                  background: 'linear-gradient(145deg, #f3f0ff 0%, #ebe5fb 100%)',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  boxShadow: 'inset 0 1px 3px rgba(255, 255, 255, 0.8), 0 10px 30px -10px rgba(109, 40, 217, 0.08)',
-                  opacity: isCardTransitioning ? 0.35 : 1,
-                  transform: isCardTransitioning ? 'scale(0.985)' : 'scale(1)',
-                  transition: 'opacity 0.4s ease, transform 0.4s ease',
-                }}
-              >
-                {/* ── CARD 1: Left / Main Featured Card ── */}
-                {card1Product && (
+                {/* Live Countdown Pill: Configurable & Controllable via Admin Customization */}
+                {showCountdownTimerSetting && countdown && (
                   <div
-                    onClick={() => handleProductClick(card1Product)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card1Product); }}
                     style={{
-                      position: 'absolute',
-                      top: '20px',
-                      left: '20px',
-                      width: '230px',
-                      background: '#ffffff',
-                      borderRadius: '16px',
-                      boxShadow: '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      zIndex: 2,
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.14)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03)';
-                    }}
-                  >
-                    <div style={{ position: 'relative', width: '100%', height: '145px', background: '#f8fafc', overflow: 'hidden' }}>
-                      <img
-                        src={getProductImage(card1Product)}
-                        alt={card1Product.name || 'Deal'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '10px',
-                          left: '10px',
-                          background: '#991b1b',
-                          color: '#ffffff',
-                          fontSize: '0.66rem',
-                          fontWeight: 800,
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                        }}
-                      >
-                        {getCardBadge(card1Product, 'UP TO 60% OFF')}
-                      </div>
-                    </div>
-                    <div style={{ padding: '12px 14px 14px' }}>
-                      <h3
-                        style={{
-                          fontSize: '0.86rem',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: '0 0 6px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        title={card1Product.name}
-                      >
-                        {card1Product.name}
-                      </h3>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>
-                          {formatPrice(card1Product.discountPrice || card1Product.price || 0)}
-                        </span>
-                        {card1Product.price && (
-                          <span style={{ fontSize: '0.76rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                            {formatPrice(
-                              card1Product.discountPrice && card1Product.price > card1Product.discountPrice
-                                ? card1Product.price
-                                : Math.round(card1Product.price * 1.4)
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── CARD 2: Top-Right Card ── */}
-                {card2Product && (
-                  <div
-                    onClick={() => handleProductClick(card2Product)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card2Product); }}
-                    style={{
-                      position: 'absolute',
-                      top: '24px',
-                      right: '20px',
-                      width: '205px',
-                      background: '#ffffff',
-                      borderRadius: '16px',
-                      boxShadow: '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      zIndex: 1,
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      border: '1px solid rgba(226, 232, 240, 0.8)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 16px 32px -4px rgba(0, 0, 0, 0.12)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02)';
-                    }}
-                  >
-                    <div style={{ position: 'relative', width: '100%', height: '125px', background: '#f8fafc', overflow: 'hidden' }}>
-                      <img
-                        src={getProductImage(card2Product)}
-                        alt={card2Product.name || 'Deal'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '8px',
-                          background: '#4f46e5',
-                          color: '#ffffff',
-                          fontSize: '0.62rem',
-                          fontWeight: 800,
-                          padding: '3px 7px',
-                          borderRadius: '5px',
-                          letterSpacing: '0.03em',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                        }}
-                      >
-                        {getCardBadge(card2Product, '57% OFF')}
-                      </div>
-                    </div>
-                    <div style={{ padding: '10px 12px 12px' }}>
-                      <h3
-                        style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: '0 0 4px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        title={card2Product.name}
-                      >
-                        {card2Product.name}
-                      </h3>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#6d28d9' }}>
-                          {formatPrice(card2Product.discountPrice || card2Product.price || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── CARD 3: Bottom-Right Horizontal Mini Card ── */}
-                {card3Product && (
-                  <div
-                    onClick={() => handleProductClick(card3Product)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleProductClick(card3Product); }}
-                    style={{
-                      position: 'absolute',
-                      bottom: '22px',
-                      right: '20px',
-                      width: '240px',
-                      background: '#ffffff',
-                      borderRadius: '14px',
-                      boxShadow: '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)',
-                      padding: '8px 10px',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      cursor: 'pointer',
-                      zIndex: 3,
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                      border: '1px solid rgba(226, 232, 240, 0.9)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 18px 36px -4px rgba(0, 0, 0, 0.16)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 14px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04)';
+                      gap: '0.75rem',
+                      padding: '0.55rem 1.35rem',
+                      borderRadius: '999px',
+                      background: 'rgba(255, 255, 255, 0.94)',
+                      border: '1.5px solid rgba(124, 58, 237, 0.2)',
+                      backdropFilter: 'blur(12px)',
+                      boxShadow: '0 4px 20px rgba(124, 58, 237, 0.1)',
+                      marginBottom: '2rem',
                     }}
                   >
-                    <img
-                      src={getProductImage(card3Product)}
-                      alt={card3Product.name || 'Item'}
+                    <span
                       style={{
-                        width: '52px',
-                        height: '52px',
-                        borderRadius: '10px',
-                        objectFit: 'cover',
-                        flexShrink: 0,
-                        background: '#f1f5f9',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        color: '#c2410c',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
                       }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    >
                       <span
                         style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: '#ea580c',
+                          boxShadow: '0 0 10px #ea580c',
                           display: 'inline-block',
-                          background: '#ede9fe',
-                          color: '#6d28d9',
-                          fontSize: '0.62rem',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          marginBottom: '3px',
-                          maxWidth: '100%',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
-                      >
-                        {card3Product.category?.name || card3Product.subCategory || 'Gourmet Box'}
+                      />
+                      {timerLabelSetting}
+                    </span>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontWeight: 800,
+                        fontSize: '0.92rem',
+                        color: '#1e1b4b',
+                      }}
+                    >
+                      <span style={{ background: '#f5f3ff', color: '#6d28d9', padding: '2px 7px', borderRadius: '6px', border: '1px solid #ddd6fe' }}>
+                        {String(countdown.days).padStart(2, '0')}d
                       </span>
-                      <h4
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: '0 0 3px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          lineHeight: 1.2,
-                        }}
-                        title={card3Product.name}
-                      >
-                        {card3Product.name}
-                      </h4>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#6d28d9' }}>
-                          {formatPrice(card3Product.discountPrice || card3Product.price || 0)}
-                        </span>
-                        {card3Product.price && (
-                          <span style={{ fontSize: '0.7rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                            {formatPrice(
-                              card3Product.discountPrice && card3Product.price > card3Product.discountPrice
-                                ? card3Product.price
-                                : Math.round(card3Product.price * 1.4)
-                            )}
-                          </span>
-                        )}
-                      </div>
+                      <span style={{ color: '#7c3aed' }}>:</span>
+                      <span style={{ background: '#f5f3ff', color: '#6d28d9', padding: '2px 7px', borderRadius: '6px', border: '1px solid #ddd6fe' }}>
+                        {String(countdown.hours).padStart(2, '0')}h
+                      </span>
+                      <span style={{ color: '#7c3aed' }}>:</span>
+                      <span style={{ background: '#f5f3ff', color: '#6d28d9', padding: '2px 7px', borderRadius: '6px', border: '1px solid #ddd6fe' }}>
+                        {String(countdown.minutes).padStart(2, '0')}m
+                      </span>
+                      <span style={{ color: '#7c3aed' }}>:</span>
+                      <span style={{ background: '#7c3aed', color: '#ffffff', padding: '2px 7px', borderRadius: '6px' }}>
+                        {String(countdown.seconds).padStart(2, '0')}s
+                      </span>
                     </div>
+
+                    <Clock size={15} color="#ea580c" />
                   </div>
                 )}
+
+                {/* Action Button: Explore Deals */}
+                <div
+                  style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}
+                >
+                  <a
+                    href="#curated-catalog"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      padding: '0.9rem 2.4rem',
+                      borderRadius: '999px',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.95rem',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      boxShadow: '0 8px 25px rgba(124, 58, 237, 0.32)',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.45)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.32)';
+                    }}
+                  >
+                    <span>Explore Deals</span>
+                    <ArrowRight size={16} />
+                  </a>
+                </div>
+
+                {/* Trust Micro-Badges */}
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#09090b', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}>
+                    <CheckCircle2 size={16} color="#7c3aed" />
+                    <span>100% Genuine Provenance</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#09090b', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}>
+                    <Truck size={16} color="#7c3aed" />
+                    <span>Same-Day Dispatch</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* ── 2. High Urgency Vault: Flash Deals (Rendered ONLY if active offer with countdown exists) ── */}
@@ -902,10 +726,10 @@ export default function Discounts() {
 
             {/* Flash Deals Cards using Site's Official ProductCard Component */}
             <div
+              className="shop-catalog-grid discounts-product-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '1.5rem',
+                gap: '1.25rem',
               }}
             >
               {flashDeals.map((prod) => (
@@ -916,9 +740,89 @@ export default function Discounts() {
         )}
 
         {/* ── 3. Controls Toolbar (Search, Category Filter Dropdown, Sorting) ── */}
-        <div id="curated-catalog" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem 1.5rem 0.5rem' }}>
+        <div id="curated-catalog" className="discounts-catalog-wrap" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem 1.5rem 0.5rem' }}>
+          <style>{`
+            @media (min-width: 1081px) {
+              .discounts-product-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: 1.25rem !important;
+              }
+            }
+            @media (max-width: 1080px) and (min-width: 769px) {
+              .discounts-product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                gap: 1rem !important;
+              }
+            }
+            @media (max-width: 768px) {
+              .discounts-hero-section {
+                background-image: url('/images/limited-deals/limited_deals_hero_mobile_bg.jpg') !important;
+                background-position: center bottom !important;
+                background-size: cover !important;
+                padding: 2.75rem 1rem 2.25rem !important;
+              }
+              .discounts-hero-scrim {
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.05) 100%) !important;
+              }
+              .discounts-hero-subtitle {
+                color: #09090b !important;
+                font-weight: 650 !important;
+                text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95) !important;
+              }
+              .discounts-catalog-wrap {
+                padding: 0.75rem 10px 0.5rem !important;
+              }
+              .discounts-grid-container {
+                padding: 0.5rem 10px 2.5rem !important;
+              }
+              #flash-deals-section {
+                padding: 1.5rem 10px 1.5rem !important;
+              }
+              .discounts-product-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                width: 100% !important;
+              }
+              .discounts-toolbar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.65rem !important;
+                padding-bottom: 0.85rem !important;
+              }
+              .discounts-toolbar-left {
+                display: flex !important;
+                align-items: center !important;
+                justifyContent: space-between !important;
+                width: 100% !important;
+              }
+              .discounts-toolbar-right {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 0.65rem !important;
+              }
+              .discounts-search-wrap {
+                display: none !important;
+              }
+              .discounts-selects-wrap {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 0.6rem !important;
+                width: 100% !important;
+              }
+              .discounts-select-item {
+                width: 100% !important;
+                min-width: 0 !important;
+              }
+            }
+            .discounts-select-item {
+              min-width: 180px;
+            }
+          `}</style>
+
           {/* Search, Category Filter & Sorting Toolbar */}
           <div
+            className="discounts-toolbar"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -930,7 +834,7 @@ export default function Discounts() {
             }}
           >
             {/* Left: Summary Count & Active Filter Indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="discounts-toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.86rem', color: '#64748b' }}>
                 Showing <strong style={{ color: '#0f172a' }}>{filteredProducts.length}</strong> curated deals
               </span>
@@ -973,9 +877,9 @@ export default function Discounts() {
             </div>
 
             {/* Right: Search, Category Dropdown Filter, Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="discounts-toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               {/* Search */}
-              <div style={{ position: 'relative', width: '220px' }}>
+              <div className="discounts-search-wrap" style={{ position: 'relative', width: '220px' }}>
                 <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
@@ -1000,70 +904,51 @@ export default function Discounts() {
                 />
               </div>
 
-              {/* Category Dropdown Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  height: '38px',
-                  padding: '0 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  fontSize: '0.84rem',
-                  color: '#334155',
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="all">All Categories ({activeDiscountProducts.length})</option>
-                {availableCategories.map((cat) => {
-                  const count = activeDiscountProducts.filter((p) => {
-                    const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
-                    const catName = typeof p.category === 'object' && p.category?.name ? p.category.name : p.subCategory || p.category;
-                    return catSlug === cat.id || catName === cat.id;
-                  }).length;
-                  return (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.label} ({count})
-                    </option>
-                  );
-                })}
-              </select>
+              {/* 2 Selects Wrapper (Side-by-side on Mobile) */}
+              <div className="discounts-selects-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {/* Category Dropdown Filter */}
+                <Select
+                  value={selectedCategory}
+                  onChange={(val) => {
+                    setSelectedCategory(val);
+                    setCurrentPage(1);
+                  }}
+                  options={categoryOptions}
+                  align="left"
+                  height="40px"
+                  borderRadius="10px"
+                  className="discounts-select-item"
+                  buttonStyle={{
+                    background: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    color: '#1e1b4b',
+                  }}
+                />
 
-              {/* Sort By */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                style={{
-                  height: '38px',
-                  padding: '0 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  fontSize: '0.84rem',
-                  color: '#334155',
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="recommended">Sort: Recommended</option>
-                <option value="highest-discount">Highest Discount (% OFF)</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest Deals</option>
-              </select>
+                {/* Sort By */}
+                <Select
+                  value={sortBy}
+                  onChange={(val) => setSortBy(val)}
+                  options={sortOptions}
+                  align="right"
+                  height="40px"
+                  borderRadius="10px"
+                  className="discounts-select-item"
+                  buttonStyle={{
+                    background: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    color: '#1e1b4b',
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── 4. Main Product Deals Grid (Using Official ProductCard Component) ── */}
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
+        <div className="discounts-grid-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
           {loading ? (
             <div style={{ padding: '6rem 0', textAlign: 'center' }}>
               <Spinner size="lg" />
@@ -1114,10 +999,10 @@ export default function Discounts() {
           ) : (
             <div>
               <div
+                className="shop-catalog-grid discounts-product-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: '1.5rem',
+                  gap: '1.25rem',
                 }}
               >
                 {paginatedProducts.map((prod) => (

@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { authService } from '../../../services/auth.service';
 import Button from '../../ui/Button';
+import './AdminProtectedRoute.module.css';
 
 export function AdminProtectedRoute({ children }) {
   const { isLoggedIn, adminUser, login } = useAdminAuthStore();
@@ -57,8 +58,8 @@ export function AdminProtectedRoute({ children }) {
   const timeoutMins = typeof window !== 'undefined' ? sessionStorage.getItem('picky_admin_timeout_mins') : null;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ maxWidth: '440px', width: '100%', background: 'rgba(30, 41, 59, 0.95)', backdropFilter: 'blur(12px)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '2.5rem 2rem', color: 'white', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+    <div className="admin-auth-page no-hover-fx" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
+      <div className="admin-auth-card no-hover-fx" style={{ maxWidth: '440px', width: '100%', background: 'rgba(30, 41, 59, 0.95)', backdropFilter: 'blur(12px)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '2.5rem 2rem', color: 'white', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#7c3aed', color: 'white', padding: '0.35rem 0.8rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 800, marginBottom: '1rem' }}>
             🔒 PICKY ADMIN PORTAL
@@ -154,7 +155,15 @@ export function AdminProtectedRoute({ children }) {
           </div>
 
           <div>
-            <Button type="submit" variant="primary" block size="lg" loading={loading} style={{ background: '#7c3aed', borderColor: '#7c3aed' }}>
+            <Button
+              type="submit"
+              variant="primary"
+              block
+              size="lg"
+              loading={loading}
+              className="no-hover-fx admin-auth-submit-btn"
+              style={{ background: '#7c3aed', borderColor: '#7c3aed' }}
+            >
               Sign In to Dashboard ➔
             </Button>
           </div>

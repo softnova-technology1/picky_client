@@ -50,7 +50,7 @@ export default function ProductDetail() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [activeDetailTab, setActiveDetailTab] = useState('reviews'); // Default to 'reviews' matching reference image
+  const [activeDetailTab, setActiveDetailTab] = useState('description');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -68,6 +68,7 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setMobileSelectedImgIdx(0);
+    setActiveDetailTab('description');
   }, [slug]);
 
   const productImages = useMemo(() => {
