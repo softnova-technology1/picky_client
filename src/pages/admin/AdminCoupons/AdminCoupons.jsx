@@ -18,6 +18,17 @@ import {
   AlertTriangle,
   X,
   Eye,
+  Ticket,
+  Clock,
+  ArrowUpDown,
+  TicketPercent,
+  BadgePercent,
+  CalendarClock,
+  Gift,
+  PiggyBank,
+  Coins,
+  Store,
+  LayoutGrid,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminStatCard from '../../../components/common/AdminStatCard';
@@ -27,6 +38,8 @@ import Button from '../../../components/ui/Button';
 import Spinner from '../../../components/ui/Spinner';
 import Select from '../../../components/ui/Select';
 import { adminService } from '../../../services/admin.service';
+import { categoryService } from '../../../services/category.service';
+import { productService } from '../../../services/product.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import {
@@ -34,7 +47,9 @@ import {
   formatValidityDate,
   getCouponStatus,
   isExpiringSoon,
+  toDateTimeLocalInput,
 } from '../../../store/couponStore';
+import styles from './AdminCoupons.module.css';
 
 // Helper: Render Applicable On badge
 function renderApplicableBadge(applicableOn) {
@@ -45,9 +60,9 @@ function renderApplicableBadge(applicableOn) {
 
   if (isAll) {
     return (
-      <span className="admin-coupon-target-chip all">
-        <Layers size={11} color="#64748b" />
-        <span>All Product</span>
+      <span className={`${styles.targetChip} ${styles.all}`}>
+        <Store size={12} color="#475569" />
+        <span>All Products</span>
       </span>
     );
   }
@@ -57,38 +72,43 @@ function renderApplicableBadge(applicableOn) {
   if (typeof applicableOn === 'string') {
     label = applicableOn;
   } else if (applicableOn.type === 'category') {
-    label = applicableOn.value;
-    Icon = FolderTree;
+    if (Array.isArray(applicableOn.categories) && applicableOn.categories.length > 1) {
+      label = `${applicableOn.categories.length} Categories`;
+    } else if (Array.isArray(applicableOn.categoryIds) && applicableOn.categoryIds.length > 1) {
+      label = `${applicableOn.categoryIds.length} Categories`;
+    } else {
+      label = applicableOn.categoryName || applicableOn.value || 'Category';
+    }
+    Icon = LayoutGrid;
   } else if (applicableOn.type === 'product') {
-    label = applicableOn.value;
+    if (Array.isArray(applicableOn.products) && applicableOn.products.length > 1) {
+      label = `${applicableOn.products.length} Products`;
+    } else if (Array.isArray(applicableOn.productIds) && applicableOn.productIds.length > 1) {
+      label = `${applicableOn.productIds.length} Products`;
+    } else {
+      label = applicableOn.productName || applicableOn.value || 'Product';
+    }
     Icon = Package;
   } else {
     label = String(applicableOn.value || applicableOn);
   }
 
   return (
-    <span className="admin-coupon-target-chip specific">
+    <span className={`${styles.targetChip} ${styles.specific}`} title={`Target: ${label}`}>
       <Icon size={11} color="#7c3aed" />
       <span>{label}</span>
     </span>
   );
 }
 
-// Helper: Calculate automatic percentage discount from max cap & min order amount
-function calculateAutoPercentage(maxCap, minOrder) {
-  const maxNum = parseFloat(maxCap);
-  const minNum = parseFloat(minOrder);
-  if (!isNaN(maxNum) && !isNaN(minNum) && minNum > 0 && maxNum > 0) {
-    const raw = (maxNum / minNum) * 100;
-    return Number.isInteger(raw) ? String(raw) : String(parseFloat(raw.toFixed(2)));
-  }
-  return null;
-}
-
 export default function AdminCoupons() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+
+  // Available real Categories and Products from backend database for selective coupon targeting
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [productsList, setProductsList] = useState([]);
 
   // Data lists from shared couponStore
   const {
@@ -131,6 +151,9 @@ export default function AdminCoupons() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
+  const [targetFilter, setTargetFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('newest');
   const [copiedCode, setCopiedCode] = useState(null);
 
   // 300ms debounce on search
@@ -146,6 +169,10 @@ export default function AdminCoupons() {
   const [couponModalLoading, setCouponModalLoading] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [viewingCoupon, setViewingCoupon] = useState(null);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [productPickerSort, setProductPickerSort] = useState('name_asc');
+  const [categoryPickerSort, setCategoryPickerSort] = useState('name_asc');
   const [couponForm, setCouponForm] = useState({
     code: '',
     type: 'percentage',
@@ -158,7 +185,163 @@ export default function AdminCoupons() {
     validTill: '',
     applicableType: 'all',
     applicableValue: '',
+    applicableId: '',
+    selectedCategories: [],
+    selectedProducts: [],
+    isActive: true,
   });
+
+  // Load live categories & products for target selector
+  useEffect(() => {
+    async function fetchTargetOptions() {
+      try {
+        const [catRes, prodRes] = await Promise.all([
+          categoryService.list().catch(() => null),
+          productService.list({ limit: 500 }).catch(() => null),
+        ]);
+        const cats = catRes?.data?.data || catRes?.data || [];
+        if (Array.isArray(cats)) setCategoriesList(cats);
+
+        const prods = prodRes?.data?.data || prodRes?.data || [];
+        if (Array.isArray(prods)) setProductsList(prods);
+      } catch (err) {
+        console.warn('Failed to load categories/products for coupon selector:', err);
+      }
+    }
+    fetchTargetOptions();
+  }, []);
+
+  // Filter and sort products for multi-select product picker
+  const filteredProducts = useMemo(() => {
+    let list = [...productsList];
+    if (productSearchQuery.trim()) {
+      const q = productSearchQuery.trim().toLowerCase();
+      list = list.filter((p) => {
+        const name = (p.name || '').toLowerCase();
+        const sku = (p.sku || '').toLowerCase();
+        const cat = (p.category?.name || p.category || '').toString().toLowerCase();
+        return name.includes(q) || sku.includes(q) || cat.includes(q);
+      });
+    }
+    return list.sort((a, b) => {
+      if (productPickerSort === 'name_asc') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      if (productPickerSort === 'price_low') {
+        return (Number(a.discountPrice || a.price) || 0) - (Number(b.discountPrice || b.price) || 0);
+      }
+      if (productPickerSort === 'price_high') {
+        return (Number(b.discountPrice || b.price) || 0) - (Number(a.discountPrice || a.price) || 0);
+      }
+      if (productPickerSort === 'sku') {
+        return (a.sku || '').localeCompare(b.sku || '');
+      }
+      return 0;
+    });
+  }, [productsList, productSearchQuery, productPickerSort]);
+
+  // Filter and sort categories for multi-select category picker
+  const filteredCategories = useMemo(() => {
+    let list = [...categoriesList];
+    if (categorySearchQuery.trim()) {
+      const q = categorySearchQuery.trim().toLowerCase();
+      list = list.filter((c) => (c.name || '').toLowerCase().includes(q));
+    }
+    return list.sort((a, b) => {
+      if (categoryPickerSort === 'name_desc') {
+        return (b.name || '').localeCompare(a.name || '');
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [categoriesList, categorySearchQuery, categoryPickerSort]);
+
+  // Multi-category picker toggle item
+  const handleToggleCategory = (cat) => {
+    const isSelected = (couponForm.selectedCategories || []).some(
+      (c) => String(c._id) === String(cat._id) || c.name === cat.name
+    );
+    let nextSelected = [];
+    if (isSelected) {
+      nextSelected = (couponForm.selectedCategories || []).filter(
+        (c) => String(c._id) !== String(cat._id) && c.name !== cat.name
+      );
+    } else {
+      nextSelected = [...(couponForm.selectedCategories || []), cat];
+    }
+    setCouponForm({
+      ...couponForm,
+      selectedCategories: nextSelected,
+      applicableId: nextSelected[0]?._id || '',
+      applicableValue: nextSelected.map((c) => c.name).join(', '),
+    });
+  };
+
+  // Multi-category picker remove chip
+  const handleRemoveCategory = (catIdOrName) => {
+    const nextSelected = (couponForm.selectedCategories || []).filter(
+      (c) => String(c._id) !== String(catIdOrName) && c.name !== catIdOrName
+    );
+    setCouponForm({
+      ...couponForm,
+      selectedCategories: nextSelected,
+      applicableId: nextSelected[0]?._id || '',
+      applicableValue: nextSelected.map((c) => c.name).join(', '),
+    });
+  };
+
+  // Multi-category picker clear all
+  const handleClearAllCategories = () => {
+    setCouponForm({
+      ...couponForm,
+      selectedCategories: [],
+      applicableId: '',
+      applicableValue: '',
+    });
+  };
+
+  // Multi-product picker toggle item
+  const handleToggleProduct = (product) => {
+    const isSelected = (couponForm.selectedProducts || []).some(
+      (p) => String(p._id) === String(product._id)
+    );
+    let nextSelected = [];
+    if (isSelected) {
+      nextSelected = couponForm.selectedProducts.filter(
+        (p) => String(p._id) !== String(product._id)
+      );
+    } else {
+      nextSelected = [...(couponForm.selectedProducts || []), product];
+    }
+    setCouponForm({
+      ...couponForm,
+      selectedProducts: nextSelected,
+      applicableId: nextSelected[0]?._id || '',
+      applicableValue: nextSelected.map((p) => p.name).join(', '),
+    });
+  };
+
+  // Multi-product picker remove chip
+  const handleRemoveProduct = (productId) => {
+    const nextSelected = (couponForm.selectedProducts || []).filter(
+      (p) => String(p._id) !== String(productId)
+    );
+    setCouponForm({
+      ...couponForm,
+      selectedProducts: nextSelected,
+      applicableId: nextSelected[0]?._id || '',
+      applicableValue: nextSelected.map((p) => p.name).join(', '),
+    });
+  };
+
+  // Multi-product picker clear all
+  const handleClearAllProducts = () => {
+    setCouponForm({
+      ...couponForm,
+      selectedProducts: [],
+      applicableId: '',
+      applicableValue: '',
+    });
+  };
 
   async function loadData() {
     try {
@@ -180,12 +363,9 @@ export default function AdminCoupons() {
             applicableOn: c.applicableOn || 'All Products',
           }))
         );
-      } else {
-        setCoupons([]);
       }
     } catch (err) {
       console.error('Failed to load coupons from server:', err);
-      setCoupons([]);
     } finally {
       setLoading(false);
     }
@@ -193,6 +373,20 @@ export default function AdminCoupons() {
 
   useEffect(() => {
     loadData();
+
+    // Auto-rehydrate when server starts or reconnects
+    const handleServerOnline = () => {
+      console.log('⚡ [AdminCoupons] Auto-syncing coupons on server reconnect...');
+      loadData();
+    };
+
+    window.addEventListener('picky_server_reconnected', handleServerOnline);
+    window.addEventListener('focus', handleServerOnline);
+
+    return () => {
+      window.removeEventListener('picky_server_reconnected', handleServerOnline);
+      window.removeEventListener('focus', handleServerOnline);
+    };
   }, []);
 
   // Auto-open coupon modal if triggered via ?action=add
@@ -225,6 +419,10 @@ export default function AdminCoupons() {
   // ── Coupon Handlers ──────────────────────────────────────────────────────────
   const handleOpenAddCoupon = () => {
     setEditingCoupon(null);
+    setProductSearchQuery('');
+    setCategorySearchQuery('');
+    setProductPickerSort('name_asc');
+    setCategoryPickerSort('name_asc');
     setCouponForm({
       code: '',
       type: 'percentage',
@@ -233,10 +431,13 @@ export default function AdminCoupons() {
       maxDiscountAmount: '',
       usageLimitPerCustomer: '1',
       usageCount: '0',
-      validFrom: '2026-09-29',
-      validTill: '2026-12-31',
+      validFrom: '',
+      validTill: '',
       applicableType: 'all',
       applicableValue: '',
+      applicableId: '',
+      selectedCategories: [],
+      selectedProducts: [],
       isActive: true,
     });
     setIsCouponModalOpen(true);
@@ -246,12 +447,59 @@ export default function AdminCoupons() {
     setEditingCoupon(c);
     let appType = 'all';
     let appVal = '';
+    let appId = '';
+    let selProds = [];
+    let selCats = [];
+
     if (c.applicableOn && typeof c.applicableOn === 'object') {
       appType = c.applicableOn.type || 'all';
-      appVal = c.applicableOn.value || '';
+      appVal = c.applicableOn.categoryName || c.applicableOn.productName || c.applicableOn.value || '';
+      appId = c.applicableOn.categoryId || c.applicableOn.productId || '';
+
+      if (appType === 'category') {
+        if (Array.isArray(c.applicableOn.categories) && c.applicableOn.categories.length > 0) {
+          selCats = c.applicableOn.categories.map((cat) => {
+            const found = categoriesList.find((item) => String(item._id) === String(cat._id || cat.id) || item.name === cat.name);
+            return found || cat;
+          });
+        } else if (Array.isArray(c.applicableOn.categoryIds) && c.applicableOn.categoryIds.length > 0) {
+          selCats = c.applicableOn.categoryIds
+            .map((id) => categoriesList.find((cat) => String(cat._id) === String(id)))
+            .filter(Boolean);
+        } else if (c.applicableOn.categoryId || c.applicableOn.categoryName || c.applicableOn.value) {
+          const catIdent = c.applicableOn.categoryId || c.applicableOn.categoryName || c.applicableOn.value;
+          const found = categoriesList.find(
+            (cat) => String(cat._id) === String(catIdent) || cat.name === catIdent
+          );
+          if (found) selCats = [found];
+          else if (catIdent) selCats = [{ name: catIdent }];
+        }
+      } else if (appType === 'product') {
+        if (Array.isArray(c.applicableOn.products) && c.applicableOn.products.length > 0) {
+          selProds = c.applicableOn.products.map((p) => {
+            const foundInStore = productsList.find((item) => String(item._id) === String(p._id || p.id));
+            return foundInStore || p;
+          });
+        } else if (Array.isArray(c.applicableOn.productIds) && c.applicableOn.productIds.length > 0) {
+          selProds = c.applicableOn.productIds
+            .map((id) => productsList.find((p) => String(p._id) === String(id)))
+            .filter(Boolean);
+        } else if (c.applicableOn.productId || c.applicableOn.productName) {
+          const found = productsList.find(
+            (p) =>
+              String(p._id) === String(c.applicableOn.productId) ||
+              p.name === c.applicableOn.productName ||
+              p.name === c.applicableOn.value
+          );
+          if (found) selProds = [found];
+        }
+      }
     } else if (c.applicableOn && c.applicableOn !== 'All Products') {
       appType = 'category';
       appVal = c.applicableOn;
+      const found = categoriesList.find((cat) => cat.name === c.applicableOn);
+      if (found) selCats = [found];
+      else selCats = [{ name: c.applicableOn }];
     }
 
     const limit =
@@ -261,6 +509,10 @@ export default function AdminCoupons() {
         ? String(c.maxUsagePerUser)
         : '';
 
+    setProductSearchQuery('');
+    setCategorySearchQuery('');
+    setProductPickerSort('name_asc');
+    setCategoryPickerSort('name_asc');
     setCouponForm({
       code: c.code || '',
       type: c.type || 'percentage',
@@ -269,10 +521,13 @@ export default function AdminCoupons() {
       maxDiscountAmount: c.maxDiscountAmount ? String(c.maxDiscountAmount) : '',
       usageLimitPerCustomer: limit,
       usageCount: c.usageCount !== undefined && c.usageCount !== null ? String(c.usageCount) : '0',
-      validFrom: c.validFrom || '',
-      validTill: c.validTill || '',
+      validFrom: toDateTimeLocalInput(c.validFrom || c.startsAt),
+      validTill: toDateTimeLocalInput(c.validTill || c.endsAt),
       applicableType: appType,
       applicableValue: appVal,
+      applicableId: appId,
+      selectedCategories: selCats,
+      selectedProducts: selProds,
       isActive: c.isActive !== undefined ? Boolean(c.isActive) : true,
     });
     setIsCouponModalOpen(true);
@@ -286,11 +541,61 @@ export default function AdminCoupons() {
     }
 
     let applicableOn = 'All Products';
-    if (couponForm.applicableType === 'category' && couponForm.applicableValue.trim()) {
-      applicableOn = { type: 'category', value: couponForm.applicableValue.trim() };
-    } else if (couponForm.applicableType === 'product' && couponForm.applicableValue.trim()) {
-      applicableOn = { type: 'product', value: couponForm.applicableValue.trim() };
+    if (couponForm.applicableType === 'category') {
+      const cats = couponForm.selectedCategories || [];
+      if (cats.length === 0) {
+        showToast('Please select at least one category for this coupon', 'error');
+        return;
+      }
+
+      const categoryIds = cats.map((c) => String(c._id || '')).filter(Boolean);
+      const displayLabel =
+        cats.length === 1
+          ? cats[0].name
+          : `${cats.length} Categories (${cats.slice(0, 2).map((c) => c.name).join(', ')}${cats.length > 2 ? '...' : ''})`;
+
+      applicableOn = {
+        type: 'category',
+        value: displayLabel,
+        categoryIds,
+        categories: cats.map((c) => ({
+          _id: c._id || null,
+          name: c.name,
+        })),
+        categoryId: cats[0]._id || null,
+        categoryName: cats[0].name,
+      };
+    } else if (couponForm.applicableType === 'product') {
+      const prods = couponForm.selectedProducts || [];
+      if (prods.length === 0) {
+        showToast('Please select at least one product for this coupon', 'error');
+        return;
+      }
+
+      const productIds = prods.map((p) => String(p._id));
+      const displayLabel =
+        prods.length === 1
+          ? prods[0].name
+          : `${prods.length} Products (${prods.slice(0, 2).map((p) => p.name).join(', ')}${prods.length > 2 ? '...' : ''})`;
+
+      applicableOn = {
+        type: 'product',
+        value: displayLabel,
+        productIds,
+        products: prods.map((p) => ({
+          _id: p._id,
+          name: p.name,
+          sku: p.sku || '',
+          price: p.discountPrice || p.price || 0,
+        })),
+        productId: prods[0]._id,
+        productName: prods[0].name,
+        sku: prods[0].sku || '',
+      };
     }
+
+    const startsAtIso = couponForm.validFrom ? new Date(couponForm.validFrom).toISOString() : null;
+    const endsAtIso = couponForm.validTill ? new Date(couponForm.validTill).toISOString() : null;
 
     const payload = {
       code: couponForm.code.trim().toUpperCase(),
@@ -303,6 +608,8 @@ export default function AdminCoupons() {
       usageCount: couponForm.usageCount !== '' ? Number(couponForm.usageCount) : (editingCoupon?.usageCount || 0),
       validFrom: couponForm.validFrom || null,
       validTill: couponForm.validTill || null,
+      startsAt: startsAtIso,
+      endsAt: endsAtIso,
       applicableOn,
       isActive: couponForm.isActive !== undefined ? Boolean(couponForm.isActive) : true,
     };
@@ -310,23 +617,26 @@ export default function AdminCoupons() {
     try {
       setCouponModalLoading(true);
       if (editingCoupon) {
-        await adminService.updateCoupon(editingCoupon._id, payload).catch(() => null);
-        storeUpdateCoupon(editingCoupon._id, payload);
+        const res = await adminService.updateCoupon(editingCoupon._id, payload);
+        const updated = res?.data || { ...editingCoupon, ...payload };
+        storeUpdateCoupon(editingCoupon._id, updated);
         showToast(`Coupon "${payload.code}" updated!`, 'success');
       } else {
-        const res = await adminService.createCoupon(payload).catch(() => null);
-        const newCoupon = res?.data || {
-          _id: `coup_${Date.now()}`,
-          ...payload,
-          isActive: payload.isActive,
-          usageCount: payload.usageCount || 0,
-        };
+        const res = await adminService.createCoupon(payload);
+        const newCoupon = res?.data;
+        if (!newCoupon) {
+          throw new Error('Failed to create coupon on server');
+        }
         storeAddCoupon(newCoupon);
         showToast(`Coupon "${payload.code}" created!`, 'success');
       }
       setIsCouponModalOpen(false);
+      // Immediately reload data from backend database to ensure total sync
+      await loadData();
     } catch (err) {
-      showToast(err.message || 'Failed to save coupon', 'error');
+      console.error('Coupon save error:', err);
+      const errMsg = err?.error || err?.message || err?.data?.error || 'Failed to save coupon';
+      showToast(errMsg, 'error');
     } finally {
       setCouponModalLoading(false);
     }
@@ -349,34 +659,126 @@ export default function AdminCoupons() {
     showToast(`Coupon "${c.code}" deleted`, 'success');
   };
 
-  // Filtered coupons based on search, status, and discount type
-  const filteredCoupons = effectiveCoupons.filter((c) => {
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.trim().toLowerCase();
-      if (!c.code?.toLowerCase().includes(q)) {
-        return false;
+  // Filtered and sorted coupons based on search, status, discount type, target, category, and sort
+  const filteredCoupons = useMemo(() => {
+    let list = effectiveCoupons.filter((c) => {
+      if (debouncedSearch.trim()) {
+        const q = debouncedSearch.trim().toLowerCase();
+        if (!c.code?.toLowerCase().includes(q)) {
+          return false;
+        }
       }
-    }
-    if (statusFilter !== 'ALL') {
-      const status = getCouponStatus(c);
-      if (status.toLowerCase() !== statusFilter.toLowerCase()) {
-        return false;
+      if (statusFilter !== 'ALL') {
+        const status = getCouponStatus(c);
+        if (status.toLowerCase() !== statusFilter.toLowerCase()) {
+          return false;
+        }
       }
-    }
-    if (typeFilter !== 'ALL') {
-      if (c.type !== typeFilter) {
-        return false;
+      if (typeFilter !== 'ALL') {
+        if (c.type !== typeFilter) {
+          return false;
+        }
       }
-    }
-    return true;
-  });
+      if (targetFilter !== 'ALL') {
+        const isAll = !c.applicableOn || c.applicableOn === 'All Products' || c.applicableOn?.type === 'all';
+        const isCategory = c.applicableOn?.type === 'category' || (typeof c.applicableOn === 'string' && c.applicableOn !== 'All Products');
+        const isProduct = c.applicableOn?.type === 'product';
+
+        if (targetFilter === 'all_products' && !isAll) return false;
+        if (targetFilter === 'category' && !isCategory) return false;
+        if (targetFilter === 'product' && !isProduct) return false;
+      }
+      if (categoryFilter !== 'ALL') {
+        const catQ = categoryFilter.toLowerCase();
+        let matchesCategory = false;
+        if (typeof c.applicableOn === 'string' && c.applicableOn.toLowerCase().includes(catQ)) {
+          matchesCategory = true;
+        } else if (c.applicableOn && typeof c.applicableOn === 'object') {
+          if (c.applicableOn.type === 'category') {
+            const catName = String(c.applicableOn.categoryName || c.applicableOn.value || '').toLowerCase();
+            const catList = Array.isArray(c.applicableOn.categories)
+              ? c.applicableOn.categories.map((cat) => (cat.name || '').toLowerCase())
+              : [];
+            if (catName.includes(catQ) || catList.some((n) => n.includes(catQ))) {
+              matchesCategory = true;
+            }
+          } else if (c.applicableOn.type === 'product' && Array.isArray(c.applicableOn.products)) {
+            const foundProd = c.applicableOn.products.some((p) => {
+              const pDoc = productsList.find((item) => String(item._id) === String(p._id || p.id));
+              const pCat = (pDoc?.category?.name || pDoc?.category || '').toString().toLowerCase();
+              return pCat.includes(catQ);
+            });
+            if (foundProd) matchesCategory = true;
+          }
+        }
+        if (!matchesCategory) return false;
+      }
+      return true;
+    });
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'newest') {
+        const dateA = new Date(a.createdAt || a.validFrom || a.startsAt || 0).getTime();
+        const dateB = new Date(b.createdAt || b.validFrom || b.startsAt || 0).getTime();
+        return dateB - dateA;
+      }
+      if (sortBy === 'discount_high') {
+        return (Number(b.value) || 0) - (Number(a.value) || 0);
+      }
+      if (sortBy === 'discount_low') {
+        return (Number(a.value) || 0) - (Number(b.value) || 0);
+      }
+      if (sortBy === 'most_used') {
+        return (Number(b.usageCount) || 0) - (Number(a.usageCount) || 0);
+      }
+      if (sortBy === 'code_asc') {
+        return (a.code || '').localeCompare(b.code || '');
+      }
+      if (sortBy === 'expiring_soon') {
+        const endA = a.validTill || a.endsAt ? new Date(a.validTill || a.endsAt).getTime() : Infinity;
+        const endB = b.validTill || b.endsAt ? new Date(b.validTill || b.endsAt).getTime() : Infinity;
+        return endA - endB;
+      }
+      if (sortBy === 'target_type') {
+        const getRank = (c) => {
+          if (!c.applicableOn || c.applicableOn === 'All Products' || c.applicableOn?.type === 'all') return 1;
+          if (c.applicableOn?.type === 'category') return 2;
+          return 3;
+        };
+        return getRank(a) - getRank(b);
+      }
+      if (sortBy === 'category_asc') {
+        const getCat = (c) => {
+          if (c.applicableOn?.type === 'category') return c.applicableOn.categoryName || c.applicableOn.value || '';
+          return 'zzz';
+        };
+        return getCat(a).localeCompare(getCat(b));
+      }
+      if (sortBy === 'product_asc') {
+        const getProd = (c) => {
+          if (c.applicableOn?.type === 'product') return c.applicableOn.productName || c.applicableOn.value || '';
+          return 'zzz';
+        };
+        return getProd(a).localeCompare(getProd(b));
+      }
+      return 0;
+    });
+  }, [effectiveCoupons, debouncedSearch, statusFilter, typeFilter, targetFilter, categoryFilter, sortBy, productsList]);
 
   // ─── Dynamic Coupon KPI Analytics Calculations ──────────────────────────────
+  const totalCouponsCount = effectiveCoupons.length;
+
   const activeCoupons = useMemo(
     () => effectiveCoupons.filter((c) => getCouponStatus(c) === 'Active'),
     [effectiveCoupons]
   );
   const activeCouponsCount = activeCoupons.length;
+
+  const scheduledCoupons = useMemo(
+    () => effectiveCoupons.filter((c) => getCouponStatus(c) === 'Scheduled'),
+    [effectiveCoupons]
+  );
+  const scheduledCouponsCount = scheduledCoupons.length;
 
   const couponRedemptions = useMemo(
     () => effectiveCoupons.reduce((sum, c) => sum + (Number(c.usageCount) || 0), 0),
@@ -435,30 +837,83 @@ export default function AdminCoupons() {
 
   return (
     <AdminLayout title="Coupon Codes & Vouchers">
-      {/* ── Page Header ── */}
-      <div className="admin-page-header-row">
-        <div>
-          <h1 className="admin-page-main-title">Discounts & Coupons</h1>
-          <p className="admin-page-main-subtitle">Manage promo coupon codes, vouchers, and automatic order discounts</p>
+      {/* ── Page Header with Real Brand Icon ── */}
+      <div className="admin-page-header-row" style={{ marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div
+            style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.28)',
+              color: '#ffffff',
+              flexShrink: 0,
+            }}
+          >
+            <TicketPercent size={25} strokeWidth={2.2} />
+          </div>
+          <div>
+            <h1 className="admin-page-main-title" style={{ margin: 0 }}>Discounts & Coupons</h1>
+            <p className="admin-page-main-subtitle" style={{ margin: 0, marginTop: '2px' }}>
+              Manage promo coupon codes, vouchers, and automatic order discounts
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ── 1. Top 4 Metric KPI Progress Cards ── */}
-      <div className="kpi-progress-grid">
+      {/* ── 1. Top Metric KPI Progress Cards (Interactive Quick Filters with Real Icons) ── */}
+      <div className="kpi-progress-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
+        <AdminStatCard
+          title="TOTAL COUPONS"
+          value={totalCouponsCount}
+          icon={<TicketPercent size={22} strokeWidth={2.2} />}
+          variant="purple"
+          footerLabel="All promo vouchers"
+          footerValue={statusFilter === 'ALL' ? 'Showing all' : 'Click to show all'}
+          showProgress={false}
+          isActive={statusFilter === 'ALL'}
+          onClick={() => setStatusFilter('ALL')}
+          style={{ cursor: 'pointer' }}
+        />
         <AdminStatCard
           title="ACTIVE COUPONS"
           value={activeCouponsCount}
-          icon={<Tag size={22} />}
-          variant="purple"
-          footerLabel="Vouchers & promo codes"
-          footerValue={activeCouponsCount > 0 ? 'Live for checkout' : 'None'}
+          icon={<BadgePercent size={22} strokeWidth={2.2} />}
+          variant="green"
+          footerLabel="Live for checkout"
+          footerValue={statusFilter === 'Active' ? 'Filtered (Active)' : 'Click to filter'}
           showProgress={false}
+          isActive={statusFilter === 'Active'}
+          onClick={() => setStatusFilter(statusFilter === 'Active' ? 'ALL' : 'Active')}
+          style={{ cursor: 'pointer' }}
+        />
+        <AdminStatCard
+          title="SCHEDULED COUPONS"
+          value={scheduledCouponsCount}
+          icon={<CalendarClock size={22} strokeWidth={2.2} />}
+          variant="blue"
+          footerLabel="Upcoming release"
+          footerValue={
+            statusFilter === 'Scheduled'
+              ? 'Filtered (Scheduled)'
+              : scheduledCouponsCount > 0
+              ? `${scheduledCouponsCount} scheduled • click to filter`
+              : 'None'
+          }
+          showProgress={false}
+          isActive={statusFilter === 'Scheduled'}
+          onClick={() => setStatusFilter(statusFilter === 'Scheduled' ? 'ALL' : 'Scheduled')}
+          style={{ cursor: 'pointer' }}
         />
         <AdminStatCard
           title="COUPONS REDEEMED"
           value={couponRedemptions.toLocaleString('en-IN')}
-          icon={<CheckCircle2 size={22} />}
-          variant="blue"
+          icon={<Gift size={22} strokeWidth={2.2} />}
+          variant="orange"
           footerLabel="Customer redemptions"
           footerValue={couponRedemptions > 0 ? `+${redemptionsThisWeek} this week` : 'None'}
           showProgress={false}
@@ -466,7 +921,7 @@ export default function AdminCoupons() {
         <AdminStatCard
           title="TOTAL COUPON SAVINGS"
           value={formatPrice(couponSavingsTotal)}
-          icon={<Percent size={22} />}
+          icon={<PiggyBank size={22} strokeWidth={2.2} />}
           variant="amber"
           footerLabel="Promotional code savings"
           footerValue={couponSavingsTotal > 0 ? 'All time' : 'None'}
@@ -475,8 +930,8 @@ export default function AdminCoupons() {
         <AdminStatCard
           title="SALES VIA COUPONS"
           value={formattedCouponRevenue}
-          icon={<TrendingUp size={22} />}
-          variant="green"
+          icon={<Coins size={22} strokeWidth={2.2} />}
+          variant="emerald"
           footerLabel="From coupon orders"
           footerValue={totalCouponRevenue > 0 ? `${couponSalesPercent}% of total` : 'None'}
           showProgress={false}
@@ -484,59 +939,17 @@ export default function AdminCoupons() {
       </div>
 
       {/* ── 2. Header Action Bar & Filter Bar ── */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1.4rem',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flex: 1 }}>
+      <div className={styles.toolbar}>
+        <div className={styles.filtersRow}>
           {/* Search by coupon code */}
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              minWidth: '270px',
-              flex: '1 1 270px',
-              maxWidth: '380px',
-            }}
-          >
-            <Search
-              size={16}
-              style={{ position: 'absolute', left: '1rem', color: '#7c3aed', pointerEvents: 'none' }}
-            />
+          <div className={styles.searchWrapper}>
+            <Search size={16} className={styles.searchIcon} />
             <input
               type="text"
               placeholder="Search coupon code (e.g. WELCOME100)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                height: '42px',
-                padding: searchTerm ? '0 2.2rem 0 2.6rem' : '0 1rem 0 2.6rem',
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '12px',
-                fontSize: '0.84rem',
-                color: '#1e1b4b',
-                fontWeight: 500,
-                outline: 'none',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
-                transition: 'all 0.18s ease',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#7c3aed';
-                e.target.style.boxShadow = '0 0 0 3px rgba(124, 58, 237, 0.12)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.03)';
-              }}
+              className={`${styles.searchInput} ${searchTerm ? styles.hasText : ''}`}
             />
             {searchTerm && (
               <button
@@ -545,17 +958,7 @@ export default function AdminCoupons() {
                   setSearchTerm('');
                   setDebouncedSearch('');
                 }}
-                style={{
-                  position: 'absolute',
-                  right: '0.75rem',
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: 0,
-                }}
+                className={styles.clearSearchBtn}
                 title="Clear search"
               >
                 <X size={15} />
@@ -570,11 +973,38 @@ export default function AdminCoupons() {
             options={[
               { value: 'ALL', label: 'All Statuses' },
               { value: 'Active', label: 'Active Codes' },
+              { value: 'Scheduled', label: 'Scheduled Codes 🕒' },
               { value: 'Disabled', label: 'Disabled Codes' },
               { value: 'Expired', label: 'Expired Codes' },
             ]}
-            minWidth="155px"
+            minWidth="145px"
           />
+
+          {/* Target Filter (Applies To) */}
+          <Select
+            value={targetFilter}
+            onChange={(val) => setTargetFilter(val)}
+            options={[
+              { value: 'ALL', label: 'All Targets' },
+              { value: 'all_products', label: '🌐 Storewide' },
+              { value: 'category', label: '📁 Categories' },
+              { value: 'product', label: '📦 Products' },
+            ]}
+            minWidth="145px"
+          />
+
+          {/* Category Filter Dropdown */}
+          {categoriesList.length > 0 && (
+            <Select
+              value={categoryFilter}
+              onChange={(val) => setCategoryFilter(val)}
+              options={[
+                { value: 'ALL', label: 'All Categories' },
+                ...categoriesList.map((c) => ({ value: c.name, label: `📁 ${c.name}` })),
+              ]}
+              minWidth="155px"
+            />
+          )}
 
           {/* Discount Type Filter Dropdown */}
           <Select
@@ -585,28 +1015,35 @@ export default function AdminCoupons() {
               { value: 'percentage', label: 'Percentage (%)' },
               { value: 'flat', label: 'Flat Off (₹)' },
             ]}
-            minWidth="175px"
+            minWidth="160px"
+          />
+
+          {/* Sort By Dropdown */}
+          <Select
+            value={sortBy}
+            onChange={(val) => setSortBy(val)}
+            options={[
+              { value: 'newest', label: 'Sort: Newest First' },
+              { value: 'discount_high', label: 'Sort: Discount High → Low' },
+              { value: 'discount_low', label: 'Sort: Discount Low → High' },
+              { value: 'most_used', label: 'Sort: Most Used' },
+              { value: 'expiring_soon', label: 'Sort: Expiring Soonest' },
+              { value: 'category_asc', label: 'Sort: Category (A → Z)' },
+              { value: 'product_asc', label: 'Sort: Product (A → Z)' },
+              { value: 'target_type', label: 'Sort: Target Type' },
+              { value: 'code_asc', label: 'Sort: Code A → Z' },
+            ]}
+            minWidth="185px"
           />
         </div>
 
         {/* Right Side: Results Count & Create CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <span
-            style={{
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              color: '#64748b',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              padding: '0.45rem 0.85rem',
-              borderRadius: '10px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Showing <strong style={{ color: '#1e1b4b' }}>{filteredCoupons.length}</strong> of {effectiveCoupons.length} coupons
+        <div className={styles.actionsRow}>
+          <span className={styles.countBadge}>
+            Showing <strong>{filteredCoupons.length}</strong> of {effectiveCoupons.length} coupons
           </span>
 
-          {(searchTerm || statusFilter !== 'ALL' || typeFilter !== 'ALL') && (
+          {(searchTerm || statusFilter !== 'ALL' || typeFilter !== 'ALL' || targetFilter !== 'ALL' || categoryFilter !== 'ALL') && (
             <button
               type="button"
               onClick={() => {
@@ -614,20 +1051,10 @@ export default function AdminCoupons() {
                 setDebouncedSearch('');
                 setStatusFilter('ALL');
                 setTypeFilter('ALL');
+                setTargetFilter('ALL');
+                setCategoryFilter('ALL');
               }}
-              className="admin-period-select-btn"
-              style={{
-                padding: '0.45rem 0.85rem',
-                fontSize: '0.8rem',
-                color: '#e11d48',
-                borderColor: '#fecdd3',
-                background: '#fff1f2',
-                borderRadius: '10px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                cursor: 'pointer',
-              }}
+              className={styles.resetBtn}
             >
               <X size={13} />
               <span>Reset</span>
@@ -636,22 +1063,7 @@ export default function AdminCoupons() {
 
           <button
             onClick={handleOpenAddCoupon}
-            className="admin-period-select-btn"
-            style={{
-              height: '42px',
-              padding: '0 1.35rem',
-              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '12px',
-              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.86rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            className={styles.createBtn}
           >
             <Plus size={16} strokeWidth={2.5} />
             <span>Create Coupon Code</span>
@@ -663,35 +1075,15 @@ export default function AdminCoupons() {
       {loading ? (
         <Spinner size={36} />
       ) : filteredCoupons.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '3.5rem 1.5rem',
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1.5px solid #ede8f8',
-            boxShadow: '0 4px 20px rgba(124, 58, 237, 0.04)',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                background: '#ede8f8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#7c3aed',
-              }}
-            >
+        <div className={styles.emptyCard}>
+          <div className={styles.emptyContent}>
+            <div className={styles.emptyIconCircle}>
               <Search size={22} />
             </div>
-            <strong style={{ fontSize: '0.98rem', color: '#1e1b4b' }}>
+            <strong className={styles.emptyTitle}>
               {effectiveCoupons.length === 0 ? 'No promo coupons created yet' : 'No coupons found'}
             </strong>
-            <span style={{ fontSize: '0.82rem', color: '#64748b', maxWidth: '340px' }}>
+            <span className={styles.emptySubtitle}>
               {effectiveCoupons.length === 0
                 ? 'Click "+ Create Coupon Code" to get started.'
                 : 'No promo coupons matched your search or status filter.'}
@@ -705,15 +1097,7 @@ export default function AdminCoupons() {
                   setStatusFilter('ALL');
                   setTypeFilter('ALL');
                 }}
-                className="admin-period-select-btn"
-                style={{
-                  marginTop: '0.4rem',
-                  padding: '0.4rem 0.95rem',
-                  fontSize: '0.8rem',
-                  color: '#7c3aed',
-                  borderColor: '#dfd5f5',
-                  background: '#ffffff',
-                }}
+                className={styles.clearFiltersBtn}
               >
                 Clear filters
               </button>
@@ -721,7 +1105,7 @@ export default function AdminCoupons() {
           </div>
         </div>
       ) : (
-        <div className="admin-coupons-grid">
+        <div className={styles.couponsGrid}>
           {filteredCoupons.map((c) => {
             const status = getCouponStatus(c);
             const expiring = isExpiringSoon(c, status);
@@ -733,46 +1117,72 @@ export default function AdminCoupons() {
                 : null;
             const isHighlighted = highlightedRow === (c.code || '').toUpperCase();
 
-            const validityText =
-              c.validFrom && c.validTill
-                ? `${formatValidityDate(c.validFrom)} - ${formatValidityDate(c.validTill)}`
-                : c.validTill
-                ? `Till ${formatValidityDate(c.validTill)}`
-                : 'Always Valid';
+            // Status Badge configuration
+            const badgeConfig = (() => {
+              if (status === 'Scheduled') {
+                return { label: 'Scheduled', variant: 'badgeScheduled' };
+              }
+              if (status === 'Expired') {
+                return { label: 'Expired', variant: 'badgeExpired' };
+              }
+              if (status === 'Disabled') {
+                return { label: 'Disabled', variant: 'badgeDisabled' };
+              }
+              if (expiring) {
+                return { label: 'Expiring Soon', variant: 'badgeExpiringSoon' };
+              }
+              return { label: 'Active', variant: 'badgeActive' };
+            })();
+
+            const validityText = (() => {
+              if (status === 'Scheduled' && (c.validFrom || c.startsAt)) {
+                return `Starts ${formatValidityDate(c.validFrom || c.startsAt)}`;
+              }
+              if ((c.validFrom || c.startsAt) && (c.validTill || c.endsAt)) {
+                return `${formatValidityDate(c.validFrom || c.startsAt)} - ${formatValidityDate(c.validTill || c.endsAt)}`;
+              }
+              if (c.validTill || c.endsAt) {
+                return `Till ${formatValidityDate(c.validTill || c.endsAt)}`;
+              }
+              return 'Always Valid';
+            })();
 
             return (
               <div
                 key={c._id}
                 id={`coupon-row-${(c.code || '').toUpperCase()}`}
-                className={`admin-coupon-card ${isHighlighted ? 'highlighted' : ''}`}
+                className={`${styles.couponCard} ${isHighlighted ? styles.highlighted : ''}`}
               >
-                {/* Top Row: Counting (Discount) on Left + Status Dot & Copy Code on Right */}
-                <div className="admin-coupon-card-top">
+                {/* Top Row: Counting (Discount) on Left + Status Badge & Copy Code on Right */}
+                <div className={styles.cardTop}>
                   {/* Left: Counting (Discount Metric) */}
-                  <div className="admin-coupon-hero-metric">
-                    <span className="admin-coupon-hero-val">
+                  <div className={styles.heroMetric}>
+                    <span className={styles.heroVal}>
                       {c.type === 'percentage' ? `${c.value}%` : formatPrice(c.value)}
                     </span>
-                    <span className="admin-coupon-hero-badge">
+                    <span className={styles.heroBadge}>
                       {c.type === 'percentage' ? 'OFF' : 'FLAT OFF'}
                     </span>
                   </div>
 
-                  {/* Right: Status Dot + Copy Code Badge */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  {/* Right: Status Badge + Copy Code Badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <span
-                      className={`admin-coupon-status-dot-only ${status === 'Active' ? 'active' : 'inactive'}`}
-                      title={status === 'Active' ? 'Active' : status === 'Expired' ? 'Expired' : 'Disabled'}
-                    />
+                      className={`${styles.statusBadge} ${styles[badgeConfig.variant]}`}
+                      title={`Status: ${badgeConfig.label}`}
+                    >
+                      <span className={styles.statusBadgeDot} />
+                      <span>{badgeConfig.label}</span>
+                    </span>
 
-                    <div className="admin-coupon-code-badge" title="Coupon Code">
-                      <span className="admin-coupon-code-text">{c.code}</span>
+                    <div className={styles.codeBadge} title="Coupon Code">
+                      <span className={styles.codeText}>{c.code}</span>
                       <button
                         type="button"
                         onClick={() => handleCopyCode(c.code)}
                         title={copiedCode === c.code ? 'Copied to clipboard!' : 'Copy coupon code'}
                         aria-label={`Copy coupon code ${c.code}`}
-                        className={`admin-coupon-copy-btn ${copiedCode === c.code ? 'copied' : ''}`}
+                        className={`${styles.copyBtn} ${copiedCode === c.code ? styles.copied : ''}`}
                       >
                         {copiedCode === c.code ? <Check size={13} /> : <Copy size={13} />}
                       </button>
@@ -781,49 +1191,47 @@ export default function AdminCoupons() {
                 </div>
 
                 {/* Tabular Details Section */}
-                <div className="admin-coupon-table-section">
-                  <div className="admin-coupon-table-row">
-                    <span className="admin-coupon-row-label">Min Order</span>
-                    <span className="admin-coupon-row-value">
+                <div className={styles.tableSection}>
+                  <div className={styles.tableRow}>
+                    <span className={styles.rowLabel}>Min Order</span>
+                    <span className={styles.rowValue}>
                       {c.minOrderAmount ? formatPrice(c.minOrderAmount) : 'No Minimum'}
                     </span>
                   </div>
 
-                  <div className="admin-coupon-table-row">
-                    <span className="admin-coupon-row-label">Max Cap</span>
-                    <span className="admin-coupon-row-value">
+                  <div className={styles.tableRow}>
+                    <span className={styles.rowLabel}>Max Cap</span>
+                    <span className={styles.rowValue}>
                       {c.maxDiscountAmount ? formatPrice(c.maxDiscountAmount) : 'Unlimited'}
                     </span>
                   </div>
 
-                  <div className="admin-coupon-table-row">
-                    <span className="admin-coupon-row-label">Validity</span>
-                    <span className="admin-coupon-row-value" title={validityText}>
+                  <div className={styles.tableRow}>
+                    <span className={styles.rowLabel}>Validity</span>
+                    <span className={styles.rowValue} title={validityText}>
                       {validityText}
                     </span>
                   </div>
 
-                  <div className="admin-coupon-table-row">
-                    <span className="admin-coupon-row-label">Applies To</span>
-                    <span className="admin-coupon-row-value">
-                      {typeof c.applicableOn === 'string'
-                        ? c.applicableOn
-                        : c.applicableOn?.value || 'All Products'}
+                  <div className={styles.tableRow}>
+                    <span className={styles.rowLabel}>Applies To</span>
+                    <span className={styles.rowValue}>
+                      {renderApplicableBadge(c.applicableOn)}
                     </span>
                   </div>
                 </div>
 
                 {/* Card Footer: Usage Count (Left) & Actions (Right) */}
-                <div className="admin-coupon-card-footer">
-                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                    Used <strong style={{ color: '#1e1b4b' }}>{c.usageCount || 0}</strong> times
+                <div className={styles.cardFooter}>
+                  <span className={styles.usedCount}>
+                    Used <strong>{c.usageCount || 0}</strong> times
                   </span>
 
-                  <div className="admin-coupon-actions">
+                  <div className={styles.actions}>
                     <button
                       type="button"
                       onClick={() => setViewingCoupon(c)}
-                      className="admin-coupon-btn-view"
+                      className={styles.btnView}
                       title="View coupon details"
                       aria-label={`View details for coupon ${c.code}`}
                     >
@@ -832,7 +1240,7 @@ export default function AdminCoupons() {
                     <button
                       type="button"
                       onClick={() => handleOpenEditCoupon(c)}
-                      className="admin-coupon-btn-edit"
+                      className={styles.btnEdit}
                       title="Edit coupon"
                       aria-label={`Edit coupon ${c.code}`}
                     >
@@ -841,12 +1249,7 @@ export default function AdminCoupons() {
                     <button
                       type="button"
                       onClick={() => handleToggleCoupon(c)}
-                      className="admin-coupon-btn-view"
-                      style={{
-                        color: c.isActive ? '#16a34a' : '#94a3b8',
-                        borderColor: c.isActive ? '#bbf7d0' : '#e2e8f0',
-                        background: c.isActive ? '#f0fdf4' : '#f8fafc',
-                      }}
+                      className={`${styles.btnView} ${c.isActive ? styles.btnPowerActive : styles.btnPowerInactive}`}
                       title={c.isActive ? 'Disable coupon' : 'Activate coupon'}
                     >
                       <Power size={13} />
@@ -854,7 +1257,7 @@ export default function AdminCoupons() {
                     <button
                       type="button"
                       onClick={() => handleDeleteCoupon(c)}
-                      className="admin-coupon-btn-delete"
+                      className={styles.btnDelete}
                       title="Delete coupon"
                       aria-label={`Delete coupon ${c.code}`}
                     >
@@ -884,7 +1287,7 @@ export default function AdminCoupons() {
             required
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div className={styles.formGrid2}>
             <div className="form-group">
               <label className="form-label">
                 Discount Type <span style={{ color: 'var(--color-danger)' }}>*</span>
@@ -892,17 +1295,7 @@ export default function AdminCoupons() {
               <select
                 className="form-input"
                 value={couponForm.type}
-                onChange={(e) => {
-                  const newType = e.target.value;
-                  setCouponForm((prev) => {
-                    const updates = { ...prev, type: newType };
-                    if (newType === 'percentage' && prev.maxDiscountAmount && prev.minOrderAmount) {
-                      const autoPct = calculateAutoPercentage(prev.maxDiscountAmount, prev.minOrderAmount);
-                      if (autoPct !== null) updates.value = autoPct;
-                    }
-                    return updates;
-                  });
-                }}
+                onChange={(e) => setCouponForm({ ...couponForm, type: e.target.value })}
               >
                 <option value="percentage">Percentage (% OFF)</option>
                 <option value="flat">Flat Amount (Rs. OFF)</option>
@@ -919,23 +1312,13 @@ export default function AdminCoupons() {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div className={styles.formGrid2}>
             <Input
               label="Minimum Order Amount (Rs.)"
               type="number"
               placeholder="e.g. 999"
               value={couponForm.minOrderAmount}
-              onChange={(e) => {
-                const minVal = e.target.value;
-                setCouponForm((prev) => {
-                  const updates = { ...prev, minOrderAmount: minVal };
-                  if (prev.type === 'percentage' && prev.maxDiscountAmount) {
-                    const autoPct = calculateAutoPercentage(prev.maxDiscountAmount, minVal);
-                    if (autoPct !== null) updates.value = autoPct;
-                  }
-                  return updates;
-                });
-              }}
+              onChange={(e) => setCouponForm({ ...couponForm, minOrderAmount: e.target.value })}
             />
 
             <Input
@@ -943,37 +1326,27 @@ export default function AdminCoupons() {
               type="number"
               placeholder="e.g. 500 (Optional)"
               value={couponForm.maxDiscountAmount}
-              onChange={(e) => {
-                const maxVal = e.target.value;
-                setCouponForm((prev) => {
-                  const updates = { ...prev, maxDiscountAmount: maxVal };
-                  if (prev.type === 'percentage' && prev.minOrderAmount) {
-                    const autoPct = calculateAutoPercentage(maxVal, prev.minOrderAmount);
-                    if (autoPct !== null) updates.value = autoPct;
-                  }
-                  return updates;
-                });
-              }}
+              onChange={(e) => setCouponForm({ ...couponForm, maxDiscountAmount: e.target.value })}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div className={styles.formGrid2}>
             <Input
-              label="Valid From (Optional)"
-              type="date"
+              label="Valid From (Start Date & Time)"
+              type="datetime-local"
               value={couponForm.validFrom}
               onChange={(e) => setCouponForm({ ...couponForm, validFrom: e.target.value })}
             />
 
             <Input
-              label="Valid Till / Expiry (Optional)"
-              type="date"
+              label="Valid Till / Expiry (End Date & Time)"
+              type="datetime-local"
               value={couponForm.validTill}
               onChange={(e) => setCouponForm({ ...couponForm, validTill: e.target.value })}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div className={styles.formGrid2}>
             <Input
               label="Usage Limit Per Customer"
               type="number"
@@ -993,74 +1366,300 @@ export default function AdminCoupons() {
             />
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: couponForm.applicableType !== 'all' ? 'repeat(2, 1fr)' : '1fr',
-              gap: '1rem',
-            }}
-          >
-            <div className="form-group">
-              <label className="form-label">Applicable Target</label>
-              <select
-                className="form-input"
-                value={couponForm.applicableType}
-                onChange={(e) => setCouponForm({ ...couponForm, applicableType: e.target.value })}
-              >
-                <option value="all">All Products</option>
-                <option value="category">Specific Category</option>
-                <option value="product">Specific Product SKU</option>
-              </select>
-            </div>
-
-            {couponForm.applicableType !== 'all' && (
-              <Input
-                label={couponForm.applicableType === 'category' ? 'Category Name' : 'Product SKU'}
-                placeholder={couponForm.applicableType === 'category' ? "e.g. Men's Wear" : 'e.g. MW-001'}
-                value={couponForm.applicableValue}
-                onChange={(e) => setCouponForm({ ...couponForm, applicableValue: e.target.value })}
-                required
-              />
-            )}
+          <div className="form-group">
+            <label className="form-label">Applicable Target</label>
+            <select
+              className="form-input"
+              value={couponForm.applicableType}
+              onChange={(e) => {
+                const newType = e.target.value;
+                setCouponForm({
+                  ...couponForm,
+                  applicableType: newType,
+                  applicableValue: '',
+                  applicableId: '',
+                  selectedCategories: newType === 'category' ? couponForm.selectedCategories : [],
+                  selectedProducts: newType === 'product' ? couponForm.selectedProducts : [],
+                });
+                setProductSearchQuery('');
+                setCategorySearchQuery('');
+              }}
+            >
+              <option value="all">All Products (Storewide)</option>
+              <option value="category">Specific Category(ies) [Search & Multi-Select]</option>
+              <option value="product">Specific Product(s) [Search & Multi-Select]</option>
+            </select>
           </div>
+
+          {/* Specific Categories: Searchable Multi-Select Picker */}
+          {couponForm.applicableType === 'category' && (
+            <div className={styles.multiProductSection}>
+              <div className={styles.multiProductHeader}>
+                <div className={styles.multiProductLabel}>
+                  <FolderTree size={14} color="#6d28d9" />
+                  <span>Choose Qualifying Categories *</span>
+                  {couponForm.selectedCategories?.length > 0 && (
+                    <span className={styles.multiProductCountBadge}>
+                      {couponForm.selectedCategories.length} Selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Sort selector for categories */}
+                <select
+                  value={categoryPickerSort}
+                  onChange={(e) => setCategoryPickerSort(e.target.value)}
+                  style={{
+                    fontSize: '0.74rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                  title="Sort categories"
+                >
+                  <option value="name_asc">Sort: Name A → Z</option>
+                  <option value="name_desc">Sort: Name Z → A</option>
+                </select>
+              </div>
+
+              {/* Search input with live filter */}
+              <div className={styles.multiProductSearchWrap}>
+                <Search size={14} color="#64748b" />
+                <input
+                  type="text"
+                  placeholder="Search categories by name (e.g. Sarees, Men)..."
+                  className={styles.multiProductSearchInput}
+                  value={categorySearchQuery}
+                  onChange={(e) => setCategorySearchQuery(e.target.value)}
+                />
+                {categorySearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setCategorySearchQuery('')}
+                    className={styles.multiProductClearSearchBtn}
+                    title="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Selected chips row */}
+              {couponForm.selectedCategories?.length > 0 && (
+                <div className={styles.selectedChipsBox}>
+                  <div className={styles.selectedChipsHeader}>
+                    <span>Selected Categories ({couponForm.selectedCategories.length}):</span>
+                    <button
+                      type="button"
+                      onClick={handleClearAllCategories}
+                      className={styles.clearAllChipsBtn}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className={styles.selectedChipsList}>
+                    {couponForm.selectedCategories.map((cat) => (
+                      <span key={cat._id || cat.name} className={styles.selectedProductChip}>
+                        <span>{cat.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(cat._id || cat.name)}
+                          className={styles.removeChipBtn}
+                          title={`Remove ${cat.name}`}
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Scrollable categories list with checkboxes */}
+              <div className={styles.productPickerList}>
+                {filteredCategories.length === 0 ? (
+                  <div className={styles.productPickerEmpty}>
+                    No categories found matching "{categorySearchQuery}"
+                  </div>
+                ) : (
+                  filteredCategories.map((cat) => {
+                    const isSelected = (couponForm.selectedCategories || []).some(
+                      (c) => String(c._id) === String(cat._id) || c.name === cat.name
+                    );
+                    return (
+                      <div
+                        key={cat._id || cat.name}
+                        className={`${styles.productPickerItem} ${isSelected ? styles.selected : ''}`}
+                        onClick={() => handleToggleCategory(cat)}
+                      >
+                        <div className={styles.productPickerLeft}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}} // handled by row onClick
+                            className={styles.productPickerCheckbox}
+                          />
+                          <div className={styles.productPickerInfo}>
+                            <span className={styles.productPickerName}>{cat.name}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Specific Products: Searchable Multi-Select Picker */}
+          {couponForm.applicableType === 'product' && (
+            <div className={styles.multiProductSection}>
+              <div className={styles.multiProductHeader}>
+                <div className={styles.multiProductLabel}>
+                  <Package size={14} color="#6d28d9" />
+                  <span>Choose Qualifying Products *</span>
+                  {couponForm.selectedProducts?.length > 0 && (
+                    <span className={styles.multiProductCountBadge}>
+                      {couponForm.selectedProducts.length} Selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Sort selector for products */}
+                <select
+                  value={productPickerSort}
+                  onChange={(e) => setProductPickerSort(e.target.value)}
+                  style={{
+                    fontSize: '0.74rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                  title="Sort products list"
+                >
+                  <option value="name_asc">Sort: Name A → Z</option>
+                  <option value="price_low">Sort: Price Low → High</option>
+                  <option value="price_high">Sort: Price High → Low</option>
+                  <option value="sku">Sort: SKU A → Z</option>
+                </select>
+              </div>
+
+              {/* Search input with live filter */}
+              <div className={styles.multiProductSearchWrap}>
+                <Search size={14} color="#64748b" />
+                <input
+                  type="text"
+                  placeholder="Search products by title or SKU (e.g. cream, F-GEN)..."
+                  className={styles.multiProductSearchInput}
+                  value={productSearchQuery}
+                  onChange={(e) => setProductSearchQuery(e.target.value)}
+                />
+                {productSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setProductSearchQuery('')}
+                    className={styles.multiProductClearSearchBtn}
+                    title="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Selected chips row */}
+              {couponForm.selectedProducts?.length > 0 && (
+                <div className={styles.selectedChipsBox}>
+                  <div className={styles.selectedChipsHeader}>
+                    <span>Selected Products ({couponForm.selectedProducts.length}):</span>
+                    <button
+                      type="button"
+                      onClick={handleClearAllProducts}
+                      className={styles.clearAllChipsBtn}
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className={styles.selectedChipsList}>
+                    {couponForm.selectedProducts.map((p) => (
+                      <span key={p._id || p.id} className={styles.selectedProductChip}>
+                        <span>{p.name}</span>
+                        {p.sku && <span className={styles.selectedProductChipSku}>{p.sku}</span>}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveProduct(p._id || p.id)}
+                          className={styles.removeChipBtn}
+                          title={`Remove ${p.name}`}
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Scrollable products list with checkboxes */}
+              <div className={styles.productPickerList}>
+                {filteredProducts.length === 0 ? (
+                  <div className={styles.productPickerEmpty}>
+                    No products found matching "{productSearchQuery}"
+                  </div>
+                ) : (
+                  filteredProducts.map((prod) => {
+                    const isSelected = (couponForm.selectedProducts || []).some(
+                      (p) => String(p._id) === String(prod._id)
+                    );
+                    return (
+                      <div
+                        key={prod._id}
+                        className={`${styles.productPickerItem} ${isSelected ? styles.selected : ''}`}
+                        onClick={() => handleToggleProduct(prod)}
+                      >
+                        <div className={styles.productPickerLeft}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}} // handled by row onClick
+                            className={styles.productPickerCheckbox}
+                          />
+                          <div className={styles.productPickerInfo}>
+                            <span className={styles.productPickerName}>{prod.name}</span>
+                            {prod.sku && <span className={styles.productPickerSku}>{prod.sku}</span>}
+                          </div>
+                        </div>
+                        <span className={styles.productPickerPrice}>
+                          ₹{prod.discountPrice || prod.price}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Status Toggle (Enable / Disable) */}
           <div
             onClick={() => setCouponForm({ ...couponForm, isActive: !couponForm.isActive })}
-            style={{
-              marginTop: '1.25rem',
-              padding: '0.85rem 1.1rem',
-              background: couponForm.isActive ? '#f0fdf4' : '#fef2f2',
-              border: `1.5px solid ${couponForm.isActive ? '#bbf7d0' : '#fecaca'}`,
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'all 0.2s ease',
-            }}
+            className={`${styles.statusBanner} ${couponForm.isActive ? styles.statusBannerActive : styles.statusBannerDisabled}`}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className={styles.statusBannerLeft}>
               <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: couponForm.isActive ? '#dcfce7' : '#fee2e2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: couponForm.isActive ? '#16a34a' : '#dc2626',
-                }}
+                className={`${styles.statusBannerIconBox} ${couponForm.isActive ? styles.statusBannerIconActive : styles.statusBannerIconDisabled}`}
               >
                 <Power size={18} />
               </div>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '0.88rem', color: couponForm.isActive ? '#15803d' : '#991b1b' }}>
+                <div className={`${styles.statusBannerTitle} ${couponForm.isActive ? styles.statusBannerTitleActive : styles.statusBannerTitleDisabled}`}>
                   Status: {couponForm.isActive ? 'Active (Enabled)' : 'Disabled'}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: couponForm.isActive ? '#16a34a' : '#b91c1c' }}>
+                <div className={`${styles.statusBannerDesc} ${couponForm.isActive ? styles.statusBannerDescActive : styles.statusBannerDescDisabled}`}>
                   {couponForm.isActive
                     ? 'Coupon is active and can be redeemed by shoppers'
                     : 'Coupon is disabled and cannot be redeemed'}
@@ -1069,33 +1668,17 @@ export default function AdminCoupons() {
             </div>
 
             <div
-              style={{
-                position: 'relative',
-                width: '46px',
-                height: '25px',
-                backgroundColor: couponForm.isActive ? '#16a34a' : '#cbd5e1',
-                borderRadius: '25px',
-                transition: 'background-color 0.25s',
-                flexShrink: 0,
-              }}
+              className={styles.largeToggleTrack}
+              style={{ backgroundColor: couponForm.isActive ? '#16a34a' : '#cbd5e1' }}
             >
               <span
-                style={{
-                  position: 'absolute',
-                  height: '19px',
-                  width: '19px',
-                  left: couponForm.isActive ? '24px' : '3px',
-                  bottom: '3px',
-                  backgroundColor: 'white',
-                  transition: 'left 0.25s',
-                  borderRadius: '50%',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                }}
+                className={styles.largeToggleThumb}
+                style={{ left: couponForm.isActive ? '24px' : '3px' }}
               />
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <div className={styles.modalFooterActions}>
             <button type="button" onClick={() => setIsCouponModalOpen(false)} className="btn btn-secondary">
               Cancel
             </button>
@@ -1115,6 +1698,7 @@ export default function AdminCoupons() {
       >
         {viewingCoupon && (() => {
           const status = getCouponStatus(viewingCoupon);
+          const expiring = isExpiringSoon(viewingCoupon, status);
           const limit =
             viewingCoupon.usageLimitPerCustomer !== undefined && viewingCoupon.usageLimitPerCustomer !== null
               ? viewingCoupon.usageLimitPerCustomer
@@ -1122,139 +1706,194 @@ export default function AdminCoupons() {
               ? viewingCoupon.maxUsagePerUser
               : null;
 
-          const validityText =
-            viewingCoupon.validFrom && viewingCoupon.validTill
-              ? `${formatValidityDate(viewingCoupon.validFrom)} - ${formatValidityDate(viewingCoupon.validTill)}`
-              : viewingCoupon.validTill
-              ? `Till ${formatValidityDate(viewingCoupon.validTill)}`
-              : 'Always Valid';
+          const badgeConfig = (() => {
+            if (status === 'Scheduled') {
+              return { label: 'Scheduled', variant: 'badgeScheduled' };
+            }
+            if (status === 'Expired') {
+              return { label: 'Expired', variant: 'badgeExpired' };
+            }
+            if (status === 'Disabled') {
+              return { label: 'Disabled', variant: 'badgeDisabled' };
+            }
+            if (expiring) {
+              return { label: 'Expiring Soon', variant: 'badgeExpiringSoon' };
+            }
+            return { label: 'Active', variant: 'badgeActive' };
+          })();
 
-          const appliesToText =
-            typeof viewingCoupon.applicableOn === 'string'
-              ? viewingCoupon.applicableOn
-              : viewingCoupon.applicableOn?.value || 'All Products';
+          const validityText = (() => {
+            const start = viewingCoupon.validFrom || viewingCoupon.startsAt;
+            const end = viewingCoupon.validTill || viewingCoupon.endsAt;
+            if (status === 'Scheduled' && start) {
+              return `Starts ${formatValidityDate(start)}`;
+            }
+            if (start && end) {
+              return `${formatValidityDate(start)} - ${formatValidityDate(end)}`;
+            }
+            if (end) {
+              return `Till ${formatValidityDate(end)}`;
+            }
+            return 'Always Valid';
+          })();
+
 
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div className={styles.viewContainer}>
               {/* Header: Code & Hero Discount Badge */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1rem 1.25rem',
-                  background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-                  borderRadius: '12px',
-                  border: '1px solid #e9d5ff',
-                }}
-              >
+              <div className={styles.viewHeader}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase' }}>
+                  <div className={styles.viewHeaderCategory}>
                     Coupon Voucher
                   </div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e1b4b', letterSpacing: '0.04em' }}>
+                  <div className={styles.viewHeaderCode}>
                     {viewingCoupon.code}
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#7c3aed' }}>
+                  <div className={styles.viewHeaderVal}>
                     {viewingCoupon.type === 'percentage' ? `${viewingCoupon.value}%` : formatPrice(viewingCoupon.value)}
                   </div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6d28d9' }}>
+                  <div className={styles.viewHeaderType}>
                     {viewingCoupon.type === 'percentage' ? 'PERCENTAGE OFF' : 'FLAT DISCOUNT'}
                   </div>
                 </div>
               </div>
 
               {/* Status & Usage Highlights */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Status</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: status === 'Active' ? '#16a34a' : '#dc2626', marginTop: '0.2rem' }}>
-                    {status}
+              <div className={styles.viewKpiGrid}>
+                <div className={styles.viewKpiCard}>
+                  <div className={styles.viewKpiLabel}>Status</div>
+                  <div style={{ marginTop: '0.35rem', display: 'flex', justifyContent: 'center' }}>
+                    <span className={`${styles.statusBadge} ${styles[badgeConfig.variant]}`}>
+                      <span className={styles.statusBadgeDot} />
+                      <span>{badgeConfig.label}</span>
+                    </span>
                   </div>
                 </div>
 
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Total Used</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e1b4b', marginTop: '0.2rem' }}>
+                <div className={styles.viewKpiCard}>
+                  <div className={styles.viewKpiLabel}>Total Used</div>
+                  <div className={styles.viewKpiVal} style={{ color: '#1e1b4b' }}>
                     {viewingCoupon.usageCount || 0} times
                   </div>
                 </div>
 
-                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '10px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Per Customer</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e1b4b', marginTop: '0.2rem' }}>
+                <div className={styles.viewKpiCard}>
+                  <div className={styles.viewKpiLabel}>Per Customer</div>
+                  <div className={styles.viewKpiVal} style={{ color: '#1e1b4b' }}>
                     {limit ? `Max ${limit}/user` : 'Unlimited'}
                   </div>
                 </div>
               </div>
 
               {/* Tabular Details Grid */}
-              <div
-                style={{
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  background: '#ffffff',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.7rem 1rem',
-                    borderBottom: '1px solid #f1f5f9',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Min Order Amount</span>
-                  <span style={{ color: '#0f172a', fontWeight: 600 }}>
+              <div className={styles.viewTable}>
+                <div className={styles.viewTableRow}>
+                  <span className={styles.viewTableLabel}>Min Order Amount</span>
+                  <span className={styles.viewTableValue}>
                     {viewingCoupon.minOrderAmount ? formatPrice(viewingCoupon.minOrderAmount) : 'No Minimum'}
                   </span>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.7rem 1rem',
-                    borderBottom: '1px solid #f1f5f9',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Max Cap (Discount Limit)</span>
-                  <span style={{ color: '#0f172a', fontWeight: 600 }}>
+                <div className={styles.viewTableRow}>
+                  <span className={styles.viewTableLabel}>Max Cap (Discount Limit)</span>
+                  <span className={styles.viewTableValue}>
                     {viewingCoupon.maxDiscountAmount ? formatPrice(viewingCoupon.maxDiscountAmount) : 'Unlimited'}
                   </span>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.7rem 1rem',
-                    borderBottom: '1px solid #f1f5f9',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Validity Period</span>
-                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{validityText}</span>
+                <div className={styles.viewTableRow}>
+                  <span className={styles.viewTableLabel}>Validity Period</span>
+                  <span className={styles.viewTableValue}>{validityText}</span>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.7rem 1rem',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  <span style={{ color: '#64748b', fontWeight: 500 }}>Applies To</span>
-                  <span style={{ color: '#0f172a', fontWeight: 600 }}>{appliesToText}</span>
+                <div className={styles.viewTableRow}>
+                  <span className={styles.viewTableLabel}>Applies To</span>
+                  <span className={styles.viewTableValue}>
+                    {renderApplicableBadge(viewingCoupon.applicableOn)}
+                  </span>
                 </div>
               </div>
+
+              {viewingCoupon.applicableOn?.type === 'product' &&
+                Array.isArray(viewingCoupon.applicableOn.products) &&
+                viewingCoupon.applicableOn.products.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: '0.75rem',
+                      padding: '0.75rem 0.9rem',
+                      background: '#faf5ff',
+                      borderRadius: '8px',
+                      border: '1px solid #e9d5ff',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.76rem',
+                        color: '#6d28d9',
+                        fontWeight: 700,
+                        marginBottom: '0.45rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <Package size={13} />
+                      <span>Qualifying Products ({viewingCoupon.applicableOn.products.length}):</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', maxHeight: '110px', overflowY: 'auto' }}>
+                      {viewingCoupon.applicableOn.products.map((p) => (
+                        <span key={p._id || p.id} className={styles.selectedProductChip}>
+                          <span>{p.name}</span>
+                          {p.sku && <span className={styles.selectedProductChipSku}>{p.sku}</span>}
+                          {p.price ? (
+                            <span style={{ fontSize: '0.68rem', color: '#059669', fontWeight: 700 }}>
+                              ₹{p.price}
+                            </span>
+                          ) : null}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {viewingCoupon.applicableOn?.type === 'category' &&
+                Array.isArray(viewingCoupon.applicableOn.categories) &&
+                viewingCoupon.applicableOn.categories.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: '0.75rem',
+                      padding: '0.75rem 0.9rem',
+                      background: '#faf5ff',
+                      borderRadius: '8px',
+                      border: '1px solid #e9d5ff',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.76rem',
+                        color: '#6d28d9',
+                        fontWeight: 700,
+                        marginBottom: '0.45rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <FolderTree size={13} />
+                      <span>Qualifying Categories ({viewingCoupon.applicableOn.categories.length}):</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', maxHeight: '110px', overflowY: 'auto' }}>
+                      {viewingCoupon.applicableOn.categories.map((c) => (
+                        <span key={c._id || c.name} className={styles.selectedProductChip}>
+                          <span>{c.name}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               {/* Action Buttons */}
               <div

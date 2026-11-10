@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { useAdminAuthStore } from '../store/adminAuthStore';
+import { notifyServerOffline } from './serverWatcher';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
@@ -17,7 +18,7 @@ function isRequestForAdmin(config) {
   if (url.startsWith('/categories') && method !== 'get') return true;
   if (url.startsWith('/subcategories') && method !== 'get') return true;
   if (url.startsWith('/products') && method !== 'get') return true;
-  if (url.startsWith('/coupons') && method !== 'get') return true;
+  if (url.startsWith('/coupons') && method !== 'get' && !url.includes('/validate')) return true;
   if (url.startsWith('/discounts') && method !== 'get') return true;
   if (url.startsWith('/blog') && method !== 'get') return true;
   if (url.startsWith('/returns') && method !== 'get' && method !== 'post') return true;
@@ -51,6 +52,29 @@ api.interceptors.response.use(
   (res) => res.data,
   async (error) => {
     const original = error.config;
+
+    // Handle Network / Connection Failure (e.g. backend booting or restarting)
+    const isNetworkOrConnectionError =
+      !error.response ||
+      error.code === 'ERR_NETWORK' ||
+      error.message?.includes('Network Error') ||
+      error.code === 'ECONNABORTED' ||
+      error.code === 'ECONNREFUSED';
+
+    const isGet = (original?.method || 'get').toLowerCase() === 'get';
+
+    if (isNetworkOrConnectionError) {
+      notifyServerOffline();
+
+      // Automatically retry idempotent GET requests up to 3 times while server finishes booting
+      if (original && isGet && (!original._retryCount || original._retryCount < 3)) {
+        original._retryCount = (original._retryCount || 0) + 1;
+        const delayMs = original._retryCount * 1200;
+        console.info(`⏳ [Picky API] Backend booting. Retrying GET (${original._retryCount}/3) in ${delayMs}ms:`, original.url);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        return api(original);
+      }
+    }
 
     // Do NOT attempt refresh on auth endpoints (login, OTP, admin login, refresh itself)
     const isAuthEndpoint = original?.url && (

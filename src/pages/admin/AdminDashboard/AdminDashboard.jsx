@@ -684,11 +684,33 @@ export default function AdminDashboard() {
       }
     }
     fetchStats();
+
+    // Auto-rehydrate when server starts or reconnects
+    const handleServerOnline = () => {
+      console.log('⚡ [AdminDashboard] Auto-syncing stats on server reconnect...');
+      fetchStats();
+    };
+
+    window.addEventListener('picky_server_reconnected', handleServerOnline);
+    window.addEventListener('focus', handleServerOnline);
+
+    // Auto-retry every 3s if stats are empty/unloaded
+    const retryInterval = setInterval(() => {
+      fetchStats();
+    }, 4000);
+
+    let unsub = () => {};
     try {
       joinAdminRoom();
-      const unsub = subscribeToOrders(() => { fetchStats(); });
-      return () => { unsub(); };
+      unsub = subscribeToOrders(() => { fetchStats(); });
     } catch (_) {}
+
+    return () => {
+      try { unsub(); } catch (_) {}
+      window.removeEventListener('picky_server_reconnected', handleServerOnline);
+      window.removeEventListener('focus', handleServerOnline);
+      clearInterval(retryInterval);
+    };
   }, []);
 
   // Dynamically map real summary data or fallback to config

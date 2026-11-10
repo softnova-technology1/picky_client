@@ -12,6 +12,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import { calculateShippingFee, isTamilNaduPincode } from '../../utils/shippingCalculator';
 import { primeAudio } from '../../utils/soundEffects';
 import { useCouponStore } from '../../store/couponStore';
+import { couponService } from '../../services/coupon.service';
 import { useOrderStore } from '../../store/orderStore';
 import styles from './Checkout.module.css';
 import './CheckoutMobile.css';
@@ -176,6 +177,17 @@ export default function Checkout() {
       }
     }
     loadShippingRules();
+
+    // Sync live active coupons from backend MongoDB database on mount
+    couponService.getPublicCoupons()
+      .then((res) => {
+        const list = res?.data || res;
+        if (Array.isArray(list) && list.length > 0) {
+          useCouponStore.getState().setCoupons(list);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       isMounted = false;
     };
@@ -419,8 +431,8 @@ export default function Checkout() {
   // Final Payable (including items subtotal, delivery fee, convenience fee, and optional gift wrap fee)
   const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee + giftWrapFee - (couponDiscount || 0));
 
-  // Handle Promo Code Application — validated against centralized MOCK_COUPONS
-  const handleApplyPromo = (e) => {
+  // Handle Promo Code Application — with live backend MongoDB validation & context-specific errors
+  const handleApplyPromo = async (e) => {
     e.preventDefault();
     setPromoError('');
     const code = promoCodeInput.trim().toUpperCase();
@@ -429,47 +441,92 @@ export default function Checkout() {
       return;
     }
 
-    // Find matching active coupon from live coupon store
-    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
-    const matched = availableCoupons.find(
-      (c) => c.code.toUpperCase() === code && c.isActive !== false
-    );
-
-    if (!matched) {
-      const inactive = availableCoupons.find((c) => c.code.toUpperCase() === code);
-      if (inactive) {
-        setPromoError(`Coupon "${code}" has expired or is no longer active.`);
-      } else {
-        const activeCodes = availableCoupons.filter((c) => c.isActive !== false).map((c) => c.code).join(', ');
-        setPromoError(activeCodes ? `Invalid coupon. Try: ${activeCodes}` : 'Invalid coupon code.');
+    try {
+      // 1. Real-time validation directly against live backend MongoDB database (with selective target check)
+      const payloadItems = checkoutItems.map((i) => ({
+        productId: i.productId || i._id || i.id,
+        name: i.name,
+        category: i.category,
+        sku: i.sku,
+        price: i.discountPrice || i.price,
+        quantity: i.quantity || 1,
+      }));
+      const res = await couponService.validateCoupon(code, subtotal, payloadItems);
+      const data = res?.data || res;
+      if (data && data.valid && data.coupon) {
+        const discount = data.discount;
+        setCoupon(code, discount);
+        const cType = data.coupon.type;
+        const cVal = data.coupon.value;
+        const savingText = cType === 'percentage'
+          ? `${cVal}% OFF — saved ${formatPrice(discount)}`
+          : `₹${cVal} OFF applied`;
+        showToast(`🎉 Coupon "${code}" applied! ${savingText}.`, 'success');
+        setPromoCodeInput('');
+        return;
       }
-      showToast('Coupon code is invalid or inactive', 'error');
+    } catch (err) {
+      const errMsg = err?.error || err?.message || err?.data?.error || 'Invalid coupon code.';
+      setPromoError(errMsg);
+      // NOTE: Never trigger a floating toast popup for coupon input errors per user requirement
       return;
     }
 
-    if (matched.minOrderAmount && subtotal < matched.minOrderAmount) {
-      setPromoError(
-        `Minimum order of ${formatPrice(matched.minOrderAmount)} required for coupon "${code}".`
-      );
-      showToast(`Min. order ${formatPrice(matched.minOrderAmount)} needed`, 'error');
+    // 2. Offline fallback against local coupon store
+    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
+    const foundCoupon = availableCoupons.find((c) => (c.code || '').toUpperCase() === code);
+
+    if (!foundCoupon) {
+      setPromoError('Invalid coupon code.');
+      return;
+    }
+
+    const now = new Date();
+    const startDate = foundCoupon.validFrom || foundCoupon.startsAt;
+    if (startDate) {
+      const start = new Date(startDate);
+      if (!isNaN(start.getTime()) && now < start) {
+        setPromoError('This coupon is scheduled and not yet active.');
+        return;
+      }
+    }
+
+    const expiryDate = foundCoupon.validTill || foundCoupon.endsAt;
+    if (expiryDate) {
+      const end = typeof expiryDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(expiryDate)
+        ? new Date(`${expiryDate.slice(0, 10)}T23:59:59.999`)
+        : new Date(expiryDate);
+      if (!isNaN(end.getTime()) && now > end) {
+        setPromoError('This coupon has expired.');
+        return;
+      }
+    }
+
+    if (foundCoupon.isActive === false) {
+      setPromoError('This coupon is currently inactive.');
+      return;
+    }
+
+    const minOrder = Number(foundCoupon.minOrderAmount) || 0;
+    if (minOrder > 0 && subtotal < minOrder) {
+      setPromoError(`Minimum order amount of ${formatPrice(minOrder)} required.`);
       return;
     }
 
     let discount = 0;
-    if (matched.type === 'percentage') {
-      discount = Math.round((subtotal * matched.value) / 100);
-      if (matched.maxDiscountAmount) {
-        discount = Math.min(discount, matched.maxDiscountAmount);
+    if (foundCoupon.type === 'percentage') {
+      discount = Math.round((subtotal * foundCoupon.value) / 100);
+      if (foundCoupon.maxDiscountAmount) {
+        discount = Math.min(discount, foundCoupon.maxDiscountAmount);
       }
     } else {
-      // flat
-      discount = Math.min(subtotal, matched.value);
+      discount = Math.min(subtotal, foundCoupon.value);
     }
 
     setCoupon(code, discount);
-    const savingText = matched.type === 'percentage'
-      ? `${matched.value}% OFF — saved ${formatPrice(discount)}`
-      : `₹${matched.value} OFF applied`;
+    const savingText = foundCoupon.type === 'percentage'
+      ? `${foundCoupon.value}% OFF — saved ${formatPrice(discount)}`
+      : `₹${foundCoupon.value} OFF applied`;
     showToast(`🎉 Coupon "${code}" applied! ${savingText}.`, 'success');
     setPromoCodeInput('');
   };
@@ -479,7 +536,7 @@ export default function Checkout() {
     showToast('Coupon code removed', 'info');
   };
 
-  // Recalculate applied coupon discount dynamically if quantity/subtotal changes
+  // Recalculate applied coupon discount dynamically if quantity/subtotal/items change
   React.useEffect(() => {
     if (!coupon) return;
     const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
@@ -494,19 +551,32 @@ export default function Checkout() {
       return;
     }
 
-    let discount = 0;
-    if (matched.type === 'percentage') {
-      discount = Math.round((subtotal * matched.value) / 100);
-      if (matched.maxDiscountAmount) {
-        discount = Math.min(discount, matched.maxDiscountAmount);
-      }
-    } else {
-      discount = Math.min(subtotal, matched.value);
-    }
-    if (discount !== couponDiscount) {
-      setCoupon(coupon, discount);
-    }
-  }, [subtotal, coupon, coupons, couponDiscount]);
+    const payloadItems = checkoutItems.map((i) => ({
+      productId: i.productId || i._id || i.id,
+      name: i.name,
+      category: i.category,
+      sku: i.sku,
+      price: i.discountPrice || i.price,
+      quantity: i.quantity || 1,
+    }));
+
+    // Real-time backend re-verification to accurately adjust selective target discount
+    couponService
+      .validateCoupon(coupon, subtotal, payloadItems)
+      .then((res) => {
+        const d = res?.data || res;
+        if (d && d.valid && d.discount !== undefined) {
+          if (d.discount !== couponDiscount) {
+            setCoupon(coupon, d.discount);
+          }
+        }
+      })
+      .catch((err) => {
+        const errMsg = err?.error || err?.message || err?.data?.error || '';
+        setCoupon(null, 0);
+        showToast(`Coupon "${coupon}" removed: ${errMsg || 'cart no longer has qualifying items'}`, 'info');
+      });
+  }, [subtotal, checkoutItems.length, coupon, coupons, couponDiscount]);
 
   // ─── Auto-Apply Recovery / Promotion Coupon from URL (?coupon=CODE) ───
   const hasAutoAppliedUrlCouponRef = React.useRef(false);

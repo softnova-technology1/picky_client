@@ -345,6 +345,20 @@ export default function AdminProducts() {
 
   useEffect(() => {
     loadData();
+
+    // Auto-rehydrate when server starts or reconnects
+    const handleServerOnline = () => {
+      console.log('⚡ [AdminProducts] Auto-syncing products on server reconnect...');
+      loadData();
+    };
+
+    window.addEventListener('picky_server_reconnected', handleServerOnline);
+    window.addEventListener('focus', handleServerOnline);
+
+    return () => {
+      window.removeEventListener('picky_server_reconnected', handleServerOnline);
+      window.removeEventListener('focus', handleServerOnline);
+    };
   }, []);
 
   // Open form workspace if action=add is triggered from Quick Actions

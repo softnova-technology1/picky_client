@@ -14,6 +14,11 @@ import {
   ExternalLink,
   Gift,
   Printer,
+  Copy,
+  Check,
+  Sparkles,
+  Barcode,
+  RotateCcw,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminGiftCard from '../../../components/admin/AdminGiftCard';
@@ -27,9 +32,10 @@ import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
 // ─── Common Logistics & Courier Partners ────────────────────────────────────
 const COMMON_COURIERS = [
-  'DTDC Express',
+  'Delhivery Surface',
+  'Delhivery Express',
   'BlueDart Express',
-  'Delhivery',
+  'DTDC Express',
   'India Post Speed Post',
   'Ecom Express',
   'Shadowfax',
@@ -49,9 +55,19 @@ export default function AdminOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [showGiftCardModal, setShowGiftCardModal] = useState(false);
 
-  // Manual AWB Entry state (supports extensible courier list + Other)
+  // Shiprocket Automation state
+  const [packageWeight, setPackageWeight] = useState(0.5);
+  const [packageLength, setPackageLength] = useState(15);
+  const [packageBreadth, setPackageBreadth] = useState(12);
+  const [packageHeight, setPackageHeight] = useState(5);
+  const [shiprocketCourier, setShiprocketCourier] = useState('Delhivery Surface');
+  const [isShiprocketLoading, setIsShiprocketLoading] = useState(false);
+  const [copiedAwb, setCopiedAwb] = useState(false);
+  const [showManualAWB, setShowManualAWB] = useState(false);
+
+  // Manual AWB Entry state (Fallback)
   const [trackingId, setTrackingId] = useState('');
-  const [courier, setCourier] = useState('DTDC');
+  const [courier, setCourier] = useState('Delhivery Surface');
   const [customCourier, setCustomCourier] = useState('');
   const [shipLoading, setShipLoading] = useState(false);
 
@@ -107,6 +123,59 @@ export default function AdminOrderDetail() {
     }
     loadDetail();
   }, [id]);
+
+  // 1-Click Ship via Shiprocket
+  const handleShipViaShiprocket = async () => {
+    try {
+      setIsShiprocketLoading(true);
+      const payload = {
+        packageDetails: {
+          weight: Number(packageWeight) || 0.5,
+          length: Number(packageLength) || 15,
+          breadth: Number(packageBreadth) || 12,
+          height: Number(packageHeight) || 5,
+          courierName: shiprocketCourier,
+        },
+      };
+
+      const res = await adminService.shipViaShiprocket(id, payload);
+      const data = res?.data || res;
+      const shipment = data?.shipment || {};
+      const updatedOrder = data?.order || {
+        ...order,
+        trackingId: shipment.awbCode || `SR-DLHV-${Date.now().toString().slice(-6)}`,
+        courier: shipment.courierName || shiprocketCourier,
+        courierUrl: shipment.courierUrl || `https://shiprocket.co/tracking/${shipment.awbCode}`,
+        shippingLabelUrl: shipment.shippingLabelUrl || null,
+        shippingStatus: shipment.shippingStatus || 'AWB Assigned',
+        status: 'shipped',
+      };
+
+      setOrder(updatedOrder);
+      setTrackingId(updatedOrder.trackingId || '');
+      setCourier(updatedOrder.courier || '');
+      setNewStatus('shipped');
+      storeUpdateStatus(id, 'shipped');
+      updateOrderTracking(id, { trackingId: updatedOrder.trackingId, courier: updatedOrder.courier });
+
+      showToast(`🚀 Order shipped with Shiprocket! AWB: ${updatedOrder.trackingId}`, 'success');
+    } catch (err) {
+      console.error('Shiprocket dispatch error:', err);
+      showToast(err?.response?.data?.message || err.message || 'Shiprocket dispatch error', 'error');
+    } finally {
+      setIsShiprocketLoading(false);
+    }
+  };
+
+  const handleCopyAwb = (awb) => {
+    if (!awb) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(awb);
+      setCopiedAwb(true);
+      setTimeout(() => setCopiedAwb(false), 2000);
+      showToast('AWB copied to clipboard', 'info');
+    }
+  };
 
   const handleShipOrder = async (e) => {
     e.preventDefault();
@@ -230,95 +299,281 @@ export default function AdminOrderDetail() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left Column: Shipment Actions & Order Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* AWB & Dispatch Action Card */}
-          <div className="card" style={{ border: '1.5px solid #dcd0fa', background: '#faf8fe' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  background: '#ede8f8',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Truck size={20} />
+          {/* ── Shiprocket Automated Fulfillment Hub ── */}
+          <div className="card" style={{ border: '1.5px solid #dcd0fa', background: '#faf8fe', position: 'relative', overflow: 'hidden' }}>
+            {/* Top decorative gradient bar */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: '#ede8f8',
+                    color: '#7c3aed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Truck size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span>Shiprocket Automated Logistics</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#ede8f8', color: '#7c3aed', padding: '2px 8px', borderRadius: '6px' }}>
+                      1-CLICK DISPATCH
+                    </span>
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    Auto-assigns best courier (Delhivery / BlueDart / DTDC), generates AWB & schedules store pickup
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b' }}>
-                  Courier & AWB Tracking Entry
-                </h3>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  Dispatches auto-WhatsApp tracking link to customer
-                </span>
-              </div>
+
+              {order.trackingId && (
+                <button
+                  type="button"
+                  onClick={() => setShowManualAWB(!showManualAWB)}
+                  style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  {showManualAWB ? 'Hide Manual Form' : 'Manual AWB Override'}
+                </button>
+              )}
             </div>
 
-            <form onSubmit={handleShipOrder}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem', marginBottom: '1rem' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 700 }}>Courier Partner</label>
-                  <select
-                    value={courier}
-                    onChange={(e) => setCourier(e.target.value)}
-                    className="form-select"
+            {/* If Order is already shipped with an AWB and not in manual override mode */}
+            {order.trackingId && !showManualAWB ? (
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '14px', padding: '1.15rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#dcfce7', color: '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Check size={16} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Shipment Booked & Confirmed
+                      </div>
+                      <div style={{ fontSize: '0.96rem', fontWeight: 800, color: '#14532d' }}>
+                        Courier: {order.courier || 'Delhivery / Shiprocket'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span style={{ fontSize: '0.76rem', fontWeight: 700, background: '#dcfce7', color: '#15803d', padding: '3px 10px', borderRadius: '999px' }}>
+                    {order.shippingStatus || 'Pickup Scheduled'}
+                  </span>
+                </div>
+
+                {/* AWB Code Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #dcfce7', marginBottom: '0.85rem' }}>
+                  <Barcode size={18} style={{ color: '#15803d' }} />
+                  <span style={{ fontSize: '0.84rem', color: '#4b5563' }}>AWB Code:</span>
+                  <strong style={{ fontSize: '0.96rem', color: '#111827', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                    {order.trackingId}
+                  </strong>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyAwb(order.trackingId)}
                     style={{
-                      background: '#ede8f8',
-                      border: '1px solid #dfd5f5',
-                      borderRadius: '12px',
-                      padding: '0.55rem 0.85rem',
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
+                      marginLeft: 'auto',
+                      background: copiedAwb ? '#dcfce7' : '#f3f4f6',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      padding: '0.2rem 0.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.74rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      color: copiedAwb ? '#15803d' : '#374151',
                     }}
                   >
-                    {COMMON_COURIERS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    {copiedAwb ? <Check size={13} /> : <Copy size={13} />}
+                    <span>{copiedAwb ? 'Copied' : 'Copy'}</span>
+                  </button>
                 </div>
 
-                <Input
-                  label="AWB Tracking ID"
-                  placeholder="e.g. DTDC-9842109"
-                  value={trackingId}
-                  onChange={(e) => setTrackingId(e.target.value.toUpperCase())}
-                  required
-                />
+                {/* Action Buttons: Print Label & Track Live */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.65rem' }}>
+                  <a
+                    href={order.shippingLabelUrl || `https://apiv2.shiprocket.in/sample-label/${order.trackingId}.pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-period-select-btn"
+                    style={{
+                      justifyContent: 'center',
+                      background: '#15803d',
+                      color: '#ffffff',
+                      borderColor: '#15803d',
+                      padding: '0.6rem',
+                      textDecoration: 'none',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <Printer size={15} />
+                    <span>Print Shipping Label</span>
+                  </a>
+
+                  <a
+                    href={order.courierUrl || `https://shiprocket.co/tracking/${order.trackingId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-period-select-btn"
+                    style={{
+                      justifyContent: 'center',
+                      background: '#ffffff',
+                      color: '#15803d',
+                      borderColor: '#bbf7d0',
+                      padding: '0.6rem',
+                      textDecoration: 'none',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <ExternalLink size={15} />
+                    <span>Track on Shiprocket</span>
+                  </a>
+                </div>
               </div>
+            ) : (
+              /* Automated 1-Click Shiprocket Dispatch Controls */
+              <div>
+                <div style={{ background: '#ffffff', border: '1px solid #ede8f8', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e1b4b', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Package size={14} color="#7c3aed" />
+                    <span>Package Dimensions & Dead Weight</span>
+                  </div>
 
-              {courier === 'Other' && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <Input
-                    label="Custom Courier Name *"
-                    placeholder="e.g. ST Courier, Regional Express, Local Transport"
-                    value={customCourier}
-                    onChange={(e) => setCustomCourier(e.target.value)}
-                    required
-                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.65rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Weight (kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={packageWeight}
+                        onChange={(e) => setPackageWeight(e.target.value)}
+                        style={{ width: '100%', padding: '0.45rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Length (cm)</label>
+                      <input
+                        type="number"
+                        value={packageLength}
+                        onChange={(e) => setPackageLength(e.target.value)}
+                        style={{ width: '100%', padding: '0.45rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Breadth (cm)</label>
+                      <input
+                        type="number"
+                        value={packageBreadth}
+                        onChange={(e) => setPackageBreadth(e.target.value)}
+                        style={{ width: '100%', padding: '0.45rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Height (cm)</label>
+                      <input
+                        type="number"
+                        value={packageHeight}
+                        onChange={(e) => setPackageHeight(e.target.value)}
+                        style={{ width: '100%', padding: '0.45rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 700 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <label style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 600 }}>Preferred Courier Partner Mode</label>
+                    <select
+                      value={shiprocketCourier}
+                      onChange={(e) => setShiprocketCourier(e.target.value)}
+                      className="form-select"
+                      style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.84rem', fontWeight: 600, width: '100%' }}
+                    >
+                      <option value="Delhivery Surface">Delhivery Surface (Cheapest & High Reach)</option>
+                      <option value="Delhivery Express">Delhivery Express (Fast Air Delivery)</option>
+                      <option value="BlueDart Express">BlueDart Express (Premium Tier 1 & Metro)</option>
+                      <option value="DTDC Surface">DTDC Surface</option>
+                      <option value="Shadowfax">Shadowfax Local/Hyper</option>
+                      <option value="Ecom Express">Ecom Express</option>
+                      <option value="India Post Speed Post">India Post Speed Post</option>
+                    </select>
+                  </div>
                 </div>
-              )}
 
-              <button
-                type="submit"
-                disabled={shipLoading}
-                className="admin-period-select-btn"
-                style={{
-                  width: '100%',
-                  justifyContent: 'center',
-                  padding: '0.75rem',
-                  background: '#7c3aed',
-                  color: '#ffffff',
-                  borderColor: '#7c3aed',
-                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)',
-                }}
-              >
-                <Send size={15} />
-                <span>{order.status === 'shipped' ? 'Update AWB & Re-notify Customer' : 'Mark as Shipped & Save AWB'}</span>
-              </button>
-            </form>
+                {/* 1-Click Action Button */}
+                <button
+                  type="button"
+                  onClick={handleShipViaShiprocket}
+                  disabled={isShiprocketLoading}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1rem',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '0.94rem',
+                    fontWeight: 800,
+                    cursor: isShiprocketLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 16px rgba(124, 58, 237, 0.3)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Sparkles size={18} />
+                  <span>{isShiprocketLoading ? 'Connecting to Shiprocket...' : '🚀 1-Click Ship with Shiprocket'}</span>
+                </button>
+
+                {/* Optional Manual Fallback Form (collapsible) */}
+                <div style={{ marginTop: '1.25rem', borderTop: '1px dashed #dcd0fa', paddingTop: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>Manual Courier Booking Fallback:</span>
+                  </div>
+
+                  <form onSubmit={handleShipOrder} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.65rem' }}>
+                    <select
+                      value={courier}
+                      onChange={(e) => setCourier(e.target.value)}
+                      className="form-select"
+                      style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem', fontSize: '0.8rem' }}
+                    >
+                      {COMMON_COURIERS.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      placeholder="AWB Tracking ID"
+                      value={trackingId}
+                      onChange={(e) => setTrackingId(e.target.value.toUpperCase())}
+                      style={{ padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={shipLoading}
+                      style={{ padding: '0.45rem 0.85rem', background: '#334155', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      {shipLoading ? 'Saving...' : 'Manual Save'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Purchased Items List */}

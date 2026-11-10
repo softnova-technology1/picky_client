@@ -79,4 +79,10 @@ export const adminService = {
   getBlogData: () => api.get('/blog'),
   updateBlogData: (data) => api.put('/blog', data),
   uploadBlogImage: (formData) => api.post('/blog/upload-image', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  // Shiprocket Logistics & Automated Fulfillment
+  shipViaShiprocket: (orderId, packageDetails) => api.post(`/orders/admin/${orderId}/shiprocket/ship`, { packageDetails }),
+  getShiprocketLabel: (orderId) => api.get(`/orders/admin/${orderId}/shiprocket/label`),
+  trackShiprocket: (awb) => api.get(`/orders/shiprocket/track/${awb}`),
+  checkDeliveryServiceability: (pincode, weight = 0.5, cod = 0) => api.post('/orders/serviceability', { pincode, weight, cod }),
 };
