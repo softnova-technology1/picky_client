@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import React, { useState, useEffect } from 'react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import {
@@ -627,7 +628,7 @@ export default function Privacy() {
                   rel="noreferrer"
                   className={styles.whatsappDpoBtn}
                 >
-                  <PhoneCall size={14} />
+                  <WhatsAppIcon size={14} color="#ffffff" />
                   <span>WhatsApp DPO</span>
                 </a>
                 <a

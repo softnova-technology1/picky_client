@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
@@ -703,7 +704,7 @@ export default function TrackOrder() {
                     rel="noopener noreferrer"
                     className={styles.whatsappSupportBtn}
                   >
-                    <MessageCircle size={16} />
+                    <WhatsAppIcon size={16} color="currentColor" />
                     <span>WhatsApp Store Support</span>
                   </a>
                 </div>

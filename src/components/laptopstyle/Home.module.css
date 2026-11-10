@@ -1,0 +1,777 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY HOMEPAGE — LAPTOP VIEWPORT OPTIMIZATIONS
+   Breakpoint: @media (min-width: 1080px) and (max-width: 1920px)
+   Rules: Proportional size reduction, padding & margin compression only.
+          Zero layout/alignment changes.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1080px) and (max-width: 1920px) {
+
+  /* ── 0. Master Section Containers (1200px Boxed Containment on Laptop) ─── */
+  :global(.editorial-hero-container),
+  :global(.editorial-hero-controls-bar),
+  :global(.hp-category-container),
+  :global(.hp-horizontal-inner),
+  :global(.hp-flash-deals-container),
+  :global(.hp-new-arrivals-section),
+  :global(.hp-new-arrivals-container),
+  :global(.hp-new-arrivals-section .hp-new-arrivals-container),
+  :global(.hp-bestsellers-inner),
+  :global(.hp-trust-container),
+  :global(.hp-reviews-container),
+  :global(.hp-final-cta-container),
+  :global(.container) {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── 1. Top Announcement Bar & Navbar ──────────────────────────────────── */
+  :global(.top-announcement-bar) {
+    height: 32px !important;
+  }
+
+  :global(.top-announcement-crosh) {
+    font-size: 0.74rem !important;
+    padding: 0 1.5rem 0 2rem !important;
+  }
+
+  :global(.top-crosh-badge) {
+    font-size: 0.62rem !important;
+    padding: 0.1rem 0.5rem !important;
+  }
+
+  :global(.floating-nav-pill) {
+    height: 58px !important;
+    padding: 0 1.75rem !important;
+  }
+
+  :global(.nav-desktop-sidebar-btn) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    flex-shrink: 0 !important;
+  }
+
+  :global(.nav-brand-logo-icon) {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 1rem !important;
+    border-radius: 9px !important;
+  }
+
+  :global(.nav-brand-name) {
+    font-size: 1.15rem !important;
+  }
+
+  :global(.nav-vertical-divider) {
+    height: 18px !important;
+    margin: 0 0.25rem !important;
+  }
+
+  :global(.nav-pill-link) {
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.8rem !important;
+    gap: 0.25rem !important;
+  }
+
+  :global(.nav-search-input) {
+    height: 38px !important;
+    font-size: 0.82rem !important;
+  }
+
+  :global(.nav-action-icon-btn) {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  :global(.nav-auth-btn-desktop) {
+    height: 38px !important;
+    padding: 0 1.15rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* ── 2. Editorial Hero Banner Carousel ──────────────────────────────────── */
+  :global(.picky-hero-banner-carousel) {
+    min-height: 420px !important;
+    height: 450px !important;
+    max-height: 480px !important;
+  }
+
+  :global(.hero-desktop-wrapper [style*="backdrop-filter"]) {
+    width: 310px !important;
+    padding: 1.5rem 1.6rem 1.35rem !important;
+    border-radius: 20px !important;
+  }
+
+  :global(.hero-desktop-wrapper [style*="backdrop-filter"] span) {
+    font-size: 0.66rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  :global(.hero-desktop-wrapper [style*="backdrop-filter"] h2) {
+    font-size: 1.95rem !important;
+    line-height: 1.05 !important;
+  }
+
+  :global(.hero-desktop-wrapper [style*="backdrop-filter"] h3) {
+    font-size: 1.15rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  :global(.hero-desktop-wrapper [style*="backdrop-filter"] div[style*="margin: 0 auto 1.3rem"]) {
+    margin: 0 auto 0.9rem !important;
+  }
+
+  :global(.carousel-arrow-btn) {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  :global(.carousel-arrow-btn svg) {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* ── 3. Common Section Headers & Badges ─────────────────────────────────── */
+  :global(.hp-section-header) {
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global(.hp-section-badge) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.68rem !important;
+    line-height: 1 !important;
+    padding: 0.3rem 0.85rem !important;
+    border-radius: 9999px !important;
+    margin-bottom: 0.45rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    width: fit-content !important;
+    height: auto !important;
+    min-height: unset !important;
+  }
+
+  :global(.hp-flash-deals-section .hp-section-badge) {
+    font-size: 0.68rem !important;
+    padding: 0.32rem 0.85rem !important;
+    margin-bottom: 0.45rem !important;
+    line-height: 1 !important;
+  }
+
+  :global(.hp-section-title) {
+    font-size: 2rem !important;
+    margin-bottom: 0.35rem !important;
+    line-height: 1.15 !important;
+  }
+
+  :global(.hp-section-subtitle) {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  :global(.hp-view-all-btn) {
+    padding: 0.45rem 1.05rem !important;
+    font-size: 0.78rem !important;
+    gap: 0.4rem !important;
+  }
+
+  /* ── 4. Shop By Category ────────────────────────────────────────────────── */
+  :global(.hp-category-nav) {
+    padding: 2.25rem 0 1.75rem !important;
+  }
+
+  :global(.hp-cat-header-wrap) {
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global(.hp-cat-eyebrow) {
+    font-size: 0.72rem !important;
+    margin-bottom: 0.25rem !important;
+    gap: 0.65rem !important;
+  }
+
+  :global(.hp-line) {
+    width: 36px !important;
+  }
+
+  :global(.hp-cat-title) {
+    font-size: 2.1rem !important;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.12 !important;
+  }
+
+  :global(.hp-cat-subtitle) {
+    font-size: 0.88rem !important;
+  }
+
+  :global(.hp-cat-view-all-btn) {
+    font-size: 0.8rem !important;
+  }
+
+  :global(.hp-category-scroll) {
+    gap: 0.95rem !important;
+    padding: 0.35rem 0.25rem 1.15rem !important;
+  }
+
+  :global(.hp-category-item) {
+    max-width: 104px !important;
+  }
+
+  :global(.hp-category-arch-wrapper) {
+    width: 92px !important;
+    height: 106px !important;
+  }
+
+  :global(.hp-category-arrow-badge) {
+    width: 26px !important;
+    height: 26px !important;
+    bottom: -12px !important;
+  }
+
+  :global(.hp-category-arrow-badge svg),
+  :global(.hp-arrow-icon) {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  :global(.hp-category-name) {
+    margin-top: 0.85rem !important;
+    font-size: 0.76rem !important;
+    line-height: 1.2 !important;
+  }
+
+  :global(.hp-cat-bottom-tagline) {
+    margin-top: 1.35rem !important;
+    gap: 1rem !important;
+  }
+
+  :global(.hp-tagline-line) {
+    width: 70px !important;
+  }
+
+  :global(.hp-tagline-text) {
+    font-size: 0.65rem !important;
+  }
+
+  /* ── 5. Trending Now (Horizontal Carousel) ──────────────────────────────── */
+  :global(.hp-horizontal-section) {
+    padding: 2.25rem 0 1.75rem !important;
+  }
+
+  :global(.hp-carousel-nav-btns) {
+    gap: 0.6rem !important;
+  }
+
+  :global(.hp-carousel-nav-btn) {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  :global(.hp-carousel-nav-btn svg) {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  :global(.hp-horizontal-scroll-container) {
+    gap: 1.1rem !important;
+    padding: 0.5rem 0.25rem 1.25rem !important;
+  }
+
+  :global(.hp-horizontal-card) {
+    min-width: 225px !important;
+    max-width: 240px !important;
+    flex: 0 0 235px !important;
+  }
+
+  /* ── 6. Reusable ProductCard (Used across Trending, Arrivals, Best Sellers) */
+  :global(.ref-product-card) {
+    border-radius: 18px !important;
+  }
+
+  :global(.ref-card-top) {
+    max-height: 210px !important;
+    border-radius: 16px !important;
+  }
+
+  :global(.ref-top-bar) {
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+  }
+
+  :global(.ref-mega-deal) {
+    padding: 2px 9px 2px 2px !important;
+  }
+
+  :global(.ref-deal-icon) {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 4px !important;
+  }
+
+  :global(.ref-deal-text) {
+    font-size: 0.58rem !important;
+  }
+
+  :global(.ref-wishlist-btn) {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  :global(.ref-wishlist-btn svg) {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  :global(.ref-card-bottom) {
+    padding: 12px 14px 14px !important;
+    gap: 6px !important;
+  }
+
+  :global(.ref-trending-tag) {
+    font-size: 0.6rem !important;
+    padding: 2px 8px !important;
+  }
+
+  :global(.ref-product-title) {
+    font-size: 0.86rem !important;
+    line-height: 1.25 !important;
+    margin: 0 0 2px 0 !important;
+  }
+
+  :global(.ref-product-desc) {
+    font-size: 0.7rem !important;
+    line-height: 1.2 !important;
+    -webkit-line-clamp: 1 !important;
+    line-clamp: 1 !important;
+    max-height: 1.3em !important;
+    margin-bottom: 2px !important;
+  }
+
+  :global(.ref-price-row) {
+    gap: 6px !important;
+  }
+
+  :global(.ref-current-price) {
+    font-size: 1.15rem !important;
+  }
+
+  :global(.ref-original-price) {
+    font-size: 0.75rem !important;
+  }
+
+  :global(.ref-discount-pill) {
+    font-size: 0.64rem !important;
+    padding: 2px 6px !important;
+  }
+
+  :global(.ref-add-cart-btn) {
+    height: 36px !important;
+    font-size: 0.78rem !important;
+    border-radius: 10px !important;
+    gap: 5px !important;
+  }
+
+  :global(.ref-add-cart-btn svg) {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* ── 7. Flash Deals / Limited Time Deals ────────────────────────────────── */
+  :global(.hp-flash-deals-section) {
+    padding: 2.25rem 0 !important;
+  }
+
+  :global(.hp-flash-deals-header) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  :global(.hp-flash-header-timer) {
+    padding: 0.4rem 1rem !important;
+    gap: 0.45rem !important;
+  }
+
+  :global(.timer-label) {
+    font-size: 0.7rem !important;
+    margin-right: 0.15rem !important;
+  }
+
+  :global(.hp-flash-header-timer .timer-box) {
+    min-width: 32px !important;
+    padding: 0.2rem 0.45rem !important;
+    border-radius: 6px !important;
+  }
+
+  :global(.hp-flash-header-timer .timer-num) {
+    font-size: 0.88rem !important;
+  }
+
+  :global(.hp-flash-header-timer .timer-unit) {
+    font-size: 0.5rem !important;
+  }
+
+  :global(.hp-flash-header-timer .timer-colon) {
+    font-size: 0.88rem !important;
+  }
+
+  :global(.hp-flash-deals-grid) {
+    gap: 1.25rem !important;
+  }
+
+  /* Left Spotlight Deal Card */
+  :global(.hp-flash-spotlight-card) {
+    padding: 1.5rem 1.4rem !important;
+    border-radius: 20px !important;
+  }
+
+  :global(.spotlight-img-wrap) {
+    height: 175px !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  :global(.spotlight-category) {
+    font-size: 0.7rem !important;
+  }
+
+  :global(.spotlight-title) {
+    font-size: 1.05rem !important;
+  }
+
+  :global(.spotlight-desc) {
+    font-size: 0.78rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  :global(.spotlight-price-row) {
+    margin-bottom: 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  :global(.spotlight-current-price) {
+    font-size: 1.25rem !important;
+  }
+
+  :global(.spotlight-orig-price) {
+    font-size: 0.82rem !important;
+  }
+
+  :global(.spotlight-savings-tag) {
+    font-size: 0.68rem !important;
+    padding: 0.15rem 0.45rem !important;
+  }
+
+  :global(.spotlight-cta-btn) {
+    height: 38px !important;
+    padding: 0.45rem 0 !important;
+    font-size: 0.8rem !important;
+    border-radius: 9999px !important;
+  }
+
+  /* Right Minimal Deal Cards */
+  :global(.hp-flash-products-grid) {
+    gap: 0.9rem !important;
+  }
+
+  :global(.hp-flash-minimal-card) {
+    border-radius: 18px !important;
+    padding: 0.85rem !important;
+    gap: 0.65rem !important;
+  }
+
+  :global(.minimal-card-img-wrap) {
+    height: 140px !important;
+    border-radius: 14px !important;
+    padding: 0.5rem !important;
+  }
+
+  :global(.minimal-card-badge) {
+    font-size: 0.65rem !important;
+    padding: 0.2rem 0.5rem !important;
+    top: 6px !important;
+    left: 6px !important;
+  }
+
+  :global(.minimal-card-heart-btn) {
+    width: 28px !important;
+    height: 28px !important;
+    top: 6px !important;
+    right: 6px !important;
+  }
+
+  :global(.minimal-card-heart-btn svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  :global(.minimal-card-btn) {
+    padding: 0.55rem 0.9rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* ── 8. New Arrivals / Fresh New Drops ──────────────────────────────────── */
+  :global(.hp-new-arrivals-section) {
+    padding: 2.25rem 0 !important;
+    max-width: 1200px !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  :global(.hp-new-arrivals-container),
+  :global(.hp-new-arrivals-section .hp-new-arrivals-container) {
+    max-width: 1200px !important;
+    width: 100% !important;
+   margin-left: 30px !important;
+    padding: 2rem 1.75rem !important;
+    border-radius: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  :global(.hp-new-arrivals-header) {
+    margin-bottom: 1.25rem !important;
+  }
+
+  :global(.hp-arrivals-filter-tabs) {
+    gap: 0.5rem !important;
+    margin-bottom: 1.35rem !important;
+    padding-bottom: 0.55rem !important;
+  }
+
+  :global(.hp-filter-tab-pill) {
+    padding: 0.35rem 0.9rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  :global(.hp-new-arrivals-grid) {
+    gap: 0.9rem !important;
+  }
+
+  /* ── 9. Best Sellers Section ────────────────────────────────────────────── */
+  :global(.hp-bestsellers-section) {
+    padding: 2.25rem 0 !important;
+  }
+
+  :global(.hp-bestsellers-inner .hp-section-header) {
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global(.hp-bestsellers-inner > div[style*="margin-top"]) {
+    margin-top: 1.25rem !important;
+  }
+
+  /* ── 10. Why Picky / Trust Section ──────────────────────────────────────── */
+  :global(.hp-trust-section) {
+    padding: 2.25rem 0 !important;
+  }
+
+  :global(.hp-trust-header) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  :global(.hp-trust-grid) {
+    gap: 1.1rem !important;
+  }
+
+  :global(.hp-trust-item) {
+    padding: 1.4rem 1.25rem !important;
+    border-radius: 20px !important;
+    gap: 0.75rem !important;
+  }
+
+  :global(.hp-trust-icon) {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+  }
+
+  :global(.hp-trust-icon svg) {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  :global(.hp-trust-title) {
+    font-size: 1.02rem !important;
+  }
+
+  :global(.hp-trust-desc) {
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ── 11. Customer Reviews ───────────────────────────────────────────────── */
+  :global(.hp-reviews-section) {
+    padding: 2.25rem 0 !important;
+  }
+
+  :global(.hp-reviews-header) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  :global(.hp-rating-summary-bar) {
+    padding: 0.45rem 1.1rem !important;
+    margin-top: 0.9rem !important;
+    gap: 0.55rem !important;
+  }
+
+  :global(.summary-score) {
+    font-size: 0.88rem !important;
+  }
+
+  :global(.summary-count) {
+    font-size: 0.76rem !important;
+  }
+
+  :global(.summary-badge) {
+    font-size: 0.7rem !important;
+    padding: 0.15rem 0.5rem !important;
+  }
+
+  :global(.hp-reviews-carousel-wrap) {
+    padding: 0.75rem 0 1.25rem !important;
+  }
+
+  :global(.hp-reviews-marquee-group) {
+    gap: 1.25rem !important;
+    padding-right: 1.25rem !important;
+  }
+
+  :global(.hp-review-slide-item) {
+    width: 340px !important;
+  }
+
+  :global(.hp-review-card) {
+    padding: 1.4rem 1.3rem !important;
+    border-radius: 20px !important;
+    gap: 0.9rem !important;
+  }
+
+  :global(.hp-review-watermark) {
+    font-size: 4rem !important;
+    top: 10px !important;
+    right: 18px !important;
+  }
+
+  :global(.hp-verified-badge) {
+    font-size: 0.65rem !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+
+  :global(.hp-review-text) {
+    font-size: 0.88rem !important;
+    line-height: 1.45 !important;
+  }
+
+  :global(.hp-review-photo-thumb) {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  :global(.hp-review-photos-more) {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 0.7rem !important;
+  }
+
+  :global(.hp-review-footer) {
+    padding-top: 0.85rem !important;
+    gap: 0.75rem !important;
+  }
+
+  :global(.hp-review-initial-badge) {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  :global(.hp-review-user-name) {
+    font-size: 0.88rem !important;
+  }
+
+  :global(.hp-review-user-meta) {
+    font-size: 0.7rem !important;
+  }
+
+  /* ── 12. Final CTA Banner ───────────────────────────────────────────────── */
+  :global(.hp-final-cta-section) {
+    padding: 2.25rem 0 !important;
+  }
+
+  :global(.hp-final-cta-box) {
+    padding: 2.2rem 1.8rem !important;
+    border-radius: 26px !important;
+    gap: 0.85rem !important;
+  }
+
+  :global(.hp-final-cta-badge) {
+    font-size: 0.68rem !important;
+    padding: 0.25rem 0.75rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  :global(.hp-final-title) {
+    font-size: 2.2rem !important;
+    padding-top: 4px !important;
+  }
+
+  :global(.hp-final-subtitle) {
+    font-size: 0.92rem !important;
+    max-width: 520px !important;
+  }
+
+  :global(.hp-final-cta-btn-group) {
+    margin-top: 0.6rem !important;
+    gap: 0.9rem !important;
+  }
+
+  :global(.hp-final-cta-btn) {
+    height: 42px !important;
+    padding: 0 1.5rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  :global(.hp-final-cta-btn svg),
+  :global(.hp-cta-wa-icon) {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* ── 13. Footer ─────────────────────────────────────────────────────────── */
+  :global(.footer-skyline-img) {
+    height: 90px !important;
+  }
+
+  :global(.picky-footer-body) {
+    padding: 2.25rem 1.5rem 1.75rem !important;
+  }
+
+  :global(.footer-grid) {
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+  }
+
+  :global(.footer-heading) {
+    font-size: 0.92rem !important;
+    margin-bottom: 0.9rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  :global(.footer-links-list) {
+    gap: 0.55rem !important;
+  }
+
+  :global(.footer-link) {
+    font-size: 0.8rem !important;
+    gap: 0.45rem !important;
+  }
+}
+

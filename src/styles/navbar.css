@@ -50,9 +50,10 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   padding: 0;
-  margin: 0;
+  margin: 0 !important;
   background: #ffffff;
   border-bottom: 1px solid rgba(226, 218, 240, 0.7);
   box-shadow: 0 4px 16px rgba(124, 58, 237, 0.04);
@@ -667,11 +668,13 @@
 
 /* Desktop Sidebar Toggle Button (Beside Logo) */
 .nav-desktop-sidebar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  flex-shrink: 0 !important;
   border-radius: 12px;
   background: #f8f6fd;
   border: 1.5px solid #ebe4f8;

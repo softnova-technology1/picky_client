@@ -4,6 +4,8 @@
    Zero inline styles.
    ══════════════════════════════════════════════════════════════════════════ */
 
+@import '../../laptopstyle/LoginPopupModal.module.css';
+
 .backdrop {
   position: fixed;
   inset: 0;
@@ -711,7 +713,7 @@
     display: none !important;
   }
 
-  .backdrop {
+    .backdrop {
     padding: 0.75rem;
     align-items: center;
     justify-content: center;

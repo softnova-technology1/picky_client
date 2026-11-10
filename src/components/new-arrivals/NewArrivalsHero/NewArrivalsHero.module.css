@@ -382,17 +382,22 @@
 
 .buyNowBtn {
   align-self: flex-start;
-  padding: 0.45rem 1.1rem;
+  padding: 0.28rem 0.65rem;
   border-radius: 9999px;
   background: #250e4a;
   color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(37, 14, 74, 0.2);
+  box-shadow: 0 4px 12px rgba(37, 14, 74, 0.18);
 }
 
 .buyNowBtn:hover {
@@ -761,18 +766,19 @@
 
   .buyNowBtn {
     width: 100% !important;
-    height: 28px !important;
+    height: 26px !important;
     background: #7c3aed !important;
     color: #ffffff !important;
     font-size: 11px !important;
     font-weight: 700 !important;
+    white-space: nowrap !important;
     border-radius: 8px !important;
     border: none !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
-    padding: 0 !important;
+    padding: 0 6px !important;
     box-shadow: none !important;
   }
 

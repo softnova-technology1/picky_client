@@ -237,10 +237,10 @@ export default function Navbar() {
       <header className={`floating-nav-container desktop-nav-only ${isScrolled ? 'is-scrolled' : ''}`}>
         <div className="floating-nav-pill">
           {/* Brand & Left Cluster with Menu Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexShrink: 0 }}>
             <button
               type="button"
-              className="nav-desktop-sidebar-btn"
+              className="nav-desktop-sidebar-btn no-hover-fx"
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               title={isMobileMenuOpen ? 'Close Navigation Sidebar' : 'Open Navigation Sidebar'}
               aria-label="Toggle Navigation Menu"

@@ -1,5 +1,7 @@
 import React from 'react';
 import styles from './About.module.css';
+import '../../components/laptopstyle/About.module.css';
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import '../../styles/home-premium.css';
 import { ArrowRight } from 'lucide-react';
 import PageWrapper from '../../components/layout/PageWrapper';
@@ -117,10 +119,7 @@ export default function About() {
                 aria-label="Join WhatsApp Group"
                 title="Join WhatsApp Group"
               >
-                <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                  <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                </svg>
+                <WhatsAppIcon size={20} color="currentColor" className="hp-cta-wa-icon" />
                 <span className="hp-cta-wa-label">
                   <span>Join WhatsApp Group</span>
                   <ArrowRight size={16} />

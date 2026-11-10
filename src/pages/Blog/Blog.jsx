@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import React, { useState } from 'react';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { 

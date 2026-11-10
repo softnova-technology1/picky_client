@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 ﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
@@ -167,7 +168,7 @@ export default function ReturnPolicy() {
 
               <div className="legal-highlight-card">
                 <div className="legal-card-icon-wrap gold">
-                  <MessageCircle size={22} />
+                  <WhatsAppIcon size={22} color="#16a34a" />
                 </div>
                 <h4 className="legal-card-title">Direct WhatsApp Help</h4>
                 <p className="legal-card-desc">
@@ -395,7 +396,7 @@ export default function ReturnPolicy() {
                   </p>
                   <div className="policy-helpdesk-card">
                     <div className="policy-helpdesk-row">
-                      <MessageCircle size={18} color="#16a34a" className="policy-helpdesk-icon" />
+                      <WhatsAppIcon size={18} color="#16a34a" className="policy-helpdesk-icon" />
                       <span><strong>WhatsApp Support:</strong> <a href="https://wa.me/918300295721" target="_blank" rel="noreferrer" style={{ color: '#16a34a', fontWeight: 700 }}>+91 83002 95721</a></span>
                     </div>
                     <div className="policy-helpdesk-row">
@@ -481,7 +482,7 @@ export default function ReturnPolicy() {
           {/* Pillar 4 */}
           <div className={styles.pillarCard}>
             <div className={`${styles.pillarIconWrap} ${styles.pillarIconEmerald}`}>
-              <MessageCircle size={16} />
+              <WhatsAppIcon size={16} color="#059669" />
             </div>
             <div>
               <h4 className={styles.pillarTitle}>Direct WhatsApp Help</h4>
@@ -743,7 +744,7 @@ export default function ReturnPolicy() {
               {/* WhatsApp Help */}
               <a href="https://wa.me/918300295721" target="_blank" rel="noreferrer" className={`${styles.contactRow} ${styles.contactRowGreen}`}>
                 <div className={`${styles.contactIconBox} ${styles.contactIconBoxGreen}`}>
-                  <MessageCircle size={16} />
+                  <WhatsAppIcon size={16} color="#16a34a" />
                 </div>
                 <div>
                   <span className={styles.contactLabel}>WhatsApp Support</span>
@@ -786,6 +787,7 @@ export default function ReturnPolicy() {
                 rel="noreferrer"
                 className={styles.instantHelpBtn}
               >
+                <WhatsAppIcon size={14} color="#ffffff" style={{ marginRight: '4px' }} />
                 <span>WhatsApp</span>
                 <ArrowRight size={13} />
               </a>

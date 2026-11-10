@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
@@ -538,7 +539,7 @@ export default function OrderDetail() {
               {/* WhatsApp & Support Helper Box */}
               <div className={styles.supportCard}>
                 <div className={styles.supportIcon}>
-                  <MessageCircle size={22} />
+                  <WhatsAppIcon size={22} color="#16a34a" />
                 </div>
                 <div className={styles.supportContent}>
                   <h4 className={styles.supportTitle}>Need Help with this Order?</h4>
