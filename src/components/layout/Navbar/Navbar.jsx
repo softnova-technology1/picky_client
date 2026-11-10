@@ -20,6 +20,7 @@ import {
   Percent,
   Phone,
   Home,
+  BookOpen,
 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useCartStore } from '../../../store/cartStore';
@@ -906,6 +907,14 @@ export default function Navbar() {
                 <span>Limited Deals</span>
                 <span className="drawer-badge-pill" style={{ background: '#ffe4e6', color: '#e11d48' }}>Sale</span>
               </Link>
+
+              {isBlogPageEnabled && (
+                <Link to="/blog" className="mobile-drawer-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  <BookOpen size={18} className="drawer-link-icon" style={{ color: '#7c3aed' }} />
+                  <span>Blog</span>
+                  <span className="drawer-badge-pill" style={{ background: '#dcfce7', color: '#16a34a' }}>Stories</span>
+                </Link>
+              )}
 
               <div className="drawer-section-title" style={{ marginTop: '0.5rem' }}>Customer Care</div>
 

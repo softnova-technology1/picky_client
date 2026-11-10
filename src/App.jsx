@@ -68,6 +68,7 @@ import { useCustomizationStore } from './store/customizationStore';
 import { adminService } from './services/admin.service';
 import { settingsService } from './services/settings.service';
 import { useCategoryStore } from './store/categoryStore';
+import { useBlogStore } from './store/blogStore';
 import { getSocket } from './services/socket';
 
 export default function App() {
@@ -96,8 +97,9 @@ export default function App() {
     fetchLatestCustomizations();
     settingsService.getSettings().catch(() => {});
 
-    // 2. Fetch real DB categories for frontend navigation
+    // 2. Fetch real DB categories & blog configuration for frontend navigation
     useCategoryStore.getState().fetchCategories();
+    useBlogStore.getState().fetchBlogFromApi();
 
     // 3. Tab visibility / Window focus revalidation:
     // When switching from Admin tab back to Storefront tab, instantly revalidate
@@ -106,6 +108,7 @@ export default function App() {
         fetchLatestCustomizations();
         settingsService.getSettings().catch(() => {});
         useCategoryStore.getState().fetchCategories(true);
+        useBlogStore.getState().fetchBlogFromApi();
         window.dispatchEvent(new CustomEvent('picky_catalog_updated'));
       }
     };
@@ -117,6 +120,7 @@ export default function App() {
     const pollInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         fetchLatestCustomizations();
+        useBlogStore.getState().fetchBlogFromApi();
         // If DB was offline on initial load and categories are still empty, keep auto-retrying!
         if (useCategoryStore.getState().categories.length === 0) {
           useCategoryStore.getState().fetchCategories(true);

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getCatalogSyncChannel } from '../utils/realtimeSync';
 
 export const INITIAL_BLOG_DATA = {
   isBlogPageEnabled: true,
@@ -391,21 +392,20 @@ export const useBlogStore = create(
 
       fetchBlogFromApi: async () => {
         try {
-          const apiUrl = (import.meta.env?.VITE_API_URL || 'http://localhost:5000/api/v1') + '/blog';
+          const isViteDev = typeof window !== 'undefined' && (window.location.port === '3000' || window.location.port === '5173');
+          const apiUrl = isViteDev ? '/api/v1/blog' : ((import.meta.env?.VITE_API_URL || 'http://localhost:5000/api/v1') + '/blog');
           const res = await fetch(apiUrl);
           const json = await res.json();
           if (json?.success && json?.data) {
             const apiData = json.data;
-            set((state) => {
-              const updated = {
+            set((state) => ({
+              blogData: {
                 ...state.blogData,
                 isBlogPageEnabled: apiData.isBlogPageEnabled !== undefined ? apiData.isBlogPageEnabled : state.blogData.isBlogPageEnabled,
                 hero: apiData.hero ? { ...state.blogData.hero, ...apiData.hero } : state.blogData.hero,
                 metrics: apiData.metrics ? { ...state.blogData.metrics, ...apiData.metrics } : state.blogData.metrics,
-              };
-              broadcastBlogUpdate(updated);
-              return { blogData: updated };
-            });
+              },
+            }));
           }
         } catch (_) {}
       },
@@ -433,6 +433,28 @@ if (typeof window !== 'undefined') {
     };
   }
 
+  // Also listen to catalog broadcast channel for cross-tab mutations
+  const catalogCh = getCatalogSyncChannel();
+  if (catalogCh) {
+    catalogCh.onmessage = (event) => {
+      if (event?.data?.type === 'BLOG_UPDATED' || event?.data?.type === 'CATALOG_UPDATED') {
+        if (event?.data?.type === 'BLOG_UPDATED' && event?.data?.payload) {
+          const apiData = event.data.payload;
+          useBlogStore.setState((state) => ({
+            blogData: {
+              ...state.blogData,
+              isBlogPageEnabled: apiData.isBlogPageEnabled !== undefined ? apiData.isBlogPageEnabled : state.blogData.isBlogPageEnabled,
+              hero: apiData.hero ? { ...state.blogData.hero, ...apiData.hero } : state.blogData.hero,
+              metrics: apiData.metrics ? { ...state.blogData.metrics, ...apiData.metrics } : state.blogData.metrics,
+            },
+          }));
+        } else {
+          useBlogStore.getState().fetchBlogFromApi();
+        }
+      }
+    };
+  }
+
   window.addEventListener('storage', (e) => {
     if (e.key === 'picky_blog_store_v1' && e.newValue) {
       try {
@@ -448,6 +470,24 @@ if (typeof window !== 'undefined') {
     if (e?.detail?.blogData) {
       useBlogStore.setState({ blogData: e.detail.blogData });
     }
+  });
+
+  window.addEventListener('picky_catalog_updated', (e) => {
+    try {
+      if (e?.detail?.type === 'BLOG_UPDATED' && e?.detail?.payload) {
+        const apiData = e.detail.payload;
+        useBlogStore.setState((state) => ({
+          blogData: {
+            ...state.blogData,
+            isBlogPageEnabled: apiData.isBlogPageEnabled !== undefined ? apiData.isBlogPageEnabled : state.blogData.isBlogPageEnabled,
+            hero: apiData.hero ? { ...state.blogData.hero, ...apiData.hero } : state.blogData.hero,
+            metrics: apiData.metrics ? { ...state.blogData.metrics, ...apiData.metrics } : state.blogData.metrics,
+          },
+        }));
+      } else {
+        useBlogStore.getState().fetchBlogFromApi();
+      }
+    } catch (_) {}
   });
 }
 

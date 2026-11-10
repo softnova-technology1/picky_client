@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
+import Select from '../../components/ui/Select';
 import { productService } from '../../services/product.service';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useUiStore } from '../../store/uiStore';
@@ -250,6 +251,32 @@ export default function Discounts() {
     return Array.from(catMap.entries()).map(([id, label]) => ({ id, label }));
   }, [activeDiscountProducts]);
 
+  const categoryOptions = useMemo(() => {
+    const list = [
+      { value: 'all', label: `All Categories (${activeDiscountProducts.length})` },
+    ];
+    availableCategories.forEach((cat) => {
+      const count = activeDiscountProducts.filter((p) => {
+        const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
+        const catName = typeof p.category === 'object' && p.category?.name ? p.category.name : p.subCategory || p.category;
+        return catSlug === cat.id || catName === cat.id;
+      }).length;
+      list.push({
+        value: cat.id,
+        label: `${cat.label} (${count})`,
+      });
+    });
+    return list;
+  }, [availableCategories, activeDiscountProducts]);
+
+  const sortOptions = useMemo(() => [
+    { value: 'recommended', label: 'Sort: Recommended' },
+    { value: 'highest-discount', label: 'Highest Discount (% OFF)' },
+    { value: 'price-low', label: 'Price: Low to High' },
+    { value: 'price-high', label: 'Price: High to Low' },
+    { value: 'newest', label: 'Newest Deals' },
+  ], []);
+
   // Filtered & Sorted products for the main catalog
   const filteredProducts = useMemo(() => {
     let result = activeDiscountProducts;
@@ -315,105 +342,34 @@ export default function Discounts() {
   return (
     <PageWrapper>
       <div style={{ background: '#ffffff', minHeight: '100vh', color: '#1e293b' }}>
-        {/* ── 1. Hero Section: Limited Deals Full-Width Purple Gradient Banner ── */}
+        {/* ── 1. Hero Section: Limited Deals Full-Width Luxury Background Banner ── */}
         {isEnabled('discounts_hero') && (
           <section
+            className="discounts-hero-section"
             style={{
               width: '100%',
-              background: 'linear-gradient(135deg, #150348 0%, #2b0b66 25%, #4a1590 55%, #6d28d9 80%, #7c3aed 100%)',
-              borderBottom: '1px solid rgba(168, 85, 247, 0.35)',
-              padding: '4rem 1.5rem 3.5rem',
+              backgroundImage: `url(${getSetting('discounts_hero', 'bgImage', '/images/limited-deals/limited_deals_hero_bg.jpg')})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat',
+              backgroundColor: '#fbfaff',
+              borderBottom: '1px solid rgba(124, 58, 237, 0.12)',
+              padding: '4.5rem 1.5rem 4rem',
               position: 'relative',
               overflow: 'hidden',
             }}
           >
-            {/* Ambient Purple Luminous Glows */}
+            {/* Soft Central Scrim so 3D Cart (Left) and Podiums (Right) are 100% Crisp */}
             <div
+              className="discounts-hero-scrim"
               style={{
                 position: 'absolute',
-                top: '-15%',
-                left: '10%',
-                width: '600px',
-                height: '600px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 65%)',
+                inset: 0,
+                background: 'linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 30%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0.45) 70%, rgba(255, 255, 255, 0) 100%)',
                 pointerEvents: 'none',
+                zIndex: 1,
               }}
             />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '-20%',
-                right: '5%',
-                width: '550px',
-                height: '550px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(192, 132, 252, 0.22) 0%, transparent 65%)',
-                pointerEvents: 'none',
-              }}
-            />
-
-            <style>{`
-              @keyframes heroSilkyFloat {
-                0% {
-                  transform: translateY(0px) rotate(0deg);
-                }
-                50% {
-                  transform: translateY(-16px) rotate(-1.2deg);
-                }
-                100% {
-                  transform: translateY(0px) rotate(0deg);
-                }
-              }
-
-              @keyframes auraGlowPulse {
-                0%, 100% {
-                  transform: scale(0.95);
-                  opacity: 0.35;
-                }
-                50% {
-                  transform: scale(1.1);
-                  opacity: 0.65;
-                }
-              }
-
-
-
-              @keyframes subtleBadgePulse {
-                0%, 100% {
-                  transform: scale(1);
-                  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(168, 85, 247, 0.4);
-                }
-                50% {
-                  transform: scale(1.05);
-                  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 25px rgba(168, 85, 247, 0.6);
-                }
-              }
-
-              @media (max-width: 960px) {
-                .hero-grid-purple {
-                  grid-template-columns: 1fr !important;
-                  gap: 2.5rem !important;
-                  text-align: center !important;
-                }
-                .hero-left-col {
-                  order: 1 !important;
-                }
-                .hero-right-col {
-                  order: 2 !important;
-                }
-                .hero-right-col p {
-                  margin-left: auto !important;
-                  margin-right: auto !important;
-                }
-                .hero-cta-wrap {
-                  justify-content: center !important;
-                }
-                .hero-trust-wrap {
-                  justify-content: center !important;
-                }
-              }
-            `}</style>
 
             <div
               style={{
@@ -423,294 +379,206 @@ export default function Discounts() {
                 zIndex: 2,
               }}
             >
-              {/* Main Content Grid: Left (Luxury 3D Gift Box) & Right (Headlines & CTAs) */}
+              {/* Centered Billboard: Clean E-Commerce Showcase */}
               <div
-                className="hero-grid-purple"
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(320px, 1.05fr) minmax(340px, 1.25fr)',
-                  gap: '3.5rem',
+                  maxWidth: '740px',
+                  margin: '0 auto',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                 }}
               >
-                {/* ── Left Column: Luxury 3D Gift Box with Silky Smooth Levitation ── */}
+                {/* Campaign Pill */}
                 <div
-                  className="hero-left-col"
                   style={{
-                    position: 'relative',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '420px',
+                    gap: '0.5rem',
+                    padding: '0.45rem 1.15rem',
+                    borderRadius: '999px',
+                    background: 'rgba(124, 58, 237, 0.08)',
+                    border: '1.5px solid rgba(124, 58, 237, 0.22)',
+                    color: '#6d28d9',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    marginBottom: '1.25rem',
+                    backdropFilter: 'blur(8px)',
                   }}
                 >
-                  {/* Purple Ambient Light Halo */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      width: '420px',
-                      height: '420px',
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(192, 132, 252, 0.35) 0%, rgba(124, 58, 237, 0.18) 45%, transparent 70%)',
-                      filter: 'blur(45px)',
-                      pointerEvents: 'none',
-                      animation: 'auraGlowPulse 6s ease-in-out infinite',
-                    }}
-                  />
-
-                  {/* Circular "LIMITED TIME" badge matching reference layout */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      left: '12px',
-                      width: '84px',
-                      height: '84px',
-                      borderRadius: '50%',
-                      border: '1.5px dashed rgba(233, 213, 255, 0.85)',
-                      background: 'rgba(22, 5, 58, 0.88)',
-                      backdropFilter: 'blur(8px)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      color: '#ffffff',
-                      fontSize: '0.68rem',
-                      fontWeight: 800,
-                      letterSpacing: '0.08em',
-                      lineHeight: '1.25',
-                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(168, 85, 247, 0.4)',
-                      zIndex: 5,
-                      animation: 'subtleBadgePulse 3.5s ease-in-out infinite',
-                    }}
-                  >
-                    <span>LIMITED</span>
-                    <span>TIME</span>
-                  </div>
-
-                  {/* 3D Box Container with Silky Smooth Floating Levitation */}
-                  <div
-                    style={{
-                      position: 'relative',
-                      zIndex: 3,
-                      maxWidth: '450px',
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      animation: 'heroSilkyFloat 5.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite',
-                      willChange: 'transform',
-                    }}
-                  >
-                    <img
-                      src="/images/limited-deals/gift_box_hero.jpg"
-                      alt="Luxury Limited Deals Gift Box"
-                      style={{
-                        width: '100%',
-                        maxHeight: '430px',
-                        objectFit: 'contain',
-                        display: 'block',
-                        borderRadius: '28px',
-                        maskImage: 'radial-gradient(circle at 50% 50%, black 46%, transparent 74%)',
-                        WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 46%, transparent 74%)',
-                        filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.55))',
-                      }}
-                    />
-                  </div>
+                  <Sparkles size={14} color="#7c3aed" />
+                  <span>{getSetting('discounts_hero', 'badgeText', 'LIMITED DEALS • LIVE NOW')}</span>
                 </div>
 
-                {/* ── Right Column: Campaign Badge, Heading, Subtitle, Countdown, Button & Trust ── */}
-                <div className="hero-right-col">
-                  {/* Campaign Pill */}
+                {/* Title */}
+                <h1
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: 'clamp(2.4rem, 4.6vw, 3.8rem)',
+                    fontWeight: 800,
+                    color: '#09090b',
+                    lineHeight: 1.15,
+                    margin: '0 0 1.25rem',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {(() => {
+                    const title = getSetting('discounts_hero', 'title', 'Limited Deals');
+                    const words = title.split(' ');
+                    if (words.length > 1) {
+                      return (
+                        <>
+                          {words.slice(0, -1).join(' ')}{' '}
+                          <span style={{ color: '#7c3aed' }}>{words[words.length - 1]}</span>
+                        </>
+                      );
+                    }
+                    return title;
+                  })()}
+                </h1>
+
+                {/* Subtitle */}
+                <p
+                  className="discounts-hero-subtitle"
+                  style={{
+                    fontSize: '1.08rem',
+                    color: '#09090b',
+                    fontWeight: 600,
+                    lineHeight: 1.65,
+                    margin: '0 auto 2rem',
+                    maxWidth: '640px',
+                    textShadow: '0 1px 3px rgba(255, 255, 255, 0.85)',
+                  }}
+                >
+                  {getSetting(
+                    'discounts_hero',
+                    'subtitle',
+                    'Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.'
+                  )}
+                </p>
+
+                {/* Live Countdown Pill: Configurable & Controllable via Admin Customization */}
+                {showCountdownTimerSetting && countdown && (
                   <div
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.42rem 1.05rem',
+                      gap: '0.75rem',
+                      padding: '0.55rem 1.35rem',
                       borderRadius: '999px',
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      border: '1px solid rgba(255, 255, 255, 0.28)',
-                      color: '#ffffff',
-                      fontSize: '0.76rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      marginBottom: '1.25rem',
-                      backdropFilter: 'blur(8px)',
+                      background: 'rgba(255, 255, 255, 0.94)',
+                      border: '1.5px solid rgba(124, 58, 237, 0.2)',
+                      backdropFilter: 'blur(12px)',
+                      boxShadow: '0 4px 20px rgba(124, 58, 237, 0.1)',
+                      marginBottom: '2rem',
                     }}
                   >
-                    <Sparkles size={14} color="#f5d0fe" />
-                    <span>{getSetting('discounts_hero', 'badgeText', 'LIMITED DEALS • LIVE NOW')}</span>
-                  </div>
-
-                  {/* Title */}
-                  <h1
-                    style={{
-                      fontFamily: "'Playfair Display', Georgia, serif",
-                      fontSize: 'clamp(2.4rem, 4.4vw, 3.8rem)',
-                      fontWeight: 800,
-                      color: '#ffffff',
-                      lineHeight: 1.15,
-                      margin: '0 0 1.25rem',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    {(() => {
-                      const title = getSetting('discounts_hero', 'title', 'Limited Deals');
-                      const words = title.split(' ');
-                      if (words.length > 1) {
-                        return (
-                          <>
-                            {words.slice(0, -1).join(' ')}{' '}
-                            <span style={{ color: '#f0abfc' }}>{words[words.length - 1]}</span>
-                          </>
-                        );
-                      }
-                      return title;
-                    })()}
-                  </h1>
-
-                  {/* Subtitle */}
-                  <p
-                    style={{
-                      fontSize: '1.05rem',
-                      color: '#e9d5ff',
-                      lineHeight: 1.65,
-                      margin: '0 0 2rem',
-                      maxWidth: '540px',
-                    }}
-                  >
-                    {getSetting(
-                      'discounts_hero',
-                      'subtitle',
-                      'Discover curated artisanal luxury and handcrafted treasures at limited deal prices. All discounts are verified and applied automatically at checkout.'
-                    )}
-                  </p>
-
-                  {/* Live Countdown Pill: Configurable & Controllable via Admin Customization */}
-                  {showCountdownTimerSetting && countdown && (
-                    <div
+                    <span
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.55rem 1.35rem',
-                        borderRadius: '999px',
-                        background: 'rgba(255, 255, 255, 0.14)',
-                        border: '1px solid rgba(255, 255, 255, 0.28)',
-                        backdropFilter: 'blur(12px)',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-                        marginBottom: '1.75rem',
+                        gap: '0.45rem',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        color: '#c2410c',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
                       }}
                     >
                       <span
                         style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontSize: '0.76rem',
-                          fontWeight: 800,
-                          color: '#fed7aa',
-                          letterSpacing: '0.06em',
-                          textTransform: 'uppercase',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: '#ea580c',
+                          boxShadow: '0 0 10px #ea580c',
+                          display: 'inline-block',
                         }}
-                      >
-                        <span
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: '#f97316',
-                            boxShadow: '0 0 10px #f97316',
-                            display: 'inline-block',
-                          }}
-                        />
-                        {timerLabelSetting}
-                      </span>
+                      />
+                      {timerLabelSetting}
+                    </span>
 
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontWeight: 800,
-                          fontSize: '0.92rem',
-                          color: '#ffffff',
-                        }}
-                      >
-                        <span style={{ background: 'rgba(255, 255, 255, 0.18)', padding: '2px 7px', borderRadius: '6px' }}>
-                          {String(countdown.days).padStart(2, '0')}d
-                        </span>
-                        <span>:</span>
-                        <span style={{ background: 'rgba(255, 255, 255, 0.18)', padding: '2px 7px', borderRadius: '6px' }}>
-                          {String(countdown.hours).padStart(2, '0')}h
-                        </span>
-                        <span>:</span>
-                        <span style={{ background: 'rgba(255, 255, 255, 0.18)', padding: '2px 7px', borderRadius: '6px' }}>
-                          {String(countdown.minutes).padStart(2, '0')}m
-                        </span>
-                        <span>:</span>
-                        <span style={{ background: 'rgba(255, 255, 255, 0.24)', padding: '2px 7px', borderRadius: '6px', color: '#fef08a' }}>
-                          {String(countdown.seconds).padStart(2, '0')}s
-                        </span>
-                      </div>
-
-                      <Clock size={15} color="#fef08a" />
-                    </div>
-                  )}
-
-                  {/* Action Button: Explore Deals */}
-                  <div
-                    className="hero-cta-wrap"
-                    style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.75rem' }}
-                  >
-                    <a
-                      href="#curated-catalog"
+                    <div
                       style={{
-                        display: 'inline-flex',
+                        display: 'flex',
                         alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.85rem 2.2rem',
-                        borderRadius: '999px',
-                        background: '#ffffff',
-                        color: '#4c1d95',
-                        fontSize: '0.95rem',
+                        gap: '0.35rem',
+                        fontFamily: "'JetBrains Mono', monospace",
                         fontWeight: 800,
-                        textDecoration: 'none',
-                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.25)',
-                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.35)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.25)';
+                        fontSize: '0.92rem',
+                        color: '#1e1b4b',
                       }}
                     >
-                      <span>Explore Deals</span>
-                      <ArrowRight size={16} />
-                    </a>
-                  </div>
+                      <span style={{ background: '#f5f3ff', color: '#6d28d9', padding: '2px 7px', borderRadius: '6px', border: '1px solid #ddd6fe' }}>
+                        {String(countdown.days).padStart(2, '0')}d
+                      </span>
+                      <span style={{ color: '#7c3aed' }}>:</span>
+                      <span style={{ background: '#f5f3ff', color: '#6d28d9', padding: '2px 7px', borderRadius: '6px', border: '1px solid #ddd6fe' }}>
+                        {String(countdown.hours).padStart(2, '0')}h
+                      </span>
+                      <span style={{ color: '#7c3aed' }}>:</span>
+                      <span style={{ background: '#f5f3ff', color: '#6d28d9', padding: '2px 7px', borderRadius: '6px', border: '1px solid #ddd6fe' }}>
+                        {String(countdown.minutes).padStart(2, '0')}m
+                      </span>
+                      <span style={{ color: '#7c3aed' }}>:</span>
+                      <span style={{ background: '#7c3aed', color: '#ffffff', padding: '2px 7px', borderRadius: '6px' }}>
+                        {String(countdown.seconds).padStart(2, '0')}s
+                      </span>
+                    </div>
 
-                  {/* Trust Micro-Badges */}
-                  <div
-                    className="hero-trust-wrap"
-                    style={{ display: 'flex', alignItems: 'center', gap: '1.75rem', flexWrap: 'wrap' }}
+                    <Clock size={15} color="#ea580c" />
+                  </div>
+                )}
+
+                {/* Action Button: Explore Deals */}
+                <div
+                  style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}
+                >
+                  <a
+                    href="#curated-catalog"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      padding: '0.9rem 2.4rem',
+                      borderRadius: '999px',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      color: '#ffffff',
+                      fontSize: '0.95rem',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      boxShadow: '0 8px 25px rgba(124, 58, 237, 0.32)',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      border: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.45)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.32)';
+                    }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#f3e8ff' }}>
-                      <CheckCircle2 size={16} color="#f5d0fe" />
-                      <span>100% Genuine Provenance</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#f5d0fe' }}>
-                      <Truck size={16} color="#f5d0fe" />
-                      <span>Same-Day Dispatch</span>
-                    </div>
+                    <span>Explore Deals</span>
+                    <ArrowRight size={16} />
+                  </a>
+                </div>
+
+                {/* Trust Micro-Badges */}
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#09090b', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}>
+                    <CheckCircle2 size={16} color="#7c3aed" />
+                    <span>100% Genuine Provenance</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#09090b', textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)' }}>
+                    <Truck size={16} color="#7c3aed" />
+                    <span>Same-Day Dispatch</span>
                   </div>
                 </div>
               </div>
@@ -858,10 +726,10 @@ export default function Discounts() {
 
             {/* Flash Deals Cards using Site's Official ProductCard Component */}
             <div
+              className="shop-catalog-grid discounts-product-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '1.5rem',
+                gap: '1.25rem',
               }}
             >
               {flashDeals.map((prod) => (
@@ -872,9 +740,89 @@ export default function Discounts() {
         )}
 
         {/* ── 3. Controls Toolbar (Search, Category Filter Dropdown, Sorting) ── */}
-        <div id="curated-catalog" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem 1.5rem 0.5rem' }}>
+        <div id="curated-catalog" className="discounts-catalog-wrap" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem 1.5rem 0.5rem' }}>
+          <style>{`
+            @media (min-width: 1081px) {
+              .discounts-product-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: 1.25rem !important;
+              }
+            }
+            @media (max-width: 1080px) and (min-width: 769px) {
+              .discounts-product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                gap: 1rem !important;
+              }
+            }
+            @media (max-width: 768px) {
+              .discounts-hero-section {
+                background-image: url('/images/limited-deals/limited_deals_hero_mobile_bg.jpg') !important;
+                background-position: center bottom !important;
+                background-size: cover !important;
+                padding: 2.75rem 1rem 2.25rem !important;
+              }
+              .discounts-hero-scrim {
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.05) 100%) !important;
+              }
+              .discounts-hero-subtitle {
+                color: #09090b !important;
+                font-weight: 650 !important;
+                text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95) !important;
+              }
+              .discounts-catalog-wrap {
+                padding: 0.75rem 10px 0.5rem !important;
+              }
+              .discounts-grid-container {
+                padding: 0.5rem 10px 2.5rem !important;
+              }
+              #flash-deals-section {
+                padding: 1.5rem 10px 1.5rem !important;
+              }
+              .discounts-product-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                width: 100% !important;
+              }
+              .discounts-toolbar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.65rem !important;
+                padding-bottom: 0.85rem !important;
+              }
+              .discounts-toolbar-left {
+                display: flex !important;
+                align-items: center !important;
+                justifyContent: space-between !important;
+                width: 100% !important;
+              }
+              .discounts-toolbar-right {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 0.65rem !important;
+              }
+              .discounts-search-wrap {
+                display: none !important;
+              }
+              .discounts-selects-wrap {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 0.6rem !important;
+                width: 100% !important;
+              }
+              .discounts-select-item {
+                width: 100% !important;
+                min-width: 0 !important;
+              }
+            }
+            .discounts-select-item {
+              min-width: 180px;
+            }
+          `}</style>
+
           {/* Search, Category Filter & Sorting Toolbar */}
           <div
+            className="discounts-toolbar"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -886,7 +834,7 @@ export default function Discounts() {
             }}
           >
             {/* Left: Summary Count & Active Filter Indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="discounts-toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.86rem', color: '#64748b' }}>
                 Showing <strong style={{ color: '#0f172a' }}>{filteredProducts.length}</strong> curated deals
               </span>
@@ -929,9 +877,9 @@ export default function Discounts() {
             </div>
 
             {/* Right: Search, Category Dropdown Filter, Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="discounts-toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               {/* Search */}
-              <div style={{ position: 'relative', width: '220px' }}>
+              <div className="discounts-search-wrap" style={{ position: 'relative', width: '220px' }}>
                 <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
@@ -956,70 +904,51 @@ export default function Discounts() {
                 />
               </div>
 
-              {/* Category Dropdown Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  height: '38px',
-                  padding: '0 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  fontSize: '0.84rem',
-                  color: '#334155',
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="all">All Categories ({activeDiscountProducts.length})</option>
-                {availableCategories.map((cat) => {
-                  const count = activeDiscountProducts.filter((p) => {
-                    const catSlug = typeof p.category === 'object' && p.category?.slug ? p.category.slug : '';
-                    const catName = typeof p.category === 'object' && p.category?.name ? p.category.name : p.subCategory || p.category;
-                    return catSlug === cat.id || catName === cat.id;
-                  }).length;
-                  return (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.label} ({count})
-                    </option>
-                  );
-                })}
-              </select>
+              {/* 2 Selects Wrapper (Side-by-side on Mobile) */}
+              <div className="discounts-selects-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {/* Category Dropdown Filter */}
+                <Select
+                  value={selectedCategory}
+                  onChange={(val) => {
+                    setSelectedCategory(val);
+                    setCurrentPage(1);
+                  }}
+                  options={categoryOptions}
+                  align="left"
+                  height="40px"
+                  borderRadius="10px"
+                  className="discounts-select-item"
+                  buttonStyle={{
+                    background: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    color: '#1e1b4b',
+                  }}
+                />
 
-              {/* Sort By */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                style={{
-                  height: '38px',
-                  padding: '0 0.85rem',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  fontSize: '0.84rem',
-                  color: '#334155',
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="recommended">Sort: Recommended</option>
-                <option value="highest-discount">Highest Discount (% OFF)</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest Deals</option>
-              </select>
+                {/* Sort By */}
+                <Select
+                  value={sortBy}
+                  onChange={(val) => setSortBy(val)}
+                  options={sortOptions}
+                  align="right"
+                  height="40px"
+                  borderRadius="10px"
+                  className="discounts-select-item"
+                  buttonStyle={{
+                    background: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    color: '#1e1b4b',
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── 4. Main Product Deals Grid (Using Official ProductCard Component) ── */}
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
+        <div className="discounts-grid-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
           {loading ? (
             <div style={{ padding: '6rem 0', textAlign: 'center' }}>
               <Spinner size="lg" />
@@ -1070,10 +999,10 @@ export default function Discounts() {
           ) : (
             <div>
               <div
+                className="shop-catalog-grid discounts-product-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: '1.5rem',
+                  gap: '1.25rem',
                 }}
               >
                 {paginatedProducts.map((prod) => (

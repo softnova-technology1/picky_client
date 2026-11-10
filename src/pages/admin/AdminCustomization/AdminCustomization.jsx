@@ -6823,6 +6823,12 @@ export default function AdminCustomization() {
                             onChange={(e) => handleUpdateSetting('title', e.target.value)}
                             placeholder="Limited Deals"
                           />
+                          <Input
+                            label="Hero Background Image URL"
+                            value={s.bgImage || ''}
+                            onChange={(e) => handleUpdateSetting('bgImage', e.target.value)}
+                            placeholder="/images/limited-deals/limited_deals_hero_bg.jpg"
+                          />
                           <div>
                             <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e1b4b', display: 'block', marginBottom: '0.4rem' }}>
                               Subtitle Description
