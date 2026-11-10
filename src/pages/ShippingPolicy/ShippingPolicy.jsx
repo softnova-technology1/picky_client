@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 ﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
@@ -454,7 +455,7 @@ export default function ShippingPolicy() {
                     gap: '0.75rem',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <MessageCircle size={18} color="#16a34a" />
+                      <WhatsAppIcon size={18} color="#16a34a" />
                       <span><strong>Live WhatsApp Tracking:</strong> <a href="https://wa.me/918300295721" target="_blank" rel="noreferrer" style={{ color: '#16a34a', fontWeight: 700 }}>+91 83002 95721</a></span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -812,7 +813,7 @@ export default function ShippingPolicy() {
               {/* Live WhatsApp Tracking */}
               <a href="https://wa.me/918300295721" target="_blank" rel="noreferrer" className={`${styles.helpdeskRow} ${styles.helpdeskRowEmerald}`}>
                 <div className={styles.helpdeskLeft}>
-                  <MessageCircle size={18} color="#059669" className={styles.helpdeskIcon} />
+                  <WhatsAppIcon size={18} color="#059669" className={styles.helpdeskIcon} />
                   <div>
                     <h4 className={`${styles.helpdeskTitle} ${styles.helpdeskTitleEmerald}`}>Live WhatsApp Tracking</h4>
                     <p className={`${styles.helpdeskSub} ${styles.helpdeskSubEmerald}`}>+91 83002 95721</p>

@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../common/WhatsAppIcon/WhatsAppIcon';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -183,10 +184,7 @@ export default function Footer() {
                     title="WhatsApp"
                     aria-label="WhatsApp"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                      <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                    </svg>
+                    <WhatsAppIcon size={16} color="currentColor" />
                   </a>
                   <a
                     href="https://youtube.com"
@@ -285,7 +283,7 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="footer-link"
                   >
-                    <MessageSquare size={15} className="footer-icon-accent" />
+                    <WhatsAppIcon size={15} color="currentColor" className="footer-icon-accent" />
                     <span>WhatsApp Order Support</span>
                   </a>
                 </li>

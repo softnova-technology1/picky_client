@@ -1,0 +1,335 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY SHOP CATALOG (PRODUCT LIST) — LAPTOP VIEWPORT OPTIMIZATIONS
+   Breakpoint: @media (min-width: 1080px) and (max-width: 1920px)
+   Rules: Proportional size reduction, padding & margin compression only.
+          Zero layout/alignment changes.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1080px) and (max-width: 1920px) {
+
+  /* ── 0. Master Section Containers (1200px Boxed Containment on Laptop) ─── */
+  :global(.container),
+  :global(.shop-hero-spotlight-premium .container),
+  :global(.shop-main-layout) {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── 1. Shop Hero Spotlight Header ──────────────────────────────────────── */
+  :global(.shop-hero-spotlight-premium) {
+    padding: 1.35rem 0 1.5rem !important;
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global(.shop-hero-spotlight-premium [style*="marginBottom: '1.15rem'"]) {
+    margin-bottom: 0.65rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  :global(.shop-hero-spotlight-premium h1) {
+    font-size: 1.85rem !important;
+    margin-bottom: 0.3rem !important;
+    line-height: 1.15 !important;
+  }
+
+  :global(.shop-hero-spotlight-premium p) {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+
+  :global(.shop-hero-spotlight-premium form) {
+    height: 40px !important;
+    padding: 0.25rem 0.4rem 0.25rem 0.85rem !important;
+    border-radius: 12px !important;
+  }
+
+  :global(.shop-hero-spotlight-premium input) {
+    font-size: 0.82rem !important;
+  }
+
+  :global(.shop-hero-spotlight-premium button[type="submit"]) {
+    padding: 0.4rem 1rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 9px !important;
+  }
+
+  /* ── 2. Master Shopping Layout & Sidebar Filter ─────────────────────────── */
+  :global(.shop-main-layout) {
+    gap: 1.35rem !important;
+  }
+
+  :global(.shop-sidebar-filter) {
+    width: 215px !important;
+    flex: 0 0 215px !important;
+  }
+
+  :global(.shop-sidebar-card) {
+    top: 75px !important;
+    padding: 0.85rem 0.75rem !important;
+    border-radius: 16px !important;
+    max-height: calc(100vh - 90px) !important;
+  }
+
+  :global(.sidebar-header) {
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0.55rem !important;
+  }
+
+  :global(.filter-header-icon-pod) {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  :global(.filter-header-icon-pod svg) {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  :global(.sidebar-header h3) {
+    font-size: 0.84rem !important;
+  }
+
+  :global(.sidebar-active-badge) {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 0.62rem !important;
+  }
+
+  :global(.sidebar-section) {
+    padding-bottom: 0.55rem !important;
+    margin-bottom: 0.55rem !important;
+  }
+
+  :global(.sidebar-section-header-btn) {
+    padding: 0.18rem 0.1rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  :global(.section-title-icon-pod) {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  :global(.section-title-icon-pod svg) {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  :global(.sidebar-section-title) {
+    font-size: 0.68rem !important;
+  }
+
+  :global(.chevron-toggle-pod) {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  :global(.chevron-toggle-pod svg) {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  :global(.sidebar-content-body) {
+    gap: 0.18rem !important;
+  }
+
+  :global(.sidebar-category-row),
+  :global(.sidebar-tag-row) {
+    padding: 0.22rem 0.45rem !important;
+    font-size: 0.75rem !important;
+    gap: 0.45rem !important;
+  }
+
+  :global(.row-icon-pod),
+  :global(.row-tag-icon-pod) {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  :global(.row-icon-pod svg),
+  :global(.row-tag-icon-pod svg) {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  :global(.sidebar-subcategories-wrap) {
+    margin: 0.15rem 0 0.25rem 0.85rem !important;
+    padding-left: 0.4rem !important;
+    gap: 0.12rem !important;
+  }
+
+  :global(.sidebar-sub-item) {
+    font-size: 0.7rem !important;
+    padding: 0.15rem 0.35rem !important;
+  }
+
+  :global(.sidebar-bottom-action) {
+    margin-top: 0.75rem !important;
+    padding-top: 0.65rem !important;
+  }
+
+  :global(.sidebar-bottom-clear-btn) {
+    padding: 0.45rem 0.65rem !important;
+    font-size: 0.72rem !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── 3. Desktop Control Header Bar ──────────────────────────────────────── */
+  :global(.shop-desktop-control-bar) {
+    padding: 0.65rem 1rem !important;
+    margin-bottom: 1.15rem !important;
+    border-radius: 14px !important;
+  }
+
+  :global(.shop-desktop-control-bar span) {
+    font-size: 0.84rem !important;
+  }
+
+  :global(.shop-desktop-control-bar select) {
+    padding: 0.32rem 0.65rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* ── 4. 4-Column Catalog Grid & Product Cards ───────────────────────────── */
+  :global(.shop-catalog-grid) {
+    gap: 1.25rem 0.85rem !important;
+  }
+
+  :global(.shop-catalog-grid .ref-product-card) {
+    border-radius: 16px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-card-top) {
+    max-height: 180px !important;
+    border-radius: 14px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-top-bar) {
+    top: 8px !important;
+    left: 8px !important;
+    right: 8px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-mega-deal) {
+    padding: 2px 7px 2px 2px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-deal-icon) {
+    width: 14px !important;
+    height: 14px !important;
+    margin-right: 3px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-deal-text) {
+    font-size: 0.54rem !important;
+  }
+
+  :global(.shop-catalog-grid .ref-wishlist-btn) {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-wishlist-btn svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-card-bottom) {
+    padding: 10px 12px 12px !important;
+    gap: 4px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-trending-tag) {
+    font-size: 0.58rem !important;
+    padding: 2px 6px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-product-title) {
+    font-size: 0.82rem !important;
+    line-height: 1.22 !important;
+    margin: 0 !important;
+  }
+
+  :global(.shop-catalog-grid .ref-product-desc) {
+    font-size: 0.68rem !important;
+    line-height: 1.18 !important;
+    max-height: 1.25em !important;
+    margin-bottom: 2px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-price-row) {
+    gap: 5px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-current-price) {
+    font-size: 1.05rem !important;
+  }
+
+  :global(.shop-catalog-grid .ref-original-price) {
+    font-size: 0.72rem !important;
+  }
+
+  :global(.shop-catalog-grid .ref-discount-pill) {
+    font-size: 0.6rem !important;
+    padding: 1px 5px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-add-cart-btn) {
+    height: 34px !important;
+    font-size: 0.74rem !important;
+    border-radius: 9px !important;
+    gap: 4px !important;
+  }
+
+  :global(.shop-catalog-grid .ref-add-cart-btn svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* ── 5. In-Feed Editorial Value Bazaar Banner ────────────────────────────── */
+  :global(.shop-infeed-banner) {
+    margin: 1rem 0 !important;
+    padding: 1.35rem 1.65rem !important;
+    border-radius: 18px !important;
+    gap: 1.15rem !important;
+  }
+
+  :global(.shop-infeed-banner [style*="DAILY VALUE BAZAAR"]) {
+    font-size: 0.68rem !important;
+    padding: 0.2rem 0.6rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  :global(.shop-infeed-banner h2) {
+    font-size: 1.45rem !important;
+    line-height: 1.15 !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  :global(.shop-infeed-banner p) {
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+    max-width: 480px !important;
+  }
+
+  :global(.shop-infeed-banner button) {
+    padding: 0.55rem 1.25rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 9999px !important;
+  }
+
+  /* ── 6. Load More Action ────────────────────────────────────────────────── */
+  :global(.clean-loadmore-btn) {
+    padding: 0.65rem 1.75rem !important;
+    font-size: 0.84rem !important;
+  }
+
+  :global(.clean-loadmore-btn svg) {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+

@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../../components/common/WhatsAppIcon/WhatsAppIcon';
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   ShoppingCart,
@@ -889,7 +890,7 @@ export default function AdminAbandonedCarts() {
               onClick={handleBulkBroadcast}
               title="Send bulk recovery WhatsApp to all pending carts"
             >
-              <MessageCircle size={15} /> Bulk WhatsApp Alerts ({kpis.pendingAlerts})
+              <WhatsAppIcon size={15} color="currentColor" /> Bulk WhatsApp Alerts ({kpis.pendingAlerts})
             </button>
             <button
               type="button"
@@ -927,7 +928,7 @@ export default function AdminAbandonedCarts() {
               onClick={handleBulkWhatsAppSelected}
               title="Send recovery WhatsApp alerts to selected customers"
             >
-              <MessageCircle size={14} /> Send WhatsApp Alert ({selectedCartIds.length})
+              <WhatsAppIcon size={14} color="currentColor" /> Send WhatsApp Alert ({selectedCartIds.length})
             </button>
 
             <button

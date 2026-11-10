@@ -1,3 +1,4 @@
+import WhatsAppIcon from '../../../components/common/WhatsAppIcon/WhatsAppIcon';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../components/layout/PageWrapper';
@@ -7,6 +8,7 @@ import { contactService } from '../../../services/contact.service';
 import { settingsService } from '../../../services/settings.service';
 import { productService } from '../../../services/product.service';
 import './Contact.css';
+import '../../../components/laptopstyle/Contact.module.css';
 import '../../../styles/home-premium.css';
 import {
   Headset,
@@ -406,22 +408,12 @@ export default function Contact() {
                   style={{ borderColor: 'rgba(37, 211, 102, 0.5)', color: '#047857' }}
                   title={`WhatsApp Consulting (${displayPhone})`}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                  </svg>
+                  <WhatsAppIcon size={18} color="#047857" />
                   <span>{getSetting('contact_hero', 'whatsappButtonText', 'WhatsApp Consulting')}</span>
                 </a>
               </div>
             </div>
 
-          </div>
-
-          {/* Wave Bottom Divider */}
-          <div className="k-hero-wave">
-            <svg viewBox="0 0 1440 96" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-              <path d="M0,32 C320,96 520,0 720,48 C920,96 1120,16 1440,48 L1440,96 L0,96 Z" fill="#ffffff"></path>
-            </svg>
           </div>
         </section>
         )}
@@ -927,10 +919,7 @@ export default function Contact() {
                   aria-label="Join WhatsApp Group"
                   title="Join WhatsApp Group"
                 >
-                  <svg className="hp-cta-wa-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-                  </svg>
+                  <WhatsAppIcon size={20} color="currentColor" className="hp-cta-wa-icon" />
                   <span className="hp-cta-wa-label">
                     <span>Join WhatsApp Group</span>
                     <ArrowRight size={16} />

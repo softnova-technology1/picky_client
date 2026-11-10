@@ -26,7 +26,7 @@ const PASTEL_THEMES = [
   { bg: '#e9efe3', isLightBtn: false }, // 10 Fitness: Soft Olive
 ];
 
-// Helper to format headline text with newlines or smart breaks
+// Helper to format headline text with newlines or smart 2-line breaks
 const renderFormattedHeadline = (text) => {
   if (!text) return 'YOUR EVERYTHING STORE';
   if (text.includes('\n')) {
@@ -38,7 +38,19 @@ const renderFormattedHeadline = (text) => {
     ));
   }
   const words = text.split(' ');
-  if (words.length >= 2 && words.length <= 4) {
+  // When there are 4 or more words, balance them into 2 lines
+  if (words.length >= 4) {
+    // For 5 words e.g. "HERITAGE COLLECTIONS OF TAMIL NADU", 2 words + 3 words splits cleanly as "HERITAGE COLLECTIONS" / "OF TAMIL NADU"
+    const mid = words.length === 5 ? 2 : Math.ceil(words.length / 2);
+    return (
+      <React.Fragment>
+        <span>{words.slice(0, mid).join(' ')}</span>
+        <br />
+        <span>{words.slice(mid).join(' ')}</span>
+      </React.Fragment>
+    );
+  }
+  if (words.length >= 2 && words.length <= 3) {
     return words.map((w, i, arr) => (
       <React.Fragment key={i}>
         {w}
@@ -97,6 +109,7 @@ export default function CategoryHeroCarousel({ categories = [] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Mouse drag-to-scroll state
   const isDraggingRef = useRef(false);
@@ -119,30 +132,23 @@ export default function CategoryHeroCarousel({ categories = [] }) {
           return sCatId === cat._id || s.categoryId?.slug === cat.slug;
         })
         .map((s) => s.name);
-
       if (catSubs.length > 0) {
         map[cat._id || cat.slug] = catSubs.slice(0, 3).join(', ');
-      } else if (cat.description) {
-        map[cat._id || cat.slug] = cat.description;
-      } else if (cat.subtext) {
-        map[cat._id || cat.slug] = cat.subtext;
-      } else {
-        map[cat._id || cat.slug] = 'Explore Collections';
       }
     });
     return map;
   }, [safeCategories, subcategories]);
 
-  // Update scroll boundaries & active indicator on scroll
+  // Update scroll buttons state and active index based on scroll position
   const handleScroll = useCallback(() => {
     if (!trackRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = trackRef.current;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    setCanScrollLeft(scrollLeft > 20);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 20);
 
-    const cardWidth = 230; // approximate card width + gap
-    const index = Math.round(scrollLeft / cardWidth);
-    setActiveIndex(Math.max(0, Math.min(index, safeCategories.length - 1)));
+    const cardWidth = 230;
+    const newIdx = Math.round(scrollLeft / cardWidth);
+    setActiveIndex(Math.max(0, Math.min(newIdx, safeCategories.length - 1)));
   }, [safeCategories.length]);
 
   useEffect(() => {
@@ -153,37 +159,27 @@ export default function CategoryHeroCarousel({ categories = [] }) {
     return () => track.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Auto-play state: move cards automatically every 2 seconds
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Auto-advance carousel every 2 seconds with seamless loop
+  // Autoplay functionality
   useEffect(() => {
     if (isPaused || safeCategories.length <= 1) return;
-
-    const timer = setInterval(() => {
+    const interval = setInterval(() => {
       if (!trackRef.current) return;
       const { scrollLeft, scrollWidth, clientWidth } = trackRef.current;
-      const isNearEnd = scrollLeft >= scrollWidth - clientWidth - 20;
-
-      if (isNearEnd) {
+      const cardWidth = 230;
+      if (scrollLeft + clientWidth >= scrollWidth - 10) {
         trackRef.current.scrollTo({ left: 0, behavior: 'smooth' });
       } else {
-        const firstCard = trackRef.current.querySelector(`.${styles.departmentCard}`);
-        const cardStep = firstCard ? firstCard.offsetWidth + 19 : 250;
-        trackRef.current.scrollBy({ left: cardStep, behavior: 'smooth' });
+        trackRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
       }
-    }, autoplaySpeed || 3000);
+    }, autoplaySpeed);
+    return () => clearInterval(interval);
+  }, [isPaused, autoplaySpeed, safeCategories.length]);
 
-    return () => clearInterval(timer);
-  }, [isPaused, safeCategories.length]);
-
-  // Scroll actions
   const scroll = (direction) => {
     if (!trackRef.current) return;
-    const firstCard = trackRef.current.querySelector(`.${styles.departmentCard}`);
-    const step = firstCard ? firstCard.offsetWidth + 19 : 250;
+    const cardWidth = 230;
     trackRef.current.scrollBy({
-      left: direction === 'left' ? -step : step,
+      left: direction === 'left' ? -cardWidth * 2 : cardWidth * 2,
       behavior: 'smooth',
     });
   };

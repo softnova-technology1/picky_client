@@ -1,0 +1,741 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY CATEGORIES PAGE — LAPTOP VIEWPORT OPTIMIZATIONS
+   Breakpoint: @media (min-width: 1080px) and (max-width: 1920px)
+   Rules: Proportional size reduction, padding & margin compression only.
+          Zero layout/alignment changes.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1080px) and (max-width: 1920px) {
+
+  /* ── 0. Master Page & Container Boxed Sizing (1200px on Laptop) ─────────── */
+  :global(.desktopOnly > div[style*="minHeight: 100vh"]) {
+    padding-bottom: 3.5rem !important;
+  }
+
+  :global(.container),
+  :global(section[aria-label="Categories Hero Showcase"]) {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── 1. Hero Carousel Section (Categories Hero Showcase) ─────────────────── */
+  :global(section[aria-label="Categories Hero Showcase"]) {
+    height: 520px !important;
+    min-height: 500px !important;
+    max-height: 540px !important;
+    padding: 0.35rem 1.75rem 0.65rem !important;
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global([class*="heroWrapper"]) {
+    height: 100% !important;
+  }
+
+  :global([class*="topHeaderBar"]) {
+    margin-bottom: 0.35rem !important;
+    gap: 0.75rem !important;
+  }
+
+  :global([class*="arrowBtn"]) {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+  }
+
+  :global([class*="arrowBtn"] svg) {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  :global([class*="seeAllLink"]) {
+    font-size: 0.82rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  :global([class*="heroGrid"]) {
+    grid-template-columns: 390px minmax(0, 1fr) !important;
+    gap: 0.95rem !important;
+    height: 100% !important;
+  }
+
+  /* Left Everything Store Hero Card */
+  :global([class*="everythingCard"]) {
+    border-radius: 22px !important;
+    padding: 1.6rem 1.35rem !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  :global([class*="everythingContent"]) {
+    max-width: 285px !important;
+    width: 82% !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: 5 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+
+  :global([class*="heroHeading"]) {
+    font-size: 1.25rem !important;
+    max-width: 285px !important;
+    margin: 0 0 0.45rem !important;
+    line-height: 1.18 !important;
+    letter-spacing: -0.02em !important;
+    white-space: normal !important;
+    word-break: normal !important;
+  }
+
+  :global([class*="heroSubheading"]) {
+    font-size: 0.74rem !important;
+    line-height: 1.36 !important;
+    margin: 0 0 0.7rem !important;
+    max-width: 235px !important;
+    color: #4b455c !important;
+  }
+
+  :global([class*="featurePills"]) {
+    margin-bottom: 0.7rem !important;
+  }
+
+  :global([class*="startingPricePill"]) {
+    padding: 0.24rem 0.7rem !important;
+    gap: 0.35rem !important;
+    border-radius: 9999px !important;
+    display: inline-flex !important;
+    align-items: baseline !important;
+  }
+
+  :global([class*="startingLabel"]) {
+    font-size: 0.68rem !important;
+  }
+
+  :global([class*="startingAmount"]) {
+    font-size: 1.02rem !important;
+  }
+
+  :global([class*="shopNowBtn"]) {
+    padding: 0.44rem 1.15rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.35rem !important;
+    border-radius: 9999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    align-self: flex-start !important;
+  }
+
+  :global([class*="shopNowBtn"] svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  :global([class*="compositionVisual"]) {
+    width: 46% !important;
+    max-width: 185px !important;
+    height: 75% !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+    overflow: hidden !important;
+  }
+
+  :global([class*="compositionImg"]) {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: right bottom !important;
+  }
+
+  /* Right Carousel Track & Department Cards (Strictly 3 Full Cards in View) */
+  :global([class*="cardsTrack"]) {
+    gap: 0.75rem !important;
+    padding: 0.2rem 0.2rem 0.5rem !important;
+  }
+
+  :global([class*="departmentCard"]) {
+    flex: 0 0 calc((100% - 2 * 0.75rem) / 3) !important;
+    width: calc((100% - 2 * 0.75rem) / 3) !important;
+    min-width: 0 !important;
+    border-radius: 20px !important;
+    padding: 1rem 0.85rem !important;
+  }
+
+  :global([class*="cardMetaNumber"]) {
+    font-size: 0.64rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  :global([class*="cardTitle"]) {
+    font-size: 1.05rem !important;
+    line-height: 1.15 !important;
+    min-height: 2.2em !important;
+    margin: 0 0 0.15rem !important;
+  }
+
+  :global([class*="cardSubtitle"]) {
+    font-size: 0.7rem !important;
+  }
+
+  :global([class*="cardImageContainer"]) {
+    min-height: 110px !important;
+    margin: 0.4rem 0 !important;
+    border-radius: 14px !important;
+  }
+
+  :global([class*="cardBottomTitle"]) {
+    font-size: 0.95rem !important;
+    margin: 0 0 0.15rem !important;
+  }
+
+  :global([class*="cardBottomSub"]) {
+    font-size: 0.68rem !important;
+    margin: 0 0 0.55rem !important;
+  }
+
+  :global([class*="exploreBtn"]) {
+    padding: 0.42rem 1rem !important;
+    font-size: 0.74rem !important;
+    gap: 0.35rem !important;
+  }
+
+  :global([class*="floatingNextBtn"]) {
+    width: 34px !important;
+    height: 34px !important;
+    right: 8px !important;
+  }
+
+  :global([class*="floatingNextBtn"] svg) {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  :global([class*="dotsTracker"]) {
+    margin-top: 0.5rem !important;
+    gap: 0.35rem !important;
+  }
+
+  :global([class*="dotIndicator"]) {
+    height: 3.5px !important;
+    width: 4.5px !important;
+  }
+
+  :global([class*="dotIndicator"][class*="activeDot"]) {
+    width: 32px !important;
+  }
+
+  /* ── 2. Shop By Budget Section (WomensPillShowcase) ───────────────────────── */
+  :global([class*="pillSection"]) {
+    margin-bottom: 2.75rem !important;
+  }
+
+  :global([class*="pillSection"] [class*="headerWrapper"]) {
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global([class*="pillSection"] [class*="sectionTitle"]) {
+    font-size: 1.75rem !important;
+    margin: 0 0 0.25rem !important;
+  }
+
+  :global([class*="pillSection"] [class*="sectionSubtitle"]) {
+    font-size: 0.82rem !important;
+    margin: 0 0 0.5rem !important;
+  }
+
+  :global([class*="pillSection"] [class*="dividerLineLeft"]),
+  :global([class*="pillSection"] [class*="dividerLineRight"]) {
+    width: 35px !important;
+  }
+
+  :global([class*="pillSection"] [class*="dividerDiamonds"]) {
+    font-size: 0.68rem !important;
+  }
+
+  :global([class*="pillsGrid"]) {
+    gap: 0.85rem !important;
+    padding-top: 0.35rem !important;
+  }
+
+  :global([class*="pillCard"]) {
+    height: 112px !important;
+    border-radius: 9999px !important;
+  }
+
+  :global([class*="pillContentCol"]) {
+    padding-left: 1.15rem !important;
+    padding-right: 95px !important;
+  }
+
+  :global([class*="pillBadgeTag"]) {
+    font-size: 0.6rem !important;
+    padding: 0.1rem 0.45rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  :global([class*="pillTitle"]) {
+    font-size: 1.05rem !important;
+    margin: 0 0 0.4rem !important;
+  }
+
+  :global([class*="pillBtn"]) {
+    padding: 0.3rem 0.8rem !important;
+    font-size: 0.65rem !important;
+    gap: 0.25rem !important;
+  }
+
+  :global([class*="cutoutCluster"]) {
+    width: 96px !important;
+    height: 96px !important;
+    right: 12px !important;
+    bottom: 6px !important;
+  }
+
+  :global([class*="slot_center"]) {
+    width: 58px !important;
+    height: 90px !important;
+    margin-left: -29px !important;
+    bottom: 2px !important;
+  }
+
+  :global([class*="slot_left"]),
+  :global([class*="slot_right"]) {
+    width: 38px !important;
+    height: 38px !important;
+    bottom: 8px !important;
+  }
+
+  /* ── 3. Top Categories Section (CategoryBudgetStore Bento Grid) ──────────── */
+  :global([class*="departmentsSection"]) {
+    margin-bottom: 3rem !important;
+  }
+
+  :global([class*="departmentsSection"] [class*="headerWrapper"]) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  :global([class*="headerEyebrow"]) {
+    gap: 0.5rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  :global([class*="eyebrowLine"]) {
+    width: 20px !important;
+  }
+
+  :global([class*="eyebrowText"]) {
+    font-size: 0.64rem !important;
+  }
+
+  :global([class*="departmentsSection"] [class*="sectionTitle"]) {
+    font-size: 1.85rem !important;
+    margin: 0 0 0.25rem !important;
+  }
+
+  :global([class*="departmentsSection"] [class*="sectionSubtitle"]) {
+    font-size: 0.82rem !important;
+    margin: 0 auto 0.65rem !important;
+    max-width: 500px !important;
+  }
+
+  :global([class*="departmentsSection"] [class*="dividerLineLeft"]),
+  :global([class*="departmentsSection"] [class*="dividerLineRight"]) {
+    width: 35px !important;
+  }
+
+  :global([class*="departmentsSection"] [class*="dividerDiamonds"]) {
+    font-size: 0.68rem !important;
+  }
+
+  :global([class*="layout"]) {
+    gap: 1.15rem !important;
+  }
+
+  :global([class*="featuredCard"]) {
+    min-height: 480px !important;
+    height: 480px !important;
+    border-radius: 20px !important;
+    padding: 0.95rem !important;
+  }
+
+  :global([class*="companionGrid"]) {
+    gap: 1rem !important;
+  }
+
+  :global([class*="companionCard"]) {
+    min-height: 232px !important;
+    height: 232px !important;
+    border-radius: 18px !important;
+    padding: 0.85rem !important;
+  }
+
+  :global([class*="frostedIndexBadge"]) {
+    padding: 0.25rem 0.65rem !important;
+  }
+
+  :global([class*="frostedIndexBadgeSmall"]) {
+    padding: 0.2rem 0.55rem !important;
+  }
+
+  :global([class*="indexNum"]) {
+    font-size: 0.65rem !important;
+  }
+
+  :global([class*="indexName"]) {
+    font-size: 0.6rem !important;
+  }
+
+  :global([class*="tactileArrowBtn"]) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  :global([class*="tactileArrowBtn"] svg) {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  :global([class*="tactileArrowBtnSmall"]) {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  :global([class*="tactileArrowBtnSmall"] svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  :global([class*="floatingGlassPlinth"]) {
+    padding: 0.85rem 1rem !important;
+    border-radius: 16px !important;
+    gap: 0.4rem !important;
+  }
+
+  :global([class*="categorySuper"]) {
+    font-size: 0.62rem !important;
+  }
+
+  :global([class*="featuredTitle"]) {
+    font-size: 1.4rem !important;
+  }
+
+  :global([class*="featuredDesc"]) {
+    font-size: 0.78rem !important;
+    line-height: 1.35 !important;
+  }
+
+  :global([class*="coutureTagsRow"]) {
+    gap: 0.4rem !important;
+    padding-top: 0.15rem !important;
+  }
+
+  :global([class*="tagsLabel"]) {
+    font-size: 0.64rem !important;
+  }
+
+  :global([class*="coutureTag"]) {
+    padding: 0.2rem 0.55rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  :global([class*="plinthFooter"]) {
+    padding-top: 0.25rem !important;
+    gap: 0.5rem !important;
+  }
+
+  :global([class*="luxuryCtaBtn"]) {
+    padding: 0.45rem 1.15rem !important;
+    font-size: 0.74rem !important;
+    gap: 0.4rem !important;
+  }
+
+  :global([class*="curatedGuarantee"]) {
+    font-size: 0.66rem !important;
+  }
+
+  :global([class*="companionGlassDock"]) {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 14px !important;
+    gap: 0.35rem !important;
+  }
+
+  :global([class*="companionTitle"]) {
+    font-size: 1.05rem !important;
+  }
+
+  :global([class*="companionDesc"]) {
+    font-size: 0.74rem !important;
+    line-height: 1.3 !important;
+  }
+
+  :global([class*="companionFooter"]) {
+    padding-top: 0.3rem !important;
+    gap: 0.45rem !important;
+  }
+
+  :global([class*="quickExploreLink"]) {
+    font-size: 0.72rem !important;
+  }
+
+  :global([class*="subCountIndicator"]) {
+    font-size: 0.66rem !important;
+  }
+
+  :global([class*="badgeInStock"]) {
+    padding: 0.18rem 0.5rem !important;
+    font-size: 0.64rem !important;
+  }
+
+  /* ── 4. Explore More Categories Section (GlamicsCategoryPills) ───────────── */
+  :global(.explore-more-categories-section) {
+    margin-bottom: 2.75rem !important;
+  }
+
+  :global(.explore-more-categories-section > div[style*="textAlign: 'center'"]) {
+    margin-bottom: 1.35rem !important;
+  }
+
+  :global(.explore-more-categories-section h2) {
+    font-size: 1.75rem !important;
+    margin: 0 0 0.25rem !important;
+  }
+
+  :global(.explore-more-categories-section p) {
+    font-size: 0.82rem !important;
+    margin: 0 0 0.5rem !important;
+  }
+
+  :global(.glamics-pills-section) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  :global(.glamics-pills-grid) {
+    gap: 0.85rem !important;
+  }
+
+  :global(.glamics-category-pill) {
+    min-height: 56px !important;
+    padding: 0.5rem 0.95rem 0.5rem 0.75rem !important;
+    border-radius: 9999px !important;
+  }
+
+  :global(.glamics-pill-img-box) {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  :global(.glamics-category-pill div[style*="fontSize: '1rem'"]) {
+    font-size: 0.86rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+
+  :global(.glamics-category-pill div[style*="fontSize: '0.78rem'"]) {
+    font-size: 0.7rem !important;
+  }
+
+  :global(.glamics-pill-arrow-btn) {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  :global(.glamics-chevron-icon) {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* ── 5. Top Products Section (CategoryFeaturedDrops) ─────────────────────── */
+  :global(.category-featured-drops-section) {
+    margin-bottom: 2.75rem !important;
+  }
+
+  :global(.featured-header-container) {
+    margin-bottom: 1.25rem !important;
+    padding-bottom: 0.75rem !important;
+    gap: 0.85rem !important;
+  }
+
+  :global(.featured-header-container h2) {
+    font-size: 1.75rem !important;
+    margin: 0 0 0.25rem !important;
+  }
+
+  :global(.featured-header-container p) {
+    font-size: 0.8rem !important;
+  }
+
+  :global(.featured-filter-bar) {
+    padding: 0.22rem !important;
+    gap: 0.25rem !important;
+  }
+
+  :global(.featured-filter-bar button) {
+    padding: 0.35rem 0.85rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  :global(.category-featured-grid) {
+    gap: 0.85rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  /* ProductCard Scaling in CategoryFeaturedGrid */
+  :global(.category-featured-grid .ref-card-bottom) {
+    padding: 8px 10px 10px !important;
+    gap: 3px !important;
+  }
+
+  :global(.category-featured-grid .ref-product-title) {
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+  }
+
+  :global(.category-featured-grid .ref-product-desc) {
+    font-size: 0.66rem !important;
+  }
+
+  :global(.category-featured-grid .ref-current-price) {
+    font-size: 1rem !important;
+  }
+
+  :global(.category-featured-grid .ref-original-price) {
+    font-size: 0.68rem !important;
+  }
+
+  :global(.category-featured-grid .ref-btn-add-cart) {
+    padding: 0.38rem 0.65rem !important;
+    font-size: 0.68rem !important;
+    height: 28px !important;
+  }
+
+  /* ── 6. Trending Products Showcase (CategoryRecommendedDrops) ────────────── */
+  :global([class*="CategoryRecommendedDrops_section"]),
+  :global(section._section_tsog6_5) {
+    margin-bottom: 2.75rem !important;
+  }
+
+  :global([class*="badgePill"]) {
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.65rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  :global([class*="marqueeLiveIndicator"]) {
+    padding: 0.18rem 0.55rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  :global([class*="marqueeViewport"]) {
+    padding: 0.75rem 0 1.25rem !important;
+  }
+
+  :global([class*="marqueeTrack"]) {
+    gap: 1.15rem !important;
+  }
+
+  :global([class*="marqueeCardItem"]) {
+    flex: 0 0 215px !important;
+    width: 215px !important;
+    min-width: 215px !important;
+  }
+
+  :global([class*="marqueeCardItem"] .ref-card-bottom) {
+    padding: 8px 10px 10px !important;
+    gap: 3px !important;
+  }
+
+  :global([class*="marqueeCardItem"] .ref-product-title) {
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+  }
+
+  :global([class*="marqueeCardItem"] .ref-product-desc) {
+    font-size: 0.66rem !important;
+  }
+
+  :global([class*="marqueeCardItem"] .ref-current-price) {
+    font-size: 1rem !important;
+  }
+
+  :global([class*="marqueeCardItem"] .ref-btn-add-cart) {
+    padding: 0.38rem 0.65rem !important;
+    font-size: 0.68rem !important;
+    height: 28px !important;
+  }
+
+  /* ── 7. Mega Department Carnival Promo Banner (CategoryPromoBanner) ──────── */
+  :global(.category-promo-banner-section) {
+    margin-bottom: 2.75rem !important;
+  }
+
+  :global(.promo-banner-card) {
+    padding: 1.65rem 2.25rem !important;
+    border-radius: 24px !important;
+    gap: 1.85rem !important;
+  }
+
+  :global(.promo-banner-card > div:first-of-type > div[style*="textTransform: 'uppercase'"]) {
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.7rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  :global(.promo-banner-card h2) {
+    font-size: 1.85rem !important;
+    margin: 0 0 0.45rem !important;
+    line-height: 1.15 !important;
+  }
+
+  :global(.promo-banner-card p[style*="maxWidth: '520px'"]) {
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
+    margin: 0 0 1rem !important;
+    max-width: 460px !important;
+  }
+
+  :global(.promo-banner-card div[style*="flexWrap: 'wrap'"][style*="gap: '1.25rem'"]) {
+    gap: 0.85rem !important;
+  }
+
+  :global(.promo-banner-card div[style*="fontSize: '0.84rem'"]) {
+    font-size: 0.74rem !important;
+  }
+
+  :global(.promo-banner-card > div[style*="backdropFilter: 'blur(16px)'"]) {
+    padding: 1.25rem 1.35rem !important;
+    border-radius: 20px !important;
+    gap: 0.75rem !important;
+  }
+
+  :global(.promo-banner-card strong[style*="fontSize: '1.25rem'"]) {
+    font-size: 1rem !important;
+  }
+
+  :global(.coupon-copy-btn) {
+    padding: 0.5rem 1rem !important;
+    max-width: 235px !important;
+  }
+
+  :global(.coupon-copy-btn strong) {
+    font-size: 0.86rem !important;
+  }
+
+  :global(.promo-banner-card a[style*="textTransform: 'uppercase'"]) {
+    padding: 0.55rem 1.35rem !important;
+    font-size: 0.76rem !important;
+  }
+
+}

@@ -1,0 +1,304 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   PICKY WELCOME LOGIN POPUP MODAL — LAPTOP VIEWPORT OPTIMIZATIONS
+   Breakpoint: @media (min-width: 1080px) and (max-width: 1920px)
+   Rules: Size reduction, padding & margin reduction only. No layout/alignment changes.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1080px) and (max-width: 1920px) {
+  .backdrop {
+    padding: 1rem;
+  }
+
+  .backdrop .card,
+  .card {
+    max-width: 480px;
+    padding: 1.85rem 2rem 1.6rem;
+    border-radius: 28px;
+    box-shadow: 0 20px 50px -15px rgba(23, 10, 46, 0.32);
+  }
+
+  /* ── 3D Visual Artwork Backdrop ── */
+  .card .artBackdrop,
+  .artBackdrop {
+    width: 235px;
+    height: 235px;
+    border-top-right-radius: 28px;
+    border-bottom-left-radius: 175px 150px;
+  }
+
+  .card .artBackdrop::after,
+  .artBackdrop::after {
+    border-top-right-radius: 28px;
+    border-bottom-left-radius: 175px 150px;
+  }
+
+  /* ── Close Button ── */
+  .card .closeButton,
+  .closeButton {
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+  }
+
+  .card .closeIcon,
+  .closeIcon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* ── Header: Logo & Tagline ── */
+  .card .header,
+  .header {
+    margin-bottom: 1.1rem;
+  }
+
+  .card .brandRow,
+  .brandRow {
+    gap: 0.45rem;
+  }
+
+  .card .brandIcon,
+  .brandIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .card .brandWordmark,
+  .brandWordmark {
+    font-size: 1.55rem;
+  }
+
+  .card .tagline,
+  .tagline {
+    margin-top: 0.35rem;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+  }
+
+  /* ── Headline & Subtitle ── */
+  .card .headlineSection,
+  .headlineSection {
+    max-width: 310px;
+    margin-bottom: 1.1rem;
+  }
+
+  .card .headline,
+  .headline {
+    font-size: 1.95rem;
+    line-height: 1.15;
+  }
+
+  .card .heartEmoji,
+  .heartEmoji {
+    font-size: 1.25rem;
+    margin-top: -0.35rem;
+  }
+
+  .card .sparkle,
+  .sparkle {
+    font-size: 0.65rem;
+  }
+
+  .card .subtitleText,
+  .subtitleText {
+    margin-top: 0.45rem;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  /* ── Key Benefits / Trust Badges ── */
+  .card .benefitsSection,
+  .benefitsSection {
+    padding: 0.35rem 0;
+    margin-bottom: 1.1rem;
+    max-width: 345px;
+  }
+
+  .card .benefitItem,
+  .benefitItem {
+    gap: 0.4rem;
+  }
+
+  .card .benefitIcon svg,
+  .benefitIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .card .benefitText,
+  .benefitText {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .card .benefitDivider,
+  .benefitDivider {
+    height: 26px;
+  }
+
+  /* ── Input Form ── */
+  .card .inputForm,
+  .inputForm {
+    gap: 0.75rem;
+  }
+
+  .card .fieldLabel,
+  .fieldLabel {
+    font-size: 0.8rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .card .inputContainer,
+  .inputContainer {
+    height: 46px;
+    padding: 0.25rem 0.35rem;
+    border-radius: 0.85rem;
+    box-sizing: border-box;
+  }
+
+  .card .countryButton,
+  .countryButton {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .card .waIconWrap,
+  .waIconWrap {
+    padding-left: 0.65rem;
+    padding-right: 0.2rem;
+  }
+
+  .card .waIconWrap svg,
+  .waIconWrap svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .card .waCountryBadge,
+  .waCountryBadge {
+    font-size: 13.5px;
+  }
+
+  .card .verticalSeparator,
+  .verticalSeparator {
+    height: 1.25rem;
+    margin: 0 0.3rem;
+  }
+
+  .card .phoneInput,
+  .phoneInput {
+    padding: 0.4rem 0.6rem;
+    font-size: 13.5px;
+  }
+
+  /* ── CTA Submit Button ── */
+  .card .submitButton,
+  .submitButton {
+    margin-top: 0.35rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+    border-radius: 9999px;
+    height: 44px;
+    box-sizing: border-box;
+  }
+
+  .card .btnArrow,
+  .btnArrow {
+    font-size: 15px;
+  }
+
+  /* ── Divider ── */
+  .card .orDivider,
+  .orDivider {
+    margin: 0.45rem 0;
+  }
+
+  .card .orDivider span,
+  .orDivider span {
+    padding: 0 0.6rem;
+    font-size: 10px;
+  }
+
+  /* ── Google Button ── */
+  .card .googleButton,
+  .googleButton {
+    padding: 0.65rem 1.25rem;
+    font-size: 12.5px;
+    border-radius: 9999px;
+    height: 42px;
+    box-sizing: border-box;
+  }
+
+  .card .googleSvg,
+  .googleSvg {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* ── Legal & Footer ── */
+  .card .footerLegal,
+  .footerLegal {
+    margin-top: 0.65rem;
+    gap: 0.35rem;
+  }
+
+  .card .termsText,
+  .termsText {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .card .accountPrompt,
+  .accountPrompt {
+    font-size: 12px;
+    margin-top: 0.15rem;
+  }
+
+  .card .accountActionBtn,
+  .accountActionBtn {
+    font-size: 12px;
+  }
+
+  /* ── OTP Verification Mode ── */
+  .card .waOtpNotice,
+  .waOtpNotice {
+    padding: 0.45rem 0.7rem;
+    font-size: 11.5px;
+    margin-bottom: 0.5rem;
+    border-radius: 0.65rem;
+  }
+
+  .card .otpInput,
+  .otpInput {
+    padding: 0.65rem;
+    font-size: 20px;
+    letter-spacing: 0.3em;
+    border-radius: 0.85rem;
+    height: 46px;
+    box-sizing: border-box;
+  }
+
+  .card .otpControls,
+  .otpControls {
+    font-size: 12px;
+    margin-top: 0.35rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .card .textBtn,
+  .textBtn {
+    font-size: 11.5px;
+  }
+
+  .card .timerText,
+  .timerText {
+    font-size: 11px;
+  }
+}
+

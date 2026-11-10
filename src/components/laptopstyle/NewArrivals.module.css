@@ -1,0 +1,288 @@
+/* ==========================================================================
+   PICKY NEW ARRIVALS PAGE — LAPTOP VIEWPORT OPTIMIZATIONS
+   Breakpoint: @media (min-width: 1080px) and (max-width: 1920px)
+   Rules: Proportional size reduction, padding & margin compression only.
+          Zero layout/alignment changes.
+          All section containers boxed to max-width: 1200px.
+   ========================================================================== */
+
+@media (min-width: 1080px) and (max-width: 1920px) {
+
+  /* ── 0. Master Section Containers (1200px Boxed Containment on Laptop) ── */
+  :global(.container),
+  :global([class*="heroContainer"]),
+  :global(.new-arrivals-catalog-heading-wrap),
+  :global(.new-arrivals-marquee-section),
+  :global(.hp-final-cta-container) {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── 1. Celestial Dome Arc Hero Showcase (NewArrivalsHero) ── */
+  :global([class*="heroStage"]) {
+    padding-top: 1.25rem !important;
+    padding-bottom: 2rem !important;
+  }
+
+  :global([class*="heroContainer"]) {
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 0 1.5rem !important;
+    gap: 1.15rem !important;
+  }
+
+  :global([class*="leftEditorial"]) {
+    max-width: 640px !important;
+  }
+
+  :global([class*="heroTitle"]) {
+    font-size: 3.25rem !important;
+    line-height: 1.06 !important;
+    margin-bottom: 0.65rem !important;
+  }
+
+  :global([class*="titleWordNew"]) {
+    font-size: 3.25rem !important;
+  }
+
+  :global([class*="titleWordArrivals"]) {
+    font-size: 3.25rem !important;
+  }
+
+  :global([class*="heroSubtitle"]) {
+    font-size: 0.92rem !important;
+    line-height: 1.4 !important;
+    margin: 0 auto 1.15rem auto !important;
+    max-width: 480px !important;
+  }
+
+  :global([class*="discoverBtn"]) {
+    padding: 0.62rem 1.75rem !important;
+    font-size: 0.82rem !important;
+    gap: 0.45rem !important;
+    border-radius: 9999px !important;
+  }
+
+  :global([class*="discoverBtn"] svg) {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* Explore Collection Marquee Runner Inside Hero */
+  :global([class*="exploreCollectionSection"]) {
+    margin-top: 0.35rem !important;
+  }
+
+  :global([class*="exploreHeaderRow"]) {
+    margin-bottom: 0.65rem !important;
+  }
+
+  :global([class*="exploreTitle"]) {
+    font-size: 1.25rem !important;
+  }
+
+  :global([class*="exploreSubtitle"]) {
+    font-size: 0.78rem !important;
+    margin-top: 0.15rem !important;
+  }
+
+  :global([class*="viewAllLink"]) {
+    font-size: 0.82rem !important;
+    gap: 0.35rem !important;
+  }
+
+  :global([class*="viewAllLink"] svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* ── 2. Explore Fresh Arrivals (Catalog & Circular Categories) ── */
+  :global(#browse-catalog) {
+    margin-top: 2rem !important;
+  }
+
+  :global(.new-arrivals-catalog-heading-wrap) {
+    margin-bottom: 1.25rem !important;
+  }
+
+  :global(.new-arrivals-catalog-title) {
+    font-size: 1.7rem !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  :global(.new-arrivals-catalog-subtitle) {
+    font-size: 0.84rem !important;
+  }
+
+  :global(.view-catalog-link) {
+    font-size: 0.78rem !important;
+    padding: 0.48rem 1.15rem !important;
+    gap: 0.4rem !important;
+  }
+
+  :global(.view-catalog-link svg),
+  :global(.view-catalog-arrow) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* Circular Categories Avatar Wheel */
+  :global(.circular-categories-wrapper) {
+    margin: 0.25rem 0 1.75rem 0 !important;
+  }
+
+  :global(.circular-categories-track) {
+    padding: 0.6rem 0.2rem 1rem 0.2rem !important;
+    gap: 0.45rem !important;
+  }
+
+  :global(.category-story-item) {
+    min-width: 62px !important;
+    max-width: 98px !important;
+    gap: 0.45rem !important;
+  }
+
+  :global(.story-circle-pod) {
+    width: 66px !important;
+    height: 66px !important;
+  }
+
+  :global(.story-label-text) {
+    font-size: 0.74rem !important;
+    max-width: 88px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Filter Toolbar, Search & Sort */
+  :global(.sort-filter-bar) {
+    gap: 1rem !important;
+    margin-bottom: 1.25rem !important;
+    padding: 0.15rem 0 !important;
+  }
+
+  :global(.sort-pill),
+  :global(.folder-toggle-btn) {
+    padding: 0.42rem 0.9rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  :global(.new-arrivals-search-box) {
+    padding: 0.38rem 0.85rem !important;
+    min-width: 220px !important;
+    max-width: 440px !important;
+    height: 38px !important;
+  }
+
+  :global(.new-arrivals-search-input) {
+    font-size: 0.78rem !important;
+  }
+
+  :global(.bar-sort-selector) {
+    padding: 0.32rem 0.75rem !important;
+  }
+
+  :global(.bar-sort-label),
+  :global(.bar-sort-select) {
+    font-size: 0.78rem !important;
+  }
+
+  :global(.clear-all-pill-btn) {
+    padding: 0.38rem 0.8rem !important;
+    font-size: 0.74rem !important;
+  }
+
+  :global(.active-filter-tags-row) {
+    margin-bottom: 1.15rem !important;
+    padding: 0.5rem 0.85rem !important;
+  }
+
+  :global(.active-tags-label) {
+    font-size: 0.72rem !important;
+  }
+
+  :global(.active-tag-chip) {
+    padding: 0.28rem 0.65rem !important;
+    font-size: 0.74rem !important;
+  }
+
+  /* Product Grid: 5 columns gracefully fitting 1200px */
+  :global(.new-arrivals-product-grid) {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 1.25rem 1rem !important;
+    margin-bottom: 3.25rem !important;
+  }
+
+  /* ── 3. Continuous Running Showcase Section (Best Sellers Marquee) ── */
+  :global(.new-arrivals-marquee-section) {
+    margin-top: 2.75rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  :global(.new-arrivals-marquee-header-wrap) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  :global(.marquee-badge-pill) {
+    font-size: 0.72rem !important;
+    padding: 0.28rem 0.8rem !important;
+    margin-bottom: 0.55rem !important;
+  }
+
+  :global(.new-arrivals-marquee-title) {
+    font-size: 1.65rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  :global(.new-arrivals-marquee-subtitle) {
+    font-size: 0.84rem !important;
+    max-width: 520px !important;
+    line-height: 1.4 !important;
+  }
+
+  :global(.new-arrivals-marquee-viewport) {
+    padding: 0.85rem 0 1.15rem 0 !important;
+  }
+
+  :global(.new-arrivals-marquee-track) {
+    gap: 1.15rem !important;
+  }
+
+  :global(.new-arrivals-marquee-card-item) {
+    flex: 0 0 215px !important;
+    width: 215px !important;
+    min-width: 215px !important;
+  }
+
+  /* ── 4. Final Community CTA Banner ── */
+  :global(.hp-final-cta-section) {
+    padding: 1.5rem 0 2rem 0 !important;
+  }
+
+  :global(.hp-final-cta-container) {
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 0 1.25rem !important;
+  }
+
+  :global(.hp-final-cta-box) {
+    padding: 2.2rem 2rem !important;
+    border-radius: 28px !important;
+  }
+
+  :global(.hp-final-title) {
+    font-size: 1.85rem !important;
+  }
+
+  :global(.hp-final-subtitle) {
+    font-size: 0.84rem !important;
+    max-width: 540px !important;
+  }
+
+  :global(.hp-final-cta-btn) {
+    height: 42px !important;
+    font-size: 0.8rem !important;
+    padding: 0 1.35rem !important;
+  }
+}
