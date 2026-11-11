@@ -1,8 +1,10 @@
 /* ─── Admin Notifications Feed Page Styles ─── */
 .container {
-  padding: 1.75rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* ── Top Header Section ── */
@@ -21,10 +23,30 @@
   gap: 0.35rem;
 }
 
-.titleRow {
+.headerTitleWrap {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  min-width: 0;
+}
+
+.headerIconBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
@@ -141,10 +163,8 @@
 .categoryTabsRow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-  scrollbar-width: none;
 }
 
 .categoryTabsRow::-webkit-scrollbar {
@@ -248,6 +268,7 @@
 .bulkActionsGroup {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
@@ -316,6 +337,7 @@
 .quickSelectGroup {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
 
@@ -390,7 +412,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  width: 260px;
+  flex: 1 1 240px;
+  min-width: 200px;
+  max-width: 340px;
 }
 
 .searchIcon {
@@ -597,6 +621,8 @@
   color: #64748b;
   line-height: 1.45;
   margin-top: 0.15rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .cardTime {
@@ -996,22 +1022,53 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+@media (max-width: 1024px) {
   .subToolbar {
     flex-direction: column;
     align-items: stretch;
   }
   .searchBox {
     width: 100%;
+    max-width: 100%;
   }
+}
+
+@media (max-width: 640px) {
   .notifCard {
-    padding: 1rem;
+    padding: 0.95rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
+  .cardActions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.35rem;
+    border-top: 1px solid #f1f5f9;
+  }
+}
+
+/* Dark Mode Harmony */
+:global(.admin-layout.dark-mode) .subToolbar,
+:global(.admin-layout.dark-mode) .notifCard,
+:global(.admin-layout.dark-mode) .categoryTab,
+:global(.admin-layout.dark-mode) .refreshBtn {
+  background: #111827;
+  border-color: #1f293d;
+  color: #e2e8f0;
+}
+
+:global(.admin-layout.dark-mode) .toolbarSelectAll,
+:global(.admin-layout.dark-mode) .quickSelectBtn,
+:global(.admin-layout.dark-mode) .statusFilterGroup,
+:global(.admin-layout.dark-mode) .searchInput,
+:global(.admin-layout.dark-mode) .bulkReadBtn {
+  background: #161f30;
+  border-color: #1f293d;
+  color: #f8fafc;
+}
+
+:global(.admin-layout.dark-mode) .cardTitle,
+:global(.admin-layout.dark-mode) .toolbarSelectLabel,
+:global(.admin-layout.dark-mode) .statusFilterBtnActive {
+  color: #f8fafc;
 }

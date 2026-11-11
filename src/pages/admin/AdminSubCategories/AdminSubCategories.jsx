@@ -67,17 +67,19 @@ function getCategoryLucideIcon(catId, size = 14, color) {
   return <IconComp size={size} style={color ? { color } : undefined} />;
 }
 
+let cachedSubCategoriesPageData = null;
+
 export default function AdminSubCategories() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef(null);
 
   // Categories list state (10 fixed categories, can have specs edited)
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => cachedSubCategoriesPageData?.categories || []);
 
   // Master list of subcategories & products
-  const [subcategories, setSubcategories] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [subcategories, setSubcategories] = useState(() => cachedSubCategoriesPageData?.subcategories || []);
+  const [products, setProducts] = useState(() => cachedSubCategoriesPageData?.products || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState(searchParams.get('category') || 'all'); // 'all' or 'cat-1', 'cat-2', etc.
   const [selectedStatus, setSelectedStatus] = useState('all'); // 'all' | 'active' | 'inactive'
@@ -93,18 +95,22 @@ export default function AdminSubCategories() {
   const [imageUploading, setImageUploading] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  async function loadData() {
-    const startTime = Date.now();
+  async function loadData(isBackground = false) {
     try {
-      setLoading(true);
+      if (!isBackground && !cachedSubCategoriesPageData) {
+        setLoading(true);
+      }
       const [catRes, subRes, prodRes] = await Promise.all([
         categoryService.list().catch(() => null),
         adminService.getSubCategories().catch(() => null),
         productService.list({ limit: 1000 }).catch(() => null),
       ]);
-      const cList = catRes ? catRes.data || [] : [];
-      const sList = subRes ? subRes.data || [] : [];
-      const pList = prodRes ? (Array.isArray(prodRes) ? prodRes : prodRes.data?.products || prodRes.data || []) : [];
+      const cList = catRes ? catRes.data || [] : (cachedSubCategoriesPageData?.categories || []);
+      const sList = subRes ? subRes.data || [] : (cachedSubCategoriesPageData?.subcategories || []);
+      const pList = prodRes
+        ? (Array.isArray(prodRes) ? prodRes : prodRes.data?.products || prodRes.data || [])
+        : (cachedSubCategoriesPageData?.products || []);
+      cachedSubCategoriesPageData = { categories: cList, subcategories: sList, products: pList };
       setCategories(cList);
       setSubcategories(sList);
       setProducts(pList);
@@ -136,7 +142,7 @@ export default function AdminSubCategories() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(Boolean(cachedSubCategoriesPageData));
   }, []);
 
   // Click outside listener for custom department dropdown

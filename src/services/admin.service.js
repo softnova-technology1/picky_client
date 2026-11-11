@@ -3,7 +3,7 @@ import { broadcastCatalogUpdate } from '../utils/realtimeSync';
 
 export const adminService = {
   // Reports
-  getSalesSummary: () => api.get('/reports/sales'),
+  getSalesSummary: (params) => api.get('/reports/sales', { params }),
   getTopProducts: (limit = 5) => api.get('/reports/top-products', { params: { limit } }),
   getOrdersReport: (params) => api.get('/reports/orders', { params }),
 

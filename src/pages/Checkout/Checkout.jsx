@@ -432,6 +432,26 @@ export default function Checkout() {
   const finalPayable = Math.max(0, subtotal + deliveryFee + convenienceFee + giftWrapFee - (couponDiscount || 0));
 
   // Handle Promo Code Application — with live backend MongoDB validation & context-specific errors
+  const buildCouponPayloadItems = React.useCallback(() => (
+    checkoutItems.map((i) => ({
+      productId: i.productId || i._id || i.id,
+      name: i.name,
+      category: i.category,
+      sku: i.sku,
+      price: i.discountPrice || i.price,
+      quantity: i.quantity || 1,
+    }))
+  ), [checkoutItems]);
+
+  const getRecoveryPreset = (code) => {
+    const presets = {
+      COMEBACK5: { pct: 5, toast: '🎉 Exclusive 5% Comeback discount automatically applied!' },
+      SAVE15: { pct: 15, toast: '🎉 Exclusive 15% Comeback discount automatically applied!' },
+      FREEDELIVERY: { pct: 0, toast: '🚚 Free Delivery coupon automatically applied!' },
+    };
+    return presets[code] || null;
+  };
+
   const handleApplyPromo = async (e) => {
     e.preventDefault();
     setPromoError('');
@@ -443,15 +463,7 @@ export default function Checkout() {
 
     try {
       // 1. Real-time validation directly against live backend MongoDB database (with selective target check)
-      const payloadItems = checkoutItems.map((i) => ({
-        productId: i.productId || i._id || i.id,
-        name: i.name,
-        category: i.category,
-        sku: i.sku,
-        price: i.discountPrice || i.price,
-        quantity: i.quantity || 1,
-      }));
-      const res = await couponService.validateCoupon(code, subtotal, payloadItems);
+      const res = await couponService.validateCoupon(code, subtotal, buildCouponPayloadItems());
       const data = res?.data || res;
       if (data && data.valid && data.coupon) {
         const discount = data.discount;
@@ -538,92 +550,97 @@ export default function Checkout() {
 
   // Recalculate applied coupon discount dynamically if quantity/subtotal/items change
   React.useEffect(() => {
-    if (!coupon) return;
-    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
-    const matched = availableCoupons.find(
-      (c) => c.code.toUpperCase() === coupon.toUpperCase() && c.isActive !== false
-    );
-    if (!matched) return;
+    if (!coupon || subtotal <= 0 || checkoutItems.length === 0) return;
 
-    if (matched.minOrderAmount && subtotal < matched.minOrderAmount) {
-      setCoupon(null, 0);
-      showToast(`Coupon "${coupon}" removed: order below min. ${formatPrice(matched.minOrderAmount)}`, 'info');
-      return;
-    }
-
-    const payloadItems = checkoutItems.map((i) => ({
-      productId: i.productId || i._id || i.id,
-      name: i.name,
-      category: i.category,
-      sku: i.sku,
-      price: i.discountPrice || i.price,
-      quantity: i.quantity || 1,
-    }));
+    const cleanCode = coupon.trim().toUpperCase();
+    const recoveryPreset = getRecoveryPreset(cleanCode);
+    let cancelled = false;
 
     // Real-time backend re-verification to accurately adjust selective target discount
     couponService
-      .validateCoupon(coupon, subtotal, payloadItems)
+      .validateCoupon(cleanCode, subtotal, buildCouponPayloadItems())
       .then((res) => {
+        if (cancelled) return;
         const d = res?.data || res;
         if (d && d.valid && d.discount !== undefined) {
           if (d.discount !== couponDiscount) {
-            setCoupon(coupon, d.discount);
+            setCoupon(cleanCode, d.discount);
           }
         }
       })
       .catch((err) => {
+        if (cancelled) return;
+        const status = err?.response?.status || err?.statusCode || err?.status;
+        if (recoveryPreset && status === 404) {
+          const fallbackDiscount = Math.round((subtotal * recoveryPreset.pct) / 100);
+          if (fallbackDiscount !== couponDiscount) {
+            setCoupon(cleanCode, fallbackDiscount);
+          }
+          return;
+        }
         const errMsg = err?.error || err?.message || err?.data?.error || '';
         setCoupon(null, 0);
         showToast(`Coupon "${coupon}" removed: ${errMsg || 'cart no longer has qualifying items'}`, 'info');
       });
-  }, [subtotal, checkoutItems.length, coupon, coupons, couponDiscount]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subtotal, checkoutItems.length, coupon, couponDiscount, buildCouponPayloadItems, setCoupon, showToast]);
 
   // ─── Auto-Apply Recovery / Promotion Coupon from URL (?coupon=CODE) ───
   const hasAutoAppliedUrlCouponRef = React.useRef(false);
+  const pendingUrlCouponRef = React.useRef(null);
   React.useEffect(() => {
     const urlCoupon = searchParams.get('coupon')?.trim()?.toUpperCase();
     if (!urlCoupon || hasAutoAppliedUrlCouponRef.current || coupon) return;
-    if (subtotal <= 0) return;
+    if (subtotal <= 0 || checkoutItems.length === 0) return;
+    if (pendingUrlCouponRef.current === urlCoupon) return;
 
-    hasAutoAppliedUrlCouponRef.current = true;
-    const availableCoupons = Array.isArray(coupons) && coupons.length > 0 ? coupons : [];
-    const matched = availableCoupons.find(
-      (c) => c.code.toUpperCase() === urlCoupon && c.isActive !== false
-    );
+    pendingUrlCouponRef.current = urlCoupon;
+    let cancelled = false;
+    const recoveryPreset = getRecoveryPreset(urlCoupon);
 
-    if (matched) {
-      if (matched.minOrderAmount && subtotal < matched.minOrderAmount) {
-        showToast(`Recovery coupon "${urlCoupon}" requires min. order of ${formatPrice(matched.minOrderAmount)}`, 'info');
-        return;
-      }
-
-      let discount = 0;
-      if (matched.type === 'percentage') {
-        discount = Math.round((subtotal * matched.value) / 100);
-        if (matched.maxDiscountAmount) {
-          discount = Math.min(discount, matched.maxDiscountAmount);
+    couponService
+      .validateCoupon(urlCoupon, subtotal, buildCouponPayloadItems())
+      .then((res) => {
+        if (cancelled) return;
+        hasAutoAppliedUrlCouponRef.current = true;
+        const d = res?.data || res;
+        if (d && d.valid) {
+          setCoupon(urlCoupon, d.discount || 0);
+          showToast(
+            recoveryPreset?.toast || `🎉 Recovery coupon "${urlCoupon}" automatically applied!`,
+            'success'
+          );
         }
-      } else {
-        discount = Math.min(subtotal, matched.value);
-      }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        hasAutoAppliedUrlCouponRef.current = true;
+        const status = err?.response?.status || err?.statusCode || err?.status;
+        if (recoveryPreset && status === 404) {
+          const fallbackDiscount = Math.round((subtotal * recoveryPreset.pct) / 100);
+          setCoupon(urlCoupon, fallbackDiscount);
+          showToast(recoveryPreset.toast, 'success');
+          return;
+        }
+        const errMsg = err?.error || err?.message || err?.data?.error || '';
+        showToast(`Recovery coupon "${urlCoupon}": ${errMsg || 'not applicable to your cart'}`, 'info');
+      })
+      .finally(() => {
+        if (pendingUrlCouponRef.current === urlCoupon) {
+          pendingUrlCouponRef.current = null;
+        }
+      });
 
-      setCoupon(urlCoupon, discount);
-      showToast(`🎉 Recovery coupon "${urlCoupon}" automatically applied!`, 'success');
-    } else {
-      if (urlCoupon === 'COMEBACK5') {
-        const discount = Math.round((subtotal * 5) / 100);
-        setCoupon('COMEBACK5', discount);
-        showToast('🎉 Exclusive 5% Comeback discount automatically applied!', 'success');
-      } else if (urlCoupon === 'SAVE15') {
-        const discount = Math.round((subtotal * 15) / 100);
-        setCoupon('SAVE15', discount);
-        showToast('🎉 Exclusive 15% Comeback discount automatically applied!', 'success');
-      } else if (urlCoupon === 'FREEDELIVERY') {
-        setCoupon('FREEDELIVERY', 0);
-        showToast('🚚 Free Delivery coupon automatically applied!', 'success');
+    return () => {
+      cancelled = true;
+      if (pendingUrlCouponRef.current === urlCoupon) {
+        pendingUrlCouponRef.current = null;
       }
-    }
-  }, [searchParams, coupons, subtotal, coupon, setCoupon, showToast]);
+    };
+  }, [searchParams, subtotal, checkoutItems.length, coupon, buildCouponPayloadItems, setCoupon, showToast]);
 
   // Step 1 Validation & Proceeding to Payment Step
   const handleConfirmDetails = async (e) => {
@@ -921,6 +938,7 @@ export default function Checkout() {
           message: isGiftWrap ? giftMessage.trim() : '',
         },
         discountAmount: couponDiscount || 0,
+        couponCode: coupon || null,
         total: finalPayable,
         totalAmount: finalPayable,
         paymentMethod,

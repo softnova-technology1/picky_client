@@ -43,6 +43,18 @@ const getInitialSidebarPages = () => {
   return { ...DEFAULT_SIDEBAR_PAGES };
 };
 
+export const isAdminPortalPath = () => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location?.pathname || '';
+  return (
+    path.startsWith('/softpicky-sn2026') ||
+    path.startsWith('/softpicky_sn2026') ||
+    path.startsWith('/admin')
+  );
+};
+
+let activeToastTimer = null;
+
 export const useUiStore = create((set) => ({
   isLoading: false,
   toast: null,      // { message, type: 'success' | 'error' | 'info' }
@@ -52,10 +64,25 @@ export const useUiStore = create((set) => ({
 
   setLoading: (v) => set({ isLoading: v }),
   showToast: (message, type = 'success') => {
+    if (!isAdminPortalPath()) {
+      return;
+    }
+    if (activeToastTimer) {
+      clearTimeout(activeToastTimer);
+    }
     set({ toast: { message, type } });
-    setTimeout(() => set({ toast: null }), 3500);
+    activeToastTimer = setTimeout(() => {
+      activeToastTimer = null;
+      set({ toast: null });
+    }, 3500);
   },
-  hideToast: () => set({ toast: null }),
+  hideToast: () => {
+    if (activeToastTimer) {
+      clearTimeout(activeToastTimer);
+      activeToastTimer = null;
+    }
+    set({ toast: null });
+  },
   openModal: (id, props = {}) => set({ modal: { id, props } }),
   closeModal: () => set({ modal: null }),
 

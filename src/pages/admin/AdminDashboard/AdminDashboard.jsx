@@ -10,6 +10,23 @@ import {
   ArrowRight,
   Sparkles,
   ArrowUpRight,
+  Truck,
+  AlertTriangle,
+  RotateCcw,
+  MessageSquare,
+  TicketPercent,
+  CreditCard,
+  BarChart3,
+  Activity,
+  Calendar,
+  Clock,
+  Star,
+  ShoppingBag,
+  MapPin,
+  Zap,
+  Send,
+  Plus,
+  Tag,
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import Select from '../../../components/ui/Select';
@@ -637,118 +654,265 @@ function OrdersDonutChart({ data }) {
   );
 }
 
+// Module-level cache for instant revisit rendering (keyed by timeframe)
+let cachedDashboardData = null;
+
+function formatActivityRelativeTime(ts) {
+  if (!ts) return 'Recent';
+  const diffSec = Math.max(0, Math.floor((Date.now() - new Date(ts).getTime()) / 1000));
+  if (diffSec < 60) return 'Just now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return `${Math.floor(diffSec / 86400)}d ago`;
+}
+
 // ─── Main Admin Dashboard Component ──────────────────────────────────────────
 export default function AdminDashboard() {
   const { showToast } = useUiStore();
-  const [summary, setSummary] = useState({ totalRevenue: 0, totalOrders: 0, confirmedOrders: 0, totalCustomers: 0, totalProducts: 0, dailySales: [] });
-  const [activeBarIndex, setActiveBarIndex] = useState(3);
   const [timeframe, setTimeframe] = useState('Week');
+  const [liveNow, setLiveNow] = useState(() => new Date());
+  const [summary, setSummary] = useState(
+    () =>
+      cachedDashboardData?.summary || {
+        totalRevenue: 0,
+        totalOrders: 0,
+        confirmedOrders: 0,
+        totalCustomers: 0,
+        totalProducts: 0,
+        avgOrderValue: 0,
+        dailySales: [],
+        timeframeSeries: [],
+      }
+  );
+  const [activeBarIndex, setActiveBarIndex] = useState(0);
 
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
+  const [recentOrders, setRecentOrders] = useState(() => cachedDashboardData?.recentOrders || []);
+  const [topProducts, setTopProducts] = useState(() => cachedDashboardData?.topProducts || []);
 
-  // Fetch live statistics seamlessly
+  // Live updating 1-second Clock & Date ticker
   useEffect(() => {
+    const clockTimer = setInterval(() => {
+      setLiveNow(new Date());
+    }, 1000);
+    return () => clearInterval(clockTimer);
+  }, []);
+
+  const liveDateDisplay = useMemo(
+    () =>
+      liveNow.toLocaleDateString('en-IN', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+    [liveNow]
+  );
+
+  const liveTimeDisplay = useMemo(
+    () =>
+      liveNow.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }),
+    [liveNow]
+  );
+
+  // Fetch live statistics seamlessly (updates when timeframe changes too)
+  useEffect(() => {
+    let isLoaded = Boolean(cachedDashboardData);
+    let lastFocusSyncAt = 0;
+
     async function fetchStats() {
       try {
         const [sumRes, topRes, ordRes] = await Promise.all([
-          adminService.getSalesSummary().catch(() => null),
+          adminService.getSalesSummary({ timeframe }).catch(() => null),
           adminService.getTopProducts(5).catch(() => null),
           adminService.getOrders({ limit: 5 }).catch(() => null),
         ]);
-        
+
         const data = sumRes?.data?.data || sumRes?.data || sumRes;
+        const tpList = topRes?.data?.data || topRes?.data || topRes;
+        const ordList = ordRes?.data?.data || ordRes?.data?.orders || ordRes?.data || ordRes;
+
+        const nextSummary =
+          data && data.totalOrders !== undefined
+            ? data
+            : cachedDashboardData?.summary || {
+                totalRevenue: 0,
+                totalOrders: 0,
+                confirmedOrders: 0,
+                totalCustomers: 0,
+                totalProducts: 0,
+                avgOrderValue: 0,
+                dailySales: [],
+                timeframeSeries: [],
+              };
+        const nextTop = Array.isArray(tpList) ? tpList : cachedDashboardData?.topProducts || [];
+        const nextRecent = Array.isArray(ordList)
+          ? ordList.slice(0, 5)
+          : cachedDashboardData?.recentOrders || [];
+
         if (data && data.totalOrders !== undefined) {
-          setSummary(data);
-        } else {
-          setSummary({ totalRevenue: 0, totalOrders: 0, confirmedOrders: 0, totalCustomers: 0, totalProducts: 0, dailySales: [] });
+          isLoaded = true;
+          cachedDashboardData = {
+            summary: nextSummary,
+            topProducts: nextTop,
+            recentOrders: nextRecent,
+          };
         }
 
-        const tpList = topRes?.data?.data || topRes?.data || topRes;
-        if (Array.isArray(tpList)) {
-          setTopProducts(tpList);
-        } else {
+        setSummary(nextSummary);
+        setTopProducts(nextTop);
+        setRecentOrders(nextRecent);
+      } catch (err) {
+        if (!cachedDashboardData) {
+          setSummary({
+            totalRevenue: 0,
+            totalOrders: 0,
+            confirmedOrders: 0,
+            totalCustomers: 0,
+            totalProducts: 0,
+            avgOrderValue: 0,
+            dailySales: [],
+            timeframeSeries: [],
+          });
+          setRecentOrders([]);
           setTopProducts([]);
         }
-
-        const ordList = ordRes?.data?.data || ordRes?.data?.orders || ordRes?.data || ordRes;
-        if (Array.isArray(ordList)) {
-          setRecentOrders(ordList.slice(0, 5));
-        } else {
-          setRecentOrders([]);
-        }
-      } catch (err) {
-        setSummary({ totalRevenue: 0, totalOrders: 0, confirmedOrders: 0, totalCustomers: 0, totalProducts: 0, dailySales: [] });
-        setRecentOrders([]);
-        setTopProducts([]);
       }
     }
     fetchStats();
 
-    // Auto-rehydrate when server starts or reconnects
+    // Auto-rehydrate silently when server reconnects or on throttled focus
     const handleServerOnline = () => {
-      console.log('⚡ [AdminDashboard] Auto-syncing stats on server reconnect...');
+      fetchStats();
+    };
+    const handleFocusSync = () => {
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
       fetchStats();
     };
 
     window.addEventListener('picky_server_reconnected', handleServerOnline);
-    window.addEventListener('focus', handleServerOnline);
+    window.addEventListener('focus', handleFocusSync);
 
-    // Auto-retry every 3s if stats are empty/unloaded
+    // Retry every 5s ONLY if initial stats haven't loaded yet
     const retryInterval = setInterval(() => {
-      fetchStats();
-    }, 4000);
+      if (!isLoaded && document.visibilityState === 'visible') {
+        fetchStats();
+      }
+    }, 5000);
 
     let unsub = () => {};
     try {
       joinAdminRoom();
-      unsub = subscribeToOrders(() => { fetchStats(); });
+      unsub = subscribeToOrders(() => {
+        fetchStats();
+      });
     } catch (_) {}
 
     return () => {
-      try { unsub(); } catch (_) {}
+      try {
+        unsub();
+      } catch (_) {}
       window.removeEventListener('picky_server_reconnected', handleServerOnline);
-      window.removeEventListener('focus', handleServerOnline);
+      window.removeEventListener('focus', handleFocusSync);
       clearInterval(retryInterval);
     };
-  }, []);
+  }, [timeframe]);
 
-  // Dynamically map real summary data or fallback to config
+  // Dynamically map real summary data cleanly
   const currentData = useMemo(() => {
     const baseConfig = TIMEFRAME_CONFIG[timeframe] || TIMEFRAME_CONFIG['Week'];
 
     if (summary && summary.totalRevenue !== undefined && summary.totalOrders !== undefined) {
-      const salesByDay = {};
-      if (Array.isArray(summary.dailySales)) {
-        summary.dailySales.forEach((s) => {
-          if (s && s._id) {
-            const dayKey = new Date(s._id).toLocaleDateString('en-US', { weekday: 'short' });
-            salesByDay[dayKey] = s;
+      let revData = [];
+      if (Array.isArray(summary.timeframeSeries) && summary.timeframeSeries.length > 0) {
+        revData = summary.timeframeSeries.map((pt) => ({
+          day: pt.day,
+          label: pt.label || pt.day,
+          revenue: Number(pt.revenue) || 0,
+          ordersCount: Number(pt.ordersCount) || 0,
+          revenueFormatted: formatPrice(Number(pt.revenue) || 0),
+        }));
+      } else {
+        const salesByDay = {};
+        if (Array.isArray(summary.dailySales)) {
+          summary.dailySales.forEach((s) => {
+            if (s && s._id) {
+              const dayKey = new Date(s._id).toLocaleDateString('en-US', { weekday: 'short' });
+              salesByDay[dayKey] = s;
+            }
+          });
+        }
+        revData = baseConfig.revenueData.map((d) => {
+          const matchingSale = salesByDay[d.day];
+          if (matchingSale) {
+            return {
+              ...d,
+              revenue: matchingSale.sales || 0,
+              ordersCount: matchingSale.orders || 0,
+              revenueFormatted: formatPrice(matchingSale.sales || 0),
+              label: new Date(matchingSale._id).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+              }),
+            };
           }
+          return { ...d, revenue: 0, ordersCount: 0, revenueFormatted: '₹0' };
         });
       }
 
-      const revData = baseConfig.revenueData.map((d) => {
-        const matchingSale = salesByDay[d.day];
-        if (matchingSale) {
-          return {
-            ...d,
-            revenue: matchingSale.sales || 0,
-            ordersCount: matchingSale.orders || 0,
-            revenueFormatted: formatPrice(matchingSale.sales || 0),
-            label: new Date(matchingSale._id).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
-          };
-        }
-        return {
-          ...d,
-          revenue: 0,
-          ordersCount: 0,
-          revenueFormatted: '₹0',
-        };
-      });
-
       const maxSale = Math.max(...revData.map((d) => d.revenue), 0);
       const chartScale = getDynamicChartScale(maxSale);
+
+      // Real Order Status Breakdown from MongoDB (never guessed percentages)
+      const osb = summary.orderStatusBreakdown;
+      let breakdown;
+      let breakdownTotal = summary.totalOrders;
+      if (osb) {
+        const confirmedCnt = (osb.placed || 0) + (osb.confirmed || 0);
+        const shippedCnt = (osb.shipped || 0) + (osb.out_for_delivery || 0);
+        const deliveredCnt = osb.delivered || 0;
+        const cancelledCnt = osb.cancelled || 0;
+        const statusSum = confirmedCnt + shippedCnt + deliveredCnt + cancelledCnt;
+        breakdownTotal = statusSum || summary.totalOrders;
+        const calcPct = (n) => (breakdownTotal > 0 ? Number(((n / breakdownTotal) * 100).toFixed(1)) : 0);
+        breakdown = [
+          { id: 'cancelled', name: 'Cancelled', count: cancelledCnt, pct: calcPct(cancelledCnt), color: '#ef4444' },
+          { id: 'shipped', name: 'Shipped', count: shippedCnt, pct: calcPct(shippedCnt), color: '#6366f1' },
+          { id: 'delivered', name: 'Delivered', count: deliveredCnt, pct: calcPct(deliveredCnt), color: '#0ea5e9' },
+          { id: 'confirmed', name: 'Confirmed', count: confirmedCnt, pct: calcPct(confirmedCnt), color: '#10b981' },
+        ];
+      } else {
+        breakdown = [
+          {
+            id: 'cancelled',
+            name: 'Cancelled',
+            count: Math.max(0, summary.totalOrders - summary.confirmedOrders),
+            pct: summary.totalOrders
+              ? Math.round(((summary.totalOrders - summary.confirmedOrders) / summary.totalOrders) * 100)
+              : 0,
+            color: '#ef4444',
+          },
+          { id: 'shipped', name: 'Shipped', count: 0, pct: 0, color: '#6366f1' },
+          { id: 'delivered', name: 'Delivered', count: 0, pct: 0, color: '#0ea5e9' },
+          {
+            id: 'confirmed',
+            name: 'Confirmed',
+            count: summary.confirmedOrders || 0,
+            pct: summary.totalOrders ? Math.round((summary.confirmedOrders / summary.totalOrders) * 100) : 0,
+            color: '#10b981',
+          },
+        ];
+      }
+
+      const periodRevenue =
+        summary.timeframeRevenue !== undefined ? summary.timeframeRevenue : summary.totalRevenue;
 
       return {
         ...baseConfig,
@@ -760,18 +924,14 @@ export default function AdminDashboard() {
         },
         revenueCard: {
           ...baseConfig.revenueCard,
-          headlineAmount: formatPrice(summary.totalRevenue),
+          headlineAmount: formatPrice(periodRevenue),
+          growthPct: summary.growthPct !== undefined ? summary.growthPct : 0,
           maxValue: chartScale.maxValue,
           gridLines: chartScale.gridLines,
         },
         ordersOverview: {
-          totalOrders: summary.totalOrders,
-          breakdown: [
-            { id: 'cancelled', name: 'Cancelled', count: summary.totalOrders - summary.confirmedOrders, pct: summary.totalOrders ? Math.round(((summary.totalOrders - summary.confirmedOrders) / summary.totalOrders) * 100) : 0, color: '#ef4444' },
-            { id: 'shipped', name: 'Shipped', count: Math.floor(summary.confirmedOrders * 0.3), pct: summary.totalOrders ? Math.round((Math.floor(summary.confirmedOrders * 0.3) / summary.totalOrders) * 100) : 0, color: '#6366f1' },
-            { id: 'delivered', name: 'Delivered', count: Math.floor(summary.confirmedOrders * 0.5), pct: summary.totalOrders ? Math.round((Math.floor(summary.confirmedOrders * 0.5) / summary.totalOrders) * 100) : 0, color: '#0ea5e9' },
-            { id: 'confirmed', name: 'Confirmed', count: summary.confirmedOrders - Math.floor(summary.confirmedOrders * 0.3) - Math.floor(summary.confirmedOrders * 0.5), pct: summary.totalOrders ? Math.round(((summary.confirmedOrders - Math.floor(summary.confirmedOrders * 0.3) - Math.floor(summary.confirmedOrders * 0.5)) / summary.totalOrders) * 100) : 0, color: '#10b981' },
-          ],
+          totalOrders: breakdownTotal,
+          breakdown,
         },
         revenueData: revData,
       };
@@ -780,11 +940,200 @@ export default function AdminDashboard() {
     return {
       ...baseConfig,
       kpis: { totalRevenue: '₹0', totalOrders: '0', customers: '0', totalProducts: '0' },
-      revenueCard: { ...baseConfig.revenueCard, headlineAmount: '₹0' },
-      revenueData: baseConfig.revenueData.map((d) => ({ ...d, revenue: 0, ordersCount: 0, revenueFormatted: '₹0' })),
-      ordersOverview: { totalOrders: 0, breakdown: baseConfig.ordersOverview.breakdown.map((b) => ({ ...b, count: 0, pct: 0 })) },
+      revenueCard: { ...baseConfig.revenueCard, headlineAmount: '₹0', growthPct: 0 },
+      revenueData: baseConfig.revenueData.map((d) => ({
+        ...d,
+        revenue: 0,
+        ordersCount: 0,
+        revenueFormatted: '₹0',
+      })),
+      ordersOverview: {
+        totalOrders: 0,
+        breakdown: baseConfig.ordersOverview.breakdown.map((b) => ({ ...b, count: 0, pct: 0 })),
+      },
     };
   }, [timeframe, summary]);
+
+  // Derived Operational & Business Metrics
+  const actionAlerts = summary?.actionAlerts || {
+    readyToDispatch: 0,
+    lowStockCount: 0,
+    outOfStockCount: 0,
+    pendingReturns: 0,
+    unreadInquiries: 0,
+    pendingReviews: 0,
+  };
+  const couponInsights = summary?.couponInsights || {
+    totalCoupons: 0,
+    activeCoupons: 0,
+    scheduledCoupons: 0,
+    totalRedemptions: 0,
+    discountSaved: 0,
+    salesViaCoupons: 0,
+    topCoupon: null,
+  };
+  const abandonedCartInsights = summary?.abandonedCartInsights || {
+    activeCount: 0,
+    atRiskValue: 0,
+    recoveredCount: 0,
+    recoveredValue: 0,
+  };
+  const paymentBreakdown = summary?.paymentBreakdown || {
+    onlineCount: 0,
+    onlineAmount: 0,
+    codCount: 0,
+    codAmount: 0,
+  };
+  const categorySales = Array.isArray(summary?.categorySales) ? summary.categorySales : [];
+  const liveActivity = Array.isArray(summary?.liveActivity) ? summary.liveActivity : [];
+  const avgOrderValue =
+    summary?.avgOrderValue !== undefined
+      ? summary.avgOrderValue
+      : summary?.confirmedOrders > 0
+      ? Math.round((summary.totalRevenue || 0) / summary.confirmedOrders)
+      : 0;
+
+  const totalPaymentCount = paymentBreakdown.onlineCount + paymentBreakdown.codCount;
+  const onlinePct =
+    totalPaymentCount > 0 ? Math.round((paymentBreakdown.onlineCount / totalPaymentCount) * 100) : 0;
+  const codPct = totalPaymentCount > 0 ? 100 - onlinePct : 0;
+  const maxCategoryRevenue = Math.max(...categorySales.map((c) => c.revenue || 0), 1);
+
+  const todaySnapshot = summary?.todaySnapshot || {
+    orders: 0,
+    revenue: 0,
+    yesterdayOrders: 0,
+    yesterdayRevenue: 0,
+    revenueGrowthPct: 0,
+    signups: 0,
+  };
+  const fulfillmentHealth = summary?.fulfillmentHealth || {
+    awaitingAwb: 0,
+    inTransit: 0,
+    cancelledCount: 0,
+    cancelledValue: 0,
+    cancellationRatePct: 0,
+    returnRequests: 0,
+    refundedValue: 0,
+  };
+  const lowStockWatchlist = Array.isArray(summary?.lowStockWatchlist) ? summary.lowStockWatchlist : [];
+  const locationInsights = summary?.locationInsights || {
+    topCities: [],
+    tnOrders: 0,
+    tnRevenue: 0,
+    otherOrders: 0,
+    otherRevenue: 0,
+  };
+  const customerRetention = summary?.customerRetention || {
+    totalCustomers: summary?.totalCustomers || 0,
+    uniqueBuyers: 0,
+    repeatBuyers: 0,
+    repeatRatePct: 0,
+    newUsersThisWeek: 0,
+  };
+  const activePromotions = summary?.activePromotions || {
+    activeDiscountsCount: 0,
+    discountedProductsCount: 0,
+    highlights: [],
+  };
+  const totalRegionOrders = (locationInsights.tnOrders || 0) + (locationInsights.otherOrders || 0);
+  const tnPct = totalRegionOrders > 0 ? Math.round((locationInsights.tnOrders / totalRegionOrders) * 100) : 0;
+  const maxCityRevenue = Math.max(
+    ...(locationInsights.topCities || []).map((c) => c.revenue || 0),
+    1
+  );
+
+  // Real CSV Report Export Handler
+  const handleExportDashboardReport = () => {
+    try {
+      const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows = [
+        ['PICKY STORE EXECUTIVE DASHBOARD REPORT'],
+        ['Generated At', `${liveDateDisplay} ${liveTimeDisplay}`],
+        ['Selected Timeframe', timeframe],
+        [],
+        ['TODAY LIVE SNAPSHOT', 'VALUE'],
+        ['Today Orders', todaySnapshot.orders],
+        ['Today Revenue (INR)', todaySnapshot.revenue],
+        ['Yesterday Revenue (INR)', todaySnapshot.yesterdayRevenue],
+        ['Today New Signups', todaySnapshot.signups],
+        [],
+        ['STORE KPIs', 'VALUE'],
+        ['Total Revenue', summary.totalRevenue || 0],
+        ['Period Revenue (' + timeframe + ')', summary.timeframeRevenue ?? summary.totalRevenue ?? 0],
+        ['Average Order Value (AOV)', avgOrderValue],
+        ['Total Orders', summary.totalOrders || 0],
+        ['Active Customers', summary.totalCustomers || 0],
+        ['Repeat Customer Rate (%)', customerRetention.repeatRatePct],
+        ['Active Products', summary.totalProducts || 0],
+        [],
+        ['FULFILLMENT & LOSS HEALTH', 'VALUE'],
+        ['Awaiting Shiprocket AWB', fulfillmentHealth.awaitingAwb],
+        ['In Transit Orders', fulfillmentHealth.inTransit],
+        ['Cancelled Orders', fulfillmentHealth.cancelledCount],
+        ['Cancellation Rate (%)', fulfillmentHealth.cancellationRatePct],
+        ['Cancelled Value (INR)', fulfillmentHealth.cancelledValue],
+        ['Refunded Return Value (INR)', fulfillmentHealth.refundedValue],
+        [],
+        ['ACTION ALERTS', 'COUNT'],
+        ['Ready to Dispatch Orders', actionAlerts.readyToDispatch],
+        ['Low Stock Items', actionAlerts.lowStockCount],
+        ['Out of Stock Items', actionAlerts.outOfStockCount],
+        ['Pending Return Requests', actionAlerts.pendingReturns],
+        ['Unread Inquiries', actionAlerts.unreadInquiries],
+        ['Pending Reviews', actionAlerts.pendingReviews],
+        [],
+        ['LOW STOCK WATCHLIST', 'SKU', 'REMAINING QTY'],
+        ...lowStockWatchlist.map((p) => [p.name, p.sku || '-', p.quantity]),
+        [],
+        ['TOP DELIVERY CITIES', 'ORDERS', 'REVENUE (INR)'],
+        ...(locationInsights.topCities || []).map((c) => [`${c.city}${c.state ? ', ' + c.state : ''}`, c.orders, c.revenue]),
+        [],
+        ['COUPON & ABANDONED CART INSIGHTS', 'VALUE'],
+        ['Active Coupons', couponInsights.activeCoupons],
+        ['Scheduled Coupons', couponInsights.scheduledCoupons],
+        ['Coupon Redemptions', couponInsights.totalRedemptions],
+        ['Total Coupon Savings', couponInsights.discountSaved],
+        ['Abandoned Carts At Risk', abandonedCartInsights.activeCount],
+        ['Abandoned Cart Value At Risk', abandonedCartInsights.atRiskValue],
+        ['Recovered Carts', abandonedCartInsights.recoveredCount],
+        ['Recovered Revenue', abandonedCartInsights.recoveredValue],
+        [],
+        ['REVENUE SERIES (' + timeframe + ')', 'REVENUE (INR)', 'ORDERS'],
+        ...currentData.revenueData.map((r) => [r.label || r.day, r.revenue, r.ordersCount]),
+        [],
+        ['TOP CATEGORIES', 'REVENUE (INR)', 'UNITS SOLD'],
+        ...categorySales.map((c) => [c.name, c.revenue, c.units]),
+        [],
+        ['TOP PRODUCTS', 'UNITS SOLD', 'REVENUE (INR)'],
+        ...topProducts.map((p) => [p.name, p.unitsSold || 0, p.totalRevenue || 0]),
+        [],
+        ['RECENT ORDERS', 'CUSTOMER', 'TOTAL (INR)', 'STATUS', 'DATE'],
+        ...recentOrders.map((o) => [
+          o.orderNumber,
+          o.user?.name || o.shippingAddress?.fullName || o.customer?.name || 'Customer',
+          o.total ?? o.totalAmount ?? 0,
+          o.status,
+          new Date(o.createdAt).toLocaleString('en-IN'),
+        ]),
+      ];
+
+      const csvContent = '\uFEFF' + rows.map((r) => r.map(esc).join(',')).join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `picky-dashboard-report-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Dashboard report exported as CSV!', 'success');
+    } catch (err) {
+      console.error('Export failed:', err);
+      showToast('Failed to export dashboard report', 'error');
+    }
+  };
 
   // Set active bar index to the day with sales or keep bounded
   useEffect(() => {
@@ -793,7 +1142,7 @@ export default function AdminDashboard() {
       if (activeIdx !== -1) {
         setActiveBarIndex(activeIdx);
       } else {
-        setActiveBarIndex((prev) => Math.min(prev, currentData.revenueData.length - 1));
+        setActiveBarIndex(Math.max(0, currentData.revenueData.length - 1));
       }
     }
   }, [timeframe, currentData]);
@@ -851,26 +1200,38 @@ export default function AdminDashboard() {
     </svg>
   );
 
+  const lowOutTotal = (actionAlerts.lowStockCount || 0) + (actionAlerts.outOfStockCount || 0);
+  const msgReviewTotal = (actionAlerts.unreadInquiries || 0) + (actionAlerts.pendingReviews || 0);
+
   return (
     <AdminLayout title="Dashboard">
       <div className={styles.dashboardContainer}>
-        {/* ─── 1. Header Overview Row ───────── */}
+        {/* ─── 1. Header Overview Row with Live Date & Real-Time Clock ───────── */}
         <div className={styles.headerRow}>
           <div className={styles.titleArea}>
             <h1 className={styles.pageTitle}>Dashboard</h1>
-            <p className={styles.pageSubtitle}>Real-time store performance, growth metrics and analytics</p>
+            <p className={styles.pageSubtitle}>Real-time store performance, operations, and growth analytics</p>
           </div>
 
           <div className={styles.headerActions}>
+            {/* Live Timing & Date Pill */}
+            <div className={styles.liveClockPill} title="Live Store Clock (IST)">
+              <span className={styles.livePulseGreen} />
+              <Calendar size={13} color="#64748b" />
+              <span className={styles.liveClockDate}>{liveDateDisplay}</span>
+              <span className={styles.liveClockDivider} />
+              <Clock size={13} color="#7c3aed" />
+              <span className={styles.liveClockTime}>{liveTimeDisplay}</span>
+            </div>
+
             {/* Timeframe Dropdown Selection */}
             <Select
               value={timeframe}
               onChange={(val) => {
                 setTimeframe(val);
-                showToast(`Viewing data for ${val}`, 'info');
               }}
               options={TIMEFRAME_OPTIONS}
-              minWidth="92px"
+              minWidth="98px"
               height="36px"
               borderRadius="9999px"
               buttonStyle={{
@@ -878,41 +1239,115 @@ export default function AdminDashboard() {
                 fontWeight: 700,
                 fontSize: '0.82rem',
                 color: '#1e1b4b',
-                padding: '0 0.65rem',
+                padding: '0 0.75rem',
                 gap: '0.35rem',
                 boxShadow: '0 1px 3px rgba(124, 58, 237, 0.04)',
               }}
               ariaLabel="Select timeframe"
             />
 
-            {/* Export Button */}
+            {/* Real CSV Export Button */}
             <button
+              type="button"
               className={styles.exportBtn}
-              onClick={() => showToast('Exporting dashboard sales report (CSV/PDF)...', 'info')}
-              title="Export Report"
+              onClick={handleExportDashboardReport}
+              title="Download CSV Sales & Analytics Report"
             >
               <Download size={14} />
-              <span>Export</span>
+              <span>Export CSV</span>
             </button>
           </div>
         </div>
 
-        {/* ─── 2. Top 4 Ultra-Premium KPI Cards ─── */}
+        {/* ─── 1.5 Today's Live Snapshot & Quick Actions Bar ─── */}
+        <div className={styles.todayBanner}>
+          <div className={styles.todayStatsGroup}>
+            <span className={styles.todayBadge}>
+              <Zap size={12} /> Today&apos;s Pulse
+            </span>
+
+            <div className={styles.todayStatItem}>
+              <span className={styles.todayStatLabel}>Today Revenue</span>
+              <div className={styles.todayStatValRow}>
+                <span className={styles.todayStatVal}>{formatPrice(todaySnapshot.revenue)}</span>
+                <span
+                  className={
+                    todaySnapshot.revenueGrowthPct >= 0
+                      ? styles.todayStatDeltaUp
+                      : styles.todayStatDeltaDown
+                  }
+                >
+                  {todaySnapshot.revenueGrowthPct >= 0 ? '↑' : '↓'}{' '}
+                  {Math.abs(todaySnapshot.revenueGrowthPct)}%
+                </span>
+              </div>
+              <span className={styles.todayStatHint}>
+                Yesterday: {formatPrice(todaySnapshot.yesterdayRevenue)}
+              </span>
+            </div>
+
+            <div className={styles.todayStatItem}>
+              <span className={styles.todayStatLabel}>Today Orders</span>
+              <div className={styles.todayStatValRow}>
+                <span className={styles.todayStatVal}>{todaySnapshot.orders}</span>
+              </div>
+              <span className={styles.todayStatHint}>Yesterday: {todaySnapshot.yesterdayOrders} orders</span>
+            </div>
+
+            <div className={styles.todayStatItem}>
+              <span className={styles.todayStatLabel}>New Signups</span>
+              <div className={styles.todayStatValRow}>
+                <span className={styles.todayStatVal}>{todaySnapshot.signups}</span>
+              </div>
+              <span className={styles.todayStatHint}>
+                Last 7 days: {customerRetention.newUsersThisWeek}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.quickActionsWrap}>
+            <Link to={`${ADMIN}/products`} className={styles.quickActionPill}>
+              <Plus size={13} /> Add Product
+            </Link>
+            <Link to={`${ADMIN}/coupons`} className={styles.quickActionPill}>
+              <TicketPercent size={13} /> Create Coupon
+            </Link>
+            <Link to={`${ADMIN}/flash-sales`} className={styles.quickActionPill}>
+              <Zap size={13} /> Flash Sales
+            </Link>
+            <Link to={`${ADMIN}/broadcast`} className={styles.quickActionPill}>
+              <Send size={13} /> Broadcast
+            </Link>
+          </div>
+        </div>
+
+        {/* ─── 2. Top 4 Clickable Executive KPI Cards ─── */}
         <div className={styles.kpiGrid}>
-          {/* Card 1: Total Revenue */}
-          <div className={styles.kpiCard}>
+          {/* Card 1: Total Revenue + AOV */}
+          <Link to={`${ADMIN}/orders`} className={`${styles.kpiCard} ${styles.kpiClickable}`}>
             {sparkline4}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.purple}`}>
                 <DollarSign size={16} />
               </div>
               <span className={styles.kpiLabel}>Total Revenue</span>
+              <span
+                className={`${styles.trendBadge} ${
+                  currentData.revenueCard.growthPct >= 0 ? styles.trendUp : styles.trendDown
+                }`}
+              >
+                {currentData.revenueCard.growthPct >= 0 ? '↑' : '↓'} {Math.abs(currentData.revenueCard.growthPct)}%
+              </span>
             </div>
             <div className={styles.kpiVal}>{currentData.kpis.totalRevenue}</div>
-          </div>
+            <div className={styles.kpiSubRow}>
+              <span className={styles.kpiMetaPill}>AOV: {formatPrice(avgOrderValue)}</span>
+              <span>View Orders →</span>
+            </div>
+          </Link>
 
           {/* Card 2: Total Orders */}
-          <div className={styles.kpiCard}>
+          <Link to={`${ADMIN}/orders`} className={`${styles.kpiCard} ${styles.kpiClickable}`}>
             {sparkline1}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.blue}`}>
@@ -921,10 +1356,14 @@ export default function AdminDashboard() {
               <span className={styles.kpiLabel}>Total Orders</span>
             </div>
             <div className={styles.kpiVal}>{currentData.kpis.totalOrders}</div>
-          </div>
+            <div className={styles.kpiSubRow}>
+              <span>{summary.confirmedOrders || 0} active / completed</span>
+              <span>Manage →</span>
+            </div>
+          </Link>
 
-          {/* Card 3: Customers */}
-          <div className={styles.kpiCard}>
+          {/* Card 3: Users */}
+          <Link to={`${ADMIN}/customers`} className={`${styles.kpiCard} ${styles.kpiClickable}`}>
             {sparkline2}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.green}`}>
@@ -933,10 +1372,14 @@ export default function AdminDashboard() {
               <span className={styles.kpiLabel}>Users</span>
             </div>
             <div className={styles.kpiVal}>{currentData.kpis.customers}</div>
-          </div>
+            <div className={styles.kpiSubRow}>
+              <span className={styles.kpiMetaPill}>Repeat: {customerRetention.repeatRatePct}%</span>
+              <span>View Users →</span>
+            </div>
+          </Link>
 
           {/* Card 4: Total Products */}
-          <div className={styles.kpiCard}>
+          <Link to={`${ADMIN}/products`} className={`${styles.kpiCard} ${styles.kpiClickable}`}>
             {sparkline3}
             <div className={styles.kpiHeaderRow}>
               <div className={`${styles.kpiMiniIcon} ${styles.orange}`}>
@@ -945,15 +1388,88 @@ export default function AdminDashboard() {
               <span className={styles.kpiLabel}>Total Products</span>
             </div>
             <div className={styles.kpiVal}>{currentData.kpis.totalProducts}</div>
-          </div>
+            <div className={styles.kpiSubRow}>
+              <span>{lowOutTotal > 0 ? `${lowOutTotal} need restock` : 'All stock healthy'}</span>
+              <span>Catalog →</span>
+            </div>
+          </Link>
         </div>
 
-        {/* ─── 3. Middle Row: Revenue Wave Chart + Orders Donut Status Breakdown ─ */}
+        {/* ─── 3. "Action Required" Live Operations Strip ─── */}
+        <div className={styles.actionStripGrid}>
+          <Link to={`${ADMIN}/orders`} className={styles.actionAlertCard}>
+            <div className={styles.actionAlertLeft}>
+              <div className={`${styles.actionIconBadge} ${styles.actionAmber}`}>
+                <Truck size={18} />
+              </div>
+              <div className={styles.actionTextWrap}>
+                <span className={styles.actionTitle}>Ready to Dispatch</span>
+                <span className={styles.actionCount}>{actionAlerts.readyToDispatch || 0}</span>
+              </div>
+            </div>
+            <span className={`${styles.actionStatusTag} ${(actionAlerts.readyToDispatch || 0) > 0 ? styles.tagPending : styles.tagClear}`}>
+              {(actionAlerts.readyToDispatch || 0) > 0 ? 'Ship Now →' : 'All Clear'}
+            </span>
+          </Link>
+
+          <Link to={`${ADMIN}/inventory`} className={styles.actionAlertCard}>
+            <div className={styles.actionAlertLeft}>
+              <div className={`${styles.actionIconBadge} ${styles.actionRose}`}>
+                <AlertTriangle size={18} />
+              </div>
+              <div className={styles.actionTextWrap}>
+                <span className={styles.actionTitle}>Low / Out of Stock</span>
+                <span className={styles.actionCount}>{lowOutTotal}</span>
+              </div>
+            </div>
+            <span className={`${styles.actionStatusTag} ${lowOutTotal > 0 ? styles.tagPending : styles.tagClear}`}>
+              {lowOutTotal > 0 ? `${actionAlerts.outOfStockCount || 0} Out • Restock` : 'Healthy'}
+            </span>
+          </Link>
+
+          <Link to={`${ADMIN}/returns`} className={styles.actionAlertCard}>
+            <div className={styles.actionAlertLeft}>
+              <div className={`${styles.actionIconBadge} ${styles.actionBlue}`}>
+                <RotateCcw size={18} />
+              </div>
+              <div className={styles.actionTextWrap}>
+                <span className={styles.actionTitle}>Pending Returns</span>
+                <span className={styles.actionCount}>{actionAlerts.pendingReturns || 0}</span>
+              </div>
+            </div>
+            <span className={`${styles.actionStatusTag} ${(actionAlerts.pendingReturns || 0) > 0 ? styles.tagPending : styles.tagClear}`}>
+              {(actionAlerts.pendingReturns || 0) > 0 ? 'Review →' : 'None'}
+            </span>
+          </Link>
+
+          <Link
+            to={(actionAlerts.unreadInquiries || 0) > 0 ? `${ADMIN}/inquiries` : `${ADMIN}/reviews`}
+            className={styles.actionAlertCard}
+          >
+            <div className={styles.actionAlertLeft}>
+              <div className={`${styles.actionIconBadge} ${styles.actionPurple}`}>
+                <MessageSquare size={18} />
+              </div>
+              <div className={styles.actionTextWrap}>
+                <span className={styles.actionTitle}>Inquiries & Reviews</span>
+                <span className={styles.actionCount}>{msgReviewTotal}</span>
+              </div>
+            </div>
+            <span className={`${styles.actionStatusTag} ${msgReviewTotal > 0 ? styles.tagPending : styles.tagClear}`}>
+              {msgReviewTotal > 0 ? `${actionAlerts.unreadInquiries || 0} Msg • ${actionAlerts.pendingReviews || 0} Rev` : 'Caught Up'}
+            </span>
+          </Link>
+        </div>
+
+        {/* ─── 4. Middle Row: Revenue Wave Chart + Real Orders Donut Breakdown ─ */}
         <div className={styles.middleGrid}>
           {/* Left Column: Total Revenue Spline Wave Chart */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Total Revenue</h2>
+              <h2 className={styles.cardTitle}>{timeframe} Revenue</h2>
+              <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 600 }}>
+                {summary.timeframeOrders ?? summary.totalOrders ?? 0} orders in period
+              </span>
             </div>
 
             {/* Metric Summary Banner */}
@@ -981,7 +1497,7 @@ export default function AdminDashboard() {
             />
           </div>
 
-          {/* Right Column: Orders Status Donut Chart Breakdown */}
+          {/* Right Column: Orders Status Donut Chart Breakdown (Real DB Counts) */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div className={styles.cardTitleWrap}>
@@ -998,7 +1514,342 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ─── 4. Bottom Row: Recent Orders & Top Selling Products ─────────── */}
+        {/* ─── 5. Business Insights Row: Coupons + Abandoned Carts + Payments & Categories ─ */}
+        <div className={styles.insightsGrid}>
+          {/* Card 1: Coupons & Discounts ROI */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrap}>
+                <TicketPercent size={18} color="#7c3aed" />
+                <h2 className={styles.cardTitle}>Coupons & Discounts</h2>
+              </div>
+              <Link to={`${ADMIN}/coupons`} className={styles.viewAllLink}>
+                <span>Manage</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className={styles.insightStatsRow}>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Active / Scheduled</span>
+                <span className={styles.insightMiniVal}>
+                  {couponInsights.activeCoupons}{' '}
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563eb' }}>
+                    (+{couponInsights.scheduledCoupons} sched)
+                  </span>
+                </span>
+                <span className={styles.insightMiniSub}>{couponInsights.totalCoupons} total codes</span>
+              </div>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Total Coupon Savings</span>
+                <span className={styles.insightMiniVal}>{formatPrice(couponInsights.discountSaved)}</span>
+                <span className={styles.insightMiniSub}>{couponInsights.totalRedemptions} redemptions</span>
+              </div>
+            </div>
+
+            <div className={styles.topCouponHighlight}>
+              <span style={{ color: '#475569', fontWeight: 600 }}>Top Performing Coupon</span>
+              {couponInsights.topCoupon ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className={styles.topCouponCode}>{couponInsights.topCoupon.code}</span>
+                  <span style={{ fontWeight: 700, color: '#059669' }}>
+                    {couponInsights.topCoupon.usageCount || 0} uses
+                  </span>
+                </div>
+              ) : (
+                <span style={{ color: '#94a3b8', fontWeight: 600 }}>No coupons yet</span>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: Abandoned Cart Recovery */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrap}>
+                <ShoppingBag size={18} color="#ea580c" />
+                <h2 className={styles.cardTitle}>Abandoned Carts</h2>
+              </div>
+              <Link to={`${ADMIN}/abandoned-carts`} className={styles.viewAllLink}>
+                <span>Recover</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className={styles.insightStatsRow}>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Carts at Risk</span>
+                <span className={styles.insightMiniVal}>{formatPrice(abandonedCartInsights.atRiskValue)}</span>
+                <span className={styles.insightMiniSub}>{abandonedCartInsights.activeCount} active bags</span>
+              </div>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Won-Back Revenue</span>
+                <span className={styles.insightMiniVal}>{formatPrice(abandonedCartInsights.recoveredValue)}</span>
+                <span className={styles.insightMiniSub}>{abandonedCartInsights.recoveredCount} recovered</span>
+              </div>
+            </div>
+
+            <div className={styles.topCouponHighlight}>
+              <span style={{ color: '#475569', fontWeight: 600 }}>WhatsApp Recovery Ready</span>
+              <Link
+                to={`${ADMIN}/abandoned-carts`}
+                style={{ fontWeight: 800, color: '#059669', textDecoration: 'none' }}
+              >
+                Send Alerts →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: Payment Split & Top Category Sales */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrap}>
+                <CreditCard size={18} color="#2563eb" />
+                <h2 className={styles.cardTitle}>Payments & Categories</h2>
+              </div>
+              <BarChart3 size={16} color="#94a3b8" />
+            </div>
+
+            {/* Online vs COD Payment Split Bar */}
+            <div className={styles.paymentSplitBox}>
+              <div className={styles.paymentLabelsRow}>
+                <span style={{ color: '#7c3aed' }}>
+                  Prepaid / Online: {onlinePct}% ({paymentBreakdown.onlineCount})
+                </span>
+                <span style={{ color: '#d97706' }}>
+                  COD: {codPct}% ({paymentBreakdown.codCount})
+                </span>
+              </div>
+              <div className={styles.paymentTrack}>
+                <div className={styles.paymentFillOnline} style={{ width: `${onlinePct}%` }} />
+              </div>
+            </div>
+
+            {/* Top Categories Leaderboard */}
+            <div className={styles.catLeaderboard}>
+              {categorySales.length === 0 ? (
+                <div style={{ fontSize: '0.8rem', color: '#64748b', textAlign: 'center', padding: '0.75rem 0' }}>
+                  No category sales recorded yet
+                </div>
+              ) : (
+                categorySales.slice(0, 4).map((cat) => {
+                  const widthPct = Math.max(8, Math.round((cat.revenue / maxCategoryRevenue) * 100));
+                  return (
+                    <div key={cat.name} className={styles.catRow}>
+                      <div className={styles.catRowTop}>
+                        <span>{cat.name}</span>
+                        <span style={{ color: '#7c3aed' }}>
+                          {formatPrice(cat.revenue)} ({cat.units} pcs)
+                        </span>
+                      </div>
+                      <div className={styles.catBarTrack}>
+                        <div className={styles.catBarFill} style={{ width: `${widthPct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── 5.5 Operations, Stock Watchlist & Regional Delivery Insights ─── */}
+        <div className={styles.insightsGrid}>
+          {/* Card 1: Low / Out of Stock Product Watchlist */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrap}>
+                <AlertTriangle size={18} color="#dc2626" />
+                <h2 className={styles.cardTitle}>Low Stock Watchlist</h2>
+              </div>
+              <Link to={`${ADMIN}/inventory`} className={styles.viewAllLink}>
+                <span>Restock</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            {lowStockWatchlist.length === 0 ? (
+              <div
+                style={{
+                  fontSize: '0.82rem',
+                  color: '#059669',
+                  background: '#ecfdf5',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  textAlign: 'center',
+                  fontWeight: 700,
+                }}
+              >
+                All active products are well stocked!
+              </div>
+            ) : (
+              <div className={styles.watchlistContainer}>
+                {lowStockWatchlist.map((item) => (
+                  <Link
+                    key={item._id}
+                    to={`${ADMIN}/inventory`}
+                    className={styles.watchlistItem}
+                  >
+                    <div className={styles.watchlistLeft}>
+                      <img
+                        src={
+                          item.image ||
+                          'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=80'
+                        }
+                        alt={item.name}
+                        className={styles.watchlistThumb}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <div className={styles.watchlistName}>{item.name}</div>
+                        <div className={styles.watchlistSku}>
+                          {item.sku ? `SKU: ${item.sku} • ` : ''}Threshold: {item.threshold}
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      className={
+                        item.quantity <= 0 ? styles.stockBadgeCritical : styles.stockBadgeLow
+                      }
+                    >
+                      {item.quantity <= 0 ? 'Out of Stock' : `${item.quantity} left`}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Shiprocket Fulfillment & Cancellations / Return Health */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrap}>
+                <Truck size={18} color="#2563eb" />
+                <h2 className={styles.cardTitle}>Fulfillment &amp; Health</h2>
+              </div>
+              <Link to={`${ADMIN}/orders`} className={styles.viewAllLink}>
+                <span>Orders</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className={styles.insightStatsRow}>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Awaiting AWB</span>
+                <span className={styles.insightMiniVal}>{fulfillmentHealth.awaitingAwb}</span>
+                <span className={styles.insightMiniSub}>Ready for Shiprocket</span>
+              </div>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>In Transit</span>
+                <span className={styles.insightMiniVal}>{fulfillmentHealth.inTransit}</span>
+                <span className={styles.insightMiniSub}>Shipped / active</span>
+              </div>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Cancellation Rate</span>
+                <span className={styles.insightMiniVal}>
+                  {fulfillmentHealth.cancellationRatePct}%
+                </span>
+                <span className={styles.insightMiniSub}>
+                  {fulfillmentHealth.cancelledCount} cancelled
+                </span>
+              </div>
+              <div className={styles.insightMiniBox}>
+                <span className={styles.insightMiniLabel}>Cancelled &amp; Refunds</span>
+                <span className={styles.insightMiniVal}>
+                  {formatPrice(
+                    (fulfillmentHealth.cancelledValue || 0) +
+                      (fulfillmentHealth.refundedValue || 0)
+                  )}
+                </span>
+                <span className={styles.insightMiniSub}>
+                  {fulfillmentHealth.returnRequests} return req
+                </span>
+              </div>
+            </div>
+
+            <div className={styles.topCouponHighlight}>
+              <span style={{ color: '#475569', fontWeight: 600 }}>Repeat Customer Rate</span>
+              <span style={{ fontWeight: 800, color: '#7c3aed' }}>
+                {customerRetention.repeatBuyers}/{customerRetention.uniqueBuyers} buyers (
+                {customerRetention.repeatRatePct}%)
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Top Delivery Cities & Active Offers */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrap}>
+                <MapPin size={18} color="#059669" />
+                <h2 className={styles.cardTitle}>Top Regions &amp; Offers</h2>
+              </div>
+              <Link to={`${ADMIN}/discounts`} className={styles.viewAllLink}>
+                <span>Offers</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className={styles.paymentSplitBox}>
+              <div className={styles.paymentLabelsRow}>
+                <span style={{ color: '#059669' }}>
+                  Tamil Nadu: {tnPct}% ({locationInsights.tnOrders})
+                </span>
+                <span style={{ color: '#64748b' }}>
+                  Rest of India: {totalRegionOrders > 0 ? 100 - tnPct : 0}% (
+                  {locationInsights.otherOrders})
+                </span>
+              </div>
+              <div className={styles.paymentTrack} style={{ background: '#e2e8f0' }}>
+                <div className={styles.regionBarFillTn} style={{ width: `${tnPct}%` }} />
+              </div>
+            </div>
+
+            <div className={styles.catLeaderboard}>
+              {(locationInsights.topCities || []).length === 0 ? (
+                <div style={{ fontSize: '0.8rem', color: '#64748b', textAlign: 'center', padding: '0.75rem 0' }}>
+                  No city delivery data yet
+                </div>
+              ) : (
+                locationInsights.topCities.slice(0, 4).map((c) => {
+                  const widthPct = Math.max(8, Math.round((c.revenue / maxCityRevenue) * 100));
+                  return (
+                    <div key={`${c.city}-${c.state}`} className={styles.catRow}>
+                      <div className={styles.catRowTop}>
+                        <span>{c.city}</span>
+                        <span style={{ color: '#059669' }}>
+                          {formatPrice(c.revenue)} ({c.orders} ord)
+                        </span>
+                      </div>
+                      <div className={styles.catBarTrack}>
+                        <div
+                          className={styles.catBarFill}
+                          style={{
+                            width: `${widthPct}%`,
+                            background: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className={styles.topCouponHighlight} style={{ marginTop: '14px' }}>
+              <span style={{ color: '#475569', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <Tag size={13} color="#7c3aed" />
+                {activePromotions.discountedProductsCount} sale items • {activePromotions.activeDiscountsCount} deals
+              </span>
+              <Link
+                to={`${ADMIN}/flash-sales`}
+                style={{ fontWeight: 800, color: '#7c3aed', textDecoration: 'none' }}
+              >
+                Flash Sales →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── 6. Bottom Row: Recent Orders & Top Selling Products ─────────── */}
         <div className={styles.bottomGrid}>
           {/* Left Column: Recent Orders Table */}
           <div className={styles.card}>
@@ -1029,58 +1880,65 @@ export default function AdminDashboard() {
                   </tr>
                 ) : (
                   recentOrders.map((order) => {
-                  let statusClass = styles.statusDelivered;
-                  if (order.status === 'shipped') statusClass = styles.statusShipped;
-                  else if (order.status === 'confirmed') statusClass = styles.statusConfirmed;
-                  else if (order.status === 'cancelled') statusClass = styles.statusCancelled;
+                    let statusClass = styles.statusDelivered;
+                    if (order.status === 'shipped' || order.status === 'out_for_delivery')
+                      statusClass = styles.statusShipped;
+                    else if (order.status === 'confirmed' || order.status === 'placed')
+                      statusClass = styles.statusConfirmed;
+                    else if (order.status === 'cancelled') statusClass = styles.statusCancelled;
 
-                  const customerName =
-                    order.user?.name ||
-                    order.shippingAddress?.fullName ||
-                    order.customer?.name ||
-                    'Customer';
+                    const customerName =
+                      order.user?.name ||
+                      order.shippingAddress?.fullName ||
+                      order.customer?.name ||
+                      'Customer';
 
-                  const customerInitials = customerName
-                    .split(' ')
-                    .filter(Boolean)
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2) || 'C';
+                    const customerInitials =
+                      customerName
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2) || 'C';
 
-                  const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  });
+                    const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    });
 
-                  const orderTotalAmount = order.total ?? order.totalAmount ?? 0;
+                    const orderTotalAmount = order.total ?? order.totalAmount ?? 0;
 
-                  return (
-                    <tr key={order._id}>
-                      <td>
-                        <strong style={{ color: '#7c3aed', fontSize: '0.84rem' }}>
-                          {order.orderNumber}
-                        </strong>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className={styles.customerAvatarBadge}>{customerInitials}</span>
-                          <span style={{ fontWeight: 600, color: '#1e1b4b' }}>{customerName}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <strong style={{ color: '#0f172a' }}>{formatPrice(orderTotalAmount)}</strong>
-                      </td>
-                      <td>
-                        <span className={`${styles.statusPill} ${statusClass}`}>
-                          <span className={styles.statusPulseDot} />
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
-                      </td>
-                      <td style={{ color: '#64748b', fontSize: '0.78rem' }}>{orderDate}</td>
-                    </tr>
-                  );
-                }))}
+                    return (
+                      <tr key={order._id}>
+                        <td>
+                          <Link
+                            to={`${ADMIN}/orders/${order._id}`}
+                            style={{ color: '#7c3aed', fontSize: '0.84rem', fontWeight: 700, textDecoration: 'none' }}
+                          >
+                            {order.orderNumber}
+                          </Link>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className={styles.customerAvatarBadge}>{customerInitials}</span>
+                            <span style={{ fontWeight: 600, color: '#1e1b4b' }}>{customerName}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <strong style={{ color: '#0f172a' }}>{formatPrice(orderTotalAmount)}</strong>
+                        </td>
+                        <td>
+                          <span className={`${styles.statusPill} ${statusClass}`}>
+                            <span className={styles.statusPulseDot} />
+                            {order.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                          </span>
+                        </td>
+                        <td style={{ color: '#64748b', fontSize: '0.78rem' }}>{orderDate}</td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -1102,47 +1960,112 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 topProducts.map((prod, idx) => (
-                <div key={prod._id || prod.id} className={styles.topProductRow}>
-                  <div className={styles.topProductLeft}>
-                    <span
-                      className={`${styles.topRankNum} ${
-                        idx === 0
-                          ? styles.topRankFirst
-                          : idx === 1
-                          ? styles.topRankSecond
-                          : idx === 2
-                          ? styles.topRankThird
-                          : ''
-                      }`}
-                    >
-                      #{idx + 1}
-                    </span>
-                    <img
-                      src={
-                        prod.image ||
-                        prod.images?.[0] ||
-                        'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100'
-                      }
-                      alt={prod.name}
-                      className={styles.topProductImg}
-                    />
-                    <div>
-                      <span className={styles.topProductName}>{prod.name}</span>
-                      <span className={styles.topProductCat}>
-                        {prod.category?.name || (typeof prod.category === 'string' ? prod.category : '') || 'General'}
+                  <div key={prod._id || prod.id || idx} className={styles.topProductRow}>
+                    <div className={styles.topProductLeft}>
+                      <span
+                        className={`${styles.topRankNum} ${
+                          idx === 0
+                            ? styles.topRankFirst
+                            : idx === 1
+                            ? styles.topRankSecond
+                            : idx === 2
+                            ? styles.topRankThird
+                            : ''
+                        }`}
+                      >
+                        #{idx + 1}
                       </span>
+                      <img
+                        src={
+                          prod.image ||
+                          prod.images?.[0] ||
+                          'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100'
+                        }
+                        alt={prod.name}
+                        className={styles.topProductImg}
+                      />
+                      <div>
+                        <span className={styles.topProductName}>{prod.name}</span>
+                        <span className={styles.topProductCat}>
+                          {prod.category?.name || (typeof prod.category === 'string' ? prod.category : '') || 'General'}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0f172a' }}>
+                        {formatPrice(prod.totalRevenue ?? prod.discountPrice ?? prod.price ?? 0)}
+                      </div>
+                      <span className={styles.topProductSales}>{prod.unitsSold} sold</span>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0f172a' }}>
-                      {formatPrice(prod.totalRevenue ?? prod.discountPrice ?? prod.price ?? 0)}
-                    </div>
-                    <span className={styles.topProductSales}>{prod.unitsSold} sold</span>
-                  </div>
-                </div>
-              )))}
+                ))
+              )}
             </div>
           </div>
+        </div>
+
+        {/* ─── 7. Live Store Activity Timeline ─────────────────────────────── */}
+        <div className={`${styles.card} ${styles.activityCard}`}>
+          <div className={styles.cardHeader}>
+            <div className={styles.cardTitleWrap}>
+              <Activity size={18} color="#7c3aed" />
+              <h2 className={styles.cardTitle}>Live Store Activity</h2>
+            </div>
+            <Link to={`${ADMIN}/notifications`} className={styles.viewAllLink}>
+              <span>Activity Feed</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          {liveActivity.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748b', fontSize: '0.85rem' }}>
+              No recent store activity yet
+            </div>
+          ) : (
+            <div className={styles.activityGrid}>
+              {liveActivity.map((act) => {
+                let iconBg = '#faf5ff';
+                let iconColor = '#7c3aed';
+                let IconComp = ShoppingBag;
+                if (act.type === 'return') {
+                  iconBg = '#eff6ff';
+                  iconColor = '#2563eb';
+                  IconComp = RotateCcw;
+                } else if (act.type === 'inquiry') {
+                  iconBg = '#fffbeb';
+                  iconColor = '#d97706';
+                  IconComp = MessageSquare;
+                } else if (act.type === 'review') {
+                  iconBg = '#ecfdf5';
+                  iconColor = '#059669';
+                  IconComp = Star;
+                }
+
+                return (
+                  <Link key={act.id} to={`${ADMIN}${act.link}`} className={styles.activityItem}>
+                    <div
+                      className={styles.activityIcon}
+                      style={{ background: iconBg, color: iconColor }}
+                    >
+                      <IconComp size={16} />
+                    </div>
+                    <div className={styles.activityBody}>
+                      <div className={styles.activityTitle}>{act.title}</div>
+                      <div className={styles.activitySub}>{act.subtitle}</div>
+                    </div>
+                    <div className={styles.activityRight}>
+                      {act.amount > 0 && (
+                        <span className={styles.activityAmount}>{formatPrice(act.amount)}</span>
+                      )}
+                      <span className={styles.activityTime}>
+                        {formatActivityRelativeTime(act.timestamp)}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

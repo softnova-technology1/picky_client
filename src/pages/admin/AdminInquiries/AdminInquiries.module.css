@@ -4,10 +4,11 @@
    ========================================================================== */
 
 .pageContainer {
-  padding: 1.5rem 2rem 3rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: calc(100vh - 72px);
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
   animation: fadeIn 0.25s ease-out;
 }
 
@@ -45,24 +46,23 @@
 }
 
 .titleIcon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f3e8ff, #ede9fe);
-  border: 1px solid #ddd6fe;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c3aed;
-  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
 }
 
 .pageTitle {
-  font-size: 1.75rem;
-  font-weight: 800;
+  font-size: 1.65rem;
+  font-weight: 850;
   color: #0f172a;
-  letter-spacing: -0.02em;
-  font-family: 'Playfair Display', serif, system-ui;
+  letter-spacing: -0.03em;
   margin: 0;
 }
 
@@ -124,9 +124,9 @@
 /* ── Metric Cards Grid ──────────────────────────────────────────────────── */
 .metricGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.15rem;
-  margin-bottom: 1.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 1.35rem;
 }
 
 .metricCard {
@@ -198,10 +198,11 @@
 .sourceTabs {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   background: #faf8fe;
-  padding: 0.35rem;
-  border-radius: 9999px;
+  padding: 0.32rem;
+  border-radius: 14px;
   border: 1px solid #ede8f8;
 }
 
@@ -249,8 +250,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-grow: 1;
-  max-width: 480px;
+  flex: 1 1 320px;
+  max-width: 520px;
 }
 
 .searchBox {
@@ -269,10 +270,12 @@
 
 .searchInput {
   width: 100%;
+  height: 40px;
+  box-sizing: border-box;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 0.55rem 2.2rem 0.55rem 2.4rem;
+  padding: 0 2.2rem 0 2.4rem;
   color: #0f172a;
   font-size: 0.835rem;
   font-family: inherit;
@@ -304,10 +307,12 @@
 }
 
 .statusFilterSelect {
+  height: 40px;
+  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  padding: 0.55rem 0.95rem;
+  padding: 0 0.95rem;
   color: #334155;
   font-size: 0.825rem;
   font-weight: 600;
@@ -429,8 +434,8 @@
 
 .inquiryTable th {
   background: #faf8fe;
-  padding: 0.95rem 1.15rem;
-  font-size: 0.73rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -440,7 +445,7 @@
 }
 
 .inquiryTable td {
-  padding: 1rem 1.15rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.865rem;
   color: #334155;
@@ -549,7 +554,7 @@
 
 /* Message Cell */
 .messageCell {
-  max-width: 380px;
+  max-width: 480px;
   min-width: 240px;
 }
 
@@ -939,24 +944,54 @@
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1120px) {
   .metricGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 640px) {
-  .pageContainer {
-    padding: 1rem;
-  }
-  .metricGrid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 768px) {
   .filterBar {
     flex-direction: column;
     align-items: stretch;
   }
+  .sourceTabs {
+    border-radius: 12px;
+  }
   .searchAndControls {
     max-width: 100%;
+    flex-wrap: wrap;
   }
+}
+
+@media (max-width: 600px) {
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark Mode Harmony */
+:global(.admin-layout.dark-mode) .metricCard,
+:global(.admin-layout.dark-mode) .filterBar,
+:global(.admin-layout.dark-mode) .tableCard,
+:global(.admin-layout.dark-mode) .inquiryRow,
+:global(.admin-layout.dark-mode) .refreshBtn,
+:global(.admin-layout.dark-mode) .statusFilterSelect {
+  background: #111827;
+  border-color: #1f293d;
+  color: #e2e8f0;
+}
+
+:global(.admin-layout.dark-mode) .sourceTabs,
+:global(.admin-layout.dark-mode) .inquiryTable th,
+:global(.admin-layout.dark-mode) .searchInput {
+  background: #161f30;
+  border-color: #1f293d;
+  color: #f8fafc;
+}
+
+:global(.admin-layout.dark-mode) .metricValue,
+:global(.admin-layout.dark-mode) .customerName,
+:global(.admin-layout.dark-mode) .messageSnippet {
+  color: #f8fafc;
 }

@@ -163,14 +163,16 @@ const PRESET_COLOR_PALETTE = [
   { id: 'pink', name: 'Rose Pink', color: '#ec4899' },
 ];
 
+let cachedProductsPageData = null;
+
 export default function AdminProducts() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(() => cachedProductsPageData?.products || []);
+  const [categories, setCategories] = useState(() => cachedProductsPageData?.categories || []);
+  const [subcategories, setSubcategories] = useState(() => cachedProductsPageData?.subcategories || []);
+  const [loading, setLoading] = useState(() => !cachedProductsPageData);
 
   // View Mode: 'table' | 'form'
   const [viewMode, setViewMode] = useState('table');
@@ -318,46 +320,56 @@ export default function AdminProducts() {
     };
   }, [formData, primaryPreview, secondaryPreviews, categories, editingProduct, charValues, customSpecs, hasSizes, selectedSizes, hasWeights, selectedWeights, hasLiquids, selectedLiquids, hasColors, selectedColors]);
 
-  async function loadData() {
-    const startTime = Date.now();
+  async function loadData(isBackground = false) {
     try {
-      setLoading(true);
+      if (!isBackground && !cachedProductsPageData) {
+        setLoading(true);
+      }
       const [prodRes, catRes, subRes] = await Promise.all([
         productService.list({ limit: 250, includeInactive: true }).catch(() => null),
         categoryService.list().catch(() => null),
         adminService.getSubCategories().catch(() => null),
       ]);
-      const pList = prodRes ? (prodRes.data?.data || prodRes.data || []) : [];
-      const cList = catRes ? (catRes.data?.data || catRes.data || []) : [];
-      const sList = subRes ? (subRes.data?.data || subRes.data || []) : [];
+      const pList = prodRes ? (prodRes.data?.data || prodRes.data || []) : (cachedProductsPageData?.products || []);
+      const cList = catRes ? (catRes.data?.data || catRes.data || []) : (cachedProductsPageData?.categories || []);
+      const sList = subRes ? (subRes.data?.data || subRes.data || []) : (cachedProductsPageData?.subcategories || []);
+      cachedProductsPageData = { products: pList, categories: cList, subcategories: sList };
       setProducts(pList);
       setCategories(cList);
       setSubcategories(sList);
     } catch (err) {
       console.error('Failed to load products:', err);
-      setProducts([]);
-      setCategories([]);
-      setSubcategories([]);
+      if (!isBackground && !cachedProductsPageData) {
+        setProducts([]);
+        setCategories([]);
+        setSubcategories([]);
+      }
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData();
+    loadData(Boolean(cachedProductsPageData));
 
-    // Auto-rehydrate when server starts or reconnects
+    // Auto-rehydrate silently when server reconnects or window focuses (throttled)
+    let lastFocusSyncAt = 0;
     const handleServerOnline = () => {
-      console.log('⚡ [AdminProducts] Auto-syncing products on server reconnect...');
-      loadData();
+      loadData(true);
+    };
+    const handleFocusSync = () => {
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
+      loadData(true);
     };
 
     window.addEventListener('picky_server_reconnected', handleServerOnline);
-    window.addEventListener('focus', handleServerOnline);
+    window.addEventListener('focus', handleFocusSync);
 
     return () => {
       window.removeEventListener('picky_server_reconnected', handleServerOnline);
-      window.removeEventListener('focus', handleServerOnline);
+      window.removeEventListener('focus', handleFocusSync);
     };
   }, []);
 
@@ -798,7 +810,7 @@ export default function AdminProducts() {
           )
         );
         showToast('Product updated successfully', 'success');
-        loadData();
+        loadData(true);
       } else {
         const res = await adminService.createProduct(payload);
         const updated = res?.data?.data || res?.data;
@@ -819,7 +831,7 @@ export default function AdminProducts() {
         };
         setProducts((prev) => [newProduct, ...prev]);
         showToast('Product created successfully', 'success');
-        loadData();
+        loadData(true);
       }
       setViewMode('table');
     } catch (err) {
@@ -1246,15 +1258,7 @@ export default function AdminProducts() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(320px, 380px) 1fr',
-                gap: '1.75rem',
-                alignItems: 'start',
-                marginBottom: '2rem',
-              }}
-            >
+            <div className="admin-product-form-grid">
               {/* ── LEFT COLUMN: High-Impact Image Upload & Visual Gallery ── */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 

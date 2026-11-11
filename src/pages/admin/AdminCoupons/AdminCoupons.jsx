@@ -101,14 +101,16 @@ function renderApplicableBadge(applicableOn) {
   );
 }
 
+let cachedTargetCategories = [];
+let cachedTargetProducts = [];
+
 export default function AdminCoupons() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
 
   // Available real Categories and Products from backend database for selective coupon targeting
-  const [categoriesList, setCategoriesList] = useState([]);
-  const [productsList, setProductsList] = useState([]);
+  const [categoriesList, setCategoriesList] = useState(cachedTargetCategories);
+  const [productsList, setProductsList] = useState(cachedTargetProducts);
 
   // Data lists from shared couponStore
   const {
@@ -121,6 +123,7 @@ export default function AdminCoupons() {
   } = useCouponStore();
 
   const effectiveCoupons = Array.isArray(coupons) ? coupons : [];
+  const [loading, setLoading] = useState(() => effectiveCoupons.length === 0);
 
   // Highlight parameter support from Reports page link
   const highlightCode = searchParams.get('highlight');
@@ -200,10 +203,16 @@ export default function AdminCoupons() {
           productService.list({ limit: 500 }).catch(() => null),
         ]);
         const cats = catRes?.data?.data || catRes?.data || [];
-        if (Array.isArray(cats)) setCategoriesList(cats);
+        if (Array.isArray(cats)) {
+          cachedTargetCategories = cats;
+          setCategoriesList(cats);
+        }
 
         const prods = prodRes?.data?.data || prodRes?.data || [];
-        if (Array.isArray(prods)) setProductsList(prods);
+        if (Array.isArray(prods)) {
+          cachedTargetProducts = prods;
+          setProductsList(prods);
+        }
       } catch (err) {
         console.warn('Failed to load categories/products for coupon selector:', err);
       }
@@ -343,9 +352,12 @@ export default function AdminCoupons() {
     });
   };
 
-  async function loadData() {
+  async function loadData(isBackground = false) {
     try {
-      setLoading(true);
+      const hasExisting = useCouponStore.getState().coupons?.length > 0;
+      if (!isBackground && !hasExisting) {
+        setLoading(true);
+      }
       const cRes = await adminService.getCoupons().catch(() => null);
       const cList = cRes?.data || [];
       if (Array.isArray(cList) && cList.length > 0) {
@@ -372,20 +384,26 @@ export default function AdminCoupons() {
   }
 
   useEffect(() => {
-    loadData();
+    loadData(effectiveCoupons.length > 0);
 
-    // Auto-rehydrate when server starts or reconnects
+    // Auto-rehydrate silently when server reconnects or window focuses (throttled)
+    let lastFocusSyncAt = 0;
     const handleServerOnline = () => {
-      console.log('⚡ [AdminCoupons] Auto-syncing coupons on server reconnect...');
-      loadData();
+      loadData(true);
+    };
+    const handleFocusSync = () => {
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
+      loadData(true);
     };
 
     window.addEventListener('picky_server_reconnected', handleServerOnline);
-    window.addEventListener('focus', handleServerOnline);
+    window.addEventListener('focus', handleFocusSync);
 
     return () => {
       window.removeEventListener('picky_server_reconnected', handleServerOnline);
-      window.removeEventListener('focus', handleServerOnline);
+      window.removeEventListener('focus', handleFocusSync);
     };
   }, []);
 
@@ -631,8 +649,8 @@ export default function AdminCoupons() {
         showToast(`Coupon "${payload.code}" created!`, 'success');
       }
       setIsCouponModalOpen(false);
-      // Immediately reload data from backend database to ensure total sync
-      await loadData();
+      // Immediately reload data from backend database silently to ensure total sync
+      await loadData(true);
     } catch (err) {
       console.error('Coupon save error:', err);
       const errMsg = err?.error || err?.message || err?.data?.error || 'Failed to save coupon';

@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
-import { AdminProtectedRoute } from './components/layout/AdminProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
 import LoginPopupModal from './components/common/LoginPopupModal/LoginPopupModal';
 import { useButtonHoverFX } from './hooks/useButtonHoverFX';
@@ -40,27 +39,8 @@ const ShippingPolicy = lazy(() => import('./pages/ShippingPolicy/ShippingPolicy'
 const Faq = lazy(() => import('./pages/Faq/Faq'));
 const SizeGuide = lazy(() => import('./pages/SizeGuide/SizeGuide'));
 
-// ── Lazy-Loaded Admin Operations Portal (Isolated from customer bundle) ──
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
-const AdminOrderDetail = lazy(() => import('./pages/admin/AdminOrderDetail'));
-const AdminReturns = lazy(() => import('./pages/admin/AdminReturns'));
-const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
-const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
-const AdminSubCategories = lazy(() => import('./pages/admin/AdminSubCategories'));
-const AdminInventory = lazy(() => import('./pages/admin/AdminInventory'));
-const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'));
-const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
-const AdminDiscounts = lazy(() => import('./pages/admin/AdminDiscounts'));
-const AdminCustomization = lazy(() => import('./pages/admin/AdminCustomization'));
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
-const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'));
-const AdminAbandonedCarts = lazy(() => import('./pages/admin/AdminAbandonedCarts'));
-const AdminBroadcast = lazy(() => import('./pages/admin/AdminBroadcast'));
-const AdminFlashSales = lazy(() => import('./pages/admin/AdminFlashSales'));
-const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications'));
-const AdminInquiries = lazy(() => import('./pages/admin/AdminInquiries'));
-const AdminBlog = lazy(() => import('./pages/admin/AdminBlog'));
+// ── Lazy-Loaded Admin Operations Portal (Single unified chunk, isolated from customer bundle) ──
+const AdminRoutes = lazy(() => import('./pages/admin/AdminRoutes'));
 
 // Minimal, zero-overhead sleek page loading spinner
 function PageLoader() {
@@ -141,32 +121,42 @@ export default function App() {
 
     window.addEventListener('picky_server_reconnected', handleServerRecovery);
 
-    // 4. Tab visibility / Window focus revalidation:
-    // When switching from Admin tab back to Storefront tab, instantly revalidate
+    // 4. Tab visibility / Window focus revalidation (throttled to avoid connection flooding):
+    let lastFocusSyncAt = 0;
+    const isAdminRoute = () =>
+      window.location.pathname.startsWith(ADMIN) || window.location.pathname.startsWith(ADMIN_ALT);
+
     const handleRevalidate = () => {
-      if (document.visibilityState === 'visible') {
-        fetchLatestCustomizations();
-        settingsService.getSettings().catch(() => {});
-        useCategoryStore.getState().fetchCategories(true);
-        useBlogStore.getState().fetchBlogFromApi();
-        window.dispatchEvent(new CustomEvent('picky_catalog_updated'));
-      }
+      if (document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
+
+      // Avoid storefront sync flooding when navigating inside the Admin Portal
+      if (isAdminRoute()) return;
+
+      fetchLatestCustomizations();
+      settingsService.getSettings().catch(() => {});
+      useCategoryStore.getState().fetchCategories(true);
+      useBlogStore.getState().fetchBlogFromApi();
+      window.dispatchEvent(new CustomEvent('picky_catalog_updated'));
     };
 
     window.addEventListener('visibilitychange', handleRevalidate);
     window.addEventListener('focus', handleRevalidate);
 
-    // 5. Lightweight background sync & DB auto-reconnect poll (every 3.5s when tab is active)
+    // 5. Lightweight background sync & DB auto-reconnect poll (every 25s when on storefront)
     const pollInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        fetchLatestCustomizations();
-        useBlogStore.getState().fetchBlogFromApi();
-        // If DB was offline on initial load and categories are still empty, keep auto-retrying!
         if (useCategoryStore.getState().categories.length === 0) {
           useCategoryStore.getState().fetchCategories(true);
         }
+        if (!isAdminRoute()) {
+          fetchLatestCustomizations();
+          useBlogStore.getState().fetchBlogFromApi();
+        }
       }
-    }, 3500);
+    }, 25000);
 
     return () => {
       window.removeEventListener('picky_server_reconnected', handleServerRecovery);
@@ -241,46 +231,8 @@ export default function App() {
           <Route path="/size-guide" element={<SizeGuide />} />
 
           {/* ── Admin Protected Portal ───────────────── */}
-          <Route path={ADMIN} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-          <Route path={ADMIN_ALT} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/returns`} element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/returns`} element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/abandoned-carts`} element={<AdminProtectedRoute><AdminAbandonedCarts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/abandoned-carts`} element={<AdminProtectedRoute><AdminAbandonedCarts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/broadcast`} element={<AdminProtectedRoute><AdminBroadcast /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/broadcast`} element={<AdminProtectedRoute><AdminBroadcast /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/flash-sales`} element={<AdminProtectedRoute><AdminFlashSales /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/flash-sales`} element={<AdminProtectedRoute><AdminFlashSales /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/products`} element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/categories`} element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/subcategories`} element={<AdminProtectedRoute><AdminSubCategories /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/subcategories`} element={<AdminProtectedRoute><AdminSubCategories /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/inventory`} element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/reviews`} element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/reviews`} element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/coupons`} element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/discounts`} element={<AdminProtectedRoute><AdminDiscounts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/discounts`} element={<AdminProtectedRoute><AdminDiscounts /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/customers`} element={<AdminProtectedRoute><AdminCustomers /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/customization`} element={<AdminProtectedRoute><AdminCustomization /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/settings`} element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/notifications`} element={<AdminProtectedRoute><AdminNotifications /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/inquiries`} element={<AdminProtectedRoute><AdminInquiries /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN}/blog`} element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
-          <Route path={`${ADMIN_ALT}/blog`} element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/*`} element={<AdminRoutes />} />
+          <Route path={`${ADMIN_ALT}/*`} element={<AdminRoutes />} />
 
 
           {/* ── Catch-all 404 Page ───────────────────── */}

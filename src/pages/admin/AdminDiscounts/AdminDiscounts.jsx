@@ -22,16 +22,82 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 
+let cachedAdminDiscountsData = null;
+
+function resolveCategoryMatch(product, categoryKey, categories) {
+  if (!categoryKey || categoryKey === 'All Categories' || categoryKey === 'all') return true;
+  const normalizedKey = String(categoryKey).trim().toLowerCase();
+  const matchedCat = (categories || []).find(
+    (c) => String(c._id) === String(categoryKey) || (c.name || '').trim().toLowerCase() === normalizedKey
+  );
+  const targetId = matchedCat?._id ? String(matchedCat._id) : null;
+  const targetName = (matchedCat?.name || categoryKey).trim().toLowerCase();
+
+  const prodCatId = product.categoryId ? String(product.categoryId) : null;
+  const prodCatName = (product.categoryName || '').trim().toLowerCase();
+
+  return (targetId && prodCatId === targetId) || (targetName && prodCatName === targetName);
+}
+
+function getAvailableSubcategories({ categoryKey, categories, subcategories, products }) {
+  const isAll = !categoryKey || categoryKey === 'All Categories' || categoryKey === 'all';
+  const normalizedKey = String(categoryKey || '').trim().toLowerCase();
+  const selectedCat = !isAll
+    ? (categories || []).find(
+        (c) => String(c._id) === String(categoryKey) || (c.name || '').trim().toLowerCase() === normalizedKey
+      )
+    : null;
+  const selectedCatId = selectedCat?._id ? String(selectedCat._id) : null;
+  const selectedCatName = (selectedCat?.name || (!isAll ? categoryKey : '')).trim().toLowerCase();
+
+  const candidates = [];
+
+  (subcategories || []).forEach((s) => {
+    if (!s) return;
+    if (isAll) {
+      candidates.push(s.name || s);
+      return;
+    }
+    const subCatId = s.categoryId?._id ? String(s.categoryId._id) : s.categoryId ? String(s.categoryId) : null;
+    const subCatName = (s.categoryId?.name || '').trim().toLowerCase();
+    if ((selectedCatId && subCatId === selectedCatId) || (selectedCatName && subCatName === selectedCatName)) {
+      candidates.push(s.name || s);
+    }
+  });
+
+  (products || []).forEach((p) => {
+    if (!p?.subCategoryName) return;
+    if (isAll || resolveCategoryMatch(p, categoryKey, categories)) {
+      candidates.push(p.subCategoryName);
+    }
+  });
+
+  const uniqueMap = new Map();
+  candidates.forEach((raw) => {
+    const name = typeof raw === 'string' ? raw : raw?.name;
+    if (name && typeof name === 'string' && name.trim()) {
+      const trimmed = name.trim();
+      const key = trimmed.toLowerCase();
+      if (!uniqueMap.has(key)) uniqueMap.set(key, trimmed);
+    }
+  });
+
+  return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b));
+}
+
 export default function AdminDiscounts() {
   const { showToast } = useUiStore();
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(() => !cachedAdminDiscountsData);
+  const [products, setProducts] = useState(() => cachedAdminDiscountsData?.products || []);
+  const [categories, setCategories] = useState(() => cachedAdminDiscountsData?.categories || []);
+  const [subcategories, setSubcategories] = useState(() => cachedAdminDiscountsData?.subcategories || []);
 
-  // Search & Filter state
+  // Search, Filter & Sort state
   const [searchQuery, setSearchQuery] = useState('');
   const [discountFilter, setDiscountFilter] = useState('All Discounts');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
+  const [subcategoryFilter, setSubcategoryFilter] = useState('All Subcategories');
+  const [sortBy, setSortBy] = useState('default');
 
   // Selection state for Bulk Actions
   const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -58,6 +124,7 @@ export default function AdminDiscounts() {
   const [applyingBulkDiscount, setApplyingBulkDiscount] = useState(false);
   const [bulkForm, setBulkForm] = useState({
     category: 'all',
+    subCategory: 'all',
     tag: 'all',
     discountType: 'percentage', // 'percentage' | 'flat'
     discountValue: '',
@@ -68,24 +135,39 @@ export default function AdminDiscounts() {
   });
 
   // Fetch live products and categories from server
-  async function loadData() {
+  async function loadData(isBackground = false) {
     try {
-      setLoading(true);
-      const [prodRes, catRes] = await Promise.all([
-        productService.list({ limit: 200, includeInactive: true }).catch(() => null),
+      if (!isBackground && !cachedAdminDiscountsData) {
+        setLoading(true);
+      }
+      const [prodRes, catRes, subRes] = await Promise.all([
+        productService.list({ limit: 250, includeInactive: true }).catch(() => null),
         categoryService.list().catch(() => null),
+        adminService.getSubCategories().catch(() => null),
       ]);
 
       const liveList = prodRes?.data?.data || prodRes?.data || [];
       const catList = catRes?.data?.data || catRes?.data || [];
+      const subList = subRes?.data?.data || subRes?.data || [];
       setCategories(catList);
+      setSubcategories(subList);
 
-      // Normalize live products
+      const categoryById = new Map(catList.map((c) => [String(c._id), c]));
+
+      // Normalize live products (never overwrite parent categoryName with subCategory!)
       const formattedLive = liveList.map((p) => {
+        const catId = typeof p.category === 'object' ? String(p.category?._id || '') : String(p.category || '');
+        const resolvedCat = categoryById.get(catId);
         const catName =
           typeof p.category === 'object' && p.category?.name
             ? p.category.name
-            : p.subCategory || p.category || 'General';
+            : resolvedCat?.name || (catId && !/^[0-9a-fA-F]{24}$/.test(catId) ? catId : '') || 'General';
+        const subCatName =
+          typeof p.subCategory === 'object' && p.subCategory?.name
+            ? String(p.subCategory.name).trim()
+            : typeof p.subCategory === 'string'
+              ? p.subCategory.trim()
+              : '';
 
         // Calculate if percentage exists
         const hasDiscount = p.discountPrice !== undefined && p.discountPrice !== null && p.discountPrice < p.price;
@@ -116,7 +198,9 @@ export default function AdminDiscounts() {
         return {
           _id: p._id || p.id,
           name: p.name || 'Untitled Product',
-          categoryName: p.subCategory || catName,
+          categoryId: catId,
+          categoryName: catName,
+          subCategoryName: subCatName,
           categoryRaw: p.category,
           price: Number(p.price) || 0,
           discountPrice: hasDiscount ? Number(p.discountPrice) : null,
@@ -134,28 +218,55 @@ export default function AdminDiscounts() {
         };
       });
 
+      cachedAdminDiscountsData = { products: formattedLive, categories: catList, subcategories: subList };
       setProducts(formattedLive);
     } catch (err) {
       console.error('Failed to load products for discount table:', err);
-      setProducts([]);
+      if (!isBackground && !cachedAdminDiscountsData) {
+        setProducts([]);
+      }
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData();
+    loadData(Boolean(cachedAdminDiscountsData));
   }, []);
 
-  // Filter products based on search, discount status, and category
+  // Cascading Subcategory dropdown options
+  const filterAvailableSubcategories = useMemo(
+    () =>
+      getAvailableSubcategories({
+        categoryKey: categoryFilter,
+        categories,
+        subcategories,
+        products,
+      }),
+    [categoryFilter, categories, subcategories, products]
+  );
+
+  const bulkAvailableSubcategories = useMemo(
+    () =>
+      getAvailableSubcategories({
+        categoryKey: bulkForm.category,
+        categories,
+        subcategories,
+        products,
+      }),
+    [bulkForm.category, categories, subcategories, products]
+  );
+
+  // Filter and sort products based on search, discount status, category, subcategory, and sortBy
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       // 1. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const nameMatch = p.name?.toLowerCase().includes(q);
         const catMatch = p.categoryName?.toLowerCase().includes(q);
-        if (!nameMatch && !catMatch) return false;
+        const subMatch = p.subCategoryName?.toLowerCase().includes(q);
+        if (!nameMatch && !catMatch && !subMatch) return false;
       }
 
       // 2. Discount Status Filter
@@ -166,15 +277,65 @@ export default function AdminDiscounts() {
       if (discountFilter === 'Scheduled' && (!isConfiguredActive || !p.isScheduled || p.isExpired)) return false;
       if (discountFilter === 'Expired' && (!isConfiguredActive || !p.isExpired)) return false;
 
-      // 3. Category Filter
-      if (categoryFilter !== 'All Categories') {
-        const catName = (p.categoryName || '').toLowerCase();
-        if (!catName.includes(categoryFilter.toLowerCase())) return false;
+      // 3. Category Filter (exact parent category ID or name match)
+      if (!resolveCategoryMatch(p, categoryFilter, categories)) return false;
+
+      // 4. Subcategory Filter
+      if (subcategoryFilter !== 'All Subcategories') {
+        if ((p.subCategoryName || '').trim().toLowerCase() !== subcategoryFilter.trim().toLowerCase()) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [products, searchQuery, discountFilter, categoryFilter]);
+
+    if (sortBy === 'default') return filtered;
+
+    const getEffectivePrice = (item) =>
+      item.discountPrice !== null && item.discountPrice < item.price ? item.discountPrice : item.price;
+    const getDiscountPct = (item) =>
+      item.price > 0 && item.discountPrice !== null && item.discountPrice < item.price
+        ? ((item.price - item.discountPrice) / item.price) * 100
+        : 0;
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'subcategory-asc') {
+        const subA = (a.subCategoryName || '').trim() || '￿';
+        const subB = (b.subCategoryName || '').trim() || '￿';
+        const cmp = subA.localeCompare(subB);
+        return cmp !== 0 ? cmp : (a.name || '').localeCompare(b.name || '');
+      }
+      if (sortBy === 'subcategory-desc') {
+        const subA = (a.subCategoryName || '').trim();
+        const subB = (b.subCategoryName || '').trim();
+        if (!subA && !subB) return (a.name || '').localeCompare(b.name || '');
+        if (!subA) return 1;
+        if (!subB) return -1;
+        const cmp = subB.localeCompare(subA);
+        return cmp !== 0 ? cmp : (a.name || '').localeCompare(b.name || '');
+      }
+      if (sortBy === 'category-asc') {
+        const cmp = (a.categoryName || '').localeCompare(b.categoryName || '');
+        if (cmp !== 0) return cmp;
+        const subCmp = (a.subCategoryName || '￿').localeCompare(b.subCategoryName || '￿');
+        return subCmp !== 0 ? subCmp : (a.name || '').localeCompare(b.name || '');
+      }
+      if (sortBy === 'discount-desc') {
+        return getDiscountPct(b) - getDiscountPct(a);
+      }
+      if (sortBy === 'price-asc') {
+        return getEffectivePrice(a) - getEffectivePrice(b);
+      }
+      if (sortBy === 'price-desc') {
+        return getEffectivePrice(b) - getEffectivePrice(a);
+      }
+      if (sortBy === 'name-asc') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      return 0;
+    });
+  }, [products, categories, searchQuery, discountFilter, categoryFilter, subcategoryFilter, sortBy]);
 
   // Pagination slice
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
@@ -559,25 +720,27 @@ export default function AdminDiscounts() {
   // Compute products that match the selected bulk criteria
   const targetBulkProducts = useMemo(() => {
     return products.filter((p) => {
-      // 1. If user checked specific products on table AND hasn't selected specific category/tag, prioritize selected items
-      if (selectedProductIds.length > 0 && bulkForm.category === 'all' && bulkForm.tag === 'all') {
+      // 1. If user checked specific products on table AND hasn't selected specific category/subcategory/tag, prioritize selected items
+      if (
+        selectedProductIds.length > 0 &&
+        bulkForm.category === 'all' &&
+        bulkForm.subCategory === 'all' &&
+        bulkForm.tag === 'all'
+      ) {
         return selectedProductIds.includes(p._id);
       }
 
       // 2. Filter by Category
-      if (bulkForm.category !== 'all') {
-        const prodCat = p.rawProduct?.category;
-        const prodCatId = typeof prodCat === 'object' ? prodCat?._id : prodCat;
-        const selectedCatObj = categories.find((c) => String(c._id) === String(bulkForm.category));
-        const selectedCatName = (selectedCatObj?.name || '').toLowerCase();
-        const prodCatName = (p.categoryName || '').toLowerCase();
+      if (!resolveCategoryMatch(p, bulkForm.category, categories)) return false;
 
-        const matchId = prodCatId && String(prodCatId) === String(bulkForm.category);
-        const matchName = selectedCatName && prodCatName.includes(selectedCatName);
-        if (!matchId && !matchName) return false;
+      // 3. Filter by Subcategory
+      if (bulkForm.subCategory !== 'all') {
+        if ((p.subCategoryName || '').trim().toLowerCase() !== bulkForm.subCategory.trim().toLowerCase()) {
+          return false;
+        }
       }
 
-      // 3. Filter by Tag
+      // 4. Filter by Tag
       if (bulkForm.tag !== 'all') {
         const prodTags = (p.rawProduct?.tags || []).map((t) => String(t).trim().toLowerCase());
         if (!prodTags.includes(bulkForm.tag.toLowerCase())) return false;
@@ -585,11 +748,12 @@ export default function AdminDiscounts() {
 
       return true;
     });
-  }, [products, selectedProductIds, bulkForm.category, bulkForm.tag, categories]);
+  }, [products, selectedProductIds, bulkForm.category, bulkForm.subCategory, bulkForm.tag, categories]);
 
   const handleOpenBulkModal = () => {
     setBulkForm({
       category: 'all',
+      subCategory: 'all',
       tag: 'all',
       discountType: 'percentage',
       discountValue: '',
@@ -1021,7 +1185,7 @@ export default function AdminDiscounts() {
             />
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search product, category, subcategory..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -1084,11 +1248,12 @@ export default function AdminDiscounts() {
             value={categoryFilter}
             onChange={(e) => {
               setCategoryFilter(e.target.value);
+              setSubcategoryFilter('All Subcategories');
               setCurrentPage(1);
             }}
             style={{
               height: '40px',
-              padding: '0 1rem',
+              padding: '0 0.85rem',
               borderRadius: '8px',
               border: '1px solid #e2e8f0',
               background: '#ffffff',
@@ -1105,6 +1270,64 @@ export default function AdminDiscounts() {
                 {c.name}
               </option>
             ))}
+          </select>
+
+          {/* All Subcategories Dropdown */}
+          <select
+            value={subcategoryFilter}
+            onChange={(e) => {
+              setSubcategoryFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{
+              height: '40px',
+              padding: '0 0.85rem',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              fontSize: '0.84rem',
+              color: '#334155',
+              cursor: 'pointer',
+              outline: 'none',
+              minWidth: '165px',
+            }}
+          >
+            <option value="All Subcategories">All Subcategories</option>
+            {filterAvailableSubcategories.map((subName) => (
+              <option key={subName} value={subName}>
+                {subName}
+              </option>
+            ))}
+          </select>
+
+          {/* Subcategory & Product Sort Dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{
+              height: '40px',
+              padding: '0 0.85rem',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              fontSize: '0.84rem',
+              color: '#334155',
+              cursor: 'pointer',
+              outline: 'none',
+              minWidth: '175px',
+            }}
+          >
+            <option value="default">Sort: Default</option>
+            <option value="subcategory-asc">Subcategory (A → Z)</option>
+            <option value="subcategory-desc">Subcategory (Z → A)</option>
+            <option value="category-asc">Category (A → Z)</option>
+            <option value="discount-desc">Discount % (High → Low)</option>
+            <option value="price-asc">Price (Low → High)</option>
+            <option value="price-desc">Price (High → Low)</option>
+            <option value="name-asc">Product Name (A → Z)</option>
           </select>
         </div>
 
@@ -1437,7 +1660,11 @@ export default function AdminDiscounts() {
                                   {p.name}
                                 </div>
                                 <div
-                                  title={p.categoryName || 'General'}
+                                  title={
+                                    p.subCategoryName
+                                      ? `${p.categoryName || 'General'} • ${p.subCategoryName}`
+                                      : p.categoryName || 'General'
+                                  }
                                   style={{
                                     fontSize: '0.74rem',
                                     color: '#64748b',
@@ -1448,6 +1675,11 @@ export default function AdminDiscounts() {
                                   }}
                                 >
                                   {p.categoryName || 'General'}
+                                  {p.subCategoryName ? (
+                                    <span style={{ color: '#7c3aed', fontWeight: 600 }}>
+                                      {' '}• {p.subCategoryName}
+                                    </span>
+                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -2134,8 +2366,8 @@ export default function AdminDiscounts() {
 
               {/* Bulk Discount Form */}
               <form onSubmit={handleApplyBulkDiscount}>
-                {/* Row 1: CATEGORY & TAG */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                {/* Row 1: CATEGORY, SUBCATEGORY & TAG */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <label
                       style={{
@@ -2152,7 +2384,9 @@ export default function AdminDiscounts() {
                     </label>
                     <select
                       value={bulkForm.category}
-                      onChange={(e) => setBulkForm({ ...bulkForm, category: e.target.value })}
+                      onChange={(e) =>
+                        setBulkForm({ ...bulkForm, category: e.target.value, subCategory: 'all' })
+                      }
                       style={{
                         width: '100%',
                         height: '42px',
@@ -2171,6 +2405,46 @@ export default function AdminDiscounts() {
                       {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>
                           {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: '0.45rem',
+                      }}
+                    >
+                      SUBCATEGORY
+                    </label>
+                    <select
+                      value={bulkForm.subCategory}
+                      onChange={(e) => setBulkForm({ ...bulkForm, subCategory: e.target.value })}
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        fontSize: '0.86rem',
+                        color: '#1e293b',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="all">All Subcategories</option>
+                      {bulkAvailableSubcategories.map((subName) => (
+                        <option key={subName} value={subName}>
+                          {subName}
                         </option>
                       ))}
                     </select>

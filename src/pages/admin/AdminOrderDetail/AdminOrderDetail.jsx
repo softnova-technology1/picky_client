@@ -26,10 +26,12 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Spinner from '../../../components/ui/Spinner';
 import StatusTimeline from '../../../components/order/StatusTimeline';
+import WhatsAppIcon from '../../../components/common/WhatsAppIcon/WhatsAppIcon';
 import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
+import { getOrderCustomerInfo, getOrderTrackingInfo, launchOrderWhatsappShare } from '../../../utils/whatsappOrderShare';
 // ─── Common Logistics & Courier Partners ────────────────────────────────────
 const COMMON_COURIERS = [
   'Delhivery Surface',
@@ -268,6 +270,9 @@ export default function AdminOrderDetail() {
     );
   }
 
+  const customerInfo = getOrderCustomerInfo(order);
+  const trackingInfo = getOrderTrackingInfo(order);
+
   return (
     <AdminLayout title={`Manage Order #${order.orderNumber}`}>
       {/* Top Breadcrumb & Status Pill */}
@@ -289,14 +294,45 @@ export default function AdminOrderDetail() {
       </div>
 
       {/* ── Page Header ── */}
-      <div className="admin-page-header-row">
+      <div className="admin-page-header-row" style={{ flexWrap: 'wrap', gap: '0.85rem' }}>
         <div>
           <h1 className="admin-page-main-title">Order #{order.orderNumber}</h1>
           <p className="admin-page-main-subtitle">Manage customer shipment, tracking details and order lifecycle</p>
         </div>
+
+        <button
+          type="button"
+          onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+          title={
+            customerInfo.hasPhone
+              ? `Send WhatsApp message to ${customerInfo.name} (${customerInfo.rawPhone})`
+              : 'Customer phone number unavailable'
+          }
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.6rem 1.1rem',
+            borderRadius: '10px',
+            border: '1.5px solid #22c55e',
+            background: trackingInfo.awb
+              ? 'linear-gradient(135deg, #25D366 0%, #16a34a 100%)'
+              : '#f0fdf4',
+            color: trackingInfo.awb ? '#ffffff' : '#15803d',
+            fontSize: '0.84rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: trackingInfo.awb ? '0 4px 12px rgba(22, 163, 74, 0.25)' : 'none',
+            opacity: customerInfo.hasPhone ? 1 : 0.65,
+            transition: 'all 0.18s ease',
+          }}
+        >
+          <WhatsAppIcon size={16} color={trackingInfo.awb ? '#ffffff' : '#16a34a'} />
+          <span>{trackingInfo.awb ? 'Send Tracking on WhatsApp' : 'Send Confirmation on WhatsApp'}</span>
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left Column: Shipment Actions & Order Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* ── Shiprocket Automated Fulfillment Hub ── */}
@@ -396,7 +432,7 @@ export default function AdminOrderDetail() {
                   </button>
                 </div>
 
-                {/* Action Buttons: Print Label & Track Live */}
+                {/* Action Buttons: Print Label, Track Live & Send Tracking on WhatsApp */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.65rem' }}>
                   <a
                     href={order.shippingLabelUrl || `https://apiv2.shiprocket.in/sample-label/${order.trackingId}.pdf`}
@@ -420,7 +456,7 @@ export default function AdminOrderDetail() {
                   </a>
 
                   <a
-                    href={order.courierUrl || `https://shiprocket.co/tracking/${order.trackingId}`}
+                    href={trackingInfo.courierTrackingUrl || `https://shiprocket.co/tracking/${order.trackingId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="admin-period-select-btn"
@@ -439,6 +475,33 @@ export default function AdminOrderDetail() {
                     <ExternalLink size={15} />
                     <span>Track on Shiprocket</span>
                   </a>
+
+                  <button
+                    type="button"
+                    onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                    title={
+                      customerInfo.hasPhone
+                        ? `Send tracking link on WhatsApp (${customerInfo.rawPhone})`
+                        : 'Customer phone number unavailable'
+                    }
+                    className="admin-period-select-btn"
+                    style={{
+                      justifyContent: 'center',
+                      background: 'linear-gradient(135deg, #25D366 0%, #16a34a 100%)',
+                      color: '#ffffff',
+                      borderColor: '#16a34a',
+                      padding: '0.6rem',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(22, 163, 74, 0.22)',
+                      opacity: customerInfo.hasPhone ? 1 : 0.65,
+                    }}
+                  >
+                    <WhatsAppIcon size={15} color="#ffffff" />
+                    <span>Send Tracking on WhatsApp</span>
+                  </button>
                 </div>
               </div>
             ) : (

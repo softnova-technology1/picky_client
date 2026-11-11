@@ -54,12 +54,14 @@ import AdminInvoice from '../../../components/admin/AdminInvoice';
 import AdminShippingLabel from '../../../components/admin/AdminShippingLabel';
 import AdminGiftCard from '../../../components/admin/AdminGiftCard';
 import AdminStatCard from '../../../components/common/AdminStatCard';
+import WhatsAppIcon from '../../../components/common/WhatsAppIcon/WhatsAppIcon';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
 import { useOrderStore } from '../../../store/orderStore';
 import { useUiStore } from '../../../store/uiStore';
 import { fuzzyMatchScore } from '../../../utils/fuzzySearch';
+import { getOrderCustomerInfo, getOrderTrackingInfo, launchOrderWhatsappShare } from '../../../utils/whatsappOrderShare';
 
 // ─── Order Status & Filter Configurations ────────────────────────────────────
 export const STATUS_TABS = [
@@ -596,25 +598,31 @@ export default function AdminOrders() {
   useEffect(() => {
     fetchDbOrders();
 
-    // Auto-rehydrate when server starts or reconnects
+    // Auto-rehydrate silently when server reconnects or focus returns (throttled)
+    let lastFocusSyncAt = 0;
     const handleServerOnline = () => {
-      console.log('⚡ [AdminOrders] Auto-syncing orders on server reconnect...');
+      fetchDbOrders();
+    };
+    const handleFocusSync = () => {
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
       fetchDbOrders();
     };
 
     window.addEventListener('picky_server_reconnected', handleServerOnline);
-    window.addEventListener('focus', handleServerOnline);
+    window.addEventListener('focus', handleFocusSync);
 
-    // If server was offline when page opened and orders list is still empty, auto-retry every 2.5s
+    // If server was offline when page opened and orders list is still empty, auto-retry every 4s
     const retryInterval = setInterval(() => {
       if (useOrderStore.getState().orders.length === 0) {
         fetchDbOrders();
       }
-    }, 2500);
+    }, 4000);
 
     return () => {
       window.removeEventListener('picky_server_reconnected', handleServerOnline);
-      window.removeEventListener('focus', handleServerOnline);
+      window.removeEventListener('focus', handleFocusSync);
       clearInterval(retryInterval);
     };
   }, []);
@@ -1014,7 +1022,7 @@ export default function AdminOrders() {
       const awb = shipment.awbCode || data?.order?.trackingNumber || 'SR-DLHV-SIM';
       const assignedCourier = shipment.courierName || courier;
       const labelUrl = shipment.labelUrl || `/api/v1/orders/admin/${id}/shiprocket/label`;
-      const trackingUrl = shipment.trackingUrl || `https://www.delhivery.com/track/package/${awb}`;
+      const trackingUrl = shipment.courierUrl || shipment.trackingUrl || `https://shiprocket.co/tracking/${encodeURIComponent(awb)}`;
 
       showToast(`🚀 Order #${order.orderNumber} dispatched via Shiprocket (${assignedCourier})! AWB: ${awb}`, 'success');
 
@@ -2095,8 +2103,10 @@ export default function AdminOrders() {
             ) : (
               paginatedOrders.map((order, index) => {
                 const custName  = order.customer?.name || order.user?.name || order.shippingAddress?.fullName || 'Customer';
-                const custPhone = order.customer?.phone || order.user?.phone || '';
+                const custPhone = order.customer?.phone || order.user?.phone || order.shippingAddress?.phone || '';
                 const custEmail = order.customer?.email || order.user?.email || '';
+                const rowCustomerInfo = getOrderCustomerInfo(order);
+                const rowTrackingInfo = getOrderTrackingInfo(order);
                 const st        = (order.status || 'placed').toLowerCase();
                 const cfg       = STATUS_CFG[st] || STATUS_CFG.placed;
                 const StatusIcon = cfg.icon;
@@ -2394,6 +2404,49 @@ export default function AdminOrders() {
                             <Tag size={15} />
                           </button>
 
+                          {/* Quick WhatsApp Share Button (Tracking link if AWB exists, else Order Confirmation) */}
+                          <button
+                            type="button"
+                            onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                            title={
+                              !rowCustomerInfo.hasPhone
+                                ? 'Customer phone number unavailable'
+                                : rowTrackingInfo.awb
+                                  ? `Send Tracking (${rowTrackingInfo.awb}) on WhatsApp`
+                                  : `Send Order Confirmation #${order.orderNumber} on WhatsApp`
+                            }
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '9999px',
+                              border: rowTrackingInfo.awb ? '1.5px solid #22c55e' : '1.5px solid #bbf7d0',
+                              background: rowTrackingInfo.awb ? '#dcfce7' : '#f0fdf4',
+                              color: '#15803d',
+                              cursor: 'pointer',
+                              transition: 'all 0.18s ease',
+                              boxSizing: 'border-box',
+                              flexShrink: 0,
+                              opacity: rowCustomerInfo.hasPhone ? 1 : 0.55,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#16a34a';
+                              e.currentTarget.style.color = '#ffffff';
+                              e.currentTarget.style.borderColor = '#16a34a';
+                              e.currentTarget.style.boxShadow = '0 3px 10px rgba(22,163,74,0.28)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = rowTrackingInfo.awb ? '#dcfce7' : '#f0fdf4';
+                              e.currentTarget.style.color = '#15803d';
+                              e.currentTarget.style.borderColor = rowTrackingInfo.awb ? '#22c55e' : '#bbf7d0';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <WhatsAppIcon size={15} color="currentColor" />
+                          </button>
+
                           {/* Manage Order Accordion Toggle Button */}
                           <button
                             onClick={(e) => {
@@ -2442,7 +2495,7 @@ export default function AdminOrders() {
                             <div
                               style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
                                 gap: '1.25rem',
                                 alignItems: 'stretch',
                                 width: '100%',
@@ -2952,7 +3005,7 @@ export default function AdminOrders() {
                                             <Printer size={12} /> Label
                                           </button>
                                           <a
-                                            href={order.courierUrl || `https://www.delhivery.com/track/package/${order.trackingId || order.trackingNumber || ''}`}
+                                            href={rowTrackingInfo.courierTrackingUrl || `https://shiprocket.co/tracking/${order.trackingId || order.trackingNumber || ''}`}
                                             target="_blank"
                                             rel="noreferrer"
                                             title="Live Tracking on Courier Site"
@@ -2962,9 +3015,9 @@ export default function AdminOrders() {
                                               gap: '0.3rem',
                                               padding: '0.35rem 0.65rem',
                                               borderRadius: '7px',
-                                              border: 'none',
-                                              background: '#16a34a',
-                                              color: '#ffffff',
+                                              border: '1px solid #16a34a',
+                                              background: '#ffffff',
+                                              color: '#15803d',
                                               fontSize: '0.74rem',
                                               fontWeight: 600,
                                               textDecoration: 'none',
@@ -2973,6 +3026,32 @@ export default function AdminOrders() {
                                           >
                                             <ExternalLink size={12} /> Live Track
                                           </a>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                                            title={
+                                              rowCustomerInfo.hasPhone
+                                                ? `Send tracking link to ${rowCustomerInfo.name} (${rowCustomerInfo.rawPhone}) on WhatsApp`
+                                                : 'Customer phone number unavailable'
+                                            }
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.35rem',
+                                              padding: '0.35rem 0.7rem',
+                                              borderRadius: '7px',
+                                              border: 'none',
+                                              background: 'linear-gradient(135deg, #25D366 0%, #16a34a 100%)',
+                                              color: '#ffffff',
+                                              fontSize: '0.74rem',
+                                              fontWeight: 700,
+                                              cursor: 'pointer',
+                                              boxShadow: '0 2px 6px rgba(22, 163, 74, 0.24)',
+                                              opacity: rowCustomerInfo.hasPhone ? 1 : 0.6,
+                                            }}
+                                          >
+                                            <WhatsAppIcon size={13} color="#ffffff" /> Send Tracking on WhatsApp
+                                          </button>
                                         </div>
                                       </div>
                                     )}
@@ -3580,6 +3659,49 @@ export default function AdminOrders() {
                                     >
                                       <Tag size={15} />
                                       Shipping Label
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                                      style={{
+                                        height: '42px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.45rem',
+                                        padding: '0.65rem 1rem',
+                                        borderRadius: '10px',
+                                        border: '1.5px solid #86efac',
+                                        fontWeight: 600,
+                                        fontSize: '0.82rem',
+                                        cursor: 'pointer',
+                                        background: '#f0fdf4',
+                                        color: '#15803d',
+                                        transition: 'all 0.2s ease',
+                                        flexShrink: 0,
+                                        opacity: rowCustomerInfo.hasPhone ? 1 : 0.65,
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#16a34a';
+                                        e.currentTarget.style.color = '#ffffff';
+                                        e.currentTarget.style.boxShadow = '0 3px 10px rgba(22,163,74,0.25)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#f0fdf4';
+                                        e.currentTarget.style.color = '#15803d';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                      }}
+                                      title={
+                                        !rowCustomerInfo.hasPhone
+                                          ? 'Customer phone number unavailable'
+                                          : rowTrackingInfo.awb
+                                            ? `Send AWB ${rowTrackingInfo.awb} tracking on WhatsApp`
+                                            : `Send Order Confirmation #${order.orderNumber} on WhatsApp`
+                                      }
+                                    >
+                                      <WhatsAppIcon size={15} color="currentColor" />
+                                      {rowTrackingInfo.awb ? 'Send Tracking' : 'WhatsApp Confirmation'}
                                     </button>
 
                                     <button
