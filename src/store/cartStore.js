@@ -147,6 +147,8 @@ export const useCartStore = create(
               hasVariants: availableSizes.length > 0 || availableColors.length > 0,
               quantity: Math.min(quantity, stockLimit),
               stock: stockLimit,
+              category: product.category || null,
+              sku: product.sku || '',
             },
             ...items,
           ];

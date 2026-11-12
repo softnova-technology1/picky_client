@@ -91,9 +91,9 @@ export default function AdminInquiries() {
   };
 
   const fetchInquiries = useCallback(
-    async (isManualRefresh = false) => {
+    async (isManualRefresh = false, isBackground = false) => {
       if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
+      else if (!isBackground) setLoading(true);
 
       try {
         const params = {
@@ -133,15 +133,22 @@ export default function AdminInquiries() {
     fetchInquiries();
   }, [fetchInquiries]);
 
-  // Window events & background polling
+  // Window events & background polling (silent, throttled on focus)
   useEffect(() => {
-    const handleUpdate = () => fetchInquiries();
+    let lastFocusSyncAt = 0;
+    const handleUpdate = () => fetchInquiries(false, true);
+    const handleFocusUpdate = () => {
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
+      fetchInquiries(false, true);
+    };
     window.addEventListener('picky_inquiries_updated', handleUpdate);
-    window.addEventListener('focus', handleUpdate);
+    window.addEventListener('focus', handleFocusUpdate);
 
     return () => {
       window.removeEventListener('picky_inquiries_updated', handleUpdate);
-      window.removeEventListener('focus', handleUpdate);
+      window.removeEventListener('focus', handleFocusUpdate);
     };
   }, [fetchInquiries]);
 
@@ -267,20 +274,20 @@ export default function AdminInquiries() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Customer Inquiries">
       <div className={styles.pageContainer}>
-        {/* ── Page Header ────────────────────────────────────────────── */}
-        <header className={styles.pageHeader}>
-          <div className={styles.titleArea}>
-            <div className={styles.titleRow}>
-              <div className={styles.titleIcon}>
-                <MessageSquareText size={22} />
-              </div>
-              <h1 className={styles.pageTitle}>Customer Inquiries</h1>
+        {/* ── Page Header (Unified Admin Alignment) ─────────────────── */}
+        <header className="admin-page-header-row">
+          <div className={styles.titleRow}>
+            <div className={styles.titleIcon}>
+              <MessageSquareText size={22} strokeWidth={2.2} />
             </div>
-            <p className={styles.pageSubtitle}>
-              Live form submissions from Homepage and Contact Page
-            </p>
+            <div>
+              <h1 className="admin-page-main-title" style={{ margin: 0 }}>Customer Inquiries</h1>
+              <p className="admin-page-main-subtitle" style={{ margin: 0, marginTop: '2px' }}>
+                Live form submissions from Homepage and Contact Page
+              </p>
+            </div>
           </div>
 
           <div className={styles.headerActions}>

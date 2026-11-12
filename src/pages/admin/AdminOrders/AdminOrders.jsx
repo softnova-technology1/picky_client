@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Search,
@@ -54,12 +54,14 @@ import AdminInvoice from '../../../components/admin/AdminInvoice';
 import AdminShippingLabel from '../../../components/admin/AdminShippingLabel';
 import AdminGiftCard from '../../../components/admin/AdminGiftCard';
 import AdminStatCard from '../../../components/common/AdminStatCard';
+import WhatsAppIcon from '../../../components/common/WhatsAppIcon/WhatsAppIcon';
 import { adminService } from '../../../services/admin.service';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatDate } from '../../../utils/formatDate';
 import { useOrderStore } from '../../../store/orderStore';
 import { useUiStore } from '../../../store/uiStore';
 import { fuzzyMatchScore } from '../../../utils/fuzzySearch';
+import { getOrderCustomerInfo, getOrderTrackingInfo, launchOrderWhatsappShare } from '../../../utils/whatsappOrderShare';
 
 // ─── Order Status & Filter Configurations ────────────────────────────────────
 export const STATUS_TABS = [
@@ -424,6 +426,10 @@ export default function AdminOrders() {
   const [selectedLabelOrder, setSelectedLabelOrder] = useState(null);
   const [selectedGiftCardOrder, setSelectedGiftCardOrder] = useState(null);
 
+  // ─── Shiprocket Fulfillment State ──────────────────────────────────────────
+  const [srShippingId, setSrShippingId] = useState(null);
+  const [srCourierChoice, setSrCourierChoice] = useState({});
+
   // ─── Dynamic Courier Partners Presets (Saved to localStorage) ─────────────
   const [courierPresets, setCourierPresets] = useState(() => {
     try {
@@ -575,21 +581,50 @@ export default function AdminOrders() {
   }, [activeTab, searchTerm, dateFilter, priceFilter, quantityFilter, sortBy]);
 
   // ─── Sync Orders from Backend Database ─────────────────────────────────────
-  useEffect(() => {
-    let isMounted = true;
-    const fetchDbOrders = async () => {
-      try {
-        const res = await adminService.getOrders({ limit: 100 });
-        const dbOrders = res?.data?.data || res?.data;
-        if (Array.isArray(dbOrders) && isMounted) {
-          useOrderStore.getState().setOrders(dbOrders);
-        }
-      } catch (err) {
-        console.warn('Backend orders fetch notice:', err?.message || err);
+  const fetchDbOrders = async () => {
+    try {
+      const res = await adminService.getOrders({ limit: 100 });
+      const dbOrders = res?.data?.data || res?.data;
+      if (Array.isArray(dbOrders)) {
+        useOrderStore.getState().setOrders(dbOrders);
+        return true;
       }
-    };
+    } catch (err) {
+      console.warn('Backend orders fetch notice:', err?.message || err);
+      return false;
+    }
+  };
+
+  useEffect(() => {
     fetchDbOrders();
-    return () => { isMounted = false; };
+
+    // Auto-rehydrate silently when server reconnects or focus returns (throttled)
+    let lastFocusSyncAt = 0;
+    const handleServerOnline = () => {
+      fetchDbOrders();
+    };
+    const handleFocusSync = () => {
+      const now = Date.now();
+      if (now - lastFocusSyncAt < 15000) return;
+      lastFocusSyncAt = now;
+      fetchDbOrders();
+    };
+
+    window.addEventListener('picky_server_reconnected', handleServerOnline);
+    window.addEventListener('focus', handleFocusSync);
+
+    // If server was offline when page opened and orders list is still empty, auto-retry every 4s
+    const retryInterval = setInterval(() => {
+      if (useOrderStore.getState().orders.length === 0) {
+        fetchDbOrders();
+      }
+    }, 4000);
+
+    return () => {
+      window.removeEventListener('picky_server_reconnected', handleServerOnline);
+      window.removeEventListener('focus', handleFocusSync);
+      clearInterval(retryInterval);
+    };
   }, []);
 
   // ─── Dashboard Stats Calculations ────────────────────────────────────────
@@ -963,6 +998,72 @@ export default function AdminOrders() {
       showToast('Status update failed', 'error');
     } finally {
       setRowLoading((p) => ({ ...p, [id]: false }));
+    }
+  };
+
+  // ─── Handle 1-Click Shiprocket Dispatch ────────────────────────────────────
+  const handleShipViaShiprocket = async (order) => {
+    const id = order._id || order.id;
+    setSrShippingId(id);
+    try {
+      const courier = srCourierChoice[id] || 'Delhivery Surface';
+      const res = await adminService.shipViaShiprocket(id, {
+        packageDetails: {
+          weight: 0.5,
+          length: 15,
+          breadth: 12,
+          height: 5,
+          courierName: courier,
+        },
+      });
+
+      const data = res?.data;
+      const shipment = data?.shipment || {};
+      const awb = shipment.awbCode || data?.order?.trackingNumber || 'SR-DLHV-SIM';
+      const assignedCourier = shipment.courierName || courier;
+      const labelUrl = shipment.labelUrl || `/api/v1/orders/admin/${id}/shiprocket/label`;
+      const trackingUrl = shipment.courierUrl || shipment.trackingUrl || `https://shiprocket.co/tracking/${encodeURIComponent(awb)}`;
+
+      showToast(`🚀 Order #${order.orderNumber} dispatched via Shiprocket (${assignedCourier})! AWB: ${awb}`, 'success');
+
+      if (updateOrder) {
+        updateOrder(id, {
+          status: 'shipped',
+          courier: assignedCourier,
+          courierUrl: trackingUrl,
+          trackingId: awb,
+          trackingNumber: awb,
+          shiprocketOrderId: shipment.shiprocketOrderId || 'SR-ORD-SIM',
+          shiprocketShipmentId: shipment.shiprocketShipmentId || 'SR-SHIP-SIM',
+          shippingLabelUrl: labelUrl,
+          shippingStatus: 'shipped',
+        });
+      }
+      if (storeUpdateStatus) {
+        storeUpdateStatus(id, 'shipped');
+      }
+      await fetchDbOrders();
+    } catch (err) {
+      console.error('Shiprocket dispatch error:', err);
+      showToast(err?.response?.data?.message || err.message || 'Shiprocket dispatch failed', 'error');
+    } finally {
+      setSrShippingId(null);
+    }
+  };
+
+  const handlePrintSrLabel = async (order) => {
+    const id = order._id || order.id;
+    try {
+      const res = await adminService.getShiprocketLabel(id);
+      const labelUrl = res?.data?.labelUrl || order.shippingLabelUrl;
+      if (labelUrl) {
+        window.open(labelUrl, '_blank');
+      } else {
+        setSelectedLabelOrder(order);
+      }
+    } catch (err) {
+      console.error('Shiprocket label fetch error:', err);
+      setSelectedLabelOrder(order);
     }
   };
 
@@ -2002,8 +2103,10 @@ export default function AdminOrders() {
             ) : (
               paginatedOrders.map((order, index) => {
                 const custName  = order.customer?.name || order.user?.name || order.shippingAddress?.fullName || 'Customer';
-                const custPhone = order.customer?.phone || order.user?.phone || '';
+                const custPhone = order.customer?.phone || order.user?.phone || order.shippingAddress?.phone || '';
                 const custEmail = order.customer?.email || order.user?.email || '';
+                const rowCustomerInfo = getOrderCustomerInfo(order);
+                const rowTrackingInfo = getOrderTrackingInfo(order);
                 const st        = (order.status || 'placed').toLowerCase();
                 const cfg       = STATUS_CFG[st] || STATUS_CFG.placed;
                 const StatusIcon = cfg.icon;
@@ -2062,9 +2165,26 @@ export default function AdminOrders() {
 
                       {/* Order ID & Date */}
                       <td style={{ padding: '1rem 1rem', textAlign: 'left' }}>
-                        <strong style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, letterSpacing: '0.01em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          #{order.orderNumber}
-                        </strong>
+                        <Link
+                          to={`/softpicky-sn2026/orders/${order._id || order.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Open Standalone Order Details Page"
+                          style={{
+                            fontSize: '0.86rem',
+                            color: '#7c3aed',
+                            fontWeight: 700,
+                            letterSpacing: '0.01em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            textDecoration: 'none',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
+                        >
+                          <span>#{order.orderNumber}</span>
+                          <ExternalLink size={12} color="#a78bfa" />
+                        </Link>
                         <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
                           <Calendar size={11} color="#94a3b8" />
                           {formatDate(order.createdAt)}
@@ -2304,6 +2424,49 @@ export default function AdminOrders() {
                             <Tag size={15} />
                           </button>
 
+                          {/* Quick WhatsApp Share Button (Tracking link if AWB exists, else Order Confirmation) */}
+                          <button
+                            type="button"
+                            onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                            title={
+                              !rowCustomerInfo.hasPhone
+                                ? 'Customer phone number unavailable'
+                                : rowTrackingInfo.awb
+                                  ? `Send Tracking (${rowTrackingInfo.awb}) on WhatsApp`
+                                  : `Send Order Confirmation #${order.orderNumber} on WhatsApp`
+                            }
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '9999px',
+                              border: rowTrackingInfo.awb ? '1.5px solid #22c55e' : '1.5px solid #bbf7d0',
+                              background: rowTrackingInfo.awb ? '#dcfce7' : '#f0fdf4',
+                              color: '#15803d',
+                              cursor: 'pointer',
+                              transition: 'all 0.18s ease',
+                              boxSizing: 'border-box',
+                              flexShrink: 0,
+                              opacity: rowCustomerInfo.hasPhone ? 1 : 0.55,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#16a34a';
+                              e.currentTarget.style.color = '#ffffff';
+                              e.currentTarget.style.borderColor = '#16a34a';
+                              e.currentTarget.style.boxShadow = '0 3px 10px rgba(22,163,74,0.28)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = rowTrackingInfo.awb ? '#dcfce7' : '#f0fdf4';
+                              e.currentTarget.style.color = '#15803d';
+                              e.currentTarget.style.borderColor = rowTrackingInfo.awb ? '#22c55e' : '#bbf7d0';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <WhatsAppIcon size={15} color="currentColor" />
+                          </button>
+
                           {/* Manage Order Accordion Toggle Button */}
                           <button
                             onClick={(e) => {
@@ -2352,7 +2515,7 @@ export default function AdminOrders() {
                             <div
                               style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
                                 gap: '1.25rem',
                                 alignItems: 'stretch',
                                 width: '100%',
@@ -2785,19 +2948,257 @@ export default function AdminOrders() {
                                         <RotateCw size={16} color="#7c3aed" />
                                         Update Order Status
                                       </h4>
-                                      <span
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                        <Link
+                                          to={`/softpicky-sn2026/orders/${order._id || order.id}`}
+                                          title="Open Standalone Order Details Page"
+                                          style={{
+                                            fontSize: '0.72rem',
+                                            color: '#6d28d9',
+                                            background: '#f3e8ff',
+                                            border: '1px solid #ddd6fe',
+                                            padding: '0.2rem 0.55rem',
+                                            borderRadius: '6px',
+                                            fontWeight: 600,
+                                            textDecoration: 'none',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem',
+                                          }}
+                                        >
+                                          <span>Full Page</span>
+                                          <ExternalLink size={10} />
+                                        </Link>
+                                        <span
+                                          style={{
+                                            fontSize: '0.72rem',
+                                            color: '#6d28d9',
+                                            background: '#f3e8ff',
+                                            padding: '0.15rem 0.55rem',
+                                            borderRadius: '9999px',
+                                            fontWeight: 600,
+                                          }}
+                                        >
+                                          #{order.orderNumber}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* ── Active Shiprocket / Courier Dispatch Info ── */}
+                                    {(order.trackingId || order.trackingNumber || order.status === 'shipped' || order.status === 'delivered') && (
+                                      <div
                                         style={{
-                                          fontSize: '0.72rem',
-                                          color: '#6d28d9',
-                                          background: '#f3e8ff',
-                                          padding: '0.15rem 0.55rem',
-                                          borderRadius: '9999px',
-                                          fontWeight: 600,
+                                          background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)',
+                                          border: '1.5px solid #86efac',
+                                          borderRadius: '12px',
+                                          padding: '0.85rem 1rem',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'space-between',
+                                          flexWrap: 'wrap',
+                                          gap: '0.6rem',
                                         }}
                                       >
-                                        #{order.orderNumber}
-                                      </span>
-                                    </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                          <div
+                                            style={{
+                                              width: '32px',
+                                              height: '32px',
+                                              borderRadius: '8px',
+                                              background: '#16a34a',
+                                              color: '#ffffff',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              flexShrink: 0,
+                                            }}
+                                          >
+                                            <Truck size={16} />
+                                          </div>
+                                          <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                              <strong style={{ fontSize: '0.82rem', color: '#166534' }}>Shiprocket Dispatched</strong>
+                                              <span
+                                                style={{
+                                                  fontSize: '0.68rem',
+                                                  background: '#dcfce7',
+                                                  color: '#15803d',
+                                                  padding: '0.1rem 0.45rem',
+                                                  borderRadius: '4px',
+                                                  fontWeight: 700,
+                                                  border: '1px solid #bbf7d0',
+                                                }}
+                                              >
+                                                {order.courier || 'Delhivery Surface'}
+                                              </span>
+                                            </div>
+                                            <div style={{ fontSize: '0.74rem', color: '#334155', marginTop: '0.15rem' }}>
+                                              AWB: <strong>{order.trackingId || order.trackingNumber || 'SR-AWB-GENERATED'}</strong>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => handlePrintSrLabel(order)}
+                                            title="Print Shiprocket Shipping Label"
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.3rem',
+                                              padding: '0.35rem 0.65rem',
+                                              borderRadius: '7px',
+                                              border: '1px solid #86efac',
+                                              background: '#ffffff',
+                                              color: '#166534',
+                                              fontSize: '0.74rem',
+                                              fontWeight: 600,
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            <Printer size={12} /> Label
+                                          </button>
+                                          <a
+                                            href={rowTrackingInfo.courierTrackingUrl || `https://shiprocket.co/tracking/${order.trackingId || order.trackingNumber || ''}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            title="Live Tracking on Courier Site"
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.3rem',
+                                              padding: '0.35rem 0.65rem',
+                                              borderRadius: '7px',
+                                              border: '1px solid #16a34a',
+                                              background: '#ffffff',
+                                              color: '#15803d',
+                                              fontSize: '0.74rem',
+                                              fontWeight: 600,
+                                              textDecoration: 'none',
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            <ExternalLink size={12} /> Live Track
+                                          </a>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                                            title={
+                                              rowCustomerInfo.hasPhone
+                                                ? `Send tracking link to ${rowCustomerInfo.name} (${rowCustomerInfo.rawPhone}) on WhatsApp`
+                                                : 'Customer phone number unavailable'
+                                            }
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.35rem',
+                                              padding: '0.35rem 0.7rem',
+                                              borderRadius: '7px',
+                                              border: 'none',
+                                              background: 'linear-gradient(135deg, #25D366 0%, #16a34a 100%)',
+                                              color: '#ffffff',
+                                              fontSize: '0.74rem',
+                                              fontWeight: 700,
+                                              cursor: 'pointer',
+                                              boxShadow: '0 2px 6px rgba(22, 163, 74, 0.24)',
+                                              opacity: rowCustomerInfo.hasPhone ? 1 : 0.6,
+                                            }}
+                                          >
+                                            <WhatsAppIcon size={13} color="#ffffff" /> Send Tracking on WhatsApp
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* ── 1-Click Ship with Shiprocket Card (When not yet shipped or cancelled) ── */}
+                                    {order.status !== 'shipped' && order.status !== 'delivered' && order.status !== 'cancelled' && !order.trackingId && (
+                                      <div
+                                        style={{
+                                          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                                          color: '#ffffff',
+                                          borderRadius: '12px',
+                                          padding: '0.9rem 1.1rem',
+                                          boxShadow: '0 4px 14px rgba(79, 70, 229, 0.22)',
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          gap: '0.65rem',
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                            <Sparkles size={16} color="#fde047" />
+                                            <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                                              Shiprocket 1-Click Fast Fulfillment
+                                            </span>
+                                          </div>
+                                          <span
+                                            style={{
+                                              fontSize: '0.68rem',
+                                              background: 'rgba(255,255,255,0.2)',
+                                              padding: '0.12rem 0.5rem',
+                                              borderRadius: '9999px',
+                                              fontWeight: 600,
+                                            }}
+                                          >
+                                            Auto AWB & Pickup
+                                          </span>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                          <div style={{ flex: 1, minWidth: '160px' }}>
+                                            <select
+                                              value={srCourierChoice[order._id] || 'Delhivery Surface'}
+                                              onChange={(e) => setSrCourierChoice(prev => ({ ...prev, [order._id]: e.target.value }))}
+                                              style={{
+                                                width: '100%',
+                                                padding: '0.45rem 0.7rem',
+                                                borderRadius: '8px',
+                                                border: '1px solid rgba(255,255,255,0.35)',
+                                                background: 'rgba(255,255,255,0.18)',
+                                                color: '#ffffff',
+                                                fontSize: '0.78rem',
+                                                fontWeight: 600,
+                                                outline: 'none',
+                                                cursor: 'pointer',
+                                              }}
+                                            >
+                                              <option value="Delhivery Surface" style={{ color: '#0f172a' }}>⚡ Delhivery Surface (Fast & Reliable)</option>
+                                              <option value="BlueDart Express" style={{ color: '#0f172a' }}>✈️ BlueDart Express (Air Priority)</option>
+                                              <option value="Shadowfax Surface" style={{ color: '#0f172a' }}>📦 Shadowfax Surface</option>
+                                              <option value="DTDC Surface" style={{ color: '#0f172a' }}>🚚 DTDC Surface</option>
+                                            </select>
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            disabled={srShippingId === order._id}
+                                            onClick={() => handleShipViaShiprocket(order)}
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.4rem',
+                                              padding: '0.48rem 1.05rem',
+                                              borderRadius: '8px',
+                                              border: 'none',
+                                              background: '#ffffff',
+                                              color: '#4338ca',
+                                              fontSize: '0.8rem',
+                                              fontWeight: 700,
+                                              cursor: srShippingId === order._id ? 'not-allowed' : 'pointer',
+                                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                              transition: 'all 0.15s ease',
+                                              flexShrink: 0,
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'; }}
+                                          >
+                                            <Truck size={14} className={srShippingId === order._id ? 'spin' : ''} />
+                                            <span>{srShippingId === order._id ? 'Dispatching…' : '🚀 Ship with Shiprocket'}</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
 
                                     {/* Custom Status Select Dropdown */}
                                     <div>
@@ -3313,6 +3714,49 @@ export default function AdminOrders() {
                                     >
                                       <Tag size={15} />
                                       Shipping Label
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => launchOrderWhatsappShare({ order, showToast, e })}
+                                      style={{
+                                        height: '42px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.45rem',
+                                        padding: '0.65rem 1rem',
+                                        borderRadius: '10px',
+                                        border: '1.5px solid #86efac',
+                                        fontWeight: 600,
+                                        fontSize: '0.82rem',
+                                        cursor: 'pointer',
+                                        background: '#f0fdf4',
+                                        color: '#15803d',
+                                        transition: 'all 0.2s ease',
+                                        flexShrink: 0,
+                                        opacity: rowCustomerInfo.hasPhone ? 1 : 0.65,
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#16a34a';
+                                        e.currentTarget.style.color = '#ffffff';
+                                        e.currentTarget.style.boxShadow = '0 3px 10px rgba(22,163,74,0.25)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#f0fdf4';
+                                        e.currentTarget.style.color = '#15803d';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                      }}
+                                      title={
+                                        !rowCustomerInfo.hasPhone
+                                          ? 'Customer phone number unavailable'
+                                          : rowTrackingInfo.awb
+                                            ? `Send AWB ${rowTrackingInfo.awb} tracking on WhatsApp`
+                                            : `Send Order Confirmation #${order.orderNumber} on WhatsApp`
+                                      }
+                                    >
+                                      <WhatsAppIcon size={15} color="currentColor" />
+                                      {rowTrackingInfo.awb ? 'Send Tracking' : 'WhatsApp Confirmation'}
                                     </button>
 
                                     <button

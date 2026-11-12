@@ -1,2 +1,1163 @@
-/* AdminCoupons CSS Module */
-/* All admin page styles are centralized in src/styles/admin.css under .admin-layout */
+/* ══════════════════════════════════════════════════════════════════════════════
+   AdminCoupons.module.css
+   Dedicated Modular CSS for Admin Coupons & Discounts Management
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Top Summary / KPI Stats Grid ── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Toolbar & Filters Row ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 270px;
+  flex: 1 1 270px;
+  max-width: 380px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  color: #7c3aed;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 1rem 0 2.6rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  color: #1e1b4b;
+  font-weight: 500;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+}
+
+.searchInput.hasText {
+  padding-right: 2.2rem;
+}
+
+.searchInput:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.clearSearchBtn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.clearSearchBtn:hover {
+  color: #475569;
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.countBadge {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.countBadge strong {
+  color: #1e1b4b;
+}
+
+.resetBtn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.resetBtn:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+}
+
+.createBtn {
+  height: 42px;
+  padding: 0 1.35rem;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.createBtn:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+}
+
+/* ── Coupons Grid Layout ── */
+.couponsGrid,
+.admin-coupons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Individual Coupon Card ── */
+.couponCard,
+.admin-coupon-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.couponCard:hover,
+.admin-coupon-card:hover {
+  transform: translateY(-3px);
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+}
+
+.couponCard.highlighted,
+.admin-coupon-card.highlighted {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), 0 12px 28px -4px rgba(124, 58, 237, 0.15);
+}
+
+/* ── Card Top Row ── */
+.cardTop,
+.admin-coupon-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+/* ── Hero Metric (Discount Value) ── */
+.heroMetric,
+.admin-coupon-hero-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.heroVal,
+.admin-coupon-hero-val {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.heroBadge,
+.admin-coupon-hero-badge {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ── Status Badges (Active / Scheduled / Expired / Disabled / Expiring Soon) ── */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.58rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.statusBadgeDot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* Active Status Badge */
+.statusBadge.badgeActive,
+.badgeActive {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.statusBadge.badgeActive .statusBadgeDot,
+.badgeActive .statusBadgeDot {
+  background: #10b981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.6);
+}
+
+/* Scheduled Status Badge */
+.statusBadge.badgeScheduled,
+.badgeScheduled {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.statusBadge.badgeScheduled .statusBadgeDot,
+.badgeScheduled .statusBadgeDot {
+  background: #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.6);
+}
+
+/* Expired Status Badge */
+.statusBadge.badgeExpired,
+.badgeExpired {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.statusBadge.badgeExpired .statusBadgeDot,
+.badgeExpired .statusBadgeDot {
+  background: #f97316;
+  box-shadow: 0 0 5px rgba(249, 115, 22, 0.6);
+}
+
+/* Disabled Status Badge */
+.statusBadge.badgeDisabled,
+.badgeDisabled {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.statusBadge.badgeDisabled .statusBadgeDot,
+.badgeDisabled .statusBadgeDot {
+  background: #94a3b8;
+}
+
+/* Expiring Soon Status Badge */
+.statusBadge.badgeExpiringSoon,
+.badgeExpiringSoon {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.statusBadge.badgeExpiringSoon .statusBadgeDot,
+.badgeExpiringSoon .statusBadgeDot {
+  background: #f59e0b;
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.6);
+}
+
+/* ── Status Dot (Active / Scheduled / Inactive) ── */
+.statusDot,
+.admin-coupon-status-dot-only {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.statusDot.active,
+.admin-coupon-status-dot-only.active {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+
+.statusDot.scheduled,
+.admin-coupon-status-dot-only.scheduled {
+  background: #2563eb;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.7);
+}
+
+.statusDot.inactive,
+.admin-coupon-status-dot-only.inactive {
+  background: #ef4444;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+}
+
+/* ── Code Badge & Copy Action ── */
+.codeBadge,
+.admin-coupon-code-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.22rem 0.5rem;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.codeBadge:hover,
+.admin-coupon-code-badge:hover {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+}
+
+.codeText,
+.admin-coupon-code-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  letter-spacing: 0.04em;
+}
+
+.copyBtn,
+.admin-coupon-copy-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  border-radius: 4px;
+}
+
+.copyBtn:hover,
+.admin-coupon-copy-btn:hover {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.copyBtn.copied,
+.admin-coupon-copy-btn.copied {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+/* ── Tabular Details Section ── */
+.tableSection,
+.admin-coupon-table-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 0.65rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.tableRow,
+.admin-coupon-table-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid #f8fafc;
+  gap: 0.75rem;
+}
+
+.tableRow:last-child,
+.admin-coupon-table-row:last-child {
+  border-bottom: none;
+}
+
+.rowLabel,
+.admin-coupon-row-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.rowValue,
+.admin-coupon-row-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── Target Chips (All vs Category/Product) ── */
+.targetChip,
+.admin-coupon-target-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.targetChip.all,
+.admin-coupon-target-chip.all {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.targetChip.specific,
+.admin-coupon-target-chip.specific {
+  background: #f5f0ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+/* ── Card Footer & Action Buttons ── */
+.cardFooter,
+.admin-coupon-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+.usedCount {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.usedCount strong {
+  color: #1e1b4b;
+}
+
+.actions,
+.admin-coupon-actions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.btnView,
+.admin-coupon-btn-view {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnView:hover,
+.admin-coupon-btn-view:hover {
+  background: #ede9fe;
+  color: #7c3aed;
+  border-color: #ddd6fe;
+  transform: scale(1.05);
+}
+
+.btnEdit,
+.admin-coupon-btn-edit {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  color: #7c3aed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnEdit:hover,
+.admin-coupon-btn-edit:hover {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+  transform: scale(1.05);
+}
+
+.btnPowerActive {
+  color: #16a34a !important;
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+}
+
+.btnPowerInactive {
+  color: #94a3b8 !important;
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+
+.btnDelete,
+.admin-coupon-btn-delete {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #e11d48;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnDelete:hover,
+.admin-coupon-btn-delete:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  transform: scale(1.05);
+}
+
+/* ── Toggle Switch in Card ── */
+.toggleWrap,
+.admin-coupon-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.toggleSwitch,
+.admin-coupon-toggle-switch {
+  width: 36px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  position: relative;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.toggleSwitch.active,
+.admin-coupon-toggle-switch.active {
+  background: #7c3aed;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+}
+
+.toggleSwitch.disabled,
+.admin-coupon-toggle-switch.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toggleHandle,
+.admin-coupon-toggle-handle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(0);
+}
+
+.toggleSwitch.active .toggleHandle,
+.admin-coupon-toggle-switch.active .admin-coupon-toggle-handle {
+  transform: translateX(16px);
+}
+
+/* ── Empty State ── */
+.emptyCard {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #ede8f8;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.04);
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.emptyIconCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ede8f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7c3aed;
+}
+
+.emptyTitle {
+  font-size: 0.98rem;
+  color: #1e1b4b;
+}
+
+.emptySubtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  max-width: 340px;
+}
+
+.clearFiltersBtn {
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.8rem;
+  color: #7c3aed;
+  border: 1px solid #dfd5f5;
+  background: #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.clearFiltersBtn:hover {
+  background: #faf5ff;
+  border-color: #c4b5fd;
+}
+
+/* ── Modal Form Controls & Status Banner ── */
+.formGrid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.statusBanner {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.statusBannerActive {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+}
+
+.statusBannerDisabled {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+}
+
+.statusBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.statusBannerIconBox {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statusBannerIconActive {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.statusBannerIconDisabled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.statusBannerTitle {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.statusBannerTitleActive {
+  color: #15803d;
+}
+
+.statusBannerTitleDisabled {
+  color: #991b1b;
+}
+
+.statusBannerDesc {
+  font-size: 0.75rem;
+}
+
+.statusBannerDescActive {
+  color: #16a34a;
+}
+
+.statusBannerDescDisabled {
+  color: #b91c1c;
+}
+
+.largeToggleTrack {
+  position: relative;
+  width: 46px;
+  height: 25px;
+  border-radius: 25px;
+  transition: background-color 0.25s;
+  flex-shrink: 0;
+}
+
+.largeToggleThumb {
+  position: absolute;
+  height: 19px;
+  width: 19px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: left 0.25s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.modalFooterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* ── View Details Modal Elements ── */
+.viewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.viewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-radius: 12px;
+  border: 1px solid #e9d5ff;
+}
+
+.viewHeaderCategory {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #7c3aed;
+  text-transform: uppercase;
+}
+
+.viewHeaderCode {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  letter-spacing: 0.04em;
+}
+
+.viewHeaderVal {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #7c3aed;
+}
+
+.viewHeaderType {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6d28d9;
+}
+
+.viewKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.viewKpiCard {
+  background: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.viewKpiLabel {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.viewKpiVal {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
+.viewTable {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.viewTableRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.85rem;
+}
+
+.viewTableRow:last-child {
+  border-bottom: none;
+}
+
+.viewTableLabel {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.viewTableValue {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* ── Multi-Product Search & Selection Picker ── */
+.multiProductSection {
+  margin-top: 0.75rem;
+  padding: 0.9rem;
+  background: #fbfbfe;
+  border: 1px solid #e0e7ff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.multiProductHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.multiProductLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #312e81;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.multiProductCountBadge {
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.multiProductSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  transition: all 0.2s ease;
+}
+
+.multiProductSearchWrap:focus-within {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.multiProductSearchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.84rem;
+  color: #1e1b4b;
+}
+
+.multiProductSearchInput::placeholder {
+  color: #94a3b8;
+}
+
+.multiProductClearSearchBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+}
+
+.multiProductClearSearchBtn:hover {
+  color: #475569;
+}
+
+.selectedChipsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+}
+
+.selectedChipsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.clearAllChipsBtn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.clearAllChipsBtn:hover {
+  text-decoration: underline;
+}
+
+.selectedChipsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-height: 85px;
+  overflow-y: auto;
+}
+
+.selectedProductChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  color: #5b21b6;
+  border-radius: 6px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.selectedProductChipSku {
+  font-size: 0.68rem;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+
+.removeChipBtn {
+  background: transparent;
+  border: none;
+  color: #8b5cf6;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  margin-left: 0.15rem;
+}
+
+.removeChipBtn:hover {
+  color: #dc2626;
+}
+
+.productPickerList {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.productPickerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.productPickerItem:last-child {
+  border-bottom: none;
+}
+
+.productPickerItem:hover {
+  background: #f8fafc;
+}
+
+.productPickerItem.selected {
+  background: #f5f3ff;
+}
+
+.productPickerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.productPickerCheckbox {
+  width: 15px;
+  height: 15px;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
+
+.productPickerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.productPickerName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e1b4b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productPickerSku {
+  font-size: 0.7rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.productPickerPrice {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #059669;
+  flex-shrink: 0;
+}
+
+.productPickerEmpty {
+  padding: 1.25rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+/* ── Responsive Mobile Optimizations ── */
+@media (max-width: 640px) {
+  .couponsGrid,
+  .admin-coupons-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .formGrid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .viewKpiGrid {
+    grid-template-columns: 1fr;
+  }
+}

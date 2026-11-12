@@ -60,7 +60,7 @@
   width: 290px;
   min-width: 290px;
   background: linear-gradient(180deg, #07030e 0%, #15092a 100%);
-  border-right: 1px solid rgba(168, 85, 247, 0.15);
+  border-right: 1px solid rgba(168, 85, 247, 0.16);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -68,9 +68,10 @@
   height: 100vh;
   max-height: 100vh;
   z-index: 50;
-  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 12px rgba(15, 23, 42, 0.08);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .admin-layout .admin-sidebar::before {
@@ -92,12 +93,20 @@
 }
 
 .admin-layout .admin-sidebar-header {
-  padding: 0.85rem 1.2rem 0.7rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  height: 68px;
+  min-height: 68px;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.admin-layout .admin-mobile-close-btn {
+  display: none;
 }
 
 .admin-layout .admin-sidebar-brand-link {
@@ -577,7 +586,9 @@
 }
 
 .admin-layout .admin-sidebar.collapsed .admin-sidebar-header {
-  padding: 0.85rem 0.5rem 0.7rem;
+  height: 68px;
+  min-height: 68px;
+  padding: 0 0.5rem;
   justify-content: center;
 }
 
@@ -643,31 +654,39 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  width: 100%;
   max-width: 100%;
   background: var(--adm-bg);
-  overflow-x: hidden;
+  overflow-x: clip;
+  margin: 0;
+  padding: 0;
 }
 
 .admin-layout .admin-topbar {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(14px);
-  border-bottom: 1.5px solid var(--adm-border);
-  padding: 0.85rem 2.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid var(--adm-border);
+  height: 68px;
+  min-height: 68px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1rem;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
 }
 
 .admin-layout .admin-topbar-left {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   flex: 1;
-  max-width: 640px;
+  min-width: 0;
   flex-wrap: nowrap;
 }
 
@@ -1541,15 +1560,10 @@
   }
 }
 
-.admin-layout .admin-topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
 .admin-layout .admin-toggle-sidebar-btn {
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
   border-radius: var(--adm-radius-pill);
   display: flex;
   align-items: center;
@@ -1607,13 +1621,7 @@
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), inset 0 1px 2px rgba(124, 58, 237, 0.05);
 }
 
-/* Topbar Right Actions */
-.admin-layout .admin-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.95rem;
-  flex-shrink: 0;
-}
+/* Topbar Notification Button (aligned vertically inside topbar) */
 
 .admin-layout .admin-notif-btn {
   position: relative;
@@ -1705,6 +1713,10 @@
 }
 
 @media (max-width: 1366px) {
+  .admin-layout .admin-topbar {
+    padding: 0 1.15rem;
+  }
+
   .admin-layout .admin-content {
     padding: 16px 1.15rem 40px;
   }
@@ -2421,14 +2433,72 @@
 
 @media (max-width: 768px) {
   .admin-layout {
-    flex-direction: column;
+    flex-direction: row;
+    position: relative;
+  }
+
+  .admin-layout .admin-mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(2px);
+    z-index: 1190;
   }
 
   .admin-layout .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 82vw !important;
+    height: 100vh;
+    max-height: 100vh;
+    z-index: 1200;
+    transform: translateX(-105%);
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .admin-layout .admin-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .admin-layout .admin-sidebar-header {
+    height: 60px;
+    min-height: 60px;
+    padding: 0 1rem;
+    justify-content: space-between;
+  }
+
+  .admin-layout .admin-sidebar-brand-link {
+    width: auto;
+    margin: 0;
+  }
+
+  .admin-layout .admin-mobile-close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #e2e8f0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .admin-layout .admin-mobile-close-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+  }
+
+  .admin-layout .admin-main {
     width: 100%;
-    min-width: 100%;
-    height: auto;
-    position: relative;
+    flex: 1;
+    min-width: 0;
   }
 
   .admin-layout .admin-kpi-grid {
@@ -2436,15 +2506,11 @@
   }
 
   .admin-layout .admin-content {
-    padding: 1.25rem 1rem;
+    padding: 1rem 0.85rem 2.5rem;
   }
 
-  .admin-layout .admin-topbar {
-    padding: 0.75rem 1rem;
-  }
-
-  .admin-layout .admin-search-input {
-    width: 200px;
+  .admin-layout .luxury-dashboard-container {
+    padding: 1rem 0.85rem 2.5rem;
   }
 
   .admin-layout .admin-bottom-banner {
@@ -3442,51 +3508,26 @@
 
 /* ── Clean SaaS Reference Metric & Tabular Card Design ────────────────────────────── */
 .admin-layout .admin-coupons-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .admin-layout .admin-coupon-card {
   background: #ffffff;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  padding: 1.15rem 1.2rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  padding: 1.25rem 1.35rem;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   position: relative;
-  /* Exactly 4 cards per row on desktop with 1.6rem gap */
-  flex: 0 0 calc((100% - (3 * 1.6rem)) / 4);
-  width: calc((100% - (3 * 1.6rem)) / 4);
-  max-width: calc((100% - (3 * 1.6rem)) / 4);
+  width: 100%;
   box-sizing: border-box;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (max-width: 1360px) {
-  .admin-layout .admin-coupon-card {
-    flex: 0 0 calc((100% - (2 * 1.6rem)) / 3);
-    width: calc((100% - (2 * 1.6rem)) / 3);
-    max-width: calc((100% - (2 * 1.6rem)) / 3);
-  }
-}
-
-@media (max-width: 980px) {
-  .admin-layout .admin-coupon-card {
-    flex: 0 0 calc((100% - 1.6rem) / 2);
-    width: calc((100% - 1.6rem) / 2);
-    max-width: calc((100% - 1.6rem) / 2);
-  }
-}
-
-@media (max-width: 580px) {
-  .admin-layout .admin-coupon-card {
-    flex: 0 0 100%;
-    width: 100%;
-    max-width: 100%;
-  }
 }
 
 .admin-layout .admin-coupon-card:hover {
@@ -3505,8 +3546,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.6rem;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
 }
 
 /* Big Hero Metric (Counting: Discount Value) */
@@ -3520,7 +3561,7 @@
 }
 
 .admin-layout .admin-coupon-hero-val {
-  font-size: 1.7rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
@@ -3528,11 +3569,11 @@
 }
 
 .admin-layout .admin-coupon-hero-badge {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: #7c3aed;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -3548,6 +3589,11 @@
 .admin-layout .admin-coupon-status-dot-only.active {
   background: #10b981;
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+
+.admin-layout .admin-coupon-status-dot-only.scheduled {
+  background: #2563eb;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.7);
 }
 
 .admin-layout .admin-coupon-status-dot-only.inactive {
@@ -3608,9 +3654,9 @@
   flex-direction: column;
   width: 100%;
   border-top: 1px dashed #e2e8f0;
-  padding-top: 0.45rem;
-  margin-top: 0.2rem;
-  margin-bottom: 0.5rem;
+  padding-top: 0.65rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
 }
 
 .admin-layout .admin-coupon-table-head {
@@ -3621,9 +3667,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.32rem 0;
+  padding: 0.42rem 0;
   border-bottom: 1px solid #f8fafc;
-  gap: 0.6rem;
+  gap: 0.75rem;
 }
 
 .admin-layout .admin-coupon-table-row:last-child {
@@ -3631,15 +3677,15 @@
 }
 
 .admin-layout .admin-coupon-row-label {
-  font-size: 0.73rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: #64748b;
   white-space: nowrap;
 }
 
 .admin-layout .admin-coupon-row-value {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: #0f172a;
   text-align: right;
   white-space: nowrap;
@@ -3679,9 +3725,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 0.65rem;
+  padding-top: 0.85rem;
   border-top: 1px solid #f1f5f9;
-  margin-top: 0.2rem;
+  margin-top: auto;
 }
 
 .admin-layout .admin-coupon-toggle-wrap {
@@ -3884,22 +3930,225 @@
   line-height: 1.4;
 }
 
-@media (max-width: 900px) {
+/* ── Responsive Topbar Alignment Across All Viewports ── */
+@media (max-width: 1120px) {
   .admin-layout .admin-topbar {
-    padding: 0.75rem 1.25rem;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .admin-layout .admin-topbar-left {
-    max-width: 100%;
-    flex-wrap: wrap;
+    padding: 0 1rem;
+    gap: 0.65rem;
   }
 
   .admin-layout .admin-topbar-search-wrap {
-    max-width: 100%;
-    min-width: 0;
+    max-width: 280px;
+    min-width: 110px;
+  }
+
+  .admin-layout .admin-topbar-user-info {
+    display: none;
+  }
+
+  .admin-layout .admin-user-chip {
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    gap: 0.4rem;
   }
 }
 
-
+@media (max-width: 900px) {
+  .admin-layout .admin-sidebar-header,
+  .admin-layout .admin-sidebar.collapsed .admin-sidebar-header {
+    height: 64px;
+    min-height: 64px;
+  }
+
+  .admin-layout .admin-topbar {
+    height: 64px;
+    min-height: 64px;
+    padding: 0 0.9rem;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+
+  .admin-layout .admin-topbar-left {
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+
+  .admin-layout .admin-topbar-search-wrap {
+    flex: 1;
+    max-width: 260px;
+    min-width: 90px;
+  }
+
+  .admin-layout .admin-topbar-right {
+    gap: 0.5rem;
+  }
+
+  .admin-layout .admin-quick-actions-btn {
+    padding: 0.45rem 0.78rem;
+    font-size: 0.77rem;
+    gap: 0.35rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-layout .admin-topbar {
+    height: 60px;
+    min-height: 60px;
+    padding: 0 0.75rem;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+  }
+
+  .admin-layout .admin-topbar-left {
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+
+  .admin-layout .admin-topbar-search-wrap {
+    flex: 1;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .admin-layout .admin-topbar-search-box {
+    height: 36px;
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .admin-layout .admin-topbar-search-input {
+    font-size: 0.8rem;
+  }
+
+  .admin-layout .admin-toggle-sidebar-btn,
+  .admin-layout .admin-topbar-notif-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .admin-layout .admin-topbar-action-btns {
+    gap: 0.35rem;
+  }
+
+  .admin-layout .admin-topbar-right {
+    gap: 0.4rem;
+  }
+
+  .admin-layout .admin-quick-actions-btn {
+    padding: 0.42rem 0.65rem;
+    font-size: 0.75rem;
+  }
+
+  .admin-layout .admin-user-avatar-wrap,
+  .admin-layout .admin-topbar-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .admin-layout .admin-user-chip {
+    padding: 0.2rem 0.42rem 0.2rem 0.2rem;
+    gap: 0.3rem;
+  }
+}
+
+@media (max-width: 580px) {
+  .admin-layout .admin-quick-actions-btn span {
+    display: none;
+  }
+
+  .admin-layout .admin-quick-actions-btn {
+    padding: 0 0.52rem;
+    height: 34px;
+    gap: 0.25rem;
+  }
+
+  .admin-layout .admin-search-results-dropdown,
+  .admin-layout .admin-topbar-notif-dropdown {
+    position: fixed;
+    top: 64px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+
+/* ── Global Admin All-Viewport Auto-Adjust System ── */
+.admin-layout .admin-content > * {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-layout .admin-table-wrap,
+.admin-layout .table-responsive,
+.admin-layout .admin-card {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-layout .admin-filters,
+.admin-layout .admin-toolbar {
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.admin-layout .admin-product-form-grid {
+  display: grid;
+  grid-template-columns: minmax(290px, 360px) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .admin-layout .admin-product-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1180px) {
+  .admin-layout .admin-sidebar:not(.collapsed) {
+    width: 232px;
+    min-width: 232px;
+  }
+
+  .admin-layout .admin-content {
+    padding: 16px 1rem 36px;
+  }
+
+  .admin-layout .kpi-progress-grid {
+    grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-layout .admin-content {
+    padding: 14px 0.85rem 28px;
+  }
+
+  .admin-layout .admin-page-header-row {
+    gap: 0.75rem;
+  }
+
+  .admin-layout .admin-page-main-title {
+    font-size: clamp(1.3rem, 4vw, 1.65rem);
+  }
+
+  .admin-layout .kpi-progress-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-layout .kpi-progress-grid {
+    grid-template-columns: 1fr;
+  }
+}

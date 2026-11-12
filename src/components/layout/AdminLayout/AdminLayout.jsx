@@ -56,15 +56,50 @@ import { useAdminIdleTimeout } from '../../../hooks/useAdminIdleTimeout';
 
 const ADMIN = '/softpicky-sn2026';
 
+// Module-level sidebar sync cache to avoid firing 5 global API calls on every admin route switch
+let lastSidebarGlobalSyncAt = 0;
+let cachedUnreadInquiriesCount = 0;
+
 export default function AdminLayout({ children, title }) {
   useAdminIdleTimeout();
   const { adminUser: user, logout } = useAdminAuthStore();
   const {
     showToast,
-    adminSidebarCollapsed: collapsed,
+    adminSidebarCollapsed: desktopCollapsed,
     toggleAdminSidebar,
     adminSidebarPages,
   } = useUiStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isMobileView, setIsMobileView] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const collapsed = !isMobileView && desktopCollapsed;
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobileView(mobile);
+      if (!mobile) {
+        setMobileDrawerOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [location.pathname]);
+
+  const handleSidebarToggleClick = () => {
+    if (isMobileView) {
+      setMobileDrawerOpen((prev) => !prev);
+    } else {
+      toggleAdminSidebar();
+    }
+  };
   const isPageVisible = (key) => adminSidebarPages?.[key] !== false;
   const { categories, fetchCategories } = useCategoryStore();
   const pendingReturnsCount = useReturnStore((s) => s.returns.filter((r) => r.status === 'pending').length);
@@ -75,8 +110,6 @@ export default function AdminLayout({ children, title }) {
   const markCartsAsViewed = useAbandonedCartStore((s) => s.markCartsAsViewed);
   const fetchAbandonedCarts = useAbandonedCartStore((s) => s.fetchCarts);
   const campaigns = useBroadcastStore((s) => s.campaigns);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -155,12 +188,14 @@ export default function AdminLayout({ children, title }) {
   };
 
   // Real-time synced admin notifications state
-  const [unreadInquiriesCount, setUnreadInquiriesCount] = useState(0);
+  const [unreadInquiriesCount, setUnreadInquiriesCount] = useState(cachedUnreadInquiriesCount);
 
   const refreshInquiriesCount = async () => {
     try {
       const res = await contactService.list({ limit: 1 });
-      setUnreadInquiriesCount(res?.data?.unreadCount || 0);
+      const count = res?.data?.unreadCount || 0;
+      cachedUnreadInquiriesCount = count;
+      setUnreadInquiriesCount(count);
     } catch (e) {}
   };
 
@@ -214,8 +249,19 @@ export default function AdminLayout({ children, title }) {
   }, [title]);
 
   useEffect(() => {
-    refreshAdminNotifications();
-    refreshInquiriesCount();
+    const syncGlobalBadges = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastSidebarGlobalSyncAt < 15000) {
+        return;
+      }
+      lastSidebarGlobalSyncAt = now;
+      refreshAdminNotifications();
+      refreshInquiriesCount();
+      fetchAbandonedCarts(true);
+    };
+
+    syncGlobalBadges(false);
+
     const handleStorage = (e) => {
       if (e.key === 'picky_admin_notifications') {
         try {
@@ -231,26 +277,32 @@ export default function AdminLayout({ children, title }) {
     const handleCustomUpdate = () => {
       refreshAdminNotifications();
     };
+    const handleFocusSync = () => {
+      syncGlobalBadges(false);
+    };
+    const handleServerReconnect = () => {
+      syncGlobalBadges(true);
+    };
+
     window.addEventListener('storage', handleStorage);
     window.addEventListener('picky_notifications_updated', handleCustomUpdate);
     window.addEventListener('picky_inquiries_updated', refreshInquiriesCount);
-    window.addEventListener('focus', refreshAdminNotifications);
+    window.addEventListener('focus', handleFocusSync);
+    window.addEventListener('picky_server_reconnected', handleServerReconnect);
 
-    fetchAbandonedCarts(true);
-    // Periodic real-time sync (every 6s when active)
+    // Periodic real-time sync (every 20s when tab is active)
     const pollInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        refreshAdminNotifications();
-        refreshInquiriesCount();
-        fetchAbandonedCarts(true);
+        syncGlobalBadges(true);
       }
-    }, 6000);
+    }, 20000);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('picky_notifications_updated', handleCustomUpdate);
       window.removeEventListener('picky_inquiries_updated', refreshInquiriesCount);
-      window.removeEventListener('focus', refreshAdminNotifications);
+      window.removeEventListener('focus', handleFocusSync);
+      window.removeEventListener('picky_server_reconnected', handleServerReconnect);
       clearInterval(pollInterval);
     };
   }, []);
@@ -260,7 +312,7 @@ export default function AdminLayout({ children, title }) {
 
   useEffect(() => {
     fetchCategories();
-    fetchReviews();
+    fetchReviews({}, true);
   }, [fetchCategories, fetchReviews]);
 
   const dropdownRef = useRef(null);
@@ -420,13 +472,18 @@ export default function AdminLayout({ children, title }) {
 
   return (
     <div className={`admin-layout ${themeMode === 'dark' ? 'dark-mode' : ''}`} data-theme-mode={themeMode}>
+      {/* Mobile Sidebar Backdrop */}
+      {isMobileView && mobileDrawerOpen && (
+        <div
+          className="admin-mobile-backdrop"
+          onClick={() => setMobileDrawerOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* ─── Ultra-Luxury Light Purple Sidebar (290px) ─── */}
       <aside
-        className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}
-        style={{
-          width: collapsed ? '80px' : '290px',
-          minWidth: collapsed ? '80px' : '290px',
-        }}
+        className={`admin-sidebar ${collapsed ? 'collapsed' : ''} ${mobileDrawerOpen ? 'mobile-open' : ''}`}
       >
         {/* Brand Header */}
         <div className="admin-sidebar-header">
@@ -437,9 +494,9 @@ export default function AdminLayout({ children, title }) {
               alt="Picky Logo"
               className="admin-sidebar-logo-img"
               style={{
-                height: collapsed ? '32px' : '42px',
+                height: collapsed ? '30px' : '40px',
                 width: 'auto',
-                maxWidth: collapsed ? '48px' : '160px',
+                maxWidth: collapsed ? '46px' : '156px',
                 objectFit: 'contain',
                 filter: 'brightness(0) invert(1)',
                 display: 'block',
@@ -448,6 +505,16 @@ export default function AdminLayout({ children, title }) {
               }}
             />
           </Link>
+          {isMobileView && (
+            <button
+              type="button"
+              className="admin-mobile-close-btn"
+              onClick={() => setMobileDrawerOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Navigation List - Structured SaaS Luxury Sidebar */}
@@ -911,10 +978,17 @@ export default function AdminLayout({ children, title }) {
           {/* Left: Sidebar Toggle + Global Search Bar + Notifications */}
           <div className="admin-topbar-left">
             <button
-              onClick={toggleAdminSidebar}
-              className={`admin-toggle-sidebar-btn ${collapsed ? 'active' : ''}`}
-              title={collapsed ? 'Expand Sidebar (290px)' : 'Collapse Sidebar (Mini 80px)'}
-              aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+              type="button"
+              onClick={handleSidebarToggleClick}
+              className={`admin-toggle-sidebar-btn ${(isMobileView ? mobileDrawerOpen : collapsed) ? 'active' : ''}`}
+              title={
+                isMobileView
+                  ? 'Toggle Navigation Menu'
+                  : collapsed
+                  ? 'Expand Sidebar (290px)'
+                  : 'Collapse Sidebar (Mini 80px)'
+              }
+              aria-label={isMobileView ? 'Toggle Navigation Menu' : collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               <Menu size={18} />
             </button>

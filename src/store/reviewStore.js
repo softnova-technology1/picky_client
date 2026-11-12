@@ -40,12 +40,23 @@ export const useReviewStore = create((set, get) => ({
     withPhotos: 0,
   },
   loading: false,
+  fetched: false,
+  lastFetchedAt: 0,
   error: null,
 
-  // 1. Fetch real reviews from MongoDB Atlas
-  fetchReviews: async (params = {}) => {
+  // 1. Fetch real reviews from MongoDB Atlas (supports silent background mode)
+  fetchReviews: async (params = {}, isBackground = false, force = false) => {
+    const hasCustomParams = params && Object.keys(params).length > 0;
+    const now = Date.now();
+    // Skip redundant unfiltered background refreshes within 15s
+    if (isBackground && !force && !hasCustomParams && get().fetched && now - get().lastFetchedAt < 15000) {
+      return;
+    }
+
     try {
-      set({ loading: true, error: null });
+      if (!isBackground && get().reviews.length === 0) {
+        set({ loading: true, error: null });
+      }
       const data = await reviewService.getAdminReviews(params);
       const list = Array.isArray(data?.reviews)
         ? data.reviews
@@ -64,15 +75,22 @@ export const useReviewStore = create((set, get) => ({
       };
 
       const unreadCount = calculateUnreadCount(list);
-      set({ reviews: list, kpis, unreadCount, loading: false });
+      set({
+        reviews: list,
+        kpis,
+        unreadCount,
+        loading: false,
+        fetched: !hasCustomParams ? true : get().fetched,
+        lastFetchedAt: !hasCustomParams ? Date.now() : get().lastFetchedAt,
+      });
     } catch (err) {
       console.error('Failed to fetch admin reviews:', err);
-      set({
+      set((state) => ({
         loading: false,
         error: err?.message || 'Failed to fetch reviews',
-        reviews: [],
-        unreadCount: 0,
-      });
+        reviews: state.reviews.length > 0 ? state.reviews : [],
+        unreadCount: state.unreadCount || 0,
+      }));
     }
   },
 

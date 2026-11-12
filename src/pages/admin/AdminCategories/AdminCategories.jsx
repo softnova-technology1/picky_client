@@ -23,14 +23,16 @@ import { adminService } from '../../../services/admin.service';
 import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
 
+let cachedAdminCategoriesData = null;
+
 export default function AdminCategories() {
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(() => cachedAdminCategoriesData?.categories || []);
+  const [subcategories, setSubcategories] = useState(() => cachedAdminCategoriesData?.subcategories || []);
+  const [loading, setLoading] = useState(() => !cachedAdminCategoriesData);
 
   // Add / Edit Category Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,28 +44,33 @@ export default function AdminCategories() {
   const [imageUploading, setImageUploading] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  async function loadData() {
+  async function loadData(isBackground = false) {
     try {
-      setLoading(true);
+      if (!isBackground && !cachedAdminCategoriesData) {
+        setLoading(true);
+      }
       const [catRes, subRes] = await Promise.all([
         categoryService.list({ all: true }).catch(() => null),
         adminService.getSubCategories().catch(() => null),
       ]);
-      const list = catRes ? catRes.data || [] : [];
-      const subs = subRes ? subRes.data || [] : [];
+      const list = catRes ? catRes.data || [] : (cachedAdminCategoriesData?.categories || []);
+      const subs = subRes ? subRes.data || [] : (cachedAdminCategoriesData?.subcategories || []);
+      cachedAdminCategoriesData = { categories: list, subcategories: subs };
       setCategories(list);
       setSubcategories(subs);
     } catch (err) {
       console.error('Failed to load categories:', err);
-      setCategories([]);
-      setSubcategories([]);
+      if (!isBackground && !cachedAdminCategoriesData) {
+        setCategories([]);
+        setSubcategories([]);
+      }
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData();
+    loadData(Boolean(cachedAdminCategoriesData));
   }, []);
 
   // Compute subcategory count per category ID
@@ -207,7 +214,7 @@ export default function AdminCategories() {
         showToast('Category created successfully', 'success');
       }
       setIsModalOpen(false);
-      await loadData();
+      await loadData(true);
     } catch (err) {
       showToast(err.message || 'Failed to save category', 'error');
     } finally {

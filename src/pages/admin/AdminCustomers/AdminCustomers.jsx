@@ -77,10 +77,12 @@ export const getCustomerTier = (customer) => {
 
 export const getCustomerOrders = () => [];
 
+let cachedAdminCustomersData = null;
+
 export default function AdminCustomers() {
-  const [summary, setSummary] = useState(null);
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(() => cachedAdminCustomersData?.summary || null);
+  const [customers, setCustomers] = useState(() => cachedAdminCustomersData?.customers || []);
+  const [loading, setLoading] = useState(() => !cachedAdminCustomersData);
 
   const { showToast } = useUiStore();
   const [selectedIds, setSelectedIds] = useState([]);
@@ -133,30 +135,33 @@ export default function AdminCustomers() {
   // Load customer profiles & summary
   useEffect(() => {
     async function load() {
-      const startTime = Date.now();
       try {
-        setLoading(true);
+        if (!cachedAdminCustomersData) {
+          setLoading(true);
+        }
         const [sumRes, custRes] = await Promise.all([
           adminService.getSalesSummary().catch(() => null),
           adminService.getCustomers({ limit: 100 }).catch(() => null),
         ]);
         const sumData = sumRes?.data || sumRes;
-        if (sumData && sumData.totalCustomers > 0) {
-          setSummary(sumData);
-        } else {
-          setSummary({});
-        }
+        const nextSummary = sumData && sumData.totalCustomers > 0 ? sumData : {};
+        setSummary(nextSummary);
 
-        const custList = Array.isArray(custRes?.data) ? custRes.data : (Array.isArray(custRes?.data?.data) ? custRes.data.data : (Array.isArray(custRes) ? custRes : []));
-        if (custList.length > 0) {
-          setCustomers(custList);
-        } else {
-          setCustomers([]);
-        }
+        const custList = Array.isArray(custRes?.data)
+          ? custRes.data
+          : Array.isArray(custRes?.data?.data)
+          ? custRes.data.data
+          : Array.isArray(custRes)
+          ? custRes
+          : [];
+        setCustomers(custList);
+        cachedAdminCustomersData = { summary: nextSummary, customers: custList };
       } catch (err) {
         console.error('Failed to load customers info:', err);
-        setSummary({});
-        setCustomers([]);
+        if (!cachedAdminCustomersData) {
+          setSummary({});
+          setCustomers([]);
+        }
       } finally {
         setLoading(false);
       }

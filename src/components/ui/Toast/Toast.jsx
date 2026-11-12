@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useUiStore } from '../../../store/uiStore';
+import { useUiStore, isAdminPortalPath } from '../../../store/uiStore';
 import styles from './Toast.module.css';
 
 export default function Toast() {
@@ -14,7 +14,7 @@ export default function Toast() {
     }
   }, [toast, hideToast]);
 
-  if (!toast) return null;
+  if (!toast || !isAdminPortalPath()) return null;
 
   return (
     <div className="toast-container">

@@ -473,27 +473,34 @@ export default function AdminNotifications() {
   return (
     <AdminLayout title="Notifications">
       <div className={styles.container}>
-        {/* ── Top Header Section ── */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <div className={styles.titleRow}>
-              <h1 className={styles.title}>Notifications</h1>
-              {unreadCount > 0 ? (
-                <div className={styles.unreadCountBadge}>
-                  <span className={styles.unreadPulseDot} />
-                  <span>{unreadCount} unread</span>
-                </div>
-              ) : (
-                <div
-                  className={styles.unreadCountBadge}
-                  style={{ background: '#ecfdf5', color: '#059669', borderColor: '#a7f3d0' }}
-                >
-                  <CheckCircle2 size={13} />
-                  <span>All caught up</span>
-                </div>
-              )}
+        {/* ── Top Header Section (Unified Admin Alignment) ── */}
+        <div className="admin-page-header-row">
+          <div className={styles.headerTitleWrap}>
+            <div className={styles.headerIconBadge}>
+              <Bell size={22} strokeWidth={2.2} />
             </div>
-            <p className={styles.subtitle}>Stay updated with store activity</p>
+            <div>
+              <div className={styles.titleRow}>
+                <h1 className="admin-page-main-title" style={{ margin: 0 }}>Notifications</h1>
+                {unreadCount > 0 ? (
+                  <div className={styles.unreadCountBadge}>
+                    <span className={styles.unreadPulseDot} />
+                    <span>{unreadCount} unread</span>
+                  </div>
+                ) : (
+                  <div
+                    className={styles.unreadCountBadge}
+                    style={{ background: '#ecfdf5', color: '#059669', borderColor: '#a7f3d0' }}
+                  >
+                    <CheckCircle2 size={13} />
+                    <span>All caught up</span>
+                  </div>
+                )}
+              </div>
+              <p className="admin-page-main-subtitle" style={{ margin: 0, marginTop: '2px' }}>
+                Stay updated with store activity
+              </p>
+            </div>
           </div>
 
           <div className={styles.headerActions}>
