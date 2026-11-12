@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
@@ -256,9 +257,14 @@ export default function OrderSuccess() {
 
             {/* ── Order Details Section ── */}
             {loading && !order ? (
-              <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
-                <Spinner size={36} />
-              </div>
+              <MobileSkeleton
+                variant="order-detail"
+                fallback={(
+                  <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
+                    <Spinner size={36} />
+                  </div>
+                )}
+              />
             ) : order ? (
               <div className={styles.orderDetailsCard}>
                 
@@ -488,9 +494,14 @@ export default function OrderSuccess() {
 
         {/* Card 2: Order Details & Summary Card */}
         {loading && !order ? (
-          <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
-            <Spinner size={32} />
-          </div>
+          <MobileSkeleton
+            variant="order-detail"
+            fallback={(
+              <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
+                <Spinner size={32} />
+              </div>
+            )}
+          />
         ) : order ? (
           <div className="mobile-success-details-card">
             {/* Order Header */}

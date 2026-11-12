@@ -4,6 +4,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import Gallery from '../../components/product/Gallery';
 import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { productService } from '../../services/product.service';
 import { wishlistService } from '../../services/wishlist.service';
 import { useCartStore } from '../../store/cartStore';
@@ -369,7 +370,10 @@ export default function ProductDetail() {
   if (loading && !product) {
     return (
       <PageWrapper>
-        <div className="section"><Spinner size={40} /></div>
+        <MobileSkeleton
+          variant="product-detail"
+          fallback={<div className="section"><Spinner size={40} /></div>}
+        />
       </PageWrapper>
     );
   }

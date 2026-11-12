@@ -4,6 +4,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import NewArrivalsHero from '../../components/new-arrivals/NewArrivalsHero';
 import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { productService } from '../../services/product.service';
 import { SLUG_ALIAS_MAP } from '../../data/data';
 import { fuzzyFilter } from '../../utils/fuzzySearch';
@@ -856,23 +857,29 @@ export default function NewArrivals() {
 
             {/* Products Grid with Generous Spacing */}
             {loading ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '6rem 2rem',
-                  background: '#ffffff',
-                  borderRadius: '24px',
-                  border: '1.5px solid #ede9fe',
-                  marginBottom: '4rem',
-                }}
-              >
-                <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
-                  <Spinner size={40} />
-                </div>
-                <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
-                  Loading fresh new arrivals...
-                </p>
-              </div>
+              <MobileSkeleton
+                variant="product-grid"
+                count={4}
+                fallback={(
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '6rem 2rem',
+                      background: '#ffffff',
+                      borderRadius: '24px',
+                      border: '1.5px solid #ede9fe',
+                      marginBottom: '4rem',
+                    }}
+                  >
+                    <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
+                      <Spinner size={40} />
+                    </div>
+                    <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+                      Loading fresh new arrivals...
+                    </p>
+                  </div>
+                )}
+              />
             ) : fetchError ? (
               <div
                 style={{

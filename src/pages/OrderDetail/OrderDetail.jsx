@@ -5,6 +5,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import OrderTracker from '../../components/order/OrderTracker';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { orderService } from '../../services/order.service';
 import { useReturnStore } from '../../store/returnStore';
 import { useAuthStore } from '../../store/authStore';
@@ -202,7 +203,10 @@ export default function OrderDetail() {
   if (loading) {
     return (
       <PageWrapper>
-        <div className="section"><Spinner size={40} /></div>
+        <MobileSkeleton
+          variant="order-detail"
+          fallback={<div className="section"><Spinner size={40} /></div>}
+        />
       </PageWrapper>
     );
   }

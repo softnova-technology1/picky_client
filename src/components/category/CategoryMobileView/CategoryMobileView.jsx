@@ -4,6 +4,7 @@ import { useCategoryStore } from '../../../store/categoryStore';
 import { productService } from '../../../services/product.service';
 import { usePageCustomization } from '../../../store/customizationStore';
 import ProductCard from '../../product/ProductCard';
+import MobileSkeleton from '../../ui/MobileSkeleton';
 import styles from './CategoryMobileView.module.css';
 
 export default function CategoryMobileView() {
@@ -763,12 +764,16 @@ export default function CategoryMobileView() {
 
         {/* 2 CARDS PER ROW USING OUR ProductCard COMPONENT */}
         <div className={styles.productsGrid2Col}>
-          {filteredProducts.slice(0, 10).map((product) => (
-            <ProductCard
-              key={product._id || product.id || product.slug}
-              product={product}
-            />
-          ))}
+          {loading ? (
+            <MobileSkeleton variant="product-grid" count={4} spanFullGrid />
+          ) : (
+            filteredProducts.slice(0, 10).map((product) => (
+              <ProductCard
+                key={product._id || product.id || product.slug}
+                product={product}
+              />
+            ))
+          )}
 
           {filteredProducts.length === 0 && !loading && (
             <div className={styles.noProductsNotice}>
