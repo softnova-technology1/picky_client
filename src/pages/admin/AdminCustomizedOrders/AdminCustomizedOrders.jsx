@@ -502,17 +502,18 @@ export default function AdminCustomizedOrders() {
                                   </span>
                                   <div className={styles.imagesGrid}>
                                     {[0, 1, 2, 3].map((slotIdx) => {
-                                      const img = frontImages[slotIdx];
+                                      const imgItem = frontImages[slotIdx];
+                                      const imgUrl = typeof imgItem === 'object' ? imgItem?.url : imgItem;
                                       return (
                                         <div
                                           key={slotIdx}
                                           className={styles.imageThumbBox}
-                                          onClick={() => img && setActiveLightboxImg(img)}
-                                          title={img ? 'Click to preview full size' : 'Slot empty'}
+                                          onClick={() => imgUrl && setActiveLightboxImg(imgUrl)}
+                                          title={imgUrl ? 'Click to preview full size' : 'Slot empty'}
                                         >
-                                          {img ? (
+                                          {imgUrl ? (
                                             <img
-                                              src={img}
+                                              src={imgUrl}
                                               alt={`Front Upload ${slotIdx + 1}`}
                                               className={styles.imageThumb}
                                             />
@@ -560,17 +561,18 @@ export default function AdminCustomizedOrders() {
                                   </span>
                                   <div className={styles.imagesGrid}>
                                     {[0, 1, 2, 3].map((slotIdx) => {
-                                      const img = backImages[slotIdx];
+                                      const imgItem = backImages[slotIdx];
+                                      const imgUrl = typeof imgItem === 'object' ? imgItem?.url : imgItem;
                                       return (
                                         <div
                                           key={slotIdx}
                                           className={styles.imageThumbBox}
-                                          onClick={() => img && setActiveLightboxImg(img)}
-                                          title={img ? 'Click to preview full size' : 'Slot empty'}
+                                          onClick={() => imgUrl && setActiveLightboxImg(imgUrl)}
+                                          title={imgUrl ? 'Click to preview full size' : 'Slot empty'}
                                         >
-                                          {img ? (
+                                          {imgUrl ? (
                                             <img
-                                              src={img}
+                                              src={imgUrl}
                                               alt={`Backside Upload ${slotIdx + 1}`}
                                               className={styles.imageThumb}
                                             />

@@ -1,7 +1,67 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { cartService } from '../services/cart.service';
 import { useAuthStore } from './authStore';
+
+// Safe localStorage adapter that catches QuotaExceededError and prevents checkout crashes
+const safeLocalStorage = {
+  getItem: (name) => {
+    try {
+      return localStorage.getItem(name);
+    } catch (_) {
+      return null;
+    }
+  },
+  setItem: (name, value) => {
+    try {
+      localStorage.setItem(name, value);
+    } catch (err) {
+      console.warn(`[cartStore] LocalStorage write failed (${err?.name || err?.message}). Attempting quota recovery...`);
+      try {
+        // Strip oversized raw data URLs to keep storage lean while preserving full cart state in memory
+        const parsed = JSON.parse(value);
+        const sanitizeCustomization = (custom) => {
+          if (!custom) return custom;
+          return {
+            ...custom,
+            frontImages: (custom.frontImages || []).map((img) => ({
+              ...img,
+              url: typeof img.url === 'string' && img.url.length > 30000 ? img.url.slice(0, 300) + '...[truncated]' : img.url,
+            })),
+            backImages: (custom.backImages || []).map((img) => ({
+              ...img,
+              url: typeof img.url === 'string' && img.url.length > 30000 ? img.url.slice(0, 300) + '...[truncated]' : img.url,
+            })),
+            frontExampleImage: typeof custom.frontExampleImage === 'string' && custom.frontExampleImage.length > 30000 ? null : custom.frontExampleImage,
+            backExampleImage: typeof custom.backExampleImage === 'string' && custom.backExampleImage.length > 30000 ? null : custom.backExampleImage,
+          };
+        };
+
+        if (parsed?.state?.items) {
+          parsed.state.items = parsed.state.items.map((i) => ({
+            ...i,
+            customization: sanitizeCustomization(i.customization),
+          }));
+        }
+        if (parsed?.state?.buyNowItem) {
+          parsed.state.buyNowItem = {
+            ...parsed.state.buyNowItem,
+            customization: sanitizeCustomization(parsed.state.buyNowItem.customization),
+          };
+        }
+        localStorage.setItem(name, JSON.stringify(parsed));
+      } catch (recoveryErr) {
+        // Gracefully stay in memory — NEVER let QuotaExceededError throw an uncaught exception!
+        console.warn('[cartStore] Operating in memory due to local storage exhaustion:', recoveryErr);
+      }
+    }
+  },
+  removeItem: (name) => {
+    try {
+      localStorage.removeItem(name);
+    } catch (_) {}
+  },
+};
 
 const getItemId = (item) => {
   if (!item) return '';
@@ -344,6 +404,7 @@ export const useCartStore = create(
     }),
     {
       name: 'picky-cart',
+      storage: createJSONStorage(() => safeLocalStorage),
       partialize: (state) => ({ items: state.items, coupon: state.coupon, couponDiscount: state.couponDiscount, buyNowItem: state.buyNowItem }),
     }
   )

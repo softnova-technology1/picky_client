@@ -116,7 +116,6 @@ export default function CustomizedOrder() {
   // Instant direct checkout for customized order
   const handleInstantCheckout = () => {
     const customizedItem = buildCustomizedProductItem();
-    addItem(customizedItem, quantity);
     setBuyNowItem(customizedItem);
     showToast(`Proceeding to checkout for Customized Order #${orderId}...`, 'info');
     navigate('/checkout?buyNow=true');

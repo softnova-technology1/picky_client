@@ -90,6 +90,9 @@ export default function ProductCustomize() {
   });
   const [frontExampleImage, setFrontExampleImage] = useState(null);
   const [backExampleImage, setBackExampleImage] = useState(null);
+  const [uploadingFront, setUploadingFront] = useState(false);
+  const [uploadingBack, setUploadingBack] = useState(false);
+  const [uploadingExample, setUploadingExample] = useState({ front: false, back: false });
 
   // Quantity
   const [quantity, setQuantity] = useState(1);
@@ -134,67 +137,129 @@ export default function ProductCustomize() {
     };
   }, [slug]);
 
-  // Image Upload Handlers (Front & Backside, max 4 each)
-  const handleFrontImagesUpload = (e) => {
+  const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB Limit
+
+  // Image Upload Handlers (Front & Backside, max 4 each) - Direct S3 upload with 10MB limit
+  const handleFrontImagesUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     const remainingSlots = 4 - frontImages.length;
     const toProcess = files.slice(0, remainingSlots);
 
-    toProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setFrontImages((prev) => {
-          if (prev.length >= 4) return prev;
-          return [...prev, { id: Date.now() + Math.random(), url: reader.result, name: file.name }];
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = '';
-    showToast(`Added image(s) to Front section`, 'success');
+    // Validate 10MB limit
+    const oversized = toProcess.find((f) => f.size > MAX_IMAGE_SIZE_BYTES);
+    if (oversized) {
+      showToast(`File "${oversized.name}" exceeds 10MB limit (${(oversized.size / (1024 * 1024)).toFixed(1)}MB). Please upload under 10MB.`, 'error');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setUploadingFront(true);
+      showToast('Uploading image(s) directly to S3...', 'info');
+
+      for (const file of toProcess) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await productService.uploadCustomizationImage(formData);
+        const s3Url = res?.data?.data?.url || res?.data?.url;
+        if (s3Url) {
+          setFrontImages((prev) => {
+            if (prev.length >= 4) return prev;
+            return [...prev, { id: Date.now() + Math.random(), url: s3Url, name: file.name }];
+          });
+        }
+      }
+      showToast('Front image(s) uploaded to S3 successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to upload image to S3:', err);
+      showToast(err?.response?.data?.message || 'Failed to upload image to S3. Please try again.', 'error');
+    } finally {
+      setUploadingFront(false);
+      e.target.value = '';
+    }
   };
 
   const removeFrontImage = (idx) => {
     setFrontImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleBackImagesUpload = (e) => {
+  const handleBackImagesUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     const remainingSlots = 4 - backImages.length;
     const toProcess = files.slice(0, remainingSlots);
 
-    toProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setBackImages((prev) => {
-          if (prev.length >= 4) return prev;
-          return [...prev, { id: Date.now() + Math.random(), url: reader.result, name: file.name }];
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = '';
-    showToast(`Added image(s) to Backside section`, 'success');
+    // Validate 10MB limit
+    const oversized = toProcess.find((f) => f.size > MAX_IMAGE_SIZE_BYTES);
+    if (oversized) {
+      showToast(`File "${oversized.name}" exceeds 10MB limit (${(oversized.size / (1024 * 1024)).toFixed(1)}MB). Please upload under 10MB.`, 'error');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setUploadingBack(true);
+      showToast('Uploading image(s) directly to S3...', 'info');
+
+      for (const file of toProcess) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await productService.uploadCustomizationImage(formData);
+        const s3Url = res?.data?.data?.url || res?.data?.url;
+        if (s3Url) {
+          setBackImages((prev) => {
+            if (prev.length >= 4) return prev;
+            return [...prev, { id: Date.now() + Math.random(), url: s3Url, name: file.name }];
+          });
+        }
+      }
+      showToast('Backside image(s) uploaded to S3 successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to upload image to S3:', err);
+      showToast(err?.response?.data?.message || 'Failed to upload image to S3. Please try again.', 'error');
+    } finally {
+      setUploadingBack(false);
+      e.target.value = '';
+    }
   };
 
   const removeBackImage = (idx) => {
     setBackImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // General Example Images
-  const handleExampleUpload = (type, e) => {
+  // General Example Images - Direct S3 upload with 10MB limit
+  const handleExampleUpload = async (type, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (type === 'front') setFrontExampleImage(reader.result);
-      else setBackExampleImage(reader.result);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-    showToast(`Uploaded ${type === 'front' ? 'Front' : 'Back'} Example Image`, 'success');
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      showToast(`File "${file.name}" exceeds 10MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please upload under 10MB.`, 'error');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setUploadingExample((prev) => ({ ...prev, [type]: true }));
+      showToast(`Uploading ${type === 'front' ? 'Front' : 'Back'} Example to S3...`, 'info');
+
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await productService.uploadCustomizationImage(formData);
+      const s3Url = res?.data?.data?.url || res?.data?.url;
+
+      if (s3Url) {
+        if (type === 'front') setFrontExampleImage(s3Url);
+        else setBackExampleImage(s3Url);
+        showToast(`${type === 'front' ? 'Front' : 'Back'} Example uploaded to S3 successfully!`, 'success');
+      }
+    } catch (err) {
+      console.error('Failed to upload example image to S3:', err);
+      showToast(err?.response?.data?.message || 'Failed to upload example image to S3', 'error');
+    } finally {
+      setUploadingExample((prev) => ({ ...prev, [type]: false }));
+      e.target.value = '';
+    }
   };
 
   // Custom Color Change handler
@@ -417,7 +482,7 @@ export default function ProductCustomize() {
             {/* Element 3: Upload 4 Images (with preview and remove on hover) */}
             <div className={styles['field-group']}>
               <label className={styles['field-label']}>
-                <span>Front Images / Artworks (Upload up to 4)</span>
+                <span>Front Images / Artworks (Upload up to 4 • Max 10MB each)</span>
                 <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{frontImages.length}/4 Uploaded</span>
               </label>
 
@@ -449,17 +514,27 @@ export default function ProductCustomize() {
 
                 {/* Upload Button if less than 4 */}
                 {frontImages.length < 4 && (
-                  <label className={styles['image-upload-slot']}>
+                  <label
+                    className={styles['image-upload-slot']}
+                    style={{
+                      opacity: uploadingFront ? 0.7 : 1,
+                      pointerEvents: uploadingFront ? 'none' : 'auto',
+                      cursor: uploadingFront ? 'wait' : 'pointer',
+                    }}
+                  >
                     <input
                       type="file"
                       accept="image/*"
                       multiple
+                      disabled={uploadingFront}
                       onChange={handleFrontImagesUpload}
                       style={{ display: 'none' }}
                     />
                     <Upload size={22} color="#0284c7" />
-                    <span className={styles['upload-slot-text']}>Upload Image</span>
-                    <span className={styles['upload-slot-sub']}>Slot {frontImages.length + 1} of 4</span>
+                    <span className={styles['upload-slot-text']}>
+                      {uploadingFront ? 'Uploading to S3...' : 'Upload Image'}
+                    </span>
+                    <span className={styles['upload-slot-sub']}>Slot {frontImages.length + 1} of 4 • Max 10MB</span>
                   </label>
                 )}
               </div>
@@ -548,7 +623,7 @@ export default function ProductCustomize() {
             {/* Element 3: Upload 4 Images (with preview and remove on hover) */}
             <div className={styles['field-group']}>
               <label className={styles['field-label']}>
-                <span>Backside Images / Artworks (Upload up to 4)</span>
+                <span>Backside Images / Artworks (Upload up to 4 • Max 10MB each)</span>
                 <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{backImages.length}/4 Uploaded</span>
               </label>
 
@@ -580,17 +655,27 @@ export default function ProductCustomize() {
 
                 {/* Upload Button if less than 4 */}
                 {backImages.length < 4 && (
-                  <label className={styles['image-upload-slot']}>
+                  <label
+                    className={styles['image-upload-slot']}
+                    style={{
+                      opacity: uploadingBack ? 0.7 : 1,
+                      pointerEvents: uploadingBack ? 'none' : 'auto',
+                      cursor: uploadingBack ? 'wait' : 'pointer',
+                    }}
+                  >
                     <input
                       type="file"
                       accept="image/*"
                       multiple
+                      disabled={uploadingBack}
                       onChange={handleBackImagesUpload}
                       style={{ display: 'none' }}
                     />
                     <Upload size={22} color="#0284c7" />
-                    <span className={styles['upload-slot-text']}>Upload Image</span>
-                    <span className={styles['upload-slot-sub']}>Slot {backImages.length + 1} of 4</span>
+                    <span className={styles['upload-slot-text']}>
+                      {uploadingBack ? 'Uploading to S3...' : 'Upload Image'}
+                    </span>
+                    <span className={styles['upload-slot-sub']}>Slot {backImages.length + 1} of 4 • Max 10MB</span>
                   </label>
                 )}
               </div>
@@ -729,7 +814,7 @@ export default function ProductCustomize() {
             {/* 4. Fields for 'Front Image' and 'Back Image' where users can upload example images */}
             <div className={styles['field-group']}>
               <label className={styles['field-label']}>
-                <span>Example Mockup Images (Front &amp; Back)</span>
+                <span>Example Mockup Images (Front &amp; Back • Max 10MB each)</span>
               </label>
 
               <div className={styles['example-images-grid']}>
@@ -762,16 +847,27 @@ export default function ProductCustomize() {
                       </div>
                     </div>
                   ) : (
-                    <label className={styles['image-upload-slot']} style={{ height: '140px' }}>
+                    <label
+                      className={styles['image-upload-slot']}
+                      style={{
+                        height: '140px',
+                        opacity: uploadingExample.front ? 0.7 : 1,
+                        pointerEvents: uploadingExample.front ? 'none' : 'auto',
+                        cursor: uploadingExample.front ? 'wait' : 'pointer',
+                      }}
+                    >
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingExample.front}
                         onChange={(e) => handleExampleUpload('front', e)}
                         style={{ display: 'none' }}
                       />
                       <ImageIcon size={24} color="#0284c7" />
-                      <span className={styles['upload-slot-text']}>Upload Front Example</span>
-                      <span className={styles['upload-slot-sub']}>PNG, JPG or WEBP</span>
+                      <span className={styles['upload-slot-text']}>
+                        {uploadingExample.front ? 'Uploading to S3...' : 'Upload Front Example'}
+                      </span>
+                      <span className={styles['upload-slot-sub']}>PNG, JPG or WEBP • Max 10MB</span>
                     </label>
                   )}
                 </div>
@@ -805,16 +901,27 @@ export default function ProductCustomize() {
                       </div>
                     </div>
                   ) : (
-                    <label className={styles['image-upload-slot']} style={{ height: '140px' }}>
+                    <label
+                      className={styles['image-upload-slot']}
+                      style={{
+                        height: '140px',
+                        opacity: uploadingExample.back ? 0.7 : 1,
+                        pointerEvents: uploadingExample.back ? 'none' : 'auto',
+                        cursor: uploadingExample.back ? 'wait' : 'pointer',
+                      }}
+                    >
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingExample.back}
                         onChange={(e) => handleExampleUpload('back', e)}
                         style={{ display: 'none' }}
                       />
                       <ImageIcon size={24} color="#0284c7" />
-                      <span className={styles['upload-slot-text']}>Upload Back Example</span>
-                      <span className={styles['upload-slot-sub']}>PNG, JPG or WEBP</span>
+                      <span className={styles['upload-slot-text']}>
+                        {uploadingExample.back ? 'Uploading to S3...' : 'Upload Back Example'}
+                      </span>
+                      <span className={styles['upload-slot-sub']}>PNG, JPG or WEBP • Max 10MB</span>
                     </label>
                   )}
                 </div>
