@@ -16,6 +16,8 @@ import NewArrivals from './pages/NewArrivals';
 import BestSellers from './pages/BestSellers';
 import Discounts from './pages/Discounts';
 import ProductDetail from './pages/ProductDetail';
+import ProductCustomize from './pages/ProductCustomize/ProductCustomize';
+import CustomizedOrder from './pages/CustomizedOrder/CustomizedOrder';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Login from './pages/Login';
@@ -40,6 +42,7 @@ import NotFound from './pages/NotFound';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminCustomizedOrders from './pages/admin/AdminCustomizedOrders';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminReturns from './pages/admin/AdminReturns';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -164,6 +167,11 @@ export default function App() {
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
+          <Route path="/products/:slug/customize" element={<ProductCustomize />} />
+          <Route path="/product/:slug/customize" element={<ProductCustomize />} />
+          <Route path="/customize/:slug" element={<ProductCustomize />} />
+          <Route path="/customized-order" element={<CustomizedOrder />} />
+          <Route path="/products/:slug/customized-order" element={<CustomizedOrder />} />
           <Route path="/search" element={<ProductList />} />
 
           {/* ── Customer Shopping Funnel ─────────────── */}
@@ -203,6 +211,10 @@ export default function App() {
           <Route path={ADMIN_ALT} element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
           <Route path={`${ADMIN_ALT}/orders`} element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/customized-orders`} element={<AdminProtectedRoute><AdminCustomizedOrders /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/customized-orders`} element={<AdminProtectedRoute><AdminCustomizedOrders /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN}/customize-orders`} element={<AdminProtectedRoute><AdminCustomizedOrders /></AdminProtectedRoute>} />
+          <Route path={`${ADMIN_ALT}/customize-orders`} element={<AdminProtectedRoute><AdminCustomizedOrders /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
           <Route path={`${ADMIN_ALT}/orders/:id`} element={<AdminProtectedRoute><AdminOrderDetail /></AdminProtectedRoute>} />
           <Route path={`${ADMIN}/returns`} element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />

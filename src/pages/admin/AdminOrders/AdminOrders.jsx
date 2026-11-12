@@ -2153,6 +2153,26 @@ export default function AdminOrders() {
                             <ShoppingBag size={13} color="#7c3aed" />
                             {order.items?.length || order.itemsCount || 1} item{(order.items?.length || 1) !== 1 ? 's' : ''}
                           </span>
+                          {Boolean(order.isCustomized || order.items?.some((i) => i.isCustomized)) && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: '#0369a1',
+                                background: '#e0f2fe',
+                                border: '1px solid #bae6fd',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '6px',
+                                letterSpacing: '0.01em',
+                              }}
+                              title="Customized Order with bespoke manufacturing specifications"
+                            >
+                              <Sparkles size={10} /> Customized
+                            </span>
+                          )}
                           {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
                             <span
                               style={{
@@ -2431,22 +2451,47 @@ export default function AdminOrders() {
                                           }}
                                         />
                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                          <strong
-                                            style={{
-                                              fontSize: '0.85rem',
-                                              color: '#0f172a',
-                                              fontWeight: 600,
-                                              display: 'block',
-                                              whiteSpace: 'nowrap',
-                                              overflow: 'hidden',
-                                              textOverflow: 'ellipsis',
-                                            }}
-                                          >
-                                            {item.name}
-                                          </strong>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                            <strong
+                                              style={{
+                                                fontSize: '0.85rem',
+                                                color: '#0f172a',
+                                                fontWeight: 600,
+                                                display: 'block',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                              }}
+                                            >
+                                              {item.name}
+                                            </strong>
+                                            {item.isCustomized && (
+                                              <span
+                                                style={{
+                                                  fontSize: '0.62rem',
+                                                  fontWeight: 800,
+                                                  color: '#0369a1',
+                                                  background: '#e0f2fe',
+                                                  padding: '0.06rem 0.4rem',
+                                                  borderRadius: '999px',
+                                                  border: '1px solid #bae6fd',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '0.2rem',
+                                                }}
+                                              >
+                                                <Sparkles size={8} /> Customized
+                                              </span>
+                                            )}
+                                          </div>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
                                             <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
                                               Qty: <strong style={{ color: '#0f172a' }}>{item.quantity}</strong> × {formatPrice(item.price)}
+                                              {item.isCustomized && (
+                                                <span style={{ color: '#0284c7', marginLeft: '0.35rem', fontWeight: 600 }}>
+                                                  (Base: {formatPrice(item.basePrice || (item.price - (item.customizationCost || 0)))} + Custom: +{formatPrice(item.customizationCost || 0)})
+                                                </span>
+                                              )}
                                             </span>
                                           </div>
                                         </div>
@@ -2552,6 +2597,16 @@ export default function AdminOrders() {
                                       </span>
                                       <span style={{ fontWeight: 700, color: '#be123c' }}>
                                         +{formatPrice(order.giftWrap?.fee || order.giftWrapFee || 30)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {Boolean(order.isCustomized || order.customizationCostTotal > 0 || order.items?.some((i) => i.isCustomized)) && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.79rem', color: '#0284c7' }}>
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        <Sparkles size={11} /> Customization Fee Total
+                                      </span>
+                                      <span style={{ fontWeight: 700, color: '#0284c7' }}>
+                                        +{formatPrice(order.customizationCostTotal || order.items?.reduce((sum, i) => sum + (Number(i.customizationCost) || 0) * (Number(i.quantity) || 1), 0) || 0)}
                                       </span>
                                     </div>
                                   )}

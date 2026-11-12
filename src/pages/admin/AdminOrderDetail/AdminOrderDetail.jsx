@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminGiftCard from '../../../components/admin/AdminGiftCard';
+import CustomizedOrderSection from '../../../components/order/CustomizedOrderSection';
+import { Sparkles } from 'lucide-react';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Spinner from '../../../components/ui/Spinner';
@@ -211,12 +213,32 @@ export default function AdminOrderDetail() {
           <ArrowLeft size={14} />
           <span>Back to Orders</span>
         </Link>
-        <span
-          className={`adm-status-pill adm-status-${order.status || 'confirmed'}`}
-          style={{ fontSize: '0.85rem', padding: '0.35rem 0.95rem' }}
-        >
-          ● Status: {order.status ? order.status.toUpperCase() : 'CONFIRMED'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {Boolean(order.isCustomized || order.items?.some((i) => i.isCustomized)) && (
+            <span
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                color: '#0369a1',
+                background: '#e0f2fe',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '999px',
+                border: '1.5px solid #bae6fd',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <Sparkles size={13} /> Customized Order
+            </span>
+          )}
+          <span
+            className={`adm-status-pill adm-status-${order.status || 'confirmed'}`}
+            style={{ fontSize: '0.85rem', padding: '0.35rem 0.95rem' }}
+          >
+            ● Status: {order.status ? order.status.toUpperCase() : 'CONFIRMED'}
+          </span>
+        </div>
       </div>
 
       {/* ── Page Header ── */}
@@ -335,11 +357,36 @@ export default function AdminOrderDetail() {
                     style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }}
                   />
                   <div style={{ flex: 1 }}>
-                    <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>
-                      {item.name}
-                    </strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      <strong style={{ fontSize: '0.92rem', color: '#1e1b4b', display: 'block' }}>
+                        {item.name}
+                      </strong>
+                      {item.isCustomized && (
+                        <span
+                          style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            color: '#0369a1',
+                            background: '#e0f2fe',
+                            padding: '0.08rem 0.45rem',
+                            borderRadius: '9999px',
+                            border: '1px solid #bae6fd',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                          }}
+                        >
+                          <Sparkles size={9} /> Customized
+                        </span>
+                      )}
+                    </div>
                     <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
                       Qty: {item.quantity} × {formatPrice(item.price)}
+                      {item.isCustomized && (
+                        <span style={{ color: '#0284c7', marginLeft: '0.35rem', fontWeight: 600 }}>
+                          (Base: {formatPrice(item.basePrice || (item.price - (item.customizationCost || 0)))} + Custom: +{formatPrice(item.customizationCost || 0)})
+                        </span>
+                      )}
                     </span>
                   </div>
                   <strong style={{ fontSize: '0.98rem', color: '#7c3aed' }}>
@@ -423,6 +470,14 @@ export default function AdminOrderDetail() {
                     <Gift size={13} /> Gift Wrapping
                   </span>
                   <span>+{formatPrice(order.giftWrap?.fee || order.giftWrapFee || 30)}</span>
+                </div>
+              )}
+              {Boolean(order.isCustomized || order.customizationCostTotal > 0 || order.items?.some((i) => i.isCustomized)) && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0284c7', fontWeight: 600 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Sparkles size={13} /> Customization Fee Total
+                  </span>
+                  <span>+{formatPrice(order.customizationCostTotal || order.items?.reduce((sum, i) => sum + (Number(i.customizationCost) || 0) * (Number(i.quantity) || 1), 0) || 0)}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800, color: '#1e1b4b', borderTop: '1px solid #ede8f8', paddingTop: '0.75rem' }}>
@@ -530,6 +585,9 @@ export default function AdminOrderDetail() {
           </div>
         </div>
       </div>
+
+      {/* ── DEDICATED CUSTOMIZED ORDERS SECTION FOR PRODUCTION & ARTISANS ── */}
+      <CustomizedOrderSection order={order} isAdmin={true} />
 
       {showGiftCardModal && (
         <AdminGiftCard
