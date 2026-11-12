@@ -12,7 +12,6 @@ import { useCategoryStore } from '../../store/categoryStore';
 import { usePageCustomization } from '../../store/customizationStore';
 import { Sparkles } from 'lucide-react';
 import styles from './Categories.module.css';
-import '../../components/laptopstyle/Categories.module.css';
 
 export default function Categories() {
   const { sections, isEnabled, getSetting } = usePageCustomization('categories');
