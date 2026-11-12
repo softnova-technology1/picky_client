@@ -36,7 +36,6 @@ import { useCategoryStore } from '../../store/categoryStore';
 import { usePageCustomization } from '../../store/customizationStore';
 import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import '../../styles/home-premium.css';
-import '../../components/laptopstyle/NewArrivals.module.css';
 
 export default function NewArrivals() {
   const { isEnabled, getSetting, getSection } = usePageCustomization('new_arrivals');

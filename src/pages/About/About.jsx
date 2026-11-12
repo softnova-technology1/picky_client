@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from './About.module.css';
-import '../../components/laptopstyle/About.module.css';
 import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import '../../styles/home-premium.css';
 import { ArrowRight } from 'lucide-react';

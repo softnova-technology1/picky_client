@@ -23,7 +23,6 @@ import {
 import AdminLayout from '../../../components/layout/AdminLayout';
 import AdminGiftCard from '../../../components/admin/AdminGiftCard';
 import CustomizedOrderSection from '../../../components/order/CustomizedOrderSection';
-import { Sparkles } from 'lucide-react';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Spinner from '../../../components/ui/Spinner';

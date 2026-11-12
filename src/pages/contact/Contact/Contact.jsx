@@ -8,7 +8,6 @@ import { contactService } from '../../../services/contact.service';
 import { settingsService } from '../../../services/settings.service';
 import { productService } from '../../../services/product.service';
 import './Contact.css';
-import '../../../components/laptopstyle/Contact.module.css';
 import '../../../styles/home-premium.css';
 import {
   Headset,
