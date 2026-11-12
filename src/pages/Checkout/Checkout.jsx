@@ -77,8 +77,14 @@ export default function Checkout() {
   React.useEffect(() => {
     if (checkoutItems.length === 0 || orderCompletedRef.current) return;
 
+    const cleanId = (id) => {
+      if (!id) return '';
+      const s = id.toString();
+      return s.includes('_custom_') ? s.split('_custom_')[0] : s;
+    };
+
     const payloadItems = checkoutItems.map((i) => ({
-      productId: i.productId || i._id || i.id,
+      productId: cleanId(i.productId || i._id || i.id),
       quantity: i.quantity || 1,
     }));
 
@@ -400,9 +406,16 @@ export default function Checkout() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Calculate pricing breakdown
+  // Calculate pricing breakdown with separate base & customization tracking
   const subtotal = checkoutItems.reduce((sum, item) => {
-    const price = item.discountPrice || item.price || 0;
+    const isCust = Boolean(item.isCustomized);
+    const customFee = isCust ? Number(item.customizationCost || 0) : 0;
+    const base = Number(
+      item.basePrice !== undefined 
+        ? item.basePrice 
+        : (item.discountPrice || item.price || 0)
+    );
+    const price = isCust ? (base + customFee) : (item.discountPrice || item.price || 0);
     return sum + price * (item.quantity || 1);
   }, 0);
 
@@ -766,13 +779,33 @@ export default function Checkout() {
       const isLoaded = await loadRazorpayScript();
       if (isLoaded && window.Razorpay) {
         try {
-          const cartPayload = checkoutItems.map((i) => ({
-            productId: i.productId || i._id || i.id,
-            name: i.name,
-            image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
-            price: i.discountPrice || i.price,
-            quantity: i.quantity || 1,
-          }));
+          const cleanProdId = (id) => {
+            if (!id) return '';
+            const s = id.toString();
+            return s.includes('_custom_') ? s.split('_custom_')[0] : s;
+          };
+
+          const cartPayload = checkoutItems.map((i) => {
+            const isCust = Boolean(i.isCustomized);
+            const customFee = isCust ? Number(i.customizationCost || 0) : 0;
+            const base = Number(
+              i.basePrice !== undefined 
+                ? i.basePrice 
+                : (i.discountPrice || i.price || 0)
+            );
+            const unitPrice = isCust ? (base + customFee) : (i.discountPrice || i.price || 0);
+            return {
+              productId: cleanProdId(i.productId || i._id || i.id),
+              name: i.name,
+              image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
+              price: unitPrice,
+              basePrice: base,
+              customizationCost: customFee,
+              isCustomized: isCust,
+              customization: i.customization || null,
+              quantity: i.quantity || 1,
+            };
+          });
 
           const rzInitRes = await orderService.createRazorpayOrder({
             shippingAddress: formData,
@@ -878,8 +911,13 @@ export default function Checkout() {
     const activeSessionId = sessionIdRef.current;
     setRzSessionId(activeSessionId);
     try {
+      const cleanProdId = (id) => {
+        if (!id) return '';
+        const s = id.toString();
+        return s.includes('_custom_') ? s.split('_custom_')[0] : s;
+      };
       const cartPayload = checkoutItems.map((i) => ({
-        productId: i.productId || i._id || i.id,
+        productId: cleanProdId(i.productId || i._id || i.id),
         quantity: i.quantity || 1,
       }));
       await orderService.reserveCheckout({
@@ -910,15 +948,35 @@ export default function Checkout() {
     setLoading(true);
 
     try {
+      const cleanProdId = (id) => {
+        if (!id) return '';
+        const s = id.toString();
+        return s.includes('_custom_') ? s.split('_custom_')[0] : s;
+      };
+
       const payload = {
         sessionId: currentSessionId,
-        items: checkoutItems.map((i) => ({
-          productId: i.productId || i._id || i.id,
-          name: i.name,
-          image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
-          price: i.discountPrice || i.price,
-          quantity: i.quantity || 1,
-        })),
+        items: checkoutItems.map((i) => {
+          const isCust = Boolean(i.isCustomized);
+          const customFee = isCust ? Number(i.customizationCost || 0) : 0;
+          const base = Number(
+            i.basePrice !== undefined 
+              ? i.basePrice 
+              : (i.discountPrice || i.price || 0)
+          );
+          const unitPrice = isCust ? (base + customFee) : (i.discountPrice || i.price || 0);
+          return {
+            productId: cleanProdId(i.productId || i._id || i.id),
+            name: i.name,
+            image: i.image || (Array.isArray(i.images) ? i.images[0] : ''),
+            price: unitPrice,
+            basePrice: base,
+            customizationCost: customFee,
+            isCustomized: isCust,
+            customization: i.customization || null,
+            quantity: i.quantity || 1,
+          };
+        }),
         shippingAddress: {
           street: formData.street,
           city: formData.city,
@@ -1702,7 +1760,14 @@ export default function Checkout() {
                   {/* Cart Items List with Quantity Controls */}
                   <div className={styles['cart-items-wrapper']}>
                     {checkoutItems.map((item, index) => {
-                      const price = item.discountPrice || item.price || 0;
+                      const isCust = Boolean(item.isCustomized);
+                      const customFee = isCust ? Number(item.customizationCost || 0) : 0;
+                      const base = Number(
+                        item.basePrice !== undefined 
+                          ? item.basePrice 
+                          : (item.discountPrice || item.price || 0)
+                      );
+                      const price = isCust ? (base + customFee) : (item.discountPrice || item.price || 0);
                       const origPrice = item.price && item.discountPrice && item.price > item.discountPrice
                         ? item.price
                         : Math.round(price * 1.25);
@@ -1718,6 +1783,16 @@ export default function Checkout() {
 
                           <div className={styles['cart-item-details']}>
                             <span className={styles['cart-item-name']}>{item.name}</span>
+                            {isCust && (
+                              <div style={{ marginTop: '0.2rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0369a1', background: '#e0f2fe', padding: '0.1rem 0.45rem', borderRadius: '999px', border: '1px solid #bae6fd', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', width: 'fit-content' }}>
+                                  <Sparkles size={10} /> Customized Order
+                                </span>
+                                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                  Base: ₹{base} + Custom: +₹{customFee}
+                                </span>
+                              </div>
+                            )}
 
                             {/* Display final selected variant values (Read-only, no re-prompting) */}
                             {(item.selectedSize || item.selectedColor) && (

@@ -226,6 +226,8 @@ export default function AdminProducts() {
     stock: '',
     isFeatured: false,
     isActive: true,
+    isCustomizable: false,
+    customizationPrice: '',
   });
 
   const [charValues, setCharValues] = useState({});
@@ -304,6 +306,8 @@ export default function AdminProducts() {
       price: finalOriginalPrice,
       discountPrice: finalSellingPrice > 0 && finalSellingPrice < finalOriginalPrice ? finalSellingPrice : (finalSellingPrice || finalOriginalPrice),
       originalPrice: finalOriginalPrice,
+      isCustomizable: formData.isCustomizable,
+      customizationPrice: formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0,
       stock: formData.stock !== '' ? Number(formData.stock) : 10,
       tags: formData.tags ? [formData.tags] : [],
       category: catName,
@@ -429,6 +433,8 @@ export default function AdminProducts() {
       stock: '',
       isFeatured: false,
       isActive: true,
+      isCustomizable: false,
+      customizationPrice: '',
     });
     setCharValues({});
     setCustomSpecs([]);
@@ -474,6 +480,8 @@ export default function AdminProducts() {
       stock: p.stock !== undefined ? String(p.stock) : '',
       isFeatured: !!p.isFeatured,
       isActive: true,
+      isCustomizable: !!p.isCustomizable,
+      customizationPrice: p.customizationPrice !== undefined && p.customizationPrice !== null ? String(p.customizationPrice) : '',
     });
 
     // Populate characteristics (Preset vs Custom)
@@ -693,6 +701,8 @@ export default function AdminProducts() {
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
     payload.append('isActive', formData.isActive !== false);
+    payload.append('isCustomizable', formData.isCustomizable);
+    payload.append('customizationPrice', formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0);
     if (formData.isScheduled && formData.scheduledAt) {
       payload.append('scheduledAt', formData.scheduledAt);
       payload.append('isScheduled', 'true');
@@ -801,6 +811,8 @@ export default function AdminProducts() {
                   stock: Number(formData.stock),
                   tags: tagsArray,
                   isFeatured: formData.isFeatured,
+                  isCustomizable: formData.isCustomizable,
+                  customizationPrice: formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0,
                   images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : p.images,
                   category: categories.find((c) => c._id === formData.category) || p.category,
                   subCategory: { name: formData.subCategory || 'General' },
@@ -824,6 +836,8 @@ export default function AdminProducts() {
           stock: Number(formData.stock),
           tags: tagsArray,
           isFeatured: formData.isFeatured,
+          isCustomizable: formData.isCustomizable,
+          customizationPrice: formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0,
           category: categories.find((c) => c._id === formData.category) || { name: 'General' },
           subCategory: { name: formData.subCategory || 'General' },
           images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : [],
@@ -1906,6 +1920,141 @@ export default function AdminProducts() {
                       }}
                     />
                   </div>
+                </div>
+
+                {/* Customizable Product Option (Toggleable with Customization Cost Amount) */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    border: formData.isCustomizable ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                    marginTop: '0.4rem',
+                    marginBottom: '0.4rem',
+                    transition: 'all 0.25s ease',
+                    boxShadow: formData.isCustomizable ? '0 4px 18px rgba(2, 132, 199, 0.08)' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: formData.isCustomizable ? '#e0f2fe' : '#f1f5f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: formData.isCustomizable ? '#0284c7' : '#64748b',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Sparkles size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.84rem', color: formData.isCustomizable ? '#0369a1' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            CUSTOMIZABLE PRODUCT
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '9999px',
+                              background: formData.isCustomizable ? '#dcfce7' : '#f1f5f9',
+                              color: formData.isCustomizable ? '#15803d' : '#64748b',
+                            }}
+                          >
+                            {formData.isCustomizable ? 'Enabled' : 'Disabled (Default)'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.74rem', color: '#64748b' }}>
+                          Enable for personalized products. Adds a "Customize" button on the product details page.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !formData.isCustomizable;
+                        setFormData({
+                          ...formData,
+                          isCustomizable: next,
+                          customizationPrice: next ? formData.customizationPrice : '',
+                        });
+                      }}
+                      style={{
+                        width: '48px',
+                        height: '26px',
+                        borderRadius: '9999px',
+                        background: formData.isCustomizable ? '#0284c7' : '#cbd5e1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'background-color 0.2s ease',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={formData.isCustomizable ? 'Click to disable customization' : 'Click to enable customization'}
+                    >
+                      <span
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          transform: formData.isCustomizable ? 'translateX(22px)' : 'translateX(0px)',
+                          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                      />
+                    </button>
+                  </div>
+
+                  {/* If enabled: Amount input field */}
+                  {formData.isCustomizable && (
+                    <div style={{ marginTop: '1.15rem', paddingTop: '1rem', borderTop: '1px solid #f0f9ff' }}>
+                      <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.04em' }}>
+                        CUSTOMIZATION AMOUNT / COST (₹) <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative', width: '220px' }}>
+                          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748b', fontSize: '0.85rem' }}>
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            placeholder="e.g. 150"
+                            value={formData.customizationPrice}
+                            onChange={(e) => setFormData({ ...formData, customizationPrice: e.target.value })}
+                            required={formData.isCustomizable}
+                            style={{
+                              width: '100%',
+                              padding: '0.62rem 0.85rem 0.62rem 1.85rem',
+                              background: '#f8fafc',
+                              border: '1px solid #0284c7',
+                              borderRadius: '10px',
+                              fontSize: '0.86rem',
+                              fontWeight: 600,
+                              color: '#0f172a',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#64748b', flex: 1, minWidth: '220px' }}>
+                          This amount will be added to the product base price (₹{Number(formData.discountPrice || formData.price || 0)} base + ₹{Number(formData.customizationPrice) || 0} customization = <strong>₹{(Number(formData.discountPrice || formData.price || 0)) + (Number(formData.customizationPrice) || 0)} total</strong> in cart).
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 5. Clothing Sizes / Variants (Optional & Toggleable - Turned OFF by default) */}
@@ -4170,6 +4319,24 @@ export default function AdminProducts() {
                               <span style={{ fontSize: '0.71rem', color: '#64748b', marginTop: '0.15rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 SKU: {p.sku || p._id?.slice(-6) || p.slug?.slice(0, 12) || 'PRD'}
                               </span>
+                              {p.isCustomizable && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    padding: '0.12rem 0.45rem',
+                                    borderRadius: '6px',
+                                    background: '#e0f2fe',
+                                    color: '#0369a1',
+                                    fontSize: '0.67rem',
+                                    fontWeight: 700,
+                                    marginTop: '0.2rem',
+                                  }}
+                                >
+                                  <Sparkles size={11} /> Customizable (+₹{p.customizationPrice || 0})
+                                </span>
+                              )}
                             </div>
                           </div>
                         </td>

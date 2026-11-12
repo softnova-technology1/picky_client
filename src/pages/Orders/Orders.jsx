@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   FileText,
   Gift,
+  Sparkles,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -204,7 +205,27 @@ export default function Orders() {
                     >
                       <div>
                         <span className={styles['order-num-label']}>Order Number</span>
-                        <h4 className={styles['order-num-title']}>#{order.orderNumber}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <h4 className={styles['order-num-title']} style={{ margin: 0 }}>#{order.orderNumber}</h4>
+                          {Boolean(order.isCustomized || order.items?.some((i) => i.isCustomized)) && (
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                color: '#0369a1',
+                                background: '#e0f2fe',
+                                padding: '0.12rem 0.5rem',
+                                borderRadius: '999px',
+                                border: '1px solid #bae6fd',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                              }}
+                            >
+                              <Sparkles size={11} /> Customized Order
+                            </span>
+                          )}
+                        </div>
                         <span className={styles['order-date-text']}>Placed on {formatDate(order.createdAt)}</span>
                       </div>
 
@@ -324,6 +345,32 @@ export default function Orders() {
                         </div>
 
                         {/* ── Gift Message Box (If Gift Order) ── */}
+                        {/* ── Bespoke Customized Order Banner ── */}
+                        {Boolean(order.isCustomized || order.items?.some((i) => i.isCustomized)) && (
+                          <div
+                            style={{
+                              margin: '0.85rem 1.25rem 0.5rem',
+                              padding: '0.85rem 1.15rem',
+                              borderRadius: '12px',
+                              background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                              border: '1.5px solid #bae6fd',
+                              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.05)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0369a1', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <Sparkles size={15} /> Customized Order Included
+                              </span>
+                              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0369a1', background: '#bae6fd', padding: '0.12rem 0.5rem', borderRadius: '999px' }}>
+                                Bespoke Crafting
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: '#075985', lineHeight: 1.45 }}>
+                              This order contains customized product specifications. Base product price and customization cost are tracked separately in the invoice.
+                            </div>
+                          </div>
+                        )}
+
                         {Boolean(order.giftWrap?.isGiftWrapped || order.giftWrapFee > 0) && (
                           <div
                             style={{
@@ -390,8 +437,33 @@ export default function Orders() {
                                   {item.name}
                                 </span>
                               </Link>
+                              {item.isCustomized && (
+                                <div style={{ margin: '0.15rem 0' }}>
+                                  <span
+                                    style={{
+                                      fontSize: '0.65rem',
+                                      fontWeight: 800,
+                                      color: '#0369a1',
+                                      background: '#e0f2fe',
+                                      padding: '0.08rem 0.4rem',
+                                      borderRadius: '999px',
+                                      border: '1px solid #bae6fd',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                    }}
+                                  >
+                                    <Sparkles size={9} /> Customized
+                                  </span>
+                                </div>
+                              )}
                               <span className={styles['order-item-qty']}>
                                 Qty: {item.quantity} × {formatPrice(item.price)}
+                                {item.isCustomized && (
+                                  <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: '0.35rem' }}>
+                                    (Base: {formatPrice(item.basePrice || (item.price - (item.customizationCost || 0)))} + Custom: +{formatPrice(item.customizationCost || 0)})
+                                  </span>
+                                )}
                               </span>
                             </div>
                           </div>

@@ -19,7 +19,6 @@ import { ArrowRight, Star, Heart, CheckCircle, ShieldCheck, Truck, Clock, Chevro
 import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
 import '../../styles/home-premium.css';
 import '../../styles/mobile-responsive.css';
-import '../../components/laptopstyle/Home.module.css';
 
 // ─── Utility Components ──────────────────────────────────────────
 

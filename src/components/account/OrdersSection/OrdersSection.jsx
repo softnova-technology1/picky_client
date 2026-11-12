@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MobileSkeleton from '../../ui/MobileSkeleton';
+import { Sparkles } from 'lucide-react';
 import styles from './OrdersSection.module.css';
 
 /**
@@ -226,7 +227,27 @@ export default function OrdersSection({
                     </div>
                     <p className={styles.placedDateText}>{formatDateLabel(order.createdAt)}</p>
                   </div>
-                  {renderStatusBadge(order.status)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {Boolean(order.isCustomized || order.items?.some((i) => i.isCustomized)) && (
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          color: '#0369a1',
+                          background: '#e0f2fe',
+                          padding: '0.12rem 0.45rem',
+                          borderRadius: '999px',
+                          border: '1px solid #bae6fd',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                        }}
+                      >
+                        <Sparkles size={10} /> Customized
+                      </span>
+                    )}
+                    {renderStatusBadge(order.status)}
+                  </div>
                 </div>
 
                 {/* Items List */}
@@ -257,11 +278,36 @@ export default function OrdersSection({
 
                       {/* Item Details */}
                       <div className={styles.itemDetails}>
-                        <h4 className={styles.itemName}>{item.name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                          <h4 className={styles.itemName} style={{ margin: 0 }}>{item.name}</h4>
+                          {item.isCustomized && (
+                            <span
+                              style={{
+                                fontSize: '0.6rem',
+                                fontWeight: 800,
+                                color: '#0369a1',
+                                background: '#e0f2fe',
+                                padding: '0.06rem 0.35rem',
+                                borderRadius: '999px',
+                                border: '1px solid #bae6fd',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.2rem',
+                              }}
+                            >
+                              <Sparkles size={8} /> Customized
+                            </span>
+                          )}
+                        </div>
                         <p className={styles.itemQty}>
                           Qty: <span className={styles.itemQtyBold}>{item.quantity}</span>
                           {items.length > 1 && (
                             <> &bull; <span className={styles.itemPrice}>₹{item.price}</span></>
+                          )}
+                          {item.isCustomized && (
+                            <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: '0.35rem' }}>
+                              (Base: ₹{item.basePrice || (item.price - (item.customizationCost || 0))} + Custom: +₹{item.customizationCost || 0})
+                            </span>
                           )}
                         </p>
                         {items.length === 1 && (

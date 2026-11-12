@@ -16,7 +16,6 @@ import { DEFAULT_PRODUCT_TAGS, extractProductTag } from '../../utils/productTagH
 import { fuzzyFilter } from '../../utils/fuzzySearch';
 import ShopMobileView from '../../components/shop/ShopMobileView';
 import styles from './ProductList.module.css';
-import '../../components/laptopstyle/ProductList.module.css';
 
 export default function ProductList() {
   const { slug: routeCategorySlug, subSlug: routeSubSlug } = useParams();

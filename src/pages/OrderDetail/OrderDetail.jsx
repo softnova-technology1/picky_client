@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import styles from './OrderDetail.module.css';
 import AdminInvoice from '../../components/admin/AdminInvoice';
+import CustomizedOrderSection from '../../components/order/CustomizedOrderSection';
+import { Sparkles } from 'lucide-react';
 
 const CANCEL_REASONS = [
   'Ordered by mistake',
@@ -313,6 +315,24 @@ export default function OrderDetail() {
               <div className={styles.headerTitleGroup}>
                 <h1 className={styles.orderTitle}>Order #{order.orderNumber}</h1>
                 <Badge status={order.status} />
+                {Boolean(order.isCustomized || order.items?.some((i) => i.isCustomized)) && (
+                  <span
+                    style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      color: '#0369a1',
+                      background: '#e0f2fe',
+                      padding: '0.2rem 0.65rem',
+                      borderRadius: '9999px',
+                      border: '1.5px solid #bae6fd',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    <Sparkles size={12} /> Customized Order
+                  </span>
+                )}
               </div>
               <div className={styles.metaRow}>
                 <span>Placed on {formatDate(order.createdAt)}</span>
@@ -395,11 +415,36 @@ export default function OrderDetail() {
                       />
                     </div>
                     <div className={styles.itemDetails}>
-                      <span className={styles.itemName}>{item.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                        <span className={styles.itemName}>{item.name}</span>
+                        {item.isCustomized && (
+                          <span
+                            style={{
+                              fontSize: '0.65rem',
+                              fontWeight: 800,
+                              color: '#0369a1',
+                              background: '#e0f2fe',
+                              padding: '0.08rem 0.45rem',
+                              borderRadius: '9999px',
+                              border: '1px solid #bae6fd',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}
+                          >
+                            <Sparkles size={9} /> Customized
+                          </span>
+                        )}
+                      </div>
                       <div className={styles.itemQtyPrice}>
                         <span className={styles.qtyBadge}>Qty: {item.quantity}</span>
                         <span>×</span>
                         <span>{formatPrice(item.price)}</span>
+                        {item.isCustomized && (
+                          <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '0.35rem' }}>
+                            (Base: {formatPrice(item.basePrice || (item.price - (item.customizationCost || 0)))} + Custom: +{formatPrice(item.customizationCost || 0)})
+                          </span>
+                        )}
                       </div>
                     </div>
                     <span className={styles.itemTotalPrice}>
@@ -479,6 +524,23 @@ export default function OrderDetail() {
                   </div>
                 )}
 
+                {Boolean(order.isCustomized || order.customizationCostTotal > 0 || order.items?.some((i) => i.isCustomized)) && (
+                  <div className={styles.invoiceRow} style={{ color: '#0369a1' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Sparkles size={13} /> Customization Fee Total
+                    </span>
+                    <span className={styles.invoiceValue} style={{ color: '#0369a1', fontWeight: 700 }}>
+                      +{formatPrice(
+                        order.customizationCostTotal ||
+                          order.items?.reduce(
+                            (sum, i) => sum + (Number(i.customizationCost) || 0) * (Number(i.quantity) || 1),
+                            0
+                          ) || 0
+                      )}
+                    </span>
+                  </div>
+                )}
+
                 <div className={styles.totalRow}>
                   <span className={styles.totalLabel}>Grand Total</span>
                   <span className={styles.totalPriceAmount}>{formatPrice(order.total)}</span>
@@ -554,6 +616,9 @@ export default function OrderDetail() {
               </div>
             </div>
           </div>
+
+          {/* ── DEDICATED CUSTOMIZED ORDERS SECTION BELOW MAIN ORDER DETAILS ── */}
+          <CustomizedOrderSection order={order} />
 
           {/* ══════════════════════════════════════════════════════════════════
               MODAL 1: CUSTOMER CANCEL ORDER MODAL

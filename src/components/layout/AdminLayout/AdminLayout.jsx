@@ -559,6 +559,23 @@ export default function AdminLayout({ children, title }) {
                 </NavLink>
               )}
 
+              {isPageVisible('customizedOrders') && (
+                <NavLink
+                  to={`${ADMIN}/customized-orders`}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                  title="Customized Orders"
+                >
+                  <div className="admin-nav-icon-wrap">
+                    <Sparkles size={19} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="admin-nav-label">Customized Orders</span>
+                    </>
+                  )}
+                </NavLink>
+              )}
+
               {isPageVisible('returns') && (
                 <NavLink
                   to={`${ADMIN}/returns`}

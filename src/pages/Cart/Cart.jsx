@@ -58,6 +58,15 @@ const getItemSizes = (item) => {
   return [];
 };
 
+const formatCustomColor = (colorVal) => {
+  if (!colorVal) return '';
+  if (typeof colorVal === 'string') return colorVal;
+  if (typeof colorVal === 'object') {
+    return colorVal.name || colorVal.hex || 'Custom Color';
+  }
+  return String(colorVal);
+};
+
 // Helper to reliably extract available colors for a cart item
 const getItemColors = (item) => {
   if (Array.isArray(item.availableColors) && item.availableColors.length > 0) return item.availableColors;
@@ -134,6 +143,17 @@ export default function Cart() {
     return sum + price * (item.quantity || 1);
   }, 0);
 
+  // Crucially calculate and track base price and customization cost separately
+  const baseProductsTotal = items.reduce((sum, item) => {
+    const base = item.basePrice !== undefined ? Number(item.basePrice) : (item.discountPrice || item.price || 0);
+    return sum + base * (item.quantity || 1);
+  }, 0);
+
+  const totalCustomizationCost = items.reduce((sum, item) => {
+    const cost = Number(item.customizationCost || 0);
+    return sum + cost * (item.quantity || 1);
+  }, 0);
+
   // Original Total (MRP Total before discounts)
   const totalOriginal = items.reduce((sum, item) => {
     const itemPrice = item.discountPrice || item.price || 0;
@@ -149,6 +169,7 @@ export default function Cart() {
 
   // Determine items that require variant selection
   const missingVariantItems = items.filter((item) => {
+    if (item.isCustomized) return false;
     const sizes = getItemSizes(item);
     const colors = getItemColors(item);
     const needsSize = sizes.length > 0 && !item.selectedSize;
@@ -168,15 +189,17 @@ export default function Cart() {
   };
 
   const handleBuyNowSingleItem = (item) => {
-    const sizes = getItemSizes(item);
-    const colors = getItemColors(item);
-    if (sizes.length > 0 && !item.selectedSize) {
-      showToast(`⚠️ Please select Size for "${item.name}" before checkout.`, 'error');
-      return;
-    }
-    if (colors.length > 0 && !item.selectedColor) {
-      showToast(`⚠️ Please select Color for "${item.name}" before checkout.`, 'error');
-      return;
+    if (!item.isCustomized) {
+      const sizes = getItemSizes(item);
+      const colors = getItemColors(item);
+      if (sizes.length > 0 && !item.selectedSize) {
+        showToast(`⚠️ Please select Size for "${item.name}" before checkout.`, 'error');
+        return;
+      }
+      if (colors.length > 0 && !item.selectedColor) {
+        showToast(`⚠️ Please select Color for "${item.name}" before checkout.`, 'error');
+        return;
+      }
     }
     setBuyNowItem({
       ...item,
@@ -496,8 +519,8 @@ export default function Cart() {
 
                   const sizes = getItemSizes(item);
                   const colors = getItemColors(item);
-                  const needsSize = sizes.length > 0 && !item.selectedSize;
-                  const needsColor = colors.length > 0 && !item.selectedColor;
+                  const needsSize = !item.isCustomized && sizes.length > 0 && !item.selectedSize;
+                  const needsColor = !item.isCustomized && colors.length > 0 && !item.selectedColor;
                   const isMissing = needsSize || needsColor;
 
                   return (
@@ -549,6 +572,58 @@ export default function Cart() {
                             )}
                           </div>
 
+                          {/* Separate Tracking: Customization Details & Price Breakdown */}
+                          {(item.isCustomized || (item.customizationCost && item.customizationCost > 0)) && (
+                            <div
+                              style={{
+                                marginTop: '0.45rem',
+                                padding: '0.45rem 0.65rem',
+                                background: '#f0f9ff',
+                                border: '1px solid #bae6fd',
+                                borderRadius: '8px',
+                                fontSize: '0.74rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#0369a1', fontWeight: 700, marginBottom: '0.2rem' }}>
+                                <Sparkles size={12} />
+                                <span>Customized Product</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', color: '#334155', fontSize: '0.72rem' }}>
+                                <span>Base Price: <strong>{formatPrice(item.basePrice || (itemPrice - (item.customizationCost || 0)))}</strong></span>
+                                <span>Customization: <strong style={{ color: '#0284c7' }}>+{formatPrice(item.customizationCost || 0)}</strong></span>
+                                <span>Total / Unit: <strong>{formatPrice(itemPrice)}</strong></span>
+                              </div>
+                              {item.customization && (
+                                <div style={{ marginTop: '0.35rem', paddingTop: '0.35rem', borderTop: '1px dashed #bae6fd', color: '#475569', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  {item.customization.orderId && (
+                                    <div>Order Ref: <strong style={{ color: '#0284c7' }}>#{item.customization.orderId}</strong></div>
+                                  )}
+                                  {(item.customization.frontText || item.customization.text) && (
+                                    <div>Front Text: <strong style={{ color: '#0f172a' }}>"{item.customization.frontText || item.customization.text}"</strong> {(item.customization.frontFont || item.customization.font) ? `(${item.customization.frontFont || item.customization.font})` : ''}</div>
+                                  )}
+                                  {item.customization.backText && (
+                                    <div>Backside Text: <strong style={{ color: '#0f172a' }}>"{item.customization.backText}"</strong> {item.customization.backFont ? `(${item.customization.backFont})` : ''}</div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', color: '#64748b', fontSize: '0.7rem' }}>
+                                    {item.customization.material && <span>Fabric: <strong style={{ color: '#334155' }}>{item.customization.material}</strong></span>}
+                                    {item.customization.size && <span>Size: <strong style={{ color: '#334155' }}>{item.customization.size}</strong></span>}
+                                    {item.customization.color && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                        Custom Color:
+                                        {typeof item.customization.color === 'object' && item.customization.color.hex && (
+                                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.customization.color.hex, display: 'inline-block', border: '1px solid rgba(0,0,0,0.2)' }} />
+                                        )}
+                                        <strong style={{ color: '#334155' }}>{formatCustomColor(item.customization.color)}</strong>
+                                      </span>
+                                    )}
+                                    {item.customization.placement && <span>Placement: <strong style={{ color: '#334155' }}>{item.customization.placement}</strong></span>}
+                                  </div>
+                                  {item.customization.notes && <div style={{ fontStyle: 'italic', color: '#64748b' }}>Notes: "{item.customization.notes}"</div>}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {/* Stepper Row inside Product Details */}
                           <div className={styles['qty-stepper-wrap']}>
                             <span className={styles['qty-label']}>Quantity:</span>
@@ -575,8 +650,8 @@ export default function Cart() {
                         </div>
                       </div>
 
-                      {/* Interactive Variant Selectors inside Cart (Horizontal Flow) */}
-                      {(sizes.length > 0 || colors.length > 0) && (
+                      {/* Interactive Variant Selectors inside Cart (Horizontal Flow - only for standard items) */}
+                      {!item.isCustomized && (sizes.length > 0 || colors.length > 0) && (
                         <div className={`${styles['cart-variants-box']} ${isMissing ? styles['missing-variant-alert'] : ''}`}>
                           {/* Size Selector */}
                           {sizes.length > 0 && (
@@ -757,6 +832,17 @@ export default function Cart() {
                   <span className={styles['row-label']}>Subtotal</span>
                   <span className={styles['row-value']}>{formatPrice(subtotal)}</span>
                 </div>
+
+                {totalCustomizationCost > 0 && (
+                  <div className={styles['breakdown-row']} style={{ color: '#0284c7' }}>
+                    <span className={styles['row-label']} style={{ color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Sparkles size={13} /> Customization Fee
+                    </span>
+                    <span className={styles['row-value']} style={{ color: '#0284c7', fontWeight: 700 }}>
+                      +{formatPrice(totalCustomizationCost)}
+                    </span>
+                  </div>
+                )}
 
                 {couponDiscount > 0 && (
                   <div className={styles['breakdown-row']} style={{ color: '#16a34a' }}>

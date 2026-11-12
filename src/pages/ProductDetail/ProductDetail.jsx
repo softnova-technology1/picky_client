@@ -18,6 +18,7 @@ import styles from './ProductDetail.module.css';
 import { extractProductTag, getTagDesign } from '../../utils/productTagHelper';
 import { usePageCustomization } from '../../store/customizationStore';
 import {
+  Sparkles,
   Truck,
   RotateCcw,
   ShieldCheck,
@@ -643,6 +644,26 @@ export default function ProductDetail() {
                     </div>
                   )}
 
+                  {product.isCustomizable && (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.28rem 0.75rem',
+                        borderRadius: '9999px',
+                        background: '#e0f2fe',
+                        color: '#0369a1',
+                        border: '1px solid #bae6fd',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <Sparkles size={13} color="#0284c7" />
+                      <span>Customization Available {product.customizationPrice > 0 ? `(+₹${product.customizationPrice})` : ''}</span>
+                    </div>
+                  )}
+
                   {isOutOfStock ? (
                     <div className={styles['top-stock-badge']} style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' }}>
                       <span className={styles['green-dot']} style={{ background: '#dc2626' }} />
@@ -813,6 +834,43 @@ export default function ProductDetail() {
                     <span style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600, display: 'block', marginTop: '-0.3rem', marginBottom: '0.1rem' }}>
                       Max stock reached ({maxStock} available)
                     </span>
+                  )}
+
+                  {/* Customize Product Button (Visible only when customizable product is enabled) */}
+                  {product.isCustomizable && (
+                    <button
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => navigate(`/products/${product.slug || slug}/customize`)}
+                      className={styles['btn-customize-product']}
+                      style={{
+                        width: '100%',
+                        padding: '0.85rem 1.25rem',
+                        borderRadius: '12px',
+                        border: '1.5px solid #0284c7',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                        color: '#ffffff',
+                        fontSize: '0.92rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
+                        marginBottom: '0.75rem',
+                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                        opacity: isOutOfStock ? 0.5 : 1,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <Sparkles size={17} />
+                      <span>Customize Product</span>
+                      {product.customizationPrice > 0 && (
+                        <span style={{ fontSize: '0.78rem', background: 'rgba(255,255,255,0.25)', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontWeight: 600 }}>
+                          +₹{product.customizationPrice}
+                        </span>
+                      )}
+                    </button>
                   )}
 
                   {/* Add to Bag Button */}
@@ -1583,6 +1641,30 @@ export default function ProductDetail() {
         )}
       </div>
       <div className="mobile-pdp-dock-actions">
+        {product.isCustomizable && (
+          <button
+            type="button"
+            disabled={isOutOfStock}
+            onClick={() => navigate(`/products/${product.slug || slug}/customize`)}
+            className="mobile-pdp-dock-btn-customize"
+            style={{
+              padding: '0.65rem 0.9rem',
+              borderRadius: '10px',
+              border: '1px solid #0284c7',
+              background: '#0284c7',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Sparkles size={14} /> Customize
+          </button>
+        )}
         <button
           type="button"
           disabled={isOutOfStock}

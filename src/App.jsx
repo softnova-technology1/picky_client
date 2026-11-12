@@ -18,6 +18,8 @@ import NewArrivals from './pages/NewArrivals';
 import BestSellers from './pages/BestSellers';
 import Discounts from './pages/Discounts';
 import ProductDetail from './pages/ProductDetail';
+import ProductCustomize from './pages/ProductCustomize/ProductCustomize';
+import CustomizedOrder from './pages/CustomizedOrder/CustomizedOrder';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Login from './pages/Login';
@@ -208,6 +210,11 @@ export default function App() {
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
+          <Route path="/products/:slug/customize" element={<ProductCustomize />} />
+          <Route path="/product/:slug/customize" element={<ProductCustomize />} />
+          <Route path="/customize/:slug" element={<ProductCustomize />} />
+          <Route path="/customized-order" element={<CustomizedOrder />} />
+          <Route path="/products/:slug/customized-order" element={<CustomizedOrder />} />
           <Route path="/search" element={<ProductList />} />
 
           {/* ── Customer Shopping Funnel ─────────────── */}

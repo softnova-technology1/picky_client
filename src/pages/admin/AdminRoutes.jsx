@@ -3,6 +3,7 @@ import { AdminProtectedRoute } from '../../components/layout/AdminProtectedRoute
 import AdminDashboard from './AdminDashboard';
 import AdminOrders from './AdminOrders';
 import AdminOrderDetail from './AdminOrderDetail';
+import AdminCustomizedOrders from './AdminCustomizedOrders';
 import AdminReturns from './AdminReturns';
 import AdminProducts from './AdminProducts';
 import AdminCategories from './AdminCategories';
@@ -34,6 +35,8 @@ export default function AdminRoutes() {
         <Route index element={<AdminDashboard />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="orders/:id" element={<AdminOrderDetail />} />
+        <Route path="customized-orders" element={<AdminCustomizedOrders />} />
+        <Route path="customized-order" element={<AdminCustomizedOrders />} />
         <Route path="returns" element={<AdminReturns />} />
         <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
         <Route path="broadcast" element={<AdminBroadcast />} />
