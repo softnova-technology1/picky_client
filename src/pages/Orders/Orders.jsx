@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
@@ -162,7 +163,7 @@ export default function Orders() {
           )}
 
           {loading ? (
-            <Spinner size={36} />
+            <MobileSkeleton variant="orders" count={3} fallback={<Spinner size={36} />} />
           ) : orders.length === 0 ? (
             <div className={`card ${styles['empty-card']}`}>
               <div className={styles['empty-icon-wrap']}>

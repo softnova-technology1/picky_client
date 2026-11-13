@@ -5,7 +5,9 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop/ScrollToTop';
 import LoginPopupModal from './components/common/LoginPopupModal/LoginPopupModal';
+import MobileSkeleton from './components/ui/MobileSkeleton';
 import { useButtonHoverFX } from './hooks/useButtonHoverFX';
+import { useMobileTapTracker } from './hooks/useMobileCircleReveal';
 
 // ── Critical Path Customer Pages (Synchronous for instantaneous launch) ──
 import Home from './pages/Home';
@@ -45,9 +47,12 @@ const SizeGuide = lazy(() => import('./pages/SizeGuide/SizeGuide'));
 // ── Lazy-Loaded Admin Operations Portal (Single unified chunk, isolated from customer bundle) ──
 const AdminRoutes = lazy(() => import('./pages/admin/AdminRoutes'));
 
-// Minimal, zero-overhead sleek page loading spinner
+// Minimal, zero-overhead sleek page loading spinner (mobile storefront shows Skeleton Screen)
 function PageLoader() {
-  return (
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isAdmin = path.startsWith(ADMIN) || path.startsWith(ADMIN_ALT);
+
+  const spinnerFallback = (
     <div style={{
       minHeight: '65vh',
       display: 'flex',
@@ -67,6 +72,12 @@ function PageLoader() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
+
+  if (isAdmin) {
+    return spinnerFallback;
+  }
+
+  return <MobileSkeleton variant="page" count={4} fallback={spinnerFallback} />;
 }
 
 const ADMIN = '/softpicky-sn2026';
@@ -83,6 +94,7 @@ import { initServerWatcher } from './services/serverWatcher';
 
 export default function App() {
   useButtonHoverFX();
+  useMobileTapTracker();
   const { setSections, setPageSections } = useCustomizationStore();
 
   useEffect(() => {

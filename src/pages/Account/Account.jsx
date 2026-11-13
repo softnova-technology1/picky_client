@@ -3,11 +3,13 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { useAuthStore } from '../../store/authStore';
 import { useOrderStore } from '../../store/orderStore';
+import { authService } from '../../services/auth.service';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import AccountProfile from '../../components/account/AccountProfile';
@@ -63,13 +65,14 @@ export default function Account() {
   const currentTab = searchParams.get('tab') || 'profile';
   const navigate = useNavigate();
 
-  const { user, logout } = useAuthStore();
+  const { user, updateUser, logout } = useAuthStore();
   const { showToast } = useUiStore();
   const { returns, fetchReturns, createReturnRequest } = useReturnStore();
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [mobileReturnOrder, setMobileReturnOrder] = useState(null);
   const [orderFilter, setOrderFilter] = useState('all');
   const [copiedOrderId, setCopiedOrderId] = useState(null);
 
@@ -115,8 +118,23 @@ export default function Account() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+    authService
+      .getMe()
+      .then((res) => {
+        const freshUser = res?.data?.data || res?.data || res;
+        if (isMounted && freshUser && typeof freshUser === 'object' && updateUser) {
+          updateUser(freshUser);
+        }
+      })
+      .catch(() => null);
+    return () => {
+      isMounted = false;
+    };
+  }, [updateUser]);
+
+  useEffect(() => {
     async function loadOrders() {
-      const startTime = Date.now();
       try {
         setLoadingOrders(true);
         const res = await orderService.list().catch(() => null);
@@ -127,11 +145,6 @@ export default function Account() {
         const fallback = useOrderStore.getState().orders || [];
         setOrders(fallback);
       } finally {
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((r) => setTimeout(r, remainingDelay));
-        }
         setLoadingOrders(false);
       }
     }
@@ -143,6 +156,7 @@ export default function Account() {
   };
 
   const handleConfirmLogout = () => {
+    authService.logout().catch(() => {});
     logout();
     navigate('/');
   };
@@ -198,6 +212,7 @@ export default function Account() {
       await createReturnRequest(newReturnRecord);
       showToast(`Return request ${ticketId} submitted successfully! Reverse pickup scheduled.`, 'success');
       setActiveReturnOrderId(null);
+      setMobileReturnOrder(null);
       setReturnMessage('');
       setReturnProofUrl('');
     } catch (err) {
@@ -228,24 +243,10 @@ export default function Account() {
             ordersCount={orders.length}
             activeTab={currentTab}
             onTabChange={handleTabChange}
-            onSignOut={() => setLogoutModalOpen(true)}
           />
         ) : currentTab === 'orders' ? (
           <div>
-            {/* Top Bar for Mobile Navigation & Sign Out */}
-            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '12px 16px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 0 10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setLogoutModalOpen(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '9999px', border: '1px solid #ddd6fe', backgroundColor: '#fff', color: '#7c3aed', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <LogOut size={14} />
-                  Sign Out
-                </button>
-              </div>
-
-              {/* Mobile Tabs Switcher */}
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '14px 14px 0' }}>
               <MobileAccountTabs
                 activeTab={currentTab}
                 ordersCount={orders.length}
@@ -255,28 +256,27 @@ export default function Account() {
 
             <OrdersSection
               orders={orders}
+              loading={loadingOrders}
+              copiedOrderId={copiedOrderId}
+              returns={returns}
               activeFilter={orderFilter}
               onFilterChange={setOrderFilter}
               onCopyOrderId={handleCopyOrderId}
               onInvoiceClick={(order) => setSelectedInvoiceOrder(order)}
               onTrackOrder={(order) => navigate('/track-order?orderId=' + (order.orderNumber || order._id))}
-              onReturnExchange={(order) => setActiveReturnOrderId(order._id)}
+              onReturnExchange={(order) => {
+                setReturnItemIdx(0);
+                setReturnReason(RETURN_REASONS[0]);
+                setReturnResolution('refund');
+                setReturnMessage('');
+                setReturnProofUrl('');
+                setMobileReturnOrder(order);
+              }}
             />
           </div>
         ) : currentTab === 'addresses' ? (
           <div>
-            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '12px 16px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 0 10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setLogoutModalOpen(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '9999px', border: '1px solid #ddd6fe', backgroundColor: '#fff', color: '#7c3aed', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <LogOut size={14} />
-                  Sign Out
-                </button>
-              </div>
-
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '14px 14px 10px' }}>
               <MobileAccountTabs
                 activeTab={currentTab}
                 ordersCount={orders.length}
@@ -284,24 +284,13 @@ export default function Account() {
               />
             </div>
 
-            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '0 16px 16px' }}>
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '0 14px 16px' }}>
               <AccountAddresses />
             </div>
           </div>
         ) : currentTab === 'password' ? (
           <div>
-            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '12px 16px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 0 10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setLogoutModalOpen(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '9999px', border: '1px solid #ddd6fe', backgroundColor: '#fff', color: '#7c3aed', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <LogOut size={14} />
-                  Sign Out
-                </button>
-              </div>
-
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '14px 14px 10px' }}>
               <MobileAccountTabs
                 activeTab={currentTab}
                 ordersCount={orders.length}
@@ -309,7 +298,7 @@ export default function Account() {
               />
             </div>
 
-            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '0 16px 16px' }}>
+            <div style={{ maxWidth: '448px', margin: '0 auto', padding: '0 14px 16px' }}>
               <AccountSecurity />
             </div>
           </div>
@@ -319,9 +308,20 @@ export default function Account() {
             ordersCount={orders.length}
             activeTab={currentTab}
             onTabChange={handleTabChange}
-            onSignOut={() => setLogoutModalOpen(true)}
           />
         )}
+
+        {/* Bottom-Aligned Sign Out Action on Phone View */}
+        <div className={styles.mobileLogoutWrap}>
+          <button
+            type="button"
+            onClick={() => setLogoutModalOpen(true)}
+            className={styles.mobileLogoutBtn}
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Desktop View: > 768px ── */}
@@ -544,7 +544,7 @@ export default function Account() {
                   })()}
 
                   {loadingOrders ? (
-                    <Spinner size={36} />
+                    <MobileSkeleton variant="orders" count={3} fallback={<Spinner size={36} />} />
                   ) : orders.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#f8fafc', borderRadius: '16px' }}>
                       <Package size={40} color="#7c3aed" style={{ marginBottom: '1rem' }} />
@@ -1495,6 +1495,120 @@ export default function Account() {
         </div>
       </div>
       </div>
+
+      {/* Mobile Return / Exchange Modal */}
+      <Modal
+        isOpen={Boolean(mobileReturnOrder)}
+        onClose={() => setMobileReturnOrder(null)}
+        title={`Return / Exchange (${mobileReturnOrder?.orderNumber || ''})`}
+      >
+        {mobileReturnOrder && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleReturnSubmit(mobileReturnOrder);
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}
+          >
+            {mobileReturnOrder.items?.length > 1 && (
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem' }}>
+                  Select Item:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  {mobileReturnOrder.items.map((it, idx) => (
+                    <label
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '10px',
+                        border: `1.5px solid ${returnItemIdx === idx ? '#7c3aed' : '#e2e8f0'}`,
+                        background: returnItemIdx === idx ? '#faf5ff' : '#ffffff',
+                        fontSize: '0.84rem',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="mob_return_item"
+                        checked={returnItemIdx === idx}
+                        onChange={() => setReturnItemIdx(idx)}
+                      />
+                      <span style={{ fontWeight: 600 }}>{it.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem' }}>
+                Resolution:
+              </label>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.86rem', fontWeight: 600 }}>
+                  <input
+                    type="radio"
+                    value="refund"
+                    checked={returnResolution === 'refund'}
+                    onChange={(e) => setReturnResolution(e.target.value)}
+                  />
+                  <span>Refund</span>
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.86rem', fontWeight: 600 }}>
+                  <input
+                    type="radio"
+                    value="replacement"
+                    checked={returnResolution === 'replacement'}
+                    onChange={(e) => setReturnResolution(e.target.value)}
+                  />
+                  <span>Replacement</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem' }}>
+                Reason:
+              </label>
+              <select
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '0.88rem' }}
+              >
+                {RETURN_REASONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem' }}>
+                Return Details *:
+              </label>
+              <textarea
+                rows={3}
+                required
+                placeholder="Describe the issue..."
+                value={returnMessage}
+                onChange={(e) => setReturnMessage(e.target.value)}
+                style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '0.88rem', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <Button type="button" variant="secondary" onClick={() => setMobileReturnOrder(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" loading={returnSubmitting} disabled={returnSubmitting}>
+                Submit Request
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       {/* Sign Out Confirmation Modal */}
       <Modal isOpen={logoutModalOpen} onClose={() => setLogoutModalOpen(false)} title="Sign Out of Picky">

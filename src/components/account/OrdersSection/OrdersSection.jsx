@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import MobileSkeleton from '../../ui/MobileSkeleton';
 import { Sparkles } from 'lucide-react';
 import styles from './OrdersSection.module.css';
 
 /**
  * OrdersSection - Mobile View My Orders Component (Target: 320px - 768px)
- * 
- * Strict Mobile Typography & Responsive Layout rules applied:
- * - Section heading: 24px (24–28px), weight 700, line-height 1.2
- * - Category card / Item title: 14px (14–16px), weight 700, line-height 1.3
- * - Product name: 14px (13–15px), weight 600, line-height 1.35
- * - Product price / Total paid: 16-17px (16–18px), weight 700, line-height 1.2
- * - Body description / Sub-date: 11-13px (13–14px), weight 400, line-height 1.5
- * - Button text: 13px (13–15px), weight 600, line-height 1.2
- * - Category count: 11px (11–12px), weight 500-700, line-height 1.3
- * - Badge text: 10px (10–11px), weight 700, line-height 1.2
  */
 export default function OrdersSection({
-  orders = null,
+  orders = [],
+  loading = false,
+  copiedOrderId = null,
+  returns = [],
   activeFilter = 'all',
   onFilterChange = null,
   onCopyOrderId = () => {},
@@ -29,62 +24,17 @@ export default function OrdersSection({
   const currentFilter = onFilterChange ? activeFilter : localFilter;
   const setFilter = onFilterChange || setLocalFilter;
 
-  // Real DB orders fallback list matching user's reference snippet
-  const fallbackOrders = [
-    {
-      _id: '1',
-      orderNumber: '#PKY-20261028-F85D521A',
-      createdAt: '2026-10-28T15:22:00',
-      status: 'placed',
-      total: 152,
-      items: [
-        { _id: 'i1', name: 'rfgegf', quantity: 1, price: 100, icon: '🎁' }
-      ]
-    },
-    {
-      _id: '2',
-      orderNumber: '#PKY-20261028-628CDF44',
-      createdAt: '2026-10-28T15:16:00',
-      status: 'cancelled',
-      total: 1577,
-      items: [
-        { _id: 'i2', name: 'cgdgdsg', quantity: 1, price: 30, icon: '🛍️' },
-        { _id: 'i3', name: 'new look', quantity: 5, price: 299, icon: '👗' }
-      ]
-    },
-    {
-      _id: '3',
-      orderNumber: '#PKY-20261021-2408ED24',
-      createdAt: '2026-10-21T18:19:00',
-      status: 'delivered',
-      total: 2452,
-      items: [
-        { _id: 'i4', name: 'CAKE', quantity: 4, price: 600, fallbackText: 'CAKE' }
-      ]
-    },
-    {
-      _id: '4',
-      orderNumber: '#PKY-20261020-A4DAA0C7',
-      createdAt: '2026-10-20T11:04:00',
-      status: 'shipped',
-      total: 602,
-      items: [
-        { _id: 'i5', name: 'CAKE', quantity: 1, price: 550, fallbackText: 'CAKE' }
-      ]
-    }
-  ];
+  const ordersList = Array.isArray(orders) ? orders : [];
 
-  const ordersList = Array.isArray(orders) && orders.length > 0 ? orders : fallbackOrders;
-
-  // Status Filter Counts calculation
+  // Status Filter Counts calculation (accurate DB counts, never inflated)
   const counts = {
     all: ordersList.length,
-    confirmed: ordersList.filter(o => (o.status || '').toLowerCase() === 'confirmed').length || 1,
-    shipped: ordersList.filter(o => {
+    confirmed: ordersList.filter((o) => (o.status || '').toLowerCase() === 'confirmed').length,
+    shipped: ordersList.filter((o) => {
       const st = (o.status || '').toLowerCase();
       return st === 'shipped' || st === 'shipping' || st === 'out_for_delivery';
-    }).length || 1,
-    delivered: ordersList.filter(o => (o.status || '').toLowerCase() === 'delivered').length || 1,
+    }).length,
+    delivered: ordersList.filter((o) => (o.status || '').toLowerCase() === 'delivered').length,
   };
 
   // Filter options with their indicators
@@ -216,14 +166,42 @@ export default function OrdersSection({
 
       {/* 3. Order Cards List */}
       <div className={styles.cardsList}>
-        {displayedOrders.length === 0 ? (
+        {loading ? (
+          <MobileSkeleton variant="orders" count={3} />
+        ) : ordersList.length === 0 ? (
           <div className={styles.emptyOrdersState}>
-            <p className={styles.emptyText}>No orders found under "{currentFilter}" status.</p>
+            <p className={styles.emptyText} style={{ marginBottom: '12px', fontWeight: 600, color: '#0f172a' }}>
+              No orders placed yet.
+            </p>
+            <Link
+              to="/products"
+              style={{
+                display: 'inline-block',
+                padding: '8px 18px',
+                borderRadius: '9999px',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                color: '#ffffff',
+                fontSize: '13px',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              Start Shopping
+            </Link>
+          </div>
+        ) : displayedOrders.length === 0 ? (
+          <div className={styles.emptyOrdersState}>
+            <p className={styles.emptyText}>No orders found under &quot;{currentFilter}&quot; status.</p>
           </div>
         ) : (
           displayedOrders.map((order) => {
             const isDelivered = (order.status || '').toLowerCase() === 'delivered';
             const totalPaid = order.total ?? order.totalAmount ?? 0;
+            const existingReturn = (returns || []).find(
+              (r) =>
+                (r.orderId && order._id && r.orderId.toString() === order._id.toString()) ||
+                (r.orderNumber && order.orderNumber && r.orderNumber === order.orderNumber)
+            );
             const items = Array.isArray(order.items) && order.items.length > 0
               ? order.items
               : [{ _id: 'df', name: 'Picky Item', quantity: 1, price: totalPaid }];
@@ -244,7 +222,7 @@ export default function OrdersSection({
                         <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
-                        Copy
+                        {copiedOrderId === order.orderNumber ? 'Copied!' : 'Copy'}
                       </button>
                     </div>
                     <p className={styles.placedDateText}>{formatDateLabel(order.createdAt)}</p>
@@ -357,13 +335,22 @@ export default function OrdersSection({
                       >
                         📄 Invoice
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => onReturnExchange(order)}
-                        className={styles.returnExchBtn}
-                      >
-                        🔄 Return / Exch
-                      </button>
+                      {existingReturn ? (
+                        <span
+                          className={styles.returnExchBtn}
+                          style={{ cursor: 'default', opacity: 0.9 }}
+                        >
+                          ✓ Return {(existingReturn.status || 'requested').toUpperCase()}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onReturnExchange(order)}
+                          className={styles.returnExchBtn}
+                        >
+                          🔄 Return / Exch
+                        </button>
+                      )}
                     </div>
 
                     <button

@@ -3,7 +3,8 @@ import { useAuthStore } from '../../../store/authStore';
 import { useUiStore } from '../../../store/uiStore';
 import { authService } from '../../../services/auth.service';
 import Button from '../../ui/Button';
-import { formatDateShort } from '../../../utils/formatDate';
+import { formatDateShort, getLocalTodayIso, normalizeDobToIso } from '../../../utils/formatDate';
+import { saveProfileField } from '../../../utils/profileFields';
 import {
   Phone,
   ShieldCheck,
@@ -33,16 +34,17 @@ export default function AccountProfile() {
   const [emailSaveSuccess, setEmailSaveSuccess] = useState(false);
 
   // ── DOB State ──
-  const [dob, setDob] = useState(user?.dob || '');
+  const [dob, setDob] = useState(() => normalizeDobToIso(user?.dob));
   const [isEditingDob, setIsEditingDob] = useState(false);
   const [dobLoading, setDobLoading] = useState(false);
   const [dobSaveSuccess, setDobSaveSuccess] = useState(false);
+  const [dobError, setDobError] = useState('');
 
   // Keep local states in sync when user store updates
   useEffect(() => {
     if (!isEditingName) setName(user?.name || '');
     if (!isEditingEmail) setEmail(user?.email || '');
-    if (!isEditingDob) setDob(user?.dob || '');
+    if (!isEditingDob) setDob(normalizeDobToIso(user?.dob));
   }, [user, isEditingName, isEditingEmail, isEditingDob]);
 
   // Re-fetch latest user profile from server so phone linked via order/address is immediately displayed
@@ -76,28 +78,17 @@ export default function AccountProfile() {
   };
   const handleSaveName = async (e) => {
     e.preventDefault();
-    if (!name.trim()) {
-      showToast?.('Name cannot be empty', 'error');
+    setNameLoading(true);
+    setNameSaveSuccess(false);
+    const result = await saveProfileField({ field: 'name', value: name, updateUser });
+    setNameLoading(false);
+    if (!result.ok) {
+      showToast?.(result.error, 'error');
       return;
     }
-    try {
-      setNameLoading(true);
-      setNameSaveSuccess(false);
-      const res = await authService.updateProfile({ name: name.trim() });
-      const updated = res?.data || res;
-      updateUser({ name: updated?.name || name.trim() });
-      setNameSaveSuccess(true);
-      setIsEditingName(false);
-      showToast?.('Name updated successfully!', 'success');
-    } catch (err) {
-      console.warn('Profile name update error:', err);
-      updateUser({ name: name.trim() });
-      setNameSaveSuccess(true);
-      setIsEditingName(false);
-      showToast?.('Name updated successfully!', 'success');
-    } finally {
-      setNameLoading(false);
-    }
+    setNameSaveSuccess(true);
+    setIsEditingName(false);
+    showToast?.('Name updated successfully!', 'success');
   };
 
   // ── Handlers for Email ──
@@ -114,67 +105,68 @@ export default function AccountProfile() {
   };
   const handleSaveEmail = async (e) => {
     e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      showToast?.('Please enter a valid email address', 'error');
+    setEmailLoading(true);
+    setEmailSaveSuccess(false);
+    const result = await saveProfileField({ field: 'email', value: email, updateUser, allowEmpty: true });
+    setEmailLoading(false);
+    if (!result.ok) {
+      showToast?.(result.error, 'error');
       return;
     }
-    try {
-      setEmailLoading(true);
-      setEmailSaveSuccess(false);
-      const res = await authService.updateProfile({ email: cleanEmail });
-      const updated = res?.data || res;
-      updateUser({ email: updated?.email || cleanEmail });
-      setEmailSaveSuccess(true);
-      setIsEditingEmail(false);
-      showToast?.('Email updated successfully!', 'success');
-    } catch (err) {
-      console.warn('Profile email update error:', err);
-      const errMsg = err?.response?.data?.message || 'Failed to update email';
-      showToast?.(errMsg, 'error');
-    } finally {
-      setEmailLoading(false);
-    }
+    setEmailSaveSuccess(true);
+    setIsEditingEmail(false);
+    showToast?.('Email updated successfully!', 'success');
   };
 
   // ── Handlers for DOB ──
-  const isDobDirty = dob !== (user?.dob || '');
+  const storedDobIso = normalizeDobToIso(user?.dob);
+  const isDobDirty = dob !== storedDobIso;
   const handleStartEditDob = () => {
-    setDob(user?.dob || '');
+    setDob(storedDobIso);
+    setDobError('');
     setDobSaveSuccess(false);
     setIsEditingDob(true);
   };
   const handleCancelEditDob = () => {
-    setDob(user?.dob || '');
+    setDob(storedDobIso);
+    setDobError('');
     setIsEditingDob(false);
     setDobSaveSuccess(false);
   };
   const handleSaveDob = async (e) => {
     e.preventDefault();
-    if (!dob) {
-      showToast?.('Please select your date of birth', 'error');
+    setDobLoading(true);
+    setDobError('');
+    setDobSaveSuccess(false);
+    const result = await saveProfileField({ field: 'dob', value: dob, updateUser });
+    setDobLoading(false);
+    if (!result.ok) {
+      setDobError(result.error);
+      showToast?.(result.error, 'error');
       return;
     }
-    try {
-      setDobLoading(true);
-      setDobSaveSuccess(false);
-      const res = await authService.updateProfile({ dob });
-      const updated = res?.data || res;
-      updateUser({ dob: updated?.dob || dob });
-      setDobSaveSuccess(true);
-      setIsEditingDob(false);
-      showToast?.('Date of birth updated successfully!', 'success');
-    } catch (err) {
-      console.warn('Profile DOB update error:', err);
-      const errMsg = err?.response?.data?.message || 'Failed to update date of birth';
-      showToast?.(errMsg, 'error');
-    } finally {
-      setDobLoading(false);
+    setDobSaveSuccess(true);
+    setIsEditingDob(false);
+    showToast?.('Date of birth updated successfully!', 'success');
+  };
+  const handleClearDob = async () => {
+    setDobLoading(true);
+    setDobError('');
+    setDobSaveSuccess(false);
+    const result = await saveProfileField({ field: 'dob', value: '', updateUser, allowEmpty: true });
+    setDobLoading(false);
+    if (!result.ok) {
+      setDobError(result.error);
+      return;
     }
+    setDob('');
+    setDobSaveSuccess(true);
+    setIsEditingDob(false);
+    showToast?.('Date of birth cleared', 'info');
   };
 
   // Max selectable date is today (user cannot be born in the future)
-  const maxDobDate = new Date().toISOString().split('T')[0];
+  const maxDobDate = getLocalTodayIso();
 
   return (
     <div className={styles.profileContainer}>
@@ -628,8 +620,12 @@ export default function AccountProfile() {
                 <input
                   type="date"
                   value={dob}
+                  min="1900-01-01"
                   max={maxDobDate}
-                  onChange={(e) => setDob(e.target.value)}
+                  onChange={(e) => {
+                    setDob(e.target.value);
+                    if (dobError) setDobError('');
+                  }}
                   autoFocus
                   style={{
                     width: '100%',
@@ -647,7 +643,12 @@ export default function AccountProfile() {
                   }}
                 />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              {dobError && (
+                <span style={{ fontSize: '0.8rem', color: '#dc2626', fontWeight: 600 }}>
+                  {dobError}
+                </span>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                 <Button
                   type="submit"
                   variant="primary"
@@ -666,6 +667,28 @@ export default function AccountProfile() {
                 >
                   Save DOB
                 </Button>
+                {storedDobIso && (
+                  <button
+                    type="button"
+                    onClick={handleClearDob}
+                    disabled={dobLoading}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      padding: '0.65rem 1rem',
+                      border: '1.5px solid #fecdd3',
+                      borderRadius: '12px',
+                      background: '#fff1f2',
+                      color: '#e11d48',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      cursor: dobLoading ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleCancelEditDob}
