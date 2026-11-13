@@ -415,18 +415,25 @@ export default function ProductDetail() {
       return;
     }
     const finalQty = Math.min(Math.max(1, quantity), maxStock);
-    const variantLabel = selectedVariant
-      ? ` (${selectedVariant})`
-      : selectedSize
-      ? ` (${selectedSize})`
-      : selectedCapacity
-      ? ` (${selectedCapacity})`
-      : '';
+    const resolvedVariantLabel = typeof selectedVariant === 'object' && selectedVariant !== null
+      ? (selectedVariant.label || selectedVariant.name || '')
+      : (typeof selectedSize === 'object' && selectedSize !== null
+          ? (selectedSize.label || selectedSize.name || '')
+          : (selectedVariant || selectedSize || selectedCapacity || ''));
+    const variantLabel = resolvedVariantLabel ? ` (${resolvedVariantLabel})` : '';
+
+    const resolvedVariant = typeof selectedVariant === 'object' && selectedVariant !== null
+      ? (selectedVariant.label || selectedVariant.name || '')
+      : (selectedVariant || selectedSize || selectedCapacity);
+    const resolvedSize = typeof selectedSize === 'object' && selectedSize !== null
+      ? (selectedSize.label || selectedSize.name || '')
+      : (selectedSize || selectedVariant || null);
+
     addItem(
       {
         ...product,
-        selectedVariant: selectedVariant || selectedSize || selectedCapacity,
-        selectedSize: selectedSize || selectedVariant || null,
+        selectedVariant: resolvedVariant,
+        selectedSize: resolvedSize,
         selectedColor,
       },
       finalQty
@@ -441,6 +448,13 @@ export default function ProductDetail() {
     }
     const finalQty = Math.min(Math.max(1, quantity), maxStock);
     const prodId = product._id || product.id || slug;
+    const resolvedVariant = typeof selectedVariant === 'object' && selectedVariant !== null
+      ? (selectedVariant.label || selectedVariant.name || '')
+      : (selectedVariant || selectedCapacity);
+    const resolvedSize = typeof selectedSize === 'object' && selectedSize !== null
+      ? (selectedSize.label || selectedSize.name || '')
+      : (product.selectedSize || resolvedVariant || selectedCapacity || null);
+
     setBuyNowItem({
       _id: prodId,
       id: prodId,
@@ -452,8 +466,8 @@ export default function ProductDetail() {
       price: product.discountPrice || product.price || 0,
       discountPrice: product.discountPrice || product.price || 0,
       originalPrice: product.originalPrice || product.price || 0,
-      selectedVariant: selectedVariant || selectedCapacity,
-      selectedSize: product.selectedSize || selectedVariant || selectedCapacity || null,
+      selectedVariant: resolvedVariant,
+      selectedSize: resolvedSize,
       selectedColor: selectedColor || null,
       quantity: finalQty,
       stock: maxStock,
@@ -492,6 +506,17 @@ export default function ProductDetail() {
 
   const availableColors = hasColorVariants ? product.variants.colors : [];
   const availableSizes = hasDbVariants ? product.variants.options : [];
+
+  // Defensive helpers for variant options (can be string or { label, price, mrp, stock })
+  const getOptionLabel = (opt) => (typeof opt === 'object' && opt !== null ? (opt.label || opt.name || opt.size || '') : String(opt || ''));
+  const getOptionKey = (opt, idx) => (typeof opt === 'object' && opt !== null ? (opt.id || opt._id || opt.label || idx) : `${opt}-${idx}`);
+  const isOptionSelected = (opt) => {
+    if (!opt) return false;
+    const optLabel = getOptionLabel(opt);
+    const selSizeLabel = getOptionLabel(selectedSize);
+    const selVarLabel = getOptionLabel(selectedVariant);
+    return opt === selectedSize || opt === selectedVariant || optLabel === selSizeLabel || optLabel === selVarLabel;
+  };
 
   const renderRelatedProductsRunningSection = (isMobile = false) => {
     if (!isEnabled('pdp_related_products')) return null;
@@ -769,23 +794,24 @@ export default function ProductDetail() {
                             : 'SELECT SIZE'}
                         </span>
                         <div className={styles['size-pills-row']}>
-                          {availableSizes.map((size) => (
-                            <button
-                              key={size}
-                              type="button"
-                              onClick={() => {
-                                setSelectedSize(size);
-                                setSelectedVariant(size);
-                              }}
-                              className={`${styles['size-pill-btn']} ${
-                                (selectedSize === size || selectedVariant === size)
-                                  ? styles['active-size-pill']
-                                  : ''
-                              }`}
-                            >
-                              {size}
-                            </button>
-                          ))}
+                          {availableSizes.map((size, idx) => {
+                            const sizeLabel = getOptionLabel(size);
+                            const sizeKey = getOptionKey(size, idx);
+                            const active = isOptionSelected(size);
+                            return (
+                              <button
+                                key={sizeKey}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSize(size);
+                                  setSelectedVariant(size);
+                                }}
+                                className={`${styles['size-pill-btn']} ${active ? styles['active-size-pill'] : ''}`}
+                              >
+                                {sizeLabel}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -1399,21 +1425,24 @@ export default function ProductDetail() {
                   : 'SELECT SIZE'}
               </span>
               <div className="mobile-pdp-pills-row">
-                {availableSizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSize(size);
-                      setSelectedVariant(size);
-                    }}
-                    className={`mobile-pdp-size-btn ${
-                      (selectedSize === size || selectedVariant === size) ? 'active' : ''
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {availableSizes.map((size, idx) => {
+                  const sizeLabel = getOptionLabel(size);
+                  const sizeKey = getOptionKey(size, idx);
+                  const active = isOptionSelected(size);
+                  return (
+                    <button
+                      key={sizeKey}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSize(size);
+                        setSelectedVariant(size);
+                      }}
+                      className={`mobile-pdp-size-btn ${active ? 'active' : ''}`}
+                    >
+                      {sizeLabel}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

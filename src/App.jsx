@@ -24,6 +24,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Checkout from './pages/Checkout';
 import NotFound from './pages/NotFound';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // ── Lazy-Loaded Customer Support & Secondary Pages ───────────
 const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
@@ -179,8 +180,9 @@ export default function App() {
         <BrowserRouter>
         <ScrollToTop />
         <LoginPopupModal />
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
           {/* ── Customer Core Catalog & Browsing ─────── */}
           <Route path="/" element={<Home />} />
           <Route path="/categories" element={<Categories />} />
@@ -242,10 +244,11 @@ export default function App() {
           <Route path={`${ADMIN_ALT}/*`} element={<AdminRoutes />} />
 
 
-          {/* ── Catch-all 404 Page ───────────────────── */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </Suspense>
+            {/* ── Catch-all 404 Page ───────────────────── */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>
     </GoogleOAuthProvider>

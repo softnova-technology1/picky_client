@@ -510,21 +510,23 @@ export default function AdminProducts() {
     const vType = pVariants?.type;
     const vOptions = Array.isArray(pVariants?.options) ? pVariants.options : [];
 
+    const cleanOptionString = (opt) => (typeof opt === 'object' && opt !== null ? (opt.label || opt.name || opt.size || '') : String(opt || ''));
+
     const hasClothingSizes = vType === 'clothing-size' && vOptions.length > 0;
     setHasSizes(hasClothingSizes);
-    setSelectedSizes(hasClothingSizes ? [...vOptions] : ['S', 'M', 'L', 'XL', 'XXL']);
+    setSelectedSizes(hasClothingSizes ? vOptions.map(cleanOptionString) : ['S', 'M', 'L', 'XL', 'XXL']);
     setCustomSizeInput('');
 
     // Populate variants (Weight Options - starting from grams)
     const hasWeightVariants = vType === 'weight' && vOptions.length > 0;
     setHasWeights(hasWeightVariants);
-    setSelectedWeights(hasWeightVariants ? [...vOptions] : ['50g', '100g', '250g', '500g', '1kg']);
+    setSelectedWeights(hasWeightVariants ? vOptions.map(cleanOptionString) : ['50g', '100g', '250g', '500g', '1kg']);
     setCustomWeightInput('');
 
     // Populate variants (Liquid Options - starting from milliliters)
     const hasLiquidVariants = (vType === 'liquid' || vType === 'volume') && vOptions.length > 0;
     setHasLiquids(hasLiquidVariants);
-    setSelectedLiquids(hasLiquidVariants ? [...vOptions] : ['50ml', '100ml', '250ml', '500ml', '1L']);
+    setSelectedLiquids(hasLiquidVariants ? vOptions.map(cleanOptionString) : ['50ml', '100ml', '250ml', '500ml', '1L']);
     setCustomLiquidInput('');
 
     // Populate variants (Color Options)
@@ -2229,7 +2231,7 @@ export default function AdminProducts() {
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <span>{sz}</span>
+                                <span>{typeof sz === 'object' && sz !== null ? (sz.label || sz.name || '') : String(sz)}</span>
                                 <button
                                   type="button"
                                   onClick={() => setSelectedSizes(selectedSizes.filter((_, i) => i !== idx))}
@@ -2486,7 +2488,7 @@ export default function AdminProducts() {
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <span>{wt}</span>
+                                <span>{typeof wt === 'object' && wt !== null ? (wt.label || wt.name || '') : String(wt)}</span>
                                 <button
                                   type="button"
                                   onClick={() => setSelectedWeights(selectedWeights.filter((_, i) => i !== idx))}
@@ -2743,7 +2745,7 @@ export default function AdminProducts() {
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <span>{liq}</span>
+                                <span>{typeof liq === 'object' && liq !== null ? (liq.label || liq.name || '') : String(liq)}</span>
                                 <button
                                   type="button"
                                   onClick={() => setSelectedLiquids(selectedLiquids.filter((_, i) => i !== idx))}
@@ -4384,7 +4386,9 @@ export default function AdminProducts() {
                         {/* Tag Chip (Requirement 2) */}
                         <td style={{ padding: '0.85rem 0.85rem', textAlign: 'left' }}>
                           {(() => {
-                            const pTag = Array.isArray(p.tags) ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : null);
+                            const rawTag = Array.isArray(p.tags) ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : null);
+                            if (!rawTag) return <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>;
+                            const pTag = typeof rawTag === 'object' && rawTag !== null ? (rawTag.name || rawTag.label || '') : String(rawTag);
                             if (!pTag) return <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>;
                             const tagStyle = getTagDesign(pTag);
                             const IconComponent = tagStyle?.icon || Tag;
@@ -4702,11 +4706,15 @@ export default function AdminProducts() {
                       Available Clothing Sizes
                     </h4>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {viewingProduct.variants.options.map((sz) => (
-                        <span key={sz} style={{ background: '#ffffff', border: '1px solid #c4b5fd', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>
-                          {sz}
-                        </span>
-                      ))}
+                      {viewingProduct.variants.options.map((sz, szIdx) => {
+                        const szLabel = typeof sz === 'object' && sz !== null ? (sz.label || sz.name || sz.size || '') : String(sz);
+                        const szKey = typeof sz === 'object' && sz !== null ? (sz.id || sz.label || szIdx) : `${sz}-${szIdx}`;
+                        return (
+                          <span key={szKey} style={{ background: '#ffffff', border: '1px solid #c4b5fd', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>
+                            {szLabel}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -4717,11 +4725,15 @@ export default function AdminProducts() {
                       Available Weight Variants (Grams / Kg)
                     </h4>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {viewingProduct.variants.options.map((wt) => (
-                        <span key={wt} style={{ background: '#ffffff', border: '1px solid #6ee7b7', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#065f46' }}>
-                          {wt}
-                        </span>
-                      ))}
+                      {viewingProduct.variants.options.map((wt, wtIdx) => {
+                        const wtLabel = typeof wt === 'object' && wt !== null ? (wt.label || wt.name || wt.size || '') : String(wt);
+                        const wtKey = typeof wt === 'object' && wt !== null ? (wt.id || wt.label || wtIdx) : `${wt}-${wtIdx}`;
+                        return (
+                          <span key={wtKey} style={{ background: '#ffffff', border: '1px solid #6ee7b7', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#065f46' }}>
+                            {wtLabel}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -4732,11 +4744,15 @@ export default function AdminProducts() {
                       Available Liquid / Volume Variants (ml / L)
                     </h4>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {viewingProduct.variants.options.map((liq) => (
-                        <span key={liq} style={{ background: '#ffffff', border: '1px solid #7dd3fc', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#0284c7' }}>
-                          {liq}
-                        </span>
-                      ))}
+                      {viewingProduct.variants.options.map((liq, liqIdx) => {
+                        const liqLabel = typeof liq === 'object' && liq !== null ? (liq.label || liq.name || liq.size || '') : String(liq);
+                        const liqKey = typeof liq === 'object' && liq !== null ? (liq.id || liq.label || liqIdx) : `${liq}-${liqIdx}`;
+                        return (
+                          <span key={liqKey} style={{ background: '#ffffff', border: '1px solid #7dd3fc', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#0284c7' }}>
+                            {liqLabel}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -5023,11 +5039,11 @@ export default function AdminProducts() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#64748b', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                 <span>Home</span>
                 <ChevronRight size={12} />
-                <span>{previewProductData.category}</span>
+                <span>{typeof previewProductData.category === 'object' ? previewProductData.category?.name : previewProductData.category}</span>
                 {previewProductData.subCategory && (
                   <>
                     <ChevronRight size={12} />
-                    <span>{previewProductData.subCategory}</span>
+                    <span>{typeof previewProductData.subCategory === 'object' ? previewProductData.subCategory?.name : previewProductData.subCategory}</span>
                   </>
                 )}
                 <ChevronRight size={12} />
@@ -5151,26 +5167,33 @@ export default function AdminProducts() {
                         Select Option ({previewProductData.variants.type || 'Variant'}):
                       </span>
                       <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        {previewProductData.variants.options.map((opt) => (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => setPreviewSelectedVariant(opt)}
-                            style={{
-                              padding: '0.4rem 0.85rem',
-                              borderRadius: '8px',
-                              border: '1.5px solid',
-                              borderColor: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#7c3aed' : '#cbd5e1',
-                              background: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#f3e8ff' : '#ffffff',
-                              color: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#7c3aed' : '#334155',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {opt}
-                          </button>
-                        ))}
+                        {previewProductData.variants.options.map((opt, optIdx) => {
+                          const optLabel = typeof opt === 'object' && opt !== null ? (opt.label || opt.name || opt.size || '') : String(opt);
+                          const optKey = typeof opt === 'object' && opt !== null ? (opt.id || opt.label || optIdx) : `${opt}-${optIdx}`;
+                          const isSel = (previewSelectedVariant || previewProductData.variants.options[0]) === opt ||
+                            (typeof previewSelectedVariant === 'object' && previewSelectedVariant?.label === optLabel) ||
+                            (typeof opt === 'object' && opt.label === previewSelectedVariant);
+                          return (
+                            <button
+                              key={optKey}
+                              type="button"
+                              onClick={() => setPreviewSelectedVariant(opt)}
+                              style={{
+                                padding: '0.4rem 0.85rem',
+                                borderRadius: '8px',
+                                border: '1.5px solid',
+                                borderColor: isSel ? '#7c3aed' : '#cbd5e1',
+                                background: isSel ? '#f3e8ff' : '#ffffff',
+                                color: isSel ? '#7c3aed' : '#334155',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {optLabel}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

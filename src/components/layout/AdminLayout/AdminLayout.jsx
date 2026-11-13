@@ -51,6 +51,7 @@ import { productService } from '../../../services/product.service';
 import { contactService } from '../../../services/contact.service';
 import { applyTheme } from '../../../utils/theme';
 import Toast from '../../ui/Toast';
+import ErrorBoundary from '../../common/ErrorBoundary';
 import '../../../styles/admin.css';
 import { useAdminIdleTimeout } from '../../../hooks/useAdminIdleTimeout';
 
@@ -1469,7 +1470,9 @@ export default function AdminLayout({ children, title }) {
 
         {/* Dynamic Page Content */}
         <main className={`admin-content ${isDashboard ? 'admin-content-dashboard' : ''}`}>
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
 

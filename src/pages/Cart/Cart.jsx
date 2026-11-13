@@ -658,19 +658,26 @@ export default function Cart() {
                             <div className={styles['cart-variant-group']}>
                               <span className={styles['variant-label']}>Size:</span>
                               <div className={styles['variant-chips-wrap']}>
-                                {sizes.map((s) => (
-                                  <button
-                                    key={s}
-                                    type="button"
-                                    className={`${styles['cart-chip']} ${item.selectedSize === s ? styles['cart-chip-active'] : ''}`}
-                                    onClick={() => {
-                                      updateVariant(item, { selectedSize: s });
-                                      showToast(`Selected size "${s}" for ${item.name}`, 'info');
-                                    }}
-                                  >
-                                    {s}
-                                  </button>
-                                ))}
+                                {sizes.map((s, sIdx) => {
+                                  const sLabel = typeof s === 'object' && s !== null ? (s.label || s.name || s.size || '') : String(s);
+                                  const sKey = typeof s === 'object' && s !== null ? (s.id || s._id || s.label || sIdx) : `${s}-${sIdx}`;
+                                  const isSelected = typeof s === 'object' && s !== null
+                                    ? (item.selectedSize === s.label || item.selectedSize === s)
+                                    : (item.selectedSize === s);
+                                  return (
+                                    <button
+                                      key={sKey}
+                                      type="button"
+                                      className={`${styles['cart-chip']} ${isSelected ? styles['cart-chip-active'] : ''}`}
+                                      onClick={() => {
+                                        updateVariant(item, { selectedSize: sLabel });
+                                        showToast(`Selected size "${sLabel}" for ${item.name}`, 'info');
+                                      }}
+                                    >
+                                      {sLabel}
+                                    </button>
+                                  );
+                                })}
                               </div>
                               {!item.selectedSize && (
                                 <span className={styles['variant-required-pill']}>Select Size *</span>

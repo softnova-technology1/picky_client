@@ -15,6 +15,15 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
 
   const { type, options = [], note } = variants;
 
+  const getOptText = (o) => (typeof o === 'object' && o !== null ? (o.label || o.name || o.size || '') : String(o || ''));
+  const getOptKey = (o, idx) => (typeof o === 'object' && o !== null ? (o.id || o._id || o.label || idx) : `${o}-${idx}`);
+  const isSelected = (o) => {
+    if (!o) return false;
+    const txt = getOptText(o);
+    const selTxt = getOptText(selected);
+    return o === selected || txt === selTxt;
+  };
+
   /* FREE SIZE — Sarees, Dupattas, Sungudi Sarees */
   if (type === 'free-size') {
     return (
@@ -42,17 +51,22 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
           <span className={styles['variant-label']}>SELECT SIZE</span>
         </div>
         <div className={styles['pill-grid']}>
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(opt)}
-              className={[styles['size-pill'], selected === opt ? styles['selected'] : ''].filter(Boolean).join(' ')}
-              aria-pressed={selected === opt}
-            >
-              {opt}
-            </button>
-          ))}
+          {options.map((opt, idx) => {
+            const txt = getOptText(opt);
+            const key = getOptKey(opt, idx);
+            const active = isSelected(opt);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={[styles['size-pill'], active ? styles['selected'] : ''].filter(Boolean).join(' ')}
+                aria-pressed={active}
+              >
+                {txt}
+              </button>
+            );
+          })}
         </div>
         <p className={styles['size-hint']}>Standard Indian sizing applies.</p>
       </div>
@@ -68,17 +82,22 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
           <span className={styles['variant-label']}>SELECT PACK SIZE</span>
         </div>
         <div className={styles['pill-grid']}>
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(opt)}
-              className={[styles['weight-pill'], selected === opt ? styles['selected'] : ''].filter(Boolean).join(' ')}
-              aria-pressed={selected === opt}
-            >
-              {opt}
-            </button>
-          ))}
+          {options.map((opt, idx) => {
+            const txt = getOptText(opt);
+            const key = getOptKey(opt, idx);
+            const active = isSelected(opt);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={[styles['weight-pill'], active ? styles['selected'] : ''].filter(Boolean).join(' ')}
+                aria-pressed={active}
+              >
+                {txt}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -93,17 +112,22 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
           <span className={styles['variant-label']}>SELECT SIZE</span>
         </div>
         <div className={styles['pill-grid']}>
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(opt)}
-              className={[styles['volume-pill'], selected === opt ? styles['selected'] : ''].filter(Boolean).join(' ')}
-              aria-pressed={selected === opt}
-            >
-              {opt}
-            </button>
-          ))}
+          {options.map((opt, idx) => {
+            const txt = getOptText(opt);
+            const key = getOptKey(opt, idx);
+            const active = isSelected(opt);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={[styles['volume-pill'], active ? styles['selected'] : ''].filter(Boolean).join(' ')}
+                aria-pressed={active}
+              >
+                {txt}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -124,17 +148,20 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
           <span className={styles['variant-label']}>SELECT RESISTANCE</span>
         </div>
         <div className={styles['resistance-grid']}>
-          {options.map((opt) => {
-            const meta = resistanceMeta[opt] || {};
+          {options.map((opt, idx) => {
+            const txt = getOptText(opt);
+            const key = getOptKey(opt, idx);
+            const active = isSelected(opt);
+            const meta = resistanceMeta[txt] || resistanceMeta[opt] || {};
             return (
               <button
-                key={opt}
+                key={key}
                 type="button"
                 onClick={() => onChange(opt)}
-                className={[styles['resistance-pill'], selected === opt ? styles['selected'] : ''].filter(Boolean).join(' ')}
-                aria-pressed={selected === opt}
+                className={[styles['resistance-pill'], active ? styles['selected'] : ''].filter(Boolean).join(' ')}
+                aria-pressed={active}
               >
-                <span className={styles['resistance-name']}>{opt}</span>
+                <span className={styles['resistance-name']}>{txt}</span>
                 {meta.sub && <span className={styles['resistance-sub']}>{meta.sub}</span>}
               </button>
             );
@@ -153,17 +180,22 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
           <span className={styles['variant-label']}>SELECT BANGLE SIZE</span>
         </div>
         <div className={styles['pill-grid']}>
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(opt)}
-              className={[styles['size-pill'], selected === opt ? styles['selected'] : ''].filter(Boolean).join(' ')}
-              aria-pressed={selected === opt}
-            >
-              {opt}
-            </button>
-          ))}
+          {options.map((opt, idx) => {
+            const txt = getOptText(opt);
+            const key = getOptKey(opt, idx);
+            const active = isSelected(opt);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={[styles['size-pill'], active ? styles['selected'] : ''].filter(Boolean).join(' ')}
+                aria-pressed={active}
+              >
+                {txt}
+              </button>
+            );
+          })}
         </div>
         <p className={styles['size-hint']}>
           Measure wrist circumference in cm to find your size.
@@ -181,17 +213,22 @@ export default function ProductVariantSelector({ variants, selected, onChange, p
           <span className={styles['variant-label']}>SELECT LENGTH</span>
         </div>
         <div className={styles['pill-grid']}>
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(opt)}
-              className={[styles['weight-pill'], selected === opt ? styles['selected'] : ''].filter(Boolean).join(' ')}
-              aria-pressed={selected === opt}
-            >
-              {opt}
-            </button>
-          ))}
+          {options.map((opt, idx) => {
+            const txt = getOptText(opt);
+            const key = getOptKey(opt, idx);
+            const active = isSelected(opt);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={[styles['weight-pill'], active ? styles['selected'] : ''].filter(Boolean).join(' ')}
+                aria-pressed={active}
+              >
+                {txt}
+              </button>
+            );
+          })}
         </div>
       </div>
     );

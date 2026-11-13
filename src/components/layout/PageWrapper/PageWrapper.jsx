@@ -4,6 +4,7 @@ import Navbar from '../Navbar';
 import Footer from '../Footer';
 import FloatingActions from '../../common/FloatingActions';
 import MobileBottomNav from '../MobileBottomNav';
+import ErrorBoundary from '../../common/ErrorBoundary';
 import styles from './PageWrapper.module.css';
 
 export default function PageWrapper({ children, hideFooter = false }) {
@@ -13,7 +14,9 @@ export default function PageWrapper({ children, hideFooter = false }) {
     <div className={styles['page-wrapper-root']}>
       <Navbar />
       <main key={location.key || (location.pathname + location.search)} className={styles['page-wrapper-main']}>
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </main>
       {!hideFooter && <Footer />}
       <FloatingActions />

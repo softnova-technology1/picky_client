@@ -326,8 +326,8 @@ export default function OrderSuccess() {
                             <div className={styles.itemMeta}>
                               <span>Qty: <strong>{item.quantity}</strong></span>
                               {item.sku && <span>SKU: {item.sku}</span>}
-                              {item.selectedSize && <span>Size: {item.selectedSize}</span>}
-                              {item.selectedColor && <span>Color: {item.selectedColor}</span>}
+                              {item.selectedSize && <span>Size: {typeof item.selectedSize === 'object' ? (item.selectedSize.label || item.selectedSize.name) : item.selectedSize}</span>}
+                              {item.selectedColor && <span>Color: {typeof item.selectedColor === 'object' ? (item.selectedColor.name || item.selectedColor.color) : item.selectedColor}</span>}
                             </div>
                           </div>
                           <div className={styles.itemPrice}>
