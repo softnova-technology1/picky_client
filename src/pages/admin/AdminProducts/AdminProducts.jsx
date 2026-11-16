@@ -57,6 +57,7 @@ import Spinner from '../../../components/ui/Spinner';
 import { productService } from '../../../services/product.service';
 import { categoryService } from '../../../services/category.service';
 import { adminService } from '../../../services/admin.service';
+import { DEFAULT_CUSTOMIZER_SECTIONS } from '../AdminCustomizerBuilder/AdminCustomizerBuilder';
 import { useUiStore } from '../../../store/uiStore';
 import { DEFAULT_PRODUCT_TAGS, getTagDesign, extractProductTag } from '../../../utils/productTagHelper';
 import { fuzzyFilter } from '../../../utils/fuzzySearch';
@@ -78,6 +79,7 @@ const formatISTDateTime = (dateVal) => {
   if (!dateVal) return '';
   const d = new Date(dateVal);
   if (isNaN(d.getTime())) return '';
+
   return (
     new Intl.DateTimeFormat('en-IN', {
       timeZone: 'Asia/Kolkata',
@@ -228,10 +230,88 @@ export default function AdminProducts() {
     isActive: true,
     isCustomizable: false,
     customizationPrice: '',
+    customizationConfig: {
+      showFront: true,
+      showBack: true,
+      showGeneral: true,
+      sectionVisibility: {},
+      materials: [],
+    },
   });
+
+  // Dynamic Customizer Form Sections loaded from Settings
+  const [customizerSections, setCustomizerSections] = useState(DEFAULT_CUSTOMIZER_SECTIONS);
+
+  // Load latest customizer form sections configured in Customizer Form Builder
+  useEffect(() => {
+    async function loadCustomizerSections() {
+      try {
+        const res = await adminService.getSettings();
+        const settings = res?.data?.data || res?.data || {};
+        if (settings.customizerForm && typeof settings.customizerForm === 'object') {
+          const raw = settings.customizerForm;
+          if (Array.isArray(raw.sections) && raw.sections.length > 0) {
+            setCustomizerSections(raw.sections);
+          } else {
+            const secs = [];
+            if (raw.front) secs.push({ ...raw.front, id: 'front' });
+            if (raw.backside) secs.push({ ...raw.backside, id: 'backside' });
+            if (raw.general) secs.push({ ...raw.general, id: 'general' });
+            if (secs.length > 0) setCustomizerSections(secs);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load customizer settings for product form:', err);
+      }
+    }
+    loadCustomizerSections();
+  }, []);
+
+  const isSectionVisible = (sec) => {
+    const cfg = formData.customizationConfig || {};
+    if (cfg.sectionVisibility && cfg.sectionVisibility[sec.id] !== undefined) {
+      return Boolean(cfg.sectionVisibility[sec.id]);
+    }
+    if (sec.id === 'front' && cfg.showFront !== undefined) return Boolean(cfg.showFront);
+    if (sec.id === 'backside' && cfg.showBack !== undefined) return Boolean(cfg.showBack);
+    if (sec.id === 'general' && cfg.showGeneral !== undefined) return Boolean(cfg.showGeneral);
+    return sec.enabled !== false;
+  };
+
+  const toggleSectionVisibility = (secId) => {
+    const cur = formData.customizationConfig || {
+      showFront: true,
+      showBack: true,
+      showGeneral: true,
+      sectionVisibility: {},
+      materials: [],
+    };
+    const currentVal = isSectionVisible({ id: secId });
+    const nextVal = !currentVal;
+
+    const nextSectionVisibility = {
+      ...(cur.sectionVisibility || {}),
+      [secId]: nextVal,
+    };
+
+    const nextCfg = {
+      ...cur,
+      sectionVisibility: nextSectionVisibility,
+    };
+
+    if (secId === 'front') nextCfg.showFront = nextVal;
+    if (secId === 'backside') nextCfg.showBack = nextVal;
+    if (secId === 'general') nextCfg.showGeneral = nextVal;
+
+    setFormData((prev) => ({
+      ...prev,
+      customizationConfig: nextCfg,
+    }));
+  };
 
   const [charValues, setCharValues] = useState({});
   const [customSpecs, setCustomSpecs] = useState([]);
+  const [newMaterialInput, setNewMaterialInput] = useState('');
   const [hasSizes, setHasSizes] = useState(false);
   const [selectedSizes, setSelectedSizes] = useState(['S', 'M', 'L', 'XL', 'XXL']);
   const [customSizeInput, setCustomSizeInput] = useState('');
@@ -245,6 +325,56 @@ export default function AdminProducts() {
   const [hasLiquids, setHasLiquids] = useState(false);
   const [selectedLiquids, setSelectedLiquids] = useState(['50ml', '100ml', '250ml', '500ml', '1L']);
   const [customLiquidInput, setCustomLiquidInput] = useState('');
+
+  // Variant Rates & Stock configuration per option (e.g. { '1kg': { price: '60', mrp: '70', stock: '50' } })
+  const [variantPricing, setVariantPricing] = useState({});
+
+  const handleVariantPricingChange = (opt, field, val) => {
+    setVariantPricing((prev) => ({
+      ...prev,
+      [opt]: {
+        ...(prev[opt] || {}),
+        [field]: val,
+      },
+    }));
+  };
+
+  // Calculate total stock and lowest selling price across active variants
+  const totalVariantStock = useMemo(() => {
+    if (!hasSizes && !hasWeights && !hasLiquids) return null;
+    const activeOpts = hasSizes ? selectedSizes : (hasWeights ? selectedWeights : selectedLiquids);
+    if (!activeOpts || activeOpts.length === 0) return null;
+    let total = 0;
+    let hasAnyExplicitStock = false;
+    activeOpts.forEach((opt) => {
+      const s = variantPricing[opt]?.stock;
+      if (s !== undefined && s !== '') {
+        const num = Number(s);
+        if (!isNaN(num)) {
+          total += num;
+          hasAnyExplicitStock = true;
+        }
+      }
+    });
+    return hasAnyExplicitStock ? total : null;
+  }, [hasSizes, hasWeights, hasLiquids, selectedSizes, selectedWeights, selectedLiquids, variantPricing]);
+
+  const lowestVariantPrice = useMemo(() => {
+    if (!hasSizes && !hasWeights && !hasLiquids) return null;
+    const activeOpts = hasSizes ? selectedSizes : (hasWeights ? selectedWeights : selectedLiquids);
+    if (!activeOpts || activeOpts.length === 0) return null;
+    let min = null;
+    activeOpts.forEach((opt) => {
+      const p = variantPricing[opt]?.price;
+      if (p !== undefined && p !== '') {
+        const num = Number(p);
+        if (!isNaN(num) && num > 0 && (min === null || num < min)) {
+          min = num;
+        }
+      }
+    });
+    return min;
+  }, [hasSizes, hasWeights, hasLiquids, selectedSizes, selectedWeights, selectedLiquids, variantPricing]);
   
   // Product Color Options state (Disabled by default)
   const [hasColors, setHasColors] = useState(false);
@@ -435,6 +565,13 @@ export default function AdminProducts() {
       isActive: true,
       isCustomizable: false,
       customizationPrice: '',
+      customizationConfig: {
+        showFront: true,
+        showBack: true,
+        showGeneral: true,
+        sectionVisibility: {},
+        materials: [],
+      },
     });
     setCharValues({});
     setCustomSpecs([]);
@@ -447,6 +584,7 @@ export default function AdminProducts() {
     setHasLiquids(false);
     setSelectedLiquids(['50ml', '100ml', '250ml', '500ml', '1L']);
     setCustomLiquidInput('');
+    setVariantPricing({});
     setHasColors(false);
     setSelectedColors(DEFAULT_ADMIN_COLORS);
     setNewColorName('');
@@ -482,6 +620,13 @@ export default function AdminProducts() {
       isActive: true,
       isCustomizable: !!p.isCustomizable,
       customizationPrice: p.customizationPrice !== undefined && p.customizationPrice !== null ? String(p.customizationPrice) : '',
+      customizationConfig: p.customizationConfig || {
+        showFront: true,
+        showBack: true,
+        showGeneral: true,
+        sectionVisibility: {},
+        materials: [],
+      },
     });
 
     // Populate characteristics (Preset vs Custom)
@@ -505,26 +650,39 @@ export default function AdminProducts() {
     setCharValues(initialChars);
     setCustomSpecs(initialCustom);
 
-    // Populate variants (Clothing Sizes)
+    // Populate variants (Clothing Sizes, Weights, Liquids)
     const pVariants = p.variants;
     const vType = pVariants?.type;
     const vOptions = Array.isArray(pVariants?.options) ? pVariants.options : [];
+    const extractedOptions = vOptions.map((opt) => (typeof opt === 'object' && opt !== null ? opt.label : opt));
 
-    const hasClothingSizes = vType === 'clothing-size' && vOptions.length > 0;
+    const initialPricing = {};
+    vOptions.forEach((opt) => {
+      if (typeof opt === 'object' && opt !== null && opt.label) {
+        initialPricing[opt.label] = {
+          price: opt.price !== undefined && opt.price !== null ? String(opt.price) : '',
+          mrp: opt.mrp !== undefined && opt.mrp !== null ? String(opt.mrp) : '',
+          stock: opt.stock !== undefined && opt.stock !== null ? String(opt.stock) : '',
+        };
+      }
+    });
+    setVariantPricing(initialPricing);
+
+    const hasClothingSizes = vType === 'clothing-size' && extractedOptions.length > 0;
     setHasSizes(hasClothingSizes);
-    setSelectedSizes(hasClothingSizes ? [...vOptions] : ['S', 'M', 'L', 'XL', 'XXL']);
+    setSelectedSizes(hasClothingSizes ? [...extractedOptions] : ['S', 'M', 'L', 'XL', 'XXL']);
     setCustomSizeInput('');
 
     // Populate variants (Weight Options - starting from grams)
-    const hasWeightVariants = vType === 'weight' && vOptions.length > 0;
+    const hasWeightVariants = vType === 'weight' && extractedOptions.length > 0;
     setHasWeights(hasWeightVariants);
-    setSelectedWeights(hasWeightVariants ? [...vOptions] : ['50g', '100g', '250g', '500g', '1kg']);
+    setSelectedWeights(hasWeightVariants ? [...extractedOptions] : ['50g', '100g', '250g', '500g', '1kg']);
     setCustomWeightInput('');
 
     // Populate variants (Liquid Options - starting from milliliters)
-    const hasLiquidVariants = (vType === 'liquid' || vType === 'volume') && vOptions.length > 0;
+    const hasLiquidVariants = (vType === 'liquid' || vType === 'volume') && extractedOptions.length > 0;
     setHasLiquids(hasLiquidVariants);
-    setSelectedLiquids(hasLiquidVariants ? [...vOptions] : ['50ml', '100ml', '250ml', '500ml', '1L']);
+    setSelectedLiquids(hasLiquidVariants ? [...extractedOptions] : ['50ml', '100ml', '250ml', '500ml', '1L']);
     setCustomLiquidInput('');
 
     // Populate variants (Color Options)
@@ -695,14 +853,21 @@ export default function AdminProducts() {
     if (formData.subCategory) payload.append('subCategory', formData.subCategory);
     if (formData.sku) payload.append('sku', formData.sku.trim().toUpperCase());
     payload.append('price', Number(formData.price));
-    if (formData.discountPrice) payload.append('discountPrice', Number(formData.discountPrice));
-    payload.append('stock', Number(formData.stock) || 0);
+    const effectiveSellingPrice = formData.discountPrice
+      ? Number(formData.discountPrice)
+      : (lowestVariantPrice !== null ? lowestVariantPrice : null);
+    if (effectiveSellingPrice !== null) payload.append('discountPrice', effectiveSellingPrice);
+    const effectiveStock = totalVariantStock !== null ? totalVariantStock : (Number(formData.stock) || 0);
+    payload.append('stock', effectiveStock);
     payload.append('shortDescription', (formData.shortDescription || '').trim());
     payload.append('description', formData.description.trim());
     payload.append('isFeatured', formData.isFeatured);
     payload.append('isActive', formData.isActive !== false);
     payload.append('isCustomizable', formData.isCustomizable);
     payload.append('customizationPrice', formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0);
+    if (formData.isCustomizable && formData.customizationConfig) {
+      payload.append('customizationConfig', JSON.stringify(formData.customizationConfig));
+    }
     if (formData.isScheduled && formData.scheduledAt) {
       payload.append('scheduledAt', formData.scheduledAt);
       payload.append('isScheduled', 'true');
@@ -740,26 +905,44 @@ export default function AdminProducts() {
 
     // Determine active primary unit variant type
     let variantType = 'none';
-    let variantOptions = [];
+    let rawVariantOptions = [];
 
     if (hasWeights && selectedWeights.length > 0) {
       variantType = 'weight';
-      variantOptions = selectedWeights;
+      rawVariantOptions = selectedWeights;
     } else if (hasLiquids && selectedLiquids.length > 0) {
       variantType = 'liquid';
-      variantOptions = selectedLiquids;
+      rawVariantOptions = selectedLiquids;
     } else if (hasSizes && selectedSizes.length > 0) {
       variantType = 'clothing-size';
-      variantOptions = selectedSizes;
+      rawVariantOptions = selectedSizes;
     } else if (hasColors && selectedColors.length > 0) {
       variantType = 'color';
     }
+
+    const baseSellPrice = Number(formData.discountPrice) || Number(formData.price) || 0;
+    const baseMrpPrice = Number(formData.price) || baseSellPrice;
+    const baseStockQty = formData.stock !== '' ? Number(formData.stock) : 10;
+
+    const variantOptions = rawVariantOptions.map((opt) => {
+      const p = variantPricing[opt] || {};
+      const hasCustomPrice = p.price !== undefined && p.price !== '';
+      const hasCustomMrp = p.mrp !== undefined && p.mrp !== '';
+      const hasCustomStock = p.stock !== undefined && p.stock !== '';
+
+      return {
+        label: opt,
+        price: hasCustomPrice ? Number(p.price) : baseSellPrice,
+        mrp: hasCustomMrp ? Number(p.mrp) : baseMrpPrice,
+        stock: hasCustomStock ? Number(p.stock) : baseStockQty,
+      };
+    });
 
     // Serialize variants (Clothing Sizes, Weights, Liquids & Colors - all turned off by default)
     const variantsData = {
       type: variantType,
       options: variantOptions,
-      default: variantOptions[0] || (hasColors && selectedColors.length > 0 ? (selectedColors[0]?.name || '') : ''),
+      default: variantOptions[0]?.label || (hasColors && selectedColors.length > 0 ? (selectedColors[0]?.name || '') : ''),
       colors: hasColors && selectedColors.length > 0 ? selectedColors : [],
     };
     payload.append('variants', JSON.stringify(variantsData));
@@ -813,6 +996,7 @@ export default function AdminProducts() {
                   isFeatured: formData.isFeatured,
                   isCustomizable: formData.isCustomizable,
                   customizationPrice: formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0,
+                  customizationConfig: formData.customizationConfig,
                   images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : p.images,
                   category: categories.find((c) => c._id === formData.category) || p.category,
                   subCategory: { name: formData.subCategory || 'General' },
@@ -838,6 +1022,7 @@ export default function AdminProducts() {
           isFeatured: formData.isFeatured,
           isCustomizable: formData.isCustomizable,
           customizationPrice: formData.isCustomizable ? (Number(formData.customizationPrice) || 0) : 0,
+          customizationConfig: formData.customizationConfig,
           category: categories.find((c) => c._id === formData.category) || { name: 'General' },
           subCategory: { name: formData.subCategory || 'General' },
           images: primaryPreview ? [primaryPreview, ...secondaryPreviews] : [],
@@ -1226,6 +1411,146 @@ export default function AdminProducts() {
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  // Helper to render Variant Pricing & Stock table
+  const renderVariantPricingTable = (options, typeName, accentColor = '#7c3aed') => {
+    if (!options || options.length === 0) return null;
+    return (
+      <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ fontSize: '0.9rem' }}>🏷️</span>
+            <strong style={{ fontSize: '0.8rem', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Set Price &amp; Stock per {typeName} (Optional)
+            </strong>
+          </div>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+            Set custom Selling Price, M.R.P, and Stock for each {typeName.toLowerCase()}. If left blank, base product price (₹{formData.discountPrice || formData.price || '0'}) and stock ({formData.stock || '10'}) will be used.
+          </p>
+        </div>
+
+        <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#475569', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <th style={{ padding: '0.6rem 0.85rem' }}>{typeName}</th>
+                <th style={{ padding: '0.6rem 0.85rem' }}>Selling Price (₹)</th>
+                <th style={{ padding: '0.6rem 0.85rem' }}>M.R.P Price (₹)</th>
+                <th style={{ padding: '0.6rem 0.85rem' }}>Stock Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {options.map((opt) => {
+                const pricing = variantPricing[opt] || {};
+                return (
+                  <tr key={opt} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '0.55rem 0.85rem', fontWeight: 700, color: '#1e293b' }}>
+                      <span style={{ display: 'inline-block', background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.76rem' }}>
+                        {opt}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.45rem 0.85rem' }}>
+                      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{ position: 'absolute', left: '0.6rem', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}>₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder={formData.discountPrice || formData.price || '0'}
+                          value={pricing.price !== undefined ? pricing.price : ''}
+                          onChange={(e) => handleVariantPricingChange(opt, 'price', e.target.value)}
+                          style={{
+                            width: '130px',
+                            padding: '0.4rem 0.6rem 0.4rem 1.4rem',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            color: '#0f172a',
+                            background: '#ffffff',
+                            outline: 'none',
+                          }}
+                        />
+                      </div>
+                    </td>
+                    <td style={{ padding: '0.45rem 0.85rem' }}>
+                      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{ position: 'absolute', left: '0.6rem', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}>₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder={formData.price || '0'}
+                          value={pricing.mrp !== undefined ? pricing.mrp : ''}
+                          onChange={(e) => handleVariantPricingChange(opt, 'mrp', e.target.value)}
+                          style={{
+                            width: '130px',
+                            padding: '0.4rem 0.6rem 0.4rem 1.4rem',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.8rem',
+                            color: '#475569',
+                            background: '#ffffff',
+                            outline: 'none',
+                          }}
+                        />
+                      </div>
+                    </td>
+                    <td style={{ padding: '0.45rem 0.85rem' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder={formData.stock !== '' ? formData.stock : '10'}
+                        value={pricing.stock !== undefined ? pricing.stock : ''}
+                        onChange={(e) => handleVariantPricingChange(opt, 'stock', e.target.value)}
+                        style={{
+                          width: '100px',
+                          padding: '0.4rem 0.6rem',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.8rem',
+                          color: '#0f172a',
+                          background: '#ffffff',
+                          outline: 'none',
+                        }}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Dynamic Summary Bar */}
+        {(totalVariantStock > 0 || lowestVariantPrice !== null) && (
+          <div
+            style={{
+              marginTop: '0.65rem',
+              padding: '0.55rem 0.85rem',
+              borderRadius: '8px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.74rem',
+              color: '#475569',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ color: '#0284c7', fontWeight: 700 }}>⚡ Inventory Sync:</span>
+              <span>Total variant stock = <strong style={{ color: '#0f172a' }}>{totalVariantStock} units</strong> (automatically updates total product stock)</span>
+            </div>
+            {lowestVariantPrice !== null && (
+              <div>
+                <span>Catalog Starting Price: <strong style={{ color: '#059669', fontSize: '0.78rem' }}>₹{lowestVariantPrice}</strong></span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   return (
     <AdminLayout title="Product Catalog Management">
@@ -1868,7 +2193,7 @@ export default function AdminProducts() {
                     </div>
                     <input
                       type="number"
-                      placeholder="e.g. 2499"
+                      placeholder={lowestVariantPrice !== null ? `Starting at ${lowestVariantPrice}` : (formData.price ? `e.g. ${Math.round(Number(formData.price) * 0.8)}` : "e.g. 349")}
                       value={formData.discountPrice}
                       onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
                       style={{
@@ -1885,6 +2210,11 @@ export default function AdminProducts() {
                         boxSizing: 'border-box',
                       }}
                     />
+                    {lowestVariantPrice !== null && !formData.discountPrice && (
+                      <span style={{ fontSize: '0.68rem', color: '#0284c7', display: 'block', marginTop: '0.35rem', fontWeight: 600 }}>
+                        ⚡ Auto-starts from ₹{lowestVariantPrice} based on variants table
+                      </span>
+                    )}
                     {formData.price && formData.discountPrice && Number(formData.discountPrice) > Number(formData.price) && (
                       <span style={{ fontSize: '0.7rem', color: '#ef4444', display: 'block', marginTop: '0.35rem', fontWeight: 600 }}>
                         <AlertCircle size={13} color="#ef4444" style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-bottom' }} /> Selling price cannot exceed M.R.P
@@ -1893,17 +2223,22 @@ export default function AdminProducts() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ minHeight: '24px', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         STOCK QUANTITY <span style={{ color: '#ef4444' }}>*</span>
                       </label>
+                      {totalVariantStock !== null && (
+                        <span style={{ fontSize: '0.66rem', color: '#0284c7', background: '#e0f2fe', padding: '0.1rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
+                          ⚡ From variants: {totalVariantStock}
+                        </span>
+                      )}
                     </div>
                     <input
                       type="number"
                       min="0"
                       step="1"
                       placeholder="e.g. 50"
-                      value={formData.stock}
+                      value={totalVariantStock !== null ? totalVariantStock : formData.stock}
                       onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                       required
                       style={{
@@ -2052,6 +2387,201 @@ export default function AdminProducts() {
                         <div style={{ fontSize: '0.76rem', color: '#64748b', flex: 1, minWidth: '220px' }}>
                           This amount will be added to the product base price (₹{Number(formData.discountPrice || formData.price || 0)} base + ₹{Number(formData.customizationPrice) || 0} customization = <strong>₹{(Number(formData.discountPrice || formData.price || 0)) + (Number(formData.customizationPrice) || 0)} total</strong> in cart).
                         </div>
+                      </div>
+
+                      {/* ── Section Selection Toggles for this Product ── */}
+                      <div style={{ marginTop: '1.25rem', paddingTop: '1.15rem', borderTop: '1px solid #e0f2fe' }}>
+                        <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              SELECT SECTIONS TO DISPLAY ON CUSTOMIZATION PAGE
+                            </label>
+                            <p style={{ margin: '0.2rem 0 0', fontSize: '0.73rem', color: '#64748b' }}>
+                              Turn ON only the sections needed for this product (e.g. Turn OFF Backside &amp; General for Caps, Mugs, or Keychains).
+                            </p>
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: '#0284c7', background: '#e0f2fe', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: 600 }}>
+                            {customizerSections.length} sections in form
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                          {customizerSections.map((sec, sIdx) => {
+                            const isOn = isSectionVisible(sec);
+                            return (
+                              <div
+                                key={sec.id || sIdx}
+                                style={{
+                                  padding: '0.85rem 1rem',
+                                  borderRadius: '12px',
+                                  border: isOn ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                                  background: isOn ? '#f0f9ff' : '#f8fafc',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                    <strong style={{ fontSize: '0.82rem', color: isOn ? '#0369a1' : '#475569' }}>
+                                      {sIdx + 1}. {sec.title || `Section ${sIdx + 1}`}
+                                    </strong>
+                                    <span style={{
+                                      fontSize: '0.64rem',
+                                      fontWeight: 700,
+                                      padding: '0.1rem 0.4rem',
+                                      borderRadius: '9999px',
+                                      background: isOn ? '#dcfce7' : '#f1f5f9',
+                                      color: isOn ? '#15803d' : '#94a3b8',
+                                    }}>
+                                      {isOn ? 'ON' : 'OFF'}
+                                    </span>
+                                  </div>
+                                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#64748b' }}>
+                                    {sec.subtitle || 'Text, Fonts & Custom Uploads'}
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSectionVisibility(sec.id)}
+                                  style={{
+                                    width: '42px',
+                                    height: '24px',
+                                    borderRadius: '9999px',
+                                    background: isOn ? '#0284c7' : '#cbd5e1',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '2px',
+                                    transition: 'background-color 0.2s ease',
+                                  }}
+                                  title={`Toggle ${sec.title}`}
+                                >
+                                  <span
+                                    style={{
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: '#ffffff',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                      transform: isOn ? 'translateX(18px)' : 'translateX(0px)',
+                                      transition: 'transform 0.2s ease',
+                                    }}
+                                  />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Optional Materials Customizer when any active section has materials */}
+                        {Boolean(customizerSections.some(sec => isSectionVisible(sec) && (sec.id === 'general' || sec.materials?.enabled))) && (
+                          <div style={{ marginTop: '0.85rem', padding: '0.85rem 1rem', background: '#ffffff', borderRadius: '10px', border: '1px solid #e0f2fe' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase' }}>
+                                Custom Materials for this Product (Optional)
+                              </label>
+                              <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                                {(formData.customizationConfig?.materials?.length || 0) === 0 ? 'Using Default Fabrics' : `${formData.customizationConfig.materials.length} configured`}
+                              </span>
+                            </div>
+
+                            {/* Tags list */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                              {(formData.customizationConfig?.materials || []).map((m, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    padding: '0.2rem 0.55rem',
+                                    borderRadius: '6px',
+                                    background: '#e0f2fe',
+                                    color: '#0369a1',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {m}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const cur = formData.customizationConfig || { showFront: true, showBack: true, showGeneral: true, materials: [] };
+                                      const updated = (cur.materials || []).filter((_, i) => i !== idx);
+                                      setFormData({ ...formData, customizationConfig: { ...cur, materials: updated } });
+                                    }}
+                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: '#0369a1', display: 'flex' }}
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Add Material Input */}
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <input
+                                type="text"
+                                placeholder="e.g. 100% Cotton, Pure Linen, Ceramic, Metal..."
+                                value={newMaterialInput}
+                                onChange={(e) => setNewMaterialInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = newMaterialInput.trim();
+                                    if (val) {
+                                      const cur = formData.customizationConfig || { showFront: true, showBack: true, showGeneral: true, materials: [] };
+                                      const existing = cur.materials || [];
+                                      if (!existing.includes(val)) {
+                                        setFormData({ ...formData, customizationConfig: { ...cur, materials: [...existing, val] } });
+                                      }
+                                      setNewMaterialInput('');
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  flex: 1,
+                                  padding: '0.45rem 0.75rem',
+                                  fontSize: '0.76rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid #cbd5e1',
+                                  outline: 'none',
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const val = newMaterialInput.trim();
+                                  if (val) {
+                                    const cur = formData.customizationConfig || { showFront: true, showBack: true, showGeneral: true, materials: [] };
+                                    const existing = cur.materials || [];
+                                    if (!existing.includes(val)) {
+                                      setFormData({ ...formData, customizationConfig: { ...cur, materials: [...existing, val] } });
+                                    }
+                                    setNewMaterialInput('');
+                                  }
+                                }}
+                                style={{
+                                  padding: '0.45rem 0.85rem',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 600,
+                                  borderRadius: '8px',
+                                  border: 'none',
+                                  background: '#0284c7',
+                                  color: '#ffffff',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                + Add
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -2310,6 +2840,7 @@ export default function AdminProducts() {
                           + Add Size
                         </button>
                       </div>
+                      {renderVariantPricingTable(selectedSizes, 'Size', '#7c3aed')}
                     </div>
                   )}
                 </div>
@@ -2567,6 +3098,7 @@ export default function AdminProducts() {
                           + Add Weight
                         </button>
                       </div>
+                      {renderVariantPricingTable(selectedWeights, 'Weight', '#059669')}
                     </div>
                   )}
                 </div>
@@ -2824,6 +3356,7 @@ export default function AdminProducts() {
                           + Add Volume
                         </button>
                       </div>
+                      {renderVariantPricingTable(selectedLiquids, 'Volume', '#0284c7')}
                     </div>
                   )}
                 </div>
@@ -4702,11 +5235,15 @@ export default function AdminProducts() {
                       Available Clothing Sizes
                     </h4>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {viewingProduct.variants.options.map((sz) => (
-                        <span key={sz} style={{ background: '#ffffff', border: '1px solid #c4b5fd', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>
-                          {sz}
-                        </span>
-                      ))}
+                      {viewingProduct.variants.options.map((sz, idx) => {
+                        const szLabel = typeof sz === 'object' && sz !== null ? (sz.label || sz.name || '') : String(sz);
+                        const szPrice = typeof sz === 'object' && sz !== null && sz.price ? sz.price : null;
+                        return (
+                          <span key={idx} style={{ background: '#ffffff', border: '1px solid #c4b5fd', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>
+                            {szLabel}{szPrice ? ` (₹${szPrice})` : ''}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -4717,11 +5254,15 @@ export default function AdminProducts() {
                       Available Weight Variants (Grams / Kg)
                     </h4>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {viewingProduct.variants.options.map((wt) => (
-                        <span key={wt} style={{ background: '#ffffff', border: '1px solid #6ee7b7', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#065f46' }}>
-                          {wt}
-                        </span>
-                      ))}
+                      {viewingProduct.variants.options.map((wt, idx) => {
+                        const wtLabel = typeof wt === 'object' && wt !== null ? (wt.label || wt.name || '') : String(wt);
+                        const wtPrice = typeof wt === 'object' && wt !== null && wt.price ? wt.price : null;
+                        return (
+                          <span key={idx} style={{ background: '#ffffff', border: '1px solid #6ee7b7', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#065f46' }}>
+                            {wtLabel}{wtPrice ? ` (₹${wtPrice})` : ''}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -4732,11 +5273,15 @@ export default function AdminProducts() {
                       Available Liquid / Volume Variants (ml / L)
                     </h4>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      {viewingProduct.variants.options.map((liq) => (
-                        <span key={liq} style={{ background: '#ffffff', border: '1px solid #7dd3fc', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#0284c7' }}>
-                          {liq}
-                        </span>
-                      ))}
+                      {viewingProduct.variants.options.map((liq, idx) => {
+                        const liqLabel = typeof liq === 'object' && liq !== null ? (liq.label || liq.name || '') : String(liq);
+                        const liqPrice = typeof liq === 'object' && liq !== null && liq.price ? liq.price : null;
+                        return (
+                          <span key={idx} style={{ background: '#ffffff', border: '1px solid #7dd3fc', borderRadius: '6px', padding: '0.2rem 0.55rem', fontSize: '0.78rem', fontWeight: 700, color: '#0284c7' }}>
+                            {liqLabel}{liqPrice ? ` (₹${liqPrice})` : ''}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -5151,26 +5696,36 @@ export default function AdminProducts() {
                         Select Option ({previewProductData.variants.type || 'Variant'}):
                       </span>
                       <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        {previewProductData.variants.options.map((opt) => (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => setPreviewSelectedVariant(opt)}
-                            style={{
-                              padding: '0.4rem 0.85rem',
-                              borderRadius: '8px',
-                              border: '1.5px solid',
-                              borderColor: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#7c3aed' : '#cbd5e1',
-                              background: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#f3e8ff' : '#ffffff',
-                              color: (previewSelectedVariant || previewProductData.variants.options[0]) === opt ? '#7c3aed' : '#334155',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {opt}
-                          </button>
-                        ))}
+                        {previewProductData.variants.options.map((opt, idx) => {
+                          const optLabel = typeof opt === 'object' && opt !== null ? (opt.label || opt.name || '') : String(opt);
+                          const optPrice = typeof opt === 'object' && opt !== null && opt.price ? opt.price : null;
+                          const firstOptLabel = typeof previewProductData.variants.options[0] === 'object' ? previewProductData.variants.options[0]?.label : previewProductData.variants.options[0];
+                          const currentSelectedLabel = typeof previewSelectedVariant === 'object' && previewSelectedVariant !== null
+                            ? (previewSelectedVariant.label || previewSelectedVariant.name)
+                            : (previewSelectedVariant || firstOptLabel);
+                          const isSelected = currentSelectedLabel === optLabel;
+
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setPreviewSelectedVariant(optLabel)}
+                              style={{
+                                padding: '0.4rem 0.85rem',
+                                borderRadius: '8px',
+                                border: '1.5px solid',
+                                borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                                background: isSelected ? '#f3e8ff' : '#ffffff',
+                                color: isSelected ? '#7c3aed' : '#334155',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {optLabel}{optPrice ? ` (₹${optPrice})` : ''}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

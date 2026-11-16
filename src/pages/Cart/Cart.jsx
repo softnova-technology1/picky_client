@@ -50,12 +50,38 @@ const isBestSellerProduct = (p) => {
   });
 };
 
+// Helper to extract clean string label for size
+const getSizeLabel = (val) => {
+  if (!val) return '';
+  if (typeof val === 'object' && val !== null) {
+    return val.label || val.name || val.size || '';
+  }
+  return String(val);
+};
+
 // Helper to reliably extract available sizes for a cart item
 const getItemSizes = (item) => {
-  if (Array.isArray(item.availableSizes) && item.availableSizes.length > 0) return item.availableSizes;
-  if (Array.isArray(item.sizes) && item.sizes.length > 0) return item.sizes;
-  if (Array.isArray(item.variants?.options) && item.variants.options.length > 0) return item.variants.options;
-  return [];
+  let rawList = [];
+  if (Array.isArray(item.availableSizes) && item.availableSizes.length > 0) rawList = item.availableSizes;
+  else if (Array.isArray(item.sizes) && item.sizes.length > 0) rawList = item.sizes;
+  else if (Array.isArray(item.variants?.options) && item.variants.options.length > 0) rawList = item.variants.options;
+
+  return rawList.map((opt) => {
+    if (typeof opt === 'object' && opt !== null) {
+      return {
+        label: opt.label || opt.name || opt.size || String(opt),
+        price: opt.price !== undefined && opt.price !== null && opt.price !== '' ? Number(opt.price) : null,
+        mrp: opt.mrp !== undefined && opt.mrp !== null && opt.mrp !== '' ? Number(opt.mrp) : null,
+        stock: opt.stock !== undefined && opt.stock !== null && opt.stock !== '' ? Number(opt.stock) : null,
+      };
+    }
+    return {
+      label: String(opt),
+      price: null,
+      mrp: null,
+      stock: null,
+    };
+  });
 };
 
 const formatCustomColor = (colorVal) => {
@@ -172,7 +198,8 @@ export default function Cart() {
     if (item.isCustomized) return false;
     const sizes = getItemSizes(item);
     const colors = getItemColors(item);
-    const needsSize = sizes.length > 0 && !item.selectedSize;
+    const hasSelectedSize = Boolean(getSizeLabel(item.selectedSize));
+    const needsSize = sizes.length > 0 && !hasSelectedSize;
     const needsColor = colors.length > 0 && !item.selectedColor;
     return needsSize || needsColor;
   });
@@ -181,7 +208,8 @@ export default function Cart() {
     if (missingVariantItems.length > 0) {
       const firstMissing = missingVariantItems[0];
       const sizes = getItemSizes(firstMissing);
-      const missingType = sizes.length > 0 && !firstMissing.selectedSize ? 'Size' : 'Color';
+      const hasSelectedSize = Boolean(getSizeLabel(firstMissing.selectedSize));
+      const missingType = sizes.length > 0 && !hasSelectedSize ? 'Size' : 'Color';
       showToast(`⚠️ Please select ${missingType} for "${firstMissing.name}" before proceeding.`, 'error');
       return;
     }
@@ -192,7 +220,8 @@ export default function Cart() {
     if (!item.isCustomized) {
       const sizes = getItemSizes(item);
       const colors = getItemColors(item);
-      if (sizes.length > 0 && !item.selectedSize) {
+      const hasSelectedSize = Boolean(getSizeLabel(item.selectedSize));
+      if (sizes.length > 0 && !hasSelectedSize) {
         showToast(`⚠️ Please select Size for "${item.name}" before checkout.`, 'error');
         return;
       }
@@ -281,19 +310,17 @@ export default function Cart() {
   const confirmRemoveItem = async () => {
     if (!itemToRemove) return;
     const item = itemToRemove;
-    const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
-    removeItem(targetId || item);
+    removeItem(item);
     showToast(`Removed "${item.name || 'Item'}" from cart`, 'info');
     setItemToRemove(null);
   };
 
   const handleUpdateQty = (item, newQty) => {
-    const targetId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
     if (newQty <= 0) {
       handleRemoveItem(item);
       return;
     }
-    updateQty(targetId || item, newQty);
+    updateQty(item, newQty);
   };
 
   const renderBestSellers = () => {
@@ -514,17 +541,19 @@ export default function Cart() {
                     ? Math.round(((originalPrice - itemPrice) / originalPrice) * 100)
                     : 0;
 
-                  const itemId = item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
+                  const rawItemId = item.cartItemId || item._id || item.id || item.productId || item.product?._id || item.product?.id || item.product;
                   const itemSlug = item.slug || item.product?.slug;
 
                   const sizes = getItemSizes(item);
                   const colors = getItemColors(item);
-                  const needsSize = !item.isCustomized && sizes.length > 0 && !item.selectedSize;
+                  const selectedSizeLabel = getSizeLabel(item.selectedSize);
+                  const needsSize = !item.isCustomized && sizes.length > 0 && !selectedSizeLabel;
                   const needsColor = !item.isCustomized && colors.length > 0 && !item.selectedColor;
                   const isMissing = needsSize || needsColor;
+                  const itemUniqueKey = item.cartItemId || `${rawItemId}_${selectedSizeLabel || 'nosize'}_${item.selectedColor || ''}_${item.isCustomized ? (item.customization?.orderId || 'cust') : ''}`;
 
                   return (
-                    <div key={itemId || Math.random()} className={styles['cart-item-row']}>
+                    <div key={itemUniqueKey} className={styles['cart-item-row']}>
                       <div className={styles['cart-item-top']}>
                         {/* Image Box */}
                         <Link to={itemSlug ? `/products/${itemSlug}` : '#'} className={styles['item-img-box']}>
@@ -606,7 +635,7 @@ export default function Cart() {
                                   )}
                                   <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', color: '#64748b', fontSize: '0.7rem' }}>
                                     {item.customization.material && <span>Fabric: <strong style={{ color: '#334155' }}>{item.customization.material}</strong></span>}
-                                    {item.customization.size && <span>Size: <strong style={{ color: '#334155' }}>{item.customization.size}</strong></span>}
+                                    {item.customization.size && <span>Size: <strong style={{ color: '#334155' }}>{getSizeLabel(item.customization.size)}</strong></span>}
                                     {item.customization.color && (
                                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                         Custom Color:
@@ -658,21 +687,41 @@ export default function Cart() {
                             <div className={styles['cart-variant-group']}>
                               <span className={styles['variant-label']}>Size:</span>
                               <div className={styles['variant-chips-wrap']}>
-                                {sizes.map((s) => (
-                                  <button
-                                    key={s}
-                                    type="button"
-                                    className={`${styles['cart-chip']} ${item.selectedSize === s ? styles['cart-chip-active'] : ''}`}
-                                    onClick={() => {
-                                      updateVariant(item, { selectedSize: s });
-                                      showToast(`Selected size "${s}" for ${item.name}`, 'info');
-                                    }}
-                                  >
-                                    {s}
-                                  </button>
-                                ))}
+                                {sizes.map((s) => {
+                                  const sizeLabel = s.label;
+                                  const isSelected = selectedSizeLabel === sizeLabel;
+                                  const sizePrice = s.price;
+
+                                  return (
+                                    <button
+                                      key={sizeLabel}
+                                      type="button"
+                                      className={`${styles['cart-chip']} ${isSelected ? styles['cart-chip-active'] : ''}`}
+                                      onClick={() => {
+                                        const updatePayload = {
+                                          selectedSize: sizeLabel,
+                                          selectedVariant: sizeLabel,
+                                        };
+                                        if (sizePrice !== null && !isNaN(sizePrice)) {
+                                          updatePayload.price = sizePrice;
+                                          updatePayload.discountPrice = sizePrice;
+                                          updatePayload.basePrice = sizePrice;
+                                        }
+                                        updateVariant(item, updatePayload);
+                                        showToast(`Selected size "${sizeLabel}" for ${item.name}`, 'info');
+                                      }}
+                                    >
+                                      {sizeLabel}
+                                      {sizePrice !== null && sizePrice !== itemPrice && (
+                                        <span style={{ fontSize: '0.7em', opacity: 0.8, marginLeft: '3px' }}>
+                                          ₹{sizePrice}
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                })}
                               </div>
-                              {!item.selectedSize && (
+                              {!selectedSizeLabel && (
                                 <span className={styles['variant-required-pill']}>Select Size *</span>
                               )}
                             </div>

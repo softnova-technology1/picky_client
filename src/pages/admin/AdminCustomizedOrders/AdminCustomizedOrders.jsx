@@ -53,36 +53,72 @@ const getColorName = (color) => {
 
 export default function AdminCustomizedOrders() {
   const { showToast } = useUiStore();
-  const { orders: storeOrders, updateOrderStatus: storeUpdateStatus } = useOrderStore();
+  const storeOrders = useOrderStore((s) => s.orders);
+  const storeUpdateStatus = useOrderStore((s) => s.updateOrderStatus);
 
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Helper: Filter customized orders from any order list
+  const getCustomOrders = (list) => {
+    return (list || []).filter(
+      (o) =>
+        o.isCustomized ||
+        o.customizationCostTotal > 0 ||
+        o.items?.some((i) => i.isCustomized || i.customization)
+    );
+  };
+
+  // Instant rehydration from store if available (0ms blank wait time)
+  const initialCustom = getCustomOrders(storeOrders);
+  const [orders, setOrders] = useState(initialCustom);
+  const [loading, setLoading] = useState(initialCustom.length === 0);
+  const [fetchError, setFetchError] = useState(null);
   const [filterTab, setFilterTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrders, setExpandedOrders] = useState({});
   const [activeLightboxImg, setActiveLightboxImg] = useState(null);
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
-  // Load orders from MongoDB backend
+  // Sync state if storeOrders updates from external fetch (e.g. AdminOrders)
+  useEffect(() => {
+    if (orders.length === 0 && storeOrders.length > 0) {
+      const customOnly = getCustomOrders(storeOrders);
+      if (customOnly.length > 0) {
+        setOrders(customOnly);
+        setLoading(false);
+      }
+    }
+  }, [storeOrders]);
+
+  // Load orders from MongoDB backend with safety timeout
   const loadOrders = async () => {
     try {
-      setLoading(true);
-      const res = await adminService.getOrders({ limit: 100 });
+      if (orders.length === 0) setLoading(true);
+      setFetchError(null);
+
+      // 15-second safety race so user is never stuck in an infinite loading spinner
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Network request timed out. Please try again.')), 15000)
+      );
+
+      const fetchPromise = adminService.getOrders({ limit: 100 });
+      const res = await Promise.race([fetchPromise, timeoutPromise]);
+
       const raw = res?.data?.orders || res?.data?.data || res?.data || [];
       const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.orders) ? raw.orders : []);
 
-      // Filter customized orders directly from live MongoDB database
-      const customOnly = list.filter(
-        (o) =>
-          o.isCustomized ||
-          o.customizationCostTotal > 0 ||
-          o.items?.some((i) => i.isCustomized || i.customization)
-      );
+      if (list.length > 0) {
+        useOrderStore.getState().setOrders(list);
+      }
 
+      const customOnly = getCustomOrders(list);
       setOrders(customOnly);
     } catch (err) {
-      console.warn('Could not fetch admin orders from DB:', err);
-      setOrders([]);
+      console.warn('Could not fetch admin orders from DB:', err?.message || err);
+      const fallback = getCustomOrders(useOrderStore.getState().orders);
+      if (fallback.length > 0) {
+        setOrders(fallback);
+      } else {
+        setFetchError(err?.message || 'Unable to load customized orders from database.');
+      }
     } finally {
       setLoading(false);
     }
@@ -305,6 +341,25 @@ export default function AdminCustomizedOrders() {
             <p style={{ marginTop: '0.75rem', color: '#64748b', fontSize: '0.88rem' }}>
               Loading bespoke customized orders...
             </p>
+          </div>
+        ) : fetchError && orders.length === 0 ? (
+          <div className={styles.emptyCard}>
+            <div className={styles.emptyIconWrap} style={{ background: '#fef2f2', color: '#dc2626' }}>
+              <RotateCw size={30} />
+            </div>
+            <h3 className={styles.emptyTitle}>Slow Database Response</h3>
+            <p className={styles.emptyDesc}>
+              {fetchError}. The cloud database took too long to return orders. Click below to retry.
+            </p>
+            <button
+              type="button"
+              onClick={loadOrders}
+              className="admin-period-select-btn"
+              style={{ marginTop: '1.2rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <RotateCw size={14} />
+              <span>Retry Fetching Orders</span>
+            </button>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className={styles.emptyCard}>

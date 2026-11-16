@@ -265,8 +265,9 @@ export default function ProductDetail() {
           const v = item.variants;
           if (v && v.type !== 'none' && Array.isArray(v.options) && v.options.length > 0) {
             const firstOpt = v.default || v.options[0];
-            setSelectedVariant(firstOpt);
-            setSelectedSize(firstOpt);
+            const firstLabel = typeof firstOpt === 'object' && firstOpt !== null ? firstOpt.label : firstOpt;
+            setSelectedVariant(firstLabel);
+            setSelectedSize(firstLabel);
           } else {
             setSelectedVariant(null);
             setSelectedSize(null);
@@ -367,6 +368,13 @@ export default function ProductDetail() {
     return getTagDesign(rawTag);
   }, [product]);
 
+  const currentVariantObj = useMemo(() => {
+    if (!product?.variants?.options || !selectedVariant) return null;
+    return product.variants.options.find(
+      (opt) => (typeof opt === 'object' && opt !== null ? opt.label : opt) === selectedVariant
+    );
+  }, [product?.variants?.options, selectedVariant]);
+
   if (loading && !product) {
     return (
       <PageWrapper>
@@ -406,7 +414,34 @@ export default function ProductDetail() {
     }
   };
 
-  const maxStock = typeof product?.stock === 'number' && !isNaN(product.stock) ? Math.max(0, product.stock) : 10;
+
+  const variantHasCustomPrice = typeof currentVariantObj === 'object' && currentVariantObj !== null && currentVariantObj.price !== undefined && currentVariantObj.price !== null;
+
+  const baseHasDiscount = Boolean(
+    product.discountPrice !== undefined &&
+    product.discountPrice !== null &&
+    Number(product.discountPrice) > 0 &&
+    Number(product.discountPrice) < Number(product.price)
+  );
+
+  const currentPrice = variantHasCustomPrice
+    ? Number(currentVariantObj.price)
+    : (baseHasDiscount ? Number(product.discountPrice) : (Number(product.price) || 231));
+
+  const originalPrice = variantHasCustomPrice
+    ? (Number(currentVariantObj.mrp) || Number(currentVariantObj.price))
+    : (Number(product.price) || Math.round(currentPrice * 1.25));
+
+  const hasDiscount = originalPrice > currentPrice;
+  const discountPercent = hasDiscount
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+    : 0;
+
+  const TagIconComponent = productTagInfo?.icon;
+  const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
+  const maxStock = typeof currentVariantObj === 'object' && currentVariantObj !== null && currentVariantObj.stock !== undefined && currentVariantObj.stock !== null
+    ? Math.max(0, Number(currentVariantObj.stock))
+    : (typeof product?.stock === 'number' && !isNaN(product?.stock) ? Math.max(0, product.stock) : 10);
   const isOutOfStock = maxStock <= 0;
 
   const handleAddToCart = () => {
@@ -425,9 +460,14 @@ export default function ProductDetail() {
     addItem(
       {
         ...product,
+        price: currentPrice,
+        discountPrice: currentPrice,
+        originalPrice: originalPrice,
+        basePrice: currentPrice,
         selectedVariant: selectedVariant || selectedSize || selectedCapacity,
         selectedSize: selectedSize || selectedVariant || null,
         selectedColor,
+        stock: maxStock,
       },
       finalQty
     );
@@ -449,9 +489,10 @@ export default function ProductDetail() {
       name: product.name,
       image: product.images?.[0] || product.image || null,
       images: product.images || (product.image ? [product.image] : []),
-      price: product.discountPrice || product.price || 0,
-      discountPrice: product.discountPrice || product.price || 0,
-      originalPrice: product.originalPrice || product.price || 0,
+      price: currentPrice,
+      discountPrice: currentPrice,
+      originalPrice: originalPrice,
+      basePrice: currentPrice,
       selectedVariant: selectedVariant || selectedCapacity,
       selectedSize: product.selectedSize || selectedVariant || selectedCapacity || null,
       selectedColor: selectedColor || null,
@@ -461,19 +502,7 @@ export default function ProductDetail() {
     navigate('/checkout?buyNow=true');
   };
 
-  const hasDiscount = Boolean(
-    product.discountPrice !== undefined &&
-    product.discountPrice !== null &&
-    Number(product.discountPrice) > 0 &&
-    Number(product.discountPrice) < Number(product.price)
-  );
-  const currentPrice = hasDiscount ? Number(product.discountPrice) : (Number(product.price) || 231);
-  const originalPrice = Number(product.price) || Math.round(currentPrice * 1.25);
-  const discountPercent = hasDiscount
-    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-    : 0;
-  const TagIconComponent = productTagInfo?.icon;
-  const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
+  // Look up selected variant details (e.g. for custom price, mrp, stock per size/weight)
 
   // Capacity / Variant options: only use what's configured in DB — NO mock fallbacks
   const hasDbVariants = Boolean(
@@ -769,23 +798,32 @@ export default function ProductDetail() {
                             : 'SELECT SIZE'}
                         </span>
                         <div className={styles['size-pills-row']}>
-                          {availableSizes.map((size) => (
-                            <button
-                              key={size}
-                              type="button"
-                              onClick={() => {
-                                setSelectedSize(size);
-                                setSelectedVariant(size);
-                              }}
-                              className={`${styles['size-pill-btn']} ${
-                                (selectedSize === size || selectedVariant === size)
-                                  ? styles['active-size-pill']
-                                  : ''
-                              }`}
-                            >
-                              {size}
-                            </button>
-                          ))}
+                          {availableSizes.map((item) => {
+                            const label = typeof item === 'object' && item !== null ? item.label : item;
+                            const isSelected = selectedSize === label || selectedVariant === label;
+                            const itemPrice = typeof item === 'object' && item !== null && item.price ? item.price : null;
+                            return (
+                              <button
+                                key={label}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSize(label);
+                                  setSelectedVariant(label);
+                                }}
+                                className={`${styles['size-pill-btn']} ${
+                                  isSelected ? styles['active-size-pill'] : ''
+                                }`}
+                                style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '48px', padding: '0.35rem 0.65rem' }}
+                              >
+                                <span style={{ fontWeight: 700 }}>{label}</span>
+                                {itemPrice && (
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: isSelected ? '#ffffff' : '#64748b', opacity: 0.9, marginTop: '1px' }}>
+                                    ₹{itemPrice}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -837,7 +875,7 @@ export default function ProductDetail() {
                     <button
                       type="button"
                       disabled={isOutOfStock}
-                      onClick={() => navigate(`/products/${product.slug || slug}/customize`)}
+                      onClick={() => navigate(`/products/${product.slug || slug}/customize`, { state: { initialSize: selectedVariant || null, initialColor: selectedColor || null } })}
                       className={styles['btn-customize-product']}
                       style={{
                         width: '100%',
@@ -1399,21 +1437,30 @@ export default function ProductDetail() {
                   : 'SELECT SIZE'}
               </span>
               <div className="mobile-pdp-pills-row">
-                {availableSizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSize(size);
-                      setSelectedVariant(size);
-                    }}
-                    className={`mobile-pdp-size-btn ${
-                      (selectedSize === size || selectedVariant === size) ? 'active' : ''
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {availableSizes.map((item) => {
+                  const label = typeof item === 'object' && item !== null ? item.label : item;
+                  const isSelected = selectedSize === label || selectedVariant === label;
+                  const itemPrice = typeof item === 'object' && item !== null && item.price ? item.price : null;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSize(label);
+                        setSelectedVariant(label);
+                      }}
+                      className={`mobile-pdp-size-btn ${isSelected ? 'active' : ''}`}
+                      style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '48px', padding: '0.35rem 0.65rem' }}
+                    >
+                      <span style={{ fontWeight: 700 }}>{label}</span>
+                      {itemPrice && (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: isSelected ? '#ffffff' : '#64748b', opacity: 0.9, marginTop: '1px' }}>
+                          ₹{itemPrice}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1641,7 +1688,12 @@ export default function ProductDetail() {
           <button
             type="button"
             disabled={isOutOfStock}
-            onClick={() => navigate(`/products/${product.slug || slug}/customize`)}
+            onClick={() => navigate(`/products/${product.slug || slug}/customize`, {
+              state: {
+                initialSize: selectedVariant || null,
+                initialColor: selectedColor || null,
+              }
+            })}
             className="mobile-pdp-dock-btn-customize"
             style={{
               padding: '0.65rem 0.9rem',

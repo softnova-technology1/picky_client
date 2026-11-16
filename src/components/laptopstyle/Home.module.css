@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Home.module.css - Laptop View Responsive Styles (1025px - 1366px)
+   ========================================================================== */
+
+@media screen and (min-width: 1025px) and (max-width: 1366px) {
+  /* Why Picky / Trust Grid Section: Equalize card heights in laptop view */
+  :global(.hp-trust-grid) {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+
+  :global(.hp-trust-grid) > :global(.fade-up) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  :global(.hp-trust-item) {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.85rem 1.4rem;
+    gap: 0.95rem;
+    box-sizing: border-box;
+  }
+
+  :global(.hp-trust-title) {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  :global(.hp-trust-desc) {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    flex-grow: 1;
+    margin: 0;
+  }
+}

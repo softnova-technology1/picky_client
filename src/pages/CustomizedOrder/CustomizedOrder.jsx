@@ -69,8 +69,8 @@ export default function CustomizedOrder() {
   const quantity = pricing.quantity || 1;
 
   const buildCustomizedProductItem = () => {
-    const rawId = product._id || product.id || product.productId;
-    const prodId = (rawId || '').toString().includes('_custom_') ? rawId.toString().split('_custom_')[0] : (rawId || product.slug);
+    const rawId = product?._id || product?.id || product?.productId;
+    const prodId = (rawId || '').toString().includes('_custom_') ? rawId.toString().split('_custom_')[0] : (rawId || product?.slug);
     const cartItemId = `${prodId}_custom_${orderId}`;
 
     return {
@@ -80,26 +80,26 @@ export default function CustomizedOrder() {
       productId: prodId,
       cartItemId,
       isCustomized: true,
-      basePrice: pricing.basePrice,
-      customizationCost: pricing.customizationCost,
-      price: pricing.totalUnitPrice,
-      discountPrice: pricing.totalUnitPrice,
-      originalPrice: (product.originalPrice || pricing.basePrice) + pricing.customizationCost,
-      selectedSize: general.size || null,
-      selectedColor: (typeof general.color === 'object' ? general.color?.name : general.color) || null,
+      basePrice: pricing?.basePrice || 0,
+      customizationCost: pricing?.customizationCost || 0,
+      price: pricing?.totalUnitPrice || pricing?.basePrice || 0,
+      discountPrice: pricing?.totalUnitPrice || pricing?.basePrice || 0,
+      originalPrice: (product?.originalPrice || pricing?.basePrice || 0) + (pricing?.customizationCost || 0),
+      selectedSize: (typeof general?.size === 'object' && general?.size !== null ? (general.size.label || general.size.name) : general?.size) || null,
+      selectedColor: (typeof general?.color === 'object' ? general?.color?.name : general?.color) || null,
       customization: {
         orderId,
-        frontText: front.text,
-        frontFont: front.font,
-        frontImages: front.images,
-        backText: backside.text,
-        backFont: backside.font,
-        backImages: backside.images,
-        material: general.material,
-        size: general.size,
-        color: general.color,
-        frontExampleImage: general.frontExampleImage,
-        backExampleImage: general.backExampleImage,
+        frontText: front?.text,
+        frontFont: front?.font,
+        frontImages: front?.images,
+        backText: backside?.text,
+        backFont: backside?.font,
+        backImages: backside?.images,
+        material: general?.material,
+        size: (typeof general?.size === 'object' && general?.size !== null ? (general.size.label || general.size.name) : general?.size) || null,
+        color: general?.color,
+        frontExampleImage: general?.frontExampleImage,
+        backExampleImage: general?.backExampleImage,
       },
       quantity,
     };
@@ -201,6 +201,7 @@ export default function CustomizedOrder() {
         {/* ── 4. All Customization Details (Front, Backside, General) ── */}
         <div className={styles['details-grid']}>
           {/* Section: Front Specifications */}
+          {front && (
           <div className={styles['spec-card']}>
             <div className={styles['spec-header']}>
               <div className={styles['spec-title']}>
@@ -221,13 +222,13 @@ export default function CustomizedOrder() {
 
             <div className={styles['spec-meta-row']}>
               <span>Selected Font Style</span>
-              <strong>{front.font}</strong>
+              <strong>{front.font || 'Standard'}</strong>
             </div>
 
             {/* Front Uploaded Images */}
             <div style={{ marginTop: '0.75rem' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
-                Uploaded Front Images ({front.images?.length || 0}/4):
+                Uploaded Front Images ({front.images?.length || 0}):
               </span>
               {front.images && front.images.length > 0 ? (
                 <div className={styles['thumbs-row']}>
@@ -249,8 +250,10 @@ export default function CustomizedOrder() {
               )}
             </div>
           </div>
+          )}
 
           {/* Section: Backside Specifications */}
+          {backside && (
           <div className={styles['spec-card']}>
             <div className={styles['spec-header']}>
               <div className={styles['spec-title']}>
@@ -271,13 +274,13 @@ export default function CustomizedOrder() {
 
             <div className={styles['spec-meta-row']}>
               <span>Selected Font Style</span>
-              <strong>{backside.font}</strong>
+              <strong>{backside.font || 'Standard'}</strong>
             </div>
 
             {/* Backside Uploaded Images */}
             <div style={{ marginTop: '0.75rem' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
-                Uploaded Backside Images ({backside.images?.length || 0}/4):
+                Uploaded Backside Images ({backside.images?.length || 0}):
               </span>
               {backside.images && backside.images.length > 0 ? (
                 <div className={styles['thumbs-row']}>
@@ -299,8 +302,10 @@ export default function CustomizedOrder() {
               )}
             </div>
           </div>
+          )}
 
           {/* Section: General Specifications (Material, Size, Color, Example Images) */}
+          {general && (
           <div className={`${styles['spec-card']} ${styles['spec-card-full']}`}>
             <div className={styles['spec-header']}>
               <div className={styles['spec-title']}>
@@ -367,6 +372,100 @@ export default function CustomizedOrder() {
               </div>
             </div>
           </div>
+          )}
+
+          {/* ── Additional Custom Sections Added via Admin Form Builder ── */}
+          {Array.isArray(orderData.customSections) && orderData.customSections.map((sec) => (
+            <div key={sec.id} className={styles['spec-card']}>
+              <div className={styles['spec-header']}>
+                <div className={styles['spec-title']}>
+                  <span>{sec.title}</span>
+                </div>
+                {sec.font && <span className={styles['spec-badge']}>Font: {sec.font}</span>}
+              </div>
+
+              {sec.text && (
+                <div className={styles['text-preview-box']}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '0.35rem', fontWeight: 700 }}>
+                    Custom Text
+                  </div>
+                  <div className={styles['text-render']} style={sec.fontStyle || {}}>
+                    "{sec.text}"
+                  </div>
+                </div>
+              )}
+
+              {sec.material && (
+                <div className={styles['spec-meta-row']}>
+                  <span>Selected Material / Option</span>
+                  <strong>{sec.material}</strong>
+                </div>
+              )}
+
+              {sec.size && (
+                <div className={styles['spec-meta-row']}>
+                  <span>Selected Size</span>
+                  <strong>{sec.size}</strong>
+                </div>
+              )}
+
+              {sec.color && (
+                <div className={styles['spec-meta-row']}>
+                  <span>Selected Color</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: sec.color?.hex || '#8b5cf6', display: 'inline-block' }} />
+                    <strong>{sec.color?.name || 'Custom Color'}</strong>
+                  </div>
+                </div>
+              )}
+
+              {Array.isArray(sec.images) && sec.images.length > 0 && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
+                    Uploaded Images ({sec.images.length}):
+                  </span>
+                  <div className={styles['thumbs-row']}>
+                    {sec.images.map((img, i) => (
+                      <img
+                        key={img.id || i}
+                        src={img.url}
+                        alt={`${sec.title} ${i + 1}`}
+                        className={styles['thumb-item']}
+                        onClick={() => setLightboxUrl(img.url)}
+                        title="Click to view full size"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(sec.frontExampleImage || sec.backExampleImage) && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
+                    Uploaded Mockups:
+                  </span>
+                  <div className={styles['thumbs-row']}>
+                    {sec.frontExampleImage && (
+                      <img
+                        src={sec.frontExampleImage}
+                        alt="Mockup 1"
+                        className={styles['thumb-item']}
+                        onClick={() => setLightboxUrl(sec.frontExampleImage)}
+                      />
+                    )}
+                    {sec.backExampleImage && (
+                      <img
+                        src={sec.backExampleImage}
+                        alt="Mockup 2"
+                        className={styles['thumb-item']}
+                        onClick={() => setLightboxUrl(sec.backExampleImage)}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* ── 5. Pricing Summary & Final Order Submission Card ── */}
