@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import BestSellersHeroSection from '../../components/bestseller/BestSellersHeroSection';
 import ProductCard from '../../components/product/ProductCard';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { productService } from '../../services/product.service';
 import { getProducts, SLUG_ALIAS_MAP } from '../../data';
 import '../../styles/home-premium.css';
@@ -400,20 +401,26 @@ export default function BestSellers() {
 
           {/* Products Grid */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  border: '3px solid #e9d5ff',
-                  borderTopColor: '#7c3aed',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                  margin: '0 auto 1rem auto',
-                }}
-              />
-              <p style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>Loading verified bestsellers...</p>
-            </div>
+            <MobileSkeleton
+              variant="product-grid"
+              count={4}
+              fallback={(
+                <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      border: '3px solid #e9d5ff',
+                      borderTopColor: '#7c3aed',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                      margin: '0 auto 1rem auto',
+                    }}
+                  />
+                  <p style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem' }}>Loading verified bestsellers...</p>
+                </div>
+              )}
+            />
           ) : filteredProducts.length > 0 ? (
             <div className="bestsellers-grid-5">
               {filteredProducts.map((prod, idx) => (

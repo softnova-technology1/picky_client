@@ -1412,11 +1412,21 @@
     justify-content: center !important;
   }
 
+  .hp-trust-item:hover::before,
+  .hp-trust-item:hover::after,
+  .hp-trust-item:active::before,
+  .hp-trust-item:active::after,
+  .hp-trust-item:focus-within::before,
+  .hp-trust-item:focus-within::after {
+    transform: translateY(0%);
+  }
+
   .hp-trust-title {
     font-size: 0.82rem !important;
     font-weight: 800 !important;
     color: #0f172a !important;
     margin: 0 !important;
+    transition: color 0.35s ease, text-shadow 0.35s ease;
   }
 
   .hp-trust-desc {
@@ -1424,6 +1434,21 @@
     color: #64748b !important;
     line-height: 1.35 !important;
     margin: 0 !important;
+    transition: color 0.35s ease, text-shadow 0.35s ease;
+  }
+
+  .hp-trust-item:hover .hp-trust-title,
+  .hp-trust-item:active .hp-trust-title,
+  .hp-trust-item:focus-within .hp-trust-title {
+    color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  }
+
+  .hp-trust-item:hover .hp-trust-desc,
+  .hp-trust-item:active .hp-trust-desc,
+  .hp-trust-item:focus-within .hp-trust-desc {
+    color: rgba(255, 255, 255, 0.94) !important;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
   }
 
   /* 10. Customer Reviews (Continuous Running Loop in Mobile) */

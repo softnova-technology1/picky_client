@@ -5,6 +5,7 @@ import { authService } from '../../../services/auth.service';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
+import MobileSkeleton from '../../ui/MobileSkeleton';
 import {
   MapPin,
   Plus,
@@ -25,12 +26,12 @@ export default function AccountAddresses() {
 
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addrError, setAddrError] = useState('');
 
   // Fetch addresses from MongoDB on mount
   useEffect(() => {
     let isMounted = true;
     const fetchAddresses = async () => {
-      const startTime = Date.now();
       try {
         setLoading(true);
         const res = await authService.getAddresses();
@@ -54,11 +55,6 @@ export default function AccountAddresses() {
           if (isMounted) setAddresses(normList);
         }
       } finally {
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 2000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((r) => setTimeout(r, remainingDelay));
-        }
         if (isMounted) setLoading(false);
       }
     };
@@ -90,6 +86,7 @@ export default function AccountAddresses() {
   };
 
   const handleOpenAdd = () => {
+    setAddrError('');
     setEditingAddr(null);
     setNewAddr({
       fullName: user?.name || '',
@@ -105,6 +102,7 @@ export default function AccountAddresses() {
   };
 
   const handleOpenEdit = (addr) => {
+    setAddrError('');
     setEditingAddr(addr);
     setNewAddr({ ...addr });
     setIsModalOpen(true);
@@ -112,13 +110,17 @@ export default function AccountAddresses() {
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
-    if (!newAddr.street || !newAddr.city || !newAddr.pincode) {
-      showToast('Please fill in street address, city, and pincode', 'error');
+    setAddrError('');
+    if (!newAddr.street?.trim() || !newAddr.city?.trim() || !/^\d{6}$/.test((newAddr.pincode || '').trim())) {
+      const msg = 'Please enter street address, city, and a valid 6-digit PIN code';
+      setAddrError(msg);
+      showToast(msg, 'error');
       return;
     }
 
     try {
       const res = await authService.addAddress({
+        ...(editingAddr?._id || editingAddr?.id ? { addressId: editingAddr._id || editingAddr.id } : {}),
         fullName: newAddr.fullName,
         phone: newAddr.phone,
         street: newAddr.street,
@@ -222,6 +224,9 @@ export default function AccountAddresses() {
       </div>
 
       {/* ── 2. Cards Grid ── */}
+      {loading ? (
+        <MobileSkeleton variant="orders" count={2} />
+      ) : (
       <div className={styles.grid}>
         {addresses.map((addr) => (
           <div
@@ -329,6 +334,7 @@ export default function AccountAddresses() {
           <span className={styles.addCardSubtitle}>Click to add a new home, office, or alternate delivery address</span>
         </div>
       </div>
+      )}
 
       {/* Add / Edit Address Modal */}
       <Modal
@@ -337,6 +343,11 @@ export default function AccountAddresses() {
         title={editingAddr ? 'Edit Delivery Address' : 'Add Delivery Address'}
       >
         <form onSubmit={handleAddAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {addrError && (
+            <div style={{ padding: '0.65rem 0.85rem', borderRadius: '10px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.84rem', fontWeight: 600 }}>
+              {addrError}
+            </div>
+          )}
           <Input
             label="Recipient Full Name"
             value={newAddr.fullName}

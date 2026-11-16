@@ -308,7 +308,11 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
                 <Sparkles size={22} color="#7c3aed" />
               </div>
               <span className="ref-placeholder-brand">PICKY</span>
-              <span className="ref-placeholder-sub">{product.category?.name || product.subCategory || 'Curated'}</span>
+              <span className="ref-placeholder-sub">
+                {(typeof product.category === 'object' ? product.category?.name : product.category) ||
+                 (typeof product.subCategory === 'object' ? product.subCategory?.name : product.subCategory) ||
+                 'Curated'}
+              </span>
             </div>
           )}
         </Link>

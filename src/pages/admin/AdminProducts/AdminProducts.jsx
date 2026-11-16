@@ -2759,7 +2759,7 @@ export default function AdminProducts() {
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <span>{sz}</span>
+                                <span>{typeof sz === 'object' && sz !== null ? (sz.label || sz.name || '') : String(sz)}</span>
                                 <button
                                   type="button"
                                   onClick={() => setSelectedSizes(selectedSizes.filter((_, i) => i !== idx))}
@@ -3017,7 +3017,7 @@ export default function AdminProducts() {
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <span>{wt}</span>
+                                <span>{typeof wt === 'object' && wt !== null ? (wt.label || wt.name || '') : String(wt)}</span>
                                 <button
                                   type="button"
                                   onClick={() => setSelectedWeights(selectedWeights.filter((_, i) => i !== idx))}
@@ -3275,7 +3275,7 @@ export default function AdminProducts() {
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <span>{liq}</span>
+                                <span>{typeof liq === 'object' && liq !== null ? (liq.label || liq.name || '') : String(liq)}</span>
                                 <button
                                   type="button"
                                   onClick={() => setSelectedLiquids(selectedLiquids.filter((_, i) => i !== idx))}
@@ -4917,7 +4917,9 @@ export default function AdminProducts() {
                         {/* Tag Chip (Requirement 2) */}
                         <td style={{ padding: '0.85rem 0.85rem', textAlign: 'left' }}>
                           {(() => {
-                            const pTag = Array.isArray(p.tags) ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : null);
+                            const rawTag = Array.isArray(p.tags) ? p.tags[0] : (typeof p.tags === 'string' ? p.tags.split(',')[0].trim() : null);
+                            if (!rawTag) return <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>;
+                            const pTag = typeof rawTag === 'object' && rawTag !== null ? (rawTag.name || rawTag.label || '') : String(rawTag);
                             if (!pTag) return <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>;
                             const tagStyle = getTagDesign(pTag);
                             const IconComponent = tagStyle?.icon || Tag;
@@ -5568,11 +5570,11 @@ export default function AdminProducts() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#64748b', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                 <span>Home</span>
                 <ChevronRight size={12} />
-                <span>{previewProductData.category}</span>
+                <span>{typeof previewProductData.category === 'object' ? previewProductData.category?.name : previewProductData.category}</span>
                 {previewProductData.subCategory && (
                   <>
                     <ChevronRight size={12} />
-                    <span>{previewProductData.subCategory}</span>
+                    <span>{typeof previewProductData.subCategory === 'object' ? previewProductData.subCategory?.name : previewProductData.subCategory}</span>
                   </>
                 )}
                 <ChevronRight size={12} />

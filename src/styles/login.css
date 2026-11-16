@@ -1093,6 +1093,12 @@
   .picky-login-modal-backdrop {
     padding: 0.75rem 0.5rem !important;
     align-items: center !important;
+    animation: none;
+  }
+
+  .picky-login-modal-backdrop.is-circle-revealing {
+    will-change: clip-path;
+    animation: pickyMobileLoginCircleReveal 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .picky-auth-card {
@@ -1523,5 +1529,23 @@
 .picky-wa-otp-notice strong {
   color: #4ade80;
   font-weight: 700;
+}
+
+@keyframes pickyMobileLoginCircleReveal {
+  0% {
+    clip-path: circle(0px at var(--cr-x, 50%) var(--cr-y, 92%));
+    opacity: 0.92;
+  }
+  100% {
+    clip-path: circle(var(--cr-r, 150vmax) at var(--cr-x, 50%) var(--cr-y, 92%));
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picky-login-modal-backdrop.is-circle-revealing {
+    animation: none !important;
+    clip-path: none !important;
+  }
 }
 

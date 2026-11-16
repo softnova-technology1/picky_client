@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { orderService } from '../../services/order.service';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
@@ -256,9 +257,14 @@ export default function OrderSuccess() {
 
             {/* ── Order Details Section ── */}
             {loading && !order ? (
-              <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
-                <Spinner size={36} />
-              </div>
+              <MobileSkeleton
+                variant="order-detail"
+                fallback={(
+                  <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
+                    <Spinner size={36} />
+                  </div>
+                )}
+              />
             ) : order ? (
               <div className={styles.orderDetailsCard}>
                 
@@ -326,8 +332,8 @@ export default function OrderSuccess() {
                             <div className={styles.itemMeta}>
                               <span>Qty: <strong>{item.quantity}</strong></span>
                               {item.sku && <span>SKU: {item.sku}</span>}
-                              {item.selectedSize && <span>Size: {item.selectedSize}</span>}
-                              {item.selectedColor && <span>Color: {item.selectedColor}</span>}
+                              {item.selectedSize && <span>Size: {typeof item.selectedSize === 'object' ? (item.selectedSize.label || item.selectedSize.name) : item.selectedSize}</span>}
+                              {item.selectedColor && <span>Color: {typeof item.selectedColor === 'object' ? (item.selectedColor.name || item.selectedColor.color) : item.selectedColor}</span>}
                             </div>
                           </div>
                           <div className={styles.itemPrice}>
@@ -488,9 +494,14 @@ export default function OrderSuccess() {
 
         {/* Card 2: Order Details & Summary Card */}
         {loading && !order ? (
-          <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
-            <Spinner size={32} />
-          </div>
+          <MobileSkeleton
+            variant="order-detail"
+            fallback={(
+              <div style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
+                <Spinner size={32} />
+              </div>
+            )}
+          />
         ) : order ? (
           <div className="mobile-success-details-card">
             {/* Order Header */}

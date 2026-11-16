@@ -1,6 +1,7 @@
 import WhatsAppIcon from '../../components/common/WhatsAppIcon/WhatsAppIcon';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { buildRevealRouteKey, useCircleRevealTransition } from '../../hooks/useMobileCircleReveal';
 import { authService } from '../../services/auth.service';
 import { cartService } from '../../services/cart.service';
 import { wishlistService } from '../../services/wishlist.service';
@@ -39,6 +40,8 @@ const GoogleIcon = ({ size = 18 }) => (
 export default function Login({ initialTab = 'login' }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const backdropRef = useRef(null);
+  useCircleRevealTransition(backdropRef, buildRevealRouteKey(location), 'is-circle-revealing');
   const { login, isLoggedIn, user } = useAuthStore();
   const { items: localCartItems, setServerCart } = useCartStore();
   const { items: localWishlistItems, setWishlist } = useWishlistStore();
@@ -356,6 +359,7 @@ export default function Login({ initialTab = 'login' }) {
 
       {/* ── Modal Overlay Backdrop with Frosted Glass Blur ── */}
       <div
+        ref={backdropRef}
         className="picky-login-modal-backdrop"
         onClick={(e) => {
           if (e.target === e.currentTarget) handleClose();

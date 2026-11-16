@@ -406,6 +406,132 @@
   white-space: normal;
 }
 
+.fieldValueEmpty {
+  font-size: 13px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.35;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.fieldBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inlineEditForm {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid #7c3aed;
+  background-color: #ffffff;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inlineInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #ddd6fe;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #faf5ff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inlineInput:focus {
+  border-color: #7c3aed;
+  background: #ffffff;
+}
+
+.inlineActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.saveFieldBtn {
+  padding: 8px 16px;
+  border-radius: 9px;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saveFieldBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.clearFieldBtn {
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  color: #e11d48;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelFieldBtn {
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fieldSuccessText {
+  margin: 0 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.fieldErrorText {
+  margin: 0 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.pendingBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.amberBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 .fieldValuePhone {
   font-size: 14px;
   font-weight: 700;

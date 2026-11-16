@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import Select from '../../components/ui/Select';
 import { productService } from '../../services/product.service';
 import { useCategoryStore } from '../../store/categoryStore';
@@ -950,12 +951,18 @@ export default function Discounts() {
         {/* ── 4. Main Product Deals Grid (Using Official ProductCard Component) ── */}
         <div className="discounts-grid-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
           {loading ? (
-            <div style={{ padding: '6rem 0', textAlign: 'center' }}>
-              <Spinner size="lg" />
-              <p style={{ marginTop: '1rem', color: '#64748b', fontSize: '0.92rem' }}>
-                Loading verified deals from database...
-              </p>
-            </div>
+            <MobileSkeleton
+              variant="product-grid"
+              count={4}
+              fallback={(
+                <div style={{ padding: '6rem 0', textAlign: 'center' }}>
+                  <Spinner size="lg" />
+                  <p style={{ marginTop: '1rem', color: '#64748b', fontSize: '0.92rem' }}>
+                    Loading verified deals from database...
+                  </p>
+                </div>
+              )}
+            />
           ) : filteredProducts.length === 0 ? (
             <div
               style={{

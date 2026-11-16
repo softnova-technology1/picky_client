@@ -37,8 +37,7 @@ export default function AdminRoutes() {
         <Route path="orders" element={<AdminOrders />} />
         <Route path="orders/:id" element={<AdminOrderDetail />} />
         <Route path="customized-orders" element={<AdminCustomizedOrders />} />
-        <Route path="customizer-builder" element={<AdminCustomizerBuilder />} />
-        <Route path="customization-form" element={<AdminCustomizerBuilder />} />
+        <Route path="customized-order" element={<AdminCustomizedOrders />} />
         <Route path="returns" element={<AdminReturns />} />
         <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
         <Route path="broadcast" element={<AdminBroadcast />} />

@@ -30,5 +30,37 @@
     max-width: 100%;
     overflow-x: clip;
   }
+
+  .page-wrapper-main {
+    animation: none;
+  }
+
+  .page-wrapper-main.is-circle-revealing {
+    will-change: clip-path;
+    animation: mobileCircleRevealPage 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+:global(.picky-login-underlying-site) .page-wrapper-main {
+  animation: none !important;
+  clip-path: none !important;
+}
+
+@keyframes mobileCircleRevealPage {
+  0% {
+    clip-path: circle(0px at var(--cr-x, 50%) var(--cr-y, 92%));
+    opacity: 0.94;
+  }
+  100% {
+    clip-path: circle(var(--cr-r, 150vmax) at var(--cr-x, 50%) var(--cr-y, 92%));
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-wrapper-main.is-circle-revealing {
+    animation: none !important;
+    clip-path: none !important;
+  }
 }
 

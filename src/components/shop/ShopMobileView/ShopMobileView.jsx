@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ProductCard from '../../product/ProductCard';
+import MobileSkeleton from '../../ui/MobileSkeleton';
 import { usePageCustomization } from '../../../store/customizationStore';
 import styles from './ShopMobileView.module.css';
 
@@ -497,18 +498,7 @@ export default function ShopMobileView({
         {/* ─── 5. 2-Column Product Grid (Database Products with ProductCard) ─── */}
         <div className={styles.productGrid}>
           {loading ? (
-            [1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                style={{
-                  height: '320px',
-                  borderRadius: '18px',
-                  background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)',
-                  backgroundSize: '200% 100%',
-                  animation: 'pulse 1.5s infinite',
-                }}
-              />
-            ))
+            <MobileSkeleton variant="product-grid" count={4} spanFullGrid />
           ) : sortedProducts.length === 0 ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px 16px', color: '#64748b' }}>
               <p style={{ fontWeight: 700, fontSize: '15px', color: '#1e1b4b', marginBottom: '8px' }}>

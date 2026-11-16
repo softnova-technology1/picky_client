@@ -1,10 +1,11 @@
 import React from 'react';
 import ProductCard from '.././ProductCard';
+import MobileSkeleton from '../../ui/MobileSkeleton';
 import { ShoppingCart } from 'lucide-react';
 
 export default function ProductGrid({ products = [], loading = false }) {
   if (loading) {
-    return (
+    const desktopLoading = (
       <div className="product-grid-5">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
           <div
@@ -27,6 +28,8 @@ export default function ProductGrid({ products = [], loading = false }) {
         `}</style>
       </div>
     );
+
+    return <MobileSkeleton variant="product-grid" count={4} fallback={desktopLoading} />;
   }
 
   if (products.length === 0) {

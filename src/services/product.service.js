@@ -5,6 +5,12 @@ export const productService = {
   search: (q, params) => api.get('/products/search', { params: { search: q, ...params } }),
   getBySlug: (slug) => api.get(`/products/${slug}`),
 
+  // Direct S3 Customization Image Upload (Max 10MB)
+  uploadCustomizationImage: (formData) =>
+    api.post('/upload/customization', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
   // Admin
   create: (formData) => api.post('/products', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   update: (id, formData) => api.put(`/products/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),

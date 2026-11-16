@@ -4,6 +4,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import Gallery from '../../components/product/Gallery';
 import ProductCard from '../../components/product/ProductCard';
 import Spinner from '../../components/ui/Spinner';
+import MobileSkeleton from '../../components/ui/MobileSkeleton';
 import { productService } from '../../services/product.service';
 import { wishlistService } from '../../services/wishlist.service';
 import { useCartStore } from '../../store/cartStore';
@@ -378,7 +379,10 @@ export default function ProductDetail() {
   if (loading && !product) {
     return (
       <PageWrapper>
-        <div className="section"><Spinner size={40} /></div>
+        <MobileSkeleton
+          variant="product-detail"
+          fallback={<div className="section"><Spinner size={40} /></div>}
+        />
       </PageWrapper>
     );
   }
@@ -450,13 +454,20 @@ export default function ProductDetail() {
       return;
     }
     const finalQty = Math.min(Math.max(1, quantity), maxStock);
-    const variantLabel = selectedVariant
-      ? ` (${selectedVariant})`
-      : selectedSize
-      ? ` (${selectedSize})`
-      : selectedCapacity
-      ? ` (${selectedCapacity})`
-      : '';
+    const resolvedVariantLabel = typeof selectedVariant === 'object' && selectedVariant !== null
+      ? (selectedVariant.label || selectedVariant.name || '')
+      : (typeof selectedSize === 'object' && selectedSize !== null
+          ? (selectedSize.label || selectedSize.name || '')
+          : (selectedVariant || selectedSize || selectedCapacity || ''));
+    const variantLabel = resolvedVariantLabel ? ` (${resolvedVariantLabel})` : '';
+
+    const resolvedVariant = typeof selectedVariant === 'object' && selectedVariant !== null
+      ? (selectedVariant.label || selectedVariant.name || '')
+      : (selectedVariant || selectedSize || selectedCapacity);
+    const resolvedSize = typeof selectedSize === 'object' && selectedSize !== null
+      ? (selectedSize.label || selectedSize.name || '')
+      : (selectedSize || selectedVariant || null);
+
     addItem(
       {
         ...product,
@@ -481,6 +492,13 @@ export default function ProductDetail() {
     }
     const finalQty = Math.min(Math.max(1, quantity), maxStock);
     const prodId = product._id || product.id || slug;
+    const resolvedVariant = typeof selectedVariant === 'object' && selectedVariant !== null
+      ? (selectedVariant.label || selectedVariant.name || '')
+      : (selectedVariant || selectedCapacity);
+    const resolvedSize = typeof selectedSize === 'object' && selectedSize !== null
+      ? (selectedSize.label || selectedSize.name || '')
+      : (product.selectedSize || resolvedVariant || selectedCapacity || null);
+
     setBuyNowItem({
       _id: prodId,
       id: prodId,
@@ -521,6 +539,17 @@ export default function ProductDetail() {
 
   const availableColors = hasColorVariants ? product.variants.colors : [];
   const availableSizes = hasDbVariants ? product.variants.options : [];
+
+  // Defensive helpers for variant options (can be string or { label, price, mrp, stock })
+  const getOptionLabel = (opt) => (typeof opt === 'object' && opt !== null ? (opt.label || opt.name || opt.size || '') : String(opt || ''));
+  const getOptionKey = (opt, idx) => (typeof opt === 'object' && opt !== null ? (opt.id || opt._id || opt.label || idx) : `${opt}-${idx}`);
+  const isOptionSelected = (opt) => {
+    if (!opt) return false;
+    const optLabel = getOptionLabel(opt);
+    const selSizeLabel = getOptionLabel(selectedSize);
+    const selVarLabel = getOptionLabel(selectedVariant);
+    return opt === selectedSize || opt === selectedVariant || optLabel === selSizeLabel || optLabel === selVarLabel;
+  };
 
   const renderRelatedProductsRunningSection = (isMobile = false) => {
     if (!isEnabled('pdp_related_products')) return null;
