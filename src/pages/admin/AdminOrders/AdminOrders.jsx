@@ -199,7 +199,7 @@ function getStatusUpdateInfo(statusKey, order) {
 }
 
 // ─── Custom Status Select Dropdown (All options visible, Green Tick on updated, Date & Time beside status) ───
-function StatusSelect({ value, onChange, currentStatus, order }) {
+function StatusSelect({ value, onChange, currentStatus, order, disabled = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -222,27 +222,29 @@ function StatusSelect({ value, onChange, currentStatus, order }) {
       {/* Trigger Button */}
       <button
         type="button"
-        onClick={() => setOpen((p) => !p)}
+        disabled={disabled}
+        onClick={() => { if (!disabled) setOpen((p) => !p); }}
         style={{
           width: '100%',
           padding: '0.65rem 0.9rem',
-          background: open ? '#ffffff' : '#f8fafc',
-          border: `1.5px solid ${open ? '#7c3aed' : '#e2e8f0'}`,
+          background: disabled ? '#f8fafc' : open ? '#ffffff' : '#f8fafc',
+          border: `1.5px solid ${disabled ? '#e2e8f0' : open ? '#7c3aed' : '#e2e8f0'}`,
           borderRadius: '10px',
           fontSize: '0.84rem',
           fontWeight: 600,
-          color: '#0f172a',
-          cursor: 'pointer',
+          color: disabled ? '#64748b' : '#0f172a',
+          cursor: disabled ? 'not-allowed' : 'pointer',
           outline: 'none',
           boxSizing: 'border-box',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '0.5rem',
-          boxShadow: open ? '0 0 0 3px rgba(124,58,237,0.08)' : 'none',
+          boxShadow: !disabled && open ? '0 0 0 3px rgba(124,58,237,0.08)' : 'none',
+          opacity: disabled ? 0.8 : 1,
           transition: 'all 0.2s ease',
         }}
-        title="Select New Status"
+        title={disabled ? 'Status locked: Controlled in Customized Orders' : 'Select New Status'}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
           <span style={{ width: '26px', height: '26px', borderRadius: '7px', background: selected.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -912,6 +914,18 @@ export default function AdminOrders() {
   // ─── Handle status update ─────────────────────────────────────────────────
   const handleStatusUpdate = async (order) => {
     const id = order._id || order.id;
+
+    // Disallow status updates for customized orders (controlled in Customized Orders page)
+    const isCustomOrder = Boolean(
+      order.isCustomized ||
+      order.customizationCostTotal > 0 ||
+      order.items?.some((i) => i.isCustomized || i.customization)
+    );
+    if (isCustomOrder) {
+      showToast('⚠️ Customized Order status is managed exclusively in the Customized Orders page.', 'info');
+      return;
+    }
+
     const newStatus = rowStatus[id] ?? order.status;
     const note = rowNote[id] ?? '';
     const cancelReason = rowCancelReason[id] ?? '';
@@ -1004,6 +1018,15 @@ export default function AdminOrders() {
   // ─── Handle 1-Click Shiprocket Dispatch ────────────────────────────────────
   const handleShipViaShiprocket = async (order) => {
     const id = order._id || order.id;
+    const isCustomOrder = Boolean(
+      order.isCustomized ||
+      order.customizationCostTotal > 0 ||
+      order.items?.some((i) => i.isCustomized || i.customization)
+    );
+    if (isCustomOrder) {
+      showToast('⚠️ Customized Order fulfillment is managed exclusively in the Customized Orders page.', 'info');
+      return;
+    }
     setSrShippingId(id);
     try {
       const courier = srCourierChoice[id] || 'Delhivery Surface';
@@ -2112,6 +2135,12 @@ export default function AdminOrders() {
                 const StatusIcon = cfg.icon;
                 const isOpen    = expandedId === order._id;
 
+                const isCustomOrder = Boolean(
+                  order.isCustomized ||
+                  order.customizationCostTotal > 0 ||
+                  order.items?.some((i) => i.isCustomized || i.customization)
+                );
+
                 // Default status strictly to order's current status (never auto-advance to shipping)
                 const currentRowStatus    = rowStatus[order._id]       ?? (order.status || 'placed');
                 const isAlreadyShippedOrDelivered = order.status === 'shipped' || order.status === 'delivered';
@@ -2910,82 +2939,130 @@ export default function AdminOrders() {
 
                                 {/* Card 2.2: Update Order Status Details & Actions */}
                                 <div
-                                  style={{
-                                    background: '#ffffff',
-                                    borderRadius: '16px',
-                                    border: '1px solid #e2e8f0',
-                                    padding: '1.25rem 1.4rem',
-                                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between',
-                                    flex: 1,
-                                    boxSizing: 'border-box',
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {/* Card Header */}
-                                    <div
                                       style={{
+                                        background: '#ffffff',
+                                        borderRadius: '16px',
+                                        border: '1px solid #e2e8f0',
+                                        padding: '1.25rem 1.4rem',
+                                        boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                                         display: 'flex',
-                                        alignItems: 'center',
+                                        flexDirection: 'column',
                                         justifyContent: 'space-between',
-                                        paddingBottom: '0.75rem',
-                                        borderBottom: '1px solid #f1f5f9',
+                                        flex: 1,
+                                        boxSizing: 'border-box',
                                       }}
                                     >
-                                      <h4
-                                        style={{
-                                          margin: 0,
-                                          fontSize: '0.9rem',
-                                          fontWeight: 700,
-                                          color: '#0f172a',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '0.5rem',
-                                        }}
-                                      >
-                                        <RotateCw size={16} color="#7c3aed" />
-                                        Update Order Status
-                                      </h4>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                                        <Link
-                                          to={`/softpicky-sn2026/orders/${order._id || order.id}`}
-                                          title="Open Standalone Order Details Page"
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {/* Card Header */}
+                                        <div
                                           style={{
-                                            fontSize: '0.72rem',
-                                            color: '#6d28d9',
-                                            background: '#f3e8ff',
-                                            border: '1px solid #ddd6fe',
-                                            padding: '0.2rem 0.55rem',
-                                            borderRadius: '6px',
-                                            fontWeight: 600,
-                                            textDecoration: 'none',
-                                            display: 'inline-flex',
+                                            display: 'flex',
                                             alignItems: 'center',
-                                            gap: '0.25rem',
+                                            justifyContent: 'space-between',
+                                            paddingBottom: '0.75rem',
+                                            borderBottom: '1px solid #f1f5f9',
                                           }}
                                         >
-                                          <span>Full Page</span>
-                                          <ExternalLink size={10} />
-                                        </Link>
-                                        <span
-                                          style={{
-                                            fontSize: '0.72rem',
-                                            color: '#6d28d9',
-                                            background: '#f3e8ff',
-                                            padding: '0.15rem 0.55rem',
-                                            borderRadius: '9999px',
-                                            fontWeight: 600,
-                                          }}
-                                        >
-                                          #{order.orderNumber}
-                                        </span>
-                                      </div>
-                                    </div>
+                                          <h4
+                                            style={{
+                                              margin: 0,
+                                              fontSize: '0.9rem',
+                                              fontWeight: 700,
+                                              color: '#0f172a',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '0.5rem',
+                                            }}
+                                          >
+                                            <RotateCw size={16} color="#7c3aed" />
+                                            Update Order Status
+                                          </h4>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                            <Link
+                                              to={`/softpicky-sn2026/orders/${order._id || order.id}`}
+                                              title="Open Standalone Order Details Page"
+                                              style={{
+                                                fontSize: '0.72rem',
+                                                color: '#6d28d9',
+                                                background: '#f3e8ff',
+                                                border: '1px solid #ddd6fe',
+                                                padding: '0.2rem 0.55rem',
+                                                borderRadius: '6px',
+                                                fontWeight: 600,
+                                                textDecoration: 'none',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem',
+                                              }}
+                                            >
+                                              <span>Full Page</span>
+                                              <ExternalLink size={10} />
+                                            </Link>
+                                            <span
+                                              style={{
+                                                fontSize: '0.72rem',
+                                                color: '#6d28d9',
+                                                background: '#f3e8ff',
+                                                padding: '0.15rem 0.55rem',
+                                                borderRadius: '9999px',
+                                                fontWeight: 600,
+                                              }}
+                                            >
+                                              #{order.orderNumber}
+                                            </span>
+                                          </div>
+                                        </div>
 
-                                    {/* ── Active Shiprocket / Courier Dispatch Info ── */}
-                                    {(order.trackingId || order.trackingNumber || order.status === 'shipped' || order.status === 'delivered') && (
+                                        {/* ── Customized Order Locked Notice ── */}
+                                        {isCustomOrder && (
+                                          <div
+                                            style={{
+                                              background: 'linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%)',
+                                              border: '1.5px solid #ddd6fe',
+                                              borderRadius: '12px',
+                                              padding: '0.85rem 1rem',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              gap: '0.75rem',
+                                              flexWrap: 'wrap',
+                                            }}
+                                          >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                              <Sparkles size={16} color="#7c3aed" />
+                                              <div>
+                                                <strong style={{ fontSize: '0.82rem', color: '#6d28d9', display: 'block' }}>
+                                                  Customized Order Status Locked
+                                                </strong>
+                                                <span style={{ fontSize: '0.74rem', color: '#7c3aed' }}>
+                                                  Status & manufacturing workflow are managed in Customized Orders to prevent conflicts.
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <Link
+                                              to="/softpicky-sn2026/customized-orders"
+                                              style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.35rem',
+                                                padding: '0.35rem 0.75rem',
+                                                borderRadius: '8px',
+                                                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                                                color: '#ffffff',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 700,
+                                                textDecoration: 'none',
+                                                boxShadow: '0 2px 8px rgba(124,58,237,0.25)',
+                                              }}
+                                            >
+                                              <span>Manage in Customized Orders</span>
+                                              <ArrowRight size={12} />
+                                            </Link>
+                                          </div>
+                                        )}
+
+                                        {/* ── Active Shiprocket / Courier Dispatch Info ── */}
+                                        {(order.trackingId || order.trackingNumber || order.status === 'shipped' || order.status === 'delivered') && (
                                       <div
                                         style={{
                                           background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)',
@@ -3112,7 +3189,7 @@ export default function AdminOrders() {
                                     )}
 
                                     {/* ── 1-Click Ship with Shiprocket Card (When not yet shipped or cancelled) ── */}
-                                    {order.status !== 'shipped' && order.status !== 'delivered' && order.status !== 'cancelled' && !order.trackingId && (
+                                    {!isCustomOrder && order.status !== 'shipped' && order.status !== 'delivered' && order.status !== 'cancelled' && !order.trackingId && (
                                       <div
                                         style={{
                                           background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
@@ -3219,14 +3296,19 @@ export default function AdminOrders() {
                                       </label>
                                       <StatusSelect
                                         value={currentRowStatus}
-                                        onChange={(val) => setRowStatus((p) => ({ ...p, [order._id]: val }))}
+                                        onChange={(val) => {
+                                          if (!isCustomOrder) {
+                                            setRowStatus((p) => ({ ...p, [order._id]: val }));
+                                          }
+                                        }}
                                         currentStatus={order.status}
                                         order={order}
+                                        disabled={isCustomOrder}
                                       />
                                     </div>
 
                                     {/* ── Courier Details & AWB Input: shown strictly when Shipping is selected ── */}
-                                    {currentRowStatus === 'shipped' && (
+                                    {!isCustomOrder && currentRowStatus === 'shipped' && (
                                       <div
                                         style={{
                                           animation: 'fadeIn 0.22s ease',
@@ -3476,7 +3558,7 @@ export default function AdminOrders() {
                                     )}
 
                                     {/* ── Cancellation Block: reason + note ── */}
-                                    {currentRowStatus === 'cancelled' && (
+                                    {!isCustomOrder && currentRowStatus === 'cancelled' && (
                                       <div style={{ animation: 'fadeIn 0.22s ease' }}>
                                         {/* Reason List */}
                                         <div style={{ marginBottom: '0.8rem' }}>
@@ -3760,8 +3842,14 @@ export default function AdminOrders() {
                                     </button>
 
                                     <button
-                                      onClick={() => handleStatusUpdate(order)}
-                                      disabled={isUpdating || currentRowStatus === order.status}
+                                      onClick={() => {
+                                        if (isCustomOrder) {
+                                          showToast('⚠️ Customized Order status is managed exclusively in the Customized Orders page.', 'info');
+                                          return;
+                                        }
+                                        handleStatusUpdate(order);
+                                      }}
+                                      disabled={isCustomOrder || isUpdating || currentRowStatus === order.status}
                                       style={{
                                         flex: 1,
                                         height: '42px',
@@ -3774,22 +3862,34 @@ export default function AdminOrders() {
                                         border: 'none',
                                         fontWeight: 600,
                                         fontSize: '0.84rem',
-                                        cursor: isUpdating || currentRowStatus === order.status ? 'not-allowed' : 'pointer',
+                                        cursor: isCustomOrder || isUpdating || currentRowStatus === order.status ? 'not-allowed' : 'pointer',
                                         transition: 'all 0.2s ease',
-                                        background: currentRowStatus === order.status
+                                        background: isCustomOrder || currentRowStatus === order.status
                                           ? '#f1f5f9'
                                           : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                                        color: currentRowStatus === order.status ? '#94a3b8' : '#ffffff',
-                                        boxShadow: currentRowStatus === order.status ? 'none' : '0 4px 14px rgba(124, 58, 237, 0.25)',
+                                        color: isCustomOrder || currentRowStatus === order.status ? '#94a3b8' : '#ffffff',
+                                        boxShadow: isCustomOrder || currentRowStatus === order.status ? 'none' : '0 4px 14px rgba(124, 58, 237, 0.25)',
                                         opacity: isUpdating ? 0.75 : 1,
                                       }}
+                                      title={isCustomOrder ? 'Customized Order status is managed in Customized Orders page' : 'Save Status Update'}
                                     >
-                                      <Save size={15} className={isUpdating ? 'spin' : ''} />
-                                      {isUpdating
-                                        ? 'Updating…'
-                                        : currentRowStatus === order.status
-                                        ? 'Select New Status Above'
-                                        : 'Save Status Update'}
+                                      {isCustomOrder ? (
+                                        <>
+                                          <ShieldCheck size={15} color="#94a3b8" />
+                                          <span>Managed in Customized Orders</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Save size={15} className={isUpdating ? 'spin' : ''} />
+                                          <span>
+                                            {isUpdating
+                                              ? 'Updating…'
+                                              : currentRowStatus === order.status
+                                              ? 'Select New Status Above'
+                                              : 'Save Status Update'}
+                                          </span>
+                                        </>
+                                      )}
                                     </button>
                                   </div>
                                 </div>
