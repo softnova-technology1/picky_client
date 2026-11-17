@@ -561,8 +561,6 @@ export default function ProductCustomize() {
                 <span>SKU: {product.sku || 'PRD'}</span>
                 <span>•</span>
                 <span>Base Price: <strong>{formatPrice(basePrice)}</strong></span>
-                <span>•</span>
-                <span className={styles['price-pill']}>Customization Fee: +{formatPrice(customizationCost)}</span>
               </div>
             </div>
           </div>
@@ -1090,7 +1088,7 @@ export default function ProductCustomize() {
               <span className={styles['pricing-title']}>Customized Total Calculation</span>
               <div className={styles['pricing-total']}>{formatPrice(totalOrderPrice)}</div>
               <span className={styles['pricing-breakdown-sub']}>
-                Base: {formatPrice(basePrice)}{selectedSize ? ` (${selectedSize})` : ''} + Customization: {formatPrice(customizationCost)} × {quantity} Item(s)
+                {selectedSize ? `Size: ${selectedSize} • ` : ''}{formatPrice(totalUnitPrice)} × {quantity} Item(s)
               </span>
             </div>
 

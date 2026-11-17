@@ -66,13 +66,12 @@
   border: 1px solid #a7f3d0;
   border-radius: 9999px;
   padding: 0.28rem 0.8rem;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #059669;
   letter-spacing: 0.02em;
-  margin-bottom: 0.85rem;
-  align-self: flex-start;
-  width: fit-content;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .green-dot {
@@ -157,6 +156,103 @@
 .reviews-count-text {
   color: #64748b;
   font-weight: 500;
+}
+
+/* ── Bento Customization Spotlight Card ── */
+.bento-customize-card {
+  background: linear-gradient(135deg, #faf5ff 0%, #ffffff 55%, #f5edff 100%);
+  border-radius: 20px;
+  border: 1.5px solid #e9d5ff;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-customize-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #7c3aed 0%, #c026d3 100%);
+  border-radius: 4px 0 0 4px;
+}
+
+.bento-customize-card:hover {
+  border-color: #c084fc;
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.14);
+  transform: translateY(-1px);
+}
+
+.customize-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customize-card-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #1e1035;
+  letter-spacing: -0.01em;
+}
+
+.customize-card-desc {
+  font-size: 0.83rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Spotlight CTA Button */
+.btn-customize-spotlight {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.82rem 1.4rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.28);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.btn-customize-spotlight:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9 0%, #581c87 100%);
+  box-shadow: 0 6px 22px rgba(109, 40, 217, 0.38);
+  transform: translateY(-2px);
+}
+
+.btn-customize-spotlight:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+  .bento-customize-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.15rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .btn-customize-spotlight {
+    width: 100%;
+  }
 }
 
 /* 2. Middle Row: 2 Standalone Cards Side-by-Side */

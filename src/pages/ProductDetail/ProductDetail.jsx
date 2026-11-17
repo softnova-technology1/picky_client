@@ -68,8 +68,16 @@ export default function ProductDetail() {
   // Mobile Gallery state & helpers
   const [mobileSelectedImgIdx, setMobileSelectedImgIdx] = useState(0);
 
+  // Variant & Color states: null by default, only set if configured in DB
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [activeColorImages, setActiveColorImages] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedCapacity, setSelectedCapacity] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+
   useEffect(() => {
     setMobileSelectedImgIdx(0);
+    setActiveColorImages(null);
     setActiveDetailTab('description');
   }, [slug]);
 
@@ -80,7 +88,32 @@ export default function ProductDetail() {
     return ['/images/about_showroom_featured.jpg'];
   }, [product]);
 
-  const activeMobileImg = productImages[mobileSelectedImgIdx] || productImages[0] || '/images/about_showroom_featured.jpg';
+  // Unified Gallery display images: uses dedicated color images when available, else fallback to default product images
+  const displayGalleryImages = useMemo(() => {
+    if (Array.isArray(activeColorImages) && activeColorImages.length > 0) {
+      return activeColorImages;
+    }
+    return productImages;
+  }, [activeColorImages, productImages]);
+
+  const activeMobileImg = displayGalleryImages[mobileSelectedImgIdx] || displayGalleryImages[0] || '/images/about_showroom_featured.jpg';
+
+  // Handler for color variant selection — switches active color and changes gallery to that color's images
+  const handleSelectColorSwatch = (swatch) => {
+    const swatchId = swatch.id || swatch.color || swatch;
+    setSelectedColor(swatchId);
+    setMobileSelectedImgIdx(0);
+
+    const swatchImgs = Array.isArray(swatch.images) && swatch.images.length > 0
+      ? swatch.images
+      : (swatch.image ? [swatch.image] : (swatch.imageUrl ? [swatch.imageUrl] : null));
+
+    if (swatchImgs && swatchImgs.length > 0) {
+      setActiveColorImages(swatchImgs);
+    } else {
+      setActiveColorImages(null);
+    }
+  };
 
   const handleMobileShare = async (e) => {
     if (e) e.stopPropagation();
@@ -96,12 +129,6 @@ export default function ProductDetail() {
       }
     } catch (_) {}
   };
-
-  // Variant & Color states: null by default, only set if configured in DB
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedCapacity, setSelectedCapacity] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(null);
 
   const { reviews: storeReviews } = useReviewStore();
   const { addItem, setBuyNowItem } = useCartStore();
@@ -277,8 +304,13 @@ export default function ProductDetail() {
           if (v && Array.isArray(v.colors) && v.colors.length > 0) {
             const firstCol = v.colors[0];
             setSelectedColor(firstCol.id || firstCol.color || firstCol);
+            const initImgs = Array.isArray(firstCol.images) && firstCol.images.length > 0
+              ? firstCol.images
+              : (firstCol.image ? [firstCol.image] : (firstCol.imageUrl ? [firstCol.imageUrl] : null));
+            setActiveColorImages(initImgs);
           } else {
             setSelectedColor(null);
+            setActiveColorImages(null);
           }
 
           // Fetch real related products from DB matching subCategory & category
@@ -468,9 +500,14 @@ export default function ProductDetail() {
       ? (selectedSize.label || selectedSize.name || '')
       : (selectedSize || selectedVariant || null);
 
+    const activeThumb = (activeColorImages && activeColorImages[0]) || product.images?.[0] || product.image || null;
+    const activeGalleryList = (activeColorImages && activeColorImages.length > 0) ? activeColorImages : (product.images || (product.image ? [product.image] : []));
+
     addItem(
       {
         ...product,
+        image: activeThumb,
+        images: activeGalleryList,
         price: currentPrice,
         discountPrice: currentPrice,
         originalPrice: originalPrice,
@@ -499,14 +536,17 @@ export default function ProductDetail() {
       ? (selectedSize.label || selectedSize.name || '')
       : (product.selectedSize || resolvedVariant || selectedCapacity || null);
 
+    const activeThumb = (activeColorImages && activeColorImages[0]) || product.images?.[0] || product.image || null;
+    const activeGalleryList = (activeColorImages && activeColorImages.length > 0) ? activeColorImages : (product.images || (product.image ? [product.image] : []));
+
     setBuyNowItem({
       _id: prodId,
       id: prodId,
       productId: prodId,
       slug: product.slug || slug,
       name: product.name,
-      image: product.images?.[0] || product.image || null,
-      images: product.images || (product.image ? [product.image] : []),
+      image: activeThumb,
+      images: activeGalleryList,
       price: currentPrice,
       discountPrice: currentPrice,
       originalPrice: originalPrice,
@@ -661,7 +701,7 @@ export default function ProductDetail() {
             {/* Left Column: Gallery Card */}
             <div>
               <Gallery
-                images={product.images || [product.image]}
+                images={displayGalleryImages}
                 productName={product.name}
                 inWishlist={inWishlist}
                 onToggleWishlist={handleToggleWishlist}
@@ -674,7 +714,7 @@ export default function ProductDetail() {
               {/* ── CARD 1: Top Hero Info Card ── */}
               <div className={styles['bento-hero-card']}>
                 {/* Product Tag Badge & Stock Status Row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
                   {productTagInfo && (
                     <div
                       className="premium-running-tag"
@@ -691,6 +731,8 @@ export default function ProductDetail() {
                         fontWeight: 800,
                         letterSpacing: '0.04em',
                         boxShadow: `0 2px 10px -2px ${productTagInfo.color}35`,
+                        lineHeight: 1.2,
+                        boxSizing: 'border-box',
                       }}
                     >
                       <TagIconComponent size={13} color={productTagInfo.color} fill={productTagInfo.color} />
@@ -704,17 +746,18 @@ export default function ProductDetail() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.4rem',
-                        padding: '0.28rem 0.75rem',
+                        padding: '0.28rem 0.8rem',
                         borderRadius: '9999px',
-                        background: '#e0f2fe',
-                        color: '#0369a1',
-                        border: '1px solid #bae6fd',
+                        background: '#f3e8ff',
+                        color: '#6d28d9',
+                        border: '1px solid #ddd6fe',
                         fontSize: '0.75rem',
                         fontWeight: 700,
+                        lineHeight: 1.2,
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <Sparkles size={13} color="#0284c7" />
-                      <span>Customization Available {product.customizationPrice > 0 ? `(+₹${product.customizationPrice})` : ''}</span>
+                      <span>Customization Available</span>
                     </div>
                   )}
 
@@ -778,6 +821,29 @@ export default function ProductDetail() {
                 </div>
               </div>
 
+              {/* ── CARD 1.5: Dedicated Bento Customization Showcase Card ── */}
+              {product.isCustomizable && (
+                <div className={styles['bento-customize-card']}>
+                  <div className={styles['customize-card-info']}>
+                    <span className={styles['customize-card-title']}>Custom Design Studio</span>
+                    <p className={styles['customize-card-desc']}>
+                      Personalize with your own custom text, photo, or graphic design
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={() => navigate(`/products/${product.slug || slug}/customize`, { state: { initialSize: selectedVariant || null, initialColor: selectedColor || null } })}
+                    className={styles['btn-customize-spotlight']}
+                    title="Open custom design studio"
+                  >
+                    <span>Customize Product</span>
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
+              )}
+
               {/* ── CARD 2: Middle Grid with Standalone Cards ── */}
               <div className={`${styles['bento-middle-grid']} ${!hasAnyVariants ? styles['single-col'] : ''}`}>
                 
@@ -795,7 +861,7 @@ export default function ProductDetail() {
                               <button
                                 key={swatchId}
                                 type="button"
-                                onClick={() => setSelectedColor(swatchId)}
+                                onClick={() => handleSelectColorSwatch(swatch)}
                                 className={`${styles['swatch-circle']} ${
                                   selectedColor === swatchId ? styles['active-swatch'] : ''
                                 }`}
@@ -830,7 +896,6 @@ export default function ProductDetail() {
                           {availableSizes.map((item) => {
                             const label = typeof item === 'object' && item !== null ? item.label : item;
                             const isSelected = selectedSize === label || selectedVariant === label;
-                            const itemPrice = typeof item === 'object' && item !== null && item.price ? item.price : null;
                             return (
                               <button
                                 key={label}
@@ -842,14 +907,8 @@ export default function ProductDetail() {
                                 className={`${styles['size-pill-btn']} ${
                                   isSelected ? styles['active-size-pill'] : ''
                                 }`}
-                                style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '48px', padding: '0.35rem 0.65rem' }}
                               >
-                                <span style={{ fontWeight: 700 }}>{label}</span>
-                                {itemPrice && (
-                                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: isSelected ? '#ffffff' : '#64748b', opacity: 0.9, marginTop: '1px' }}>
-                                    ₹{itemPrice}
-                                  </span>
-                                )}
+                                {label}
                               </button>
                             );
                           })}
@@ -897,43 +956,6 @@ export default function ProductDetail() {
                     <span style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600, display: 'block', marginTop: '-0.3rem', marginBottom: '0.1rem' }}>
                       Max stock reached ({maxStock} available)
                     </span>
-                  )}
-
-                  {/* Customize Product Button (Visible only when customizable product is enabled) */}
-                  {product.isCustomizable && (
-                    <button
-                      type="button"
-                      disabled={isOutOfStock}
-                      onClick={() => navigate(`/products/${product.slug || slug}/customize`, { state: { initialSize: selectedVariant || null, initialColor: selectedColor || null } })}
-                      className={styles['btn-customize-product']}
-                      style={{
-                        width: '100%',
-                        padding: '0.85rem 1.25rem',
-                        borderRadius: '12px',
-                        border: '1.5px solid #0284c7',
-                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                        color: '#ffffff',
-                        fontSize: '0.92rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
-                        marginBottom: '0.75rem',
-                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                        opacity: isOutOfStock ? 0.5 : 1,
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <Sparkles size={17} />
-                      <span>Customize Product</span>
-                      {product.customizationPrice > 0 && (
-                        <span style={{ fontSize: '0.78rem', background: 'rgba(255,255,255,0.25)', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontWeight: 600 }}>
-                          +₹{product.customizationPrice}
-                        </span>
-                      )}
-                    </button>
                   )}
 
                   {/* Add to Bag Button */}
@@ -1355,9 +1377,9 @@ export default function ProductDetail() {
           />
         </div>
 
-        {productImages.length > 1 && (
+        {displayGalleryImages.length > 1 && (
           <div className="mobile-pdp-dots-row">
-            {productImages.map((_, idx) => (
+            {displayGalleryImages.map((_, idx) => (
               <span
                 key={idx}
                 className={`mobile-pdp-dot ${mobileSelectedImgIdx === idx ? 'active' : ''}`}
@@ -1367,9 +1389,9 @@ export default function ProductDetail() {
           </div>
         )}
 
-        {productImages.length > 1 && (
+        {displayGalleryImages.length > 1 && (
           <div className="mobile-pdp-thumbs-row">
-            {productImages.map((img, idx) => (
+            {displayGalleryImages.map((img, idx) => (
               <div
                 key={idx}
                 className={`mobile-pdp-thumb-item ${mobileSelectedImgIdx === idx ? 'active' : ''}`}
@@ -1442,7 +1464,7 @@ export default function ProductDetail() {
                     <button
                       key={swatchId}
                       type="button"
-                      onClick={() => setSelectedColor(swatchId)}
+                      onClick={() => handleSelectColorSwatch(swatch)}
                       className={`mobile-pdp-swatch-circle ${selectedColor === swatchId ? 'active' : ''}`}
                       style={{ backgroundColor: swatch.color || swatch }}
                       title={swatch.name || swatch}
@@ -1469,7 +1491,6 @@ export default function ProductDetail() {
                 {availableSizes.map((item) => {
                   const label = typeof item === 'object' && item !== null ? item.label : item;
                   const isSelected = selectedSize === label || selectedVariant === label;
-                  const itemPrice = typeof item === 'object' && item !== null && item.price ? item.price : null;
                   return (
                     <button
                       key={label}
@@ -1479,14 +1500,8 @@ export default function ProductDetail() {
                         setSelectedVariant(label);
                       }}
                       className={`mobile-pdp-size-btn ${isSelected ? 'active' : ''}`}
-                      style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '48px', padding: '0.35rem 0.65rem' }}
                     >
-                      <span style={{ fontWeight: 700 }}>{label}</span>
-                      {itemPrice && (
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: isSelected ? '#ffffff' : '#64748b', opacity: 0.9, marginTop: '1px' }}>
-                          ₹{itemPrice}
-                        </span>
-                      )}
+                      {label}
                     </button>
                   );
                 })}
@@ -1725,21 +1740,22 @@ export default function ProductDetail() {
             })}
             className="mobile-pdp-dock-btn-customize"
             style={{
-              padding: '0.65rem 0.9rem',
+              padding: '0.65rem 0.95rem',
               borderRadius: '10px',
-              border: '1px solid #0284c7',
-              background: '#0284c7',
+              border: '1px solid #7c3aed',
+              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
               color: '#ffffff',
               fontWeight: 700,
               fontSize: '0.82rem',
               cursor: isOutOfStock ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              justifyContent: 'center',
               whiteSpace: 'nowrap',
+              boxShadow: '0 3px 10px rgba(124, 58, 237, 0.25)',
             }}
           >
-            <Sparkles size={14} /> Customize
+            Customize
           </button>
         )}
         <button

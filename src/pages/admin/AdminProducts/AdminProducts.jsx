@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import {
@@ -340,24 +340,7 @@ export default function AdminProducts() {
   };
 
   // Calculate total stock and lowest selling price across active variants
-  const totalVariantStock = useMemo(() => {
-    if (!hasSizes && !hasWeights && !hasLiquids) return null;
-    const activeOpts = hasSizes ? selectedSizes : (hasWeights ? selectedWeights : selectedLiquids);
-    if (!activeOpts || activeOpts.length === 0) return null;
-    let total = 0;
-    let hasAnyExplicitStock = false;
-    activeOpts.forEach((opt) => {
-      const s = variantPricing[opt]?.stock;
-      if (s !== undefined && s !== '') {
-        const num = Number(s);
-        if (!isNaN(num)) {
-          total += num;
-          hasAnyExplicitStock = true;
-        }
-      }
-    });
-    return hasAnyExplicitStock ? total : null;
-  }, [hasSizes, hasWeights, hasLiquids, selectedSizes, selectedWeights, selectedLiquids, variantPricing]);
+  const totalVariantStock = null;
 
   const lowestVariantPrice = useMemo(() => {
     if (!hasSizes && !hasWeights && !hasLiquids) return null;
@@ -381,6 +364,9 @@ export default function AdminProducts() {
   const [selectedColors, setSelectedColors] = useState(DEFAULT_ADMIN_COLORS);
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#1e2238');
+  const [newColorImages, setNewColorImages] = useState([]);
+  const [uploadingColorImage, setUploadingColorImage] = useState(false);
+  const colorFileInputRef = useRef(null);
   const [editingColorIndex, setEditingColorIndex] = useState(null);
   const [primaryFile, setPrimaryFile] = useState(null);
   const [secondaryFiles, setSecondaryFiles] = useState([]);
@@ -589,6 +575,7 @@ export default function AdminProducts() {
     setSelectedColors(DEFAULT_ADMIN_COLORS);
     setNewColorName('');
     setNewColorHex('#1e2238');
+    setNewColorImages([]);
     setEditingColorIndex(null);
     setPrimaryFile(null);
     setSecondaryFiles([]);
@@ -694,13 +681,20 @@ export default function AdminProducts() {
       hasProductColors
         ? pVariants.colors.map((c, i) =>
             typeof c === 'string'
-              ? { id: `col-${i}`, name: c, color: '#3b82f6' }
-              : { id: c.id || `col-${i}`, name: c.name || 'Color', color: c.color || '#3b82f6' }
+              ? { id: `col-${i}`, name: c, color: '#3b82f6', image: null, images: [] }
+              : {
+                  id: c.id || `col-${i}`,
+                  name: c.name || 'Color',
+                  color: c.color || '#3b82f6',
+                  image: c.image || c.imageUrl || (Array.isArray(c.images) ? c.images[0] : null) || null,
+                  images: Array.isArray(c.images) ? c.images : (c.image ? [c.image] : []),
+                }
           )
         : DEFAULT_ADMIN_COLORS
     );
     setNewColorName('');
     setNewColorHex('#1e2238');
+    setNewColorImages([]);
     setEditingColorIndex(null);
 
     // Set image previews
@@ -710,6 +704,69 @@ export default function AdminProducts() {
     setPrimaryFile(null);
     setSecondaryFiles([]);
     setViewMode('form');
+  };
+
+  // Upload up to 4 color variant images directly to S3 (Max 10MB each)
+  const MAX_COLOR_IMAGES = 4;
+  const handleColorImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const remainingSlots = MAX_COLOR_IMAGES - newColorImages.length;
+    if (remainingSlots <= 0) {
+      showToast(`Maximum ${MAX_COLOR_IMAGES} photos allowed per color variant.`, 'warning');
+      e.target.value = '';
+      return;
+    }
+
+    const filesToUpload = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      showToast(`Only ${remainingSlots} more photo(s) can be added (Max ${MAX_COLOR_IMAGES} photos per color).`, 'info');
+    }
+
+    // Validate 10MB file size limit per image
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    for (const file of filesToUpload) {
+      if (file.size > MAX_SIZE) {
+        showToast(
+          `"${file.name}" exceeds 10MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose images under 10MB.`,
+          'error'
+        );
+        e.target.value = '';
+        return;
+      }
+    }
+
+    try {
+      setUploadingColorImage(true);
+      const uploadedUrls = [];
+      for (const file of filesToUpload) {
+        const fd = new FormData();
+        fd.append('image', file);
+        fd.append('folder', 'products');
+
+        const res = await adminService.uploadImage(fd);
+        const s3Url = res?.data?.data?.url || res?.data?.url || res?.url;
+        if (s3Url) {
+          uploadedUrls.push(s3Url);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setNewColorImages((prev) => [...prev, ...uploadedUrls].slice(0, MAX_COLOR_IMAGES));
+        showToast(
+          uploadedUrls.length === 1
+            ? 'Color variant photo uploaded to S3 successfully!'
+            : `${uploadedUrls.length} color variant photos uploaded to S3 successfully!`,
+          'success'
+        );
+      }
+    } catch (err) {
+      showToast(err?.message || 'Failed to upload color photo to S3', 'error');
+    } finally {
+      setUploadingColorImage(false);
+      e.target.value = '';
+    }
   };
 
   const handlePrimaryFileSelect = async (e) => {
@@ -1412,7 +1469,7 @@ export default function AdminProducts() {
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Helper to render Variant Pricing & Stock table
+  // Helper to render Variant Pricing table
   const renderVariantPricingTable = (options, typeName, accentColor = '#7c3aed') => {
     if (!options || options.length === 0) return null;
     return (
@@ -1421,11 +1478,11 @@ export default function AdminProducts() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <span style={{ fontSize: '0.9rem' }}>🏷️</span>
             <strong style={{ fontSize: '0.8rem', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Set Price &amp; Stock per {typeName} (Optional)
+              Set Price per {typeName} (Optional)
             </strong>
           </div>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
-            Set custom Selling Price, M.R.P, and Stock for each {typeName.toLowerCase()}. If left blank, base product price (₹{formData.discountPrice || formData.price || '0'}) and stock ({formData.stock || '10'}) will be used.
+            Set custom Selling Price for each {typeName.toLowerCase()}. If left blank, base product price (₹{formData.discountPrice || formData.price || '0'}) will be used.
           </p>
         </div>
 
@@ -1435,8 +1492,6 @@ export default function AdminProducts() {
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#475569', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 <th style={{ padding: '0.6rem 0.85rem' }}>{typeName}</th>
                 <th style={{ padding: '0.6rem 0.85rem' }}>Selling Price (₹)</th>
-                <th style={{ padding: '0.6rem 0.85rem' }}>M.R.P Price (₹)</th>
-                <th style={{ padding: '0.6rem 0.85rem' }}>Stock Quantity</th>
               </tr>
             </thead>
             <tbody>
@@ -1472,47 +1527,6 @@ export default function AdminProducts() {
                         />
                       </div>
                     </td>
-                    <td style={{ padding: '0.45rem 0.85rem' }}>
-                      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                        <span style={{ position: 'absolute', left: '0.6rem', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}>₹</span>
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder={formData.price || '0'}
-                          value={pricing.mrp !== undefined ? pricing.mrp : ''}
-                          onChange={(e) => handleVariantPricingChange(opt, 'mrp', e.target.value)}
-                          style={{
-                            width: '130px',
-                            padding: '0.4rem 0.6rem 0.4rem 1.4rem',
-                            borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '0.8rem',
-                            color: '#475569',
-                            background: '#ffffff',
-                            outline: 'none',
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td style={{ padding: '0.45rem 0.85rem' }}>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder={formData.stock !== '' ? formData.stock : '10'}
-                        value={pricing.stock !== undefined ? pricing.stock : ''}
-                        onChange={(e) => handleVariantPricingChange(opt, 'stock', e.target.value)}
-                        style={{
-                          width: '100px',
-                          padding: '0.4rem 0.6rem',
-                          borderRadius: '8px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.8rem',
-                          color: '#0f172a',
-                          background: '#ffffff',
-                          outline: 'none',
-                        }}
-                      />
-                    </td>
                   </tr>
                 );
               })}
@@ -1521,7 +1535,7 @@ export default function AdminProducts() {
         </div>
 
         {/* Dynamic Summary Bar */}
-        {(totalVariantStock > 0 || lowestVariantPrice !== null) && (
+        {lowestVariantPrice !== null && (
           <div
             style={{
               marginTop: '0.65rem',
@@ -1531,20 +1545,14 @@ export default function AdminProducts() {
               border: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               fontSize: '0.74rem',
               color: '#475569',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ color: '#0284c7', fontWeight: 700 }}>⚡ Inventory Sync:</span>
-              <span>Total variant stock = <strong style={{ color: '#0f172a' }}>{totalVariantStock} units</strong> (automatically updates total product stock)</span>
+            <div>
+              <span>Catalog Starting Price: <strong style={{ color: '#059669', fontSize: '0.78rem' }}>₹{lowestVariantPrice}</strong></span>
             </div>
-            {lowestVariantPrice !== null && (
-              <div>
-                <span>Catalog Starting Price: <strong style={{ color: '#059669', fontSize: '0.78rem' }}>₹{lowestVariantPrice}</strong></span>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -2263,11 +2271,11 @@ export default function AdminProducts() {
                     background: '#ffffff',
                     padding: '1.25rem',
                     borderRadius: '14px',
-                    border: formData.isCustomizable ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                    border: formData.isCustomizable ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
                     marginTop: '0.4rem',
                     marginBottom: '0.4rem',
                     transition: 'all 0.25s ease',
-                    boxShadow: formData.isCustomizable ? '0 4px 18px rgba(2, 132, 199, 0.08)' : 'none',
+                    boxShadow: formData.isCustomizable ? '0 4px 18px rgba(124, 58, 237, 0.06)' : 'none',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
@@ -2277,19 +2285,20 @@ export default function AdminProducts() {
                           width: '36px',
                           height: '36px',
                           borderRadius: '10px',
-                          background: formData.isCustomizable ? '#e0f2fe' : '#f1f5f9',
+                          background: formData.isCustomizable ? '#ede9fe' : '#f1f5f9',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: formData.isCustomizable ? '#0284c7' : '#64748b',
+                          color: formData.isCustomizable ? '#7c3aed' : '#64748b',
                           transition: 'all 0.2s ease',
+                          flexShrink: 0,
                         }}
                       >
                         <Sparkles size={18} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <strong style={{ fontSize: '0.84rem', color: formData.isCustomizable ? '#0369a1' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          <strong style={{ fontSize: '0.84rem', color: formData.isCustomizable ? '#5b21b6' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             CUSTOMIZABLE PRODUCT
                           </strong>
                           <span
@@ -2324,9 +2333,10 @@ export default function AdminProducts() {
                       }}
                       style={{
                         width: '48px',
+                        minWidth: '48px',
                         height: '26px',
                         borderRadius: '9999px',
-                        background: formData.isCustomizable ? '#0284c7' : '#cbd5e1',
+                        background: formData.isCustomizable ? '#7c3aed' : '#cbd5e1',
                         border: 'none',
                         cursor: 'pointer',
                         position: 'relative',
@@ -2334,6 +2344,7 @@ export default function AdminProducts() {
                         padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
+                        flexShrink: 0,
                       }}
                       title={formData.isCustomizable ? 'Click to disable customization' : 'Click to enable customization'}
                     >
@@ -2346,6 +2357,7 @@ export default function AdminProducts() {
                           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                           transform: formData.isCustomizable ? 'translateX(22px)' : 'translateX(0px)',
                           transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          flexShrink: 0,
                         }}
                       />
                     </button>
@@ -2353,13 +2365,13 @@ export default function AdminProducts() {
 
                   {/* If enabled: Amount input field */}
                   {formData.isCustomizable && (
-                    <div style={{ marginTop: '1.15rem', paddingTop: '1rem', borderTop: '1px solid #f0f9ff' }}>
+                    <div style={{ marginTop: '1.15rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
                       <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.04em' }}>
                         CUSTOMIZATION AMOUNT / COST (₹) <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <div style={{ position: 'relative', width: '220px' }}>
-                          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748b', fontSize: '0.85rem' }}>
+                          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#7c3aed', fontSize: '0.85rem' }}>
                             ₹
                           </span>
                           <input
@@ -2373,8 +2385,8 @@ export default function AdminProducts() {
                             style={{
                               width: '100%',
                               padding: '0.62rem 0.85rem 0.62rem 1.85rem',
-                              background: '#f8fafc',
-                              border: '1px solid #0284c7',
+                              background: '#faf5ff',
+                              border: '1.5px solid #c4b5fd',
                               borderRadius: '10px',
                               fontSize: '0.86rem',
                               fontWeight: 600,
@@ -2385,22 +2397,22 @@ export default function AdminProducts() {
                           />
                         </div>
                         <div style={{ fontSize: '0.76rem', color: '#64748b', flex: 1, minWidth: '220px' }}>
-                          This amount will be added to the product base price (₹{Number(formData.discountPrice || formData.price || 0)} base + ₹{Number(formData.customizationPrice) || 0} customization = <strong>₹{(Number(formData.discountPrice || formData.price || 0)) + (Number(formData.customizationPrice) || 0)} total</strong> in cart).
+                          This amount will be added to the product base price (₹{Number(formData.discountPrice || formData.price || 0)} base + ₹{Number(formData.customizationPrice) || 0} customization = <strong style={{ color: '#5b21b6' }}>₹{(Number(formData.discountPrice || formData.price || 0)) + (Number(formData.customizationPrice) || 0)} total</strong> in cart).
                         </div>
                       </div>
 
                       {/* ── Section Selection Toggles for this Product ── */}
-                      <div style={{ marginTop: '1.25rem', paddingTop: '1.15rem', borderTop: '1px solid #e0f2fe' }}>
+                      <div style={{ marginTop: '1.25rem', paddingTop: '1.15rem', borderTop: '1px solid #ede9fe' }}>
                         <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                           <div>
-                            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#5b21b6', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                               SELECT SECTIONS TO DISPLAY ON CUSTOMIZATION PAGE
                             </label>
                             <p style={{ margin: '0.2rem 0 0', fontSize: '0.73rem', color: '#64748b' }}>
                               Turn ON only the sections needed for this product (e.g. Turn OFF Backside &amp; General for Caps, Mugs, or Keychains).
                             </p>
                           </div>
-                          <span style={{ fontSize: '0.72rem', color: '#0284c7', background: '#e0f2fe', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: 600 }}>
+                          <span style={{ fontSize: '0.72rem', color: '#6d28d9', background: '#ede9fe', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: 600 }}>
                             {customizerSections.length} sections in form
                           </span>
                         </div>
@@ -2414,17 +2426,18 @@ export default function AdminProducts() {
                                 style={{
                                   padding: '0.85rem 1rem',
                                   borderRadius: '12px',
-                                  border: isOn ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                                  background: isOn ? '#f0f9ff' : '#f8fafc',
+                                  border: isOn ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
+                                  background: isOn ? '#f5f3ff' : '#f8fafc',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'space-between',
+                                  gap: '0.75rem',
                                   transition: 'all 0.2s ease',
                                 }}
                               >
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                                    <strong style={{ fontSize: '0.82rem', color: isOn ? '#0369a1' : '#475569' }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                    <strong style={{ fontSize: '0.82rem', color: isOn ? '#5b21b6' : '#475569' }}>
                                       {sIdx + 1}. {sec.title || `Section ${sIdx + 1}`}
                                     </strong>
                                     <span style={{
@@ -2438,7 +2451,7 @@ export default function AdminProducts() {
                                       {isOn ? 'ON' : 'OFF'}
                                     </span>
                                   </div>
-                                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#64748b' }}>
+                                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#64748b', lineHeight: 1.4 }}>
                                     {sec.subtitle || 'Text, Fonts & Custom Uploads'}
                                   </p>
                                 </div>
@@ -2447,16 +2460,18 @@ export default function AdminProducts() {
                                   type="button"
                                   onClick={() => toggleSectionVisibility(sec.id)}
                                   style={{
-                                    width: '42px',
+                                    width: '44px',
+                                    minWidth: '44px',
                                     height: '24px',
                                     borderRadius: '9999px',
-                                    background: isOn ? '#0284c7' : '#cbd5e1',
+                                    background: isOn ? '#7c3aed' : '#cbd5e1',
                                     border: 'none',
                                     cursor: 'pointer',
                                     position: 'relative',
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '2px',
+                                    flexShrink: 0,
                                     transition: 'background-color 0.2s ease',
                                   }}
                                   title={`Toggle ${sec.title}`}
@@ -2468,8 +2483,9 @@ export default function AdminProducts() {
                                       borderRadius: '50%',
                                       background: '#ffffff',
                                       boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                      transform: isOn ? 'translateX(18px)' : 'translateX(0px)',
+                                      transform: isOn ? 'translateX(20px)' : 'translateX(0px)',
                                       transition: 'transform 0.2s ease',
+                                      flexShrink: 0,
                                     }}
                                   />
                                 </button>
@@ -2477,111 +2493,6 @@ export default function AdminProducts() {
                             );
                           })}
                         </div>
-
-                        {/* Optional Materials Customizer when any active section has materials */}
-                        {Boolean(customizerSections.some(sec => isSectionVisible(sec) && (sec.id === 'general' || sec.materials?.enabled))) && (
-                          <div style={{ marginTop: '0.85rem', padding: '0.85rem 1rem', background: '#ffffff', borderRadius: '10px', border: '1px solid #e0f2fe' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase' }}>
-                                Custom Materials for this Product (Optional)
-                              </label>
-                              <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
-                                {(formData.customizationConfig?.materials?.length || 0) === 0 ? 'Using Default Fabrics' : `${formData.customizationConfig.materials.length} configured`}
-                              </span>
-                            </div>
-
-                            {/* Tags list */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
-                              {(formData.customizationConfig?.materials || []).map((m, idx) => (
-                                <span
-                                  key={idx}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.35rem',
-                                    padding: '0.2rem 0.55rem',
-                                    borderRadius: '6px',
-                                    background: '#e0f2fe',
-                                    color: '#0369a1',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {m}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const cur = formData.customizationConfig || { showFront: true, showBack: true, showGeneral: true, materials: [] };
-                                      const updated = (cur.materials || []).filter((_, i) => i !== idx);
-                                      setFormData({ ...formData, customizationConfig: { ...cur, materials: updated } });
-                                    }}
-                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: '#0369a1', display: 'flex' }}
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-
-                            {/* Add Material Input */}
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <input
-                                type="text"
-                                placeholder="e.g. 100% Cotton, Pure Linen, Ceramic, Metal..."
-                                value={newMaterialInput}
-                                onChange={(e) => setNewMaterialInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    const val = newMaterialInput.trim();
-                                    if (val) {
-                                      const cur = formData.customizationConfig || { showFront: true, showBack: true, showGeneral: true, materials: [] };
-                                      const existing = cur.materials || [];
-                                      if (!existing.includes(val)) {
-                                        setFormData({ ...formData, customizationConfig: { ...cur, materials: [...existing, val] } });
-                                      }
-                                      setNewMaterialInput('');
-                                    }
-                                  }
-                                }}
-                                style={{
-                                  flex: 1,
-                                  padding: '0.45rem 0.75rem',
-                                  fontSize: '0.76rem',
-                                  borderRadius: '8px',
-                                  border: '1px solid #cbd5e1',
-                                  outline: 'none',
-                                }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const val = newMaterialInput.trim();
-                                  if (val) {
-                                    const cur = formData.customizationConfig || { showFront: true, showBack: true, showGeneral: true, materials: [] };
-                                    const existing = cur.materials || [];
-                                    if (!existing.includes(val)) {
-                                      setFormData({ ...formData, customizationConfig: { ...cur, materials: [...existing, val] } });
-                                    }
-                                    setNewMaterialInput('');
-                                  }
-                                }}
-                                style={{
-                                  padding: '0.45rem 0.85rem',
-                                  fontSize: '0.74rem',
-                                  fontWeight: 600,
-                                  borderRadius: '8px',
-                                  border: 'none',
-                                  background: '#0284c7',
-                                  color: '#ffffff',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                + Add
-                              </button>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}
@@ -2654,16 +2565,19 @@ export default function AdminProducts() {
                       }}
                       style={{
                         width: '48px',
+                        minWidth: '48px',
                         height: '26px',
                         borderRadius: '9999px',
                         background: hasSizes ? '#7c3aed' : '#cbd5e1',
                         border: 'none',
+                        outline: 'none',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background-color 0.2s ease',
                         padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
+                        flexShrink: 0,
                       }}
                       title={hasSizes ? 'Click to disable sizes' : 'Click to enable sizes'}
                     >
@@ -2851,10 +2765,10 @@ export default function AdminProducts() {
                     background: '#ffffff',
                     padding: '1.25rem',
                     borderRadius: '14px',
-                    border: hasWeights ? '1.5px solid #059669' : '1px solid #e2e8f0',
+                    border: hasWeights ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
                     marginTop: '0.85rem',
                     transition: 'all 0.25s ease',
-                    boxShadow: hasWeights ? '0 4px 18px rgba(5, 150, 105, 0.08)' : 'none',
+                    boxShadow: hasWeights ? '0 4px 18px rgba(124, 58, 237, 0.06)' : 'none',
                   }}
                 >
                   {/* Header Row with Toggle Switch */}
@@ -2865,19 +2779,20 @@ export default function AdminProducts() {
                           width: '36px',
                           height: '36px',
                           borderRadius: '10px',
-                          background: hasWeights ? '#d1fae5' : '#f1f5f9',
+                          background: hasWeights ? '#ede9fe' : '#f1f5f9',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: hasWeights ? '#059669' : '#64748b',
+                          color: hasWeights ? '#7c3aed' : '#64748b',
                           transition: 'all 0.2s ease',
+                          flexShrink: 0,
                         }}
                       >
                         <Scale size={18} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <strong style={{ fontSize: '0.84rem', color: hasWeights ? '#065f46' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          <strong style={{ fontSize: '0.84rem', color: hasWeights ? '#5b21b6' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             PRODUCT WEIGHT OPTIONS (GRAMS / KG)
                           </strong>
                           <span
@@ -2886,8 +2801,8 @@ export default function AdminProducts() {
                               fontWeight: 700,
                               padding: '0.15rem 0.5rem',
                               borderRadius: '9999px',
-                              background: hasWeights ? '#d1fae5' : '#f1f5f9',
-                              color: hasWeights ? '#047857' : '#64748b',
+                              background: hasWeights ? '#dcfce7' : '#f1f5f9',
+                              color: hasWeights ? '#15803d' : '#64748b',
                             }}
                           >
                             {hasWeights ? 'Enabled' : 'Disabled (Default)'}
@@ -2912,16 +2827,19 @@ export default function AdminProducts() {
                       }}
                       style={{
                         width: '48px',
+                        minWidth: '48px',
                         height: '26px',
                         borderRadius: '9999px',
-                        background: hasWeights ? '#059669' : '#cbd5e1',
+                        background: hasWeights ? '#7c3aed' : '#cbd5e1',
                         border: 'none',
+                        outline: 'none',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background-color 0.2s ease',
                         padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
+                        flexShrink: 0,
                       }}
                       title={hasWeights ? 'Click to disable weight options' : 'Click to enable weight options'}
                     >
@@ -2934,6 +2852,7 @@ export default function AdminProducts() {
                           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                           transform: hasWeights ? 'translateX(22px)' : 'translateX(0px)',
                           transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          flexShrink: 0,
                         }}
                       />
                     </button>
@@ -2968,9 +2887,9 @@ export default function AdminProducts() {
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   border: '1.5px solid',
-                                  borderColor: isSelected ? '#059669' : '#cbd5e1',
-                                  background: isSelected ? '#ecfdf5' : '#ffffff',
-                                  color: isSelected ? '#047857' : '#475569',
+                                  borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                                  background: isSelected ? '#f5f3ff' : '#ffffff',
+                                  color: isSelected ? '#6d28d9' : '#475569',
                                   transition: 'all 0.15s ease',
                                 }}
                               >
@@ -3010,10 +2929,10 @@ export default function AdminProducts() {
                                   background: '#ffffff',
                                   padding: '0.3rem 0.65rem',
                                   borderRadius: '8px',
-                                  border: '1px solid #a7f3d0',
+                                  border: '1px solid #c4b5fd',
                                   fontSize: '0.82rem',
                                   fontWeight: 700,
-                                  color: '#047857',
+                                  color: '#5b21b6',
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
@@ -3085,7 +3004,7 @@ export default function AdminProducts() {
                           }}
                           style={{
                             padding: '0.55rem 0.95rem',
-                            background: '#059669',
+                            background: '#7c3aed',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '8px',
@@ -3098,7 +3017,7 @@ export default function AdminProducts() {
                           + Add Weight
                         </button>
                       </div>
-                      {renderVariantPricingTable(selectedWeights, 'Weight', '#059669')}
+                      {renderVariantPricingTable(selectedWeights, 'Weight', '#7c3aed')}
                     </div>
                   )}
                 </div>
@@ -3109,10 +3028,10 @@ export default function AdminProducts() {
                     background: '#ffffff',
                     padding: '1.25rem',
                     borderRadius: '14px',
-                    border: hasLiquids ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                    border: hasLiquids ? '1.5px solid #c4b5fd' : '1px solid #e2e8f0',
                     marginTop: '0.85rem',
                     transition: 'all 0.25s ease',
-                    boxShadow: hasLiquids ? '0 4px 18px rgba(2, 132, 199, 0.08)' : 'none',
+                    boxShadow: hasLiquids ? '0 4px 18px rgba(124, 58, 237, 0.06)' : 'none',
                   }}
                 >
                   {/* Header Row with Toggle Switch */}
@@ -3123,19 +3042,20 @@ export default function AdminProducts() {
                           width: '36px',
                           height: '36px',
                           borderRadius: '10px',
-                          background: hasLiquids ? '#e0f2fe' : '#f1f5f9',
+                          background: hasLiquids ? '#ede9fe' : '#f1f5f9',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: hasLiquids ? '#0284c7' : '#64748b',
+                          color: hasLiquids ? '#7c3aed' : '#64748b',
                           transition: 'all 0.2s ease',
+                          flexShrink: 0,
                         }}
                       >
                         <Droplet size={18} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <strong style={{ fontSize: '0.84rem', color: hasLiquids ? '#0369a1' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          <strong style={{ fontSize: '0.84rem', color: hasLiquids ? '#5b21b6' : '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             LIQUID / VOLUME OPTIONS (ML / LITER)
                           </strong>
                           <span
@@ -3144,8 +3064,8 @@ export default function AdminProducts() {
                               fontWeight: 700,
                               padding: '0.15rem 0.5rem',
                               borderRadius: '9999px',
-                              background: hasLiquids ? '#e0f2fe' : '#f1f5f9',
-                              color: hasLiquids ? '#0369a1' : '#64748b',
+                              background: hasLiquids ? '#dcfce7' : '#f1f5f9',
+                              color: hasLiquids ? '#15803d' : '#64748b',
                             }}
                           >
                             {hasLiquids ? 'Enabled' : 'Disabled (Default)'}
@@ -3170,16 +3090,19 @@ export default function AdminProducts() {
                       }}
                       style={{
                         width: '48px',
+                        minWidth: '48px',
                         height: '26px',
                         borderRadius: '9999px',
-                        background: hasLiquids ? '#0284c7' : '#cbd5e1',
+                        background: hasLiquids ? '#7c3aed' : '#cbd5e1',
                         border: 'none',
+                        outline: 'none',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background-color 0.2s ease',
                         padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
+                        flexShrink: 0,
                       }}
                       title={hasLiquids ? 'Click to disable liquid options' : 'Click to enable liquid options'}
                     >
@@ -3192,6 +3115,7 @@ export default function AdminProducts() {
                           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                           transform: hasLiquids ? 'translateX(22px)' : 'translateX(0px)',
                           transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          flexShrink: 0,
                         }}
                       />
                     </button>
@@ -3226,9 +3150,9 @@ export default function AdminProducts() {
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   border: '1.5px solid',
-                                  borderColor: isSelected ? '#0284c7' : '#cbd5e1',
-                                  background: isSelected ? '#f0f9ff' : '#ffffff',
-                                  color: isSelected ? '#0369a1' : '#475569',
+                                  borderColor: isSelected ? '#7c3aed' : '#cbd5e1',
+                                  background: isSelected ? '#f5f3ff' : '#ffffff',
+                                  color: isSelected ? '#6d28d9' : '#475569',
                                   transition: 'all 0.15s ease',
                                 }}
                               >
@@ -3268,10 +3192,10 @@ export default function AdminProducts() {
                                   background: '#ffffff',
                                   padding: '0.3rem 0.65rem',
                                   borderRadius: '8px',
-                                  border: '1px solid #7dd3fc',
+                                  border: '1px solid #c4b5fd',
                                   fontSize: '0.82rem',
                                   fontWeight: 700,
-                                  color: '#0369a1',
+                                  color: '#5b21b6',
                                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
@@ -3343,7 +3267,7 @@ export default function AdminProducts() {
                           }}
                           style={{
                             padding: '0.55rem 0.95rem',
-                            background: '#0284c7',
+                            background: '#7c3aed',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '8px',
@@ -3356,7 +3280,7 @@ export default function AdminProducts() {
                           + Add Volume
                         </button>
                       </div>
-                      {renderVariantPricingTable(selectedLiquids, 'Volume', '#0284c7')}
+                      {renderVariantPricingTable(selectedLiquids, 'Volume', '#7c3aed')}
                     </div>
                   )}
                 </div>
@@ -3421,16 +3345,19 @@ export default function AdminProducts() {
                       onClick={() => setHasColors(!hasColors)}
                       style={{
                         width: '48px',
+                        minWidth: '48px',
                         height: '26px',
                         borderRadius: '9999px',
                         background: hasColors ? '#7c3aed' : '#cbd5e1',
                         border: 'none',
+                        outline: 'none',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background-color 0.2s ease',
                         padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
+                        flexShrink: 0,
                       }}
                       title={hasColors ? 'Click to disable color options' : 'Click to enable color options'}
                     >
@@ -3560,6 +3487,34 @@ export default function AdminProducts() {
                                         flexShrink: 0,
                                       }}
                                     />
+                                    {(() => {
+                                      const colImgs =
+                                        Array.isArray(col.images) && col.images.length > 0
+                                          ? col.images.filter(Boolean)
+                                          : col.image
+                                            ? [col.image]
+                                            : [];
+                                      if (colImgs.length === 0) return null;
+                                      return (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                                          {colImgs.slice(0, 4).map((u, uIdx) => (
+                                            <img
+                                              key={uIdx}
+                                              src={u}
+                                              alt={`${col.name} ${uIdx + 1}`}
+                                              style={{
+                                                width: '22px',
+                                                height: '22px',
+                                                borderRadius: '4px',
+                                                objectFit: 'cover',
+                                                border: '1px solid #cbd5e1',
+                                                flexShrink: 0,
+                                              }}
+                                            />
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                     <div style={{ minWidth: 0 }}>
                                       <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {col.name}
@@ -3578,10 +3533,18 @@ export default function AdminProducts() {
                                           setEditingColorIndex(null);
                                           setNewColorName('');
                                           setNewColorHex('#1e2238');
+                                          setNewColorImages([]);
                                         } else {
                                           setEditingColorIndex(idx);
                                           setNewColorName(col.name);
                                           setNewColorHex(col.color || '#1e2238');
+                                          const existingImgs =
+                                            Array.isArray(col.images) && col.images.length > 0
+                                              ? col.images.filter(Boolean)
+                                              : col.image
+                                                ? [col.image]
+                                                : [];
+                                          setNewColorImages(existingImgs.slice(0, MAX_COLOR_IMAGES));
                                         }
                                       }}
                                       style={{
@@ -3603,6 +3566,9 @@ export default function AdminProducts() {
                                       onClick={() => {
                                         if (editingColorIndex === idx) {
                                           setEditingColorIndex(null);
+                                          setNewColorName('');
+                                          setNewColorHex('#1e2238');
+                                          setNewColorImages([]);
                                         }
                                         setSelectedColors(selectedColors.filter((_, i) => i !== idx));
                                       }}
@@ -3685,7 +3651,7 @@ export default function AdminProducts() {
                           {/* Color Name Input */}
                           <input
                             type="text"
-                            placeholder="Color Name (e.g. Royal Navy, Olive Green, Wine Red)"
+                            placeholder="Color Name (e.g. Royal Navy, Wine Red)"
                             value={newColorName}
                             onChange={(e) => setNewColorName(e.target.value)}
                             onKeyDown={(e) => {
@@ -3698,23 +3664,46 @@ export default function AdminProducts() {
                                 }
                                 const hex = newColorHex.trim() || '#1e2238';
                                 const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                                const imgArray = newColorImages.filter(Boolean).slice(0, MAX_COLOR_IMAGES);
+                                const cImg = imgArray[0] || null;
                                 if (editingColorIndex !== null) {
                                   setSelectedColors((prev) =>
-                                    prev.map((c, i) => (i === editingColorIndex ? { ...c, name, color: hex, id: c.id || id } : c))
+                                    prev.map((c, i) =>
+                                      i === editingColorIndex
+                                        ? {
+                                            ...c,
+                                            name,
+                                            color: hex,
+                                            id: c.id || id,
+                                            image: cImg,
+                                            images: imgArray,
+                                          }
+                                        : c
+                                    )
                                   );
                                   setEditingColorIndex(null);
                                   showToast(`Updated color "${name}"`, 'success');
                                 } else {
-                                  setSelectedColors((prev) => [...prev, { id, name, color: hex }]);
+                                  setSelectedColors((prev) => [
+                                    ...prev,
+                                    {
+                                      id,
+                                      name,
+                                      color: hex,
+                                      image: cImg,
+                                      images: imgArray,
+                                    },
+                                  ]);
                                   showToast(`Added color "${name}"`, 'success');
                                 }
                                 setNewColorName('');
                                 setNewColorHex('#1e2238');
+                                setNewColorImages([]);
                               }
                             }}
                             style={{
-                              flex: 1,
-                              minWidth: '180px',
+                              flex: '1 1 150px',
+                              minWidth: '140px',
                               padding: '0.55rem 0.8rem',
                               background: '#ffffff',
                               border: '1px solid #cbd5e1',
@@ -3724,6 +3713,104 @@ export default function AdminProducts() {
                               outline: 'none',
                             }}
                           />
+
+                          {/* S3 Image Upload Input & Button (Up to 4 Photos, Max 10MB each) */}
+                          <input
+                            type="file"
+                            ref={colorFileInputRef}
+                            accept="image/*"
+                            multiple
+                            onChange={handleColorImageUpload}
+                            style={{ display: 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => colorFileInputRef.current?.click()}
+                            disabled={uploadingColorImage || newColorImages.length >= MAX_COLOR_IMAGES}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              padding: '0.55rem 0.95rem',
+                              background:
+                                uploadingColorImage || newColorImages.length >= MAX_COLOR_IMAGES
+                                  ? '#f1f5f9'
+                                  : '#f5f3ff',
+                              border: '1.5px dashed #7c3aed',
+                              borderRadius: '8px',
+                              color:
+                                uploadingColorImage || newColorImages.length >= MAX_COLOR_IMAGES
+                                  ? '#94a3b8'
+                                  : '#7c3aed',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor:
+                                uploadingColorImage || newColorImages.length >= MAX_COLOR_IMAGES
+                                  ? 'not-allowed'
+                                  : 'pointer',
+                              whiteSpace: 'nowrap',
+                              transition: 'all 0.15s ease',
+                            }}
+                            title="Upload up to 4 color photos directly to S3 (Max 10MB each)"
+                          >
+                            <Upload size={14} />
+                            {uploadingColorImage
+                              ? 'Uploading to S3...'
+                              : newColorImages.length >= MAX_COLOR_IMAGES
+                                ? `4/4 Photos Added`
+                                : newColorImages.length > 0
+                                  ? `Add Photo (${newColorImages.length}/4)`
+                                  : 'Upload Photo (≤10MB)'}
+                          </button>
+
+                          {/* Uploaded Thumbnail Previews (Up to 4) with Individual Remove Buttons */}
+                          {newColorImages.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                              {newColorImages.map((imgUrl, imgIdx) => (
+                                <div key={imgIdx} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                  <img
+                                    src={imgUrl}
+                                    alt={`Color variant ${imgIdx + 1}`}
+                                    style={{
+                                      width: '38px',
+                                      height: '38px',
+                                      borderRadius: '8px',
+                                      objectFit: 'cover',
+                                      border: '1.5px solid #7c3aed',
+                                      boxShadow: '0 1px 3px rgba(124, 58, 237, 0.2)',
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setNewColorImages((prev) => prev.filter((_, i) => i !== imgIdx))
+                                    }
+                                    style={{
+                                      position: 'absolute',
+                                      top: '-6px',
+                                      right: '-6px',
+                                      background: '#ef4444',
+                                      color: '#ffffff',
+                                      borderRadius: '50%',
+                                      width: '18px',
+                                      height: '18px',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      fontSize: '11px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 700,
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                                    }}
+                                    title={`Remove photo ${imgIdx + 1}`}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Save / Add Button */}
                           <button
@@ -3736,18 +3823,41 @@ export default function AdminProducts() {
                               }
                               const hex = newColorHex.trim() || '#1e2238';
                               const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                              const imgArray = newColorImages.filter(Boolean).slice(0, MAX_COLOR_IMAGES);
+                              const cImg = imgArray[0] || null;
                               if (editingColorIndex !== null) {
                                 setSelectedColors((prev) =>
-                                  prev.map((c, i) => (i === editingColorIndex ? { ...c, name, color: hex, id: c.id || id } : c))
+                                  prev.map((c, i) =>
+                                    i === editingColorIndex
+                                      ? {
+                                          ...c,
+                                          name,
+                                          color: hex,
+                                          id: c.id || id,
+                                          image: cImg,
+                                          images: imgArray,
+                                        }
+                                      : c
+                                  )
                                 );
                                 setEditingColorIndex(null);
                                 showToast(`Updated color "${name}"`, 'success');
                               } else {
-                                setSelectedColors((prev) => [...prev, { id, name, color: hex }]);
+                                setSelectedColors((prev) => [
+                                  ...prev,
+                                  {
+                                    id,
+                                    name,
+                                    color: hex,
+                                    image: cImg,
+                                    images: imgArray,
+                                  },
+                                ]);
                                 showToast(`Added color "${name}"`, 'success');
                               }
                               setNewColorName('');
                               setNewColorHex('#1e2238');
+                              setNewColorImages([]);
                             }}
                             style={{
                               padding: '0.55rem 1rem',
@@ -3772,6 +3882,7 @@ export default function AdminProducts() {
                                 setEditingColorIndex(null);
                                 setNewColorName('');
                                 setNewColorHex('#1e2238');
+                                setNewColorImages([]);
                               }}
                               style={{
                                 padding: '0.55rem 0.8rem',
