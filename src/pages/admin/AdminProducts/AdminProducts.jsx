@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import {
@@ -381,6 +381,9 @@ export default function AdminProducts() {
   const [selectedColors, setSelectedColors] = useState(DEFAULT_ADMIN_COLORS);
   const [newColorName, setNewColorName] = useState('');
   const [newColorHex, setNewColorHex] = useState('#1e2238');
+  const [newColorImage, setNewColorImage] = useState('');
+  const [uploadingColorImage, setUploadingColorImage] = useState(false);
+  const colorFileInputRef = useRef(null);
   const [editingColorIndex, setEditingColorIndex] = useState(null);
   const [primaryFile, setPrimaryFile] = useState(null);
   const [secondaryFiles, setSecondaryFiles] = useState([]);
@@ -589,6 +592,7 @@ export default function AdminProducts() {
     setSelectedColors(DEFAULT_ADMIN_COLORS);
     setNewColorName('');
     setNewColorHex('#1e2238');
+    setNewColorImage('');
     setEditingColorIndex(null);
     setPrimaryFile(null);
     setSecondaryFiles([]);
@@ -694,13 +698,20 @@ export default function AdminProducts() {
       hasProductColors
         ? pVariants.colors.map((c, i) =>
             typeof c === 'string'
-              ? { id: `col-${i}`, name: c, color: '#3b82f6' }
-              : { id: c.id || `col-${i}`, name: c.name || 'Color', color: c.color || '#3b82f6' }
+              ? { id: `col-${i}`, name: c, color: '#3b82f6', image: null, images: [] }
+              : {
+                  id: c.id || `col-${i}`,
+                  name: c.name || 'Color',
+                  color: c.color || '#3b82f6',
+                  image: c.image || c.imageUrl || (Array.isArray(c.images) ? c.images[0] : null) || null,
+                  images: Array.isArray(c.images) ? c.images : (c.image ? [c.image] : []),
+                }
           )
         : DEFAULT_ADMIN_COLORS
     );
     setNewColorName('');
     setNewColorHex('#1e2238');
+    setNewColorImage('');
     setEditingColorIndex(null);
 
     // Set image previews
@@ -710,6 +721,39 @@ export default function AdminProducts() {
     setPrimaryFile(null);
     setSecondaryFiles([]);
     setViewMode('form');
+  };
+
+  // Upload color variant image directly to S3 (Max 10MB)
+  const handleColorImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate 10MB file size limit
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      showToast(`Image exceeds 10MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose an image under 10MB.`, 'error');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setUploadingColorImage(true);
+      const fd = new FormData();
+      fd.append('image', file);
+      fd.append('folder', 'products');
+
+      const res = await adminService.uploadImage(fd);
+      const s3Url = res?.data?.data?.url || res?.data?.url || res?.url;
+      if (s3Url) {
+        setNewColorImage(s3Url);
+        showToast('Color variant photo uploaded to S3 successfully!', 'success');
+      }
+    } catch (err) {
+      showToast(err?.message || 'Failed to upload color photo to S3', 'error');
+    } finally {
+      setUploadingColorImage(false);
+      e.target.value = '';
+    }
   };
 
   const handlePrimaryFileSelect = async (e) => {
@@ -3560,6 +3604,20 @@ export default function AdminProducts() {
                                         flexShrink: 0,
                                       }}
                                     />
+                                    {Boolean(col.image || col.images?.[0]) && (
+                                      <img
+                                        src={col.image || col.images?.[0]}
+                                        alt={col.name}
+                                        style={{
+                                          width: '22px',
+                                          height: '22px',
+                                          borderRadius: '4px',
+                                          objectFit: 'cover',
+                                          border: '1px solid #cbd5e1',
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                    )}
                                     <div style={{ minWidth: 0 }}>
                                       <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {col.name}
@@ -3578,10 +3636,12 @@ export default function AdminProducts() {
                                           setEditingColorIndex(null);
                                           setNewColorName('');
                                           setNewColorHex('#1e2238');
+                                          setNewColorImage('');
                                         } else {
                                           setEditingColorIndex(idx);
                                           setNewColorName(col.name);
                                           setNewColorHex(col.color || '#1e2238');
+                                          setNewColorImage(col.image || col.images?.[0] || '');
                                         }
                                       }}
                                       style={{
@@ -3685,7 +3745,7 @@ export default function AdminProducts() {
                           {/* Color Name Input */}
                           <input
                             type="text"
-                            placeholder="Color Name (e.g. Royal Navy, Olive Green, Wine Red)"
+                            placeholder="Color Name (e.g. Royal Navy, Wine Red)"
                             value={newColorName}
                             onChange={(e) => setNewColorName(e.target.value)}
                             onKeyDown={(e) => {
@@ -3698,23 +3758,46 @@ export default function AdminProducts() {
                                 }
                                 const hex = newColorHex.trim() || '#1e2238';
                                 const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                                const cImg = newColorImage.trim();
+                                const imgArray = cImg ? [cImg] : [];
                                 if (editingColorIndex !== null) {
                                   setSelectedColors((prev) =>
-                                    prev.map((c, i) => (i === editingColorIndex ? { ...c, name, color: hex, id: c.id || id } : c))
+                                    prev.map((c, i) =>
+                                      i === editingColorIndex
+                                        ? {
+                                            ...c,
+                                            name,
+                                            color: hex,
+                                            id: c.id || id,
+                                            image: cImg || null,
+                                            images: imgArray.length > 0 ? imgArray : (Array.isArray(c.images) ? c.images : []),
+                                          }
+                                        : c
+                                    )
                                   );
                                   setEditingColorIndex(null);
                                   showToast(`Updated color "${name}"`, 'success');
                                 } else {
-                                  setSelectedColors((prev) => [...prev, { id, name, color: hex }]);
+                                  setSelectedColors((prev) => [
+                                    ...prev,
+                                    {
+                                      id,
+                                      name,
+                                      color: hex,
+                                      image: cImg || null,
+                                      images: imgArray,
+                                    },
+                                  ]);
                                   showToast(`Added color "${name}"`, 'success');
                                 }
                                 setNewColorName('');
                                 setNewColorHex('#1e2238');
+                                setNewColorImage('');
                               }
                             }}
                             style={{
-                              flex: 1,
-                              minWidth: '180px',
+                              flex: '1 1 150px',
+                              minWidth: '140px',
                               padding: '0.55rem 0.8rem',
                               background: '#ffffff',
                               border: '1px solid #cbd5e1',
@@ -3724,6 +3807,82 @@ export default function AdminProducts() {
                               outline: 'none',
                             }}
                           />
+
+                          {/* S3 Image Upload Input & Button (Max 10MB) */}
+                          <input
+                            type="file"
+                            ref={colorFileInputRef}
+                            accept="image/*"
+                            onChange={handleColorImageUpload}
+                            style={{ display: 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => colorFileInputRef.current?.click()}
+                            disabled={uploadingColorImage}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              padding: '0.55rem 0.95rem',
+                              background: uploadingColorImage ? '#f1f5f9' : '#f5f3ff',
+                              border: '1.5px dashed #7c3aed',
+                              borderRadius: '8px',
+                              color: uploadingColorImage ? '#94a3b8' : '#7c3aed',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: uploadingColorImage ? 'not-allowed' : 'pointer',
+                              whiteSpace: 'nowrap',
+                              transition: 'all 0.15s ease',
+                            }}
+                            title="Upload color photo directly to S3 (Max 10MB)"
+                          >
+                            <Upload size={14} />
+                            {uploadingColorImage ? 'Uploading to S3...' : (newColorImage ? 'Replace Photo' : 'Upload Photo (≤10MB)')}
+                          </button>
+
+                          {/* Uploaded Thumbnail Preview with Remove Button */}
+                          {Boolean(newColorImage) && (
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                              <img
+                                src={newColorImage}
+                                alt="Color variant preview"
+                                style={{
+                                  width: '38px',
+                                  height: '38px',
+                                  borderRadius: '8px',
+                                  objectFit: 'cover',
+                                  border: '1.5px solid #7c3aed',
+                                  boxShadow: '0 1px 3px rgba(124, 58, 237, 0.2)',
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setNewColorImage('')}
+                                style={{
+                                  position: 'absolute',
+                                  top: '-6px',
+                                  right: '-6px',
+                                  background: '#ef4444',
+                                  color: '#ffffff',
+                                  borderRadius: '50%',
+                                  width: '18px',
+                                  height: '18px',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                                }}
+                                title="Remove photo"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          )}
 
                           {/* Save / Add Button */}
                           <button
@@ -3736,18 +3895,41 @@ export default function AdminProducts() {
                               }
                               const hex = newColorHex.trim() || '#1e2238';
                               const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                              const cImg = newColorImage.trim();
+                              const imgArray = cImg ? [cImg] : [];
                               if (editingColorIndex !== null) {
                                 setSelectedColors((prev) =>
-                                  prev.map((c, i) => (i === editingColorIndex ? { ...c, name, color: hex, id: c.id || id } : c))
+                                  prev.map((c, i) =>
+                                    i === editingColorIndex
+                                      ? {
+                                          ...c,
+                                          name,
+                                          color: hex,
+                                          id: c.id || id,
+                                          image: cImg || null,
+                                          images: imgArray.length > 0 ? imgArray : (Array.isArray(c.images) ? c.images : []),
+                                        }
+                                      : c
+                                  )
                                 );
                                 setEditingColorIndex(null);
                                 showToast(`Updated color "${name}"`, 'success');
                               } else {
-                                setSelectedColors((prev) => [...prev, { id, name, color: hex }]);
+                                setSelectedColors((prev) => [
+                                  ...prev,
+                                  {
+                                    id,
+                                    name,
+                                    color: hex,
+                                    image: cImg || null,
+                                    images: imgArray,
+                                  },
+                                ]);
                                 showToast(`Added color "${name}"`, 'success');
                               }
                               setNewColorName('');
                               setNewColorHex('#1e2238');
+                              setNewColorImage('');
                             }}
                             style={{
                               padding: '0.55rem 1rem',
@@ -3772,6 +3954,7 @@ export default function AdminProducts() {
                                 setEditingColorIndex(null);
                                 setNewColorName('');
                                 setNewColorHex('#1e2238');
+                                setNewColorImage('');
                               }}
                               style={{
                                 padding: '0.55rem 0.8rem',

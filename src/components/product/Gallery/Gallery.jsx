@@ -26,6 +26,11 @@ export default function Gallery({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
 
+  // Auto-reset active image index to 0 whenever gallery images change (e.g., color variant switched)
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [images]);
+
   // ── Magnifier Lens Zoom State ──
   const [isLensActive, setIsLensActive] = useState(false);
   const [lensPos, setLensPos] = useState({ x: 0, y: 0, percentX: 0, percentY: 0, show: false });
