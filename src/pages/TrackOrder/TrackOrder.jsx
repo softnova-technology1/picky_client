@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { orderService } from '../../services/order.service';
+import { watchOrder } from '../../services/socket';
 import { formatPrice } from '../../utils/formatPrice';
 import { formatDate } from '../../utils/formatDate';
 import {
@@ -313,6 +314,22 @@ export default function TrackOrder() {
       setIsLoading(false);
     }
   };
+
+  // Live WebSocket sync: auto-update stepper & status if admin updates order in real-time
+  useEffect(() => {
+    const raw = trackedOrder?.rawOrder;
+    if (!raw) return;
+    const watchTarget = raw._id || raw.orderNumber || orderNumber;
+    if (!watchTarget) return;
+
+    const unsub = watchOrder(watchTarget, (update) => {
+      if (update?.status) {
+        handleLocateShipment(null, watchTarget);
+      }
+    });
+
+    return () => unsub();
+  }, [trackedOrder?.rawOrder?._id, trackedOrder?.rawOrder?.orderNumber]);
 
   return (
     <PageWrapper>

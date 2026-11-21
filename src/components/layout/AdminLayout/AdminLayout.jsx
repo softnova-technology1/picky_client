@@ -43,6 +43,7 @@ import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { useUiStore } from '../../../store/uiStore';
 import { useCategoryStore } from '../../../store/categoryStore';
 import { useReturnStore } from '../../../store/returnStore';
+import { joinAdminRoom } from '../../../services/socket';
 import { useReviewStore } from '../../../store/reviewStore';
 import { useAbandonedCartStore } from '../../../store/abandonedCartStore';
 import { useBroadcastStore } from '../../../store/broadcastStore';
@@ -290,6 +291,9 @@ export default function AdminLayout({ children, title }) {
     window.addEventListener('picky_inquiries_updated', refreshInquiriesCount);
     window.addEventListener('focus', handleFocusSync);
     window.addEventListener('picky_server_reconnected', handleServerReconnect);
+
+    // Ensure socket joins admin room for live notifications & orders
+    try { joinAdminRoom(); } catch (_) {}
 
     // Periodic real-time sync (every 20s when tab is active)
     const pollInterval = setInterval(() => {

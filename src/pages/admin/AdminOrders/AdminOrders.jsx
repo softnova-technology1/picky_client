@@ -62,6 +62,7 @@ import { useOrderStore } from '../../../store/orderStore';
 import { useUiStore } from '../../../store/uiStore';
 import { fuzzyMatchScore } from '../../../utils/fuzzySearch';
 import { getOrderCustomerInfo, getOrderTrackingInfo, launchOrderWhatsappShare } from '../../../utils/whatsappOrderShare';
+import { subscribeToOrders } from '../../../services/socket';
 
 // ─── Order Status & Filter Configurations ────────────────────────────────────
 export const STATUS_TABS = [
@@ -620,7 +621,16 @@ export default function AdminOrders() {
       }
     }, 4000);
 
+    // Live WebSocket subscription: new orders, cancellations, and status updates refresh list instantly
+    let unsubOrders = () => {};
+    try {
+      unsubOrders = subscribeToOrders(() => {
+        fetchDbOrders();
+      });
+    } catch (_) {}
+
     return () => {
+      try { unsubOrders(); } catch (_) {}
       window.removeEventListener('picky_server_reconnected', handleServerOnline);
       window.removeEventListener('focus', handleFocusSync);
       clearInterval(retryInterval);
