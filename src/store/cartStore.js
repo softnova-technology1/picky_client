@@ -154,7 +154,11 @@ export const useCartStore = create(
         const totalOriginal = origBase + customizationCost;
 
         // Distinct key for customized items so different customizations don't overwrite each other
-        const itemKey = product.cartItemId || (isCustomized ? `${prodId}_custom_${Date.now()}` : prodId);
+        const sizeStr = typeof product.selectedSize === 'object' && product.selectedSize !== null
+          ? (product.selectedSize.label || product.selectedSize.name)
+          : (product.selectedSize || product.selectedVariant || '');
+        const variantSuffix = sizeStr ? `_var_${sizeStr}` : '';
+        const itemKey = product.cartItemId || (isCustomized ? `${prodId}_custom_${Date.now()}` : `${prodId}${variantSuffix}`);
 
         const availableSizes = Array.isArray(product.variants?.options) && product.variants.options.length > 0
           ? product.variants.options
@@ -199,9 +203,9 @@ export const useCartStore = create(
               price: totalPrice,
               discountPrice: totalPrice,
               originalPrice: totalOriginal,
-              selectedSize: product.selectedSize || product.customization?.size || null,
+              selectedSize: sizeStr || null,
               selectedColor: product.selectedColor || (typeof product.customization?.color === 'object' ? product.customization?.color?.name : product.customization?.color) || null,
-              selectedVariant: product.selectedVariant || null,
+              selectedVariant: sizeStr || product.selectedVariant || null,
               availableSizes,
               availableColors,
               hasVariants: availableSizes.length > 0 || availableColors.length > 0,
@@ -219,32 +223,22 @@ export const useCartStore = create(
         try {
           const auth = useAuthStore.getState();
           if (auth?.isLoggedIn && auth?.accessToken) {
-            if (isCustomized) {
-              // Crucial: For customized items, ALWAYS call cartService.addItem directly with customization specs!
-              cartService.addItem(prodId, quantity, {
-                basePrice,
-                customizationCost,
-                isCustomized: true,
-                customization: product.customization || null,
-              }).catch(() => null);
-            } else {
-              const itemInList = newItems.find((i) => getItemId(i) === itemKey);
-              const totalQty = itemInList ? itemInList.quantity : quantity;
-              if (qtyDebounceTimers[itemKey]) {
-                clearTimeout(qtyDebounceTimers[itemKey]);
-              }
-              qtyDebounceTimers[itemKey] = setTimeout(() => {
-                cartService.updateQty(prodId, totalQty).catch(() => {
-                  cartService.addItem(prodId, quantity).catch(() => null);
-                });
-                delete qtyDebounceTimers[itemKey];
-              }, 300);
-            }
+            cartService.addItem(prodId, quantity, {
+              cartItemId: itemKey,
+              basePrice,
+              customizationCost,
+              isCustomized,
+              customization: product.customization || null,
+              selectedSize: sizeStr || null,
+              selectedColor: product.selectedColor || null,
+              selectedVariant: sizeStr || null,
+            }).catch(() => null);
+            
           }
         } catch (_) {}
       },
 
-      updateVariant: (target, { selectedSize, selectedColor }) => {
+      updateVariant: (target, variantUpdates = {}) => {
         const targetId = String(getItemId(target));
         if (!targetId) return;
 
@@ -253,13 +247,13 @@ export const useCartStore = create(
           if (String(getItemId(i)) === targetId) {
             return {
               ...i,
-              ...(selectedSize !== undefined ? { selectedSize } : {}),
-              ...(selectedColor !== undefined ? { selectedColor } : {}),
+              ...variantUpdates,
+
             };
           }
           return i;
         });
-        set({ items: newItems });
+        set({ items: newItems, total: calcTotal(newItems) });
       },
 
       updateQty: (target, quantity) => {
@@ -371,7 +365,8 @@ export const useCartStore = create(
         const normalizedItems = rawItems.map((i) => {
           const prodId = getProductId(i);
           const isCust = Boolean(i.isCustomized);
-          const cartKey = i.cartItemId || (isCust ? `${prodId}_custom_${i.customization?.orderId || i.customization?.orderRef || Date.now()}` : prodId);
+          const sizeStr = typeof i.selectedSize === 'object' && i.selectedSize !== null ? (i.selectedSize.label || i.selectedSize.name) : (i.selectedSize || i.customization?.size || '');
+          const cartKey = i.cartItemId || (isCust ? `${prodId}_custom_${i.customization?.orderId || i.customization?.orderRef || Date.now()}` : (sizeStr ? `${prodId}_var_${sizeStr}` : prodId));
           const basePrice = i.basePrice !== undefined ? Number(i.basePrice) : (i.discountPrice || i.price || i.product?.discountPrice || i.product?.price || 0);
           const customizationCost = Number(i.customizationCost || (isCust ? (i.product?.customizationPrice || 0) : 0));
           const totalPrice = i.price || (basePrice + customizationCost);
@@ -390,7 +385,8 @@ export const useCartStore = create(
             price: totalPrice,
             discountPrice: totalPrice,
             quantity: i.quantity || 1,
-            selectedSize: i.selectedSize || i.customization?.size || null,
+            selectedSize: sizeStr || null,
+            selectedVariant: i.selectedVariant || sizeStr || null,
             selectedColor: i.selectedColor || (typeof i.customization?.color === 'object' ? i.customization?.color?.name : i.customization?.color) || null,
           };
         });

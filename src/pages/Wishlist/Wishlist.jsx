@@ -187,8 +187,10 @@ export default function Wishlist() {
 
   // Size helper
   const getProductSizes = (product) => {
-    if (Array.isArray(product.sizes) && product.sizes.length > 0) return product.sizes;
-    if (Array.isArray(product.variants?.options) && product.variants.options.length > 0) return product.variants.options;
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) return product.sizes.map((o) => (typeof o === 'object' && o !== null ? (o.label || o.name || '') : String(o)));
+    if (Array.isArray(product.variants?.options) && product.variants.options.length > 0) {
+      return product.variants.options.map((o) => (typeof o === 'object' && o !== null ? (o.label || o.name || '') : String(o)));
+    }
     return ['XS', 'S', 'M', 'L', 'XL'];
   };
 

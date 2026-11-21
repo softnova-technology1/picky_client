@@ -38,6 +38,7 @@ import {
   Sun,
   Moon,
   Newspaper,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useAdminAuthStore } from '../../../store/adminAuthStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -660,6 +661,17 @@ export default function AdminLayout({ children, title }) {
                   {!collapsed && <span className="admin-nav-label">Products</span>}
                 </NavLink>
               )}
+
+              <NavLink
+                to={`${ADMIN}/customizer-builder`}
+                className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                title="Customizer Form & Fields Builder"
+              >
+                <div className="admin-nav-icon-wrap">
+                  <SlidersHorizontal size={19} />
+                </div>
+                {!collapsed && <span className="admin-nav-label">Customizer Form</span>}
+              </NavLink>
 
               {isPageVisible('categories') && (
                 <NavLink

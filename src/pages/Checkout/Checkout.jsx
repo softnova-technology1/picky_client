@@ -1799,7 +1799,7 @@ export default function Checkout() {
                               <div className={styles['checkout-variant-info']}>
                                 {item.selectedSize && (
                                   <span className={styles['checkout-variant-tag']}>
-                                    Size: <strong>{item.selectedSize}</strong>
+                                    Size: <strong>{typeof item.selectedSize === 'object' && item.selectedSize !== null ? (item.selectedSize.label || item.selectedSize.name || '') : item.selectedSize}</strong>
                                   </span>
                                 )}
                                 {item.selectedSize && item.selectedColor && (
@@ -2380,7 +2380,7 @@ export default function Checkout() {
                         <span className="mobile-summary-item-name">{item.name}</span>
                         {(item.selectedSize || item.selectedColor) && (
                           <span className="mobile-summary-item-variant">
-                            {item.selectedSize ? `Size: ${item.selectedSize}` : ''}
+                            {item.selectedSize ? `Size: ${typeof item.selectedSize === 'object' && item.selectedSize !== null ? (item.selectedSize.label || item.selectedSize.name || '') : item.selectedSize}` : ''}
                             {item.selectedSize && item.selectedColor ? ' • ' : ''}
                             {item.selectedColor ? `Color: ${item.selectedColor}` : ''}
                           </span>

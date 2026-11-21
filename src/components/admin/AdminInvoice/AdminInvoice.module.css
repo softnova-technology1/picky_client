@@ -182,13 +182,19 @@
 .logoBox {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.35rem;
 }
 
 .brandLogo {
-  height: 58px;
-  width: auto;
+  height: 62px;
+  width: 62px;
+  max-width: 62px;
   object-fit: contain;
+  object-position: left center;
+  align-self: flex-start;
+  display: block;
+  flex-shrink: 0;
 }
 
 .companyMeta {

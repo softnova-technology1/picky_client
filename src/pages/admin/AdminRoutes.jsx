@@ -21,6 +21,7 @@ import AdminFlashSales from './AdminFlashSales';
 import AdminNotifications from './AdminNotifications';
 import AdminInquiries from './AdminInquiries';
 import AdminBlog from './AdminBlog';
+import AdminCustomizerBuilder from './AdminCustomizerBuilder';
 import NotFound from '../NotFound';
 
 /**

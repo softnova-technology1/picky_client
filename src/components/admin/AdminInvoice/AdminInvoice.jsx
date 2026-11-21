@@ -82,6 +82,21 @@ export async function generateInvoicePdf(element, fileName = 'Invoice.pdf') {
       clonedElement.style.top = '0';
       clonedElement.style.opacity = '1';
       clonedElement.style.visibility = 'visible';
+
+      const logoImgs = clonedElement.querySelectorAll('img');
+      logoImgs.forEach((img) => {
+        const targetHeight = 62;
+        const ratio =
+          img.naturalWidth && img.naturalHeight
+            ? img.naturalWidth / img.naturalHeight
+            : 1;
+        const targetWidth = Math.round(targetHeight * ratio);
+        img.style.width = `${targetWidth}px`;
+        img.style.height = `${targetHeight}px`;
+        img.style.maxWidth = `${targetWidth}px`;
+        img.style.alignSelf = 'flex-start';
+        img.style.display = 'block';
+      });
     },
   });
 
@@ -204,11 +219,21 @@ export const AdminInvoiceSheet = React.forwardRef(function AdminInvoiceSheet({ o
       {/* ── 1. Top Brand & Invoice Metadata ── */}
       <div>
         <div className={styles.brandRow}>
-          <div className={styles.logoBox}>
+          <div className={styles.logoBox} style={{ alignItems: 'flex-start' }}>
             <img
               src="/images/logo.png"
               alt="Picky Logo"
               className={styles.brandLogo}
+              width="62"
+              height="62"
+              style={{
+                width: '62px',
+                height: '62px',
+                maxWidth: '62px',
+                objectFit: 'contain',
+                alignSelf: 'flex-start',
+                display: 'block',
+              }}
               crossOrigin="anonymous"
             />
             <div className={styles.companyMeta}>
