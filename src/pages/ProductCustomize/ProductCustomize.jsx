@@ -149,6 +149,19 @@ export default function ProductCustomize() {
   }, [enabledSections]);
 
   const [activeStep, setActiveStep] = useState('front');
+  const [mobileFontDropdownSecId, setMobileFontDropdownSecId] = useState(null);
+
+  // Close mobile font dropdown on outside click
+  useEffect(() => {
+    if (!mobileFontDropdownSecId) return;
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(`.${styles['font-dropdown-card']}`)) {
+        setMobileFontDropdownSecId(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [mobileFontDropdownSecId]);
 
   useEffect(() => {
     if (availableSteps.length > 0 && !availableSteps.some((s) => s.id === activeStep)) {
@@ -566,7 +579,7 @@ export default function ProductCustomize() {
           </div>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', textTransform: 'uppercase', fontWeight: 700 }}>Total Unit Price</span>
-            <strong style={{ fontSize: '1.45rem', color: '#0284c7' }}>{formatPrice(totalUnitPrice)}</strong>
+            <strong style={{ fontSize: '1.45rem', color: '#630ed4' }}>{formatPrice(totalUnitPrice)}</strong>
           </div>
         </div>
 
@@ -574,20 +587,21 @@ export default function ProductCustomize() {
         {anySectionEnabled && availableSteps.length > 1 && (
           <div className={styles['stepper-wrapper']}>
             <div className={styles['stepper-nav']}>
-              {availableSteps.map((step) => {
+              {availableSteps.map((step, idx) => {
                 const isCurrent = activeStep === step.id;
+                const isCompleted = idx < currentStepIndex;
                 return (
                   <button
                     key={step.id}
                     type="button"
                     onClick={() => setActiveStep(step.id)}
-                    className={`${styles['stepper-tab']} ${isCurrent ? styles['stepper-tab-active'] : ''}`}
+                    className={`${styles['stepper-tab']} ${isCurrent ? styles['stepper-tab-active'] : ''} ${isCompleted ? styles['stepper-tab-completed'] : ''}`}
                   >
                     <div className={styles['stepper-badge']}>
-                      {step.stepNumber}
+                      {isCompleted ? '✓' : step.stepNumber}
                     </div>
                     <div className={styles['stepper-info']}>
-                      <span className={styles['stepper-step-label']}>Step {step.stepNumber} of {availableSteps.length}</span>
+                      <span className={styles['stepper-step-label']}>Step {step.stepNumber}</span>
                       <span className={styles['stepper-step-title']}>{step.shortTitle}</span>
                     </div>
                   </button>
@@ -691,7 +705,12 @@ export default function ProductCustomize() {
 
                         {/* Dropdown in the same row */}
                         {secDropdownFonts.length > 0 && (
-                          <div className={`${styles['font-dropdown-card']} ${isDropdownActive ? styles['active'] : ''}`}>
+                          <div
+                            className={`${styles['font-dropdown-card']} ${isDropdownActive ? styles['active'] : ''}`}
+                            onClick={() => {
+                              setMobileFontDropdownSecId((prev) => (prev === sec.id ? null : sec.id));
+                            }}
+                          >
                             <span
                               className={styles['font-sample']}
                               style={isDropdownActive ? currentFont?.style : { fontSize: '0.92rem' }}
@@ -701,6 +720,8 @@ export default function ProductCustomize() {
                             <span className={styles['font-name']}>
                               {isDropdownActive ? currentFont?.name : 'Select Style'}
                             </span>
+
+                            {/* Desktop native select overlay */}
                             <select
                               className={styles['font-dropdown-select-overlay']}
                               value={isDropdownActive ? currentFont?.id : ''}
@@ -720,6 +741,59 @@ export default function ProductCustomize() {
                                 </option>
                               ))}
                             </select>
+
+                            {/* Mobile bounded custom dropdown popover */}
+                            {mobileFontDropdownSecId === sec.id && (
+                              <>
+                                <div
+                                  className={styles['font-popover-backdrop']}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMobileFontDropdownSecId(null);
+                                  }}
+                                />
+                                <div
+                                  className={styles['font-dropdown-popover']}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                <div className={styles['font-popover-header']}>
+                                  <span>Choose Font Style</span>
+                                  <button
+                                    type="button"
+                                    className={styles['font-popover-close']}
+                                    onClick={() => setMobileFontDropdownSecId(null)}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                                <div className={styles['font-popover-list']}>
+                                  {secDropdownFonts.map((df) => {
+                                    const isSelected = currentFont?.id === df.id;
+                                    return (
+                                      <button
+                                        key={df.id}
+                                        type="button"
+                                        className={`${styles['font-popover-item']} ${isSelected ? styles['active-font-item'] : ''}`}
+                                        onClick={() => {
+                                          setSecFont(sec.id, df);
+                                          setMobileFontDropdownSecId(null);
+                                          showToast(`Selected font: ${df.name}`, 'info');
+                                        }}
+                                      >
+                                        <div className={styles['font-popover-item-text']}>
+                                          <span className={styles['font-popover-item-name']}>{df.name}</span>
+                                          <span className={styles['font-popover-item-sample']} style={df.style}>
+                                            {df.sample || 'Aa Bb 123'}
+                                          </span>
+                                        </div>
+                                        {isSelected && <Check size={16} color="#630ed4" strokeWidth={3} />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </>
+                          )}
                           </div>
                         )}
                       </div>
@@ -772,7 +846,7 @@ export default function ProductCustomize() {
                               onChange={(e) => handleSectionImagesUpload(sec.id, maxImages, e)}
                               style={{ display: 'none' }}
                             />
-                            <Upload size={20} color="#0284c7" />
+                            <Upload size={20} color="#630ed4" />
                             <span className={styles['upload-slot-text']}>Upload Image</span>
                             <span className={styles['upload-slot-sub']}>Slot {currentImages.length + 1} of {maxImages}</span>
                           </label>
@@ -819,7 +893,7 @@ export default function ProductCustomize() {
                   <div className={styles['field-group']}>
                     <label className={styles['field-label']}>
                       <span>{sec.materials?.label || 'Material (Type of Fabric)'}</span>
-                      <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 600 }}>{currentMaterial}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#630ed4', fontWeight: 600 }}>{currentMaterial}</span>
                     </label>
                     <div className={styles['material-grid']}>
                       {secMaterials.map((mat) => (
@@ -841,7 +915,7 @@ export default function ProductCustomize() {
                   <div className={styles['field-group']}>
                     <label className={styles['field-label']}>
                       <span>{sec.sizes?.label || 'Size'}</span>
-                      <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 600 }}>Selected: {currentSize}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#630ed4', fontWeight: 600 }}>Selected: {currentSize}</span>
                     </label>
                     <div className={styles['size-chips']}>
                       {secSizes.map((sz) => (
@@ -863,7 +937,7 @@ export default function ProductCustomize() {
                   <div className={styles['field-group']}>
                     <div className={styles['field-label']}>
                       <span>{sec.colors?.label || 'Custom Color'}</span>
-                      <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.72rem', color: '#630ed4', fontWeight: 700 }}>
                         Selected: {currentColor?.name || 'Color'}
                       </span>
                     </div>
@@ -905,14 +979,14 @@ export default function ProductCustomize() {
                             {currentColor?.isCustom && <Check size={16} color="#ffffff" strokeWidth={3} />}
                           </span>
                           <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', cursor: 'pointer' }}>
-                            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: currentColor?.isCustom ? '#0284c7' : '#334155' }}>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: currentColor?.isCustom ? '#630ed4' : '#334155' }}>
                               Custom Color
                             </span>
                             <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
                               {(currentColor?.hex || '#8B5CF6').toUpperCase()}
                             </span>
                           </div>
-                          <Palette size={16} color="#0284c7" style={{ marginLeft: '0.5rem' }} />
+                          <Palette size={16} color="#630ed4" style={{ marginLeft: '0.5rem' }} />
                           <input
                             type="color"
                             ref={(el) => (colorInputRefs.current[sec.id] = el)}
@@ -979,7 +1053,7 @@ export default function ProductCustomize() {
                               onChange={(e) => handleSectionMockupUpload(sec.id, 'frontExampleImage', e)}
                               style={{ display: 'none' }}
                             />
-                            <ImageIcon size={24} color="#0284c7" />
+                            <ImageIcon size={24} color="#630ed4" />
                             <span className={styles['upload-slot-text']}>Upload Mockup</span>
                             <span className={styles['upload-slot-sub']}>PNG, JPG or WEBP</span>
                           </label>
@@ -1022,7 +1096,7 @@ export default function ProductCustomize() {
                               onChange={(e) => handleSectionMockupUpload(sec.id, 'backExampleImage', e)}
                               style={{ display: 'none' }}
                             />
-                            <ImageIcon size={24} color="#0284c7" />
+                            <ImageIcon size={24} color="#630ed4" />
                             <span className={styles['upload-slot-text']}>Upload Mockup</span>
                             <span className={styles['upload-slot-sub']}>PNG, JPG or WEBP</span>
                           </label>
@@ -1070,7 +1144,7 @@ export default function ProductCustomize() {
           {/* Alert if no sections are enabled */}
           {!anySectionEnabled && (
             <div className={styles['section-card']} style={{ textAlign: 'center', padding: '3.5rem 1.5rem' }}>
-              <AlertCircle size={40} color="#0284c7" style={{ margin: '0 auto 0.75rem' }} />
+              <AlertCircle size={40} color="#630ed4" style={{ margin: '0 auto 0.75rem' }} />
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem' }}>
                 No Customization Sections Enabled
               </h3>

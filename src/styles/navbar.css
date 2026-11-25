@@ -666,9 +666,9 @@
   cursor: pointer;
 }
 
-/* Desktop Sidebar Toggle Button (Beside Logo) */
+/* Desktop Sidebar Toggle Button (Hidden on standard desktop to eliminate dual hamburger & preserve navbar width) */
 .nav-desktop-sidebar-btn {
-  display: flex !important;
+  display: none !important;
   align-items: center !important;
   justify-content: center !important;
   width: 38px !important;
@@ -901,18 +901,51 @@
 }
 
 /* ── 11. Responsive Breakpoints ──────────────────────────────────────────── */
-@media (max-width: 1240px) {
+@media (max-width: 1360px) {
+  .floating-nav-pill {
+    padding: 0 1rem;
+  }
+
   .nav-center-links {
     gap: 0.15rem;
   }
 
   .nav-pill-link {
-    padding: 0.4rem 0.65rem;
-    font-size: 0.82rem;
+    padding: 0.38rem 0.58rem;
+    font-size: 0.81rem;
   }
 
   .nav-search-bar-btn {
-    width: 155px;
+    width: 135px;
+  }
+
+  .nav-cta-btn {
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+  }
+
+  .nav-actions-cluster {
+    gap: 0.45rem;
+  }
+}
+
+@media (max-width: 1240px) {
+  .nav-center-links {
+    gap: 0.1rem;
+  }
+
+  .nav-pill-link {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.79rem;
+  }
+
+  .nav-search-bar-btn {
+    width: 120px;
+  }
+
+  .nav-cta-btn {
+    padding: 0.42rem 0.85rem;
+    font-size: 0.8rem;
   }
 }
 

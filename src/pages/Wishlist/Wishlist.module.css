@@ -276,6 +276,12 @@
   z-index: 0;
 }
 
+@media (hover: none) {
+  .stat-card::before {
+    display: none !important;
+  }
+}
+
 .stat-card-wrapper:hover .stat-card::before,
 .stat-card:hover::before {
   height: 100%;

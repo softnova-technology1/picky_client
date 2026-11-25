@@ -1410,6 +1410,46 @@ export default function ProductDetail() {
 
       {/* ── 2. Title, Pricing & Offers Card ── */}
       <div className="mobile-pdp-card">
+        {/* Top Badges Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+          {product.isCustomizable && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.22rem 0.65rem',
+                borderRadius: '9999px',
+                background: '#f3e8ff',
+                color: '#6d28d9',
+                border: '1px solid #ddd6fe',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                lineHeight: 1.2,
+              }}
+            >
+              Customization Available
+            </span>
+          )}
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.22rem 0.65rem',
+              borderRadius: '9999px',
+              background: isOutOfStock ? '#fef2f2' : '#f0fdf4',
+              color: isOutOfStock ? '#dc2626' : '#15803d',
+              border: isOutOfStock ? '1px solid #fecaca' : '1px solid #bbf7d0',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              lineHeight: 1.2,
+            }}
+          >
+            {isOutOfStock ? '• Out of Stock' : '• In Stock & Ready to Ship'}
+          </span>
+        </div>
+
         <div className="mobile-pdp-category-kicker">
           {typeof product.category === 'object'
             ? (product.category?.name || product.brand || 'PICKY LUXURY')
@@ -1450,6 +1490,29 @@ export default function ProductDetail() {
         <p className="mobile-pdp-tax-note">Inclusive of all taxes</p>
 
       </div>
+
+      {/* ── CARD 2.5: Dedicated Bento Customization Showcase Card (Mobile Matching Desktop) ── */}
+      {product.isCustomizable && (
+        <div className={styles['bento-customize-card']} style={{ margin: '0.65rem 0', borderRadius: '16px' }}>
+          <div className={styles['customize-card-info']}>
+            <span className={styles['customize-card-title']}>Custom Design Studio</span>
+            <p className={styles['customize-card-desc']}>
+              Personalize with your own custom text, photo, or graphic design
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={isOutOfStock}
+            onClick={() => navigate(`/products/${product.slug || slug}/customize`, { state: { initialSize: selectedVariant || null, initialColor: selectedColor || null } })}
+            className={styles['btn-customize-spotlight']}
+            title="Open custom design studio"
+          >
+            <span>Customize Product</span>
+            <ArrowRight size={15} />
+          </button>
+        </div>
+      )}
 
       {/* ── 3. Variants & Purchase Actions Card ── */}
       <div className="mobile-pdp-card">
@@ -1728,36 +1791,6 @@ export default function ProductDetail() {
         )}
       </div>
       <div className="mobile-pdp-dock-actions">
-        {product.isCustomizable && (
-          <button
-            type="button"
-            disabled={isOutOfStock}
-            onClick={() => navigate(`/products/${product.slug || slug}/customize`, {
-              state: {
-                initialSize: selectedVariant || null,
-                initialColor: selectedColor || null,
-              }
-            })}
-            className="mobile-pdp-dock-btn-customize"
-            style={{
-              padding: '0.65rem 0.95rem',
-              borderRadius: '10px',
-              border: '1px solid #7c3aed',
-              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 3px 10px rgba(124, 58, 237, 0.25)',
-            }}
-          >
-            Customize
-          </button>
-        )}
         <button
           type="button"
           disabled={isOutOfStock}

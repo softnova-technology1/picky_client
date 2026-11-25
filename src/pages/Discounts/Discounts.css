@@ -1,0 +1,1409 @@
+/* ==========================================================================
+   PICKY LIMITED DEALS - LUXURY LIGHT PURPLE THEME STYLES
+   Strictly using the site's 2 official fonts:
+   - Primary: 'Playfair Display', Georgia, serif
+   - Secondary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif
+   - Mono: 'JetBrains Mono', monospace (Numerals only)
+   ========================================================================== */
+
+:root {
+  --purple-50: #faf7ff;
+  --purple-100: #f3ecfc;
+  --purple-200: #e9dcfc;
+  --purple-300: #d6bdf8;
+  --purple-400: #bc93f4;
+  --purple-500: #9e63ed;
+  --purple-600: #7c3aed;
+  --purple-700: #6d28d9;
+  --purple-800: #581c87;
+  --purple-900: #3b0764;
+  --purple-glow: rgba(124, 58, 237, 0.22);
+}
+
+/* Base Page Root - Uses Site Secondary Font (Inter) */
+.discounts-page-root {
+  background-color: #faf8ff;
+  min-height: 100vh;
+  color: #1e1b4b;
+  font-family: var(--font-secondary, 'Inter', -apple-system, sans-serif);
+  overflow-x: hidden;
+}
+
+/* Keyframe Animations */
+@keyframes pulseRadar {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+  }
+}
+
+@keyframes shimmerStripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 0;
+  }
+}
+
+/* ── Top-to-Bottom Continuous Vertical Auto-Scroll Marquee ── */
+@keyframes scrollVerticalTopToBottom {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+/* ── Bottom-to-Top Continuous Vertical Auto-Scroll Marquee ── */
+@keyframes scrollVerticalBottomToTop {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+/* ── Hero Section (100vh Full Screen Layout on Desktop) ── */
+.discounts-hero-wrapper {
+  position: relative;
+  min-height: calc(100vh - 76px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f0fd;
+  background-image: url('/images/limited-deals/hero_left_products_right_plain_v3.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  border-bottom: 1.5px solid rgba(124, 58, 237, 0.12);
+  padding: 2.5rem 1.5rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1025px) {
+  .discounts-hero-wrapper {
+    height: calc(100vh - 76px);
+    min-height: 680px;
+    padding: 1.75rem 2rem;
+  }
+}
+
+/* Atmospheric Soft White Wash over Left Product Background for Seamless Text Visibility */
+.discounts-hero-grid-pattern {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.62) 42%,
+    rgba(245, 240, 253, 0.25) 54%,
+    rgba(245, 240, 253, 0) 64%
+  );
+}
+
+@media (max-width: 1024px) {
+  .discounts-hero-grid-pattern {
+    background: rgba(255, 255, 255, 0.36);
+  }
+}
+
+/* Hero Content Grid (Split 2-Columns on Desktop) */
+.discounts-hero-container {
+  max-width: 1540px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr);
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .discounts-hero-container {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.discounts-hero-left-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 680px;
+}
+
+.discounts-hero-right-col {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Typography - Strictly Site's Playfair Display */
+.discounts-gradient-title {
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(3.5rem, 5.5vw, 5rem);
+  font-weight: 900;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  color: #1e1b4b;
+  margin: 0 0 1.25rem;
+}
+
+.discounts-gradient-highlight {
+  background: linear-gradient(135deg, #2e0854 0%, #581c87 35%, #7c3aed 70%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  filter: drop-shadow(0 4px 16px rgba(124, 58, 237, 0.28));
+  position: relative;
+}
+
+/* ── Circular SVG Countdown Dials (Playfair Display & Inter) ── */
+.countdown-dials-container {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 0.95vw, 0.95rem);
+  flex-wrap: nowrap;
+  margin-bottom: 2rem;
+  max-width: 100%;
+}
+
+.countdown-dial-pod {
+  position: relative;
+  width: clamp(96px, 8vw, 114px);
+  height: clamp(96px, 8vw, 114px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 50%;
+  box-shadow: 
+    0 14px 34px rgba(124, 58, 237, 0.16),
+    0 3px 8px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.95);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.countdown-dial-pod:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 
+    0 18px 42px rgba(124, 58, 237, 0.24),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.countdown-svg-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.countdown-number {
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2.05rem, 2.5vw, 2.45rem);
+  font-weight: 700;
+  line-height: 1;
+  color: #3b0764;
+  letter-spacing: -0.01em;
+  z-index: 2;
+}
+
+.countdown-label {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: clamp(0.72rem, 0.85vw, 0.8rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-top: 5px;
+  z-index: 2;
+}
+
+.countdown-dial-separator {
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2.2rem, 2.8vw, 2.7rem);
+  font-weight: 700;
+  color: #c084fc;
+  margin-top: -6px;
+  flex-shrink: 0;
+}
+
+.seconds-radar-dot {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #7c3aed;
+  animation: pulseRadar 1.5s infinite;
+  z-index: 3;
+}
+
+/* Stock Claim Progress Meter */
+.stock-meter-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid rgba(124, 58, 237, 0.16);
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
+  margin-bottom: 1.75rem;
+  max-width: 500px;
+}
+
+.stock-meter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  font-size: 0.82rem;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+}
+
+.stock-meter-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #ede9fe;
+  overflow: hidden;
+  position: relative;
+}
+
+.stock-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed 0%, #9333ea 50%, #ec4899 100%);
+  background-size: 20px 20px;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%,
+    transparent
+  );
+  animation: shimmerStripes 1.2s linear infinite;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Coupon Ticket Chip */
+.coupon-ticket-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f5f0fd 0%, #ede8f8 100%);
+  border: 1.5px dashed #a855f7;
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+}
+
+.coupon-ticket-chip:hover {
+  background: #ede8f8;
+  border-color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.15);
+}
+
+/* ==========================================================================
+   3-COLUMN VERTICAL AUTO-SCROLL DEALS STREAM
+   - Center column: 100% fully visible, prominent, bottom-to-top scroll
+   - Side columns: partially visible (flanking edges), top-to-bottom scroll
+   ========================================================================== */
+
+.vertical-deals-stream-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 790px;
+  margin: 0 auto;
+  height: clamp(560px, 76vh, 720px);
+  overflow: hidden;
+  border-radius: 32px;
+  background: transparent;
+  padding: 0.5rem 0;
+  box-sizing: border-box;
+  mask-image: 
+    linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%);
+  -webkit-mask-image: 
+    linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+/* Deep Soft White Gradient Shades for Flanks (Dissolves any sharp cut-off edges) */
+.vertical-deals-stream-wrapper::before,
+.vertical-deals-stream-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 140px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.vertical-deals-stream-wrapper::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(245, 240, 253, 1) 0%,
+    rgba(245, 240, 253, 0.92) 25%,
+    rgba(245, 240, 253, 0.65) 60%,
+    rgba(245, 240, 253, 0.2) 85%,
+    transparent 100%
+  );
+}
+
+.vertical-deals-stream-wrapper::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(245, 240, 253, 1) 0%,
+    rgba(245, 240, 253, 0.92) 25%,
+    rgba(245, 240, 253, 0.65) 60%,
+    rgba(245, 240, 253, 0.2) 85%,
+    transparent 100%
+  );
+}
+
+.vertical-deals-stream-grid.three-columns {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 1.15rem;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+/* Base column styles */
+.vertical-deals-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  height: max-content;
+  will-change: transform;
+}
+
+/* Center Column: Extra Wide (360px), prominent, fully visible on stage */
+.vertical-deals-column.col-center {
+  flex: 0 0 360px;
+  width: 360px;
+  max-width: 360px;
+  opacity: 1;
+  transform: scale(1);
+  z-index: 5;
+  animation: scrollVerticalBottomToTop 42s linear infinite;
+}
+
+/* Side Columns: Partially visible, slightly scaled down, lower opacity, flanking the sides */
+.vertical-deals-column.col-side {
+  flex: 0 0 175px;
+  width: 175px;
+  max-width: 175px;
+  opacity: 0.5;
+  transform: scale(0.9);
+  z-index: 2;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.vertical-deals-column.col-side:hover {
+  opacity: 0.82;
+}
+
+/* Column 1 (Left flank): Top to Bottom scroll */
+.vertical-deals-column.col-left {
+  animation: scrollVerticalTopToBottom 48s linear infinite;
+}
+
+/* Column 3 (Right flank): Top to Bottom scroll */
+.vertical-deals-column.col-right {
+  animation: scrollVerticalTopToBottom 54s linear infinite;
+}
+
+/* Hover pause */
+.vertical-deals-stream-wrapper:hover .vertical-deals-column {
+  animation-play-state: paused;
+}
+
+/* Responsive adjustment on smaller tablets/mobiles */
+@media (max-width: 1024px) {
+  .vertical-deals-column.col-side {
+    display: none;
+  }
+  .vertical-deals-column.col-center {
+    flex: 0 0 280px;
+    width: 280px;
+    max-width: 280px;
+  }
+}
+
+/* ── Luxury Product Deal Card Aesthetics (Vertical Running Stream) ── */
+.dept-deal-card {
+  width: 100%;
+  flex-shrink: 0; /* CRITICAL: Never squish in flex column! */
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 10px 26px -6px rgba(0, 0, 0, 0.08),
+    -6px 0 16px -4px rgba(124, 58, 237, 0.12),
+    6px 0 16px -4px rgba(124, 58, 237, 0.12);
+  border: 1.5px solid rgba(124, 58, 237, 0.16);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Center card: Extra Large, prominent, crisp white product card with deep 3D shadows */
+.col-center .dept-deal-card {
+  border-radius: 24px;
+  padding: 0.85rem;
+  box-shadow: 
+    0 22px 48px -8px rgba(124, 58, 237, 0.28),
+    -12px 0 26px -4px rgba(124, 58, 237, 0.16),
+    12px 0 26px -4px rgba(124, 58, 237, 0.16);
+  border: 1.5px solid rgba(124, 58, 237, 0.32);
+}
+
+.col-center .dept-card-image-wrap {
+  aspect-ratio: 4 / 3.1;
+  border-radius: 18px;
+}
+
+.col-center .dept-card-body {
+  padding: 0.7rem 0.25rem 0.15rem;
+  gap: 0.5rem;
+}
+
+.col-center .dept-card-meta {
+  font-size: 0.7rem;
+}
+
+.col-center .dept-card-title {
+  font-size: 1.15rem !important;
+  -webkit-line-clamp: 1;
+}
+
+.col-center .dept-card-sub {
+  font-size: 0.78rem;
+}
+
+.col-center .dept-card-price {
+  font-size: 1.3rem;
+}
+
+.col-center .dept-card-original-price {
+  font-size: 0.86rem;
+}
+
+.col-center .dept-card-buy-btn {
+  height: 42px;
+  font-size: 0.9rem;
+  border-radius: 12px;
+}
+
+.col-center .dept-card-cart-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+/* Compact adjustments for narrow 175px flank cards */
+.col-side .dept-card-deal-tag,
+.col-side .dept-card-save-pill,
+.col-side .dept-card-sub {
+  display: none;
+}
+
+.col-side .dept-card-image-wrap {
+  aspect-ratio: 1 / 0.88;
+  border-radius: 14px;
+}
+
+.col-side .dept-card-body {
+  padding: 0.45rem 0.15rem 0.1rem;
+  gap: 0.35rem;
+}
+
+.col-side .dept-card-meta {
+  font-size: 0.6rem;
+}
+
+.col-side .dept-card-title {
+  font-size: 0.85rem !important;
+  -webkit-line-clamp: 1;
+}
+
+.col-side .dept-card-price {
+  font-size: 0.95rem;
+}
+
+.col-side .dept-card-original-price {
+  font-size: 0.68rem;
+}
+
+.col-side .dept-card-buy-btn {
+  height: 30px;
+  font-size: 0.72rem;
+  border-radius: 8px;
+}
+
+.col-side .dept-card-cart-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.col-side .dept-card-cart-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Left side column cards: pronounced outer left shadow/shade */
+.col-left .dept-deal-card {
+  box-shadow: 
+    0 8px 24px -6px rgba(0, 0, 0, 0.06),
+    -12px 0 24px -4px rgba(124, 58, 237, 0.22);
+}
+
+/* Right side column cards: pronounced outer right shadow/shade */
+.col-right .dept-deal-card {
+  box-shadow: 
+    0 8px 24px -6px rgba(0, 0, 0, 0.06),
+    12px 0 24px -4px rgba(124, 58, 237, 0.22);
+}
+
+.dept-deal-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 
+    0 20px 45px -8px rgba(124, 58, 237, 0.34),
+    -12px 0 28px -4px rgba(124, 58, 237, 0.2),
+    12px 0 28px -4px rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.48);
+}
+
+/* Top Product Image Frame */
+.dept-card-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 0.9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f5efff;
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.08);
+}
+
+.dept-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.dept-deal-card:hover .dept-card-img {
+  transform: scale(1.06);
+}
+
+.dept-card-deal-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(236, 253, 245, 0.96);
+  backdrop-filter: blur(8px);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.28);
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dept-card-discount-pill {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  color: #6d28d9;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Crisp White Card Body */
+.dept-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.55rem 0.2rem 0.15rem;
+}
+
+.dept-card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dept-card-meta {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c3aed;
+}
+
+.dept-card-title {
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif) !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-transform: capitalize;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dept-card-sub {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.35;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Price & Savings Row */
+.dept-card-price-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+}
+
+.dept-card-price {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #4c1d95;
+  line-height: 1.1;
+}
+
+.dept-card-original-price {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.dept-card-save-pill {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #059669;
+  background: rgba(5, 150, 105, 0.1);
+  border: 1px solid rgba(5, 150, 105, 0.22);
+  padding: 0.18rem 0.5rem;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+/* Buy Now + Cart Action Row */
+.dept-card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0.2rem;
+  width: 100%;
+}
+
+.dept-card-buy-btn {
+  flex: 1;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: #ffffff;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(109, 40, 217, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dept-card-buy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+  box-shadow: 0 10px 24px rgba(109, 40, 217, 0.4);
+  transform: translateY(-2px);
+}
+
+.dept-card-buy-btn:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.dept-card-cart-btn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1.5px solid #ddd6fe;
+  background: #f5f0fd;
+  color: #6d28d9;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.08);
+}
+
+.dept-card-cart-btn:hover:not(:disabled) {
+  background: #ede9fe;
+  border-color: #7c3aed;
+  color: #4c1d95;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(109, 40, 217, 0.16);
+}
+
+.dept-card-cart-btn.added {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.dept-card-cart-btn:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Steal Deals Quick Filter Pills Bar ── */
+.steal-deals-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #ddd6fe transparent;
+}
+
+.steal-deal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1.5px solid #e9d5ff;
+  color: #4c1d95;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.05);
+}
+
+.steal-deal-pill:hover {
+  background: #faf5ff;
+  border-color: #7c3aed;
+  color: #7c3aed;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.12);
+}
+
+.steal-deal-pill.active {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  border-color: #6d28d9;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Spotlight Deal of the Day Banner ── */
+.spotlight-banner-card {
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 50%, #f3e8ff 100%);
+  border: 2px solid rgba(147, 51, 234, 0.25);
+  border-radius: 28px;
+  padding: 2.25rem;
+  box-shadow: 0 15px 40px -10px rgba(124, 58, 237, 0.16);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+}
+
+@media (max-width: 860px) {
+  .spotlight-banner-card {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+}
+
+/* ── Multi-Product Category Cards Grid ── */
+.category-deals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3.5rem;
+}
+
+.category-deal-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(124, 58, 237, 0.12);
+  border-radius: 20px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+}
+
+.category-deal-card:hover {
+  transform: translateY(-4px);
+  border-color: #7c3aed;
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.14);
+}
+
+.category-deal-card.active {
+  background: linear-gradient(180deg, #f5f0fd 0%, #ffffff 100%);
+  border-color: #7c3aed;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.16);
+}
+
+/* ── Coupon Tickets Strip ── */
+.coupon-cards-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin: 2.5rem 0 3.5rem;
+}
+
+.coupon-perforated-ticket {
+  background: #ffffff;
+  border: 1.5px dashed #c084fc;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.06);
+  transition: all 0.2s ease;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+}
+
+.coupon-perforated-ticket:hover {
+  border-color: #7c3aed;
+  background: #fdfaff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
+}
+
+/* In-Page Notification Toast */
+.deal-inpage-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  background: #1e1b4b;
+  color: #ffffff;
+  padding: 0.85rem 1.35rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  box-shadow: 0 12px 35px rgba(30, 27, 75, 0.35);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .discounts-hero-wrapper {
+    min-height: auto;
+    height: auto;
+    padding: 2.25rem 1rem 2rem;
+    background-image: url('/images/limited-deals/hero_mobile_flatlay_bg.jpg');
+    background-position: center center;
+  }
+
+  .discounts-hero-container {
+    gap: 0;
+  }
+
+  .discounts-hero-right-col,
+  .vertical-deals-stream-wrapper {
+    display: none !important;
+  }
+
+  .discounts-hero-left-col {
+    max-width: 100%;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .discounts-gradient-title {
+    text-align: center;
+    width: 100%;
+  }
+
+  .discounts-hero-subtitle {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .discounts-timer-label-row {
+    justify-content: center;
+  }
+
+  .discounts-hero-cta-row {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .discounts-hero-trust-row {
+    justify-content: center;
+    gap: 0.75rem 1.25rem !important;
+  }
+
+  .discounts-hero-cta-btn {
+    padding: 0.68rem 1.55rem !important;
+    font-size: 0.88rem !important;
+    gap: 0.45rem !important;
+  }
+
+  .discounts-hero-cta-btn svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .discounts-flash-section {
+    padding: 0 8px !important;
+    margin: 2rem auto 2rem !important;
+  }
+
+  .discounts-flash-header {
+    margin-bottom: 1.15rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .discounts-flash-status-pill {
+    display: none !important;
+  }
+
+  /* Give mobile 2-column cards maximum width (8px outer padding + 8px gap = 175.5px at 375px) so offer pill never clips */
+  .shop-catalog-grid.discounts-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 8px !important;
+    row-gap: 14px !important;
+    width: 100% !important;
+  }
+
+  .discounts-product-grid .ref-card-bottom {
+    padding: 8px 5px 10px !important;
+  }
+
+  .discounts-product-grid .ref-price-row {
+    gap: 4px !important;
+  }
+
+  .discounts-product-grid .ref-discount-pill {
+    padding: 1px 3px !important;
+  }
+
+  .countdown-dials-container {
+    gap: 0.65rem;
+    justify-content: center;
+  }
+
+  .countdown-dial-pod {
+    width: 66px;
+    height: 66px;
+  }
+
+  .countdown-number {
+    font-size: 1.3rem;
+  }
+
+  .countdown-label {
+    font-size: 0.52rem;
+  }
+
+  .countdown-dial-separator {
+    display: none;
+  }
+
+  .stock-meter-card {
+    padding: 0.75rem 1rem;
+  }
+
+  .category-deals-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+  }
+
+  .coupon-cards-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-deals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Buyer Protection & Trust Badges Grid ── */
+.trust-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.15rem;
+}
+
+@media (max-width: 1024px) {
+  .trust-badges-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .trust-badges-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Limited Deals Parallax Fixed Feature Section ── */
+.limited-deals-parallax-section {
+  position: relative;
+  width: 100%;
+  background-image: url('/images/limited-deals/picky_luxury_ecommerce_multiproduct_bg.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed !important;
+  margin: 1.5rem 0 3rem;
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 16px 40px -10px rgba(0, 0, 0, 0.35),
+    inset 0 0 80px rgba(0, 0, 0, 0.4);
+}
+
+.limited-deals-parallax-overlay {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 10, 15, 0.6) 0%,
+    rgba(10, 10, 15, 0.35) 45%,
+    rgba(10, 10, 15, 0.1) 80%,
+    rgba(10, 10, 15, 0.05) 100%
+  );
+  padding: 4.5rem 1.5rem;
+}
+
+.limited-deals-parallax-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3.5rem;
+}
+
+.limited-deals-parallax-content {
+  flex: 1 1 55%;
+  max-width: 660px;
+  color: #ffffff;
+}
+
+.limited-deals-parallax-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 0.45rem 1.15rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  backdrop-filter: blur(8px);
+}
+
+.limited-deals-parallax-title {
+  font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+
+.limited-deals-parallax-desc {
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 1.02rem;
+  color: #f1f5f9;
+  line-height: 1.65;
+  margin: 0 0 1.75rem;
+  max-width: 580px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.limited-deals-parallax-perks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2.25rem;
+}
+
+.limited-deals-parallax-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.limited-deals-parallax-perk-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.limited-deals-parallax-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #ffffff;
+  color: #111827;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.96rem;
+  font-weight: 800;
+  padding: 0.95rem 2.25rem;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+}
+
+.limited-deals-parallax-cta:hover {
+  transform: translateY(-2px);
+  background: #f8fafc;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+  color: #000000;
+}
+
+/* Image Showcase Side */
+.limited-deals-parallax-image-wrapper {
+  flex: 1 1 45%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.limited-deals-parallax-image-card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4 / 3;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.limited-deals-parallax-image-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.65);
+}
+
+.limited-deals-parallax-image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.limited-deals-floating-badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: rgba(220, 38, 38, 0.92);
+  color: #ffffff;
+  font-family: var(--font-secondary, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+.limited-deals-floating-card-bottom {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  right: 18px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .limited-deals-parallax-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 2.5rem;
+  }
+  .limited-deals-parallax-content {
+    max-width: 100%;
+  }
+  .limited-deals-parallax-desc {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .limited-deals-parallax-perks {
+    align-items: center;
+  }
+  .limited-deals-parallax-overlay {
+    padding: 3.5rem 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .limited-deals-parallax-section {
+    background-image: url('/images/limited-deals/picky_luxury_parallax_mobile_bg.jpg');
+    background-attachment: scroll !important;
+    background-size: cover;
+    background-position: center bottom;
+  }
+
+  .limited-deals-parallax-overlay {
+    padding: 2.5rem 1.25rem 3.25rem;
+    background: linear-gradient(
+      180deg,
+      rgba(10, 10, 15, 0.72) 0%,
+      rgba(10, 10, 15, 0.56) 62%,
+      rgba(10, 10, 15, 0.42) 100%
+    );
+  }
+
+  .limited-deals-parallax-cta {
+    padding: 0.72rem 1.65rem;
+    font-size: 0.88rem;
+  }
+}

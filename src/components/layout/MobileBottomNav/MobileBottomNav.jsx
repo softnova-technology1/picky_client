@@ -29,7 +29,7 @@ export default function MobileBottomNav() {
     isActive('/orders') ||
     (!isLoggedIn && (isActive('/login') || isActive('/signup')));
 
-  if (!showMobileBottomNav || currentPath.startsWith('/checkout') || currentPath.startsWith('/order-success')) {
+  if (!showMobileBottomNav || currentPath.startsWith('/checkout') || currentPath.startsWith('/order-success') || currentPath.includes('/customize')) {
     return null;
   }
 

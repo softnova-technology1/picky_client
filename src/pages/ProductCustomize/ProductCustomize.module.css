@@ -26,7 +26,7 @@
 }
 
 .breadcrumb-current {
-  color: #0284c7;
+  color: #630ed4;
   font-weight: 600;
 }
 
@@ -95,6 +95,7 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  padding-bottom: 4rem;
 }
 
 .section-card {
@@ -129,7 +130,7 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: #0284c7;
+  background: #630ed4;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -189,9 +190,9 @@
 }
 
 .text-input:focus {
-  border-color: #0284c7;
+  border-color: #7c3aed;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+  box-shadow: 0 0 0 3px rgba(99, 14, 212, 0.12);
 }
 
 /* Font Styles: 4 Direct Options + Dropdown */
@@ -236,9 +237,9 @@
 }
 
 .font-card.active {
-  border-color: #0284c7;
-  background: #f0f9ff;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+  border-color: #630ed4;
+  background: #faf5ff;
+  box-shadow: 0 2px 8px rgba(99, 14, 212, 0.15);
 }
 
 .font-sample {
@@ -248,7 +249,7 @@
 }
 
 .font-card.active .font-sample {
-  color: #0284c7;
+  color: #630ed4;
 }
 
 .font-name {
@@ -277,20 +278,20 @@
 }
 
 .font-dropdown-card:hover {
-  border-color: #0284c7;
-  background: #f0f9ff;
+  border-color: #7c3aed;
+  background: #faf5ff;
   transform: translateY(-1px);
 }
 
 .font-dropdown-card.active {
   border-style: solid;
-  border-color: #0284c7;
-  background: #f0f9ff;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+  border-color: #630ed4;
+  background: #faf5ff;
+  box-shadow: 0 2px 8px rgba(99, 14, 212, 0.15);
 }
 
 .font-dropdown-card.active .font-sample {
-  color: #0284c7;
+  color: #630ed4;
 }
 
 .font-dropdown-select-overlay {
@@ -314,8 +315,8 @@
   gap: 0.35rem;
   padding: 0.35rem 0.75rem;
   border-radius: 9999px;
-  background: #e0f2fe;
-  color: #0369a1;
+  background: #f3e8ff;
+  color: #6d28d9;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -402,7 +403,7 @@
 }
 
 .hover-btn-view:hover {
-  background: #0284c7;
+  background: #630ed4;
   color: #ffffff;
 }
 
@@ -427,14 +428,14 @@
 }
 
 .image-upload-slot:hover {
-  border-color: #0284c7;
-  background: #f0f9ff;
+  border-color: #7c3aed;
+  background: #faf5ff;
 }
 
 .upload-slot-text {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #0284c7;
+  color: #630ed4;
   line-height: 1.15;
 }
 
@@ -469,10 +470,10 @@
 }
 
 .material-chip.active {
-  border-color: #0284c7;
-  background: #f0f9ff;
-  color: #0284c7;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.12);
+  border-color: #630ed4;
+  background: #faf5ff;
+  color: #630ed4;
+  box-shadow: 0 2px 6px rgba(99, 14, 212, 0.12);
 }
 
 /* Size Chips */
@@ -501,8 +502,8 @@
 }
 
 .size-chip.active {
-  border-color: #0284c7;
-  background: #0284c7;
+  border-color: #630ed4;
+  background: #630ed4;
   color: #ffffff;
 }
 
@@ -533,7 +534,7 @@
 }
 
 .color-swatch.active {
-  box-shadow: 0 0 0 2.5px #0284c7, 0 3px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 2.5px #630ed4, 0 3px 8px rgba(0, 0, 0, 0.15);
   transform: scale(1.12);
 }
 
@@ -543,9 +544,9 @@
   gap: 0.4rem;
   padding: 0.55rem 0.95rem;
   border-radius: 9999px;
-  border: 1.5px dashed #0284c7;
-  background: #f0f9ff;
-  color: #0284c7;
+  border: 1.5px dashed #7c3aed;
+  background: #faf5ff;
+  color: #630ed4;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -553,7 +554,7 @@
 }
 
 .add-color-btn:hover {
-  background: #e0f2fe;
+  background: #f3e8ff;
 }
 
 .custom-color-picker-box {
@@ -570,14 +571,14 @@
 }
 
 .custom-color-picker-box:hover {
-  border-color: #0284c7;
-  background: #f0f9ff;
+  border-color: #7c3aed;
+  background: #faf5ff;
 }
 
 .custom-color-picker-box.active-custom-color {
-  border-color: #0284c7;
-  background: #f0f9ff;
-  box-shadow: 0 0 0 2.5px rgba(2, 132, 199, 0.25);
+  border-color: #630ed4;
+  background: #faf5ff;
+  box-shadow: 0 0 0 2.5px rgba(99, 14, 212, 0.25);
 }
 
 /* Example Images (Front & Back) */
@@ -629,8 +630,176 @@
   flex-wrap: wrap;
   gap: 1.25rem;
   box-shadow: 0 12px 36px rgba(15, 23, 42, 0.35);
-  margin-top: 1.25rem;
+  margin-top: 1.75rem;
+  margin-bottom: 2rem;
   transition: transform 0.2s, box-shadow 0.2s;
+}
+
+@media (min-width: 769px) {
+  .submit-actions-group {
+    padding-right: 4.5rem; /* Reserve clearance so floating WhatsApp / Cart button never overlaps the Proceed CTA */
+  }
+}
+
+@media (max-width: 768px) {
+  .submit-card {
+    position: sticky;
+    bottom: 0.75rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+
+  /* ── Mobile Connected Timeline Stepper (Step 1 ── Step 2 ── Step 3 ...) ── */
+  .stepper-wrapper {
+    margin-bottom: 1.25rem;
+    padding: 0;
+    width: 100%;
+  }
+
+  .stepper-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    border: 1px solid #ede9fe !important;
+    border-radius: 16px !important;
+    padding: 1.15rem 0.5rem 0.85rem !important;
+    box-shadow: 0 4px 18px rgba(99, 14, 212, 0.06) !important;
+    gap: 0 !important;
+    position: relative !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .stepper-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .stepper-tab {
+    flex: 1 1 0 !important;
+    min-width: 62px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 6px 0.15rem 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    cursor: pointer !important;
+    overflow: visible !important;
+  }
+
+  .stepper-tab-active,
+  .stepper-tab-completed {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Connecting timeline line between steps */
+  .stepper-tab:not(:last-child)::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 20px !important; /* Centered with 28px badge (6px padding-top + 14px) */
+    left: 50% !important;
+    width: 100% !important;
+    height: 2px !important;
+    background: #e2e8f0 !important;
+    z-index: 1 !important;
+    transition: background 0.25s ease !important;
+  }
+
+  .stepper-tab-completed:not(:last-child)::after {
+    background: #630ed4 !important;
+  }
+
+  .stepper-badge {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    border: 2px solid #cbd5e1 !important;
+    color: #64748b !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    z-index: 3 !important;
+    margin-bottom: 0.35rem !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 0 0 3px #ffffff !important;
+    overflow: visible !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .stepper-tab-active .stepper-badge {
+    background: #630ed4 !important;
+    border-color: #630ed4 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 3px #ffffff, 0 0 0 6px rgba(99, 14, 212, 0.22), 0 3px 8px rgba(99, 14, 212, 0.35) !important;
+    transform: none !important;
+  }
+
+  .stepper-tab-completed .stepper-badge {
+    background: #7c3aed !important;
+    border-color: #7c3aed !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 3px #ffffff !important;
+  }
+
+  .stepper-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 0.12rem !important;
+    width: 100% !important;
+  }
+
+  .stepper-step-label {
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    color: #94a3b8 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+  }
+
+  .stepper-tab-active .stepper-step-label {
+    color: #630ed4 !important;
+    font-weight: 800 !important;
+  }
+
+  .stepper-step-title {
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    line-height: 1.15 !important;
+  }
+
+  .stepper-tab-active .stepper-step-title {
+    color: #1e1b4b !important;
+    font-weight: 800 !important;
+  }
 }
 
 .submit-pricing-col {
@@ -650,7 +819,7 @@
 .pricing-total {
   font-size: 1.55rem;
   font-weight: 800;
-  color: #38bdf8;
+  color: #c084fc;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
@@ -709,7 +878,7 @@
   padding: 0 1.6rem;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #630ed4 100%);
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -717,7 +886,7 @@
   align-items: center;
   gap: 0.55rem;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 4px 16px rgba(99, 14, 212, 0.35);
   transition: transform 0.15s, box-shadow 0.15s;
   box-sizing: border-box;
   white-space: nowrap;
@@ -725,21 +894,43 @@
 
 .btn-proceed-order:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(2, 132, 199, 0.45);
+  box-shadow: 0 6px 22px rgba(99, 14, 212, 0.45);
 }
 
 @media (max-width: 640px) {
   .submit-card {
-    padding: 0.85rem 1.15rem;
-    gap: 0.85rem;
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "price stepper"
+      "cta cta" !important;
+    gap: 0.75rem 1rem !important;
+    padding: 0.85rem 1rem !important;
+    align-items: center !important;
   }
+
+  .submit-pricing-col {
+    grid-area: price !important;
+  }
+
   .submit-actions-group {
-    width: 100%;
-    justify-content: space-between;
+    display: contents !important;
   }
+
+  .quantity-stepper {
+    grid-area: stepper !important;
+    align-self: center !important;
+  }
+
   .btn-proceed-order {
-    flex: 1;
-    justify-content: center;
+    grid-area: cta !important;
+    width: 100% !important;
+    height: 44px !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+    padding: 0 1rem !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
   }
 }
 
@@ -830,10 +1021,17 @@
   border-color: #e2e8f0;
 }
 
-.stepper-tab-active {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
-  border-color: #0284c7 !important;
-  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.15);
+@media (min-width: 769px) {
+  .stepper-tab-active {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%) !important;
+    border-color: #630ed4 !important;
+    box-shadow: 0 2px 10px rgba(99, 14, 212, 0.15);
+  }
+}
+
+.stepper-tab-completed .stepper-badge {
+  background: #7c3aed;
+  color: #ffffff;
 }
 
 .stepper-badge {
@@ -852,11 +1050,10 @@
 }
 
 .stepper-tab-active .stepper-badge {
-  background: #0284c7;
+  background: #630ed4;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 2px 6px rgba(99, 14, 212, 0.35);
 }
-
 
 .stepper-info {
   display: flex;
@@ -874,7 +1071,7 @@
 }
 
 .stepper-tab-active .stepper-step-label {
-  color: #0284c7;
+  color: #630ed4;
 }
 
 .stepper-step-title {
@@ -886,7 +1083,7 @@
 }
 
 .stepper-tab-active .stepper-step-title {
-  color: #0369a1;
+  color: #4c1d95;
 }
 
 /* ── Step Footer Navigation Buttons ── */
@@ -961,7 +1158,7 @@
   padding: 0.65rem 1.45rem;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #630ed4 100%);
   color: #ffffff;
   font-size: 0.88rem;
   font-weight: 700;
@@ -969,7 +1166,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
+  box-shadow: 0 4px 14px rgba(99, 14, 212, 0.25);
   transition: all 0.2s ease;
   margin-left: auto;
   white-space: nowrap;
@@ -977,5 +1174,163 @@
 
 .btn-step-next:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 6px 18px rgba(99, 14, 212, 0.35);
+}
+
+/* ── Custom Popover for Mobile Font Dropdown (Bounded within viewport) ── */
+.font-dropdown-popover {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .font-dropdown-select-overlay {
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .font-dropdown-select-overlay {
+    display: none !important; /* Never open the native overflowing OS select on mobile */
+  }
+
+  .font-dropdown-card {
+    position: relative !important;
+  }
+
+  .font-popover-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 98 !important;
+    background: rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .font-dropdown-popover {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    width: 250px !important;
+    max-width: calc(100vw - 32px) !important;
+    background: #ffffff !important;
+    border: 1.5px solid #ede9fe !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 32px rgba(99, 14, 212, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    z-index: 99 !important;
+    overflow: hidden !important;
+    cursor: default !important;
+    animation: fadeInDropdown 0.15s ease-out !important;
+  }
+
+  /* When card is on the right column (child 2, 4), anchor right so it expands inwards to the left */
+  .font-dropdown-card:nth-child(even) .font-dropdown-popover {
+    right: 0 !important;
+    left: auto !important;
+  }
+
+  /* When card is on the left column (child 1, 3), anchor left so it expands inwards to the right */
+  .font-dropdown-card:nth-child(odd) .font-dropdown-popover {
+    left: 0 !important;
+    right: auto !important;
+  }
+
+  .font-popover-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.65rem 0.85rem !important;
+    background: #faf5ff !important;
+    border-bottom: 1px solid #ede9fe !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    color: #630ed4 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  .font-popover-close {
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    padding: 0 0.2rem !important;
+    line-height: 1 !important;
+  }
+
+  .font-popover-close:hover {
+    color: #630ed4 !important;
+  }
+
+  .font-popover-list {
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 230px !important;
+    overflow-y: auto !important;
+    padding: 0.35rem 0 !important;
+  }
+
+  .font-popover-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.6rem 0.85rem !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    transition: background 0.15s ease !important;
+    border-bottom: 1px solid #f8fafc !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .font-popover-item:last-child {
+    border-bottom: none !important;
+  }
+
+  .font-popover-item:hover,
+  .font-popover-item:active {
+    background: #faf5ff !important;
+  }
+
+  .font-popover-item.active-font-item {
+    background: #f5f3ff !important;
+  }
+
+  .font-popover-item-text {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.15rem !important;
+  }
+
+  .font-popover-item-name {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+  }
+
+  .active-font-item .font-popover-item-name {
+    color: #630ed4 !important;
+  }
+
+  .font-popover-item-sample {
+    font-size: 0.88rem !important;
+    color: #475569 !important;
+  }
+
+  .active-font-item .font-popover-item-sample {
+    color: #630ed4 !important;
+  }
+}
+
+@keyframes fadeInDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

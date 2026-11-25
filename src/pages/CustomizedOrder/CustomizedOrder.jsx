@@ -140,15 +140,13 @@ export default function CustomizedOrder() {
           <div className={styles['header-title-col']}>
             <h1 className={styles['order-main-title']}>Customized Order Review</h1>
             <div className={styles['order-ref-meta']}>
-              <span>Order Reference: <strong>#{orderId}</strong></span>
-              <span>•</span>
-              <span>Status: Ready for Production &amp; Checkout</span>
+              <span className={styles['order-ref-pill']}>Ref: <strong>#{orderId}</strong></span>
+              <span className={styles['order-status-pill']}>Ready for Production</span>
             </div>
           </div>
           <Link
             to={`/products/${product.slug}/customize`}
-            className={styles['btn-edit-custom']}
-            style={{ color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}
+            className={styles['btn-edit-header']}
           >
             <Edit2 size={14} /> Edit Specifications
           </Link>
@@ -179,19 +177,21 @@ export default function CustomizedOrder() {
                 {product.name}
               </Link>
               <div className={styles['origin-submeta']}>
-                <span>SKU: {product.sku || 'PRD'}</span>
-                <span>•</span>
-                <span>Category: {product.category || 'Apparel'}</span>
-                <span>•</span>
-                <span>Quantity: <strong>{quantity} Item(s)</strong></span>
+                <span className={styles['submeta-tag']}>SKU: <strong>{product.sku || 'PRD'}</strong></span>
+                <span className={styles['meta-dot']}>•</span>
+                <span className={styles['submeta-tag']}>Category: <strong>{product.category || 'Apparel'}</strong></span>
+                <span className={styles['meta-dot']}>•</span>
+                <span className={styles['submeta-tag']}>Quantity: <strong>{quantity} Item(s)</strong></span>
               </div>
             </div>
           </div>
 
           <div className={styles['origin-price-box']}>
-            <span className={styles['unit-price-label']}>Total Unit Price</span>
-            <span className={styles['unit-price-val']}>{formatPrice(pricing.totalUnitPrice)}</span>
-            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+            <div className={styles['price-box-top']}>
+              <span className={styles['unit-price-label']}>Total Unit Price</span>
+              <span className={styles['unit-price-val']}>{formatPrice(pricing.totalUnitPrice)}</span>
+            </div>
+            <span className={styles['unit-price-breakdown']}>
               Base: {formatPrice(pricing.basePrice)} + Customization: +{formatPrice(pricing.customizationCost)}
             </span>
           </div>
@@ -474,7 +474,7 @@ export default function CustomizedOrder() {
               <span>Base Product Price ({formatPrice(pricing.basePrice)} × {quantity})</span>
               <strong>{formatPrice(pricing.basePrice * quantity)}</strong>
             </div>
-            <div className={styles['summary-row']} style={{ color: '#38bdf8' }}>
+            <div className={styles['summary-row']} style={{ color: '#c084fc' }}>
               <span>Customization Fee ({formatPrice(pricing.customizationCost)} × {quantity})</span>
               <strong>+{formatPrice(pricing.customizationCost * quantity)}</strong>
             </div>

@@ -368,13 +368,23 @@
   }
 
   .mobile-pdp-swatch-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1.5px #ccc3d8;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    aspect-ratio: 1 / 1 !important;
+    flex: 0 0 32px !important;
+    border-radius: 50% !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 0 1.5px #ccc3d8 !important;
     cursor: pointer;
     outline: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 0 !important;
+    box-sizing: border-box !important;
     transition: transform 0.15s ease;
   }
 

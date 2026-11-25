@@ -1415,6 +1415,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: calc(100% - 240px);
+  margin: 0 auto;
 }
 
 .hp-cat-eyebrow {

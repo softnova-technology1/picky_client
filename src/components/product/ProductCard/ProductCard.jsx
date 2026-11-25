@@ -10,7 +10,7 @@ import { extractProductTag, getTagDesign } from '../../../utils/productTagHelper
 
 import './ProductCard.css';
 
-export default function ProductCard({ product, actionText = 'Add to Cart', onAction, onRemoveWishlist, badgeText, hideBadge = false }) {
+export default function ProductCard({ product, actionText = 'Add to Cart', onAction, onRemoveWishlist, badgeText, hideBadge = false, buyNowOnly = false }) {
   const navigate = useNavigate();
   const { addItem, setBuyNowItem } = useCartStore();
   const { isInWishlist, toggleItem } = useWishlistStore();
@@ -75,9 +75,16 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
+  const isOutOfStock = typeof product.stock === 'number' && product.stock <= 0;
+
   const handleQuickAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isOutOfStock) {
+      showToast('This item is currently out of stock', 'error');
+      return;
+    }
 
     if (onAction) {
       onAction(product);
@@ -86,7 +93,16 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
       return;
     }
 
-    addItem(product, 1);
+    const activePrice = currentPrice || product.discountPrice || product.price || 0;
+    addItem(
+      {
+        ...product,
+        basePrice: activePrice,
+        discountPrice: activePrice,
+        originalPrice: Number(product.originalPrice || originalPrice || activePrice),
+      },
+      1
+    );
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1600);
     showToast(`Added "${product.name}" to cart!`, 'success');
@@ -95,7 +111,31 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
   const handleBuyNow = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isOutOfStock) {
+      showToast('This item is currently out of stock', 'error');
+      return;
+    }
+
     const prodId = product._id || product.id || product.slug;
+    const activePrice = currentPrice || product.discountPrice || product.price || 0;
+    const hasDbVariants =
+      product?.variants?.type &&
+      product.variants.type !== 'none' &&
+      Array.isArray(product.variants.options) &&
+      product.variants.options.length > 0;
+    const firstOpt = hasDbVariants ? product.variants.options[0] : null;
+    const defaultSize =
+      product?.variants?.default ||
+      (firstOpt && typeof firstOpt === 'object' ? firstOpt.label || firstOpt.name || firstOpt.size : firstOpt) ||
+      '';
+    const firstColor =
+      Array.isArray(product?.variants?.colors) && product.variants.colors.length > 0
+        ? (typeof product.variants.colors[0] === 'object'
+            ? product.variants.colors[0].name || product.variants.colors[0].label
+            : product.variants.colors[0])
+        : '';
+
     setBuyNowItem({
       _id: prodId,
       id: prodId,
@@ -104,9 +144,12 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
       name: product.name,
       image: primaryImage || '',
       images: product.images || (primaryImage ? [primaryImage] : []),
-      price: product.discountPrice || product.price || 0,
-      discountPrice: product.discountPrice || product.price || 0,
-      originalPrice: product.originalPrice || product.price || 0,
+      price: activePrice,
+      discountPrice: activePrice,
+      originalPrice: Number(product.originalPrice || originalPrice || activePrice),
+      basePrice: activePrice,
+      ...(defaultSize ? { selectedSize: defaultSize, selectedVariant: defaultSize } : {}),
+      ...(firstColor ? { selectedColor: firstColor } : {}),
       quantity: 1,
       stock: typeof product.stock === 'number' ? product.stock : 10,
     });
@@ -346,10 +389,33 @@ export default function ProductCard({ product, actionText = 'Add to Cart', onAct
 
 
         <div className="ref-actions-row">
-          <button className="ref-add-cart-btn" onClick={handleQuickAdd}>
-            {justAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
-            <span>{justAdded ? 'Added' : (actionText || 'Add to Cart')}</span>
-          </button>
+          {buyNowOnly ? (
+            <>
+              <button
+                type="button"
+                className="ref-add-cart-btn ref-buy-now-btn"
+                onClick={handleBuyNow}
+                disabled={isOutOfStock}
+              >
+                <span>{isOutOfStock ? 'Out of Stock' : 'Buy Now'}</span>
+              </button>
+              <button
+                type="button"
+                className={`ref-cart-icon-btn ${justAdded ? 'added' : ''}`}
+                onClick={handleQuickAdd}
+                disabled={isOutOfStock}
+                aria-label={`Add ${product.name} to cart`}
+                title="Add to Cart"
+              >
+                {justAdded ? <Check size={17} strokeWidth={2.5} /> : <ShoppingCart size={17} strokeWidth={2.2} />}
+              </button>
+            </>
+          ) : (
+            <button className="ref-add-cart-btn" onClick={handleQuickAdd}>
+              {justAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
+              <span>{justAdded ? 'Added' : (actionText || 'Add to Cart')}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

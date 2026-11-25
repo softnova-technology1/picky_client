@@ -316,11 +316,14 @@
 /* Actions */
 .ref-actions-row {
     display: flex;
+    align-items: center;
+    gap: 8px;
     margin-top: auto;
 }
 
 .ref-add-cart-btn {
     width: 100%;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -342,6 +345,52 @@
     background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
     box-shadow: 0 10px 24px rgba(109, 40, 217, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
+}
+
+.ref-add-cart-btn:disabled {
+    background: #cbd5e1;
+    color: #475569;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ref-cart-icon-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1.5px solid #ddd6fe;
+    background: #f5f0fd;
+    color: #6d28d9;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(109, 40, 217, 0.08);
+}
+
+.ref-cart-icon-btn:hover:not(:disabled) {
+    background: #ede9fe;
+    border-color: #7c3aed;
+    color: #4c1d95;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(109, 40, 217, 0.16);
+}
+
+.ref-cart-icon-btn.added {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #059669;
+}
+
+.ref-cart-icon-btn:disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* Mobile adjustments (320px - 768px) */
@@ -514,6 +563,17 @@
         width: 13px !important;
         height: 13px !important;
     }
+
+    .ref-cart-icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+    }
+
+    .ref-cart-icon-btn svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
 }
 
 @media (max-width: 350px) {
@@ -576,6 +636,17 @@
         font-size: 0.68rem !important;
         white-space: nowrap !important;
         flex-direction: row !important;
+    }
+
+    .ref-cart-icon-btn {
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 8px !important;
+    }
+
+    .ref-cart-icon-btn svg {
+        width: 13px !important;
+        height: 13px !important;
     }
 }
 

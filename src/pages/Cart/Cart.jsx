@@ -736,20 +736,27 @@ export default function Cart() {
                             <div className={styles['cart-variant-group']}>
                               <span className={styles['variant-label']}>Color:</span>
                               <div className={styles['color-chips-wrap']}>
-                                {colors.map((c, i) => (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    className={`${styles['cart-color-chip']} ${item.selectedColor === c ? styles['cart-color-active'] : ''}`}
-                                    style={{ backgroundColor: c }}
-                                    onClick={() => {
-                                      updateVariant(item, { selectedColor: c });
-                                      showToast(`Selected color for ${item.name}`, 'info');
-                                    }}
-                                    title={c}
-                                    aria-label={`Color ${c}`}
-                                  />
-                                ))}
+                                {colors.map((c, i) => {
+                                  const colorBg = typeof c === 'object' ? (c.color || c.hex || c.name || '#cbd5e1') : c;
+                                  const colorVal = typeof c === 'object' ? (c.name || c.id || c.color || c.hex) : c;
+                                  const colorTitle = typeof c === 'object' ? (c.name || c.color || c.hex) : c;
+                                  const isSelected = item.selectedColor === colorVal || item.selectedColor === colorTitle;
+
+                                  return (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      className={`${styles['cart-color-chip']} ${isSelected ? styles['cart-color-active'] : ''}`}
+                                      style={{ backgroundColor: colorBg }}
+                                      onClick={() => {
+                                        updateVariant(item, { selectedColor: colorVal });
+                                        showToast(`Selected color "${colorTitle}" for ${item.name}`, 'info');
+                                      }}
+                                      title={colorTitle}
+                                      aria-label={`Color ${colorTitle}`}
+                                    />
+                                  );
+                                })}
                               </div>
                               {!item.selectedColor && (
                                 <span className={styles['variant-required-pill']}>Select Color *</span>

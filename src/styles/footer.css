@@ -82,7 +82,7 @@
 .picky-footer-body {
   background: linear-gradient(180deg, #1c093b 0%, #27114b 50%, #0a011d 100%);
   color: #e2e8f0;
-  padding: 3.5rem 1.5rem 2.25rem;
+  padding: 3.5rem 1.5rem 4.75rem;
   position: relative;
   z-index: 3;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
@@ -118,6 +118,10 @@
   margin-bottom: 3.25rem;
 }
 
+.footer-col-contact {
+  padding-right: 4.5rem;
+}
+
 @media (max-width: 1200px) {
   .footer-grid {
     grid-template-columns: 1.4fr 1fr 1fr 1fr;
@@ -129,6 +133,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     padding-top: 1.75rem;
+    padding-right: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 }
@@ -568,6 +573,10 @@
 
 /* ── PICKY Mobile Typography Standard ── */
 @media (max-width: 768px) {
+  .picky-footer-body {
+    padding-bottom: calc(85px + env(safe-area-inset-bottom, 20px)) !important;
+  }
+
   .footer-contact-title,
   .footer-contact-sub,
   .footer-contact-item,

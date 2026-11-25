@@ -199,7 +199,7 @@
   }
 
   /* Buttons & CTAs */
-  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]):not([class*="dot"]):not([class*="Dot"]):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
+  button:not(.mobile-nav-hamburger-btn):not(.mobile-search-filter-btn):not([class*="iconBtn"]):not([class*="IconBtn"]):not([class*="dot"]):not([class*="Dot"]):not([class*="activeDot"]):not([class*="inactiveDot"]):not([class*="swatch"]):not(.mobile-pdp-swatch-circle):not(.ref-add-cart-btn):not(.hero-mobile-cta):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .mobile-cta-btn,
   [class*="btnPrimary"],
   [class*="btnSecondary"],
@@ -406,8 +406,8 @@
   .mobile-pdp-discount-badge,
   .mobile-pdp-rating-badge,
   .legal-badge-pill,
-  [class*="badge"]:not(.mobile-header-badge),
-  [class*="Badge"]:not(.mobile-header-badge),
+  [class*="badge"]:not(.mobile-header-badge):not([class*="stepper-badge"]),
+  [class*="Badge"]:not(.mobile-header-badge):not([class*="stepper-badge"]),
   [class*="pill"]:not([class*="rail"]),
   [class*="Pill"]:not([class*="rail"]) {
     font-size: var(--p-font-badge) !important;

@@ -8,8 +8,13 @@ export default function FloatingActions() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide floating action buttons on checkout to prevent covering bottom actions
-  if (location.pathname.startsWith('/checkout') || location.pathname.startsWith('/order-success')) {
+  // Hide floating action buttons on checkout, cart and customize to prevent covering critical actions
+  if (
+    location.pathname.startsWith('/checkout') ||
+    location.pathname.startsWith('/order-success') ||
+    location.pathname === '/cart' ||
+    location.pathname.includes('/customize')
+  ) {
     return null;
   }
 

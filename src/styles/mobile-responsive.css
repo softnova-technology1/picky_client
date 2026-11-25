@@ -1664,11 +1664,26 @@
   }
 
   .picky-footer-body {
-    padding: 24px 14px calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 24px 14px calc(115px + env(safe-area-inset-bottom, 20px)) !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
     margin-bottom: 0 !important;
+  }
+
+  .footer-bottom-bar {
+    padding-bottom: 30px !important;
+  }
+
+  /* Best Sellers Hero Badge Pill — Allow clean wrap on mobile screens */
+  .bestsellers-hero-badge-pill {
+    max-width: 90vw !important;
+    white-space: normal !important;
+    line-height: 1.35 !important;
+    text-align: center !important;
+    word-break: break-word !important;
+    font-size: 10.5px !important;
+    padding: 0.35rem 0.75rem !important;
   }
 
   .footer-grid {
@@ -2813,7 +2828,7 @@
   }
 
   /* Button text / CTA: 13px | 600-700 | 1.2 (Min-height: 42px) */
-  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
+  button:not([class*="badge"]):not([class*="chip"]):not([class*="tab"]):not([class*="icon"]):not([class*="Dot"]):not([class*="dot"]):not([class*="close"]):not([class*="Close"]):not([class*="swatch"]):not(.mobile-pdp-swatch-circle):not(.ref-add-cart-btn):not(.hero-mobile-cta):not([class*="activeDot"]):not([class*="inactiveDot"]):not(.hp-final-cta-outline-btn):not([class*="viewAllPillsBtn"]):not([class*="pillsBtn"]):not([class*="stepper"]):not(.ref-wishlist-btn):not(.spotlight-heart-btn):not([class*="heart-btn"]):not([class*="wishlist"]):not(.hp-view-all-btn):not(.hp-cat-view-all-btn):not(.hp-carousel-nav-btn):not(.spotlight-cta-btn),
   .hero-cta,
   .carousel-cta-btn,
   .product-card-add-btn,
